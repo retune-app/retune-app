@@ -31,19 +31,33 @@ const audioUpload = multer({
 });
 
 // Generate affirmation script using OpenAI
-async function generateScript(goal: string, category?: string): Promise<string> {
+async function generateScript(goal: string, category?: string, length?: string): Promise<string> {
+  const lengthGuide = {
+    short: "15-30 seconds when read aloud (approximately 40-75 words)",
+    medium: "30-60 seconds when read aloud (approximately 75-150 words)",
+    long: "60-90 seconds when read aloud (approximately 150-225 words)",
+  };
+  
+  const selectedLength = lengthGuide[length as keyof typeof lengthGuide] || lengthGuide.medium;
+  
   const systemPrompt = `You are an expert in creating powerful, personalized affirmations that rewire subconscious beliefs. Create affirmations that are:
 - Written in first person ("I am", "I have", "I attract")
 - Present tense, as if already achieved
 - Positive and empowering
 - Specific and emotionally resonant
-- 30-60 seconds when read aloud (approximately 75-150 words)
+- ${selectedLength}
 
-The affirmations should flow naturally as if speaking to oneself, building in emotional intensity.`;
+CRITICAL RULES:
+- Output ONLY the affirmation statements themselves
+- Do NOT include any title, header, or script name
+- Do NOT include any instructions in parentheses or brackets like "(Take a deep breath...)" or "[Pause here]"
+- Do NOT include markdown formatting like ** or ##
+- Start directly with the first affirmation statement
+- The affirmations should flow naturally as if speaking to oneself, building in emotional intensity.`;
 
   const userPrompt = `Create a powerful affirmation script for someone who wants to: ${goal}${category ? ` (Focus area: ${category})` : ""}.
 
-The script should be a continuous, flowing set of affirmations that build upon each other, creating a powerful subconscious reprogramming experience.`;
+Output only the affirmation statements with no title, no instructions, and no formatting.`;
 
   const response = await openai.chat.completions.create({
     model: "gpt-4o",
@@ -55,7 +69,18 @@ The script should be a continuous, flowing set of affirmations that build upon e
     max_tokens: 500,
   });
 
-  return response.choices[0]?.message?.content || "";
+  let script = response.choices[0]?.message?.content || "";
+  
+  // Clean up any remaining formatting the model might have added
+  script = script
+    .replace(/^\*\*.*?\*\*\s*/gm, "") // Remove bold titles
+    .replace(/^#+\s*.*?\n/gm, "") // Remove markdown headers
+    .replace(/\*?\([^)]*\)\*?\s*/g, "") // Remove parenthetical instructions
+    .replace(/\[[^\]]*\]\s*/g, "") // Remove bracketed instructions
+    .replace(/^\s*\n/gm, "") // Remove empty lines
+    .trim();
+  
+  return script;
 }
 
 // Auto-generate title from affirmation script
@@ -239,13 +264,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Generate script using AI (requires auth)
   app.post("/api/affirmations/generate-script", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { goal, category } = req.body;
+      const { goal, category, length } = req.body;
 
       if (!goal) {
         return res.status(400).json({ error: "Goal is required" });
       }
 
-      const script = await generateScript(goal, category);
+      const script = await generateScript(goal, category, length);
       res.json({ script });
     } catch (error) {
       console.error("Error generating script:", error);

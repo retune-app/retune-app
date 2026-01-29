@@ -27,6 +27,8 @@ import { apiRequest } from "@/lib/query-client";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
 const CATEGORIES = ["Career", "Health", "Confidence", "Wealth", "Relationships", "Sleep"];
+const LENGTHS = ["Short", "Medium", "Long"] as const;
+type LengthOption = typeof LENGTHS[number];
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -41,6 +43,7 @@ export default function CreateScreen() {
   const [goal, setGoal] = useState("");
   const [generatedScript, setGeneratedScript] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedLength, setSelectedLength] = useState<LengthOption>("Medium");
   const [regenerateCount, setRegenerateCount] = useState(0);
 
   const generateMutation = useMutation({
@@ -48,6 +51,7 @@ export default function CreateScreen() {
       const res = await apiRequest("POST", "/api/affirmations/generate-script", {
         goal: goalText,
         category: selectedCategory,
+        length: selectedLength.toLowerCase(),
       });
       return res.json();
     },
@@ -180,6 +184,28 @@ export default function CreateScreen() {
           ))}
         </View>
 
+        {mode === "ai" ? (
+          <>
+            <ThemedText type="h4" style={styles.sectionTitle}>
+              Length
+            </ThemedText>
+            <View style={styles.lengthSelector}>
+              {LENGTHS.map((len) => (
+                <Button
+                  key={len}
+                  variant={selectedLength === len ? "primary" : "ghost"}
+                  size="small"
+                  onPress={() => setSelectedLength(len)}
+                  style={styles.lengthButton}
+                  testID={`button-length-${len.toLowerCase()}`}
+                >
+                  {len}
+                </Button>
+              ))}
+            </View>
+          </>
+        ) : null}
+
         {mode === "ai" && (
           <Button
             variant="gradient"
@@ -271,6 +297,14 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: Spacing.sm,
     marginBottom: Spacing["2xl"],
+  },
+  lengthSelector: {
+    flexDirection: "row",
+    gap: Spacing.sm,
+    marginBottom: Spacing["2xl"],
+  },
+  lengthButton: {
+    flex: 1,
   },
   generateButton: {
     marginBottom: Spacing["2xl"],

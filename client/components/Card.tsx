@@ -6,10 +6,11 @@ import Animated, {
   withSpring,
   WithSpringConfig,
 } from "react-native-reanimated";
+import * as Haptics from "expo-haptics";
 
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
-import { Spacing, BorderRadius } from "@/constants/theme";
+import { Spacing, BorderRadius, Animation, Shadows } from "@/constants/theme";
 
 interface CardProps {
   elevation?: number;
@@ -18,14 +19,14 @@ interface CardProps {
   children?: React.ReactNode;
   onPress?: () => void;
   style?: ViewStyle;
+  testID?: string;
 }
 
 const springConfig: WithSpringConfig = {
-  damping: 15,
-  mass: 0.3,
-  stiffness: 150,
-  overshootClamping: true,
-  energyThreshold: 0.001,
+  damping: Animation.spring.damping,
+  mass: Animation.spring.mass,
+  stiffness: Animation.spring.stiffness,
+  overshootClamping: Animation.spring.overshootClamping,
 };
 
 const getBackgroundColorForElevation = (
@@ -34,13 +35,13 @@ const getBackgroundColorForElevation = (
 ): string => {
   switch (elevation) {
     case 1:
-      return theme.backgroundDefault;
+      return theme.cardBackground;
     case 2:
       return theme.backgroundSecondary;
     case 3:
       return theme.backgroundTertiary;
     default:
-      return theme.backgroundRoot;
+      return theme.backgroundDefault;
   }
 };
 
@@ -53,6 +54,7 @@ export function Card({
   children,
   onPress,
   style,
+  testID,
 }: CardProps) {
   const { theme } = useTheme();
   const scale = useSharedValue(1);
@@ -64,11 +66,16 @@ export function Card({
   }));
 
   const handlePressIn = () => {
-    scale.value = withSpring(0.98, springConfig);
+    if (onPress) {
+      scale.value = withSpring(Animation.pressScale, springConfig);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
   };
 
   const handlePressOut = () => {
-    scale.value = withSpring(1, springConfig);
+    if (onPress) {
+      scale.value = withSpring(1, springConfig);
+    }
   };
 
   return (
@@ -76,8 +83,11 @@ export function Card({
       onPress={onPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
+      disabled={!onPress}
+      testID={testID}
       style={[
         styles.card,
+        Shadows.small,
         {
           backgroundColor: cardBackgroundColor,
         },
@@ -91,7 +101,7 @@ export function Card({
         </ThemedText>
       ) : null}
       {description ? (
-        <ThemedText type="small" style={styles.cardDescription}>
+        <ThemedText type="small" style={[styles.cardDescription, { color: theme.textSecondary }]}>
           {description}
         </ThemedText>
       ) : null}
@@ -102,13 +112,13 @@ export function Card({
 
 const styles = StyleSheet.create({
   card: {
-    padding: Spacing.xl,
-    borderRadius: BorderRadius["2xl"],
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
   },
   cardTitle: {
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   cardDescription: {
-    opacity: 0.7,
+    opacity: 0.8,
   },
 });

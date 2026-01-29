@@ -9,5 +9,6 @@ export function useTheme() {
   return {
     theme,
     isDark,
+    colorScheme: colorScheme ?? "light",
   };
 }

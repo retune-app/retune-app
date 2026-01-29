@@ -1,12 +1,16 @@
 import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import MainTabNavigator from "@/navigation/MainTabNavigator";
-import ModalScreen from "@/screens/ModalScreen";
+import VoiceSetupScreen from "@/screens/VoiceSetupScreen";
+import CreateScreen from "@/screens/CreateScreen";
+import PlayerScreen from "@/screens/PlayerScreen";
 import { useScreenOptions } from "@/hooks/useScreenOptions";
 
 export type RootStackParamList = {
   Main: undefined;
-  Modal: undefined;
+  VoiceSetup: undefined;
+  Create: undefined;
+  Player: { affirmationId: number };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -22,11 +26,27 @@ export default function RootStackNavigator() {
         options={{ headerShown: false }}
       />
       <Stack.Screen
-        name="Modal"
-        component={ModalScreen}
+        name="VoiceSetup"
+        component={VoiceSetupScreen}
         options={{
+          presentation: "fullScreenModal",
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="Create"
+        component={CreateScreen}
+        options={{
+          headerTitle: "Create Affirmation",
           presentation: "modal",
-          headerTitle: "Modal",
+        }}
+      />
+      <Stack.Screen
+        name="Player"
+        component={PlayerScreen}
+        options={{
+          headerTitle: "",
+          headerTransparent: true,
         }}
       />
     </Stack.Navigator>

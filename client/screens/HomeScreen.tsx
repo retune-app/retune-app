@@ -1,28 +1,179 @@
-import { FlatList } from "react-native";
+import React, { useState, useCallback } from "react";
+import { FlatList, View, StyleSheet, RefreshControl, TextInput } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useQuery } from "@tanstack/react-query";
+import { Feather } from "@expo/vector-icons";
 
+import { ThemedText } from "@/components/ThemedText";
+import { EmptyState } from "@/components/EmptyState";
+import { AffirmationCard } from "@/components/AffirmationCard";
+import { CategoryChip } from "@/components/CategoryChip";
 import { useTheme } from "@/hooks/useTheme";
-import { Spacing } from "@/constants/theme";
+import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
+import type { RootStackParamList } from "@/navigation/RootStackNavigator";
+import type { Affirmation } from "@shared/schema";
+
+const CATEGORIES = ["All", "Career", "Health", "Confidence", "Wealth", "Relationships"];
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
   const tabBarHeight = useBottomTabBarHeight();
   const { theme } = useTheme();
+  const navigation = useNavigation<NavigationProp>();
+
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
+
+  const { data: affirmations = [], refetch, isLoading } = useQuery<Affirmation[]>({
+    queryKey: ["/api/affirmations"],
+  });
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }, [refetch]);
+
+  const filteredAffirmations = affirmations.filter((item) => {
+    const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === "All" || true;
+    return matchesSearch && matchesCategory;
+  });
+
+  const handleAffirmationPress = (id: number) => {
+    navigation.navigate("Player", { affirmationId: id });
+  };
+
+  const handlePlayPress = (id: number) => {
+    navigation.navigate("Player", { affirmationId: id });
+  };
+
+  const handleCreatePress = () => {
+    navigation.navigate("Create");
+  };
+
+  const renderHeader = () => (
+    <View style={styles.headerContent}>
+      <View style={[styles.searchContainer, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder }]}>
+        <Feather name="search" size={20} color={theme.placeholder} />
+        <TextInput
+          style={[styles.searchInput, { color: theme.text }]}
+          placeholder="Search affirmations..."
+          placeholderTextColor={theme.placeholder}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          testID="input-search"
+        />
+      </View>
+      <FlatList
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        data={CATEGORIES}
+        keyExtractor={(item) => item}
+        contentContainerStyle={styles.categoriesContainer}
+        renderItem={({ item }) => (
+          <CategoryChip
+            label={item}
+            isSelected={selectedCategory === item}
+            onPress={() => setSelectedCategory(item)}
+            testID={`chip-category-${item.toLowerCase()}`}
+          />
+        )}
+      />
+    </View>
+  );
+
+  const renderEmpty = () => (
+    <EmptyState
+      image={require("../../assets/images/empty-library.png")}
+      title="No Affirmations Yet"
+      description="Create your first personalized affirmation to start rewiring your subconscious mind."
+      actionLabel="Create Affirmation"
+      onAction={handleCreatePress}
+    />
+  );
+
+  const renderItem = ({ item }: { item: Affirmation }) => (
+    <AffirmationCard
+      id={item.id}
+      title={item.title}
+      duration={item.duration ?? undefined}
+      isFavorite={item.isFavorite ?? false}
+      onPress={() => handleAffirmationPress(item.id)}
+      onPlayPress={() => handlePlayPress(item.id)}
+      testID={`card-affirmation-${item.id}`}
+    />
+  );
 
   return (
     <FlatList
-      style={{ flex: 1, backgroundColor: theme.backgroundRoot }}
-      contentContainerStyle={{
-        paddingTop: headerHeight + Spacing.xl,
-        paddingBottom: tabBarHeight + Spacing.xl,
-        paddingHorizontal: Spacing.lg,
-      }}
+      style={[styles.container, { backgroundColor: theme.backgroundRoot }]}
+      contentContainerStyle={[
+        styles.contentContainer,
+        {
+          paddingTop: headerHeight + Spacing.lg,
+          paddingBottom: tabBarHeight + Spacing.xl,
+        },
+        filteredAffirmations.length === 0 && styles.emptyContainer,
+      ]}
       scrollIndicatorInsets={{ bottom: insets.bottom }}
-      data={[]}
-      renderItem={() => null}
+      data={filteredAffirmations}
+      keyExtractor={(item) => item.id.toString()}
+      renderItem={renderItem}
+      ListHeaderComponent={renderHeader}
+      ListEmptyComponent={renderEmpty}
+      ItemSeparatorComponent={() => <View style={styles.separator} />}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={theme.primary}
+        />
+      }
     />
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  contentContainer: {
+    paddingHorizontal: Spacing.lg,
+  },
+  emptyContainer: {
+    flexGrow: 1,
+  },
+  headerContent: {
+    marginBottom: Spacing.lg,
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Spacing.lg,
+    height: 48,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1,
+    marginBottom: Spacing.lg,
+  },
+  searchInput: {
+    flex: 1,
+    marginLeft: Spacing.sm,
+    fontSize: 16,
+  },
+  categoriesContainer: {
+    paddingVertical: Spacing.xs,
+    gap: Spacing.sm,
+  },
+  separator: {
+    height: Spacing.md,
+  },
+});

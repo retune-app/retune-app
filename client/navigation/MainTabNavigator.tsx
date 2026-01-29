@@ -1,18 +1,50 @@
 import React from "react";
+import { View, Pressable, StyleSheet } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
-import { Platform, StyleSheet } from "react-native";
+import { Platform } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import * as Haptics from "expo-haptics";
+
 import HomeStackNavigator from "@/navigation/HomeStackNavigator";
 import ProfileStackNavigator from "@/navigation/ProfileStackNavigator";
 import { useTheme } from "@/hooks/useTheme";
+import { Shadows } from "@/constants/theme";
 
 export type MainTabParamList = {
   HomeTab: undefined;
+  CreateTab: undefined;
   ProfileTab: undefined;
 };
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
+
+function CreateTabButton({ onPress }: { onPress?: () => void }) {
+  const { theme } = useTheme();
+
+  const handlePress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    onPress?.();
+  };
+
+  return (
+    <Pressable onPress={handlePress} style={styles.createButtonContainer}>
+      <LinearGradient
+        colors={theme.gradient.primary as [string, string]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.createButton, Shadows.medium]}
+      >
+        <Feather name="plus" size={28} color="#FFFFFF" />
+      </LinearGradient>
+    </Pressable>
+  );
+}
+
+function EmptyComponent() {
+  return null;
+}
 
 export default function MainTabNavigator() {
   const { theme, isDark } = useTheme();
@@ -31,6 +63,8 @@ export default function MainTabNavigator() {
           }),
           borderTopWidth: 0,
           elevation: 0,
+          height: Platform.select({ ios: 88, android: 70 }),
+          paddingBottom: Platform.select({ ios: 28, android: 12 }),
         },
         tabBarBackground: () =>
           Platform.OS === "ios" ? (
@@ -41,17 +75,36 @@ export default function MainTabNavigator() {
             />
           ) : null,
         headerShown: false,
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: "500",
+        },
       }}
     >
       <Tab.Screen
         name="HomeTab"
         component={HomeStackNavigator}
         options={{
-          title: "Home",
+          title: "Library",
           tabBarIcon: ({ color, size }) => (
-            <Feather name="home" size={size} color={color} />
+            <Feather name="book-open" size={size} color={color} />
           ),
         }}
+      />
+      <Tab.Screen
+        name="CreateTab"
+        component={EmptyComponent}
+        options={{
+          tabBarButton: (props) => (
+            <CreateTabButton onPress={props.onPress} />
+          ),
+        }}
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            e.preventDefault();
+            navigation.navigate("Create");
+          },
+        })}
       />
       <Tab.Screen
         name="ProfileTab"
@@ -66,3 +119,19 @@ export default function MainTabNavigator() {
     </Tab.Navigator>
   );
 }
+
+const styles = StyleSheet.create({
+  createButtonContainer: {
+    position: "relative",
+    top: -20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  createButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+});

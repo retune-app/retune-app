@@ -1,9 +1,373 @@
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "node:http";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+import { db } from "./db";
+import { affirmations, voiceSamples, categories } from "@shared/schema";
+import { eq, desc } from "drizzle-orm";
+import { openai } from "./replit_integrations/audio/client";
+import {
+  cloneVoice,
+  textToSpeech as elevenLabsTTS,
+} from "./replit_integrations/elevenlabs/client";
+
+const uploadDir = path.join(process.cwd(), "uploads");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const audioUpload = multer({
+  storage: multer.diskStorage({
+    destination: uploadDir,
+    filename: (req, file, cb) => {
+      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+      cb(null, `voice-${uniqueSuffix}${path.extname(file.originalname) || ".m4a"}`);
+    },
+  }),
+  limits: { fileSize: 50 * 1024 * 1024 },
+});
+
+// Generate affirmation script using OpenAI
+async function generateScript(goal: string, category?: string): Promise<string> {
+  const systemPrompt = `You are an expert in creating powerful, personalized affirmations that rewire subconscious beliefs. Create affirmations that are:
+- Written in first person ("I am", "I have", "I attract")
+- Present tense, as if already achieved
+- Positive and empowering
+- Specific and emotionally resonant
+- 30-60 seconds when read aloud (approximately 75-150 words)
+
+The affirmations should flow naturally as if speaking to oneself, building in emotional intensity.`;
+
+  const userPrompt = `Create a powerful affirmation script for someone who wants to: ${goal}${category ? ` (Focus area: ${category})` : ""}.
+
+The script should be a continuous, flowing set of affirmations that build upon each other, creating a powerful subconscious reprogramming experience.`;
+
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o",
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    temperature: 0.7,
+    max_tokens: 500,
+  });
+
+  return response.choices[0]?.message?.content || "";
+}
+
+// Generate audio using ElevenLabs or fallback to OpenAI
+async function generateAudio(
+  script: string,
+  voiceId?: string
+): Promise<{ audio: ArrayBuffer; duration: number }> {
+  try {
+    // Try ElevenLabs first (for cloned voices or better quality)
+    const result = await elevenLabsTTS(script, voiceId);
+    return result;
+  } catch (error) {
+    console.error("ElevenLabs TTS failed, falling back to OpenAI:", error);
+    
+    // Fallback to OpenAI TTS if ElevenLabs fails
+    const response = await openai.audio.speech.create({
+      model: "tts-1",
+      voice: "nova",
+      input: script,
+    });
+
+    const audioBuffer = await response.arrayBuffer();
+    const wordCount = script.split(/\s+/).length;
+    const estimatedDuration = Math.ceil((wordCount / 150) * 60);
+
+    return {
+      audio: audioBuffer,
+      duration: estimatedDuration,
+    };
+  }
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // put application routes here
-  // prefix all routes with /api
+  // Serve uploaded audio files
+  app.use("/uploads", (req, res, next) => {
+    const filePath = path.join(uploadDir, req.path);
+    if (fs.existsSync(filePath)) {
+      res.sendFile(filePath);
+    } else {
+      res.status(404).json({ error: "File not found" });
+    }
+  });
+
+  // Get all affirmations
+  app.get("/api/affirmations", async (req: Request, res: Response) => {
+    try {
+      const allAffirmations = await db
+        .select()
+        .from(affirmations)
+        .orderBy(desc(affirmations.createdAt));
+      res.json(allAffirmations);
+    } catch (error) {
+      console.error("Error fetching affirmations:", error);
+      res.status(500).json({ error: "Failed to fetch affirmations" });
+    }
+  });
+
+  // Get single affirmation
+  app.get("/api/affirmations/:id", async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const [affirmation] = await db
+        .select()
+        .from(affirmations)
+        .where(eq(affirmations.id, parseInt(id)));
+
+      if (!affirmation) {
+        return res.status(404).json({ error: "Affirmation not found" });
+      }
+
+      res.json(affirmation);
+    } catch (error) {
+      console.error("Error fetching affirmation:", error);
+      res.status(500).json({ error: "Failed to fetch affirmation" });
+    }
+  });
+
+  // Generate script using AI
+  app.post("/api/affirmations/generate-script", async (req: Request, res: Response) => {
+    try {
+      const { goal, category } = req.body;
+
+      if (!goal) {
+        return res.status(400).json({ error: "Goal is required" });
+      }
+
+      const script = await generateScript(goal, category);
+      res.json({ script });
+    } catch (error) {
+      console.error("Error generating script:", error);
+      res.status(500).json({ error: "Failed to generate script" });
+    }
+  });
+
+  // Create affirmation with voice synthesis
+  app.post("/api/affirmations/create-with-voice", async (req: Request, res: Response) => {
+    try {
+      const { title, script, category, isManual } = req.body;
+
+      if (!script) {
+        return res.status(400).json({ error: "Script is required" });
+      }
+
+      // Get user's voice ID if available
+      const [voiceSample] = await db
+        .select()
+        .from(voiceSamples)
+        .where(eq(voiceSamples.status, "ready"))
+        .orderBy(desc(voiceSamples.createdAt))
+        .limit(1);
+
+      // Generate audio
+      const audioResult = await generateAudio(
+        script,
+        voiceSample?.voiceId || undefined
+      );
+
+      // Save audio file
+      const audioFilename = `affirmation-${Date.now()}.mp3`;
+      const audioPath = path.join(uploadDir, audioFilename);
+      fs.writeFileSync(audioPath, Buffer.from(audioResult.audio));
+
+      // Create affirmation record
+      const [newAffirmation] = await db
+        .insert(affirmations)
+        .values({
+          title: title || "My Affirmation",
+          script,
+          audioUrl: `/uploads/${audioFilename}`,
+          duration: audioResult.duration,
+          isManual: isManual || false,
+        })
+        .returning();
+
+      res.json(newAffirmation);
+    } catch (error) {
+      console.error("Error creating affirmation:", error);
+      res.status(500).json({ error: "Failed to create affirmation" });
+    }
+  });
+
+  // Update favorite status
+  app.patch("/api/affirmations/:id/favorite", async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { isFavorite } = req.body;
+
+      const [updated] = await db
+        .update(affirmations)
+        .set({ isFavorite, updatedAt: new Date() })
+        .where(eq(affirmations.id, parseInt(id)))
+        .returning();
+
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating favorite:", error);
+      res.status(500).json({ error: "Failed to update favorite" });
+    }
+  });
+
+  // Increment play count
+  app.post("/api/affirmations/:id/play", async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+
+      const [affirmation] = await db
+        .select()
+        .from(affirmations)
+        .where(eq(affirmations.id, parseInt(id)));
+
+      if (!affirmation) {
+        return res.status(404).json({ error: "Affirmation not found" });
+      }
+
+      const [updated] = await db
+        .update(affirmations)
+        .set({
+          playCount: (affirmation.playCount || 0) + 1,
+          updatedAt: new Date(),
+        })
+        .where(eq(affirmations.id, parseInt(id)))
+        .returning();
+
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating play count:", error);
+      res.status(500).json({ error: "Failed to update play count" });
+    }
+  });
+
+  // Upload voice sample and clone voice
+  app.post(
+    "/api/voice-samples",
+    audioUpload.single("audio"),
+    async (req: Request, res: Response) => {
+      try {
+        const file = req.file;
+        if (!file) {
+          return res.status(400).json({ error: "No audio file provided" });
+        }
+
+        // Create voice sample record
+        const [sample] = await db
+          .insert(voiceSamples)
+          .values({
+            userId: "default-user",
+            audioUrl: `/uploads/${file.filename}`,
+            status: "processing",
+          })
+          .returning();
+
+        // Clone voice with ElevenLabs
+        try {
+          const voiceId = await cloneVoice(file.path, "My Affirmation Voice");
+
+          // Update sample with voice ID
+          const [updatedSample] = await db
+            .update(voiceSamples)
+            .set({ voiceId, status: "ready" })
+            .where(eq(voiceSamples.id, sample.id))
+            .returning();
+
+          res.json(updatedSample);
+        } catch (cloneError) {
+          console.error("Voice cloning error:", cloneError);
+
+          // Update status to failed
+          await db
+            .update(voiceSamples)
+            .set({ status: "failed" })
+            .where(eq(voiceSamples.id, sample.id));
+
+          res.status(500).json({ error: "Voice cloning failed. Please ensure your recording is at least 30 seconds." });
+        }
+      } catch (error) {
+        console.error("Error uploading voice sample:", error);
+        res.status(500).json({ error: "Failed to upload voice sample" });
+      }
+    }
+  );
+
+  // Get user's voice sample status
+  app.get("/api/voice-samples/status", async (req: Request, res: Response) => {
+    try {
+      const [sample] = await db
+        .select()
+        .from(voiceSamples)
+        .orderBy(desc(voiceSamples.createdAt))
+        .limit(1);
+
+      res.json({
+        hasVoiceSample: !!sample && sample.status === "ready",
+        status: sample?.status || null,
+      });
+    } catch (error) {
+      console.error("Error fetching voice sample status:", error);
+      res.status(500).json({ error: "Failed to fetch voice sample status" });
+    }
+  });
+
+  // Get user stats
+  app.get("/api/user/stats", async (req: Request, res: Response) => {
+    try {
+      const allAffirmations = await db.select().from(affirmations);
+
+      const totalListens = allAffirmations.reduce(
+        (sum, a) => sum + (a.playCount || 0),
+        0
+      );
+
+      res.json({
+        totalListens,
+        streak: 0,
+        affirmationsCount: allAffirmations.length,
+      });
+    } catch (error) {
+      console.error("Error fetching user stats:", error);
+      res.status(500).json({ error: "Failed to fetch user stats" });
+    }
+  });
+
+  // Get categories
+  app.get("/api/categories", async (req: Request, res: Response) => {
+    try {
+      const allCategories = await db.select().from(categories);
+      res.json(allCategories);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      res.status(500).json({ error: "Failed to fetch categories" });
+    }
+  });
+
+  // Initialize default categories
+  app.post("/api/categories/init", async (req: Request, res: Response) => {
+    try {
+      const defaultCategories = [
+        { name: "Career", icon: "briefcase", color: "#4A90E2" },
+        { name: "Health", icon: "heart", color: "#50E3C2" },
+        { name: "Confidence", icon: "star", color: "#7B61FF" },
+        { name: "Wealth", icon: "dollar-sign", color: "#F5A623" },
+        { name: "Relationships", icon: "users", color: "#E91E63" },
+        { name: "Sleep", icon: "moon", color: "#9C27B0" },
+      ];
+
+      for (const cat of defaultCategories) {
+        await db.insert(categories).values(cat).onConflictDoNothing();
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error initializing categories:", error);
+      res.status(500).json({ error: "Failed to initialize categories" });
+    }
+  });
 
   const httpServer = createServer(app);
 

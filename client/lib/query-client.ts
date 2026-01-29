@@ -1,5 +1,6 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { Platform } from "react-native";
+import { getAuthToken } from "@/contexts/AuthContext";
 
 /**
  * Gets the base URL for the Express API server (e.g., "http://localhost:5000")
@@ -56,10 +57,21 @@ export async function apiRequest(
 ): Promise<Response> {
   const baseUrl = getApiUrl();
   const url = new URL(route, baseUrl);
+  
+  const headers: Record<string, string> = {};
+  if (data) {
+    headers["Content-Type"] = "application/json";
+  }
+  
+  // Add auth token if available
+  const authToken = getAuthToken();
+  if (authToken) {
+    headers["X-Auth-Token"] = authToken;
+  }
 
   const res = await fetch(url, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers,
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
@@ -77,8 +89,16 @@ export const getQueryFn: <T>(options: {
     const baseUrl = getApiUrl();
     const url = new URL(queryKey.join("/") as string, baseUrl);
 
+    // Build headers with auth token if available
+    const headers: Record<string, string> = {};
+    const authToken = getAuthToken();
+    if (authToken) {
+      headers["X-Auth-Token"] = authToken;
+    }
+
     const res = await fetch(url, {
       credentials: "include",
+      headers,
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {

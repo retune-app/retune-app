@@ -33,29 +33,17 @@ const audioUpload = multer({
 // Generate affirmation script using OpenAI
 async function generateScript(goal: string, category?: string, length?: string): Promise<string> {
   const lengthConfig = {
-    short: { sentences: 3, tokens: 100, description: "exactly 3 short sentences" },
-    medium: { sentences: 6, tokens: 250, description: "exactly 6 sentences" },
-    long: { sentences: 12, tokens: 500, description: "exactly 12 sentences" },
+    short: { sentences: 2, tokens: 80, description: "exactly 2 sentences" },
+    medium: { sentences: 5, tokens: 200, description: "exactly 5 sentences" },
+    long: { sentences: 10, tokens: 400, description: "exactly 10 sentences" },
   };
   
   const config = lengthConfig[length as keyof typeof lengthConfig] || lengthConfig.medium;
   console.log(`Generating script with length: ${length}, using config:`, config);
   
-  const systemPrompt = `You are an expert in creating powerful, personalized affirmations.
+  const systemPrompt = `Write ${config.sentences} affirmation sentences. First person, present tense. No titles, no instructions, no numbering. Just ${config.sentences} sentences.`;
 
-STRICT LENGTH: Write ${config.description}. Count carefully - this is mandatory.
-
-Rules:
-- First person present tense ("I am", "I have")
-- Positive and empowering
-- NO titles, headers, or markdown
-- NO instructions like "(breathe)" or "[pause]"
-- NO numbering
-- Start directly with the first affirmation`;
-
-  const userPrompt = `Write ${config.description} of affirmations for: ${goal}${category ? ` (${category})` : ""}.
-
-Output ONLY ${config.sentences} sentences. Nothing else.`;
+  const userPrompt = `${config.sentences} affirmations for: ${goal}. Only ${config.sentences} sentences total.`;
 
   const response = await openai.chat.completions.create({
     model: "gpt-4o",
@@ -78,6 +66,12 @@ Output ONLY ${config.sentences} sentences. Nothing else.`;
     .replace(/^\d+\.\s*/gm, "") // Remove numbered lists
     .replace(/^\s*\n/gm, "") // Remove empty lines
     .trim();
+  
+  // Enforce sentence limit by truncating if needed
+  const sentences = script.match(/[^.!?]+[.!?]+/g) || [];
+  if (sentences.length > config.sentences) {
+    script = sentences.slice(0, config.sentences).join(" ").trim();
+  }
   
   return script;
 }

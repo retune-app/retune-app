@@ -209,8 +209,17 @@ export default function PlayerScreen() {
         return generateFallbackTimings();
       }
       
-      const firstWord = parsed[0]?.word;
-      if (typeof firstWord === 'string' && firstWord.includes('undefined')) {
+      // Check for corrupted data - any word containing "undefined" or invalid timing
+      const hasCorruptedData = parsed.some((item: any) => {
+        if (!item || typeof item.word !== 'string') return true;
+        if (item.word.includes('undefined')) return true;
+        if (typeof item.startMs !== 'number' || isNaN(item.startMs)) return true;
+        if (typeof item.endMs !== 'number' || isNaN(item.endMs)) return true;
+        return false;
+      });
+      
+      if (hasCorruptedData) {
+        console.log('Detected corrupted word timings, using fallback');
         return generateFallbackTimings();
       }
       

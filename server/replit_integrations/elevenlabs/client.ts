@@ -178,20 +178,45 @@ function parseCharacterTimingsToWords(alignment: any): WordTiming[] {
 
   // Log the alignment structure to debug
   console.log("Alignment keys:", Object.keys(alignment));
+  console.log("Alignment sample:", JSON.stringify(alignment).substring(0, 300));
 
-  // Format 1: characters array with start/end times in seconds (most common ElevenLabs format)
-  if (alignment.characters && Array.isArray(alignment.characters) && 
+  // Format 1: characters (string or array) with start/end times in seconds (most common ElevenLabs format)
+  if (alignment.characters && 
       alignment.character_start_times_seconds && alignment.character_end_times_seconds) {
     console.log("Using Format 1: characters + character_start_times_seconds");
+    
+    // Handle characters as either string or array
+    const chars: string[] = typeof alignment.characters === 'string' 
+      ? alignment.characters.split('')
+      : Array.isArray(alignment.characters) 
+        ? alignment.characters
+        : [];
+    
+    if (chars.length === 0) {
+      console.log("No characters found in alignment");
+      return [];
+    }
+    
+    console.log(`Processing ${chars.length} characters`);
+    
     const words: WordTiming[] = [];
     let currentWord = "";
     let wordStartMs: number | null = null;
     let wordEndMs: number = 0;
 
-    for (let i = 0; i < alignment.characters.length; i++) {
-      const char = alignment.characters[i];
-      const startMs = Math.round(alignment.character_start_times_seconds[i] * 1000);
-      const endMs = Math.round(alignment.character_end_times_seconds[i] * 1000);
+    for (let i = 0; i < chars.length; i++) {
+      const char = chars[i];
+      const startTime = alignment.character_start_times_seconds[i];
+      const endTime = alignment.character_end_times_seconds[i];
+      
+      // Skip if timing data is undefined/null/NaN
+      if (startTime === undefined || startTime === null || isNaN(startTime) ||
+          endTime === undefined || endTime === null || isNaN(endTime)) {
+        continue;
+      }
+      
+      const startMs = Math.round(startTime * 1000);
+      const endMs = Math.round(endTime * 1000);
       
       // Skip undefined/null characters
       if (char === undefined || char === null) continue;
@@ -215,8 +240,16 @@ function parseCharacterTimingsToWords(alignment: any): WordTiming[] {
       words.push({ word: currentWord, startMs: wordStartMs, endMs: wordEndMs });
     }
 
-    console.log(`Parsed ${words.length} words from Format 1`);
-    return words;
+    // Validate words - filter out any containing "undefined"
+    const validWords = words.filter(w => 
+      w.word && 
+      typeof w.word === 'string' && 
+      !w.word.includes('undefined') &&
+      !isNaN(w.startMs) && 
+      !isNaN(w.endMs)
+    );
+    console.log(`Parsed ${validWords.length} valid words from Format 1 (${words.length} before filtering)`);
+    return validWords;
   }
 
   // Format 2: chars/charStartTimesMs/charDurationsMs arrays

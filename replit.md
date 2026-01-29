@@ -1,8 +1,8 @@
-# Subconscious Rewire
+# Rewired
 
 ## Overview
 
-Subconscious Rewire is a mobile app (React Native/Expo) that helps users rewire their subconscious mind through personalized audio affirmations. Users describe their goals, AI generates affirmation scripts, and the app uses voice cloning technology to play the affirmations back in the user's own voice. The app follows a "Serene Empowerment" design aesthetic that blends therapeutic tranquility with motivational energy.
+Rewired is a mobile app (React Native/Expo) that helps users rewire their subconscious mind through personalized audio affirmations. Users describe their goals, AI generates affirmation scripts, and the app uses voice cloning technology to play the affirmations back in the user's own voice. The app follows a "Serene Empowerment" design aesthetic that blends therapeutic tranquility with motivational energy.
 
 ## User Preferences
 

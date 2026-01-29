@@ -1,6 +1,6 @@
 import { Platform } from "react-native";
 
-// Subconscious Rewire Design System
+// Rewired Design System
 // Based on design_guidelines.md - Serene Empowerment aesthetic
 
 // Primary brand colors from design guidelines

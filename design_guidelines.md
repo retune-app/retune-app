@@ -1,4 +1,4 @@
-# Design Guidelines: Subconscious Rewire
+# Design Guidelines: Rewired
 
 ## 1. Brand Identity
 

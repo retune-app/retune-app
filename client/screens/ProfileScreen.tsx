@@ -235,8 +235,8 @@ export default function ProfileScreen() {
         <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
           <SettingItem
             icon="info"
-            label="About Subconscious Rewire"
-            onPress={() => Alert.alert("About", "Subconscious Rewire v1.0.0\n\nRewire your mind with personalized audio affirmations.")}
+            label="About Rewired"
+            onPress={() => Alert.alert("About", "Rewired v1.0.0\n\nRewire your mind with personalized audio affirmations.")}
           />
           <SettingItem
             icon="help-circle"

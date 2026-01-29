@@ -19,7 +19,7 @@ export default function HomeStackNavigator() {
         name="Home"
         component={HomeScreen}
         options={{
-          headerTitle: () => <HeaderTitle title="Subconscious Rewire" />,
+          headerTitle: () => <HeaderTitle title="Rewired" />,
         }}
       />
     </Stack.Navigator>

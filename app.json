@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Subconscious Rewire",
+    "name": "Rewired",
     "slug": "subconscious-rewire",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -47,7 +47,7 @@
       [
         "expo-av",
         {
-          "microphonePermission": "Allow Subconscious Rewire to access your microphone to record personalized affirmations."
+          "microphonePermission": "Allow Rewired to access your microphone to record personalized affirmations."
         }
       ]
     ],

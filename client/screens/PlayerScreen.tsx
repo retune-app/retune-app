@@ -202,6 +202,25 @@ export default function PlayerScreen() {
     loadSettings();
   }, []);
 
+  // Control orientation based on Focus Mode state
+  // Allow landscape when Focus Mode is enabled and either playing OR already in landscape (to allow pause/resume)
+  useEffect(() => {
+    const shouldAllowLandscape = rsvpEnabled && (isCurrentlyPlaying || isLandscape);
+    
+    if (shouldAllowLandscape) {
+      // Unlock orientation to allow landscape when Focus Mode + playing or already in landscape
+      ScreenOrientation.unlockAsync();
+    } else {
+      // Lock to portrait otherwise
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+    }
+    
+    return () => {
+      // Lock back to portrait when leaving screen
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+    };
+  }, [rsvpEnabled, isCurrentlyPlaying, isLandscape]);
+
   // Listen for orientation changes for fullscreen Focus Mode
   useEffect(() => {
     const checkOrientation = async () => {
@@ -228,7 +247,8 @@ export default function PlayerScreen() {
   }, []);
 
   // Determine if fullscreen Focus Mode should be shown
-  const showFullscreenFocus = isLandscape && rsvpEnabled && isCurrentlyPlaying;
+  // Show when in landscape + Focus Mode enabled (even if paused, so user can tap to resume)
+  const showFullscreenFocus = isLandscape && rsvpEnabled;
 
   const wordTimings: WordTiming[] = useMemo(() => {
     const generateFallbackTimings = () => {
@@ -387,6 +407,16 @@ export default function PlayerScreen() {
               fontSize="XL"
               showHighlight={rsvpHighlight}
             />
+            {!isCurrentlyPlaying ? (
+              <View style={styles.fullscreenPlayHint}>
+                <View style={[styles.fullscreenPlayButton, { backgroundColor: theme.primary }]}>
+                  <Feather name="play" size={32} color="#FFFFFF" />
+                </View>
+                <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: 8 }}>
+                  Tap to resume
+                </ThemedText>
+              </View>
+            ) : null}
           </Pressable>
           <View style={styles.fullscreenHint}>
             <ThemedText type="caption" style={{ color: theme.textSecondary, opacity: 0.6 }}>
@@ -767,5 +797,17 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: Spacing.xl,
     alignItems: "center",
+  },
+  fullscreenPlayHint: {
+    position: "absolute",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  fullscreenPlayButton: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

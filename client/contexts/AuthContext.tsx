@@ -6,7 +6,10 @@ import React, {
   useCallback,
   ReactNode,
 } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getApiUrl } from "@/lib/query-client";
+
+const AUTH_TOKEN_KEY = "@auth/token";
 
 interface User {
   id: number;
@@ -19,6 +22,7 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  authToken: string | null;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signup: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
@@ -27,14 +31,37 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Export auth token for use in other parts of the app
+let globalAuthToken: string | null = null;
+export function getAuthToken(): string | null {
+  return globalAuthToken;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [authToken, setAuthToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const setToken = useCallback(async (token: string | null) => {
+    globalAuthToken = token;
+    setAuthToken(token);
+    if (token) {
+      await AsyncStorage.setItem(AUTH_TOKEN_KEY, token);
+    } else {
+      await AsyncStorage.removeItem(AUTH_TOKEN_KEY);
+    }
+  }, []);
 
   const refreshUser = useCallback(async () => {
     try {
+      const headers: Record<string, string> = {};
+      if (globalAuthToken) {
+        headers["X-Auth-Token"] = globalAuthToken;
+      }
+      
       const response = await fetch(new URL("/api/auth/me", getApiUrl()).toString(), {
         credentials: "include",
+        headers,
       });
 
       if (response.ok) {
@@ -42,16 +69,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(userData.user);
       } else {
         setUser(null);
+        await setToken(null);
       }
     } catch (error) {
       console.error("Failed to fetch user:", error);
       setUser(null);
     }
-  }, []);
+  }, [setToken]);
 
   useEffect(() => {
     const checkAuth = async () => {
       setIsLoading(true);
+      
+      // Load saved auth token
+      try {
+        const savedToken = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
+        if (savedToken) {
+          globalAuthToken = savedToken;
+          setAuthToken(savedToken);
+        }
+      } catch (e) {
+        console.error("Failed to load auth token:", e);
+      }
+      
       await refreshUser();
       setIsLoading(false);
     };
@@ -71,6 +111,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (response.ok) {
         setUser(data.user);
+        if (data.authToken) {
+          await setToken(data.authToken);
+        }
         return { success: true };
       } else {
         return { success: false, error: data.error || "Login failed" };
@@ -94,6 +137,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (response.ok) {
         setUser(data.user);
+        if (data.authToken) {
+          await setToken(data.authToken);
+        }
         return { success: true };
       } else {
         return { success: false, error: data.error || "Signup failed" };
@@ -106,14 +152,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
+      const headers: Record<string, string> = {};
+      if (globalAuthToken) {
+        headers["X-Auth-Token"] = globalAuthToken;
+      }
+      
       await fetch(new URL("/api/auth/logout", getApiUrl()).toString(), {
         method: "POST",
         credentials: "include",
+        headers,
       });
       setUser(null);
+      await setToken(null);
     } catch (error) {
       console.error("Logout error:", error);
       setUser(null);
+      await setToken(null);
     }
   };
 
@@ -123,6 +177,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         isLoading,
         isAuthenticated: !!user,
+        authToken,
         login,
         signup,
         logout,

@@ -12,7 +12,7 @@ import {
   textToSpeech as elevenLabsTTS,
   type WordTiming,
 } from "./replit_integrations/elevenlabs/client";
-import { setupAuth, requireAuth, optionalAuth, AuthenticatedRequest, generateUploadToken } from "./auth";
+import { setupAuth, requireAuth, optionalAuth, AuthenticatedRequest } from "./auth";
 
 const uploadDir = path.join(process.cwd(), "uploads");
 if (!fs.existsSync(uploadDir)) {
@@ -480,17 +480,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating play count:", error);
       res.status(500).json({ error: "Failed to update play count" });
-    }
-  });
-
-  // Get upload token for mobile apps (works with session auth)
-  app.get("/api/upload-token", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const token = generateUploadToken(req.userId!);
-      res.json({ token });
-    } catch (error) {
-      console.error("Error generating upload token:", error);
-      res.status(500).json({ error: "Failed to generate upload token" });
     }
   });
 

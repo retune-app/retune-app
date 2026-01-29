@@ -15,6 +15,7 @@ import { WaveformVisualizer } from "@/components/WaveformVisualizer";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { getApiUrl } from "@/lib/query-client";
+import { getAuthToken } from "@/contexts/AuthContext";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -47,23 +48,7 @@ export default function VoiceSetupScreen() {
   const uploadMutation = useMutation({
     mutationFn: async (uri: string) => {
       const apiUrl = getApiUrl();
-      
-      // First, get an upload token for mobile auth
-      console.log("Getting upload token...");
-      let uploadToken = "";
-      try {
-        const tokenResponse = await fetch(`${apiUrl}/api/upload-token`, {
-          method: "GET",
-          credentials: "include",
-        });
-        if (tokenResponse.ok) {
-          const tokenData = await tokenResponse.json();
-          uploadToken = tokenData.token;
-          console.log("Got upload token");
-        }
-      } catch (e) {
-        console.log("Could not get upload token, will try without");
-      }
+      const authToken = getAuthToken();
       
       const formData = new FormData();
       
@@ -80,6 +65,7 @@ export default function VoiceSetupScreen() {
       }
 
       console.log("Uploading to:", `${apiUrl}/api/voice-samples`);
+      console.log("Auth token:", authToken ? "present" : "missing");
 
       // Use AbortController for 3 minute timeout (voice cloning takes time)
       const controller = new AbortController();
@@ -87,8 +73,8 @@ export default function VoiceSetupScreen() {
 
       try {
         const headers: Record<string, string> = {};
-        if (uploadToken) {
-          headers["X-Upload-Token"] = uploadToken;
+        if (authToken) {
+          headers["X-Auth-Token"] = authToken;
         }
         
         const response = await fetch(`${apiUrl}/api/voice-samples`, {

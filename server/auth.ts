@@ -80,6 +80,9 @@ export function setupAuth(app: Express) {
         })
         .returning();
 
+      // Generate auth token for mobile apps
+      const authToken = generateAuthToken(newUser.id);
+      
       // Set session and save explicitly
       req.session.userId = newUser.id;
       req.session.save((err) => {
@@ -95,6 +98,7 @@ export function setupAuth(app: Express) {
             name: newUser.name,
             hasVoiceSample: newUser.hasVoiceSample,
           },
+          authToken, // Token for mobile apps
         });
       });
     } catch (error) {
@@ -126,6 +130,9 @@ export function setupAuth(app: Express) {
         return res.status(401).json({ error: "Invalid email or password" });
       }
 
+      // Generate auth token for mobile apps
+      const authToken = generateAuthToken(user.id);
+      
       // Set session and save explicitly
       req.session.userId = user.id;
       req.session.save((err) => {
@@ -141,6 +148,7 @@ export function setupAuth(app: Express) {
             name: user.name,
             hasVoiceSample: user.hasVoiceSample,
           },
+          authToken, // Token for mobile apps
         });
       });
     } catch (error: any) {
@@ -194,52 +202,69 @@ export function setupAuth(app: Express) {
   });
 }
 
-// Store for temporary upload tokens (in production, use Redis)
-const uploadTokens = new Map<string, { userId: string; expires: number }>();
+// Store for auth tokens (in production, use Redis or JWT)
+const authTokens = new Map<string, { userId: string; expires: number }>();
 
-// Generate upload token for mobile apps
-export function generateUploadToken(userId: string): string {
-  const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
-  uploadTokens.set(token, {
+// Generate auth token for mobile apps (long-lived)
+export function generateAuthToken(userId: string): string {
+  // Check if user already has a valid token
+  for (const [token, data] of authTokens.entries()) {
+    if (data.userId === userId && Date.now() < data.expires) {
+      // Extend existing token
+      data.expires = Date.now() + 30 * 24 * 60 * 60 * 1000;
+      return token;
+    }
+  }
+  
+  // Create new token
+  const token = Math.random().toString(36).substring(2) + 
+                Math.random().toString(36).substring(2) + 
+                Date.now().toString(36);
+  authTokens.set(token, {
     userId,
-    expires: Date.now() + 10 * 60 * 1000, // 10 minutes
+    expires: Date.now() + 30 * 24 * 60 * 60 * 1000, // 30 days
   });
   return token;
 }
 
-// Verify upload token
-export function verifyUploadToken(token: string): string | null {
-  const data = uploadTokens.get(token);
+// Verify auth token
+export function verifyAuthToken(token: string): string | null {
+  const data = authTokens.get(token);
   if (!data) return null;
   if (Date.now() > data.expires) {
-    uploadTokens.delete(token);
+    authTokens.delete(token);
     return null;
   }
   return data.userId;
 }
 
+// Invalidate auth token (for logout)
+export function invalidateAuthToken(token: string): void {
+  authTokens.delete(token);
+}
+
 // Clean up expired tokens periodically
 setInterval(() => {
   const now = Date.now();
-  for (const [token, data] of uploadTokens.entries()) {
+  for (const [token, data] of authTokens.entries()) {
     if (now > data.expires) {
-      uploadTokens.delete(token);
+      authTokens.delete(token);
     }
   }
 }, 60000);
 
 // Middleware to require authentication
 export function requireAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-  // First try session-based auth
+  // First try session-based auth (works on web)
   if (req.session.userId) {
     req.userId = req.session.userId;
     return next();
   }
   
-  // Fallback to token-based auth for file uploads
-  const uploadToken = req.header("X-Upload-Token");
-  if (uploadToken) {
-    const userId = verifyUploadToken(uploadToken);
+  // Fallback to token-based auth (works on mobile)
+  const authToken = req.header("X-Auth-Token");
+  if (authToken) {
+    const userId = verifyAuthToken(authToken);
     if (userId) {
       req.userId = userId;
       return next();

@@ -19,32 +19,25 @@ interface CircularWaveformProps {
   size?: number;
 }
 
-function RadialBar({
+function WaveBar({
   index,
   isActive,
   color,
-  angle,
-  centerX,
-  centerY,
-  innerRadius,
+  totalBars,
 }: {
   index: number;
   isActive: boolean;
   color: string;
-  angle: number;
-  centerX: number;
-  centerY: number;
-  innerRadius: number;
+  totalBars: number;
 }) {
-  const scale = useSharedValue(0.4);
-  const baseHeight = 30;
+  const scale = useSharedValue(0.3);
 
   useEffect(() => {
     if (isActive) {
-      const delay = (index % 8) * 50;
-      const minScale = 0.3 + Math.random() * 0.2;
-      const maxScale = 0.7 + Math.random() * 0.5;
-      const duration = 250 + Math.random() * 150;
+      const delay = (index % 6) * 60;
+      const minScale = 0.2 + Math.random() * 0.15;
+      const maxScale = 0.6 + Math.random() * 0.4;
+      const duration = 280 + Math.random() * 180;
 
       scale.value = withDelay(
         delay,
@@ -58,33 +51,19 @@ function RadialBar({
         )
       );
     } else {
-      scale.value = withTiming(0.4, { duration: 400 });
+      scale.value = withTiming(0.3, { duration: 400 });
     }
   }, [isActive, index]);
 
-  const angleRad = (angle * Math.PI) / 180;
-  const x = centerX + Math.cos(angleRad) * innerRadius - 2;
-  const y = centerY + Math.sin(angleRad) * innerRadius - baseHeight / 2;
-  const rotation = angle + 90;
-
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { rotate: `${rotation}deg` },
-      { scaleY: scale.value },
-    ],
+    transform: [{ scaleY: scale.value }],
   }));
 
   return (
     <Animated.View
       style={[
         styles.bar,
-        {
-          backgroundColor: color,
-          height: baseHeight,
-          position: "absolute",
-          left: x,
-          top: y,
-        },
+        { backgroundColor: color },
         animatedStyle,
       ]}
     />
@@ -93,54 +72,44 @@ function RadialBar({
 
 export function CircularWaveform({
   isActive = false,
-  barCount = 24,
+  barCount = 32,
   style,
   size = 200,
 }: CircularWaveformProps) {
   const { theme } = useTheme();
-  const centerX = size / 2;
-  const centerY = size / 2;
-  const innerRadius = size * 0.25;
-
-  const bars = Array.from({ length: barCount }).map((_, index) => {
-    const angle = (360 / barCount) * index - 90;
-    return (
-      <RadialBar
-        key={index}
-        index={index}
-        isActive={isActive}
-        color={theme.primary}
-        angle={angle}
-        centerX={centerX}
-        centerY={centerY}
-        innerRadius={innerRadius}
-      />
-    );
-  });
 
   return (
     <View style={[styles.container, { width: size, height: size }, style]}>
-      <View style={[styles.centerDot, { backgroundColor: theme.primary + "30" }]} />
-      {bars}
+      <View style={styles.waveContainer}>
+        {Array.from({ length: barCount }).map((_, index) => (
+          <WaveBar
+            key={index}
+            index={index}
+            isActive={isActive}
+            color={theme.primary}
+            totalBars={barCount}
+          />
+        ))}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    position: "relative",
     alignItems: "center",
     justifyContent: "center",
   },
+  waveContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    height: 80,
+    gap: 3,
+  },
   bar: {
     width: 4,
+    height: 80,
     borderRadius: BorderRadius.xs,
-    transformOrigin: "center bottom",
-  },
-  centerDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    position: "absolute",
   },
 });

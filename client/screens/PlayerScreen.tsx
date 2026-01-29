@@ -203,14 +203,16 @@ export default function PlayerScreen() {
     loadSettings();
   }, []);
 
-  // Control orientation based on Focus Mode state
+  // Control orientation based on Focus Mode and fullscreen state
   useEffect(() => {
-    // Allow landscape when: Focus Mode enabled AND (playing OR already in fullscreen mode)
-    const shouldAllowLandscape = rsvpEnabled && (isCurrentlyPlaying || isInFullscreenMode);
-    
-    if (shouldAllowLandscape) {
+    if (isInFullscreenMode) {
+      // Lock to landscape while in fullscreen mode
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+    } else if (rsvpEnabled && isCurrentlyPlaying) {
+      // Allow any orientation when Focus Mode + playing (to enter fullscreen)
       ScreenOrientation.unlockAsync();
     } else {
+      // Lock to portrait otherwise
       ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
     }
     
@@ -237,11 +239,6 @@ export default function PlayerScreen() {
         orientation === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
         orientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT;
       setIsLandscape(landscape);
-      
-      // Exit fullscreen mode when rotating back to portrait
-      if (!landscape) {
-        setIsInFullscreenMode(false);
-      }
     });
     
     return () => {
@@ -406,6 +403,12 @@ export default function PlayerScreen() {
       >
         <View style={[styles.fullscreenContainer, { backgroundColor: theme.background }]}>
           <Pressable 
+            style={styles.fullscreenCloseButton}
+            onPress={() => setIsInFullscreenMode(false)}
+          >
+            <Feather name="x" size={24} color={theme.textSecondary} />
+          </Pressable>
+          <Pressable 
             style={styles.fullscreenTapArea}
             onPress={() => {
               console.log('Fullscreen tap - toggling playback');
@@ -434,7 +437,7 @@ export default function PlayerScreen() {
           </Pressable>
           <View style={styles.fullscreenHint}>
             <ThemedText type="caption" style={{ color: theme.textSecondary, opacity: 0.6 }}>
-              Rotate to portrait to exit
+              Tap X to exit
             </ThemedText>
           </View>
         </View>
@@ -823,5 +826,16 @@ const styles = StyleSheet.create({
     borderRadius: 32,
     alignItems: "center",
     justifyContent: "center",
+  },
+  fullscreenCloseButton: {
+    position: "absolute",
+    top: Spacing.xl,
+    right: Spacing.xl,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 10,
   },
 });

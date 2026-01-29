@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-import { View, StyleSheet, Animated, Alert } from "react-native";
+import { View, StyleSheet, Animated, Alert, Platform } from "react-native";
 import { Swipeable, RectButton } from "react-native-gesture-handler";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";

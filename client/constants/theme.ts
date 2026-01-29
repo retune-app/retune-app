@@ -1,79 +1,91 @@
 import { Platform } from "react-native";
 
 // ReWired Design System
-// Based on design_guidelines.md - Serene Empowerment aesthetic
+// Gold/Navy aesthetic with mental growth theme
 
-// Primary brand colors from design guidelines
-const primaryBlue = "#4A90E2";
+// Primary brand colors - Gold to Navy palette
+const primaryGold = "#C9A227";
+const goldLight = "#E5C95C";
+const navyDark = "#0F1C3F";
+const navyMid = "#1A2D4F";
 const accentPurple = "#7B61FF";
 const successTeal = "#50E3C2";
-const backgroundSoft = "#F8FAFB";
+const backgroundLight = "#F5F7FA";
 const surfaceWhite = "#FFFFFF";
-const textPrimary = "#2C3E50";
-const textSecondary = "#7F8C8D";
-const borderLight = "#E8ECF0";
+const textNavy = "#0F1C3F";
+const textSecondaryLight = "#5A6A7E";
+const borderLight = "#E0E4EB";
 
-// Dark mode equivalents
-const darkBackground = "#1A1A2E";
-const darkSurface = "#252542";
-const darkTextPrimary = "#F8FAFB";
-const darkTextSecondary = "#9BA1A6";
+// Dark mode colors
+const darkBackground = "#0A0F1F";
+const darkSurface = "#141E33";
+const darkTextPrimary = "#F5F7FA";
+const darkTextSecondary = "#8A9AAE";
+const darkBorder = "#1E2D4A";
 
 export const Colors = {
   light: {
-    text: textPrimary,
-    textSecondary: textSecondary,
-    buttonText: "#FFFFFF",
-    tabIconDefault: textSecondary,
-    tabIconSelected: primaryBlue,
-    link: primaryBlue,
-    primary: primaryBlue,
+    text: textNavy,
+    textSecondary: textSecondaryLight,
+    buttonText: navyDark,
+    tabIconDefault: textSecondaryLight,
+    tabIconSelected: primaryGold,
+    link: primaryGold,
+    primary: primaryGold,
     accent: accentPurple,
     success: successTeal,
     error: "#E74C3C",
     warning: "#F39C12",
-    backgroundRoot: backgroundSoft,
+    backgroundRoot: backgroundLight,
     backgroundDefault: surfaceWhite,
-    backgroundSecondary: "#F0F4F8",
-    backgroundTertiary: "#E8ECF0",
+    backgroundSecondary: "#EEF1F5",
+    backgroundTertiary: "#E0E4EB",
     border: borderLight,
     cardBackground: surfaceWhite,
     inputBackground: surfaceWhite,
     inputBorder: borderLight,
-    placeholder: textSecondary,
-    overlay: "rgba(44, 62, 80, 0.5)",
+    placeholder: textSecondaryLight,
+    overlay: "rgba(15, 28, 63, 0.5)",
+    gold: primaryGold,
+    goldLight: goldLight,
+    navy: navyDark,
+    navyMid: navyMid,
     gradient: {
-      primary: [primaryBlue, accentPurple],
-      card: [backgroundSoft, surfaceWhite],
-      hero: ["#4A90E2", "#7B61FF"],
+      primary: [goldLight, primaryGold],
+      card: [backgroundLight, surfaceWhite],
+      hero: [primaryGold, navyMid],
     },
   },
   dark: {
     text: darkTextPrimary,
     textSecondary: darkTextSecondary,
-    buttonText: "#FFFFFF",
+    buttonText: navyDark,
     tabIconDefault: darkTextSecondary,
-    tabIconSelected: primaryBlue,
-    link: "#5BA3F5",
-    primary: "#5BA3F5",
+    tabIconSelected: goldLight,
+    link: goldLight,
+    primary: goldLight,
     accent: "#9B7FFF",
     success: "#6BE9D2",
     error: "#FF6B6B",
     warning: "#FFB347",
     backgroundRoot: darkBackground,
     backgroundDefault: darkSurface,
-    backgroundSecondary: "#2F2F4A",
-    backgroundTertiary: "#3A3A5A",
-    border: "#3A3A5A",
+    backgroundSecondary: "#1E2D4A",
+    backgroundTertiary: "#283A5A",
+    border: darkBorder,
     cardBackground: darkSurface,
-    inputBackground: "#2F2F4A",
-    inputBorder: "#3A3A5A",
+    inputBackground: "#1E2D4A",
+    inputBorder: darkBorder,
     placeholder: darkTextSecondary,
-    overlay: "rgba(0, 0, 0, 0.6)",
+    overlay: "rgba(0, 0, 0, 0.7)",
+    gold: goldLight,
+    goldLight: "#F0D878",
+    navy: navyDark,
+    navyMid: navyMid,
     gradient: {
-      primary: ["#5BA3F5", "#9B7FFF"],
-      card: [darkSurface, "#2F2F4A"],
-      hero: ["#5BA3F5", "#9B7FFF"],
+      primary: [goldLight, primaryGold],
+      card: [darkSurface, "#1E2D4A"],
+      hero: [goldLight, navyMid],
     },
   },
 };
@@ -84,6 +96,7 @@ export const Spacing = {
   md: 12,
   lg: 16,
   xl: 20,
+  xxl: 24,
   "2xl": 24,
   "3xl": 32,
   "4xl": 40,

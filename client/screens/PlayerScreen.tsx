@@ -72,6 +72,27 @@ export default function PlayerScreen() {
     },
   });
 
+  const autoSaveMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", `/api/affirmations/${affirmationId}/auto-save`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/affirmations"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/affirmations", affirmationId] });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert("Saved", "Affirmation saved to your library with an AI-generated title!");
+    },
+    onError: () => {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert("Error", "Failed to save affirmation");
+    },
+  });
+
+  const handleSave = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    autoSaveMutation.mutate();
+  }, [autoSaveMutation]);
+
   const handleDelete = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     Alert.alert(
@@ -90,6 +111,18 @@ export default function PlayerScreen() {
 
   useLayoutEffect(() => {
     navigation.setOptions({
+      headerLeft: () => (
+        <HeaderButton
+          onPress={handleSave}
+          testID="button-save-affirmation"
+        >
+          <Feather 
+            name="save" 
+            size={22} 
+            color={autoSaveMutation.isPending ? theme.textSecondary : theme.primary} 
+          />
+        </HeaderButton>
+      ),
       headerRight: () => (
         <HeaderButton
           onPress={handleDelete}
@@ -99,7 +132,7 @@ export default function PlayerScreen() {
         </HeaderButton>
       ),
     });
-  }, [navigation, handleDelete]);
+  }, [navigation, handleSave, handleDelete, autoSaveMutation.isPending, theme]);
 
   useEffect(() => {
     AsyncStorage.getItem(AUTO_REPLAY_KEY).then((value) => {

@@ -56,6 +56,34 @@ The script should be a continuous, flowing set of affirmations that build upon e
   return response.choices[0]?.message?.content || "";
 }
 
+// Auto-generate title from affirmation script
+async function autoGenerateTitle(script: string): Promise<string> {
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: `You are a title generator for affirmations. Create a short, inspiring title (3-6 words) that captures the essence of the affirmation. 
+The title should be motivational and concise. Do NOT include quotation marks.
+Respond with ONLY the title, nothing else.`,
+        },
+        {
+          role: "user",
+          content: script,
+        },
+      ],
+      temperature: 0.7,
+      max_tokens: 30,
+    });
+
+    return response.choices[0]?.message?.content?.trim() || "My Affirmation";
+  } catch (error) {
+    console.error("Auto-title generation failed:", error);
+    return "My Affirmation";
+  }
+}
+
 // Auto-categorize affirmation based on content
 async function autoCategorizе(text: string): Promise<string> {
   const validCategories = ["Career", "Health", "Confidence", "Wealth", "Relationships", "Sleep"];
@@ -328,6 +356,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating favorite:", error);
       res.status(500).json({ error: "Failed to update favorite" });
+    }
+  });
+
+  // Auto-save affirmation with AI-generated title and category
+  app.post("/api/affirmations/:id/auto-save", async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+
+      const [affirmation] = await db
+        .select()
+        .from(affirmations)
+        .where(eq(affirmations.id, parseInt(id)));
+
+      if (!affirmation) {
+        return res.status(404).json({ error: "Affirmation not found" });
+      }
+
+      const script = affirmation.script || affirmation.title || "";
+      
+      // Generate AI title and category in parallel
+      const [generatedTitle, categoryName] = await Promise.all([
+        autoGenerateTitle(script),
+        affirmation.categoryId ? Promise.resolve(null) : autoCategorizе(script),
+      ]);
+
+      // Find category ID if we need to update it
+      let categoryId = affirmation.categoryId;
+      if (categoryName) {
+        const [category] = await db
+          .select()
+          .from(categories)
+          .where(eq(categories.name, categoryName));
+        if (category) {
+          categoryId = category.id;
+        }
+      }
+
+      // Update the affirmation
+      const [updated] = await db
+        .update(affirmations)
+        .set({
+          title: generatedTitle,
+          categoryId: categoryId,
+          updatedAt: new Date(),
+        })
+        .where(eq(affirmations.id, parseInt(id)))
+        .returning();
+
+      console.log(`Auto-saved affirmation ${id}: title="${generatedTitle}", categoryId=${categoryId}`);
+      res.json(updated);
+    } catch (error) {
+      console.error("Error auto-saving affirmation:", error);
+      res.status(500).json({ error: "Failed to auto-save affirmation" });
     }
   });
 

@@ -13,7 +13,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
-import { CircularWaveform } from "@/components/CircularWaveform";
+import { WaveformVisualizer } from "@/components/WaveformVisualizer";
 import { RSVPDisplay, WordTiming, RSVPFontSize } from "@/components/RSVPDisplay";
 import { IconButton } from "@/components/IconButton";
 import { useTheme } from "@/hooks/useTheme";
@@ -338,10 +338,10 @@ export default function PlayerScreen() {
               showHighlight={rsvpHighlight}
             />
           ) : (
-            <CircularWaveform
+            <WaveformVisualizer
               isActive={isCurrentlyPlaying}
-              barCount={32}
-              size={220}
+              barCount={40}
+              color={theme.primary}
             />
           )}
         </View>
@@ -579,7 +579,9 @@ const styles = StyleSheet.create({
   },
   visualizerContainer: {
     alignItems: "center",
+    justifyContent: "center",
     marginBottom: Spacing["3xl"],
+    minHeight: 120,
   },
   infoContainer: {
     width: "100%",

@@ -211,17 +211,18 @@ export default function PlayerScreen() {
     };
   }, []);
 
-  // Control orientation - only change when fullscreen state changes, not on play/pause
+  // Control orientation - keep unlocked in fullscreen so user can tilt to exit
   useEffect(() => {
     console.log('Orientation effect - isInFullscreenMode:', isInFullscreenMode);
     if (isInFullscreenMode) {
-      // Lock to landscape while in fullscreen mode
-      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
-    } else {
-      // When not in fullscreen, lock to portrait
+      // Keep orientation unlocked so user can tilt back to portrait to exit
+      ScreenOrientation.unlockAsync();
+    } else if (!isCurrentlyPlaying || !rsvpEnabled) {
+      // Lock to portrait when not playing or Focus Mode is off
       ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
     }
-  }, [isInFullscreenMode]);
+    // When playing with Focus Mode but not in fullscreen, leave unlocked (handled by other effect)
+  }, [isInFullscreenMode, isCurrentlyPlaying, rsvpEnabled]);
 
   // Unlock orientation when Focus Mode is on and playing (to allow entering fullscreen)
   useEffect(() => {

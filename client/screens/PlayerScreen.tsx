@@ -273,13 +273,18 @@ export default function PlayerScreen() {
     }
   }, [isLandscape, rsvpEnabled, isCurrentlyPlaying, isInFullscreenMode]);
 
-  // Reset the exit flag when device returns to portrait
+  // Reset the exit flag when device returns to portrait and re-enable rotation
   useEffect(() => {
     if (!isLandscape && userExitedFullscreenRef.current) {
       console.log('Resetting user exit flag - device returned to portrait');
       userExitedFullscreenRef.current = false;
+      // Now unlock orientation so user can rotate to landscape again
+      if (rsvpEnabled && isCurrentlyPlaying) {
+        console.log('Re-enabling rotation after portrait reset');
+        ScreenOrientation.unlockAsync();
+      }
     }
-  }, [isLandscape]);
+  }, [isLandscape, rsvpEnabled, isCurrentlyPlaying]);
 
   // Debug: track fullscreen state changes
   useEffect(() => {

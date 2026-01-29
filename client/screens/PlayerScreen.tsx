@@ -65,6 +65,7 @@ export default function PlayerScreen() {
   const [showRsvpSettings, setShowRsvpSettings] = useState(false);
   const [showScript, setShowScript] = useState(false);
   const [isLandscape, setIsLandscape] = useState(false);
+  const [isInFullscreenMode, setIsInFullscreenMode] = useState(false);
 
   const { data: affirmation, isLoading } = useQuery<Affirmation>({
     queryKey: ["/api/affirmations", affirmationId],
@@ -203,42 +204,44 @@ export default function PlayerScreen() {
   }, []);
 
   // Control orientation based on Focus Mode state
-  // Allow landscape when Focus Mode is enabled and either playing OR already in landscape (to allow pause/resume)
   useEffect(() => {
-    const shouldAllowLandscape = rsvpEnabled && (isCurrentlyPlaying || isLandscape);
+    // Allow landscape when: Focus Mode enabled AND (playing OR already in fullscreen mode)
+    const shouldAllowLandscape = rsvpEnabled && (isCurrentlyPlaying || isInFullscreenMode);
     
     if (shouldAllowLandscape) {
-      // Unlock orientation to allow landscape when Focus Mode + playing or already in landscape
       ScreenOrientation.unlockAsync();
     } else {
-      // Lock to portrait otherwise
       ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
     }
     
     return () => {
-      // Lock back to portrait when leaving screen
       ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
     };
-  }, [rsvpEnabled, isCurrentlyPlaying, isLandscape]);
+  }, [rsvpEnabled, isCurrentlyPlaying, isInFullscreenMode]);
 
-  // Listen for orientation changes for fullscreen Focus Mode
+  // Listen for orientation changes
   useEffect(() => {
     const checkOrientation = async () => {
       const orientation = await ScreenOrientation.getOrientationAsync();
-      setIsLandscape(
+      const landscape = 
         orientation === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
-        orientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT
-      );
+        orientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT;
+      setIsLandscape(landscape);
     };
     
     checkOrientation();
     
     const subscription = ScreenOrientation.addOrientationChangeListener((event) => {
       const orientation = event.orientationInfo.orientation;
-      setIsLandscape(
+      const landscape = 
         orientation === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
-        orientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT
-      );
+        orientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT;
+      setIsLandscape(landscape);
+      
+      // Exit fullscreen mode when rotating back to portrait
+      if (!landscape) {
+        setIsInFullscreenMode(false);
+      }
     });
     
     return () => {
@@ -246,9 +249,15 @@ export default function PlayerScreen() {
     };
   }, []);
 
-  // Determine if fullscreen Focus Mode should be shown
-  // Show when in landscape + Focus Mode enabled (even if paused, so user can tap to resume)
-  const showFullscreenFocus = isLandscape && rsvpEnabled;
+  // Enter fullscreen mode when conditions are met
+  useEffect(() => {
+    if (isLandscape && rsvpEnabled && isCurrentlyPlaying && !isInFullscreenMode) {
+      setIsInFullscreenMode(true);
+    }
+  }, [isLandscape, rsvpEnabled, isCurrentlyPlaying, isInFullscreenMode]);
+
+  // Show fullscreen when in fullscreen mode (stays up even when paused)
+  const showFullscreenFocus = isInFullscreenMode && rsvpEnabled;
 
   const wordTimings: WordTiming[] = useMemo(() => {
     const generateFallbackTimings = () => {

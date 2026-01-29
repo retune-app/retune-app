@@ -60,12 +60,19 @@ function renderWordWithORP(
   const orpChar = word[orpIndex] || "";
   const after = word.slice(orpIndex + 1);
 
+  const charWidth = fontSize * 0.6;
+  const beforeWidth = before.length * charWidth;
+  const orpHalfWidth = charWidth / 2;
+  const offsetX = -(beforeWidth + orpHalfWidth - (word.length * charWidth) / 2);
+
   return (
-    <Text style={[styles.word, { fontSize }]}>
-      <Text style={{ color: textColor }}>{before}</Text>
-      <Text style={{ color: accentColor }}>{orpChar}</Text>
-      <Text style={{ color: textColor }}>{after}</Text>
-    </Text>
+    <View style={{ transform: [{ translateX: offsetX }] }}>
+      <Text style={[styles.word, { fontSize }]}>
+        <Text style={{ color: textColor }}>{before}</Text>
+        <Text style={{ color: accentColor, fontWeight: '900' }}>{orpChar}</Text>
+        <Text style={{ color: textColor }}>{after}</Text>
+      </Text>
+    </View>
   );
 }
 

@@ -633,6 +633,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Reset user data - deletes all affirmations and voice samples for the user
+  app.post("/api/user/reset", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const userId = req.userId!;
+
+      // Delete all affirmations for this user (audio files will be orphaned but that's ok)
+      const deletedAffirmations = await db
+        .delete(affirmations)
+        .where(eq(affirmations.userId, userId))
+        .returning();
+
+      // Delete all voice samples for this user
+      const deletedSamples = await db
+        .delete(voiceSamples)
+        .where(eq(voiceSamples.userId, userId))
+        .returning();
+
+      // Reset user's voice-related fields
+      await db
+        .update(users)
+        .set({ 
+          hasVoiceSample: false,
+          voiceId: null
+        })
+        .where(eq(users.id, userId));
+
+      res.json({ 
+        success: true, 
+        deletedAffirmations: deletedAffirmations.length,
+        deletedVoiceSamples: deletedSamples.length
+      });
+    } catch (error) {
+      console.error("Error resetting user data:", error);
+      res.status(500).json({ error: "Failed to reset user data" });
+    }
+  });
+
+  // Delete user account - removes all user data and the account itself
+  app.delete("/api/user/account", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const userId = req.userId!;
+
+      // Delete all affirmations for this user
+      await db
+        .delete(affirmations)
+        .where(eq(affirmations.userId, userId));
+
+      // Delete all voice samples for this user
+      await db
+        .delete(voiceSamples)
+        .where(eq(voiceSamples.userId, userId));
+
+      // Delete all collections for this user
+      await db
+        .delete(collections)
+        .where(eq(collections.userId, userId));
+
+      // Delete the user account
+      await db
+        .delete(users)
+        .where(eq(users.id, userId));
+
+      // Destroy the session
+      req.session.destroy((err) => {
+        if (err) {
+          console.error("Session destroy error:", err);
+        }
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting user account:", error);
+      res.status(500).json({ error: "Failed to delete account" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

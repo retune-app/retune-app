@@ -263,8 +263,10 @@ export function requireAuth(req: AuthenticatedRequest, res: Response, next: Next
   
   // Fallback to token-based auth (works on mobile)
   const authToken = req.header("X-Auth-Token");
+  console.log("Auth check - Token header:", authToken ? authToken.substring(0, 10) + "..." : "missing");
   if (authToken) {
     const userId = verifyAuthToken(authToken);
+    console.log("Auth check - User ID from token:", userId);
     if (userId) {
       req.userId = userId;
       return next();

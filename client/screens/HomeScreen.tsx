@@ -13,6 +13,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { SwipeableAffirmationCard } from "@/components/SwipeableAffirmationCard";
 import { CategoryChip } from "@/components/CategoryChip";
 import { useTheme } from "@/hooks/useTheme";
+import { useAudio } from "@/contexts/AudioContext";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import type { Affirmation, Category } from "@shared/schema";
@@ -27,6 +28,7 @@ export default function HomeScreen() {
   const tabBarHeight = useBottomTabBarHeight();
   const { theme } = useTheme();
   const navigation = useNavigation<NavigationProp>();
+  const { playAffirmation, currentAffirmation, isPlaying, togglePlayPause } = useAudio();
 
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
@@ -66,8 +68,12 @@ export default function HomeScreen() {
     navigation.navigate("Player", { affirmationId: id });
   };
 
-  const handlePlayPress = (id: number) => {
-    navigation.navigate("Player", { affirmationId: id });
+  const handlePlayPress = async (affirmation: Affirmation) => {
+    if (currentAffirmation?.id === affirmation.id) {
+      await togglePlayPause();
+    } else {
+      await playAffirmation(affirmation);
+    }
   };
 
   const handleCreatePress = () => {
@@ -115,14 +121,18 @@ export default function HomeScreen() {
     />
   );
 
-  const renderItem = ({ item }: { item: Affirmation }) => (
-    <SwipeableAffirmationCard
-      affirmation={item}
-      onPress={() => handleAffirmationPress(item.id)}
-      onPlayPress={() => handlePlayPress(item.id)}
-      testID={`card-affirmation-${item.id}`}
-    />
-  );
+  const renderItem = ({ item }: { item: Affirmation }) => {
+    const isCurrentlyPlaying = currentAffirmation?.id === item.id && isPlaying;
+    return (
+      <SwipeableAffirmationCard
+        affirmation={item}
+        onPress={() => handleAffirmationPress(item.id)}
+        onPlayPress={() => handlePlayPress(item)}
+        isActive={isCurrentlyPlaying}
+        testID={`card-affirmation-${item.id}`}
+      />
+    );
+  };
 
   return (
     <FlatList

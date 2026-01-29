@@ -9,7 +9,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
-import { Audio } from "expo-av";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Animated, {
   useSharedValue,
@@ -24,8 +23,9 @@ import { ThemedView } from "@/components/ThemedView";
 import { WaveformVisualizer } from "@/components/WaveformVisualizer";
 import { IconButton } from "@/components/IconButton";
 import { useTheme } from "@/hooks/useTheme";
+import { useAudio } from "@/contexts/AudioContext";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
-import { apiRequest, getApiUrl } from "@/lib/query-client";
+import { apiRequest } from "@/lib/query-client";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import type { Affirmation } from "@shared/schema";
 
@@ -44,21 +44,32 @@ export default function PlayerScreen() {
 
   const { affirmationId, isNew = false } = route.params;
 
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [autoReplay, setAutoReplay] = useState(true);
-  const [playbackSpeed, setPlaybackSpeed] = useState(1);
-  const [sound, setSound] = useState<Audio.Sound | null>(null);
-  const [position, setPosition] = useState(0);
-  const [duration, setDuration] = useState(0);
+  const {
+    currentAffirmation,
+    isPlaying,
+    position,
+    duration,
+    autoReplay,
+    playAffirmation,
+    togglePlayPause,
+    setAutoReplay,
+    stop,
+  } = useAudio();
 
+  const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const rotation = useSharedValue(0);
 
   const { data: affirmation, isLoading } = useQuery<Affirmation>({
     queryKey: ["/api/affirmations", affirmationId],
   });
 
+  const isCurrentlyPlaying = currentAffirmation?.id === affirmationId && isPlaying;
+
   const deleteMutation = useMutation({
     mutationFn: async () => {
+      if (currentAffirmation?.id === affirmationId) {
+        await stop();
+      }
       await apiRequest("DELETE", `/api/affirmations/${affirmationId}`);
     },
     onSuccess: () => {
@@ -151,21 +162,6 @@ export default function PlayerScreen() {
     });
   }, []);
 
-  useEffect(() => {
-    const initAudio = async () => {
-      try {
-        await Audio.setAudioModeAsync({
-          playsInSilentModeIOS: true,
-          staysActiveInBackground: false,
-          shouldDuckAndroid: true,
-        });
-      } catch (error) {
-        console.error("Error initializing audio:", error);
-      }
-    };
-    initAudio();
-  }, []);
-
   const favoriteMutation = useMutation({
     mutationFn: async () => {
       await apiRequest("PATCH", `/api/affirmations/${affirmationId}/favorite`, {
@@ -180,7 +176,7 @@ export default function PlayerScreen() {
   });
 
   useEffect(() => {
-    if (isPlaying) {
+    if (isCurrentlyPlaying) {
       rotation.value = withRepeat(
         withTiming(360, { duration: 8000, easing: Easing.linear }),
         -1,
@@ -189,58 +185,22 @@ export default function PlayerScreen() {
     } else {
       rotation.value = withTiming(0, { duration: 500 });
     }
-  }, [isPlaying]);
+  }, [isCurrentlyPlaying]);
 
   const discAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${rotation.value}deg` }],
   }));
 
-  const loadSound = useCallback(async () => {
-    if (affirmation?.audioUrl) {
-      try {
-        const audioUri = `${getApiUrl()}${affirmation.audioUrl}`;
-        console.log("Loading audio from:", audioUri);
-        
-        const { sound: newSound } = await Audio.Sound.createAsync(
-          { uri: audioUri },
-          { shouldPlay: false, isLooping: autoReplay },
-          (status) => {
-            if (status.isLoaded) {
-              setPosition(status.positionMillis || 0);
-              setDuration(status.durationMillis || 0);
-              if (status.didJustFinish && !autoReplay) {
-                setIsPlaying(false);
-              }
-            }
-          }
-        );
-        console.log("Audio loaded successfully");
-        setSound(newSound);
-      } catch (error) {
-        console.error("Error loading sound:", error);
-        Alert.alert("Audio Error", "Could not load audio file. Please try again.");
-      }
-    }
-  }, [affirmation?.audioUrl, autoReplay]);
-
-  useEffect(() => {
-    loadSound();
-    return () => {
-      sound?.unloadAsync();
-    };
-  }, [affirmation?.audioUrl]);
-
   const handlePlayPause = async () => {
-    if (!sound) return;
+    if (!affirmation) return;
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-    if (isPlaying) {
-      await sound.pauseAsync();
+    if (currentAffirmation?.id === affirmationId) {
+      await togglePlayPause();
     } else {
-      await sound.playAsync();
+      await playAffirmation(affirmation);
     }
-    setIsPlaying(!isPlaying);
   };
 
   const handleAutoReplay = async () => {
@@ -248,9 +208,6 @@ export default function PlayerScreen() {
     const newAutoReplay = !autoReplay;
     setAutoReplay(newAutoReplay);
     await AsyncStorage.setItem(AUTO_REPLAY_KEY, String(newAutoReplay));
-    if (sound) {
-      await sound.setIsLoopingAsync(newAutoReplay);
-    }
   };
 
   const handleSpeedChange = async () => {
@@ -258,9 +215,6 @@ export default function PlayerScreen() {
     const currentIndex = speeds.indexOf(playbackSpeed);
     const nextSpeed = speeds[(currentIndex + 1) % speeds.length];
     setPlaybackSpeed(nextSpeed);
-    if (sound) {
-      await sound.setRateAsync(nextSpeed, true);
-    }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
@@ -275,7 +229,9 @@ export default function PlayerScreen() {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const progress = duration > 0 ? position / duration : 0;
+  const displayPosition = currentAffirmation?.id === affirmationId ? position : 0;
+  const displayDuration = currentAffirmation?.id === affirmationId ? duration : 0;
+  const progress = displayDuration > 0 ? displayPosition / displayDuration : 0;
 
   return (
     <ThemedView style={styles.container}>
@@ -297,7 +253,7 @@ export default function PlayerScreen() {
             </LinearGradient>
           </Animated.View>
           <WaveformVisualizer
-            isActive={isPlaying}
+            isActive={isCurrentlyPlaying}
             barCount={40}
             style={styles.waveform}
             color={theme.primary}
@@ -320,10 +276,10 @@ export default function PlayerScreen() {
             </View>
             <View style={styles.timeContainer}>
               <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                {formatTime(position)}
+                {formatTime(displayPosition)}
               </ThemedText>
               <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                {formatTime(duration)}
+                {formatTime(displayDuration)}
               </ThemedText>
             </View>
           </View>
@@ -356,10 +312,10 @@ export default function PlayerScreen() {
               style={[styles.playButton, Shadows.large]}
             >
               <Feather
-                name={isPlaying ? "pause" : "play"}
+                name={isCurrentlyPlaying ? "pause" : "play"}
                 size={32}
                 color="#FFFFFF"
-                style={{ marginLeft: isPlaying ? 0 : 4 }}
+                style={{ marginLeft: isCurrentlyPlaying ? 0 : 4 }}
               />
             </LinearGradient>
           </Pressable>

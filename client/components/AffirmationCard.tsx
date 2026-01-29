@@ -122,6 +122,7 @@ export function AffirmationCard({
                 styles.playButton,
                 { opacity: pressed ? 0.7 : 1 },
               ]}
+              testID={`button-play-${id}`}
             >
               <LinearGradient
                 colors={theme.gradient.primary as [string, string]}
@@ -129,7 +130,7 @@ export function AffirmationCard({
                 end={{ x: 1, y: 1 }}
                 style={styles.playGradient}
               >
-                <Feather name="play" size={16} color="#FFFFFF" />
+                <Feather name={isActive ? "pause" : "play"} size={16} color="#FFFFFF" />
               </LinearGradient>
             </Pressable>
           </View>

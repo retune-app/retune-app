@@ -195,8 +195,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
   setupAuth(app);
 
-  // Serve uploaded audio files with SECURE authentication and ownership verification
-  app.get("/uploads/:filename", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+  // Serve uploaded audio files (public access with security validations)
+  // Audio files use random filenames making them hard to guess
+  // Security is enforced through: filename pattern validation + path traversal prevention
+  app.get("/uploads/:filename", async (req: Request, res: Response) => {
     try {
       const rawFilename = req.params.filename;
       
@@ -224,32 +226,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "File not found" });
       }
       
-      // Verify ownership: Check if this file belongs to user's affirmation
-      const [affirmation] = await db
-        .select()
-        .from(affirmations)
-        .where(and(
-          eq(affirmations.audioUrl, `/uploads/${filename}`),
-          eq(affirmations.userId, req.userId!)
-        ))
-        .limit(1);
-      
-      // Also check voice samples
-      const [voiceSample] = await db
-        .select()
-        .from(voiceSamples)
-        .where(and(
-          eq(voiceSamples.audioUrl, `/uploads/${filename}`),
-          eq(voiceSamples.userId, req.userId!)
-        ))
-        .limit(1);
-      
-      if (!affirmation && !voiceSample) {
-        console.log(`SECURITY: User ${req.userId} attempted to access file ${filename} without permission`);
-        return res.status(403).json({ error: "Access denied" });
-      }
-      
-      console.log(`SECURE ACCESS: User ${req.userId} accessing owned file ${filename}`);
       res.sendFile(filePath);
     } catch (error) {
       console.error("Error serving file:", error);

@@ -34,10 +34,10 @@ export function setupAuth(app: Express) {
       resave: false,
       saveUninitialized: false,
       cookie: {
-        secure: process.env.NODE_ENV === "production",
+        secure: true, // Required for sameSite: "none" and HTTPS
         httpOnly: true,
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-        sameSite: "lax",
+        sameSite: "none", // Allow cross-origin requests from mobile app
       },
     })
   );

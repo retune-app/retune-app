@@ -32,32 +32,37 @@ const audioUpload = multer({
 
 // Generate affirmation script using OpenAI
 async function generateScript(goal: string, category?: string, length?: string): Promise<string> {
-  const lengthGuide = {
-    short: "15-30 seconds when read aloud (approximately 40-75 words)",
-    medium: "30-60 seconds when read aloud (approximately 75-150 words)",
-    long: "60-90 seconds when read aloud (approximately 150-225 words)",
+  const lengthConfig = {
+    short: { words: "40-75", tokens: 200, description: "a brief, focused affirmation of about 50 words" },
+    medium: { words: "100-150", tokens: 400, description: "a medium-length affirmation of about 120 words" },
+    long: { words: "200-280", tokens: 700, description: "an extensive, detailed affirmation of about 240 words" },
   };
   
-  const selectedLength = lengthGuide[length as keyof typeof lengthGuide] || lengthGuide.medium;
+  const config = lengthConfig[length as keyof typeof lengthConfig] || lengthConfig.medium;
   
-  const systemPrompt = `You are an expert in creating powerful, personalized affirmations that rewire subconscious beliefs. Create affirmations that are:
+  const systemPrompt = `You are an expert in creating powerful, personalized affirmations that rewire subconscious beliefs.
+
+CRITICAL LENGTH REQUIREMENT: You MUST write ${config.description}. This is mandatory - do not write more or less.
+
+Create affirmations that are:
 - Written in first person ("I am", "I have", "I attract")
 - Present tense, as if already achieved
 - Positive and empowering
 - Specific and emotionally resonant
-- ${selectedLength}
+- Exactly ${config.words} words total
 
-CRITICAL RULES:
+CRITICAL FORMATTING RULES:
 - Output ONLY the affirmation statements themselves
 - Do NOT include any title, header, or script name
 - Do NOT include any instructions in parentheses or brackets like "(Take a deep breath...)" or "[Pause here]"
 - Do NOT include markdown formatting like ** or ##
+- Do NOT number the affirmations
 - Start directly with the first affirmation statement
-- The affirmations should flow naturally as if speaking to oneself, building in emotional intensity.`;
+- The affirmations should flow naturally, building in emotional intensity.`;
 
-  const userPrompt = `Create a powerful affirmation script for someone who wants to: ${goal}${category ? ` (Focus area: ${category})` : ""}.
+  const userPrompt = `Create ${config.description} for someone who wants to: ${goal}${category ? ` (Focus area: ${category})` : ""}.
 
-Output only the affirmation statements with no title, no instructions, and no formatting.`;
+Remember: Output EXACTLY ${config.words} words. No title, no instructions, no formatting. Just the affirmations.`;
 
   const response = await openai.chat.completions.create({
     model: "gpt-4o",
@@ -66,7 +71,7 @@ Output only the affirmation statements with no title, no instructions, and no fo
       { role: "user", content: userPrompt },
     ],
     temperature: 0.7,
-    max_tokens: 500,
+    max_tokens: config.tokens,
   });
 
   let script = response.choices[0]?.message?.content || "";
@@ -77,6 +82,7 @@ Output only the affirmation statements with no title, no instructions, and no fo
     .replace(/^#+\s*.*?\n/gm, "") // Remove markdown headers
     .replace(/\*?\([^)]*\)\*?\s*/g, "") // Remove parenthetical instructions
     .replace(/\[[^\]]*\]\s*/g, "") // Remove bracketed instructions
+    .replace(/^\d+\.\s*/gm, "") // Remove numbered lists
     .replace(/^\s*\n/gm, "") // Remove empty lines
     .trim();
   

@@ -18,7 +18,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { Card } from "@/components/Card";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
-import { Spacing, BorderRadius, Shadows, FontFamily, FontSizes } from "@/constants/theme";
+import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -374,7 +374,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   logoutText: {
-    fontFamily: FontFamily.semibold,
-    fontSize: FontSizes.md,
+    fontFamily: "Nunito_600SemiBold",
+    fontSize: 16,
   },
 });

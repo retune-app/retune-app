@@ -14,14 +14,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import { useAuth } from "@/contexts/AuthContext";
-import { useTheme } from "@/constants/theme";
-import { Spacing, FontSizes, FontFamily, BorderRadius } from "@/constants/theme";
+import { useTheme } from "@/hooks/useTheme";
+import { Spacing, BorderRadius } from "@/constants/theme";
 
 type AuthMode = "login" | "signup";
 
 export function AuthScreen() {
   const insets = useSafeAreaInsets();
-  const theme = useTheme();
+  const { theme } = useTheme();
   const { login, signup } = useAuth();
 
   const [mode, setMode] = useState<AuthMode>("login");
@@ -124,14 +124,14 @@ export function AuthScreen() {
       marginBottom: Spacing.lg,
     },
     title: {
-      fontFamily: FontFamily.bold,
-      fontSize: FontSizes.xxxl,
+      fontFamily: "Nunito_700Bold",
+      fontSize: 34,
       color: "#FFFFFF",
       marginBottom: Spacing.xs,
     },
     subtitle: {
-      fontFamily: FontFamily.regular,
-      fontSize: FontSizes.md,
+      fontFamily: "Nunito_400Regular",
+      fontSize: 16,
       color: "rgba(255,255,255,0.8)",
     },
     formContainer: {
@@ -145,8 +145,8 @@ export function AuthScreen() {
       elevation: 4,
     },
     formTitle: {
-      fontFamily: FontFamily.bold,
-      fontSize: FontSizes.xl,
+      fontFamily: "Nunito_700Bold",
+      fontSize: 20,
       color: theme.text,
       marginBottom: Spacing.lg,
       textAlign: "center",
@@ -155,8 +155,8 @@ export function AuthScreen() {
       marginBottom: Spacing.md,
     },
     inputLabel: {
-      fontFamily: FontFamily.medium,
-      fontSize: FontSizes.sm,
+      fontFamily: "Nunito_500Medium",
+      fontSize: 14,
       color: theme.textSecondary,
       marginBottom: Spacing.xs,
     },
@@ -170,8 +170,8 @@ export function AuthScreen() {
     },
     input: {
       flex: 1,
-      fontFamily: FontFamily.regular,
-      fontSize: FontSizes.md,
+      fontFamily: "Nunito_400Regular",
+      fontSize: 16,
       color: theme.text,
       paddingHorizontal: Spacing.md,
       paddingVertical: Spacing.md,
@@ -183,8 +183,8 @@ export function AuthScreen() {
       padding: Spacing.md,
     },
     errorText: {
-      fontFamily: FontFamily.medium,
-      fontSize: FontSizes.sm,
+      fontFamily: "Nunito_500Medium",
+      fontSize: 14,
       color: "#E74C3C",
       marginBottom: Spacing.md,
       textAlign: "center",
@@ -199,8 +199,8 @@ export function AuthScreen() {
       alignItems: "center",
     },
     submitText: {
-      fontFamily: FontFamily.bold,
-      fontSize: FontSizes.md,
+      fontFamily: "Nunito_700Bold",
+      fontSize: 16,
       color: "#FFFFFF",
     },
     disabledButton: {
@@ -212,13 +212,13 @@ export function AuthScreen() {
       marginTop: Spacing.lg,
     },
     switchText: {
-      fontFamily: FontFamily.regular,
-      fontSize: FontSizes.sm,
+      fontFamily: "Nunito_400Regular",
+      fontSize: 14,
       color: theme.textSecondary,
     },
     switchLink: {
-      fontFamily: FontFamily.bold,
-      fontSize: FontSizes.sm,
+      fontFamily: "Nunito_700Bold",
+      fontSize: 14,
       color: theme.primary,
     },
     securityNote: {
@@ -229,8 +229,8 @@ export function AuthScreen() {
       paddingHorizontal: Spacing.md,
     },
     securityText: {
-      fontFamily: FontFamily.regular,
-      fontSize: FontSizes.xs,
+      fontFamily: "Nunito_400Regular",
+      fontSize: 12,
       color: "rgba(255,255,255,0.7)",
       marginLeft: Spacing.xs,
       textAlign: "center",

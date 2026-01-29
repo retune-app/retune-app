@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useLayoutEffect, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useLayoutEffect, useMemo, useRef } from "react";
 import { View, StyleSheet, Pressable, Alert, ScrollView, Modal, Dimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
@@ -66,6 +66,7 @@ export default function PlayerScreen() {
   const [showScript, setShowScript] = useState(false);
   const [isLandscape, setIsLandscape] = useState(false);
   const [isInFullscreenMode, setIsInFullscreenMode] = useState(false);
+  const userExitedFullscreenRef = useRef(false);
 
   const { data: affirmation, isLoading } = useQuery<Affirmation>({
     queryKey: ["/api/affirmations", affirmationId],
@@ -257,11 +258,24 @@ export default function PlayerScreen() {
 
   // Enter fullscreen mode when conditions are met
   useEffect(() => {
+    // Don't re-enter if user just manually exited
+    if (userExitedFullscreenRef.current) {
+      console.log('Skipping fullscreen entry - user just exited');
+      return;
+    }
     if (isLandscape && rsvpEnabled && isCurrentlyPlaying && !isInFullscreenMode) {
       console.log('Entering fullscreen mode');
       setIsInFullscreenMode(true);
     }
   }, [isLandscape, rsvpEnabled, isCurrentlyPlaying, isInFullscreenMode]);
+
+  // Reset the exit flag when device returns to portrait
+  useEffect(() => {
+    if (!isLandscape && userExitedFullscreenRef.current) {
+      console.log('Resetting user exit flag - device returned to portrait');
+      userExitedFullscreenRef.current = false;
+    }
+  }, [isLandscape]);
 
   // Debug: track fullscreen state changes
   useEffect(() => {
@@ -270,7 +284,8 @@ export default function PlayerScreen() {
 
   // Handler for exiting fullscreen
   const handleExitFullscreen = useCallback(() => {
-    console.log('Exiting fullscreen mode');
+    console.log('Exiting fullscreen mode - user requested');
+    userExitedFullscreenRef.current = true;
     setIsInFullscreenMode(false);
   }, []);
 

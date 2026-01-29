@@ -142,11 +142,18 @@ export async function textToSpeech(
   
   // Calculate duration from the last word's end time, or estimate if no timing data
   let estimatedDuration: number;
-  if (wordTimings.length > 0) {
+  if (wordTimings.length > 0 && typeof wordTimings[wordTimings.length - 1].endMs === 'number' && !isNaN(wordTimings[wordTimings.length - 1].endMs)) {
     estimatedDuration = Math.ceil(wordTimings[wordTimings.length - 1].endMs / 1000);
   } else {
-    const wordCount = text.split(/\s+/).length;
-    estimatedDuration = Math.ceil((wordCount / 150) * 60);
+    // Fallback: estimate duration based on word count (150 words per minute average)
+    const wordCount = text.split(/\s+/).filter(w => w.length > 0).length;
+    estimatedDuration = Math.max(1, Math.ceil((wordCount / 150) * 60));
+  }
+  
+  // Ensure duration is never NaN or <= 0
+  if (isNaN(estimatedDuration) || estimatedDuration <= 0) {
+    const wordCount = text.split(/\s+/).filter(w => w.length > 0).length;
+    estimatedDuration = Math.max(1, Math.ceil((wordCount / 150) * 60));
   }
 
   return {
@@ -158,51 +165,83 @@ export async function textToSpeech(
 
 /**
  * Parse ElevenLabs character-level alignment data into word-level timing.
+ * Supports both old format (characters array) and new format (chars/charStartTimesMs/charDurationsMs arrays)
  */
-function parseCharacterTimingsToWords(alignment: { characters: Array<{ character: string; start_time_ms: number; end_time_ms: number }> }): WordTiming[] {
-  if (!alignment || !alignment.characters || alignment.characters.length === 0) {
+function parseCharacterTimingsToWords(alignment: any): WordTiming[] {
+  if (!alignment) {
     return [];
   }
 
-  const words: WordTiming[] = [];
-  let currentWord = "";
-  let wordStartMs: number | null = null;
-  let wordEndMs: number = 0;
+  // Check for new format: separate arrays for characters and timings
+  if (alignment.chars && alignment.charStartTimesMs && alignment.charDurationsMs) {
+    const words: WordTiming[] = [];
+    let currentWord = "";
+    let wordStartMs: number | null = null;
+    let wordEndMs: number = 0;
 
-  for (const charData of alignment.characters) {
-    const char = charData.character;
-    
-    // Space or punctuation that ends a word
-    if (char === ' ' || char === '\n' || char === '\r' || char === '\t') {
-      if (currentWord.length > 0 && wordStartMs !== null) {
-        words.push({
-          word: currentWord,
-          startMs: wordStartMs,
-          endMs: wordEndMs,
-        });
+    for (let i = 0; i < alignment.chars.length; i++) {
+      const char = alignment.chars[i];
+      const startMs = alignment.charStartTimesMs[i];
+      const durationMs = alignment.charDurationsMs[i];
+      const endMs = startMs + durationMs;
+      
+      if (char === ' ' || char === '\n' || char === '\r' || char === '\t') {
+        if (currentWord.length > 0 && wordStartMs !== null) {
+          words.push({ word: currentWord, startMs: wordStartMs, endMs: wordEndMs });
+        }
+        currentWord = "";
+        wordStartMs = null;
+      } else {
+        if (wordStartMs === null) {
+          wordStartMs = startMs;
+        }
+        currentWord += char;
+        wordEndMs = endMs;
       }
-      currentWord = "";
-      wordStartMs = null;
-    } else {
-      // Add character to current word
-      if (wordStartMs === null) {
-        wordStartMs = charData.start_time_ms;
-      }
-      currentWord += char;
-      wordEndMs = charData.end_time_ms;
     }
+
+    if (currentWord.length > 0 && wordStartMs !== null) {
+      words.push({ word: currentWord, startMs: wordStartMs, endMs: wordEndMs });
+    }
+
+    return words;
   }
 
-  // Add the last word if any
-  if (currentWord.length > 0 && wordStartMs !== null) {
-    words.push({
-      word: currentWord,
-      startMs: wordStartMs,
-      endMs: wordEndMs,
-    });
+  // Check for old format: characters array with objects
+  if (alignment.characters && Array.isArray(alignment.characters) && alignment.characters.length > 0) {
+    const words: WordTiming[] = [];
+    let currentWord = "";
+    let wordStartMs: number | null = null;
+    let wordEndMs: number = 0;
+
+    for (const charData of alignment.characters) {
+      const char = charData.character;
+      
+      if (char === ' ' || char === '\n' || char === '\r' || char === '\t') {
+        if (currentWord.length > 0 && wordStartMs !== null) {
+          words.push({ word: currentWord, startMs: wordStartMs, endMs: wordEndMs });
+        }
+        currentWord = "";
+        wordStartMs = null;
+      } else {
+        if (wordStartMs === null) {
+          wordStartMs = charData.start_time_ms;
+        }
+        currentWord += char;
+        wordEndMs = charData.end_time_ms;
+      }
+    }
+
+    if (currentWord.length > 0 && wordStartMs !== null) {
+      words.push({ word: currentWord, startMs: wordStartMs, endMs: wordEndMs });
+    }
+
+    return words;
   }
 
-  return words;
+  // No recognized format - return empty array
+  console.log("Unrecognized alignment format:", JSON.stringify(alignment).substring(0, 200));
+  return [];
 }
 
 /**

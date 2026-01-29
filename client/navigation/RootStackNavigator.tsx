@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { View, StyleSheet, ActivityIndicator } from "react-native";
 import { createNativeStackNavigator, NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { NavigationState, useNavigation } from "@react-navigation/native";
@@ -35,6 +35,22 @@ function MiniPlayerWrapper({ currentRoute }: { currentRoute: string }) {
       onNavigateToPlayer={handleNavigateToPlayer}
     />
   );
+}
+
+function VoiceSetupNavigator() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { needsVoiceSetup, clearNeedsVoiceSetup } = useAuth();
+  const hasNavigated = useRef(false);
+
+  useEffect(() => {
+    if (needsVoiceSetup && !hasNavigated.current) {
+      hasNavigated.current = true;
+      clearNeedsVoiceSetup();
+      navigation.navigate('VoiceSetup');
+    }
+  }, [needsVoiceSetup, clearNeedsVoiceSetup, navigation]);
+
+  return null;
 }
 
 export default function RootStackNavigator() {
@@ -104,6 +120,7 @@ export default function RootStackNavigator() {
           }}
         />
       </Stack.Navigator>
+      <VoiceSetupNavigator />
       <MiniPlayerWrapper currentRoute={currentRoute} />
     </View>
   );

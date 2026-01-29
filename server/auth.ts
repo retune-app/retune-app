@@ -2,8 +2,8 @@ import bcrypt from "bcrypt";
 import session from "express-session";
 import type { Express, Request, Response, NextFunction } from "express";
 import { db } from "./db";
-import { users } from "@shared/schema";
-import { eq } from "drizzle-orm";
+import { users, authTokens } from "@shared/schema";
+import { eq, and, gt } from "drizzle-orm";
 
 declare module "express-session" {
   interface SessionData {
@@ -81,25 +81,25 @@ export function setupAuth(app: Express) {
         .returning();
 
       // Generate auth token for mobile apps
-      const authToken = generateAuthToken(newUser.id);
+      const authToken = await generateAuthToken(newUser.id);
       
       // Set session and save explicitly
       req.session.userId = newUser.id;
-      req.session.save((err) => {
-        if (err) {
-          console.error("Session save error:", err);
-          return res.status(500).json({ error: "Failed to save session" });
-        }
-        
-        res.json({
-          user: {
-            id: newUser.id,
-            email: newUser.email,
-            name: newUser.name,
-            hasVoiceSample: newUser.hasVoiceSample,
-          },
-          authToken, // Token for mobile apps
+      await new Promise<void>((resolve, reject) => {
+        req.session.save((err) => {
+          if (err) reject(err);
+          else resolve();
         });
+      });
+      
+      res.json({
+        user: {
+          id: newUser.id,
+          email: newUser.email,
+          name: newUser.name,
+          hasVoiceSample: newUser.hasVoiceSample,
+        },
+        authToken, // Token for mobile apps
       });
     } catch (error) {
       console.error("Registration error:", error);
@@ -131,25 +131,25 @@ export function setupAuth(app: Express) {
       }
 
       // Generate auth token for mobile apps
-      const authToken = generateAuthToken(user.id);
+      const authToken = await generateAuthToken(user.id);
       
       // Set session and save explicitly
       req.session.userId = user.id;
-      req.session.save((err) => {
-        if (err) {
-          console.error("Session save error:", err);
-          return res.status(500).json({ error: "Failed to save session" });
-        }
-        
-        res.json({
-          user: {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            hasVoiceSample: user.hasVoiceSample,
-          },
-          authToken, // Token for mobile apps
+      await new Promise<void>((resolve, reject) => {
+        req.session.save((err) => {
+          if (err) reject(err);
+          else resolve();
         });
+      });
+      
+      res.json({
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          hasVoiceSample: user.hasVoiceSample,
+        },
+        authToken, // Token for mobile apps
       });
     } catch (error: any) {
       console.error("Login error:", error?.message || error);
@@ -202,85 +202,107 @@ export function setupAuth(app: Express) {
   });
 }
 
-// Store for auth tokens (in production, use Redis or JWT)
-const authTokens = new Map<string, { userId: string; expires: number }>();
+// Generate auth token for mobile apps (stored in database for persistence)
+export async function generateAuthToken(userId: string): Promise<string> {
+  // Check if user already has a valid token in database
+  const existingTokens = await db
+    .select()
+    .from(authTokens)
+    .where(and(
+      eq(authTokens.userId, userId),
+      gt(authTokens.expiresAt, new Date())
+    ))
+    .limit(1);
 
-// Generate auth token for mobile apps (long-lived)
-export function generateAuthToken(userId: string): string {
-  // Check if user already has a valid token
-  for (const [token, data] of authTokens.entries()) {
-    if (data.userId === userId && Date.now() < data.expires) {
-      // Extend existing token
-      data.expires = Date.now() + 30 * 24 * 60 * 60 * 1000;
-      console.log("Reusing existing token for user:", userId, "token:", token.substring(0, 10) + "...");
-      return token;
-    }
+  if (existingTokens.length > 0) {
+    // Extend existing token expiry
+    const newExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    await db
+      .update(authTokens)
+      .set({ expiresAt: newExpiry })
+      .where(eq(authTokens.token, existingTokens[0].token));
+    console.log("Reusing existing token for user:", userId);
+    return existingTokens[0].token;
   }
   
   // Create new token
   const token = Math.random().toString(36).substring(2) + 
                 Math.random().toString(36).substring(2) + 
                 Date.now().toString(36);
-  authTokens.set(token, {
+  
+  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  
+  await db.insert(authTokens).values({
+    token,
     userId,
-    expires: Date.now() + 30 * 24 * 60 * 60 * 1000, // 30 days
+    expiresAt,
   });
-  console.log("Created new token for user:", userId, "token:", token.substring(0, 10) + "...", "Map size:", authTokens.size);
+  
+  console.log("Created new token for user:", userId);
   return token;
 }
 
-// Verify auth token
-export function verifyAuthToken(token: string): string | null {
-  console.log("Verifying token:", token.substring(0, 10) + "...", "Map size:", authTokens.size);
-  const data = authTokens.get(token);
-  if (!data) {
-    console.log("Token not found in Map. Available tokens:", Array.from(authTokens.keys()).map(k => k.substring(0, 10) + "..."));
+// Verify auth token (from database)
+export async function verifyAuthToken(token: string): Promise<string | null> {
+  const results = await db
+    .select()
+    .from(authTokens)
+    .where(and(
+      eq(authTokens.token, token),
+      gt(authTokens.expiresAt, new Date())
+    ))
+    .limit(1);
+
+  if (results.length === 0) {
+    console.log("Token not found or expired:", token.substring(0, 10) + "...");
     return null;
   }
-  if (Date.now() > data.expires) {
-    authTokens.delete(token);
-    return null;
-  }
-  return data.userId;
+  
+  console.log("Token verified for user:", results[0].userId);
+  return results[0].userId;
 }
 
 // Invalidate auth token (for logout)
-export function invalidateAuthToken(token: string): void {
-  authTokens.delete(token);
+export async function invalidateAuthToken(token: string): Promise<void> {
+  await db.delete(authTokens).where(eq(authTokens.token, token));
 }
 
-// Clean up expired tokens periodically
-setInterval(() => {
-  const now = Date.now();
-  for (const [token, data] of authTokens.entries()) {
-    if (now > data.expires) {
-      authTokens.delete(token);
-    }
-  }
-}, 60000);
+// Async middleware wrapper for Express
+function asyncMiddleware(fn: (req: AuthenticatedRequest, res: Response, next: NextFunction) => Promise<void>) {
+  return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    Promise.resolve(fn(req, res, next)).catch(next);
+  };
+}
 
 // Middleware to require authentication
-export function requireAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+async function requireAuthAsync(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
   // First try session-based auth (works on web)
   if (req.session.userId) {
     req.userId = req.session.userId;
-    return next();
+    next();
+    return;
   }
   
   // Fallback to token-based auth (works on mobile)
   const authToken = req.header("X-Auth-Token");
-  console.log("Auth check - Token header:", authToken ? authToken.substring(0, 10) + "..." : "missing");
   if (authToken) {
-    const userId = verifyAuthToken(authToken);
-    console.log("Auth check - User ID from token:", userId);
-    if (userId) {
-      req.userId = userId;
-      return next();
+    try {
+      const userId = await verifyAuthToken(authToken);
+      if (userId) {
+        req.userId = userId;
+        next();
+        return;
+      }
+    } catch (error) {
+      console.error("Token verification error:", error);
     }
   }
   
-  return res.status(401).json({ error: "Authentication required" });
+  res.status(401).json({ error: "Authentication required" });
 }
+
+// Export wrapped version for use as middleware
+export const requireAuth = asyncMiddleware(requireAuthAsync);
 
 // Optional auth - sets userId if logged in but doesn't require it
 export function optionalAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {

@@ -32,10 +32,12 @@ Preferred communication style: Simple, everyday language.
 - **Categories**: Affirmation categories (Career, Health, Confidence, Wealth, Relationships, Sleep)
 
 ### Authentication
-- **Session-based auth**: Express-session with secure HTTP-only cookies
+- **Session-based auth**: Express-session with secure HTTP-only cookies (web)
+- **Token-based auth**: Database-backed auth tokens for mobile apps (X-Auth-Token header)
 - **Password hashing**: bcrypt with 12 salt rounds
 - **Data isolation**: All user data (affirmations, voice samples) is associated with user IDs
 - **Frontend AuthContext**: React context for auth state management with login, signup, logout functions
+- **Auth tokens table**: `auth_tokens` table stores persistent tokens for mobile auth across server restarts
 
 ### API Endpoints
 
@@ -50,6 +52,7 @@ Preferred communication style: Simple, everyday language.
 - `GET /api/affirmations/:id` - Get single affirmation
 - `POST /api/affirmations/generate-script` - Generate AI script from goal
 - `POST /api/affirmations/create-with-voice` - Create affirmation with TTS audio
+- `POST /api/affirmations/samples` - Create sample affirmations with default voice (for new users)
 - `PATCH /api/affirmations/:id/favorite` - Toggle favorite status
 - `POST /api/voice-samples` - Upload voice sample for cloning
 - `GET /api/voice-samples/status` - Check if user has a cloned voice

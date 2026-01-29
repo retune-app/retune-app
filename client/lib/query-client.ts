@@ -1,17 +1,42 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { Platform } from "react-native";
 
 /**
- * Gets the base URL for the Express API server (e.g., "http://localhost:3000")
+ * Gets the base URL for the Express API server (e.g., "http://localhost:5000")
  * @returns {string} The API base URL
  */
 export function getApiUrl(): string {
+  // For web running on localhost, use localhost:5000 directly
+  if (Platform.OS === "web" && typeof window !== "undefined") {
+    const currentHost = window.location?.hostname;
+    if (currentHost === "localhost" || currentHost === "127.0.0.1") {
+      return "http://localhost:5000";
+    }
+    
+    // For web on public domain, use port 5000 explicitly
+    // The default port 80 routes to Expo (8081), but port 5000 routes to Express
+    // e.g., https://domain.replit.dev:5000
+    const currentOrigin = window.location?.origin;
+    if (currentOrigin && currentOrigin.includes(".replit.dev")) {
+      // Extract the hostname and add port 5000
+      const hostname = window.location?.hostname;
+      return `https://${hostname}:5000`;
+    }
+  }
+
+  // For native apps (iOS/Android), use the public domain with port 5000
   let host = process.env.EXPO_PUBLIC_DOMAIN;
 
   if (!host) {
     throw new Error("EXPO_PUBLIC_DOMAIN is not set");
   }
 
-  let url = new URL(`https://${host}`);
+  // Ensure the host includes port 5000 for API access
+  // The domain "something.replit.dev:5000" should stay as is
+  // The domain "something.replit.dev" should become "something.replit.dev:5000"
+  const hostWithPort = host.includes(":") ? host : `${host}:5000`;
+
+  let url = new URL(`https://${hostWithPort}`);
 
   // Remove trailing slash to prevent double slashes in URL concatenation
   return url.href.replace(/\/$/, "");

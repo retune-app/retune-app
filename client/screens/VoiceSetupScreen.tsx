@@ -211,8 +211,41 @@ export default function VoiceSetupScreen() {
     }
   };
 
+  const skipMutation = useMutation({
+    mutationFn: async () => {
+      const apiUrl = getApiUrl();
+      const authToken = getAuthToken();
+      
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (authToken) {
+        headers["X-Auth-Token"] = authToken;
+      }
+      
+      const response = await fetch(`${apiUrl}/api/affirmations/samples`, {
+        method: "POST",
+        credentials: "include",
+        headers,
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to create sample affirmations");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/affirmations"] });
+      navigation.goBack();
+    },
+    onError: (error: any) => {
+      console.error("Skip error:", error);
+      navigation.goBack();
+    },
+  });
+
   const handleSkip = () => {
-    navigation.goBack();
+    skipMutation.mutate();
   };
 
   const formatDuration = (seconds: number) => {
@@ -311,6 +344,8 @@ export default function VoiceSetupScreen() {
           <Button
             variant="ghost"
             onPress={handleSkip}
+            loading={skipMutation.isPending}
+            disabled={uploadMutation.isPending}
             style={styles.skipButton}
             testID="button-skip"
           >

@@ -79,6 +79,15 @@ export const voiceSamples = pgTable("voice_samples", {
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 
+// Auth tokens for mobile authentication (persistent storage)
+export const authTokens = pgTable("auth_tokens", {
+  id: serial("id").primaryKey(),
+  token: text("token").notNull().unique(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
 // Collections for organizing affirmations
 export const collections = pgTable("collections", {
   id: serial("id").primaryKey(),

@@ -596,6 +596,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create sample affirmations for user (requires auth)
+  app.post("/api/affirmations/samples", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      // Check if user already has affirmations
+      const existingAffirmations = await db
+        .select()
+        .from(affirmations)
+        .where(eq(affirmations.userId, req.userId!))
+        .limit(1);
+
+      if (existingAffirmations.length > 0) {
+        return res.json({ message: "User already has affirmations", created: 0 });
+      }
+
+      // Sample affirmation scripts
+      const sampleAffirmations = [
+        {
+          title: "Morning Confidence",
+          script: "I am confident, capable, and ready to embrace today. Every challenge is an opportunity for growth. I trust myself and my abilities. I am worthy of success and happiness.",
+          categoryId: 3, // Confidence
+        },
+        {
+          title: "Abundance Mindset",
+          script: "I attract abundance in all areas of my life. Money flows to me easily and effortlessly. I am open to receiving prosperity. My financial future is bright and secure.",
+          categoryId: 4, // Wealth
+        },
+        {
+          title: "Inner Peace",
+          script: "I am calm, centered, and at peace. I release all stress and tension. My mind is clear and my heart is open. I choose peace in every moment of my day.",
+          categoryId: 2, // Health
+        },
+      ];
+
+      const createdAffirmations = [];
+
+      for (const sample of sampleAffirmations) {
+        try {
+          // Generate audio with default voice (Rachel)
+          const audioResult = await generateAudio(sample.script);
+          
+          // Save audio file
+          const audioFilename = `affirmation-${Date.now()}-${Math.random().toString(36).slice(2)}.mp3`;
+          const audioPath = path.join(uploadDir, audioFilename);
+          fs.writeFileSync(audioPath, Buffer.from(audioResult.audio));
+
+          // Create affirmation record
+          const [newAffirmation] = await db
+            .insert(affirmations)
+            .values({
+              userId: req.userId!,
+              title: sample.title,
+              script: sample.script,
+              categoryId: sample.categoryId,
+              audioUrl: `/uploads/${audioFilename}`,
+              duration: audioResult.duration,
+              wordTimings: JSON.stringify(audioResult.wordTimings),
+              isManual: false,
+            })
+            .returning();
+
+          createdAffirmations.push(newAffirmation);
+        } catch (error) {
+          console.error(`Error creating sample affirmation "${sample.title}":`, error);
+        }
+      }
+
+      res.json({ 
+        message: "Sample affirmations created", 
+        created: createdAffirmations.length,
+        affirmations: createdAffirmations 
+      });
+    } catch (error) {
+      console.error("Error creating sample affirmations:", error);
+      res.status(500).json({ error: "Failed to create sample affirmations" });
+    }
+  });
+
   // Reorder affirmations (requires auth)
   app.put("/api/affirmations/reorder", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {

@@ -23,6 +23,8 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   authToken: string | null;
+  needsVoiceSetup: boolean;
+  clearNeedsVoiceSetup: () => void;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signup: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
@@ -41,6 +43,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [authToken, setAuthToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [needsVoiceSetup, setNeedsVoiceSetup] = useState(false);
+
+  const clearNeedsVoiceSetup = useCallback(() => {
+    setNeedsVoiceSetup(false);
+  }, []);
 
   const setToken = useCallback(async (token: string | null) => {
     globalAuthToken = token;
@@ -145,6 +152,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (data.authToken) {
           await setToken(data.authToken);
         }
+        // New users always need voice setup
+        if (!data.user.hasVoiceSample) {
+          setNeedsVoiceSetup(true);
+        }
         return { success: true };
       } else {
         return { success: false, error: data.error || "Signup failed" };
@@ -183,6 +194,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         isAuthenticated: !!user,
         authToken,
+        needsVoiceSetup,
+        clearNeedsVoiceSetup,
         login,
         signup,
         logout,

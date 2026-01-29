@@ -15,6 +15,8 @@ interface SwipeableAffirmationCardProps {
   affirmation: Affirmation;
   onPress: () => void;
   onPlayPress: () => void;
+  onLongPress?: () => void;
+  isActive?: boolean;
   testID?: string;
 }
 
@@ -22,6 +24,8 @@ export function SwipeableAffirmationCard({
   affirmation,
   onPress,
   onPlayPress,
+  onLongPress,
+  isActive,
   testID,
 }: SwipeableAffirmationCardProps) {
   const { theme } = useTheme();
@@ -92,6 +96,7 @@ export function SwipeableAffirmationCard({
       rightThreshold={40}
       friction={2}
       overshootRight={false}
+      enabled={!isActive}
     >
       <AffirmationCard
         id={affirmation.id}
@@ -100,6 +105,8 @@ export function SwipeableAffirmationCard({
         isFavorite={affirmation.isFavorite ?? false}
         onPress={onPress}
         onPlayPress={onPlayPress}
+        onLongPress={onLongPress}
+        isActive={isActive}
         testID={testID}
       />
     </Swipeable>

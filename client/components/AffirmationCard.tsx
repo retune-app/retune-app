@@ -21,6 +21,8 @@ interface AffirmationCardProps {
   isFavorite?: boolean;
   onPress?: () => void;
   onPlayPress?: () => void;
+  onLongPress?: () => void;
+  isActive?: boolean;
   testID?: string;
 }
 
@@ -34,6 +36,8 @@ export function AffirmationCard({
   isFavorite = false,
   onPress,
   onPlayPress,
+  onLongPress,
+  isActive = false,
   testID,
 }: AffirmationCardProps) {
   const { theme } = useTheme();
@@ -79,10 +83,17 @@ export function AffirmationCard({
       onPress={handlePress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
+      onLongPress={onLongPress}
+      delayLongPress={200}
       style={[animatedStyle]}
       testID={testID}
     >
-      <View style={[styles.card, Shadows.small, { backgroundColor: theme.cardBackground }]}>
+      <View style={[
+        styles.card,
+        Shadows.small,
+        { backgroundColor: theme.cardBackground },
+        isActive && { backgroundColor: theme.backgroundSecondary, borderColor: theme.primary, borderWidth: 2 },
+      ]}>
         <View style={styles.content}>
           <View style={styles.textContainer}>
             <ThemedText type="h4" numberOfLines={2} style={styles.title}>

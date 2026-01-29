@@ -5,7 +5,7 @@ import path from "path";
 import fs from "fs";
 import { db } from "./db";
 import { affirmations, voiceSamples, categories } from "@shared/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, asc } from "drizzle-orm";
 import { openai } from "./replit_integrations/audio/client";
 import {
   cloneVoice,
@@ -160,7 +160,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const allAffirmations = await db
         .select()
         .from(affirmations)
-        .orderBy(desc(affirmations.createdAt));
+        .orderBy(asc(affirmations.displayOrder), desc(affirmations.createdAt));
       res.json(allAffirmations);
     } catch (error) {
       console.error("Error fetching affirmations:", error);
@@ -459,6 +459,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching categories:", error);
       res.status(500).json({ error: "Failed to fetch categories" });
+    }
+  });
+
+  // Reorder affirmations
+  app.put("/api/affirmations/reorder", async (req: Request, res: Response) => {
+    try {
+      const { orderedIds } = req.body as { orderedIds: number[] };
+      
+      if (!orderedIds || !Array.isArray(orderedIds)) {
+        return res.status(400).json({ error: "orderedIds array is required" });
+      }
+
+      // Update each affirmation's display order
+      for (let i = 0; i < orderedIds.length; i++) {
+        await db
+          .update(affirmations)
+          .set({ displayOrder: i })
+          .where(eq(affirmations.id, orderedIds[i]));
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error reordering affirmations:", error);
+      res.status(500).json({ error: "Failed to reorder affirmations" });
     }
   });
 

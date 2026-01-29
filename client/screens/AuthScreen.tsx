@@ -254,7 +254,7 @@ export function AuthScreen() {
         colors={[authColors.offWhite, authColors.gold, authColors.navyMid, authColors.navy]}
         locations={[0, 0.3, 0.7, 1]}
         start={{ x: 0, y: 0 }}
-        end={{ x: 0.3, y: 1 }}
+        end={{ x: 1, y: 1 }}
         style={styles.gradient}
       >
         <KeyboardAvoidingView

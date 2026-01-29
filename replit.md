@@ -126,6 +126,22 @@ Preferred communication style: Simple, everyday language.
 - `REPLIT_CONNECTORS_HOSTNAME`: For ElevenLabs credential fetching
 - `EXPO_PUBLIC_DOMAIN`: API server domain for mobile client
 
+### API URL Configuration
+The frontend uses `getApiUrl()` from `client/lib/query-client.ts` to determine the backend URL:
+- **Web on localhost**: Uses `http://localhost:5000` directly
+- **Web on Replit domain**: Uses `https://domain.replit.dev:5000` (port 5000 explicitly)
+- **Native apps (iOS/Android)**: Uses `https://domain.replit.dev:5000`
+
+This is necessary because Replit's port configuration maps port 80 to the Expo dev server (8081), while port 5000 routes to the Express backend.
+
+### Default Voice for New Users
+- Users can skip voice setup and immediately use sample affirmations
+- Default ElevenLabs voice: "Rachel" (voiceId: 21m00Tcm4TlvDq8ikWAM)
+- POST /api/affirmations/samples creates 3 starter affirmations:
+  - "Morning Confidence" (Confidence category)
+  - "Abundance Mindset" (Wealth category)
+  - "Inner Peace" (Health category)
+
 ## Development Commands
 - `npm run dev` - Start both frontend and backend
 - `npm run server:dev` - Start backend only

@@ -152,23 +152,31 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   }, [currentAffirmation?.id, autoReplay, playbackSpeed, unloadCurrentSound]);
 
   const togglePlayPause = useCallback(async () => {
-    if (!soundRef.current) return;
+    console.log('togglePlayPause called, soundRef exists:', !!soundRef.current);
+    if (!soundRef.current) {
+      console.log('No sound ref, returning early');
+      return;
+    }
 
     // Prevent overlapping operations from rapid button presses
     if (isOperationInProgress.current) {
+      console.log('Operation in progress, skipping');
       return;
     }
 
     isOperationInProgress.current = true;
     try {
       const status = await soundRef.current.getStatusAsync();
+      console.log('Sound status:', status.isLoaded ? 'loaded' : 'not loaded', status.isLoaded && 'isPlaying' in status ? (status.isPlaying ? 'playing' : 'paused') : '');
       if (status.isLoaded) {
         if (status.isPlaying) {
           await soundRef.current.pauseAsync();
           setIsPlaying(false);
+          console.log('Paused');
         } else {
           await soundRef.current.playAsync();
           setIsPlaying(true);
+          console.log('Resumed');
         }
       }
     } catch (error) {

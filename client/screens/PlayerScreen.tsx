@@ -407,17 +407,22 @@ export default function PlayerScreen() {
         <View style={[styles.fullscreenContainer, { backgroundColor: theme.background }]}>
           <Pressable 
             style={styles.fullscreenTapArea}
-            onPress={togglePlayPause}
+            onPress={() => {
+              console.log('Fullscreen tap - toggling playback');
+              togglePlayPause();
+            }}
           >
-            <RSVPDisplay
-              wordTimings={wordTimings}
-              currentPositionMs={rsvpPosition}
-              isPlaying={isCurrentlyPlaying}
-              fontSize="XL"
-              showHighlight={rsvpHighlight}
-            />
+            <View pointerEvents="none">
+              <RSVPDisplay
+                wordTimings={wordTimings}
+                currentPositionMs={rsvpPosition}
+                isPlaying={isCurrentlyPlaying}
+                fontSize="XL"
+                showHighlight={rsvpHighlight}
+              />
+            </View>
             {!isCurrentlyPlaying ? (
-              <View style={styles.fullscreenPlayHint}>
+              <View style={styles.fullscreenPlayHint} pointerEvents="none">
                 <View style={[styles.fullscreenPlayButton, { backgroundColor: theme.primary }]}>
                   <Feather name="play" size={32} color="#FFFFFF" />
                 </View>

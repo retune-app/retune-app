@@ -1,0 +1,60 @@
+nstructions for Replit AI Agents: ReWired App Design Theme
+These instructions detail the visual and stylistic elements of the "ReWired" app icon (based on the left image variant, featuring title case "Rewired" text). Use this as a foundational theme to ensure consistency across the entire app's UI/UX design, including screens, buttons, typography, color schemes, and any graphical elements. The overall aesthetic is ultra-minimalist, modern, elegant, calm, and sophisticated—emphasizing high negative space, spiritual renewal (via organic growth motifs), and subtle AI integration (via glowing elements). Avoid clutter, vibrant colors, or overly complex shapes; prioritize restraint and harmony.
+1. Core Concept and Symbolism
+
+Main Icon Element: A single, continuous flowing line forming a stylized side-profile of a human head (facing right in the icon view). The line starts from the base (neck/shoulder curve), flows up to define the chin, mouth, nose, forehead, and crown, then organically transitions into a sprouting leaf at the top (crown chakra-inspired position).
+The leaf is simple: one primary blade with a subtle vein or secondary lobe, angled slightly upward for a sense of growth and enlightenment.
+Line style: Smooth, confident strokes with slight variable thickness (thinner at curves, slightly bolder at structural points for depth). No fills—pure outline/line art.
+
+AI Core Representation: A small, subtle glowing dot (circular, soft-edged) placed at the center of the head (roughly forehead/third-eye position). This symbolizes the AI-powered spiritual core—keep it understated, not dominant.
+Composition: High negative space (at least 70-80% empty). Center the icon elements with ample breathing room. For app-wide use, scale this motif subtly (e.g., as loaders, favicons, or background watermarks).
+Orientation and Proportions: Head profile is elongated and graceful; leaf extends naturally without overpowering. Maintain a balanced aspect ratio (e.g., square for icons, adaptable for banners).
+
+2. Color Palette
+
+Primary Gradient (Line and Leaf): A subtle linear or radial gradient transitioning from charcoal grey (#333333 or hex #2F2F2F for depth) at the base/neck to muted gold (#BFAF83 or hex #C0A875—soft, antique gold, not bright yellow) at the crown/leaf tip. This evokes "rewiring" from grounded (grey) to enlightened/growth (gold).
+Avoid harsh contrasts; use 20-30% opacity blends for smoothness.
+For accessibility: Ensure sufficient contrast against backgrounds (WCAG AA compliant, e.g., 4.5:1 ratio).
+
+Glowing Dot: Soft golden-yellow (#FFD700 with 50% opacity glow, or hex #E6B800 for core, with a subtle radial blur/halo in #FFFACD for light emission). Keep glow radius small (5-10% of icon size) to maintain minimalism.
+Text Color: Dark charcoal grey (#333333 or #404040) for primary text like "Rewired." For accents, use muted gold (#BFAF83) sparingly (e.g., highlights or active states).
+Background: Plain off-white (#F5F5F5 or #FAF9F6—warm ivory, not stark white). Use this as the app's default canvas for screens to promote calm and readability.
+Secondary/Accent Colors (for app extension):
+Neutral: Light grey (#E0E0E0) for dividers, borders, or inactive elements.
+Success/Growth: Subtle green-tinged gold (#A8B07D) for affirmations or progress indicators (tie to leaf motif).
+AI/Interactive: Soft blue-grey (#7A8A99) for buttons or AI prompts (subtle nod to tech without clashing).
+Error/Warning: Avoid reds; use desaturated brown-grey (#8B7D6B) for gentle alerts.
+
+Palette Guidelines: Limit to 4-6 colors total. All hues should be muted/desaturated (saturation <40%) for a serene, spiritual feel. Test on light/dark modes: Invert to dark off-black (#121212) background with lightened gradients for dark theme.
+
+3. Typography
+
+Primary Font: Clean, modern sans-serif (e.g., Inter, Manrope, or DM Sans—geometric with good kerning and legibility). Use medium weight (400-500) for body text, bold (600-700) for headings.
+For "Rewired": Title case ("Rewired"—capital R, rest lowercase). Size: Proportionate to icon (e.g., 24-32pt below icon in mocks).
+Spacing: Generous letter-spacing (0.05-0.1em) for elegance; line-height 1.4-1.6 for readability.
+
+App-Wide Typography Scale:
+Headings: 24-36pt, bold, in charcoal grey.
+Body/Affirmations: 16-18pt, regular, in charcoal grey.
+Subtext/Labels: 12-14pt, light weight, in light grey.
+Hierarchy: Use size, weight, and subtle color shifts (e.g., gold for key phrases) to guide focus. No italics or underlining—keep flat.
+
+Consistency: All text should align with the icon's minimalism—avoid decorative fonts. Ensure cross-platform rendering (web/iOS/Android).
+
+4. Style and Layout Guidelines
+
+Minimalism: Embrace whitespace—margins/padding at least 16-24px. No shadows, gradients, or effects unless subtle (e.g., 1px blur on glow).
+Animations/Interactions: Subtle fades or growth animations (e.g., leaf sprout on load). Use easing curves (ease-in-out) for calm transitions.
+UI Components:
+Buttons: Rounded rectangles (8-12px radius), off-white background with charcoal outline; gold fill on hover/active.
+Cards/Screens: Borderless or thin grey borders; center content with high negative space.
+Icons/Graphics: Reuse head/leaf motif scaled down (e.g., for nav items). Monochrome variants in grey for inactive states.
+
+Accessibility: High contrast, scalable text (min 200%), alt text for images (e.g., "Stylized head with sprouting leaf and AI glow"). Support voice-over for spiritual affirmations.
+Branding Extension: Apply theme to splash screens, onboarding, affirmation cards, settings—e.g., background with faint leaf watermark in 5% opacity gold.
+
+5. Implementation Notes for Replit Agents
+
+Tools/Libraries: Use CSS/SVG for icon recreation (export as vector for scalability). For app builds: React Native/Flutter for cross-platform; Tailwind CSS for theme consistency.
+Variations: Generate light/dark mode toggles. Test on devices (iPhone previews for App Store compliance).
+Iteration: Start with wireframes matching this palette, then refine based on user feedback. Ensure all elements evoke "AI-powered spiritual rewiring"—organic yet tech-infused.

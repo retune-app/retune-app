@@ -19,18 +19,18 @@ import { Spacing, BorderRadius } from "@/constants/theme";
 
 type AuthMode = "login" | "signup";
 
-// Login screen color palette (gold to navy/purple)
+// Login screen color palette (gold to dark navy blue)
 const authColors = {
   gold: "#C9A227",
   goldLight: "#E5C95C",
-  navy: "#1A1A3E",
-  navyLight: "#2D2D5A",
-  purple: "#3D3D6B",
+  navy: "#0F1C3F",
+  navyMid: "#1A2D4F",
   white: "#FFFFFF",
-  whiteTranslucent: "rgba(255,255,255,0.9)",
-  textSecondary: "#6B6B8D",
-  border: "#E0E0EC",
-  surface: "#F8F8FC",
+  offWhite: "#F5F7FA",
+  whiteTranslucent: "rgba(255,255,255,0.95)",
+  textSecondary: "#5A6A7E",
+  border: "#E0E4EB",
+  surface: "#F8F9FB",
   error: "#E74C3C",
 };
 
@@ -136,13 +136,13 @@ export function AuthScreen() {
     title: {
       fontFamily: "Nunito_700Bold",
       fontSize: 34,
-      color: authColors.gold,
+      color: authColors.navy,
       marginBottom: Spacing.xs,
     },
     subtitle: {
       fontFamily: "Nunito_400Regular",
       fontSize: 16,
-      color: "rgba(255,255,255,0.8)",
+      color: authColors.navyMid,
       textAlign: "center",
     },
     formContainer: {
@@ -251,10 +251,10 @@ export function AuthScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[authColors.gold, authColors.navyLight, authColors.navy]}
-        locations={[0, 0.5, 1]}
+        colors={[authColors.offWhite, authColors.gold, authColors.navyMid, authColors.navy]}
+        locations={[0, 0.3, 0.7, 1]}
         start={{ x: 0, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
+        end={{ x: 0.3, y: 1 }}
         style={styles.gradient}
       >
         <KeyboardAvoidingView

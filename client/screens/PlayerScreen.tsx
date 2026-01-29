@@ -64,7 +64,7 @@ export default function PlayerScreen() {
   } = useAudio();
   const [rsvpEnabled, setRsvpEnabled] = useState(true);
   const [rsvpFontSize, setRsvpFontSize] = useState<RSVPFontSize>("M");
-  const [rsvpHighlight, setRsvpHighlight] = useState(true);
+  const [rsvpHighlight, setRsvpHighlight] = useState(false);
   const [showRsvpSettings, setShowRsvpSettings] = useState(false);
   const [showScript, setShowScript] = useState(false);
   const rotation = useSharedValue(0);

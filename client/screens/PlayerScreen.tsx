@@ -462,11 +462,6 @@ export default function PlayerScreen() {
               </View>
             ) : null}
           </Pressable>
-          <View style={styles.fullscreenHint}>
-            <ThemedText type="caption" style={{ color: theme.textSecondary, opacity: 0.6 }}>
-              Tap X to exit
-            </ThemedText>
-          </View>
         </View>
       </Modal>
 

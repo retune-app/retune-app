@@ -9,19 +9,33 @@ import {
   Platform,
   ScrollView,
   Pressable,
+  Image,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import { useAuth } from "@/contexts/AuthContext";
-import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
 type AuthMode = "login" | "signup";
 
+// Login screen color palette (gold to navy/purple)
+const authColors = {
+  gold: "#C9A227",
+  goldLight: "#E5C95C",
+  navy: "#1A1A3E",
+  navyLight: "#2D2D5A",
+  purple: "#3D3D6B",
+  white: "#FFFFFF",
+  whiteTranslucent: "rgba(255,255,255,0.9)",
+  textSecondary: "#6B6B8D",
+  border: "#E0E0EC",
+  surface: "#F8F8FC",
+  error: "#E74C3C",
+};
+
 export function AuthScreen() {
   const insets = useSafeAreaInsets();
-  const { theme } = useTheme();
   const { login, signup } = useAuth();
 
   const [mode, setMode] = useState<AuthMode>("login");
@@ -114,40 +128,37 @@ export function AuthScreen() {
       alignItems: "center",
       marginBottom: Spacing.xxl,
     },
-    logoIcon: {
-      width: 80,
-      height: 80,
-      borderRadius: 40,
-      backgroundColor: "rgba(255,255,255,0.2)",
-      alignItems: "center",
-      justifyContent: "center",
+    logoImage: {
+      width: 120,
+      height: 120,
       marginBottom: Spacing.lg,
     },
     title: {
       fontFamily: "Nunito_700Bold",
       fontSize: 34,
-      color: "#FFFFFF",
+      color: authColors.gold,
       marginBottom: Spacing.xs,
     },
     subtitle: {
       fontFamily: "Nunito_400Regular",
       fontSize: 16,
       color: "rgba(255,255,255,0.8)",
+      textAlign: "center",
     },
     formContainer: {
-      backgroundColor: theme.background,
+      backgroundColor: authColors.whiteTranslucent,
       borderRadius: BorderRadius.xl,
       padding: Spacing.xl,
       shadowColor: "#000",
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.1,
+      shadowOpacity: 0.15,
       shadowRadius: 12,
       elevation: 4,
     },
     formTitle: {
       fontFamily: "Nunito_700Bold",
       fontSize: 20,
-      color: theme.text,
+      color: authColors.navy,
       marginBottom: Spacing.lg,
       textAlign: "center",
     },
@@ -157,22 +168,22 @@ export function AuthScreen() {
     inputLabel: {
       fontFamily: "Nunito_500Medium",
       fontSize: 14,
-      color: theme.textSecondary,
+      color: authColors.textSecondary,
       marginBottom: Spacing.xs,
     },
     inputWrapper: {
       flexDirection: "row",
       alignItems: "center",
-      backgroundColor: theme.surface,
+      backgroundColor: authColors.surface,
       borderRadius: BorderRadius.md,
       borderWidth: 1,
-      borderColor: theme.border,
+      borderColor: authColors.border,
     },
     input: {
       flex: 1,
       fontFamily: "Nunito_400Regular",
       fontSize: 16,
-      color: theme.text,
+      color: authColors.navy,
       paddingHorizontal: Spacing.md,
       paddingVertical: Spacing.md,
     },
@@ -185,7 +196,7 @@ export function AuthScreen() {
     errorText: {
       fontFamily: "Nunito_500Medium",
       fontSize: 14,
-      color: "#E74C3C",
+      color: authColors.error,
       marginBottom: Spacing.md,
       textAlign: "center",
     },
@@ -201,7 +212,7 @@ export function AuthScreen() {
     submitText: {
       fontFamily: "Nunito_700Bold",
       fontSize: 16,
-      color: "#FFFFFF",
+      color: authColors.navy,
     },
     disabledButton: {
       opacity: 0.6,
@@ -214,12 +225,12 @@ export function AuthScreen() {
     switchText: {
       fontFamily: "Nunito_400Regular",
       fontSize: 14,
-      color: theme.textSecondary,
+      color: authColors.textSecondary,
     },
     switchLink: {
       fontFamily: "Nunito_700Bold",
       fontSize: 14,
-      color: theme.primary,
+      color: authColors.gold,
     },
     securityNote: {
       flexDirection: "row",
@@ -240,9 +251,10 @@ export function AuthScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[theme.primary, theme.accent]}
+        colors={[authColors.gold, authColors.navyLight, authColors.navy]}
+        locations={[0, 0.5, 1]}
         start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+        end={{ x: 0.5, y: 1 }}
         style={styles.gradient}
       >
         <KeyboardAvoidingView
@@ -254,9 +266,11 @@ export function AuthScreen() {
             keyboardShouldPersistTaps="handled"
           >
             <View style={styles.logoContainer}>
-              <View style={styles.logoIcon}>
-                <Feather name="headphones" size={40} color="#FFFFFF" />
-              </View>
+              <Image
+                source={require("../../assets/images/login-logo.jpg")}
+                style={styles.logoImage}
+                resizeMode="contain"
+              />
               <Text style={styles.title}>ReWired</Text>
               <Text style={styles.subtitle}>
                 Transform your mind with AI-powered affirmations
@@ -275,7 +289,7 @@ export function AuthScreen() {
                     <Feather
                       name="user"
                       size={20}
-                      color={theme.textSecondary}
+                      color={authColors.textSecondary}
                       style={styles.inputIcon}
                     />
                     <TextInput
@@ -283,7 +297,7 @@ export function AuthScreen() {
                       value={name}
                       onChangeText={setName}
                       placeholder="Your name"
-                      placeholderTextColor={theme.textSecondary}
+                      placeholderTextColor={authColors.textSecondary}
                       autoCapitalize="words"
                       testID="input-name"
                     />
@@ -297,7 +311,7 @@ export function AuthScreen() {
                   <Feather
                     name="mail"
                     size={20}
-                    color={theme.textSecondary}
+                    color={authColors.textSecondary}
                     style={styles.inputIcon}
                   />
                   <TextInput
@@ -305,7 +319,7 @@ export function AuthScreen() {
                     value={email}
                     onChangeText={setEmail}
                     placeholder="you@example.com"
-                    placeholderTextColor={theme.textSecondary}
+                    placeholderTextColor={authColors.textSecondary}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoComplete="email"
@@ -320,7 +334,7 @@ export function AuthScreen() {
                   <Feather
                     name="lock"
                     size={20}
-                    color={theme.textSecondary}
+                    color={authColors.textSecondary}
                     style={styles.inputIcon}
                   />
                   <TextInput
@@ -328,7 +342,7 @@ export function AuthScreen() {
                     value={password}
                     onChangeText={setPassword}
                     placeholder="Minimum 8 characters"
-                    placeholderTextColor={theme.textSecondary}
+                    placeholderTextColor={authColors.textSecondary}
                     secureTextEntry={!showPassword}
                     autoCapitalize="none"
                     autoComplete="password"
@@ -342,7 +356,7 @@ export function AuthScreen() {
                     <Feather
                       name={showPassword ? "eye-off" : "eye"}
                       size={20}
-                      color={theme.textSecondary}
+                      color={authColors.textSecondary}
                     />
                   </Pressable>
                 </View>
@@ -355,7 +369,7 @@ export function AuthScreen() {
                     <Feather
                       name="lock"
                       size={20}
-                      color={theme.textSecondary}
+                      color={authColors.textSecondary}
                       style={styles.inputIcon}
                     />
                     <TextInput
@@ -363,7 +377,7 @@ export function AuthScreen() {
                       value={confirmPassword}
                       onChangeText={setConfirmPassword}
                       placeholder="Re-enter your password"
-                      placeholderTextColor={theme.textSecondary}
+                      placeholderTextColor={authColors.textSecondary}
                       secureTextEntry={!showPassword}
                       autoCapitalize="none"
                       testID="input-confirm-password"
@@ -383,13 +397,13 @@ export function AuthScreen() {
                 testID="button-submit"
               >
                 <LinearGradient
-                  colors={[theme.primary, theme.accent]}
+                  colors={[authColors.goldLight, authColors.gold]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.submitGradient}
                 >
                   {isLoading ? (
-                    <ActivityIndicator color="#FFFFFF" />
+                    <ActivityIndicator color={authColors.navy} />
                   ) : (
                     <Text style={styles.submitText}>
                       {mode === "login" ? "Sign In" : "Create Account"}

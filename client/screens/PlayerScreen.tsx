@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useLayoutEffect } from "react";
+import React, { useState, useEffect, useCallback, useLayoutEffect, useMemo } from "react";
 import { View, StyleSheet, Pressable, Alert, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
@@ -21,6 +21,7 @@ import Animated, {
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { WaveformVisualizer } from "@/components/WaveformVisualizer";
+import { RSVPDisplay, WordTiming, RSVPFontSize } from "@/components/RSVPDisplay";
 import { IconButton } from "@/components/IconButton";
 import { useTheme } from "@/hooks/useTheme";
 import { useAudio } from "@/contexts/AudioContext";
@@ -30,6 +31,9 @@ import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import type { Affirmation } from "@shared/schema";
 
 const AUTO_REPLAY_KEY = "@settings/autoReplay";
+const RSVP_ENABLED_KEY = "@settings/rsvpEnabled";
+const RSVP_FONT_SIZE_KEY = "@settings/rsvpFontSize";
+const RSVP_HIGHLIGHT_KEY = "@settings/rsvpHighlight";
 
 type PlayerRouteProp = RouteProp<RootStackParamList, "Player">;
 type PlayerNavigationProp = NativeStackNavigationProp<RootStackParamList, "Player">;
@@ -57,6 +61,10 @@ export default function PlayerScreen() {
   } = useAudio();
 
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
+  const [rsvpEnabled, setRsvpEnabled] = useState(true);
+  const [rsvpFontSize, setRsvpFontSize] = useState<RSVPFontSize>("M");
+  const [rsvpHighlight, setRsvpHighlight] = useState(true);
+  const [showRsvpSettings, setShowRsvpSettings] = useState(false);
   const rotation = useSharedValue(0);
 
   const { data: affirmation, isLoading } = useQuery<Affirmation>({
@@ -139,7 +147,7 @@ export default function PlayerScreen() {
             onPress={() => navigation.goBack()}
             testID="button-back"
           >
-            <Feather name="arrow-left" size={22} color={theme.textPrimary} />
+            <Feather name="arrow-left" size={22} color={theme.text} />
           </HeaderButton>
         )
       ),
@@ -160,7 +168,66 @@ export default function PlayerScreen() {
         setAutoReplay(value === "true");
       }
     });
+    AsyncStorage.getItem(RSVP_ENABLED_KEY).then((value) => {
+      if (value !== null) {
+        setRsvpEnabled(value === "true");
+      }
+    });
+    AsyncStorage.getItem(RSVP_FONT_SIZE_KEY).then((value) => {
+      if (value !== null && ["S", "M", "L", "XL"].includes(value)) {
+        setRsvpFontSize(value as RSVPFontSize);
+      }
+    });
+    AsyncStorage.getItem(RSVP_HIGHLIGHT_KEY).then((value) => {
+      if (value !== null) {
+        setRsvpHighlight(value === "true");
+      }
+    });
   }, []);
+
+  const wordTimings: WordTiming[] = useMemo(() => {
+    if (!affirmation?.wordTimings) {
+      if (affirmation?.script) {
+        const words = affirmation.script.split(/\s+/).filter(w => w.length > 0);
+        const durationMs = (affirmation.duration || 30) * 1000;
+        const avgWordDurationMs = durationMs / words.length;
+        return words.map((word, index) => ({
+          word,
+          startMs: Math.round(index * avgWordDurationMs),
+          endMs: Math.round((index + 1) * avgWordDurationMs),
+        }));
+      }
+      return [];
+    }
+    try {
+      return JSON.parse(affirmation.wordTimings);
+    } catch {
+      return [];
+    }
+  }, [affirmation?.wordTimings, affirmation?.script, affirmation?.duration]);
+
+  const handleToggleRsvp = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const newValue = !rsvpEnabled;
+    setRsvpEnabled(newValue);
+    await AsyncStorage.setItem(RSVP_ENABLED_KEY, String(newValue));
+  };
+
+  const handleChangeFontSize = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const sizes: RSVPFontSize[] = ["S", "M", "L", "XL"];
+    const currentIndex = sizes.indexOf(rsvpFontSize);
+    const nextSize = sizes[(currentIndex + 1) % sizes.length];
+    setRsvpFontSize(nextSize);
+    await AsyncStorage.setItem(RSVP_FONT_SIZE_KEY, nextSize);
+  };
+
+  const handleToggleHighlight = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const newValue = !rsvpHighlight;
+    setRsvpHighlight(newValue);
+    await AsyncStorage.setItem(RSVP_HIGHLIGHT_KEY, String(newValue));
+  };
 
   const favoriteMutation = useMutation({
     mutationFn: async () => {
@@ -242,22 +309,34 @@ export default function PlayerScreen() {
         ]}
       >
         <View style={styles.visualizerContainer}>
-          <Animated.View style={[styles.disc, discAnimatedStyle]}>
-            <LinearGradient
-              colors={theme.gradient.hero as [string, string]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.discGradient}
-            >
-              <View style={[styles.discCenter, { backgroundColor: theme.backgroundRoot }]} />
-            </LinearGradient>
-          </Animated.View>
-          <WaveformVisualizer
-            isActive={isCurrentlyPlaying}
-            barCount={40}
-            style={styles.waveform}
-            color={theme.primary}
-          />
+          {rsvpEnabled ? (
+            <RSVPDisplay
+              wordTimings={wordTimings}
+              currentPositionMs={displayPosition}
+              isPlaying={isCurrentlyPlaying}
+              fontSize={rsvpFontSize}
+              showHighlight={rsvpHighlight}
+            />
+          ) : (
+            <>
+              <Animated.View style={[styles.disc, discAnimatedStyle]}>
+                <LinearGradient
+                  colors={theme.gradient.hero as [string, string]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.discGradient}
+                >
+                  <View style={[styles.discCenter, { backgroundColor: theme.backgroundRoot }]} />
+                </LinearGradient>
+              </Animated.View>
+              <WaveformVisualizer
+                isActive={isCurrentlyPlaying}
+                barCount={40}
+                style={styles.waveform}
+                color={theme.primary}
+              />
+            </>
+          )}
         </View>
 
         <View style={styles.infoContainer}>
@@ -349,6 +428,96 @@ export default function PlayerScreen() {
             onPress={() => Alert.alert("Share", "Sharing coming soon!")}
             testID="button-share"
           />
+        </View>
+
+        <View style={[styles.rsvpSettings, { backgroundColor: theme.backgroundSecondary }]}>
+          <View style={styles.rsvpSettingsRow}>
+            <ThemedText type="small" style={{ color: theme.textSecondary }}>
+              RSVP Mode
+            </ThemedText>
+            <Pressable
+              onPress={handleToggleRsvp}
+              style={[
+                styles.rsvpToggle,
+                { backgroundColor: rsvpEnabled ? theme.primary : theme.backgroundTertiary },
+              ]}
+              testID="button-toggle-rsvp"
+            >
+              <View
+                style={[
+                  styles.rsvpToggleKnob,
+                  { 
+                    backgroundColor: "#FFFFFF",
+                    transform: [{ translateX: rsvpEnabled ? 20 : 2 }],
+                  },
+                ]}
+              />
+            </Pressable>
+          </View>
+
+          {rsvpEnabled ? (
+            <>
+              <View style={styles.rsvpSettingsRow}>
+                <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                  Font Size
+                </ThemedText>
+                <View style={styles.fontSizeButtons}>
+                  {(["S", "M", "L", "XL"] as RSVPFontSize[]).map((size) => (
+                    <Pressable
+                      key={size}
+                      onPress={() => {
+                        setRsvpFontSize(size);
+                        AsyncStorage.setItem(RSVP_FONT_SIZE_KEY, size);
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      }}
+                      style={[
+                        styles.fontSizeButton,
+                        {
+                          backgroundColor:
+                            rsvpFontSize === size ? theme.primary : theme.backgroundTertiary,
+                        },
+                      ]}
+                      testID={`button-font-size-${size}`}
+                    >
+                      <ThemedText
+                        type="small"
+                        style={{
+                          color: rsvpFontSize === size ? "#FFFFFF" : theme.text,
+                          fontWeight: "600",
+                        }}
+                      >
+                        {size}
+                      </ThemedText>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+
+              <View style={styles.rsvpSettingsRow}>
+                <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                  Highlight Focus
+                </ThemedText>
+                <Pressable
+                  onPress={handleToggleHighlight}
+                  style={[
+                    styles.rsvpToggle,
+                    { backgroundColor: rsvpHighlight ? theme.primary : theme.backgroundTertiary },
+                  ]}
+                  testID="button-toggle-highlight"
+                >
+                  <View
+                    style={[
+                      styles.rsvpToggleKnob,
+                      { 
+                        backgroundColor: "#FFFFFF",
+                        transform: [{ translateX: rsvpHighlight ? 20 : 2 }],
+                      },
+                    ]}
+                  />
+                </Pressable>
+              </View>
+            </>
+          ) : null}
         </View>
 
         {affirmation?.script ? (
@@ -467,5 +636,39 @@ const styles = StyleSheet.create({
   },
   scriptScroll: {
     maxHeight: 100,
+  },
+  rsvpSettings: {
+    width: "100%",
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    marginBottom: Spacing.lg,
+    gap: Spacing.md,
+  },
+  rsvpSettingsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  rsvpToggle: {
+    width: 44,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: "center",
+  },
+  rsvpToggleKnob: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+  },
+  fontSizeButtons: {
+    flexDirection: "row",
+    gap: Spacing.sm,
+  },
+  fontSizeButton: {
+    width: 36,
+    height: 28,
+    borderRadius: BorderRadius.xs,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

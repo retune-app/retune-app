@@ -225,6 +225,10 @@ export default function PlayerScreen() {
 
   // Unlock orientation temporarily when Focus Mode is on and playing (to allow entering fullscreen)
   useEffect(() => {
+    // Don't unlock if user just manually exited fullscreen
+    if (userExitedFullscreenRef.current) {
+      return;
+    }
     if (rsvpEnabled && isCurrentlyPlaying && !isInFullscreenMode) {
       console.log('Unlocking orientation to allow fullscreen entry');
       ScreenOrientation.unlockAsync();

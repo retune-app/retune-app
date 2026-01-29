@@ -74,11 +74,19 @@ Preferred communication style: Simple, everyday language.
 - **State sharing**: All screens (HomeScreen, PlayerScreen) share playback state via useAudio hook
 - **Key files**: `client/contexts/AudioContext.tsx`, `client/components/MiniPlayer.tsx`
 
+### RSVP Mode (Rapid Serial Visual Presentation)
+- **Word-by-word display**: Shows one word at a time synchronized with audio playback
+- **Word timings from ElevenLabs**: Uses `/with-timestamps` endpoint to get character-level timing, parsed into word-level data
+- **Fallback timing**: For legacy affirmations without timestamps, generates approximate timing based on word length
+- **ORP highlighting**: Optional highlighting of Optimal Recognition Point (center letter of each word)
+- **Customizable settings**: Font size (S/M/L/XL), highlight toggle, RSVP on/off - all persisted to AsyncStorage
+- **Key files**: `client/components/RSVPDisplay.tsx`, `server/replit_integrations/elevenlabs/client.ts`
+
 ## Screen Structure
 
 - **HomeScreen**: Library of affirmations with search and category filters
 - **CreateScreen**: Create new affirmation (AI Generate or Manual mode)
-- **PlayerScreen**: Audio player with waveform visualization, playback controls
+- **PlayerScreen**: Audio player with waveform visualization, playback controls, and RSVP mode for synchronized word display
 - **VoiceSetupScreen**: Record voice sample for cloning (fullscreen modal)
 - **ProfileScreen**: User settings, stats, voice sample management
 

@@ -1,7 +1,5 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,17 +8,19 @@ import * as Haptics from 'expo-haptics';
 
 import { useAudio } from '@/contexts/AudioContext';
 import { useTheme } from '@/hooks/useTheme';
-import { RootStackParamList } from '@/navigation/RootStackNavigator';
 
-type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+interface MiniPlayerProps {
+  currentRoute?: string;
+  onNavigateToPlayer?: (affirmationId: number) => void;
+}
 
-export function MiniPlayer() {
+export function MiniPlayer({ currentRoute, onNavigateToPlayer }: MiniPlayerProps) {
   const { currentAffirmation, isPlaying, isLoading, togglePlayPause, position, duration } = useAudio();
   const { theme } = useTheme();
-  const navigation = useNavigation<NavigationProp>();
   const insets = useSafeAreaInsets();
 
-  if (!currentAffirmation) {
+  // Don't show mini player if no affirmation or if on Player screen
+  if (!currentAffirmation || currentRoute === 'Player') {
     return null;
   }
 
@@ -28,7 +28,7 @@ export function MiniPlayer() {
 
   const handlePress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    navigation.navigate('Player', { affirmationId: currentAffirmation.id, isNew: false });
+    onNavigateToPlayer?.(currentAffirmation.id);
   };
 
   const handlePlayPause = async () => {
@@ -44,7 +44,7 @@ export function MiniPlayer() {
     >
       <Pressable onPress={handlePress} style={styles.pressable}>
         <LinearGradient
-          colors={[theme.colors.primary, theme.colors.accent]}
+          colors={[theme.primary, theme.accent]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.gradient}

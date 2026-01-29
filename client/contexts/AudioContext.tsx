@@ -101,13 +101,19 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         { uri: audioUri },
         { shouldPlay: true, isLooping: autoReplay },
         (status) => {
-          if (status.isLoaded) {
-            setPosition(status.positionMillis || 0);
-            setDuration(status.durationMillis || 0);
-            setIsPlaying(status.isPlaying);
-            if (status.didJustFinish && !autoReplay) {
-              setIsPlaying(false);
+          try {
+            if (status.isLoaded) {
+              setPosition(status.positionMillis || 0);
+              setDuration(status.durationMillis || 0);
+              setIsPlaying(status.isPlaying);
+              if (status.didJustFinish && !autoReplay) {
+                setIsPlaying(false);
+              }
+            } else if ('error' in status) {
+              console.error('Audio playback error:', status.error);
             }
+          } catch (e) {
+            console.error('Error in audio status callback:', e);
           }
         }
       );

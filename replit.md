@@ -49,6 +49,13 @@ Preferred communication style: Simple, everyday language.
 5. Script synthesized to audio using cloned voice (or default voice)
 6. Audio stored and streamed for playback
 
+### Global Audio Player (AudioContext)
+- **AudioContext Provider**: Centralized audio state management wrapping the entire app
+- **Single-instance playback**: Only one affirmation can play at a time; starting new playback automatically stops previous
+- **MiniPlayer**: Floating bar above tab navigation showing current track with play/pause, progress, and tap-to-navigate
+- **State sharing**: All screens (HomeScreen, PlayerScreen) share playback state via useAudio hook
+- **Key files**: `client/contexts/AudioContext.tsx`, `client/components/MiniPlayer.tsx`
+
 ## Screen Structure
 
 - **HomeScreen**: Library of affirmations with search and category filters

@@ -590,19 +590,12 @@ export default function PlayerScreen() {
 
         {showScript && affirmation?.script ? (
           <View style={[styles.scriptPreview, { backgroundColor: theme.backgroundSecondary }]}>
-            <ThemedText type="caption" style={{ color: theme.textSecondary, marginBottom: Spacing.xs }}>
+            <ThemedText type="caption" style={{ color: theme.textSecondary, marginBottom: Spacing.sm }}>
               SCRIPT
             </ThemedText>
-            <ScrollView 
-              style={styles.scriptScroll} 
-              showsVerticalScrollIndicator={true}
-              nestedScrollEnabled={true}
-              contentContainerStyle={styles.scriptScrollContent}
-            >
-              <ThemedText type="body" style={{ lineHeight: 24 }}>
-                {affirmation.script}
-              </ThemedText>
-            </ScrollView>
+            <ThemedText type="body" style={{ lineHeight: 24 }}>
+              {affirmation.script}
+            </ThemedText>
           </View>
         ) : null}
       </ScrollView>
@@ -702,14 +695,7 @@ const styles = StyleSheet.create({
     width: "100%",
     padding: Spacing.lg,
     borderRadius: BorderRadius.lg,
-    maxHeight: 200,
-    flex: 1,
-  },
-  scriptScroll: {
-    flex: 1,
-  },
-  scriptScrollContent: {
-    paddingBottom: Spacing.md,
+    marginBottom: Spacing.lg,
   },
   rsvpSettings: {
     width: "100%",

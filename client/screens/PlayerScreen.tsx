@@ -344,11 +344,13 @@ export default function PlayerScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <View
-        style={[
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[
           styles.content,
           { paddingTop: headerHeight + Spacing.lg, paddingBottom: insets.bottom + Spacing["2xl"] },
         ]}
+        showsVerticalScrollIndicator={false}
       >
         <View style={styles.visualizerContainer}>
           {rsvpEnabled ? (
@@ -603,7 +605,7 @@ export default function PlayerScreen() {
             </ScrollView>
           </View>
         ) : null}
-      </View>
+      </ScrollView>
     </ThemedView>
   );
 }
@@ -612,8 +614,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  content: {
+  scrollView: {
     flex: 1,
+  },
+  content: {
     paddingHorizontal: Spacing.lg,
     alignItems: "center",
   },

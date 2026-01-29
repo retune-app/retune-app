@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "Rewired",
+    "name": "ReWired",
     "slug": "subconscious-rewire",
     "version": "1.0.0",
     "orientation": "default",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/icon.jpg",
     "scheme": "subconsciousrewire",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -18,8 +18,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#4A90E2",
-        "foregroundImage": "./assets/images/icon.png"
+        "backgroundColor": "#F5F5F5",
+        "foregroundImage": "./assets/images/icon.jpg"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -28,18 +28,18 @@
     },
     "web": {
       "output": "single",
-      "favicon": "./assets/images/icon.png"
+      "favicon": "./assets/images/icon.jpg"
     },
     "plugins": [
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/splash-icon.jpg",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#F8FAFB",
+          "backgroundColor": "#F5F5F5",
           "dark": {
-            "backgroundColor": "#1A1A2E"
+            "backgroundColor": "#121212"
           }
         }
       ],
@@ -47,7 +47,7 @@
       [
         "expo-av",
         {
-          "microphonePermission": "Allow Rewired to access your microphone to record personalized affirmations."
+          "microphonePermission": "Allow ReWired to access your microphone to record personalized affirmations."
         }
       ]
     ],

@@ -83,20 +83,29 @@ export async function cloneVoice(
   return result.voice_id;
 }
 
+// Word timing data structure for RSVP display
+export interface WordTiming {
+  word: string;
+  startMs: number;
+  endMs: number;
+}
+
 /**
- * Generate speech from text using ElevenLabs TTS.
+ * Generate speech from text using ElevenLabs TTS with word-level timestamps.
+ * Uses the /with-timestamps endpoint for RSVP synchronization.
  * @param text - The text to convert to speech
  * @param voiceId - ElevenLabs voice ID (optional, defaults to a preset voice)
- * @returns Audio buffer in mp3 format
+ * @returns Audio buffer in mp3 format with word timing data
  */
 export async function textToSpeech(
   text: string,
   voiceId: string = "21m00Tcm4TlvDq8ikWAM" // Default Rachel voice
-): Promise<{ audio: ArrayBuffer; duration: number }> {
+): Promise<{ audio: ArrayBuffer; duration: number; wordTimings: WordTiming[] }> {
   const apiKey = await getCredentials();
 
+  // Use the with-timestamps endpoint for word timing data
   const response = await fetch(
-    `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
+    `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/with-timestamps`,
     {
       method: "POST",
       headers: {
@@ -122,17 +131,78 @@ export async function textToSpeech(
     throw new Error(`TTS failed: ${response.statusText}`);
   }
 
-  const audioBuffer = await response.arrayBuffer();
-
-  // Estimate duration (rough calculation based on text length)
-  // Approximate speaking rate: 150 words per minute
-  const wordCount = text.split(/\s+/).length;
-  const estimatedDuration = Math.ceil((wordCount / 150) * 60);
+  const result = await response.json();
+  
+  // Decode base64 audio
+  const audioBase64 = result.audio_base64;
+  const audioBuffer = Uint8Array.from(atob(audioBase64), c => c.charCodeAt(0)).buffer;
+  
+  // Parse character-level timing into word-level timing
+  const wordTimings = parseCharacterTimingsToWords(result.alignment);
+  
+  // Calculate duration from the last word's end time, or estimate if no timing data
+  let estimatedDuration: number;
+  if (wordTimings.length > 0) {
+    estimatedDuration = Math.ceil(wordTimings[wordTimings.length - 1].endMs / 1000);
+  } else {
+    const wordCount = text.split(/\s+/).length;
+    estimatedDuration = Math.ceil((wordCount / 150) * 60);
+  }
 
   return {
     audio: audioBuffer,
     duration: estimatedDuration,
+    wordTimings,
   };
+}
+
+/**
+ * Parse ElevenLabs character-level alignment data into word-level timing.
+ */
+function parseCharacterTimingsToWords(alignment: { characters: Array<{ character: string; start_time_ms: number; end_time_ms: number }> }): WordTiming[] {
+  if (!alignment || !alignment.characters || alignment.characters.length === 0) {
+    return [];
+  }
+
+  const words: WordTiming[] = [];
+  let currentWord = "";
+  let wordStartMs: number | null = null;
+  let wordEndMs: number = 0;
+
+  for (const charData of alignment.characters) {
+    const char = charData.character;
+    
+    // Space or punctuation that ends a word
+    if (char === ' ' || char === '\n' || char === '\r' || char === '\t') {
+      if (currentWord.length > 0 && wordStartMs !== null) {
+        words.push({
+          word: currentWord,
+          startMs: wordStartMs,
+          endMs: wordEndMs,
+        });
+      }
+      currentWord = "";
+      wordStartMs = null;
+    } else {
+      // Add character to current word
+      if (wordStartMs === null) {
+        wordStartMs = charData.start_time_ms;
+      }
+      currentWord += char;
+      wordEndMs = charData.end_time_ms;
+    }
+  }
+
+  // Add the last word if any
+  if (currentWord.length > 0 && wordStartMs !== null) {
+    words.push({
+      word: currentWord,
+      startMs: wordStartMs,
+      endMs: wordEndMs,
+    });
+  }
+
+  return words;
 }
 
 /**

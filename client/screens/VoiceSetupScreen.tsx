@@ -63,9 +63,9 @@ export default function VoiceSetupScreen() {
       const apiUrl = getApiUrl();
       console.log("Uploading to:", `${apiUrl}/api/voice-samples`);
 
-      // Use AbortController for 2 minute timeout (voice cloning takes time)
+      // Use AbortController for 3 minute timeout (voice cloning takes time)
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 120000);
+      const timeoutId = setTimeout(() => controller.abort(), 180000);
 
       try {
         const response = await fetch(`${apiUrl}/api/voice-samples`, {
@@ -211,7 +211,7 @@ export default function VoiceSetupScreen() {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const isValidDuration = recordingDuration >= 30;
+  const isValidDuration = recordingDuration >= 15;
 
   return (
     <ThemedView style={styles.container}>
@@ -237,7 +237,7 @@ export default function VoiceSetupScreen() {
 
         {!isRecording && !hasRecording ? (
           <ThemedText type="body" style={[styles.description, { color: theme.textSecondary }]}>
-            Record a 30-60 second sample of your voice. When you start recording, we'll show you some fun text to read aloud!
+            Record a 15-60 second sample of your voice. When you start recording, we'll show you some fun text to read aloud!
           </ThemedText>
         ) : null}
 

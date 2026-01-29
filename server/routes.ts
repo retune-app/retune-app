@@ -355,8 +355,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update favorite status
-  app.patch("/api/affirmations/:id/favorite", async (req: Request, res: Response) => {
+  // Update favorite status (requires auth, must belong to user)
+  app.patch("/api/affirmations/:id/favorite", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { id } = req.params;
       const { isFavorite } = req.body;
@@ -364,8 +364,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const [updated] = await db
         .update(affirmations)
         .set({ isFavorite, updatedAt: new Date() })
-        .where(eq(affirmations.id, parseInt(id)))
+        .where(and(
+          eq(affirmations.id, parseInt(id)),
+          eq(affirmations.userId, req.userId!)
+        ))
         .returning();
+
+      if (!updated) {
+        return res.status(404).json({ error: "Affirmation not found" });
+      }
 
       res.json(updated);
     } catch (error) {
@@ -374,15 +381,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Auto-save affirmation with AI-generated title and category
-  app.post("/api/affirmations/:id/auto-save", async (req: Request, res: Response) => {
+  // Auto-save affirmation with AI-generated title and category (requires auth)
+  app.post("/api/affirmations/:id/auto-save", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { id } = req.params;
 
       const [affirmation] = await db
         .select()
         .from(affirmations)
-        .where(eq(affirmations.id, parseInt(id)));
+        .where(and(
+          eq(affirmations.id, parseInt(id)),
+          eq(affirmations.userId, req.userId!)
+        ));
 
       if (!affirmation) {
         return res.status(404).json({ error: "Affirmation not found" });
@@ -427,15 +437,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Increment play count
-  app.post("/api/affirmations/:id/play", async (req: Request, res: Response) => {
+  // Increment play count (requires auth)
+  app.post("/api/affirmations/:id/play", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { id } = req.params;
 
       const [affirmation] = await db
         .select()
         .from(affirmations)
-        .where(eq(affirmations.id, parseInt(id)));
+        .where(and(
+          eq(affirmations.id, parseInt(id)),
+          eq(affirmations.userId, req.userId!)
+        ));
 
       if (!affirmation) {
         return res.status(404).json({ error: "Affirmation not found" });
@@ -535,10 +548,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get user stats
-  app.get("/api/user/stats", async (req: Request, res: Response) => {
+  // Get user stats (requires auth)
+  app.get("/api/user/stats", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const allAffirmations = await db.select().from(affirmations);
+      const allAffirmations = await db
+        .select()
+        .from(affirmations)
+        .where(eq(affirmations.userId, req.userId!));
 
       const totalListens = allAffirmations.reduce(
         (sum, a) => sum + (a.playCount || 0),
@@ -567,8 +583,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Reorder affirmations
-  app.put("/api/affirmations/reorder", async (req: Request, res: Response) => {
+  // Reorder affirmations (requires auth)
+  app.put("/api/affirmations/reorder", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { orderedIds } = req.body as { orderedIds: number[] };
       
@@ -576,12 +592,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "orderedIds array is required" });
       }
 
-      // Update each affirmation's display order
+      // Update each affirmation's display order (only if owned by user)
       for (let i = 0; i < orderedIds.length; i++) {
         await db
           .update(affirmations)
           .set({ displayOrder: i })
-          .where(eq(affirmations.id, orderedIds[i]));
+          .where(and(
+            eq(affirmations.id, orderedIds[i]),
+            eq(affirmations.userId, req.userId!)
+          ));
       }
 
       res.json({ success: true });

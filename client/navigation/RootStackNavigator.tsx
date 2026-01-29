@@ -1,15 +1,19 @@
-import React, { useState, useCallback, useRef } from "react";
-import { View, StyleSheet } from "react-native";
+import React, { useState, useCallback } from "react";
+import { View, StyleSheet, ActivityIndicator } from "react-native";
 import { createNativeStackNavigator, NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { NavigationState, useNavigation } from "@react-navigation/native";
 import MainTabNavigator from "@/navigation/MainTabNavigator";
 import VoiceSetupScreen from "@/screens/VoiceSetupScreen";
 import CreateScreen from "@/screens/CreateScreen";
 import PlayerScreen from "@/screens/PlayerScreen";
+import { AuthScreen } from "@/screens/AuthScreen";
 import { MiniPlayer } from "@/components/MiniPlayer";
 import { useScreenOptions } from "@/hooks/useScreenOptions";
+import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/constants/theme";
 
 export type RootStackParamList = {
+  Auth: undefined;
   Main: undefined;
   VoiceSetup: undefined;
   Create: undefined;
@@ -35,6 +39,8 @@ function MiniPlayerWrapper({ currentRoute }: { currentRoute: string }) {
 
 export default function RootStackNavigator() {
   const screenOptions = useScreenOptions();
+  const theme = useTheme();
+  const { isAuthenticated, isLoading } = useAuth();
   const [currentRoute, setCurrentRoute] = useState<string>('Main');
 
   const handleStateChange = useCallback((state: NavigationState | undefined) => {
@@ -43,6 +49,22 @@ export default function RootStackNavigator() {
       setCurrentRoute(route?.name ?? 'Main');
     }
   }, []);
+
+  if (isLoading) {
+    return (
+      <View style={[styles.loadingContainer, { backgroundColor: theme.backgroundRoot }]}>
+        <ActivityIndicator size="large" color={theme.primary} />
+      </View>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Auth" component={AuthScreen} />
+      </Stack.Navigator>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -90,5 +112,10 @@ export default function RootStackNavigator() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

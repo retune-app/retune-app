@@ -91,7 +91,7 @@ export function RSVPDisplay({
   
   // Use light colors for dark background in fullscreen mode
   const textColor = forceDarkMode ? "#F8FAFB" : theme.text;
-  const accentColor = forceDarkMode ? "#9B7FFF" : theme.accent;
+  const accentColor = forceDarkMode ? "#E5C95C" : theme.accent;
 
   const currentWord = useMemo(() => {
     if (!wordTimings || wordTimings.length === 0) {

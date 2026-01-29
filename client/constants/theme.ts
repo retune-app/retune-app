@@ -3,13 +3,12 @@ import { Platform } from "react-native";
 // ReWired Design System
 // Gold/Navy aesthetic with mental growth theme
 
-// Primary brand colors - Gold to Navy palette
+// Primary brand colors - Gold, White, Navy palette (NO PURPLE)
 const primaryGold = "#C9A227";
 const goldLight = "#E5C95C";
 const navyDark = "#0F1C3F";
 const navyMid = "#1A2D4F";
-const accentPurple = "#7B61FF";
-const successTeal = "#50E3C2";
+const successTeal = "#50C9B0";
 const backgroundLight = "#F5F7FA";
 const surfaceWhite = "#FFFFFF";
 const textNavy = "#0F1C3F";
@@ -32,7 +31,7 @@ export const Colors = {
     tabIconSelected: primaryGold,
     link: primaryGold,
     primary: primaryGold,
-    accent: accentPurple,
+    accent: navyMid,
     success: successTeal,
     error: "#E74C3C",
     warning: "#F39C12",
@@ -64,7 +63,7 @@ export const Colors = {
     tabIconSelected: goldLight,
     link: goldLight,
     primary: goldLight,
-    accent: "#9B7FFF",
+    accent: goldLight,
     success: "#6BE9D2",
     error: "#FF6B6B",
     warning: "#FFB347",

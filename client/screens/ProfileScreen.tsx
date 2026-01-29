@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, StyleSheet, Pressable, Switch, Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
@@ -9,6 +9,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const AUTO_REPLAY_KEY = "@settings/autoReplay";
 
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { ThemedText } from "@/components/ThemedText";
@@ -66,10 +69,19 @@ export default function ProfileScreen() {
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [reminderTime, setReminderTime] = useState("8:00 AM");
+  const [autoReplayEnabled, setAutoReplayEnabled] = useState(true);
 
   const { data: stats } = useQuery({
     queryKey: ["/api/user/stats"],
   });
+
+  useEffect(() => {
+    AsyncStorage.getItem(AUTO_REPLAY_KEY).then((value) => {
+      if (value !== null) {
+        setAutoReplayEnabled(value === "true");
+      }
+    });
+  }, []);
 
   const handleVoiceSetup = () => {
     navigation.navigate("VoiceSetup");
@@ -78,6 +90,13 @@ export default function ProfileScreen() {
   const handleToggleNotifications = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setNotificationsEnabled(!notificationsEnabled);
+  };
+
+  const handleToggleAutoReplay = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const newValue = !autoReplayEnabled;
+    setAutoReplayEnabled(newValue);
+    await AsyncStorage.setItem(AUTO_REPLAY_KEY, String(newValue));
   };
 
   const handleReminderTime = () => {
@@ -154,6 +173,28 @@ export default function ProfileScreen() {
             label="Voice Sample"
             value="Re-record your voice"
             onPress={handleVoiceSetup}
+          />
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+          PLAYBACK
+        </ThemedText>
+        <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
+          <SettingItem
+            icon="repeat"
+            label="Auto-Replay"
+            value={autoReplayEnabled ? "Affirmations loop automatically" : "Play once then stop"}
+            showArrow={false}
+            rightElement={
+              <Switch
+                value={autoReplayEnabled}
+                onValueChange={handleToggleAutoReplay}
+                trackColor={{ false: theme.border, true: theme.primary + "80" }}
+                thumbColor={autoReplayEnabled ? theme.primary : theme.textSecondary}
+              />
+            }
           />
         </View>
       </View>

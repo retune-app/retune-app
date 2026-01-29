@@ -73,7 +73,7 @@ export default function CreateScreen() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/affirmations"] });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      navigation.navigate("Player", { affirmationId: data.id });
+      navigation.navigate("Player", { affirmationId: data.id, isNew: true });
     },
     onError: () => {
       Alert.alert("Error", "Failed to create affirmation. Please try again.");

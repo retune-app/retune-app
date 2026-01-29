@@ -10,7 +10,7 @@ export type RootStackParamList = {
   Main: undefined;
   VoiceSetup: undefined;
   Create: undefined;
-  Player: { affirmationId: number };
+  Player: { affirmationId: number; isNew?: boolean };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();

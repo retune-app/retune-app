@@ -42,7 +42,7 @@ export default function PlayerScreen() {
   const { theme } = useTheme();
   const queryClient = useQueryClient();
 
-  const { affirmationId } = route.params;
+  const { affirmationId, isNew = false } = route.params;
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [autoReplay, setAutoReplay] = useState(true);
@@ -112,16 +112,25 @@ export default function PlayerScreen() {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerLeft: () => (
-        <HeaderButton
-          onPress={handleSave}
-          testID="button-save-affirmation"
-        >
-          <Feather 
-            name="save" 
-            size={22} 
-            color={autoSaveMutation.isPending ? theme.textSecondary : theme.primary} 
-          />
-        </HeaderButton>
+        isNew ? (
+          <HeaderButton
+            onPress={handleSave}
+            testID="button-save-affirmation"
+          >
+            <Feather 
+              name="save" 
+              size={22} 
+              color={autoSaveMutation.isPending ? theme.textSecondary : theme.primary} 
+            />
+          </HeaderButton>
+        ) : (
+          <HeaderButton
+            onPress={() => navigation.goBack()}
+            testID="button-back"
+          >
+            <Feather name="arrow-left" size={22} color={theme.textPrimary} />
+          </HeaderButton>
+        )
       ),
       headerRight: () => (
         <HeaderButton
@@ -132,7 +141,7 @@ export default function PlayerScreen() {
         </HeaderButton>
       ),
     });
-  }, [navigation, handleSave, handleDelete, autoSaveMutation.isPending, theme]);
+  }, [navigation, handleSave, handleDelete, autoSaveMutation.isPending, theme, isNew]);
 
   useEffect(() => {
     AsyncStorage.getItem(AUTO_REPLAY_KEY).then((value) => {
@@ -140,6 +149,21 @@ export default function PlayerScreen() {
         setAutoReplay(value === "true");
       }
     });
+  }, []);
+
+  useEffect(() => {
+    const initAudio = async () => {
+      try {
+        await Audio.setAudioModeAsync({
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: false,
+          shouldDuckAndroid: true,
+        });
+      } catch (error) {
+        console.error("Error initializing audio:", error);
+      }
+    };
+    initAudio();
   }, []);
 
   const favoriteMutation = useMutation({
@@ -174,8 +198,11 @@ export default function PlayerScreen() {
   const loadSound = useCallback(async () => {
     if (affirmation?.audioUrl) {
       try {
+        const audioUri = `${getApiUrl()}${affirmation.audioUrl}`;
+        console.log("Loading audio from:", audioUri);
+        
         const { sound: newSound } = await Audio.Sound.createAsync(
-          { uri: `${getApiUrl()}${affirmation.audioUrl}` },
+          { uri: audioUri },
           { shouldPlay: false, isLooping: autoReplay },
           (status) => {
             if (status.isLoaded) {
@@ -187,9 +214,11 @@ export default function PlayerScreen() {
             }
           }
         );
+        console.log("Audio loaded successfully");
         setSound(newSound);
       } catch (error) {
         console.error("Error loading sound:", error);
+        Alert.alert("Audio Error", "Could not load audio file. Please try again.");
       }
     }
   }, [affirmation?.audioUrl, autoReplay]);

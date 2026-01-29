@@ -5,7 +5,6 @@ import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Audio } from "expo-av";
-import { File } from "expo-file-system/next";
 import * as Haptics from "expo-haptics";
 
 import { ThemedText } from "@/components/ThemedText";
@@ -54,9 +53,6 @@ export default function VoiceSetupScreen() {
         const blob = await response.blob();
         formData.append("audio", blob, "voice-sample.webm");
       } else {
-        const file = new File(uri);
-        if (!file.exists) throw new Error("Recording file not found");
-        
         formData.append("audio", {
           uri,
           type: "audio/m4a",
@@ -64,21 +60,45 @@ export default function VoiceSetupScreen() {
         } as any);
       }
 
-      const response = await fetch(`${getApiUrl()}/api/voice-samples`, {
-        method: "POST",
-        body: formData,
-      });
+      const apiUrl = getApiUrl();
+      console.log("Uploading to:", `${apiUrl}/api/voice-samples`);
 
-      if (!response.ok) throw new Error("Upload failed");
-      return response.json();
+      // Use AbortController for 2 minute timeout (voice cloning takes time)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 120000);
+
+      try {
+        const response = await fetch(`${apiUrl}/api/voice-samples`, {
+          method: "POST",
+          body: formData,
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Upload response error:", errorText);
+          throw new Error(errorText || "Upload failed");
+        }
+        return response.json();
+      } catch (error: any) {
+        clearTimeout(timeoutId);
+        if (error.name === "AbortError") {
+          throw new Error("Upload timed out. Please try again.");
+        }
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/user/profile"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/voice-samples/status"] });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       navigation.navigate("Main");
     },
-    onError: (error) => {
-      Alert.alert("Upload Failed", "Could not upload your voice sample. Please try again.");
+    onError: (error: any) => {
+      const message = error?.message || "Could not upload your voice sample. Please try again.";
+      Alert.alert("Upload Failed", message);
       console.error("Upload error:", error);
     },
   });

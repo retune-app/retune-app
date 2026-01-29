@@ -20,15 +20,17 @@ import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-const READING_PROMPTS = `I am absolutely crushing it today. My morning coffee tastes like liquid success, and my bed makes itself out of respect for my energy.
+const READING_PROMPTS = `Your voice is the most powerful tool for rewiring your mind.
 
-I radiate confidence like a disco ball at a dance party. People see me walking down the street and think, "Wow, that person definitely has their life together."
+When you hear affirmations in your own voice, your subconscious accepts them as truth. This activates your brain's reward centers and creates new neural pathways.
 
-My plants thrive because they can sense my positive vibes. Even my houseplants have started growing towards me instead of the window.
+I am ready to transform my thinking. I speak positive words, and my mind believes them. Each time I listen, I strengthen new patterns of thought.
 
-I am patient, I am kind, and I am ridiculously good at parallel parking. Some people have talents, but I have the whole package.
+I am capable of incredible change. My brain is designed for growth. What I repeat, I become.
 
-I am becoming the best version of myself, which is really saying something because the current version is already pretty fantastic.`;
+I choose thoughts that serve me. I release what no longer helps me. I am rewiring my mind for the life I want to live.
+
+This is my voice. This is my power. This is my transformation.`;
 
 export default function VoiceSetupScreen() {
   const insets = useSafeAreaInsets();

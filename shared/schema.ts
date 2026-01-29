@@ -59,6 +59,7 @@ export const affirmations = pgTable("affirmations", {
   categoryId: integer("category_id").references(() => categories.id),
   audioUrl: text("audio_url"),
   duration: integer("duration"),
+  wordTimings: text("word_timings"), // JSON string of WordTiming[] for RSVP sync
   isManual: boolean("is_manual").default(false),
   isFavorite: boolean("is_favorite").default(false),
   playCount: integer("play_count").default(0),

@@ -4,7 +4,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { db } from "./db";
-import { affirmations, voiceSamples, categories, users } from "@shared/schema";
+import { affirmations, voiceSamples, categories, users, collections } from "@shared/schema";
 import { eq, desc, asc, and } from "drizzle-orm";
 import { openai } from "./replit_integrations/audio/client";
 import {
@@ -671,7 +671,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete user account - removes all user data and the account itself
-  app.delete("/api/user/account", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+  // Note: Using POST instead of DELETE because SameSite=Lax cookies aren't sent with DELETE on cross-origin requests
+  app.post("/api/user/account/delete", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const userId = req.userId!;
 

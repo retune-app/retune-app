@@ -116,10 +116,18 @@ export default function ProfileScreen() {
   const handleResetData = async () => {
     setIsResetting(true);
     try {
-      const response = await fetch(new URL("/api/user/reset", getApiUrl()).toString(), {
+      const url = new URL("/api/user/reset", getApiUrl()).toString();
+      console.log("Resetting data at:", url);
+      
+      const response = await fetch(url, {
         method: "POST",
         credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
+      
+      console.log("Reset response status:", response.status);
       
       if (response.ok) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -128,9 +136,14 @@ export default function ProfileScreen() {
         queryClient.invalidateQueries({ queryKey: ["/api/voice-samples"] });
         queryClient.invalidateQueries({ queryKey: ["/api/user/stats"] });
         setShowResetModal(false);
+      } else {
+        const data = await response.json();
+        console.error("Reset data failed:", data);
+        setShowResetModal(false);
       }
     } catch (error) {
       console.error("Reset data error:", error);
+      setShowResetModal(false);
     } finally {
       setIsResetting(false);
     }
@@ -139,18 +152,34 @@ export default function ProfileScreen() {
   const handleDeleteAccount = async () => {
     setIsDeleting(true);
     try {
-      const response = await fetch(new URL("/api/user/account", getApiUrl()).toString(), {
-        method: "DELETE",
+      const url = new URL("/api/user/account/delete", getApiUrl()).toString();
+      console.log("Deleting account at:", url);
+      
+      const response = await fetch(url, {
+        method: "POST",
         credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
+      
+      console.log("Delete response status:", response.status);
       
       if (response.ok) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         setShowDeleteAccountModal(false);
-        logout();
+        // Short delay to ensure modal closes before navigation
+        setTimeout(() => {
+          logout();
+        }, 100);
+      } else {
+        const data = await response.json();
+        console.error("Delete account failed:", data);
+        setShowDeleteAccountModal(false);
       }
     } catch (error) {
       console.error("Delete account error:", error);
+      setShowDeleteAccountModal(false);
     } finally {
       setIsDeleting(false);
     }

@@ -80,16 +80,22 @@ export function setupAuth(app: Express) {
         })
         .returning();
 
-      // Set session
+      // Set session and save explicitly
       req.session.userId = newUser.id;
-
-      res.json({
-        user: {
-          id: newUser.id,
-          email: newUser.email,
-          name: newUser.name,
-          hasVoiceSample: newUser.hasVoiceSample,
-        },
+      req.session.save((err) => {
+        if (err) {
+          console.error("Session save error:", err);
+          return res.status(500).json({ error: "Failed to save session" });
+        }
+        
+        res.json({
+          user: {
+            id: newUser.id,
+            email: newUser.email,
+            name: newUser.name,
+            hasVoiceSample: newUser.hasVoiceSample,
+          },
+        });
       });
     } catch (error) {
       console.error("Registration error:", error);
@@ -120,16 +126,22 @@ export function setupAuth(app: Express) {
         return res.status(401).json({ error: "Invalid email or password" });
       }
 
-      // Set session
+      // Set session and save explicitly
       req.session.userId = user.id;
-
-      res.json({
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          hasVoiceSample: user.hasVoiceSample,
-        },
+      req.session.save((err) => {
+        if (err) {
+          console.error("Session save error:", err);
+          return res.status(500).json({ error: "Failed to save session" });
+        }
+        
+        res.json({
+          user: {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            hasVoiceSample: user.hasVoiceSample,
+          },
+        });
       });
     } catch (error: any) {
       console.error("Login error:", error?.message || error);

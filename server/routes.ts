@@ -33,12 +33,13 @@ const audioUpload = multer({
 // Generate affirmation script using OpenAI
 async function generateScript(goal: string, category?: string, length?: string): Promise<string> {
   const lengthConfig = {
-    short: { words: "40-75", tokens: 200, description: "a brief, focused affirmation of about 50 words" },
-    medium: { words: "100-150", tokens: 400, description: "a medium-length affirmation of about 120 words" },
-    long: { words: "200-280", tokens: 700, description: "an extensive, detailed affirmation of about 240 words" },
+    short: { words: "30-50", tokens: 150, description: "a very brief affirmation of exactly 40 words" },
+    medium: { words: "80-100", tokens: 300, description: "a medium affirmation of exactly 90 words" },
+    long: { words: "180-220", tokens: 600, description: "a long, comprehensive affirmation of exactly 200 words" },
   };
   
   const config = lengthConfig[length as keyof typeof lengthConfig] || lengthConfig.medium;
+  console.log(`Generating script with length: ${length}, using config:`, config);
   
   const systemPrompt = `You are an expert in creating powerful, personalized affirmations that rewire subconscious beliefs.
 

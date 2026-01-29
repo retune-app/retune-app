@@ -14,10 +14,16 @@ export function getApiUrl(): string {
       return "http://localhost:5000";
     }
     
-    // For web on public domain, use port 5000 explicitly
+    // For production (.replit.app), use the same origin (no port needed)
+    // Production deployments serve both frontend and API on the same domain
+    const currentOrigin = window.location?.origin;
+    if (currentOrigin && currentOrigin.includes(".replit.app")) {
+      return currentOrigin;
+    }
+    
+    // For development (.replit.dev), use port 5000 explicitly
     // The default port 80 routes to Expo (8081), but port 5000 routes to Express
     // e.g., https://domain.replit.dev:5000
-    const currentOrigin = window.location?.origin;
     if (currentOrigin && currentOrigin.includes(".replit.dev")) {
       // Extract the hostname and add port 5000
       const hostname = window.location?.hostname;
@@ -25,14 +31,21 @@ export function getApiUrl(): string {
     }
   }
 
-  // For native apps (iOS/Android), use the public domain with port 5000
+  // For native apps (iOS/Android), use the public domain
   let host = process.env.EXPO_PUBLIC_DOMAIN;
 
   if (!host) {
     throw new Error("EXPO_PUBLIC_DOMAIN is not set");
   }
 
-  // Ensure the host includes port 5000 for API access
+  // For production (.replit.app), no port needed - same domain serves API
+  if (host.includes(".replit.app")) {
+    // Remove any port if present and use https
+    const cleanHost = host.split(":")[0];
+    return `https://${cleanHost}`;
+  }
+
+  // For development (.replit.dev), use port 5000 explicitly
   // The domain "something.replit.dev:5000" should stay as is
   // The domain "something.replit.dev" should become "something.replit.dev:5000"
   const hostWithPort = host.includes(":") ? host : `${host}:5000`;

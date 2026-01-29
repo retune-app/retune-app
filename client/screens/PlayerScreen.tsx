@@ -66,7 +66,6 @@ export default function PlayerScreen() {
   const [showScript, setShowScript] = useState(false);
   const [isLandscape, setIsLandscape] = useState(false);
   const [isInFullscreenMode, setIsInFullscreenMode] = useState(false);
-  const userExitedFullscreenRef = useRef(false);
   const prevLandscapeRef = useRef(false);
 
   const { data: affirmation, isLoading } = useQuery<Affirmation>({
@@ -224,12 +223,8 @@ export default function PlayerScreen() {
     }
   }, [isInFullscreenMode]);
 
-  // Unlock orientation temporarily when Focus Mode is on and playing (to allow entering fullscreen)
+  // Unlock orientation when Focus Mode is on and playing (to allow entering fullscreen)
   useEffect(() => {
-    // Don't unlock if user just manually exited fullscreen
-    if (userExitedFullscreenRef.current) {
-      return;
-    }
     if (rsvpEnabled && isCurrentlyPlaying && !isInFullscreenMode) {
       console.log('Unlocking orientation to allow fullscreen entry');
       ScreenOrientation.unlockAsync();
@@ -261,51 +256,33 @@ export default function PlayerScreen() {
     };
   }, []);
 
-  // Enter fullscreen mode only on portrait→landscape rotation change while playing
+  // Handle orientation changes - enter/exit fullscreen based on rotation
   useEffect(() => {
     const wasLandscape = prevLandscapeRef.current;
     const justRotatedToLandscape = isLandscape && !wasLandscape;
+    const justRotatedToPortrait = !isLandscape && wasLandscape;
     
     // Update prev ref for next run
     prevLandscapeRef.current = isLandscape;
     
-    // Don't re-enter if user just manually exited
-    if (userExitedFullscreenRef.current) {
-      console.log('Skipping fullscreen entry - user just exited');
+    // Exit fullscreen when rotating back to portrait
+    if (justRotatedToPortrait && isInFullscreenMode) {
+      console.log('Exiting fullscreen mode - rotated to portrait');
+      setIsInFullscreenMode(false);
       return;
     }
     
-    // Only enter fullscreen if user just rotated TO landscape while playing
+    // Enter fullscreen if user just rotated TO landscape while playing
     if (justRotatedToLandscape && rsvpEnabled && isCurrentlyPlaying && !isInFullscreenMode) {
       console.log('Entering fullscreen mode - rotated to landscape while playing');
       setIsInFullscreenMode(true);
     }
   }, [isLandscape, rsvpEnabled, isCurrentlyPlaying, isInFullscreenMode]);
 
-  // Reset the exit flag when device returns to portrait and re-enable rotation
-  useEffect(() => {
-    if (!isLandscape && userExitedFullscreenRef.current) {
-      console.log('Resetting user exit flag - device returned to portrait');
-      userExitedFullscreenRef.current = false;
-      // Now unlock orientation so user can rotate to landscape again
-      if (rsvpEnabled && isCurrentlyPlaying) {
-        console.log('Re-enabling rotation after portrait reset');
-        ScreenOrientation.unlockAsync();
-      }
-    }
-  }, [isLandscape, rsvpEnabled, isCurrentlyPlaying]);
-
   // Debug: track fullscreen state changes
   useEffect(() => {
     console.log('Fullscreen state:', { isInFullscreenMode, rsvpEnabled, isLandscape, isCurrentlyPlaying });
   }, [isInFullscreenMode, rsvpEnabled, isLandscape, isCurrentlyPlaying]);
-
-  // Handler for exiting fullscreen
-  const handleExitFullscreen = useCallback(() => {
-    console.log('Exiting fullscreen mode - user requested');
-    userExitedFullscreenRef.current = true;
-    setIsInFullscreenMode(false);
-  }, []);
 
   // Show fullscreen when in fullscreen mode (stays up even when paused)
   const showFullscreenFocus = isInFullscreenMode && rsvpEnabled;
@@ -448,22 +425,15 @@ export default function PlayerScreen() {
     <ThemedView style={styles.container}>
       <StatusBar style={showFullscreenFocus ? "light" : "auto"} hidden={showFullscreenFocus} />
       
-      {/* Fullscreen Landscape Focus Mode */}
+      {/* Fullscreen Landscape Focus Mode - tilt back to portrait to exit */}
       <Modal
         visible={showFullscreenFocus}
         animationType="fade"
         statusBarTranslucent
         supportedOrientations={["landscape-left", "landscape-right", "portrait"]}
-        onRequestClose={handleExitFullscreen}
         presentationStyle="fullScreen"
       >
         <View style={[styles.fullscreenContainer, { backgroundColor: theme.background }]}>
-          <Pressable 
-            style={styles.fullscreenCloseButton}
-            onPress={handleExitFullscreen}
-          >
-            <Feather name="x" size={24} color={theme.textSecondary} />
-          </Pressable>
           <Pressable 
             style={styles.fullscreenTapArea}
             onPress={() => {

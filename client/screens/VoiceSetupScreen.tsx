@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { View, StyleSheet, Image, Alert, Platform } from "react-native";
+import { View, StyleSheet, Image, Alert, Platform, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -14,11 +14,27 @@ import { Button } from "@/components/Button";
 import { RecordButton } from "@/components/RecordButton";
 import { WaveformVisualizer } from "@/components/WaveformVisualizer";
 import { useTheme } from "@/hooks/useTheme";
-import { Spacing, Shadows } from "@/constants/theme";
+import { Spacing, BorderRadius } from "@/constants/theme";
 import { apiRequest, getApiUrl } from "@/lib/query-client";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
+const READING_PROMPTS = `I am absolutely crushing it today, and honestly, every day. My morning coffee tastes like liquid success, and my bed makes itself out of respect for my energy.
+
+I radiate confidence like a disco ball at a dance party. People see me walking down the street and think, "Wow, that person definitely has their life together," and they would be absolutely right.
+
+My plants thrive because they can sense my positive vibes. Even my houseplants have started growing towards me instead of the window. That's just the kind of energy I bring.
+
+I attract abundance like a magnet attracts... well, magnets attract a lot of things, but mostly good stuff when it comes to me. Money, opportunities, and compliments flow to me effortlessly.
+
+I am patient, I am kind, and I am ridiculously good at parallel parking. Some people have talents, but I have the whole package.
+
+Every cell in my body is vibrating with joy and excellent health. My immune system is basically a team of tiny superheroes wearing capes made of positive thoughts.
+
+I forgive myself for eating that entire pizza last Tuesday. It was delicious, I regret nothing, and my body processed it with grace and efficiency.
+
+I am becoming the best version of myself, which is really saying something because the current version is already pretty fantastic.`;
 
 export default function VoiceSetupScreen() {
   const insets = useSafeAreaInsets();
@@ -184,51 +200,75 @@ export default function VoiceSetupScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <View style={[styles.content, { paddingTop: insets.top + Spacing["3xl"], paddingBottom: insets.bottom + Spacing["2xl"] }]}>
-        <Image
-          source={require("../../assets/images/voice-setup-hero.png")}
-          style={styles.heroImage}
-          resizeMode="contain"
-        />
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[
+          styles.content,
+          { paddingTop: insets.top + Spacing["2xl"], paddingBottom: insets.bottom + Spacing["2xl"] },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        {!isRecording && !hasRecording ? (
+          <Image
+            source={require("../../assets/images/voice-setup-hero.png")}
+            style={styles.heroImage}
+            resizeMode="contain"
+          />
+        ) : null}
 
         <ThemedText type="h1" style={styles.title}>
-          Record Your Voice
+          {isRecording ? "Read This Aloud" : "Record Your Voice"}
         </ThemedText>
 
-        <ThemedText type="body" style={[styles.description, { color: theme.textSecondary }]}>
-          Record a 30-60 second sample of your voice. Speak naturally about anything - this helps create personalized affirmations in your own voice.
-        </ThemedText>
+        {!isRecording && !hasRecording ? (
+          <ThemedText type="body" style={[styles.description, { color: theme.textSecondary }]}>
+            Record a 30-60 second sample of your voice. When you start recording, we'll show you some fun text to read aloud!
+          </ThemedText>
+        ) : null}
 
-        <WaveformVisualizer
-          isActive={isRecording}
-          barCount={32}
-          style={styles.waveform}
-          color={theme.primary}
-        />
+        {isRecording ? (
+          <View style={[styles.promptCard, { backgroundColor: theme.backgroundSecondary }]}>
+            <ThemedText type="caption" style={[styles.promptLabel, { color: theme.primary }]}>
+              READ NATURALLY AT YOUR OWN PACE
+            </ThemedText>
+            <ThemedText type="body" style={styles.promptText}>
+              {READING_PROMPTS}
+            </ThemedText>
+          </View>
+        ) : null}
 
-        <ThemedText type="h2" style={[styles.timer, { color: isRecording ? theme.primary : theme.text }]}>
-          {formatDuration(recordingDuration)}
-        </ThemedText>
+        <View style={styles.recordingSection}>
+          <WaveformVisualizer
+            isActive={isRecording}
+            barCount={32}
+            style={styles.waveform}
+            color={theme.primary}
+          />
 
-        <ThemedText
-          type="caption"
-          style={[styles.hint, { color: theme.textSecondary }]}
-        >
-          {isRecording
-            ? recordingDuration < 30
-              ? `Keep speaking... ${30 - recordingDuration}s more needed`
-              : "Great! You can stop or keep going up to 60s"
-            : hasRecording
-            ? "Recording complete! You can re-record or continue."
-            : "Tap the microphone to start recording"}
-        </ThemedText>
+          <ThemedText type="h2" style={[styles.timer, { color: isRecording ? theme.primary : theme.text }]}>
+            {formatDuration(recordingDuration)}
+          </ThemedText>
 
-        <RecordButton
-          isRecording={isRecording}
-          onPress={handleRecordPress}
-          size={80}
-          testID="button-record"
-        />
+          <ThemedText
+            type="caption"
+            style={[styles.hint, { color: theme.textSecondary }]}
+          >
+            {isRecording
+              ? recordingDuration < 30
+                ? `Keep reading... ${30 - recordingDuration}s more needed`
+                : "Perfect! You can stop or keep going up to 60s"
+              : hasRecording
+              ? "Recording complete! You can re-record or continue."
+              : "Tap the microphone to start recording"}
+          </ThemedText>
+
+          <RecordButton
+            isRecording={isRecording}
+            onPress={handleRecordPress}
+            size={80}
+            testID="button-record"
+          />
+        </View>
 
         <View style={styles.buttonsContainer}>
           {hasRecording && isValidDuration ? (
@@ -252,7 +292,7 @@ export default function VoiceSetupScreen() {
             Skip for now
           </Button>
         </View>
-      </View>
+      </ScrollView>
     </ThemedView>
   );
 }
@@ -261,15 +301,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  content: {
+  scrollView: {
     flex: 1,
+  },
+  content: {
     alignItems: "center",
     paddingHorizontal: Spacing["2xl"],
   },
   heroImage: {
-    width: 200,
-    height: 150,
-    marginBottom: Spacing["2xl"],
+    width: 180,
+    height: 130,
+    marginBottom: Spacing.xl,
   },
   title: {
     textAlign: "center",
@@ -277,26 +319,46 @@ const styles = StyleSheet.create({
   },
   description: {
     textAlign: "center",
-    marginBottom: Spacing["3xl"],
+    marginBottom: Spacing["2xl"],
     maxWidth: 320,
     lineHeight: 24,
   },
+  promptCard: {
+    width: "100%",
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    marginBottom: Spacing.xl,
+  },
+  promptLabel: {
+    marginBottom: Spacing.md,
+    letterSpacing: 1,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  promptText: {
+    lineHeight: 28,
+    fontSize: 17,
+  },
+  recordingSection: {
+    width: "100%",
+    alignItems: "center",
+  },
   waveform: {
     width: "100%",
-    height: 80,
-    marginBottom: Spacing.lg,
+    height: 60,
+    marginBottom: Spacing.md,
   },
   timer: {
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   hint: {
     textAlign: "center",
-    marginBottom: Spacing["3xl"],
+    marginBottom: Spacing.xl,
     height: 40,
   },
   buttonsContainer: {
     width: "100%",
-    marginTop: Spacing["3xl"],
+    marginTop: Spacing.xl,
     gap: Spacing.md,
   },
   continueButton: {

@@ -17,15 +17,20 @@ function checkRateLimit(ip: string): { allowed: boolean; retryAfter?: number } {
   
   if (!attempt || now > attempt.resetTime) {
     loginAttempts.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+    console.log(`Rate limit: First attempt from ${ip}, count=1`);
     return { allowed: true };
   }
   
-  if (attempt.count >= MAX_ATTEMPTS) {
+  // Increment FIRST, then check
+  attempt.count++;
+  console.log(`Rate limit: Attempt from ${ip}, count=${attempt.count}`);
+  
+  if (attempt.count > MAX_ATTEMPTS) {
     const retryAfter = Math.ceil((attempt.resetTime - now) / 1000);
+    console.log(`Rate limit: BLOCKED - ${ip} exceeded ${MAX_ATTEMPTS} attempts`);
     return { allowed: false, retryAfter };
   }
   
-  attempt.count++;
   return { allowed: true };
 }
 

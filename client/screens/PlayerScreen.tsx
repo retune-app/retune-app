@@ -34,6 +34,7 @@ const AUTO_REPLAY_KEY = "@settings/autoReplay";
 const RSVP_ENABLED_KEY = "@settings/rsvpEnabled";
 const RSVP_FONT_SIZE_KEY = "@settings/rsvpFontSize";
 const RSVP_HIGHLIGHT_KEY = "@settings/rsvpHighlight";
+const SHOW_SCRIPT_KEY = "@settings/showScript";
 
 type PlayerRouteProp = RouteProp<RootStackParamList, "Player">;
 type PlayerNavigationProp = NativeStackNavigationProp<RootStackParamList, "Player">;
@@ -65,6 +66,7 @@ export default function PlayerScreen() {
   const [rsvpFontSize, setRsvpFontSize] = useState<RSVPFontSize>("M");
   const [rsvpHighlight, setRsvpHighlight] = useState(true);
   const [showRsvpSettings, setShowRsvpSettings] = useState(false);
+  const [showScript, setShowScript] = useState(false);
   const rotation = useSharedValue(0);
 
   const { data: affirmation, isLoading } = useQuery<Affirmation>({
@@ -183,6 +185,11 @@ export default function PlayerScreen() {
         setRsvpHighlight(value === "true");
       }
     });
+    AsyncStorage.getItem(SHOW_SCRIPT_KEY).then((value) => {
+      if (value !== null) {
+        setShowScript(value === "true");
+      }
+    });
   }, []);
 
   const wordTimings: WordTiming[] = useMemo(() => {
@@ -250,6 +257,13 @@ export default function PlayerScreen() {
     const newValue = !rsvpHighlight;
     setRsvpHighlight(newValue);
     await AsyncStorage.setItem(RSVP_HIGHLIGHT_KEY, String(newValue));
+  };
+
+  const handleToggleScript = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const newValue = !showScript;
+    setShowScript(newValue);
+    await AsyncStorage.setItem(SHOW_SCRIPT_KEY, String(newValue));
   };
 
   const favoriteMutation = useMutation({
@@ -546,9 +560,33 @@ export default function PlayerScreen() {
               </View>
             </>
           ) : null}
+
+          <View style={styles.rsvpSettingsRow}>
+            <ThemedText type="small" style={{ color: theme.textSecondary }}>
+              Show Script
+            </ThemedText>
+            <Pressable
+              onPress={handleToggleScript}
+              style={[
+                styles.rsvpToggle,
+                { backgroundColor: showScript ? theme.primary : theme.backgroundTertiary },
+              ]}
+              testID="button-toggle-script"
+            >
+              <View
+                style={[
+                  styles.rsvpToggleKnob,
+                  { 
+                    backgroundColor: "#FFFFFF",
+                    transform: [{ translateX: showScript ? 20 : 2 }],
+                  },
+                ]}
+              />
+            </Pressable>
+          </View>
         </View>
 
-        {affirmation?.script ? (
+        {showScript && affirmation?.script ? (
           <View style={[styles.scriptPreview, { backgroundColor: theme.backgroundSecondary }]}>
             <ThemedText type="caption" style={{ color: theme.textSecondary, marginBottom: Spacing.xs }}>
               SCRIPT
@@ -557,6 +595,7 @@ export default function PlayerScreen() {
               style={styles.scriptScroll} 
               showsVerticalScrollIndicator={true}
               nestedScrollEnabled={true}
+              contentContainerStyle={styles.scriptScrollContent}
             >
               <ThemedText type="body" style={{ lineHeight: 24 }}>
                 {affirmation.script}
@@ -659,11 +698,14 @@ const styles = StyleSheet.create({
     width: "100%",
     padding: Spacing.lg,
     borderRadius: BorderRadius.lg,
-    maxHeight: 150,
+    maxHeight: 200,
     flex: 1,
   },
   scriptScroll: {
-    maxHeight: 100,
+    flex: 1,
+  },
+  scriptScrollContent: {
+    paddingBottom: Spacing.md,
   },
   rsvpSettings: {
     width: "100%",

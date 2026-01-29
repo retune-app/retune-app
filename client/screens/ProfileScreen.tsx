@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, Pressable, Switch, Text, Modal } from "react-native";
+import { View, StyleSheet, Pressable, Switch, Text, Modal, ActivityIndicator } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
@@ -19,6 +19,7 @@ import { Card } from "@/components/Card";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
+import { getApiUrl } from "@/lib/query-client";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -69,10 +70,16 @@ export default function ProfileScreen() {
   const navigation = useNavigation<NavigationProp>();
   const { user, logout } = useAuth();
 
+  const queryClient = useQueryClient();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [reminderTime, setReminderTime] = useState("8:00 AM");
   const [autoReplayEnabled, setAutoReplayEnabled] = useState(true);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
+  const [showSecurityModal, setShowSecurityModal] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const { data: stats } = useQuery({
     queryKey: ["/api/user/stats"],
@@ -103,7 +110,50 @@ export default function ProfileScreen() {
   };
 
   const handleReminderTime = () => {
-    Alert.alert("Reminder Time", "Time picker coming soon!");
+    // Time picker coming soon
+  };
+
+  const handleResetData = async () => {
+    setIsResetting(true);
+    try {
+      const response = await fetch(new URL("/api/user/reset", getApiUrl()).toString(), {
+        method: "POST",
+        credentials: "include",
+      });
+      
+      if (response.ok) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        // Invalidate queries to refresh the UI
+        queryClient.invalidateQueries({ queryKey: ["/api/affirmations"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/voice-samples"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/user/stats"] });
+        setShowResetModal(false);
+      }
+    } catch (error) {
+      console.error("Reset data error:", error);
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    try {
+      const response = await fetch(new URL("/api/user/account", getApiUrl()).toString(), {
+        method: "DELETE",
+        credentials: "include",
+      });
+      
+      if (response.ok) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        setShowDeleteAccountModal(false);
+        logout();
+      }
+    } catch (error) {
+      console.error("Delete account error:", error);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -239,30 +289,64 @@ export default function ProfileScreen() {
           <SettingItem
             icon="info"
             label="About Rewired"
-            onPress={() => Alert.alert(
-              "About Rewired",
-              "Version 1.0.0\n\nRewire your subconscious mind with personalized AI-powered audio affirmations in your own voice."
-            )}
+            value="Version 1.0.0"
           />
           <SettingItem
             icon="shield"
             label="Security & Privacy"
-            onPress={() => Alert.alert(
-              "Security Measures",
-              "Your data is protected by:\n\n" +
-              "\u2022 Password Hashing: Passwords are encrypted using bcrypt with secure salt rounds\n\n" +
-              "\u2022 Secure Sessions: Session-based authentication with HTTP-only cookies\n\n" +
-              "\u2022 Data Isolation: All your affirmations and voice data are private and accessible only to you\n\n" +
-              "\u2022 Voice Protection: Your cloned voice ID is stored securely and never shared\n\n" +
-              "\u2022 Encrypted Storage: All sensitive data is encrypted at rest\n\n" +
-              "\u2022 HTTPS: All data in transit is encrypted using TLS"
-            )}
+            onPress={() => setShowSecurityModal(true)}
           />
           <SettingItem
             icon="help-circle"
             label="Help & Support"
-            onPress={() => Alert.alert("Help", "Support documentation coming soon!")}
+            value="Get assistance"
           />
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+          DATA MANAGEMENT
+        </ThemedText>
+        <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
+          <Pressable
+            onPress={() => setShowResetModal(true)}
+            style={({ pressed }) => [
+              styles.settingItem,
+              { backgroundColor: pressed ? theme.backgroundSecondary : "transparent" },
+            ]}
+            testID="button-reset-data"
+          >
+            <View style={[styles.settingIcon, { backgroundColor: "#F5A62320" }]}>
+              <Feather name="refresh-cw" size={20} color="#F5A623" />
+            </View>
+            <View style={styles.settingContent}>
+              <ThemedText type="body">Reset All Data</ThemedText>
+              <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                Clear affirmations and voice samples
+              </ThemedText>
+            </View>
+            <Feather name="chevron-right" size={20} color={theme.textSecondary} />
+          </Pressable>
+          <Pressable
+            onPress={() => setShowDeleteAccountModal(true)}
+            style={({ pressed }) => [
+              styles.settingItem,
+              { backgroundColor: pressed ? theme.backgroundSecondary : "transparent" },
+            ]}
+            testID="button-delete-account"
+          >
+            <View style={[styles.settingIcon, { backgroundColor: "#E74C3C20" }]}>
+              <Feather name="trash-2" size={20} color="#E74C3C" />
+            </View>
+            <View style={styles.settingContent}>
+              <Text style={[styles.dangerText, { color: "#E74C3C" }]}>Delete Account</Text>
+              <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                Permanently remove your account
+              </ThemedText>
+            </View>
+            <Feather name="chevron-right" size={20} color={theme.textSecondary} />
+          </Pressable>
         </View>
       </View>
 
@@ -321,6 +405,149 @@ export default function ProfileScreen() {
                 <Text style={styles.confirmLogoutText}>Sign Out</Text>
               </Pressable>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showResetModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowResetModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: theme.cardBackground }]}>
+            <View style={[styles.modalIconContainer, { backgroundColor: "#F5A62320" }]}>
+              <Feather name="refresh-cw" size={32} color="#F5A623" />
+            </View>
+            <ThemedText type="subtitle" style={styles.modalTitle}>Reset All Data</ThemedText>
+            <ThemedText type="body" style={[styles.modalMessage, { color: theme.textSecondary }]}>
+              This will permanently delete all your affirmations and voice samples. Your account and preferences will be kept.
+            </ThemedText>
+            <View style={styles.modalButtons}>
+              <Pressable
+                onPress={() => setShowResetModal(false)}
+                style={[styles.modalButton, { backgroundColor: theme.backgroundSecondary }]}
+                testID="button-cancel-reset"
+                disabled={isResetting}
+              >
+                <ThemedText type="body">Cancel</ThemedText>
+              </Pressable>
+              <Pressable
+                onPress={handleResetData}
+                style={[styles.modalButton, { backgroundColor: "#F5A623" }]}
+                testID="button-confirm-reset"
+                disabled={isResetting}
+              >
+                {isResetting ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={styles.confirmLogoutText}>Reset Data</Text>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showDeleteAccountModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowDeleteAccountModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: theme.cardBackground }]}>
+            <View style={[styles.modalIconContainer, { backgroundColor: "#E74C3C20" }]}>
+              <Feather name="alert-triangle" size={32} color="#E74C3C" />
+            </View>
+            <ThemedText type="subtitle" style={styles.modalTitle}>Delete Account</ThemedText>
+            <ThemedText type="body" style={[styles.modalMessage, { color: theme.textSecondary }]}>
+              This action cannot be undone. All your data including affirmations, voice samples, and account information will be permanently deleted.
+            </ThemedText>
+            <View style={styles.modalButtons}>
+              <Pressable
+                onPress={() => setShowDeleteAccountModal(false)}
+                style={[styles.modalButton, { backgroundColor: theme.backgroundSecondary }]}
+                testID="button-cancel-delete"
+                disabled={isDeleting}
+              >
+                <ThemedText type="body">Cancel</ThemedText>
+              </Pressable>
+              <Pressable
+                onPress={handleDeleteAccount}
+                style={[styles.modalButton, { backgroundColor: "#E74C3C" }]}
+                testID="button-confirm-delete"
+                disabled={isDeleting}
+              >
+                {isDeleting ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={styles.confirmLogoutText}>Delete</Text>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showSecurityModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowSecurityModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.securityModalContent, { backgroundColor: theme.cardBackground }]}>
+            <View style={styles.securityHeader}>
+              <View style={[styles.modalIconContainer, { backgroundColor: theme.primary + "20" }]}>
+                <Feather name="shield" size={32} color={theme.primary} />
+              </View>
+              <ThemedText type="subtitle" style={styles.modalTitle}>Security & Privacy</ThemedText>
+            </View>
+            
+            <View style={styles.securitySection}>
+              <ThemedText type="body" style={styles.securitySectionTitle}>Data Protection</ThemedText>
+              <ThemedText type="small" style={[styles.securityText, { color: theme.textSecondary }]}>
+                Your passwords are encrypted using bcrypt with secure salt rounds. All sessions use HTTP-only cookies to prevent unauthorized access.
+              </ThemedText>
+            </View>
+
+            <View style={styles.securitySection}>
+              <ThemedText type="body" style={styles.securitySectionTitle}>Voice Data Security</ThemedText>
+              <ThemedText type="small" style={[styles.securityText, { color: theme.textSecondary }]}>
+                Your voice samples and cloned voice IDs are stored securely and are never shared with third parties. Only you can access your voice data.
+              </ThemedText>
+            </View>
+
+            <View style={styles.securitySection}>
+              <ThemedText type="body" style={styles.securitySectionTitle}>Data Isolation</ThemedText>
+              <ThemedText type="small" style={[styles.securityText, { color: theme.textSecondary }]}>
+                All affirmations and personal data are private and accessible only to you. Each user's data is completely isolated from others.
+              </ThemedText>
+            </View>
+
+            <View style={styles.securitySection}>
+              <ThemedText type="body" style={styles.securitySectionTitle}>Encryption</ThemedText>
+              <ThemedText type="small" style={[styles.securityText, { color: theme.textSecondary }]}>
+                All data in transit is encrypted using TLS/HTTPS. Sensitive data at rest is encrypted for additional security.
+              </ThemedText>
+            </View>
+
+            <View style={styles.securitySection}>
+              <ThemedText type="body" style={styles.securitySectionTitle}>Your Control</ThemedText>
+              <ThemedText type="small" style={[styles.securityText, { color: theme.textSecondary }]}>
+                You can reset your data or delete your account at any time from the Data Management section. We respect your right to control your personal information.
+              </ThemedText>
+            </View>
+
+            <Pressable
+              onPress={() => setShowSecurityModal(false)}
+              style={[styles.securityCloseButton, { backgroundColor: theme.primary }]}
+              testID="button-close-security"
+            >
+              <Text style={styles.confirmLogoutText}>Got It</Text>
+            </Pressable>
           </View>
         </View>
       </Modal>
@@ -436,5 +663,44 @@ const styles = StyleSheet.create({
     fontFamily: "Nunito_600SemiBold",
     fontSize: 16,
     color: "#FFFFFF",
+  },
+  dangerText: {
+    fontFamily: "Nunito_600SemiBold",
+    fontSize: 16,
+  },
+  modalIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: Spacing.md,
+  },
+  securityModalContent: {
+    width: "100%",
+    maxWidth: 340,
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.xl,
+  },
+  securityHeader: {
+    alignItems: "center",
+    marginBottom: Spacing.lg,
+  },
+  securitySection: {
+    marginBottom: Spacing.md,
+  },
+  securitySectionTitle: {
+    fontFamily: "Nunito_600SemiBold",
+    marginBottom: Spacing.xs,
+  },
+  securityText: {
+    lineHeight: 20,
+  },
+  securityCloseButton: {
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: Spacing.lg,
   },
 });

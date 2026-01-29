@@ -165,25 +165,36 @@ export async function textToSpeech(
 
 /**
  * Parse ElevenLabs character-level alignment data into word-level timing.
- * Supports both old format (characters array) and new format (chars/charStartTimesMs/charDurationsMs arrays)
+ * Supports multiple formats from ElevenLabs API:
+ * - Format 1: { characters: string[], character_start_times_seconds: number[], character_end_times_seconds: number[] }
+ * - Format 2: { chars: string[], charStartTimesMs: number[], charDurationsMs: number[] }
+ * - Format 3: { characters: [{character, start_time_ms, end_time_ms}, ...] }
  */
 function parseCharacterTimingsToWords(alignment: any): WordTiming[] {
   if (!alignment) {
+    console.log("No alignment data provided");
     return [];
   }
 
-  // Check for new format: separate arrays for characters and timings
-  if (alignment.chars && alignment.charStartTimesMs && alignment.charDurationsMs) {
+  // Log the alignment structure to debug
+  console.log("Alignment keys:", Object.keys(alignment));
+
+  // Format 1: characters array with start/end times in seconds (most common ElevenLabs format)
+  if (alignment.characters && Array.isArray(alignment.characters) && 
+      alignment.character_start_times_seconds && alignment.character_end_times_seconds) {
+    console.log("Using Format 1: characters + character_start_times_seconds");
     const words: WordTiming[] = [];
     let currentWord = "";
     let wordStartMs: number | null = null;
     let wordEndMs: number = 0;
 
-    for (let i = 0; i < alignment.chars.length; i++) {
-      const char = alignment.chars[i];
-      const startMs = alignment.charStartTimesMs[i];
-      const durationMs = alignment.charDurationsMs[i];
-      const endMs = startMs + durationMs;
+    for (let i = 0; i < alignment.characters.length; i++) {
+      const char = alignment.characters[i];
+      const startMs = Math.round(alignment.character_start_times_seconds[i] * 1000);
+      const endMs = Math.round(alignment.character_end_times_seconds[i] * 1000);
+      
+      // Skip undefined/null characters
+      if (char === undefined || char === null) continue;
       
       if (char === ' ' || char === '\n' || char === '\r' || char === '\t') {
         if (currentWord.length > 0 && wordStartMs !== null) {
@@ -204,11 +215,54 @@ function parseCharacterTimingsToWords(alignment: any): WordTiming[] {
       words.push({ word: currentWord, startMs: wordStartMs, endMs: wordEndMs });
     }
 
+    console.log(`Parsed ${words.length} words from Format 1`);
     return words;
   }
 
-  // Check for old format: characters array with objects
-  if (alignment.characters && Array.isArray(alignment.characters) && alignment.characters.length > 0) {
+  // Format 2: chars/charStartTimesMs/charDurationsMs arrays
+  if (alignment.chars && alignment.charStartTimesMs && alignment.charDurationsMs) {
+    console.log("Using Format 2: chars + charStartTimesMs");
+    const words: WordTiming[] = [];
+    let currentWord = "";
+    let wordStartMs: number | null = null;
+    let wordEndMs: number = 0;
+
+    for (let i = 0; i < alignment.chars.length; i++) {
+      const char = alignment.chars[i];
+      const startMs = alignment.charStartTimesMs[i];
+      const durationMs = alignment.charDurationsMs[i];
+      const endMs = startMs + durationMs;
+      
+      // Skip undefined/null characters
+      if (char === undefined || char === null) continue;
+      
+      if (char === ' ' || char === '\n' || char === '\r' || char === '\t') {
+        if (currentWord.length > 0 && wordStartMs !== null) {
+          words.push({ word: currentWord, startMs: wordStartMs, endMs: wordEndMs });
+        }
+        currentWord = "";
+        wordStartMs = null;
+      } else {
+        if (wordStartMs === null) {
+          wordStartMs = startMs;
+        }
+        currentWord += char;
+        wordEndMs = endMs;
+      }
+    }
+
+    if (currentWord.length > 0 && wordStartMs !== null) {
+      words.push({ word: currentWord, startMs: wordStartMs, endMs: wordEndMs });
+    }
+
+    console.log(`Parsed ${words.length} words from Format 2`);
+    return words;
+  }
+
+  // Format 3: characters as array of objects with character, start_time_ms, end_time_ms
+  if (alignment.characters && Array.isArray(alignment.characters) && 
+      alignment.characters.length > 0 && typeof alignment.characters[0] === 'object') {
+    console.log("Using Format 3: characters as objects");
     const words: WordTiming[] = [];
     let currentWord = "";
     let wordStartMs: number | null = null;
@@ -216,6 +270,9 @@ function parseCharacterTimingsToWords(alignment: any): WordTiming[] {
 
     for (const charData of alignment.characters) {
       const char = charData.character;
+      
+      // Skip undefined/null characters
+      if (char === undefined || char === null) continue;
       
       if (char === ' ' || char === '\n' || char === '\r' || char === '\t') {
         if (currentWord.length > 0 && wordStartMs !== null) {
@@ -236,11 +293,12 @@ function parseCharacterTimingsToWords(alignment: any): WordTiming[] {
       words.push({ word: currentWord, startMs: wordStartMs, endMs: wordEndMs });
     }
 
+    console.log(`Parsed ${words.length} words from Format 3`);
     return words;
   }
 
-  // No recognized format - return empty array
-  console.log("Unrecognized alignment format:", JSON.stringify(alignment).substring(0, 200));
+  // No recognized format - log detailed info and return empty array
+  console.log("Unrecognized alignment format. Full structure:", JSON.stringify(alignment).substring(0, 500));
   return [];
 }
 

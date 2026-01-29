@@ -54,13 +54,13 @@ export default function PlayerScreen() {
     position,
     duration,
     autoReplay,
+    playbackSpeed,
     playAffirmation,
     togglePlayPause,
     setAutoReplay,
+    setPlaybackSpeed,
     stop,
   } = useAudio();
-
-  const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [rsvpEnabled, setRsvpEnabled] = useState(true);
   const [rsvpFontSize, setRsvpFontSize] = useState<RSVPFontSize>("M");
   const [rsvpHighlight, setRsvpHighlight] = useState(true);
@@ -186,23 +186,37 @@ export default function PlayerScreen() {
   }, []);
 
   const wordTimings: WordTiming[] = useMemo(() => {
+    const generateFallbackTimings = () => {
+      if (!affirmation?.script) return [];
+      const words = affirmation.script.split(/\s+/).filter(w => w.length > 0);
+      const durationMs = (affirmation.duration || 30) * 1000;
+      const avgWordDurationMs = durationMs / words.length;
+      return words.map((word, index) => ({
+        word,
+        startMs: Math.round(index * avgWordDurationMs),
+        endMs: Math.round((index + 1) * avgWordDurationMs),
+      }));
+    };
+
     if (!affirmation?.wordTimings) {
-      if (affirmation?.script) {
-        const words = affirmation.script.split(/\s+/).filter(w => w.length > 0);
-        const durationMs = (affirmation.duration || 30) * 1000;
-        const avgWordDurationMs = durationMs / words.length;
-        return words.map((word, index) => ({
-          word,
-          startMs: Math.round(index * avgWordDurationMs),
-          endMs: Math.round((index + 1) * avgWordDurationMs),
-        }));
-      }
-      return [];
+      return generateFallbackTimings();
     }
+    
     try {
-      return JSON.parse(affirmation.wordTimings);
+      const parsed = JSON.parse(affirmation.wordTimings);
+      
+      if (!Array.isArray(parsed) || parsed.length === 0) {
+        return generateFallbackTimings();
+      }
+      
+      const firstWord = parsed[0]?.word;
+      if (typeof firstWord === 'string' && firstWord.includes('undefined')) {
+        return generateFallbackTimings();
+      }
+      
+      return parsed;
     } catch {
-      return [];
+      return generateFallbackTimings();
     }
   }, [affirmation?.wordTimings, affirmation?.script, affirmation?.duration]);
 

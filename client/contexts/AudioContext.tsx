@@ -10,6 +10,7 @@ interface AudioState {
   duration: number;
   isLoading: boolean;
   autoReplay: boolean;
+  playbackSpeed: number;
 }
 
 interface AudioContextType extends AudioState {
@@ -18,6 +19,7 @@ interface AudioContextType extends AudioState {
   stop: () => Promise<void>;
   seek: (position: number) => Promise<void>;
   setAutoReplay: (enabled: boolean) => void;
+  setPlaybackSpeed: (speed: number) => void;
 }
 
 const AudioContext = createContext<AudioContextType | null>(null);
@@ -37,6 +39,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const [duration, setDuration] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [autoReplay, setAutoReplayState] = useState(true);
+  const [playbackSpeed, setPlaybackSpeedState] = useState(1);
   const soundRef = useRef<Audio.Sound | null>(null);
   const isOperationInProgress = useRef(false);
 
@@ -192,6 +195,13 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const setPlaybackSpeed = useCallback((speed: number) => {
+    setPlaybackSpeedState(speed);
+    if (soundRef.current) {
+      soundRef.current.setRateAsync(speed, true);
+    }
+  }, []);
+
   return (
     <AudioContext.Provider
       value={{
@@ -201,11 +211,13 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         duration,
         isLoading,
         autoReplay,
+        playbackSpeed,
         playAffirmation,
         togglePlayPause,
         stop,
         seek,
         setAutoReplay,
+        setPlaybackSpeed,
       }}
     >
       {children}

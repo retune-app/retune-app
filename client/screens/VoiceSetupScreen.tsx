@@ -72,6 +72,7 @@ export default function VoiceSetupScreen() {
           method: "POST",
           body: formData,
           signal: controller.signal,
+          credentials: "include",
         });
 
         clearTimeout(timeoutId);

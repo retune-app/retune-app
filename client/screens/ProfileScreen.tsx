@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, Pressable, Switch, Alert, Text } from "react-native";
+import { View, StyleSheet, Pressable, Switch, Text, Modal } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -72,6 +72,7 @@ export default function ProfileScreen() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [reminderTime, setReminderTime] = useState("8:00 AM");
   const [autoReplayEnabled, setAutoReplayEnabled] = useState(true);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const { data: stats } = useQuery({
     queryKey: ["/api/user/stats"],
@@ -271,23 +272,7 @@ export default function ProfileScreen() {
         </ThemedText>
         <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
           <Pressable
-            onPress={() => {
-              Alert.alert(
-                "Sign Out",
-                "Are you sure you want to sign out?",
-                [
-                  { text: "Cancel", style: "cancel" },
-                  {
-                    text: "Sign Out",
-                    style: "destructive",
-                    onPress: () => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                      logout();
-                    },
-                  },
-                ]
-              );
-            }}
+            onPress={() => setShowLogoutModal(true)}
             style={({ pressed }) => [
               styles.settingItem,
               { backgroundColor: pressed ? theme.backgroundSecondary : "transparent" },
@@ -303,6 +288,42 @@ export default function ProfileScreen() {
           </Pressable>
         </View>
       </View>
+
+      <Modal
+        visible={showLogoutModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowLogoutModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: theme.cardBackground }]}>
+            <ThemedText type="subtitle" style={styles.modalTitle}>Sign Out</ThemedText>
+            <ThemedText type="body" style={[styles.modalMessage, { color: theme.textSecondary }]}>
+              Are you sure you want to sign out?
+            </ThemedText>
+            <View style={styles.modalButtons}>
+              <Pressable
+                onPress={() => setShowLogoutModal(false)}
+                style={[styles.modalButton, { backgroundColor: theme.backgroundSecondary }]}
+                testID="button-cancel-logout"
+              >
+                <ThemedText type="body">Cancel</ThemedText>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  setShowLogoutModal(false);
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  logout();
+                }}
+                style={[styles.modalButton, { backgroundColor: "#E74C3C" }]}
+                testID="button-confirm-logout"
+              >
+                <Text style={styles.confirmLogoutText}>Sign Out</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAwareScrollViewCompat>
   );
 }
@@ -376,5 +397,44 @@ const styles = StyleSheet.create({
   logoutText: {
     fontFamily: "Nunito_600SemiBold",
     fontSize: 16,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: Spacing.xl,
+  },
+  modalContent: {
+    width: "100%",
+    maxWidth: 320,
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.xl,
+    alignItems: "center",
+  },
+  modalTitle: {
+    marginBottom: Spacing.sm,
+    textAlign: "center",
+  },
+  modalMessage: {
+    textAlign: "center",
+    marginBottom: Spacing.xl,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    gap: Spacing.md,
+    width: "100%",
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  confirmLogoutText: {
+    fontFamily: "Nunito_600SemiBold",
+    fontSize: 16,
+    color: "#FFFFFF",
   },
 });

@@ -31,7 +31,21 @@ Preferred communication style: Simple, everyday language.
 - **Voice Samples**: Uploaded voice recordings used for voice cloning
 - **Categories**: Affirmation categories (Career, Health, Confidence, Wealth, Relationships, Sleep)
 
+### Authentication
+- **Session-based auth**: Express-session with secure HTTP-only cookies
+- **Password hashing**: bcrypt with 12 salt rounds
+- **Data isolation**: All user data (affirmations, voice samples) is associated with user IDs
+- **Frontend AuthContext**: React context for auth state management with login, signup, logout functions
+
 ### API Endpoints
+
+#### Authentication
+- `POST /api/auth/signup` - Register new user (expects name, email, password)
+- `POST /api/auth/login` - Login user (expects email, password)
+- `POST /api/auth/logout` - Logout current user
+- `GET /api/auth/me` - Get current authenticated user
+
+#### Affirmations (all require auth)
 - `GET /api/affirmations` - List all affirmations
 - `GET /api/affirmations/:id` - Get single affirmation
 - `POST /api/affirmations/generate-script` - Generate AI script from goal

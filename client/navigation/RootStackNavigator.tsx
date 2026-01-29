@@ -10,7 +10,7 @@ import { AuthScreen } from "@/screens/AuthScreen";
 import { MiniPlayer } from "@/components/MiniPlayer";
 import { useScreenOptions } from "@/hooks/useScreenOptions";
 import { useAuth } from "@/contexts/AuthContext";
-import { useTheme } from "@/constants/theme";
+import { useTheme } from "@/hooks/useTheme";
 
 export type RootStackParamList = {
   Auth: undefined;
@@ -39,7 +39,7 @@ function MiniPlayerWrapper({ currentRoute }: { currentRoute: string }) {
 
 export default function RootStackNavigator() {
   const screenOptions = useScreenOptions();
-  const theme = useTheme();
+  const { theme } = useTheme();
   const { isAuthenticated, isLoading } = useAuth();
   const [currentRoute, setCurrentRoute] = useState<string>('Main');
 

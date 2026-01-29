@@ -42,27 +42,31 @@ export function setupAuth(app: Express) {
     })
   );
 
-  // Register new user
-  app.post("/api/auth/register", async (req: Request, res: Response) => {
+  // Register new user (signup)
+  app.post("/api/auth/signup", async (req: Request, res: Response) => {
     try {
-      const { username, password, displayName } = req.body;
+      const { name, email, password } = req.body;
 
-      if (!username || !password) {
-        return res.status(400).json({ error: "Username and password are required" });
+      if (!email || !password) {
+        return res.status(400).json({ error: "Email and password are required" });
+      }
+
+      if (!name) {
+        return res.status(400).json({ error: "Name is required" });
       }
 
       if (password.length < 8) {
         return res.status(400).json({ error: "Password must be at least 8 characters" });
       }
 
-      // Check if username exists
+      // Check if email exists
       const [existingUser] = await db
         .select()
         .from(users)
-        .where(eq(users.username, username.toLowerCase()));
+        .where(eq(users.email, email.toLowerCase()));
 
       if (existingUser) {
-        return res.status(400).json({ error: "Username already taken" });
+        return res.status(400).json({ error: "Email already registered" });
       }
 
       // Hash password and create user
@@ -70,9 +74,9 @@ export function setupAuth(app: Express) {
       const [newUser] = await db
         .insert(users)
         .values({
-          username: username.toLowerCase(),
+          email: email.toLowerCase(),
           password: hashedPassword,
-          displayName: displayName || username,
+          name: name,
         })
         .returning();
 
@@ -82,8 +86,8 @@ export function setupAuth(app: Express) {
       res.json({
         user: {
           id: newUser.id,
-          username: newUser.username,
-          displayName: newUser.displayName,
+          email: newUser.email,
+          name: newUser.name,
           hasVoiceSample: newUser.hasVoiceSample,
         },
       });
@@ -96,24 +100,24 @@ export function setupAuth(app: Express) {
   // Login
   app.post("/api/auth/login", async (req: Request, res: Response) => {
     try {
-      const { username, password } = req.body;
+      const { email, password } = req.body;
 
-      if (!username || !password) {
-        return res.status(400).json({ error: "Username and password are required" });
+      if (!email || !password) {
+        return res.status(400).json({ error: "Email and password are required" });
       }
 
       const [user] = await db
         .select()
         .from(users)
-        .where(eq(users.username, username.toLowerCase()));
+        .where(eq(users.email, email.toLowerCase()));
 
       if (!user) {
-        return res.status(401).json({ error: "Invalid username or password" });
+        return res.status(401).json({ error: "Invalid email or password" });
       }
 
       const isValid = await verifyPassword(password, user.password);
       if (!isValid) {
-        return res.status(401).json({ error: "Invalid username or password" });
+        return res.status(401).json({ error: "Invalid email or password" });
       }
 
       // Set session
@@ -122,13 +126,13 @@ export function setupAuth(app: Express) {
       res.json({
         user: {
           id: user.id,
-          username: user.username,
-          displayName: user.displayName,
+          email: user.email,
+          name: user.name,
           hasVoiceSample: user.hasVoiceSample,
         },
       });
-    } catch (error) {
-      console.error("Login error:", error);
+    } catch (error: any) {
+      console.error("Login error:", error?.message || error);
       res.status(500).json({ error: "Failed to login" });
     }
   });
@@ -165,8 +169,8 @@ export function setupAuth(app: Express) {
       res.json({
         user: {
           id: user.id,
-          username: user.username,
-          displayName: user.displayName,
+          email: user.email,
+          name: user.name,
           hasVoiceSample: user.hasVoiceSample,
           voiceId: user.voiceId,
         },

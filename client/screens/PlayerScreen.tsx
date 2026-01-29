@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { View, StyleSheet, Pressable, Alert } from "react-native";
+import { View, StyleSheet, Pressable, Alert, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
@@ -8,6 +8,7 @@ import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import { Audio } from "expo-av";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -26,6 +27,8 @@ import { apiRequest, getApiUrl } from "@/lib/query-client";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import type { Affirmation } from "@shared/schema";
 
+const AUTO_REPLAY_KEY = "@settings/autoReplay";
+
 type PlayerRouteProp = RouteProp<RootStackParamList, "Player">;
 
 export default function PlayerScreen() {
@@ -39,7 +42,7 @@ export default function PlayerScreen() {
   const { affirmationId } = route.params;
 
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isLooping, setIsLooping] = useState(false);
+  const [autoReplay, setAutoReplay] = useState(true);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [position, setPosition] = useState(0);
@@ -50,6 +53,14 @@ export default function PlayerScreen() {
   const { data: affirmation, isLoading } = useQuery<Affirmation>({
     queryKey: ["/api/affirmations", affirmationId],
   });
+
+  useEffect(() => {
+    AsyncStorage.getItem(AUTO_REPLAY_KEY).then((value) => {
+      if (value !== null) {
+        setAutoReplay(value === "true");
+      }
+    });
+  }, []);
 
   const favoriteMutation = useMutation({
     mutationFn: async () => {
@@ -85,12 +96,12 @@ export default function PlayerScreen() {
       try {
         const { sound: newSound } = await Audio.Sound.createAsync(
           { uri: `${getApiUrl()}${affirmation.audioUrl}` },
-          { shouldPlay: false, isLooping },
+          { shouldPlay: false, isLooping: autoReplay },
           (status) => {
             if (status.isLoaded) {
               setPosition(status.positionMillis || 0);
               setDuration(status.durationMillis || 0);
-              if (status.didJustFinish && !isLooping) {
+              if (status.didJustFinish && !autoReplay) {
                 setIsPlaying(false);
               }
             }
@@ -101,7 +112,7 @@ export default function PlayerScreen() {
         console.error("Error loading sound:", error);
       }
     }
-  }, [affirmation?.audioUrl, isLooping]);
+  }, [affirmation?.audioUrl, autoReplay]);
 
   useEffect(() => {
     loadSound();
@@ -123,12 +134,13 @@ export default function PlayerScreen() {
     setIsPlaying(!isPlaying);
   };
 
-  const handleLoop = async () => {
+  const handleAutoReplay = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const newLooping = !isLooping;
-    setIsLooping(newLooping);
+    const newAutoReplay = !autoReplay;
+    setAutoReplay(newAutoReplay);
+    await AsyncStorage.setItem(AUTO_REPLAY_KEY, String(newAutoReplay));
     if (sound) {
-      await sound.setIsLoopingAsync(newLooping);
+      await sound.setIsLoopingAsync(newAutoReplay);
     }
   };
 
@@ -210,17 +222,17 @@ export default function PlayerScreen() {
 
         <View style={styles.controls}>
           <Pressable
-            onPress={handleLoop}
+            onPress={handleAutoReplay}
             style={({ pressed }) => [
               styles.secondaryControl,
-              { opacity: pressed ? 0.7 : 1, backgroundColor: isLooping ? theme.primary + "20" : "transparent" },
+              { opacity: pressed ? 0.7 : 1, backgroundColor: autoReplay ? theme.primary + "20" : "transparent" },
             ]}
-            testID="button-loop"
+            testID="button-auto-replay"
           >
             <Feather
               name="repeat"
               size={24}
-              color={isLooping ? theme.primary : theme.textSecondary}
+              color={autoReplay ? theme.primary : theme.textSecondary}
             />
           </Pressable>
 
@@ -279,9 +291,15 @@ export default function PlayerScreen() {
             <ThemedText type="caption" style={{ color: theme.textSecondary, marginBottom: Spacing.xs }}>
               SCRIPT
             </ThemedText>
-            <ThemedText type="body" style={{ lineHeight: 24 }} numberOfLines={4}>
-              {affirmation.script}
-            </ThemedText>
+            <ScrollView 
+              style={styles.scriptScroll} 
+              showsVerticalScrollIndicator={true}
+              nestedScrollEnabled={true}
+            >
+              <ThemedText type="body" style={{ lineHeight: 24 }}>
+                {affirmation.script}
+              </ThemedText>
+            </ScrollView>
           </View>
         ) : null}
       </View>
@@ -379,5 +397,10 @@ const styles = StyleSheet.create({
     width: "100%",
     padding: Spacing.lg,
     borderRadius: BorderRadius.lg,
+    maxHeight: 150,
+    flex: 1,
+  },
+  scriptScroll: {
+    maxHeight: 100,
   },
 });

@@ -25,6 +25,8 @@ import type { Affirmation } from "@shared/schema";
 
 const AUTO_REPLAY_KEY = "@settings/autoReplay";
 const RSVP_ENABLED_KEY = "@settings/rsvpEnabled";
+const SETTINGS_VERSION_KEY = "@settings/version";
+const CURRENT_SETTINGS_VERSION = "2"; // Increment to reset defaults
 const RSVP_FONT_SIZE_KEY = "@settings/rsvpFontSize";
 const RSVP_HIGHLIGHT_KEY = "@settings/rsvpHighlight";
 const SHOW_SCRIPT_KEY = "@settings/showScript";
@@ -157,31 +159,44 @@ export default function PlayerScreen() {
   }, [navigation, handleSave, handleDelete, autoSaveMutation.isPending, theme, isNew]);
 
   useEffect(() => {
-    AsyncStorage.getItem(AUTO_REPLAY_KEY).then((value) => {
-      if (value !== null) {
-        setAutoReplay(value === "true");
+    const loadSettings = async () => {
+      // Check if we need to reset settings to new defaults
+      const storedVersion = await AsyncStorage.getItem(SETTINGS_VERSION_KEY);
+      if (storedVersion !== CURRENT_SETTINGS_VERSION) {
+        // Reset RSVP and Show Script to new defaults
+        await AsyncStorage.setItem(RSVP_ENABLED_KEY, "true");
+        await AsyncStorage.setItem(SHOW_SCRIPT_KEY, "false");
+        await AsyncStorage.setItem(SETTINGS_VERSION_KEY, CURRENT_SETTINGS_VERSION);
+        setRsvpEnabled(true);
+        setShowScript(false);
+      } else {
+        // Load saved settings
+        const rsvpValue = await AsyncStorage.getItem(RSVP_ENABLED_KEY);
+        if (rsvpValue !== null) {
+          setRsvpEnabled(rsvpValue === "true");
+        }
+        const showScriptValue = await AsyncStorage.getItem(SHOW_SCRIPT_KEY);
+        if (showScriptValue !== null) {
+          setShowScript(showScriptValue === "true");
+        }
       }
-    });
-    AsyncStorage.getItem(RSVP_ENABLED_KEY).then((value) => {
-      if (value !== null) {
-        setRsvpEnabled(value === "true");
+
+      // Load other settings normally
+      const autoReplayValue = await AsyncStorage.getItem(AUTO_REPLAY_KEY);
+      if (autoReplayValue !== null) {
+        setAutoReplay(autoReplayValue === "true");
       }
-    });
-    AsyncStorage.getItem(RSVP_FONT_SIZE_KEY).then((value) => {
-      if (value !== null && ["S", "M", "L", "XL"].includes(value)) {
-        setRsvpFontSize(value as RSVPFontSize);
+      const fontSizeValue = await AsyncStorage.getItem(RSVP_FONT_SIZE_KEY);
+      if (fontSizeValue !== null && ["S", "M", "L", "XL"].includes(fontSizeValue)) {
+        setRsvpFontSize(fontSizeValue as RSVPFontSize);
       }
-    });
-    AsyncStorage.getItem(RSVP_HIGHLIGHT_KEY).then((value) => {
-      if (value !== null) {
-        setRsvpHighlight(value === "true");
+      const highlightValue = await AsyncStorage.getItem(RSVP_HIGHLIGHT_KEY);
+      if (highlightValue !== null) {
+        setRsvpHighlight(highlightValue === "true");
       }
-    });
-    AsyncStorage.getItem(SHOW_SCRIPT_KEY).then((value) => {
-      if (value !== null) {
-        setShowScript(value === "true");
-      }
-    });
+    };
+
+    loadSettings();
   }, []);
 
   const wordTimings: WordTiming[] = useMemo(() => {

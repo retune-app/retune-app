@@ -47,11 +47,11 @@ export default function CreateScreen() {
   const [regenerateCount, setRegenerateCount] = useState(0);
 
   const generateMutation = useMutation({
-    mutationFn: async (goalText: string) => {
+    mutationFn: async ({ goalText, category, length }: { goalText: string; category: string; length: string }) => {
       const res = await apiRequest("POST", "/api/affirmations/generate-script", {
         goal: goalText,
-        category: selectedCategory,
-        length: selectedLength.toLowerCase(),
+        category,
+        length,
       });
       return res.json();
     },
@@ -89,7 +89,11 @@ export default function CreateScreen() {
       Alert.alert("Enter a Goal", "Please describe what you want to achieve.");
       return;
     }
-    generateMutation.mutate(goal);
+    generateMutation.mutate({
+      goalText: goal,
+      category: selectedCategory,
+      length: selectedLength.toLowerCase(),
+    });
   };
 
   const handleRegenerate = () => {
@@ -98,7 +102,11 @@ export default function CreateScreen() {
       return;
     }
     setRegenerateCount((prev) => prev + 1);
-    generateMutation.mutate(goal);
+    generateMutation.mutate({
+      goalText: goal,
+      category: selectedCategory,
+      length: selectedLength.toLowerCase(),
+    });
   };
 
   const handleCreate = () => {

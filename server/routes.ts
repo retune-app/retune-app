@@ -63,7 +63,9 @@ async function generateAudio(
 ): Promise<{ audio: ArrayBuffer; duration: number }> {
   try {
     // Try ElevenLabs first (for cloned voices or better quality)
+    console.log("Attempting ElevenLabs TTS with voiceId:", voiceId);
     const result = await elevenLabsTTS(script, voiceId);
+    console.log("ElevenLabs TTS succeeded");
     return result;
   } catch (error) {
     console.error("ElevenLabs TTS failed, falling back to OpenAI:", error);
@@ -164,6 +166,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .where(eq(voiceSamples.status, "ready"))
         .orderBy(desc(voiceSamples.createdAt))
         .limit(1);
+
+      console.log("Voice sample found:", voiceSample);
+      console.log("Using voiceId:", voiceSample?.voiceId);
 
       // Generate audio
       const audioResult = await generateAudio(

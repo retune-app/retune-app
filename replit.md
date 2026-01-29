@@ -55,6 +55,10 @@ Preferred communication style: Simple, everyday language.
 - `GET /api/voice-samples/status` - Check if user has a cloned voice
 - `GET /api/user/stats` - Get user statistics
 
+#### User Data Management (all require auth)
+- `POST /api/user/reset` - Reset all user data (affirmations, voice samples, cloned voice) while keeping account
+- `POST /api/user/account/delete` - Permanently delete user account and all associated data
+
 ### Audio Pipeline
 1. User records 30-60 second voice sample during onboarding
 2. Sample uploaded to server and sent to ElevenLabs for voice cloning

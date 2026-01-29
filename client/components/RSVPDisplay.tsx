@@ -154,9 +154,6 @@ export function RSVPDisplay({
       </View>
 
       <Animated.View style={[styles.wordContainer, animatedStyle]}>
-        {showHighlight && (
-          <View style={[styles.fixationLine, { backgroundColor: theme.accent }]} />
-        )}
         {currentWord &&
           renderWordWithORP(
             currentWord.word,
@@ -206,14 +203,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     minHeight: 100,
-    position: "relative",
-  },
-  fixationLine: {
-    position: "absolute",
-    width: 2,
-    height: 20,
-    top: -10,
-    opacity: 0.6,
   },
   word: {
     fontFamily: "Nunito_700Bold",

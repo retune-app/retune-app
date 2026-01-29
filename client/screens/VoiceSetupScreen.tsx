@@ -5,7 +5,7 @@ import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Audio } from "expo-av";
-import * as FileSystem from "expo-file-system";
+import { File } from "expo-file-system/next";
 import * as Haptics from "expo-haptics";
 
 import { ThemedText } from "@/components/ThemedText";
@@ -15,24 +15,18 @@ import { RecordButton } from "@/components/RecordButton";
 import { WaveformVisualizer } from "@/components/WaveformVisualizer";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
-import { apiRequest, getApiUrl } from "@/lib/query-client";
+import { getApiUrl } from "@/lib/query-client";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-const READING_PROMPTS = `I am absolutely crushing it today, and honestly, every day. My morning coffee tastes like liquid success, and my bed makes itself out of respect for my energy.
+const READING_PROMPTS = `I am absolutely crushing it today. My morning coffee tastes like liquid success, and my bed makes itself out of respect for my energy.
 
-I radiate confidence like a disco ball at a dance party. People see me walking down the street and think, "Wow, that person definitely has their life together," and they would be absolutely right.
+I radiate confidence like a disco ball at a dance party. People see me walking down the street and think, "Wow, that person definitely has their life together."
 
-My plants thrive because they can sense my positive vibes. Even my houseplants have started growing towards me instead of the window. That's just the kind of energy I bring.
-
-I attract abundance like a magnet attracts... well, magnets attract a lot of things, but mostly good stuff when it comes to me. Money, opportunities, and compliments flow to me effortlessly.
+My plants thrive because they can sense my positive vibes. Even my houseplants have started growing towards me instead of the window.
 
 I am patient, I am kind, and I am ridiculously good at parallel parking. Some people have talents, but I have the whole package.
-
-Every cell in my body is vibrating with joy and excellent health. My immune system is basically a team of tiny superheroes wearing capes made of positive thoughts.
-
-I forgive myself for eating that entire pizza last Tuesday. It was delicious, I regret nothing, and my body processed it with grace and efficiency.
 
 I am becoming the best version of myself, which is really saying something because the current version is already pretty fantastic.`;
 
@@ -60,8 +54,8 @@ export default function VoiceSetupScreen() {
         const blob = await response.blob();
         formData.append("audio", blob, "voice-sample.webm");
       } else {
-        const fileInfo = await FileSystem.getInfoAsync(uri);
-        if (!fileInfo.exists) throw new Error("Recording file not found");
+        const file = new File(uri);
+        if (!file.exists) throw new Error("Recording file not found");
         
         formData.append("audio", {
           uri,

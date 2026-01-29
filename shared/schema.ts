@@ -68,7 +68,7 @@ export const affirmations = pgTable("affirmations", {
 // Voice samples for cloning
 export const voiceSamples = pgTable("voice_samples", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  userId: varchar("user_id"),
   audioUrl: text("audio_url").notNull(),
   duration: integer("duration"),
   voiceId: text("voice_id"),

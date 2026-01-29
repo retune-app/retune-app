@@ -259,7 +259,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const [sample] = await db
           .insert(voiceSamples)
           .values({
-            userId: "default-user",
             audioUrl: `/uploads/${file.filename}`,
             status: "processing",
           })

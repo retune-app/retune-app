@@ -3,8 +3,8 @@
 
 import { ElevenLabsClient } from "elevenlabs";
 import WebSocket from "ws";
-import FormData from "form-data";
 import fs from "fs";
+import path from "path";
 
 let connectionSettings: any;
 
@@ -55,21 +55,22 @@ export async function cloneVoice(
 ): Promise<string> {
   const apiKey = await getCredentials();
 
+  // Read the file as a buffer
+  const fileBuffer = fs.readFileSync(audioFilePath);
+  const fileName = path.basename(audioFilePath);
+  
+  // Create FormData using native Node.js FormData
   const formData = new FormData();
   formData.append("name", name);
-  formData.append("files", fs.createReadStream(audioFilePath));
-  formData.append(
-    "description",
-    "User voice for personalized affirmations"
-  );
+  formData.append("files", new Blob([fileBuffer]), fileName);
+  formData.append("description", "User voice for personalized affirmations");
 
   const response = await fetch("https://api.elevenlabs.io/v1/voices/add", {
     method: "POST",
     headers: {
       "xi-api-key": apiKey,
-      ...formData.getHeaders(),
     },
-    body: formData as any,
+    body: formData,
   });
 
   if (!response.ok) {

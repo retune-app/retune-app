@@ -195,13 +195,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
   setupAuth(app);
 
-  // Serve uploaded audio files (protected - only authenticated users can access their files)
-  app.use("/uploads", (req: AuthenticatedRequest, res, next) => {
-    const filePath = path.join(uploadDir, req.path);
-    if (fs.existsSync(filePath)) {
+  // Serve uploaded audio files with SECURE authentication and ownership verification
+  app.get("/uploads/:filename", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const filename = req.params.filename;
+      const filePath = path.join(uploadDir, filename);
+      
+      // Check if file exists
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: "File not found" });
+      }
+      
+      // Verify ownership: Check if this file belongs to user's affirmation
+      const [affirmation] = await db
+        .select()
+        .from(affirmations)
+        .where(and(
+          eq(affirmations.audioUrl, `/uploads/${filename}`),
+          eq(affirmations.userId, req.userId!)
+        ))
+        .limit(1);
+      
+      // Also check voice samples
+      const [voiceSample] = await db
+        .select()
+        .from(voiceSamples)
+        .where(and(
+          eq(voiceSamples.audioUrl, `/uploads/${filename}`),
+          eq(voiceSamples.userId, req.userId!)
+        ))
+        .limit(1);
+      
+      if (!affirmation && !voiceSample) {
+        console.log(`SECURITY: User ${req.userId} attempted to access file ${filename} without permission`);
+        return res.status(403).json({ error: "Access denied" });
+      }
+      
+      console.log(`SECURE ACCESS: User ${req.userId} accessing owned file ${filename}`);
       res.sendFile(filePath);
-    } else {
-      res.status(404).json({ error: "File not found" });
+    } catch (error) {
+      console.error("Error serving file:", error);
+      res.status(500).json({ error: "Failed to serve file" });
     }
   });
 

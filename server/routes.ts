@@ -198,8 +198,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Serve uploaded audio files with SECURE authentication and ownership verification
   app.get("/uploads/:filename", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const filename = req.params.filename;
+      const rawFilename = req.params.filename;
+      
+      // SECURITY: Sanitize filename to prevent path traversal attacks (e.g., ../../etc/passwd)
+      const filename = path.basename(rawFilename);
+      
+      // SECURITY: Reject any filename that doesn't match expected pattern
+      if (!/^(affirmation|voice)-\d+(-\d+)?\.(mp3|m4a|wav|webm)$/.test(filename)) {
+        console.log(`SECURITY: Rejected malformed filename: ${rawFilename}`);
+        return res.status(400).json({ error: "Invalid filename format" });
+      }
+      
       const filePath = path.join(uploadDir, filename);
+      
+      // SECURITY: Verify resolved path is within uploads directory (defense in depth)
+      const resolvedPath = path.resolve(filePath);
+      const resolvedUploadDir = path.resolve(uploadDir);
+      if (!resolvedPath.startsWith(resolvedUploadDir + path.sep)) {
+        console.log(`SECURITY: Path traversal attempt blocked: ${rawFilename}`);
+        return res.status(403).json({ error: "Access denied" });
+      }
       
       // Check if file exists
       if (!fs.existsSync(filePath)) {
@@ -400,11 +418,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Affirmation not found" });
       }
       
-      // Delete audio file if exists
+      // Delete audio file if exists (with path sanitization)
       if (affirmation.audioUrl) {
-        const audioPath = path.join(process.cwd(), affirmation.audioUrl);
-        if (fs.existsSync(audioPath)) {
-          fs.unlinkSync(audioPath);
+        // SECURITY: Extract just the filename and validate it
+        const filename = path.basename(affirmation.audioUrl);
+        
+        // SECURITY: Verify filename matches expected pattern before deletion
+        if (/^(affirmation|voice)-\d+(-\d+)?\.(mp3|m4a|wav|webm)$/.test(filename)) {
+          const audioPath = path.join(uploadDir, filename);
+          
+          // SECURITY: Verify resolved path is within uploads directory
+          const resolvedPath = path.resolve(audioPath);
+          const resolvedUploadDir = path.resolve(uploadDir);
+          
+          if (resolvedPath.startsWith(resolvedUploadDir + path.sep) && fs.existsSync(audioPath)) {
+            fs.unlinkSync(audioPath);
+            console.log(`SECURE DELETE: Removed audio file ${filename}`);
+          }
+        } else {
+          console.log(`SECURITY: Skipped deletion of invalid filename pattern: ${affirmation.audioUrl}`);
         }
       }
       

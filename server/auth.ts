@@ -1,9 +1,37 @@
 import bcrypt from "bcrypt";
+import crypto from "crypto";
 import session from "express-session";
 import type { Express, Request, Response, NextFunction } from "express";
 import { db } from "./db";
 import { users, authTokens } from "@shared/schema";
 import { eq, and, gt } from "drizzle-orm";
+
+// Simple in-memory rate limiting for auth endpoints
+const loginAttempts = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutes
+const MAX_ATTEMPTS = 5;
+
+function checkRateLimit(ip: string): { allowed: boolean; retryAfter?: number } {
+  const now = Date.now();
+  const attempt = loginAttempts.get(ip);
+  
+  if (!attempt || now > attempt.resetTime) {
+    loginAttempts.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+    return { allowed: true };
+  }
+  
+  if (attempt.count >= MAX_ATTEMPTS) {
+    const retryAfter = Math.ceil((attempt.resetTime - now) / 1000);
+    return { allowed: false, retryAfter };
+  }
+  
+  attempt.count++;
+  return { allowed: true };
+}
+
+function resetRateLimit(ip: string): void {
+  loginAttempts.delete(ip);
+}
 
 declare module "express-session" {
   interface SessionData {
@@ -107,10 +135,23 @@ export function setupAuth(app: Express) {
     }
   });
 
-  // Login
+  // Login with rate limiting
   app.post("/api/auth/login", async (req: Request, res: Response) => {
     try {
       const { email, password } = req.body;
+      
+      // SECURITY: Rate limit login attempts to prevent brute force attacks
+      const clientIp = req.ip || req.headers["x-forwarded-for"] as string || "unknown";
+      const rateLimitCheck = checkRateLimit(clientIp);
+      
+      if (!rateLimitCheck.allowed) {
+        console.log(`SECURITY: Rate limit exceeded for IP ${clientIp}`);
+        res.setHeader("Retry-After", rateLimitCheck.retryAfter!.toString());
+        return res.status(429).json({ 
+          error: "Too many login attempts. Please try again later.",
+          retryAfter: rateLimitCheck.retryAfter
+        });
+      }
 
       if (!email || !password) {
         return res.status(400).json({ error: "Email and password are required" });
@@ -129,6 +170,9 @@ export function setupAuth(app: Express) {
       if (!isValid) {
         return res.status(401).json({ error: "Invalid email or password" });
       }
+      
+      // SECURITY: Reset rate limit on successful login
+      resetRateLimit(clientIp);
 
       // Generate auth token for mobile apps
       const authToken = await generateAuthToken(user.id);
@@ -157,16 +201,34 @@ export function setupAuth(app: Express) {
     }
   });
 
-  // Logout
-  app.post("/api/auth/logout", (req: Request, res: Response) => {
-    req.session.destroy((err) => {
-      if (err) {
-        console.error("Logout error:", err);
-        return res.status(500).json({ error: "Failed to logout" });
+  // Logout - also invalidate auth tokens
+  app.post("/api/auth/logout", async (req: Request, res: Response) => {
+    try {
+      // SECURITY: Invalidate all auth tokens for this user
+      const userId = req.session.userId;
+      if (userId) {
+        await db.delete(authTokens).where(eq(authTokens.userId, userId));
+        console.log(`SECURITY: Invalidated all auth tokens for user ${userId} on logout`);
       }
-      res.clearCookie("connect.sid");
-      res.json({ success: true });
-    });
+      
+      // Also invalidate token from header if present
+      const headerToken = req.headers["x-auth-token"] as string;
+      if (headerToken) {
+        await db.delete(authTokens).where(eq(authTokens.token, headerToken));
+      }
+      
+      req.session.destroy((err) => {
+        if (err) {
+          console.error("Logout error:", err);
+          return res.status(500).json({ error: "Failed to logout" });
+        }
+        res.clearCookie("connect.sid");
+        res.json({ success: true });
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+      res.status(500).json({ error: "Failed to logout" });
+    }
   });
 
   // Get current user
@@ -225,10 +287,8 @@ export async function generateAuthToken(userId: string): Promise<string> {
     return existingTokens[0].token;
   }
   
-  // Create new token
-  const token = Math.random().toString(36).substring(2) + 
-                Math.random().toString(36).substring(2) + 
-                Date.now().toString(36);
+  // SECURITY: Create new token using cryptographically secure random bytes
+  const token = crypto.randomBytes(32).toString("hex");
   
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
   

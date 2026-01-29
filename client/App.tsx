@@ -21,6 +21,8 @@ import RootStackNavigator from "@/navigation/RootStackNavigator";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { AudioProvider } from "@/contexts/AudioContext";
+import { MiniPlayer } from "@/components/MiniPlayer";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -55,10 +57,13 @@ export default function App() {
         <SafeAreaProvider>
           <GestureHandlerRootView style={styles.root}>
             <KeyboardProvider>
-              <NavigationContainer>
-                <RootStackNavigator />
-              </NavigationContainer>
-              <StatusBar style="auto" />
+              <AudioProvider>
+                <NavigationContainer>
+                  <RootStackNavigator />
+                  <MiniPlayer />
+                </NavigationContainer>
+                <StatusBar style="auto" />
+              </AudioProvider>
             </KeyboardProvider>
           </GestureHandlerRootView>
         </SafeAreaProvider>

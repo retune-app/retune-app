@@ -4,13 +4,14 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { db } from "./db";
-import { affirmations, voiceSamples, categories } from "@shared/schema";
-import { eq, desc, asc } from "drizzle-orm";
+import { affirmations, voiceSamples, categories, users } from "@shared/schema";
+import { eq, desc, asc, and } from "drizzle-orm";
 import { openai } from "./replit_integrations/audio/client";
 import {
   cloneVoice,
   textToSpeech as elevenLabsTTS,
 } from "./replit_integrations/elevenlabs/client";
+import { setupAuth, requireAuth, optionalAuth, AuthenticatedRequest } from "./auth";
 
 const uploadDir = path.join(process.cwd(), "uploads");
 if (!fs.existsSync(uploadDir)) {
@@ -161,8 +162,11 @@ async function generateAudio(
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Serve uploaded audio files
-  app.use("/uploads", (req, res, next) => {
+  // Setup authentication
+  setupAuth(app);
+
+  // Serve uploaded audio files (protected - only authenticated users can access their files)
+  app.use("/uploads", (req: AuthenticatedRequest, res, next) => {
     const filePath = path.join(uploadDir, req.path);
     if (fs.existsSync(filePath)) {
       res.sendFile(filePath);
@@ -182,12 +186,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get all affirmations
-  app.get("/api/affirmations", async (req: Request, res: Response) => {
+  // Get all affirmations for the authenticated user
+  app.get("/api/affirmations", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const allAffirmations = await db
         .select()
         .from(affirmations)
+        .where(eq(affirmations.userId, req.userId!))
         .orderBy(asc(affirmations.displayOrder), desc(affirmations.createdAt));
       res.json(allAffirmations);
     } catch (error) {
@@ -196,14 +201,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get single affirmation
-  app.get("/api/affirmations/:id", async (req: Request, res: Response) => {
+  // Get single affirmation (must belong to user)
+  app.get("/api/affirmations/:id", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { id } = req.params;
       const [affirmation] = await db
         .select()
         .from(affirmations)
-        .where(eq(affirmations.id, parseInt(id)));
+        .where(and(
+          eq(affirmations.id, parseInt(id)),
+          eq(affirmations.userId, req.userId!)
+        ));
 
       if (!affirmation) {
         return res.status(404).json({ error: "Affirmation not found" });
@@ -216,8 +224,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Generate script using AI
-  app.post("/api/affirmations/generate-script", async (req: Request, res: Response) => {
+  // Generate script using AI (requires auth)
+  app.post("/api/affirmations/generate-script", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { goal, category } = req.body;
 
@@ -233,8 +241,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create affirmation with voice synthesis
-  app.post("/api/affirmations/create-with-voice", async (req: Request, res: Response) => {
+  // Create affirmation with voice synthesis (requires auth)
+  app.post("/api/affirmations/create-with-voice", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { title, script, category, isManual } = req.body;
 
@@ -263,11 +271,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Get user's voice ID if available
+      // Get user's voice ID if available (specific to this user)
       const [voiceSample] = await db
         .select()
         .from(voiceSamples)
-        .where(eq(voiceSamples.status, "ready"))
+        .where(and(
+          eq(voiceSamples.userId, req.userId!),
+          eq(voiceSamples.status, "ready")
+        ))
         .orderBy(desc(voiceSamples.createdAt))
         .limit(1);
 
@@ -285,10 +296,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const audioPath = path.join(uploadDir, audioFilename);
       fs.writeFileSync(audioPath, Buffer.from(audioResult.audio));
 
-      // Create affirmation record
+      // Create affirmation record (associated with user)
       const [newAffirmation] = await db
         .insert(affirmations)
         .values({
+          userId: req.userId!,
           title: title || "My Affirmation",
           script,
           categoryId,
@@ -305,16 +317,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Delete affirmation
-  app.delete("/api/affirmations/:id", async (req: Request, res: Response) => {
+  // Delete affirmation (requires auth, must belong to user)
+  app.delete("/api/affirmations/:id", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { id } = req.params;
       
-      // Get the affirmation to delete the audio file
+      // Get the affirmation to delete the audio file (ensure it belongs to user)
       const [affirmation] = await db
         .select()
         .from(affirmations)
-        .where(eq(affirmations.id, parseInt(id)));
+        .where(and(
+          eq(affirmations.id, parseInt(id)),
+          eq(affirmations.userId, req.userId!)
+        ));
       
       if (!affirmation) {
         return res.status(404).json({ error: "Affirmation not found" });
@@ -442,21 +457,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Upload voice sample and clone voice
+  // Upload voice sample and clone voice (requires auth)
   app.post(
     "/api/voice-samples",
+    requireAuth,
     audioUpload.single("audio"),
-    async (req: Request, res: Response) => {
+    async (req: AuthenticatedRequest, res: Response) => {
       try {
         const file = req.file;
         if (!file) {
           return res.status(400).json({ error: "No audio file provided" });
         }
 
-        // Create voice sample record
+        // Create voice sample record (associated with user)
         const [sample] = await db
           .insert(voiceSamples)
           .values({
+            userId: req.userId!,
             audioUrl: `/uploads/${file.filename}`,
             status: "processing",
           })
@@ -472,6 +489,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .set({ voiceId, status: "ready" })
             .where(eq(voiceSamples.id, sample.id))
             .returning();
+
+          // Also update the user's voiceId and hasVoiceSample flag
+          await db
+            .update(users)
+            .set({ voiceId, hasVoiceSample: true })
+            .where(eq(users.id, req.userId!));
 
           res.json(updatedSample);
         } catch (cloneError) {
@@ -492,12 +515,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   );
 
-  // Get user's voice sample status
-  app.get("/api/voice-samples/status", async (req: Request, res: Response) => {
+  // Get user's voice sample status (requires auth)
+  app.get("/api/voice-samples/status", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const [sample] = await db
         .select()
         .from(voiceSamples)
+        .where(eq(voiceSamples.userId, req.userId!))
         .orderBy(desc(voiceSamples.createdAt))
         .limit(1);
 

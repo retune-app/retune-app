@@ -33,37 +33,29 @@ const audioUpload = multer({
 // Generate affirmation script using OpenAI
 async function generateScript(goal: string, category?: string, length?: string): Promise<string> {
   const lengthConfig = {
-    short: { words: "30-50", tokens: 150, description: "a very brief affirmation of exactly 40 words" },
-    medium: { words: "80-100", tokens: 300, description: "a medium affirmation of exactly 90 words" },
-    long: { words: "180-220", tokens: 600, description: "a long, comprehensive affirmation of exactly 200 words" },
+    short: { sentences: 3, tokens: 100, description: "exactly 3 short sentences" },
+    medium: { sentences: 6, tokens: 250, description: "exactly 6 sentences" },
+    long: { sentences: 12, tokens: 500, description: "exactly 12 sentences" },
   };
   
   const config = lengthConfig[length as keyof typeof lengthConfig] || lengthConfig.medium;
   console.log(`Generating script with length: ${length}, using config:`, config);
   
-  const systemPrompt = `You are an expert in creating powerful, personalized affirmations that rewire subconscious beliefs.
+  const systemPrompt = `You are an expert in creating powerful, personalized affirmations.
 
-CRITICAL LENGTH REQUIREMENT: You MUST write ${config.description}. This is mandatory - do not write more or less.
+STRICT LENGTH: Write ${config.description}. Count carefully - this is mandatory.
 
-Create affirmations that are:
-- Written in first person ("I am", "I have", "I attract")
-- Present tense, as if already achieved
+Rules:
+- First person present tense ("I am", "I have")
 - Positive and empowering
-- Specific and emotionally resonant
-- Exactly ${config.words} words total
+- NO titles, headers, or markdown
+- NO instructions like "(breathe)" or "[pause]"
+- NO numbering
+- Start directly with the first affirmation`;
 
-CRITICAL FORMATTING RULES:
-- Output ONLY the affirmation statements themselves
-- Do NOT include any title, header, or script name
-- Do NOT include any instructions in parentheses or brackets like "(Take a deep breath...)" or "[Pause here]"
-- Do NOT include markdown formatting like ** or ##
-- Do NOT number the affirmations
-- Start directly with the first affirmation statement
-- The affirmations should flow naturally, building in emotional intensity.`;
+  const userPrompt = `Write ${config.description} of affirmations for: ${goal}${category ? ` (${category})` : ""}.
 
-  const userPrompt = `Create ${config.description} for someone who wants to: ${goal}${category ? ` (Focus area: ${category})` : ""}.
-
-Remember: Output EXACTLY ${config.words} words. No title, no instructions, no formatting. Just the affirmations.`;
+Output ONLY ${config.sentences} sentences. Nothing else.`;
 
   const response = await openai.chat.completions.create({
     model: "gpt-4o",

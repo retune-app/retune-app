@@ -10,17 +10,10 @@ import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withTiming,
-  Easing,
-} from "react-native-reanimated";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
-import { WaveformVisualizer } from "@/components/WaveformVisualizer";
+import { CircularWaveform } from "@/components/CircularWaveform";
 import { RSVPDisplay, WordTiming, RSVPFontSize } from "@/components/RSVPDisplay";
 import { IconButton } from "@/components/IconButton";
 import { useTheme } from "@/hooks/useTheme";
@@ -67,7 +60,6 @@ export default function PlayerScreen() {
   const [rsvpHighlight, setRsvpHighlight] = useState(false);
   const [showRsvpSettings, setShowRsvpSettings] = useState(false);
   const [showScript, setShowScript] = useState(false);
-  const rotation = useSharedValue(0);
 
   const { data: affirmation, isLoading } = useQuery<Affirmation>({
     queryKey: ["/api/affirmations", affirmationId],
@@ -279,22 +271,6 @@ export default function PlayerScreen() {
     },
   });
 
-  useEffect(() => {
-    if (isCurrentlyPlaying) {
-      rotation.value = withRepeat(
-        withTiming(360, { duration: 8000, easing: Easing.linear }),
-        -1,
-        false
-      );
-    } else {
-      rotation.value = withTiming(0, { duration: 500 });
-    }
-  }, [isCurrentlyPlaying]);
-
-  const discAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${rotation.value}deg` }],
-  }));
-
   const handlePlayPause = async () => {
     if (!affirmation) return;
 
@@ -362,24 +338,11 @@ export default function PlayerScreen() {
               showHighlight={rsvpHighlight}
             />
           ) : (
-            <>
-              <Animated.View style={[styles.disc, discAnimatedStyle]}>
-                <LinearGradient
-                  colors={theme.gradient.hero as [string, string]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.discGradient}
-                >
-                  <View style={[styles.discCenter, { backgroundColor: theme.backgroundRoot }]} />
-                </LinearGradient>
-              </Animated.View>
-              <WaveformVisualizer
-                isActive={isCurrentlyPlaying}
-                barCount={40}
-                style={styles.waveform}
-                color={theme.primary}
-              />
-            </>
+            <CircularWaveform
+              isActive={isCurrentlyPlaying}
+              barCount={32}
+              size={220}
+            />
           )}
         </View>
 
@@ -617,27 +580,6 @@ const styles = StyleSheet.create({
   visualizerContainer: {
     alignItems: "center",
     marginBottom: Spacing["3xl"],
-  },
-  disc: {
-    width: 180,
-    height: 180,
-    borderRadius: 90,
-    marginBottom: Spacing["2xl"],
-  },
-  discGradient: {
-    flex: 1,
-    borderRadius: 90,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  discCenter: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-  },
-  waveform: {
-    width: "100%",
-    height: 60,
   },
   infoContainer: {
     width: "100%",

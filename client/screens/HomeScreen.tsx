@@ -10,14 +10,14 @@ import { Feather } from "@expo/vector-icons";
 
 import { ThemedText } from "@/components/ThemedText";
 import { EmptyState } from "@/components/EmptyState";
-import { AffirmationCard } from "@/components/AffirmationCard";
+import { SwipeableAffirmationCard } from "@/components/SwipeableAffirmationCard";
 import { CategoryChip } from "@/components/CategoryChip";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
-import type { Affirmation } from "@shared/schema";
+import type { Affirmation, Category } from "@shared/schema";
 
-const CATEGORIES = ["All", "Career", "Health", "Confidence", "Wealth", "Relationships"];
+const CATEGORIES = ["All", "Career", "Health", "Confidence", "Wealth", "Relationships", "Sleep"];
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -36,15 +36,29 @@ export default function HomeScreen() {
     queryKey: ["/api/affirmations"],
   });
 
+  const { data: categoriesData = [] } = useQuery<Category[]>({
+    queryKey: ["/api/categories"],
+  });
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await refetch();
     setRefreshing(false);
   }, [refetch]);
 
+  // Create a map of category ID to name for filtering
+  const categoryMap = React.useMemo(() => {
+    const map: Record<number, string> = {};
+    categoriesData.forEach((cat) => {
+      map[cat.id] = cat.name;
+    });
+    return map;
+  }, [categoriesData]);
+
   const filteredAffirmations = affirmations.filter((item) => {
     const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === "All" || true;
+    const itemCategoryName = item.categoryId ? categoryMap[item.categoryId] : null;
+    const matchesCategory = selectedCategory === "All" || itemCategoryName === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
@@ -102,11 +116,8 @@ export default function HomeScreen() {
   );
 
   const renderItem = ({ item }: { item: Affirmation }) => (
-    <AffirmationCard
-      id={item.id}
-      title={item.title}
-      duration={item.duration ?? undefined}
-      isFavorite={item.isFavorite ?? false}
+    <SwipeableAffirmationCard
+      affirmation={item}
       onPress={() => handleAffirmationPress(item.id)}
       onPlayPress={() => handlePlayPress(item.id)}
       testID={`card-affirmation-${item.id}`}

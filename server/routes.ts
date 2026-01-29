@@ -56,6 +56,50 @@ The script should be a continuous, flowing set of affirmations that build upon e
   return response.choices[0]?.message?.content || "";
 }
 
+// Auto-categorize affirmation based on content
+async function autoCategorizе(text: string): Promise<string> {
+  const validCategories = ["Career", "Health", "Confidence", "Wealth", "Relationships", "Sleep"];
+  
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: `You are a categorization assistant. Analyze the given text and categorize it into exactly one of these categories: ${validCategories.join(", ")}. 
+Respond with ONLY the category name, nothing else.`,
+        },
+        {
+          role: "user",
+          content: text,
+        },
+      ],
+      temperature: 0.3,
+      max_tokens: 20,
+    });
+
+    const category = response.choices[0]?.message?.content?.trim() || "Confidence";
+    
+    // Validate category
+    if (validCategories.includes(category)) {
+      return category;
+    }
+    
+    // Find closest match
+    const lowerCategory = category.toLowerCase();
+    for (const valid of validCategories) {
+      if (valid.toLowerCase().includes(lowerCategory) || lowerCategory.includes(valid.toLowerCase())) {
+        return valid;
+      }
+    }
+    
+    return "Confidence"; // Default fallback
+  } catch (error) {
+    console.error("Auto-categorization failed:", error);
+    return "Confidence"; // Default fallback
+  }
+}
+
 // Generate audio using ElevenLabs or fallback to OpenAI
 async function generateAudio(
   script: string,
@@ -96,6 +140,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.sendFile(filePath);
     } else {
       res.status(404).json({ error: "File not found" });
+    }
+  });
+
+  // Get all categories
+  app.get("/api/categories", async (req: Request, res: Response) => {
+    try {
+      const allCategories = await db.select().from(categories);
+      res.json(allCategories);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      res.status(500).json({ error: "Failed to fetch categories" });
     }
   });
 
@@ -159,6 +214,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Script is required" });
       }
 
+      // Auto-categorize if no category provided
+      let categoryName = category;
+      if (!categoryName) {
+        console.log("No category provided, auto-categorizing...");
+        categoryName = await autoCategorizе(script);
+        console.log("Auto-categorized as:", categoryName);
+      }
+
+      // Look up category ID
+      let categoryId: number | null = null;
+      if (categoryName) {
+        const [cat] = await db
+          .select()
+          .from(categories)
+          .where(eq(categories.name, categoryName))
+          .limit(1);
+        if (cat) {
+          categoryId = cat.id;
+        }
+      }
+
       // Get user's voice ID if available
       const [voiceSample] = await db
         .select()
@@ -187,6 +263,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .values({
           title: title || "My Affirmation",
           script,
+          categoryId,
           audioUrl: `/uploads/${audioFilename}`,
           duration: audioResult.duration,
           isManual: isManual || false,
@@ -197,6 +274,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating affirmation:", error);
       res.status(500).json({ error: "Failed to create affirmation" });
+    }
+  });
+
+  // Delete affirmation
+  app.delete("/api/affirmations/:id", async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      
+      // Get the affirmation to delete the audio file
+      const [affirmation] = await db
+        .select()
+        .from(affirmations)
+        .where(eq(affirmations.id, parseInt(id)));
+      
+      if (!affirmation) {
+        return res.status(404).json({ error: "Affirmation not found" });
+      }
+      
+      // Delete audio file if exists
+      if (affirmation.audioUrl) {
+        const audioPath = path.join(process.cwd(), affirmation.audioUrl);
+        if (fs.existsSync(audioPath)) {
+          fs.unlinkSync(audioPath);
+        }
+      }
+      
+      // Delete from database
+      await db
+        .delete(affirmations)
+        .where(eq(affirmations.id, parseInt(id)));
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting affirmation:", error);
+      res.status(500).json({ error: "Failed to delete affirmation" });
     }
   });
 

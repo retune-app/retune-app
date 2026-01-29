@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useLayoutEffect, useMemo } from "react";
-import { View, StyleSheet, Pressable, Alert, ScrollView } from "react-native";
+import { View, StyleSheet, Pressable, Alert, ScrollView, Modal, Dimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { HeaderButton } from "@react-navigation/elements";
@@ -9,6 +9,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
+import * as ScreenOrientation from "expo-screen-orientation";
+import { StatusBar } from "expo-status-bar";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { ThemedText } from "@/components/ThemedText";
@@ -62,6 +64,7 @@ export default function PlayerScreen() {
   const [rsvpHighlight, setRsvpHighlight] = useState(false);
   const [showRsvpSettings, setShowRsvpSettings] = useState(false);
   const [showScript, setShowScript] = useState(false);
+  const [isLandscape, setIsLandscape] = useState(false);
 
   const { data: affirmation, isLoading } = useQuery<Affirmation>({
     queryKey: ["/api/affirmations", affirmationId],
@@ -199,6 +202,34 @@ export default function PlayerScreen() {
     loadSettings();
   }, []);
 
+  // Listen for orientation changes for fullscreen Focus Mode
+  useEffect(() => {
+    const checkOrientation = async () => {
+      const orientation = await ScreenOrientation.getOrientationAsync();
+      setIsLandscape(
+        orientation === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
+        orientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT
+      );
+    };
+    
+    checkOrientation();
+    
+    const subscription = ScreenOrientation.addOrientationChangeListener((event) => {
+      const orientation = event.orientationInfo.orientation;
+      setIsLandscape(
+        orientation === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
+        orientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT
+      );
+    });
+    
+    return () => {
+      ScreenOrientation.removeOrientationChangeListener(subscription);
+    };
+  }, []);
+
+  // Determine if fullscreen Focus Mode should be shown
+  const showFullscreenFocus = isLandscape && rsvpEnabled && isCurrentlyPlaying;
+
   const wordTimings: WordTiming[] = useMemo(() => {
     const generateFallbackTimings = () => {
       if (!affirmation?.script) return [];
@@ -335,6 +366,36 @@ export default function PlayerScreen() {
 
   return (
     <ThemedView style={styles.container}>
+      <StatusBar style={showFullscreenFocus ? "light" : "auto"} hidden={showFullscreenFocus} />
+      
+      {/* Fullscreen Landscape Focus Mode */}
+      <Modal
+        visible={showFullscreenFocus}
+        animationType="fade"
+        statusBarTranslucent
+        supportedOrientations={["landscape-left", "landscape-right", "portrait"]}
+      >
+        <View style={[styles.fullscreenContainer, { backgroundColor: theme.background }]}>
+          <Pressable 
+            style={styles.fullscreenTapArea}
+            onPress={togglePlayPause}
+          >
+            <RSVPDisplay
+              wordTimings={wordTimings}
+              currentPositionMs={rsvpPosition}
+              isPlaying={isCurrentlyPlaying}
+              fontSize="XL"
+              showHighlight={rsvpHighlight}
+            />
+          </Pressable>
+          <View style={styles.fullscreenHint}>
+            <ThemedText type="caption" style={{ color: theme.textSecondary, opacity: 0.6 }}>
+              Rotate to portrait to exit
+            </ThemedText>
+          </View>
+        </View>
+      </Modal>
+
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={[
@@ -689,5 +750,22 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.xs,
     alignItems: "center",
     justifyContent: "center",
+  },
+  fullscreenContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  fullscreenTapArea: {
+    flex: 1,
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: Spacing["4xl"],
+  },
+  fullscreenHint: {
+    position: "absolute",
+    bottom: Spacing.xl,
+    alignItems: "center",
   },
 });

@@ -434,7 +434,7 @@ export default function PlayerScreen() {
         supportedOrientations={["landscape-left", "landscape-right", "portrait"]}
         presentationStyle="fullScreen"
       >
-        <View style={[styles.fullscreenContainer, { backgroundColor: '#1A1A2E' }]}>
+        <View style={[styles.fullscreenContainer, { backgroundColor: theme.navy }]}>
           <Pressable 
             style={styles.fullscreenTapArea}
             onPress={() => {
@@ -718,6 +718,7 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+    backgroundColor: "transparent",
   },
   content: {
     paddingHorizontal: Spacing.lg,

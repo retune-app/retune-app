@@ -83,7 +83,7 @@ export default function RootStackNavigator() {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       <Stack.Navigator 
         screenOptions={screenOptions}
         screenListeners={{

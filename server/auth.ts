@@ -194,13 +194,59 @@ export function setupAuth(app: Express) {
   });
 }
 
+// Store for temporary upload tokens (in production, use Redis)
+const uploadTokens = new Map<string, { userId: string; expires: number }>();
+
+// Generate upload token for mobile apps
+export function generateUploadToken(userId: string): string {
+  const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
+  uploadTokens.set(token, {
+    userId,
+    expires: Date.now() + 10 * 60 * 1000, // 10 minutes
+  });
+  return token;
+}
+
+// Verify upload token
+export function verifyUploadToken(token: string): string | null {
+  const data = uploadTokens.get(token);
+  if (!data) return null;
+  if (Date.now() > data.expires) {
+    uploadTokens.delete(token);
+    return null;
+  }
+  return data.userId;
+}
+
+// Clean up expired tokens periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [token, data] of uploadTokens.entries()) {
+    if (now > data.expires) {
+      uploadTokens.delete(token);
+    }
+  }
+}, 60000);
+
 // Middleware to require authentication
 export function requireAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-  if (!req.session.userId) {
-    return res.status(401).json({ error: "Authentication required" });
+  // First try session-based auth
+  if (req.session.userId) {
+    req.userId = req.session.userId;
+    return next();
   }
-  req.userId = req.session.userId;
-  next();
+  
+  // Fallback to token-based auth for file uploads
+  const uploadToken = req.header("X-Upload-Token");
+  if (uploadToken) {
+    const userId = verifyUploadToken(uploadToken);
+    if (userId) {
+      req.userId = userId;
+      return next();
+    }
+  }
+  
+  return res.status(401).json({ error: "Authentication required" });
 }
 
 // Optional auth - sets userId if logged in but doesn't require it

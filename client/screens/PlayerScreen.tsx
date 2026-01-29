@@ -67,6 +67,7 @@ export default function PlayerScreen() {
   const [isLandscape, setIsLandscape] = useState(false);
   const [isInFullscreenMode, setIsInFullscreenMode] = useState(false);
   const userExitedFullscreenRef = useRef(false);
+  const prevLandscapeRef = useRef(false);
 
   const { data: affirmation, isLoading } = useQuery<Affirmation>({
     queryKey: ["/api/affirmations", affirmationId],
@@ -260,15 +261,23 @@ export default function PlayerScreen() {
     };
   }, []);
 
-  // Enter fullscreen mode when conditions are met
+  // Enter fullscreen mode only on portrait→landscape rotation change while playing
   useEffect(() => {
+    const wasLandscape = prevLandscapeRef.current;
+    const justRotatedToLandscape = isLandscape && !wasLandscape;
+    
+    // Update prev ref for next run
+    prevLandscapeRef.current = isLandscape;
+    
     // Don't re-enter if user just manually exited
     if (userExitedFullscreenRef.current) {
       console.log('Skipping fullscreen entry - user just exited');
       return;
     }
-    if (isLandscape && rsvpEnabled && isCurrentlyPlaying && !isInFullscreenMode) {
-      console.log('Entering fullscreen mode');
+    
+    // Only enter fullscreen if user just rotated TO landscape while playing
+    if (justRotatedToLandscape && rsvpEnabled && isCurrentlyPlaying && !isInFullscreenMode) {
+      console.log('Entering fullscreen mode - rotated to landscape while playing');
       setIsInFullscreenMode(true);
     }
   }, [isLandscape, rsvpEnabled, isCurrentlyPlaying, isInFullscreenMode]);

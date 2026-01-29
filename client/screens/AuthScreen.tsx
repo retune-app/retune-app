@@ -257,7 +257,7 @@ export function AuthScreen() {
               <View style={styles.logoIcon}>
                 <Feather name="headphones" size={40} color="#FFFFFF" />
               </View>
-              <Text style={styles.title}>Rewired</Text>
+              <Text style={styles.title}>ReWired</Text>
               <Text style={styles.subtitle}>
                 Transform your mind with AI-powered affirmations
               </Text>

@@ -317,7 +317,7 @@ export default function ProfileScreen() {
         <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
           <SettingItem
             icon="info"
-            label="About Rewired"
+            label="About ReWired"
             value="Version 1.0.0"
           />
           <SettingItem

@@ -38,6 +38,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [autoReplay, setAutoReplayState] = useState(true);
   const soundRef = useRef<Audio.Sound | null>(null);
+  const isOperationInProgress = useRef(false);
 
   useEffect(() => {
     const initAudio = async () => {
@@ -81,15 +82,27 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    // Prevent overlapping operations from rapid button presses
+    if (isOperationInProgress.current) {
+      return;
+    }
+
+    // If same affirmation is already loaded, just resume playback
     if (currentAffirmation?.id === affirmation.id && soundRef.current) {
-      const status = await soundRef.current.getStatusAsync();
-      if (status.isLoaded) {
-        await soundRef.current.playAsync();
-        setIsPlaying(true);
-        return;
+      try {
+        isOperationInProgress.current = true;
+        const status = await soundRef.current.getStatusAsync();
+        if (status.isLoaded) {
+          await soundRef.current.playAsync();
+          setIsPlaying(true);
+          return;
+        }
+      } finally {
+        isOperationInProgress.current = false;
       }
     }
 
+    isOperationInProgress.current = true;
     setIsLoading(true);
     await unloadCurrentSound();
 
@@ -125,12 +138,19 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       console.error('Error loading audio:', error);
     } finally {
       setIsLoading(false);
+      isOperationInProgress.current = false;
     }
   }, [currentAffirmation?.id, autoReplay, unloadCurrentSound]);
 
   const togglePlayPause = useCallback(async () => {
     if (!soundRef.current) return;
 
+    // Prevent overlapping operations from rapid button presses
+    if (isOperationInProgress.current) {
+      return;
+    }
+
+    isOperationInProgress.current = true;
     try {
       const status = await soundRef.current.getStatusAsync();
       if (status.isLoaded) {
@@ -144,6 +164,8 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error) {
       console.error('Error toggling playback:', error);
+    } finally {
+      isOperationInProgress.current = false;
     }
   }, []);
 

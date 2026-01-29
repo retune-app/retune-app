@@ -110,9 +110,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await response.json();
 
       if (response.ok) {
+        console.log("Login response:", JSON.stringify(data));
         setUser(data.user);
         if (data.authToken) {
+          console.log("Storing auth token:", data.authToken.substring(0, 10) + "...");
           await setToken(data.authToken);
+          console.log("Global auth token after set:", globalAuthToken ? "set" : "null");
+        } else {
+          console.log("No authToken in login response!");
         }
         return { success: true };
       } else {

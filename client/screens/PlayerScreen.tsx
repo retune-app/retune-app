@@ -313,6 +313,11 @@ export default function PlayerScreen() {
   const displayPosition = currentAffirmation?.id === affirmationId ? position : 0;
   const displayDuration = currentAffirmation?.id === affirmationId ? duration : 0;
   const progress = displayDuration > 0 ? displayPosition / displayDuration : 0;
+  
+  // Add offset to compensate for audio position latency and UI rendering delay
+  // Higher playback speeds need more forward offset since words change faster
+  const rsvpPositionOffset = 100 * playbackSpeed; // ms ahead to look
+  const rsvpPosition = displayPosition + rsvpPositionOffset;
 
   return (
     <ThemedView style={styles.container}>
@@ -326,7 +331,7 @@ export default function PlayerScreen() {
           {rsvpEnabled ? (
             <RSVPDisplay
               wordTimings={wordTimings}
-              currentPositionMs={displayPosition}
+              currentPositionMs={rsvpPosition}
               isPlaying={isCurrentlyPlaying}
               fontSize={rsvpFontSize}
               showHighlight={rsvpHighlight}

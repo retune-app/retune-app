@@ -115,7 +115,13 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
       const { sound } = await Audio.Sound.createAsync(
         { uri: audioUri },
-        { shouldPlay: true, isLooping: autoReplay },
+        { 
+          shouldPlay: true, 
+          isLooping: autoReplay,
+          rate: playbackSpeed,
+          shouldCorrectPitch: true,
+          progressUpdateIntervalMillis: 50, // Update every 50ms for smoother RSVP sync
+        },
         (status) => {
           try {
             if (status.isLoaded) {
@@ -143,7 +149,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
       isOperationInProgress.current = false;
     }
-  }, [currentAffirmation?.id, autoReplay, unloadCurrentSound]);
+  }, [currentAffirmation?.id, autoReplay, playbackSpeed, unloadCurrentSound]);
 
   const togglePlayPause = useCallback(async () => {
     if (!soundRef.current) return;

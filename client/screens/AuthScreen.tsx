@@ -149,7 +149,7 @@ export function AuthScreen() {
       backgroundColor: authColors.whiteTranslucent,
       borderRadius: BorderRadius.xl,
       padding: Spacing.xl,
-      shadowColor: "#000",
+      shadowColor: "#0F1C3F",
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.15,
       shadowRadius: 12,

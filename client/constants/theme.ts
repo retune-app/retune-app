@@ -15,12 +15,12 @@ const textNavy = "#0F1C3F";
 const textSecondaryLight = "#5A6A7E";
 const borderLight = "#E0E4EB";
 
-// Dark mode colors
-const darkBackground = "#0A0F1F";
-const darkSurface = "#141E33";
+// Dark mode colors - Navy tones, NO BLACK
+const darkBackground = "#0F1C3F";
+const darkSurface = "#1A2D4F";
 const darkTextPrimary = "#F5F7FA";
 const darkTextSecondary = "#8A9AAE";
-const darkBorder = "#1E2D4A";
+const darkBorder = "#2A3D5F";
 
 export const Colors = {
   light: {
@@ -69,21 +69,21 @@ export const Colors = {
     warning: "#FFB347",
     backgroundRoot: darkBackground,
     backgroundDefault: darkSurface,
-    backgroundSecondary: "#1E2D4A",
-    backgroundTertiary: "#283A5A",
+    backgroundSecondary: "#243656",
+    backgroundTertiary: "#2E4166",
     border: darkBorder,
     cardBackground: darkSurface,
-    inputBackground: "#1E2D4A",
+    inputBackground: "#243656",
     inputBorder: darkBorder,
     placeholder: darkTextSecondary,
-    overlay: "rgba(0, 0, 0, 0.7)",
+    overlay: "rgba(15, 28, 63, 0.8)",
     gold: goldLight,
     goldLight: "#F0D878",
     navy: navyDark,
     navyMid: navyMid,
     gradient: {
       primary: [goldLight, primaryGold],
-      card: [darkSurface, "#1E2D4A"],
+      card: [darkSurface, "#243656"],
       hero: [goldLight, navyMid],
     },
   },
@@ -173,30 +173,30 @@ export const Typography = {
 
 export const Shadows = {
   small: {
-    shadowColor: "#000",
+    shadowColor: navyDark,
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.15,
     shadowRadius: 4,
     elevation: 2,
   },
   medium: {
-    shadowColor: "#000",
+    shadowColor: navyDark,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 4,
   },
   large: {
-    shadowColor: "#000",
+    shadowColor: navyDark,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.25,
     shadowRadius: 16,
     elevation: 8,
   },
   floating: {
-    shadowColor: "#000",
+    shadowColor: navyDark,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.10,
+    shadowOpacity: 0.18,
     shadowRadius: 2,
     elevation: 3,
   },

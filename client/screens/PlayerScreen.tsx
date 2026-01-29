@@ -203,22 +203,31 @@ export default function PlayerScreen() {
     loadSettings();
   }, []);
 
-  // Control orientation based on Focus Mode and fullscreen state
+  // Lock orientation to portrait on unmount only
   useEffect(() => {
-    if (isInFullscreenMode) {
-      // Lock to landscape while in fullscreen mode
-      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
-    } else if (rsvpEnabled && isCurrentlyPlaying) {
-      // Allow any orientation when Focus Mode + playing (to enter fullscreen)
-      ScreenOrientation.unlockAsync();
-    } else {
-      // Lock to portrait otherwise
-      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
-    }
-    
     return () => {
       ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
     };
+  }, []);
+
+  // Control orientation - only change when fullscreen state changes, not on play/pause
+  useEffect(() => {
+    console.log('Orientation effect - isInFullscreenMode:', isInFullscreenMode);
+    if (isInFullscreenMode) {
+      // Lock to landscape while in fullscreen mode
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+    } else {
+      // When not in fullscreen, lock to portrait
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+    }
+  }, [isInFullscreenMode]);
+
+  // Unlock orientation temporarily when Focus Mode is on and playing (to allow entering fullscreen)
+  useEffect(() => {
+    if (rsvpEnabled && isCurrentlyPlaying && !isInFullscreenMode) {
+      console.log('Unlocking orientation to allow fullscreen entry');
+      ScreenOrientation.unlockAsync();
+    }
   }, [rsvpEnabled, isCurrentlyPlaying, isInFullscreenMode]);
 
   // Listen for orientation changes
@@ -249,9 +258,21 @@ export default function PlayerScreen() {
   // Enter fullscreen mode when conditions are met
   useEffect(() => {
     if (isLandscape && rsvpEnabled && isCurrentlyPlaying && !isInFullscreenMode) {
+      console.log('Entering fullscreen mode');
       setIsInFullscreenMode(true);
     }
   }, [isLandscape, rsvpEnabled, isCurrentlyPlaying, isInFullscreenMode]);
+
+  // Debug: track fullscreen state changes
+  useEffect(() => {
+    console.log('Fullscreen state:', { isInFullscreenMode, rsvpEnabled, isLandscape, isCurrentlyPlaying });
+  }, [isInFullscreenMode, rsvpEnabled, isLandscape, isCurrentlyPlaying]);
+
+  // Handler for exiting fullscreen
+  const handleExitFullscreen = useCallback(() => {
+    console.log('Exiting fullscreen mode');
+    setIsInFullscreenMode(false);
+  }, []);
 
   // Show fullscreen when in fullscreen mode (stays up even when paused)
   const showFullscreenFocus = isInFullscreenMode && rsvpEnabled;
@@ -400,11 +421,13 @@ export default function PlayerScreen() {
         animationType="fade"
         statusBarTranslucent
         supportedOrientations={["landscape-left", "landscape-right", "portrait"]}
+        onRequestClose={handleExitFullscreen}
+        presentationStyle="fullScreen"
       >
         <View style={[styles.fullscreenContainer, { backgroundColor: theme.background }]}>
           <Pressable 
             style={styles.fullscreenCloseButton}
-            onPress={() => setIsInFullscreenMode(false)}
+            onPress={handleExitFullscreen}
           >
             <Feather name="x" size={24} color={theme.textSecondary} />
           </Pressable>

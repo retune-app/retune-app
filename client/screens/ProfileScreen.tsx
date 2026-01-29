@@ -66,7 +66,7 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
   const tabBarHeight = useBottomTabBarHeight();
-  const { theme, isDark } = useTheme();
+  const { theme, isDark, themeMode, setThemeMode } = useTheme();
   const navigation = useNavigation<NavigationProp>();
   const { user, logout } = useAuth();
 
@@ -278,6 +278,71 @@ export default function ProfileScreen() {
               />
             }
           />
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+          APPEARANCE
+        </ThemedText>
+        <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
+          <Pressable
+            onPress={() => setThemeMode("light")}
+            style={({ pressed }) => [
+              styles.settingItem,
+              { backgroundColor: pressed ? theme.backgroundSecondary : "transparent" },
+            ]}
+            testID="button-theme-light"
+          >
+            <View style={[styles.settingIcon, { backgroundColor: theme.backgroundSecondary }]}>
+              <Feather name="sun" size={20} color={theme.primary} />
+            </View>
+            <View style={styles.settingContent}>
+              <ThemedText type="body">Light Mode</ThemedText>
+            </View>
+            {themeMode === "light" ? (
+              <Feather name="check" size={20} color={theme.primary} />
+            ) : null}
+          </Pressable>
+          <Pressable
+            onPress={() => setThemeMode("dark")}
+            style={({ pressed }) => [
+              styles.settingItem,
+              { backgroundColor: pressed ? theme.backgroundSecondary : "transparent" },
+            ]}
+            testID="button-theme-dark"
+          >
+            <View style={[styles.settingIcon, { backgroundColor: theme.backgroundSecondary }]}>
+              <Feather name="moon" size={20} color={theme.primary} />
+            </View>
+            <View style={styles.settingContent}>
+              <ThemedText type="body">Dark Mode</ThemedText>
+            </View>
+            {themeMode === "dark" ? (
+              <Feather name="check" size={20} color={theme.primary} />
+            ) : null}
+          </Pressable>
+          <Pressable
+            onPress={() => setThemeMode("system")}
+            style={({ pressed }) => [
+              styles.settingItem,
+              { backgroundColor: pressed ? theme.backgroundSecondary : "transparent" },
+            ]}
+            testID="button-theme-system"
+          >
+            <View style={[styles.settingIcon, { backgroundColor: theme.backgroundSecondary }]}>
+              <Feather name="smartphone" size={20} color={theme.primary} />
+            </View>
+            <View style={styles.settingContent}>
+              <ThemedText type="body">System Default</ThemedText>
+              <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                Match device settings
+              </ThemedText>
+            </View>
+            {themeMode === "system" ? (
+              <Feather name="check" size={20} color={theme.primary} />
+            ) : null}
+          </Pressable>
         </View>
       </View>
 

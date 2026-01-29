@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useLayoutEffect } from "react";
 import { View, StyleSheet, Pressable, Alert, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
+import { HeaderButton } from "@react-navigation/elements";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -30,10 +32,11 @@ import type { Affirmation } from "@shared/schema";
 const AUTO_REPLAY_KEY = "@settings/autoReplay";
 
 type PlayerRouteProp = RouteProp<RootStackParamList, "Player">;
+type PlayerNavigationProp = NativeStackNavigationProp<RootStackParamList, "Player">;
 
 export default function PlayerScreen() {
   const route = useRoute<PlayerRouteProp>();
-  const navigation = useNavigation();
+  const navigation = useNavigation<PlayerNavigationProp>();
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
   const { theme } = useTheme();
@@ -53,6 +56,50 @@ export default function PlayerScreen() {
   const { data: affirmation, isLoading } = useQuery<Affirmation>({
     queryKey: ["/api/affirmations", affirmationId],
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("DELETE", `/api/affirmations/${affirmationId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/affirmations"] });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      navigation.goBack();
+    },
+    onError: () => {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert("Error", "Failed to delete affirmation");
+    },
+  });
+
+  const handleDelete = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    Alert.alert(
+      "Delete Affirmation",
+      `Are you sure you want to delete "${affirmation?.title}"?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => deleteMutation.mutate(),
+        },
+      ]
+    );
+  }, [affirmation?.title, deleteMutation]);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <HeaderButton
+          onPress={handleDelete}
+          testID="button-delete-affirmation"
+        >
+          <Feather name="trash-2" size={22} color="#E53935" />
+        </HeaderButton>
+      ),
+    });
+  }, [navigation, handleDelete]);
 
   useEffect(() => {
     AsyncStorage.getItem(AUTO_REPLAY_KEY).then((value) => {

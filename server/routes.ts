@@ -10,6 +10,7 @@ import { openai } from "./replit_integrations/audio/client";
 import {
   cloneVoice,
   textToSpeech as elevenLabsTTS,
+  type WordTiming,
 } from "./replit_integrations/elevenlabs/client";
 import { setupAuth, requireAuth, optionalAuth, AuthenticatedRequest } from "./auth";
 
@@ -133,17 +134,18 @@ Respond with ONLY the category name, nothing else.`,
 async function generateAudio(
   script: string,
   voiceId?: string
-): Promise<{ audio: ArrayBuffer; duration: number }> {
+): Promise<{ audio: ArrayBuffer; duration: number; wordTimings: WordTiming[] }> {
   try {
     // Try ElevenLabs first (for cloned voices or better quality)
     console.log("Attempting ElevenLabs TTS with voiceId:", voiceId);
     const result = await elevenLabsTTS(script, voiceId);
-    console.log("ElevenLabs TTS succeeded");
+    console.log("ElevenLabs TTS succeeded with", result.wordTimings?.length || 0, "word timings");
     return result;
   } catch (error) {
     console.error("ElevenLabs TTS failed, falling back to OpenAI:", error);
     
     // Fallback to OpenAI TTS if ElevenLabs fails
+    // Note: OpenAI TTS doesn't provide word-level timestamps, so we generate approximate timings
     const response = await openai.audio.speech.create({
       model: "tts-1",
       voice: "nova",
@@ -151,12 +153,22 @@ async function generateAudio(
     });
 
     const audioBuffer = await response.arrayBuffer();
-    const wordCount = script.split(/\s+/).length;
+    const words = script.split(/\s+/).filter(w => w.length > 0);
+    const wordCount = words.length;
     const estimatedDuration = Math.ceil((wordCount / 150) * 60);
+    
+    // Generate approximate word timings based on word length (no real timing data from OpenAI)
+    const avgWordDurationMs = (estimatedDuration * 1000) / wordCount;
+    const wordTimings: WordTiming[] = words.map((word, index) => ({
+      word,
+      startMs: Math.round(index * avgWordDurationMs),
+      endMs: Math.round((index + 1) * avgWordDurationMs),
+    }));
 
     return {
       audio: audioBuffer,
       duration: estimatedDuration,
+      wordTimings,
     };
   }
 }
@@ -285,7 +297,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Voice sample found:", voiceSample);
       console.log("Using voiceId:", voiceSample?.voiceId);
 
-      // Generate audio
+      // Generate audio with word timings
       const audioResult = await generateAudio(
         script,
         voiceSample?.voiceId || undefined
@@ -306,6 +318,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           categoryId,
           audioUrl: `/uploads/${audioFilename}`,
           duration: audioResult.duration,
+          wordTimings: JSON.stringify(audioResult.wordTimings),
           isManual: isManual || false,
         })
         .returning();

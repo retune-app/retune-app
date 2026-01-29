@@ -195,6 +195,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
   setupAuth(app);
 
+  // Handle OPTIONS preflight for audio files (CORS)
+  app.options("/uploads/:filename", (req: Request, res: Response) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Range, Accept-Encoding');
+    res.status(204).end();
+  });
+
   // Serve uploaded audio files (public access with security validations)
   // Audio files use random filenames making them hard to guess
   // Security is enforced through: filename pattern validation + path traversal prevention
@@ -224,6 +232,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if file exists
       if (!fs.existsSync(filePath)) {
         return res.status(404).json({ error: "File not found" });
+      }
+      
+      // Set CORS headers for mobile audio playback
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Range, Accept-Encoding');
+      
+      // Set appropriate content type based on extension
+      const ext = path.extname(filename).toLowerCase();
+      const contentTypes: Record<string, string> = {
+        '.mp3': 'audio/mpeg',
+        '.m4a': 'audio/mp4',
+        '.wav': 'audio/wav',
+        '.webm': 'audio/webm',
+      };
+      if (contentTypes[ext]) {
+        res.setHeader('Content-Type', contentTypes[ext]);
       }
       
       res.sendFile(filePath);

@@ -22,6 +22,7 @@ interface RSVPDisplayProps {
   isPlaying: boolean;
   fontSize?: RSVPFontSize;
   showHighlight?: boolean;
+  forceDarkMode?: boolean;
 }
 
 const FONT_SIZES: Record<RSVPFontSize, number> = {
@@ -84,8 +85,13 @@ export function RSVPDisplay({
   isPlaying,
   fontSize = "M",
   showHighlight = true,
+  forceDarkMode = false,
 }: RSVPDisplayProps) {
   const { theme } = useTheme();
+  
+  // Use light colors for dark background in fullscreen mode
+  const textColor = forceDarkMode ? "#F8FAFB" : theme.text;
+  const accentColor = forceDarkMode ? "#9B7FFF" : theme.accent;
 
   const currentWord = useMemo(() => {
     if (!wordTimings || wordTimings.length === 0) {
@@ -139,8 +145,8 @@ export function RSVPDisplay({
           renderWordWithORP(
             currentWord.word,
             fontSizeValue,
-            theme.text,
-            theme.accent,
+            textColor,
+            accentColor,
             showHighlight
           )}
       </Animated.View>

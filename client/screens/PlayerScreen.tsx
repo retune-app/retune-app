@@ -434,7 +434,7 @@ export default function PlayerScreen() {
         supportedOrientations={["landscape-left", "landscape-right", "portrait"]}
         presentationStyle="fullScreen"
       >
-        <View style={[styles.fullscreenContainer, { backgroundColor: theme.background }]}>
+        <View style={[styles.fullscreenContainer, { backgroundColor: '#1A1A2E' }]}>
           <Pressable 
             style={styles.fullscreenTapArea}
             onPress={() => {
@@ -449,6 +449,7 @@ export default function PlayerScreen() {
                 isPlaying={isCurrentlyPlaying}
                 fontSize="XL"
                 showHighlight={rsvpHighlight}
+                forceDarkMode={true}
               />
             </View>
             {!isCurrentlyPlaying ? (
@@ -456,7 +457,7 @@ export default function PlayerScreen() {
                 <View style={[styles.fullscreenPlayButton, { backgroundColor: theme.primary }]}>
                   <Feather name="play" size={32} color="#FFFFFF" />
                 </View>
-                <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: 8 }}>
+                <ThemedText type="caption" style={{ color: 'rgba(255,255,255,0.7)', marginTop: 8 }}>
                   Tap to resume
                 </ThemedText>
               </View>

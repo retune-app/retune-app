@@ -212,6 +212,7 @@ export function generateAuthToken(userId: string): string {
     if (data.userId === userId && Date.now() < data.expires) {
       // Extend existing token
       data.expires = Date.now() + 30 * 24 * 60 * 60 * 1000;
+      console.log("Reusing existing token for user:", userId, "token:", token.substring(0, 10) + "...");
       return token;
     }
   }
@@ -224,13 +225,18 @@ export function generateAuthToken(userId: string): string {
     userId,
     expires: Date.now() + 30 * 24 * 60 * 60 * 1000, // 30 days
   });
+  console.log("Created new token for user:", userId, "token:", token.substring(0, 10) + "...", "Map size:", authTokens.size);
   return token;
 }
 
 // Verify auth token
 export function verifyAuthToken(token: string): string | null {
+  console.log("Verifying token:", token.substring(0, 10) + "...", "Map size:", authTokens.size);
   const data = authTokens.get(token);
-  if (!data) return null;
+  if (!data) {
+    console.log("Token not found in Map. Available tokens:", Array.from(authTokens.keys()).map(k => k.substring(0, 10) + "..."));
+    return null;
+  }
   if (Date.now() > data.expires) {
     authTokens.delete(token);
     return null;

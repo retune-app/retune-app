@@ -65,9 +65,13 @@ function RadialBar({
   const angleRad = (angle * Math.PI) / 180;
   const x = centerX + Math.cos(angleRad) * innerRadius - 2;
   const y = centerY + Math.sin(angleRad) * innerRadius - baseHeight / 2;
+  const rotation = angle + 90;
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scaleY: scale.value }],
+    transform: [
+      { rotate: `${rotation}deg` },
+      { scaleY: scale.value },
+    ],
   }));
 
   return (
@@ -80,7 +84,6 @@ function RadialBar({
           position: "absolute",
           left: x,
           top: y,
-          transform: [{ rotate: `${angle + 90}deg` }],
         },
         animatedStyle,
       ]}

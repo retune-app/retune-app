@@ -101,17 +101,6 @@ export function RSVPDisplay({
     return wordTimings[0];
   }, [wordTimings, currentPositionMs]);
 
-  const wordIndex = useMemo(() => {
-    if (!currentWord || !wordTimings) return 0;
-    return wordTimings.findIndex(
-      (w) => w.startMs === currentWord.startMs && w.word === currentWord.word
-    );
-  }, [currentWord, wordTimings]);
-
-  const progress = useMemo(() => {
-    if (!wordTimings || wordTimings.length === 0) return 0;
-    return Math.round((wordIndex / wordTimings.length) * 100);
-  }, [wordIndex, wordTimings]);
 
   const fontSizeValue = FONT_SIZES[fontSize];
 
@@ -144,14 +133,6 @@ export function RSVPDisplay({
 
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundSecondary }]}>
-      <View style={styles.progressInfo}>
-        <Text style={[styles.progressText, { color: theme.textSecondary }]}>
-          {wordIndex + 1} of {wordTimings.length} words
-        </Text>
-        <Text style={[styles.progressText, { color: theme.textSecondary }]}>
-          {progress}%
-        </Text>
-      </View>
 
       <Animated.View style={[styles.wordContainer, animatedStyle]}>
         {currentWord &&
@@ -164,17 +145,6 @@ export function RSVPDisplay({
           )}
       </Animated.View>
 
-      <View style={[styles.progressBar, { backgroundColor: theme.backgroundTertiary }]}>
-        <View
-          style={[
-            styles.progressFill,
-            {
-              backgroundColor: theme.primary,
-              width: `${progress}%`,
-            },
-          ]}
-        />
-      </View>
     </View>
   );
 }
@@ -187,16 +157,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     minHeight: 200,
-  },
-  progressInfo: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%",
-    marginBottom: Spacing.lg,
-  },
-  progressText: {
-    fontSize: 12,
-    fontFamily: "Nunito_400Regular",
   },
   wordContainer: {
     flex: 1,
@@ -213,16 +173,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: "Nunito_400Regular",
     textAlign: "center",
-  },
-  progressBar: {
-    width: "100%",
-    height: 4,
-    borderRadius: 2,
-    marginTop: Spacing.lg,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    borderRadius: 2,
   },
 });

@@ -455,7 +455,7 @@ export default function PlayerScreen() {
         <View style={[styles.rsvpSettings, { backgroundColor: theme.backgroundSecondary }]}>
           <View style={styles.rsvpSettingsRow}>
             <ThemedText type="small" style={{ color: theme.textSecondary }}>
-              RSVP Mode
+              Focus Mode
             </ThemedText>
             <Pressable
               onPress={handleToggleRsvp}

@@ -94,7 +94,7 @@ export default function VoiceSetupScreen() {
       queryClient.invalidateQueries({ queryKey: ["/api/user/profile"] });
       queryClient.invalidateQueries({ queryKey: ["/api/voice-samples/status"] });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      navigation.navigate("Main");
+      navigation.goBack();
     },
     onError: (error: any) => {
       const message = error?.message || "Could not upload your voice sample. Please try again.";
@@ -201,7 +201,7 @@ export default function VoiceSetupScreen() {
   };
 
   const handleSkip = () => {
-    navigation.navigate("Main");
+    navigation.goBack();
   };
 
   const formatDuration = (seconds: number) => {

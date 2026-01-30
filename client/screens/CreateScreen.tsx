@@ -6,12 +6,14 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  Modal,
+  Pressable,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 
@@ -25,6 +27,13 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { apiRequest } from "@/lib/query-client";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
+
+interface CustomCategory {
+  id: number;
+  userId: string;
+  name: string;
+  createdAt: string;
+}
 
 const CATEGORIES = ["Career", "Health", "Confidence", "Wealth", "Relationships", "Sleep"];
 const LENGTHS = ["Short", "Medium", "Long"] as const;
@@ -45,6 +54,39 @@ export default function CreateScreen() {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedLength, setSelectedLength] = useState<LengthOption>("Medium");
   const [regenerateCount, setRegenerateCount] = useState(0);
+  const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+
+  const { data: customCategories = [] } = useQuery<CustomCategory[]>({
+    queryKey: ["/api/custom-categories"],
+  });
+
+  const addCategoryMutation = useMutation({
+    mutationFn: async (name: string) => {
+      const res = await apiRequest("POST", "/api/custom-categories", { name });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/custom-categories"] });
+      setNewCategoryName("");
+      setShowAddCategoryModal(false);
+      setSelectedCategory(data.name);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    },
+    onError: (error: any) => {
+      Alert.alert("Error", error.message || "Failed to add category");
+    },
+  });
+
+  const handleAddCategory = () => {
+    if (!newCategoryName.trim()) {
+      Alert.alert("Enter Name", "Please enter a category name.");
+      return;
+    }
+    addCategoryMutation.mutate(newCategoryName.trim());
+  };
+
+  const allCategories = [...CATEGORIES, ...customCategories.map(c => c.name)];
 
   const generateMutation = useMutation({
     mutationFn: async ({ goalText, category, length }: { goalText: string; category: string; length: string }) => {
@@ -181,7 +223,7 @@ export default function CreateScreen() {
           Category
         </ThemedText>
         <View style={styles.categoriesGrid}>
-          {CATEGORIES.map((cat) => (
+          {allCategories.map((cat) => (
             <CategoryChip
               key={cat}
               label={cat}
@@ -190,6 +232,15 @@ export default function CreateScreen() {
               testID={`chip-${cat.toLowerCase()}`}
             />
           ))}
+          {customCategories.length < 5 ? (
+            <Pressable
+              style={[styles.addCategoryButton, { borderColor: theme.primary }]}
+              onPress={() => setShowAddCategoryModal(true)}
+              testID="button-add-category"
+            >
+              <Feather name="plus" size={18} color={theme.primary} />
+            </Pressable>
+          ) : null}
         </View>
 
         {mode === "ai" ? (
@@ -258,6 +309,56 @@ export default function CreateScreen() {
           </Button>
         ) : null}
       </ScrollView>
+
+      <Modal
+        visible={showAddCategoryModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowAddCategoryModal(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setShowAddCategoryModal(false)}>
+          <Pressable style={[styles.modalContent, { backgroundColor: theme.cardBackground }]} onPress={(e) => e.stopPropagation()}>
+            <ThemedText type="title" style={styles.modalTitle}>
+              Add Category
+            </ThemedText>
+            <ThemedText type="caption" style={[styles.modalSubtitle, { color: theme.textSecondary }]}>
+              {5 - customCategories.length} of 5 custom categories remaining
+            </ThemedText>
+            <TextInput
+              style={[styles.modalInput, { backgroundColor: theme.inputBackground, borderColor: theme.primary, color: theme.text }]}
+              placeholder="Enter category name..."
+              placeholderTextColor={theme.placeholder}
+              value={newCategoryName}
+              onChangeText={setNewCategoryName}
+              maxLength={30}
+              autoFocus
+              testID="input-new-category"
+            />
+            <View style={styles.modalButtons}>
+              <Button
+                variant="ghost"
+                onPress={() => {
+                  setNewCategoryName("");
+                  setShowAddCategoryModal(false);
+                }}
+                style={styles.modalButton}
+                testID="button-cancel-category"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onPress={handleAddCategory}
+                loading={addCategoryMutation.isPending}
+                style={styles.modalButton}
+                testID="button-save-category"
+              >
+                Add
+              </Button>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </ThemedView>
   );
 }
@@ -332,5 +433,50 @@ const styles = StyleSheet.create({
   },
   createButton: {
     marginTop: Spacing.lg,
+  },
+  addCategoryButton: {
+    width: 40,
+    height: 36,
+    borderRadius: BorderRadius.full,
+    borderWidth: 2,
+    borderStyle: "dashed",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(15, 28, 63, 0.8)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: Spacing.lg,
+  },
+  modalContent: {
+    width: "100%",
+    maxWidth: 340,
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.xl,
+    ...Shadows.medium,
+  },
+  modalTitle: {
+    textAlign: "center",
+    marginBottom: Spacing.xs,
+  },
+  modalSubtitle: {
+    textAlign: "center",
+    marginBottom: Spacing.lg,
+  },
+  modalInput: {
+    borderWidth: 2,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
+    fontSize: 16,
+    marginBottom: Spacing.lg,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    gap: Spacing.md,
+  },
+  modalButton: {
+    flex: 1,
   },
 });

@@ -74,3 +74,8 @@ task = "shell.exec"
 args = "npm run expo:dev"
 waitForPort = 8081
 ensurePreviewReachable = "/status"
+
+[userenv]
+
+[userenv.shared]
+EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID = "29494814124-660lsfgfnb63elm4i7fjds94c7mrj7rl.apps.googleusercontent.com"

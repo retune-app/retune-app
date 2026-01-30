@@ -113,15 +113,18 @@ export function WelcomeSection({
 
   return (
     <View style={styles.container}>
-      <View style={styles.greetingRow}>
+      <View style={[
+        styles.greetingRow,
+        !isDark && styles.greetingRowLight,
+      ]}>
         <View style={styles.greetingContent}>
           <View style={styles.greetingHeader}>
             <Feather name={icon as any} size={20} color={theme.gold} />
-            <ThemedText type="h2" style={styles.greeting}>
+            <ThemedText type="h2" style={[styles.greeting, { color: theme.text }]}>
               {greeting}, {displayName}
             </ThemedText>
           </View>
-          <ThemedText type="body" style={[styles.suggestion, { color: theme.textSecondary }]}>
+          <ThemedText type="body" style={[styles.suggestion, { color: isDark ? theme.textSecondary : "#3A4A5E" }]}>
             {suggestion}
           </ThemedText>
         </View>
@@ -134,13 +137,16 @@ export function WelcomeSection({
             style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}
           >
             <LinearGradient
-              colors={isDark ? [theme.navyMid, "#243656"] : [theme.gold + "15", theme.gold + "08"]}
+              colors={isDark ? [theme.navyMid, "#243656"] : ["rgba(255, 255, 255, 0.95)", "rgba(255, 255, 255, 0.85)"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={[
                 styles.quickPlayCard,
                 Shadows.small,
-                { borderColor: theme.gold + "40" },
+                { 
+                  borderColor: isDark ? theme.gold + "40" : theme.gold + "60",
+                  backgroundColor: isDark ? undefined : "rgba(255, 255, 255, 0.9)",
+                },
               ]}
             >
               <View style={styles.quickPlayContent}>
@@ -183,6 +189,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: Spacing.lg,
+  },
+  greetingRowLight: {
+    backgroundColor: "rgba(255, 255, 255, 0.7)",
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    marginHorizontal: -Spacing.lg,
+    marginTop: -Spacing.md,
+    borderRadius: BorderRadius.md,
   },
   greetingContent: {
     flex: 1,

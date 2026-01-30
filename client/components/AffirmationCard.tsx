@@ -45,7 +45,7 @@ export function AffirmationCard({
   isActive = false,
   testID,
 }: AffirmationCardProps) {
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const scale = useSharedValue(1);
   const breathProgress = useSharedValue(0);
   const glowOpacity = useSharedValue(0);
@@ -131,7 +131,11 @@ export function AffirmationCard({
       <View style={[
         styles.card,
         Shadows.small,
-        { backgroundColor: theme.cardBackground },
+        { 
+          backgroundColor: theme.cardBackground,
+          borderColor: isDark ? 'transparent' : theme.border,
+          borderWidth: isDark ? 0 : 1,
+        },
         isActive && { backgroundColor: theme.backgroundSecondary, borderColor: theme.primary, borderWidth: 2 },
       ]}>
         <View style={styles.content}>

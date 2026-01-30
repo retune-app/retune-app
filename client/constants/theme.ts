@@ -40,7 +40,7 @@ export const Colors = {
     backgroundSecondary: "#EEF1F5",
     backgroundTertiary: "#E0E4EB",
     border: borderLight,
-    cardBackground: "rgba(255, 255, 255, 0.9)",
+    cardBackground: "rgba(255, 255, 255, 0.95)",
     inputBackground: surfaceWhite,
     inputBorder: borderLight,
     placeholder: textSecondaryLight,

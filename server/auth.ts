@@ -171,6 +171,11 @@ export function setupAuth(app: Express) {
         return res.status(401).json({ error: "Invalid email or password" });
       }
 
+      // OAuth users cannot login with password
+      if (!user.password) {
+        return res.status(401).json({ error: "Please use social login for this account" });
+      }
+
       const isValid = await verifyPassword(password, user.password);
       if (!isValid) {
         return res.status(401).json({ error: "Invalid email or password" });
@@ -233,6 +238,84 @@ export function setupAuth(app: Express) {
     } catch (error) {
       console.error("Logout error:", error);
       res.status(500).json({ error: "Failed to logout" });
+    }
+  });
+
+  // OAuth login (Google/Apple) - token verification
+  app.post("/api/auth/oauth", async (req: Request, res: Response) => {
+    try {
+      const { email, name, provider, providerId, avatarUrl } = req.body;
+
+      if (!email || !provider || !providerId) {
+        return res.status(400).json({ error: "Email, provider, and providerId are required" });
+      }
+
+      if (!["google", "apple"].includes(provider)) {
+        return res.status(400).json({ error: "Invalid auth provider" });
+      }
+
+      // Check if user exists by email
+      const [existingUser] = await db
+        .select()
+        .from(users)
+        .where(eq(users.email, email.toLowerCase()));
+
+      let user;
+
+      if (existingUser) {
+        // Update existing user's OAuth info if needed
+        if (!existingUser.providerId || existingUser.authProvider !== provider) {
+          [user] = await db
+            .update(users)
+            .set({
+              authProvider: provider,
+              providerId: providerId,
+              avatarUrl: avatarUrl || existingUser.avatarUrl,
+            })
+            .where(eq(users.id, existingUser.id))
+            .returning();
+        } else {
+          user = existingUser;
+        }
+      } else {
+        // Create new OAuth user
+        [user] = await db
+          .insert(users)
+          .values({
+            email: email.toLowerCase(),
+            name: name || email.split("@")[0],
+            authProvider: provider,
+            providerId: providerId,
+            avatarUrl: avatarUrl,
+          })
+          .returning();
+      }
+
+      // Generate auth token for mobile apps
+      const authToken = await generateAuthToken(user.id);
+
+      // Set session
+      req.session.userId = user.id;
+      await new Promise<void>((resolve, reject) => {
+        req.session.save((err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+
+      res.json({
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          hasVoiceSample: user.hasVoiceSample,
+          avatarUrl: user.avatarUrl,
+        },
+        authToken,
+      });
+    } catch (error) {
+      console.error("OAuth login error:", error);
+      res.status(500).json({ error: "Failed to authenticate" });
     }
   });
 

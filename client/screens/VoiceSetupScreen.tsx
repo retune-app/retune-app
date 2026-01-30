@@ -6,6 +6,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Audio } from "expo-av";
 import * as Haptics from "expo-haptics";
+import { Feather } from "@expo/vector-icons";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -38,6 +39,7 @@ export default function VoiceSetupScreen() {
   const navigation = useNavigation<NavigationProp>();
   const queryClient = useQueryClient();
 
+  const [showPrivacyNotice, setShowPrivacyNotice] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [hasRecording, setHasRecording] = useState(false);
@@ -117,7 +119,6 @@ export default function VoiceSetupScreen() {
   });
 
   useEffect(() => {
-    requestPermissions();
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
       if (recordingRef.current) {
@@ -125,6 +126,11 @@ export default function VoiceSetupScreen() {
       }
     };
   }, []);
+
+  const handlePrivacyAcknowledge = async () => {
+    setShowPrivacyNotice(false);
+    await requestPermissions();
+  };
 
   const requestPermissions = async () => {
     try {
@@ -257,6 +263,113 @@ export default function VoiceSetupScreen() {
   };
 
   const isValidDuration = recordingDuration >= 15;
+
+  if (showPrivacyNotice) {
+    return (
+      <ThemedView style={styles.container}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={[
+            styles.content,
+            styles.privacyContent,
+            { paddingTop: insets.top + Spacing["2xl"], paddingBottom: insets.bottom + Spacing["2xl"] },
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={[styles.privacyIconContainer, { backgroundColor: theme.backgroundSecondary }]}>
+            <Feather name="shield" size={48} color={theme.primary} />
+          </View>
+
+          <ThemedText type="h1" style={styles.title}>
+            Your Voice is Protected
+          </ThemedText>
+
+          <ThemedText type="body" style={[styles.privacyDescription, { color: theme.textSecondary }]}>
+            We take your privacy seriously. Here's how we protect your voice recording:
+          </ThemedText>
+
+          <View style={[styles.privacyCard, { backgroundColor: theme.backgroundSecondary }]}>
+            <View style={styles.privacyItem}>
+              <View style={[styles.privacyBullet, { backgroundColor: theme.primary }]}>
+                <Feather name="lock" size={16} color="#FFFFFF" />
+              </View>
+              <View style={styles.privacyItemText}>
+                <ThemedText type="body" style={styles.privacyItemTitle}>
+                  Securely Stored
+                </ThemedText>
+                <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                  Your voice recording is encrypted and stored securely
+                </ThemedText>
+              </View>
+            </View>
+
+            <View style={styles.privacyItem}>
+              <View style={[styles.privacyBullet, { backgroundColor: theme.primary }]}>
+                <Feather name="user" size={16} color="#FFFFFF" />
+              </View>
+              <View style={styles.privacyItemText}>
+                <ThemedText type="body" style={styles.privacyItemTitle}>
+                  Only You Have Access
+                </ThemedText>
+                <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                  No one else can access or listen to your voice sample
+                </ThemedText>
+              </View>
+            </View>
+
+            <View style={styles.privacyItem}>
+              <View style={[styles.privacyBullet, { backgroundColor: theme.primary }]}>
+                <Feather name="headphones" size={16} color="#FFFFFF" />
+              </View>
+              <View style={styles.privacyItemText}>
+                <ThemedText type="body" style={styles.privacyItemTitle}>
+                  Personal Use Only
+                </ThemedText>
+                <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                  Used solely to create your personalized affirmations
+                </ThemedText>
+              </View>
+            </View>
+
+            <View style={styles.privacyItem}>
+              <View style={[styles.privacyBullet, { backgroundColor: theme.primary }]}>
+                <Feather name="trash-2" size={16} color="#FFFFFF" />
+              </View>
+              <View style={styles.privacyItemText}>
+                <ThemedText type="body" style={styles.privacyItemTitle}>
+                  Delete Anytime
+                </ThemedText>
+                <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                  You can delete your voice data at any time from your profile
+                </ThemedText>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.buttonsContainer}>
+            <Button
+              variant="gradient"
+              onPress={handlePrivacyAcknowledge}
+              style={styles.continueButton}
+              testID="button-privacy-continue"
+            >
+              I Understand, Continue
+            </Button>
+
+            <Button
+              variant="ghost"
+              onPress={handleSkip}
+              loading={skipMutation.isPending}
+              style={styles.skipButton}
+              testID="button-privacy-skip"
+            >
+              Skip for now
+            </Button>
+          </View>
+        </ScrollView>
+      </ThemedView>
+    );
+  }
 
   return (
     <ThemedView style={styles.container}>
@@ -428,5 +541,50 @@ const styles = StyleSheet.create({
   },
   skipButton: {
     width: "100%",
+  },
+  privacyContent: {
+    justifyContent: "center",
+    minHeight: "100%",
+  },
+  privacyIconContainer: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: Spacing.xl,
+  },
+  privacyDescription: {
+    textAlign: "center",
+    marginBottom: Spacing.xl,
+    maxWidth: 320,
+    lineHeight: 24,
+  },
+  privacyCard: {
+    width: "100%",
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    marginBottom: Spacing.xl,
+    gap: Spacing.lg,
+  },
+  privacyItem: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: Spacing.md,
+  },
+  privacyBullet: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 2,
+  },
+  privacyItemText: {
+    flex: 1,
+    gap: 4,
+  },
+  privacyItemTitle: {
+    fontWeight: "600",
   },
 });

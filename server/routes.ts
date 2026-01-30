@@ -213,7 +213,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
 
   // Handle OPTIONS preflight for audio files (CORS)
-  app.options("/uploads/:filename", (req: Request, res: Response) => {
+  app.options("/uploads/audio/:filename", (req: Request, res: Response) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Range, Accept-Encoding');
@@ -223,7 +223,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Serve uploaded audio files (public access with security validations)
   // Audio files use random filenames making them hard to guess
   // Security is enforced through: filename pattern validation + path traversal prevention
-  app.get("/uploads/:filename", async (req: Request, res: Response) => {
+  app.get("/uploads/audio/:filename", async (req: Request, res: Response) => {
     try {
       const rawFilename = req.params.filename;
       
@@ -232,11 +232,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // SECURITY: Reject any filename that doesn't match expected pattern
       if (!/^(affirmation|voice)-\d+(-\d+)?\.(mp3|m4a|wav|webm)$/.test(filename)) {
-        console.log(`SECURITY: Rejected malformed filename: ${rawFilename}`);
         return res.status(400).json({ error: "Invalid filename format" });
       }
       
-      const filePath = path.join(uploadDir, filename);
+      const audioDir = path.join(uploadDir, "audio");
+      const filePath = path.join(audioDir, filename);
       
       // SECURITY: Verify resolved path is within uploads directory (defense in depth)
       const resolvedPath = path.resolve(filePath);

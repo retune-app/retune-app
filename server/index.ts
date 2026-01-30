@@ -211,8 +211,14 @@ function configureExpoAndLanding(app: express.Application) {
     next();
   });
 
-  app.use("/assets", express.static(path.resolve(process.cwd(), "assets")));
-  app.use(express.static(path.resolve(process.cwd(), "static-build")));
+  const assetsPath = path.resolve(process.cwd(), "assets");
+  const staticBuildPath = path.resolve(process.cwd(), "static-build");
+  
+  log(`Static paths: assets=${assetsPath}`);
+  
+  app.use("/assets", express.static(assetsPath));
+  // Note: /uploads is handled by API routes in routes.ts with security validations
+  app.use(express.static(staticBuildPath));
 
   log("Expo routing: Checking expo-platform header on / and /manifest");
 }

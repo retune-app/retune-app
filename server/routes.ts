@@ -31,12 +31,7 @@ const audioUpload = multer({
 });
 
 // Generate affirmation script using OpenAI
-interface ScriptGeneration {
-  script: string;
-  description: string;
-}
-
-async function generateScript(goal: string, category?: string, length?: string): Promise<ScriptGeneration> {
+async function generateScript(goal: string, category?: string, length?: string): Promise<string> {
   const lengthConfig = {
     short: { sentences: 2, tokens: 80, description: "exactly 2 sentences" },
     medium: { sentences: 5, tokens: 200, description: "exactly 5 sentences" },
@@ -63,11 +58,9 @@ async function generateScript(goal: string, category?: string, length?: string):
   
   const systemPrompt = `Write ${config.sentences} affirmation sentences. First person, present tense. No titles, no instructions, no numbering. Just ${config.sentences} sentences.
 
-TONE AND STYLE: ${toneInstruction}
+TONE AND STYLE: ${toneInstruction}`;
 
-After the affirmation, on a new line, write "DESCRIPTION:" followed by a single short tagline (5-8 words) that captures the essence - like "Build unshakeable confidence daily" or "Embrace your inner power".`;
-
-  const userPrompt = `${config.sentences} affirmations for: ${goal}. Only ${config.sentences} sentences total, then the DESCRIPTION line.`;
+  const userPrompt = `${config.sentences} affirmations for: ${goal}. Only ${config.sentences} sentences total.`;
 
   const response = await openai.chat.completions.create({
     model: "gpt-4o",
@@ -76,21 +69,13 @@ After the affirmation, on a new line, write "DESCRIPTION:" followed by a single 
       { role: "user", content: userPrompt },
     ],
     temperature: 0.7,
-    max_tokens: config.tokens + 50, // Extra tokens for description
+    max_tokens: config.tokens,
   });
 
-  let content = response.choices[0]?.message?.content || "";
+  let script = response.choices[0]?.message?.content || "";
   
-  // Extract description if present
-  let description = "";
-  const descMatch = content.match(/DESCRIPTION:\s*(.+?)(?:\n|$)/i);
-  if (descMatch) {
-    description = descMatch[1].trim();
-    content = content.replace(/DESCRIPTION:\s*.+?(?:\n|$)/i, "").trim();
-  }
-  
-  // Clean up the script
-  let script = content
+  // Clean up any remaining formatting the model might have added
+  script = script
     .replace(/^\*\*.*?\*\*\s*/gm, "") // Remove bold titles
     .replace(/^#+\s*.*?\n/gm, "") // Remove markdown headers
     .replace(/\*?\([^)]*\)\*?\s*/g, "") // Remove parenthetical instructions
@@ -105,7 +90,7 @@ After the affirmation, on a new line, write "DESCRIPTION:" followed by a single 
     script = sentences.slice(0, config.sentences).join(" ").trim();
   }
   
-  return { script, description };
+  return script;
 }
 
 // Auto-generate title from affirmation script
@@ -350,8 +335,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Goal is required" });
       }
 
-      const result = await generateScript(goal, category, length);
-      res.json({ script: result.script, description: result.description });
+      const script = await generateScript(goal, category, length);
+      res.json({ script });
     } catch (error) {
       console.error("Error generating script:", error);
       res.status(500).json({ error: "Failed to generate script" });
@@ -361,7 +346,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create affirmation with voice synthesis (requires auth)
   app.post("/api/affirmations/create-with-voice", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { title, script, category, isManual, description } = req.body;
+      const { title, script, category, isManual } = req.body;
 
       if (!script) {
         return res.status(400).json({ error: "Script is required" });
@@ -416,7 +401,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .values({
           userId: req.userId!,
           title: title || "My Affirmation",
-          description: description || null, // AI-generated description for card display
           script,
           categoryName: categoryName || null, // Store category name directly
           audioUrl: `/uploads/audio/${audioFilename}`,

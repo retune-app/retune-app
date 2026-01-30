@@ -21,7 +21,6 @@ import { Spacing, BorderRadius, Animation, Shadows } from "@/constants/theme";
 interface AffirmationCardProps {
   id: number;
   title: string;
-  description?: string | null;
   category?: string;
   duration?: number;
   isFavorite?: boolean;
@@ -39,7 +38,6 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 export function AffirmationCard({
   id,
   title,
-  description,
   category,
   duration,
   isFavorite = false,
@@ -162,21 +160,29 @@ export function AffirmationCard({
         },
         isActive && { backgroundColor: theme.backgroundSecondary, borderColor: theme.primary, borderWidth: 2 },
       ]}>
-        <View style={styles.content}>
-          <View style={styles.textContainer}>
-            <View style={styles.titleRow}>
-              <ThemedText type="h4" numberOfLines={2} style={styles.title}>
-                {title}
-              </ThemedText>
-              {isFavorite ? (
-                <Feather name="heart" size={14} color={theme.accent} style={styles.favoriteIcon} />
-              ) : null}
-            </View>
-            {description ? (
-              <ThemedText type="body" numberOfLines={1} style={[styles.description, { color: theme.textSecondary }]}>
-                {description}
+        <View style={[styles.cardHeader, { borderBottomColor: isDark ? 'rgba(255,255,255,0.08)' : theme.border }]}>
+          <View style={styles.ownershipBadge}>
+            <Feather name="user" size={10} color={theme.gold} />
+            <ThemedText style={[styles.ownershipText, { color: theme.gold }]}>
+              My Affirmation
+            </ThemedText>
+          </View>
+          <View style={styles.headerRight}>
+            {isFavorite ? (
+              <Feather name="heart" size={14} color={theme.accent} style={styles.favoriteIcon} />
+            ) : null}
+            {formatCreatedDate(createdAt) ? (
+              <ThemedText style={[styles.dateText, { color: theme.textSecondary }]}>
+                {formatCreatedDate(createdAt)}
               </ThemedText>
             ) : null}
+          </View>
+        </View>
+        <View style={styles.content}>
+          <View style={styles.textContainer}>
+            <ThemedText type="h4" numberOfLines={2} style={styles.title}>
+              {title}
+            </ThemedText>
             <View style={styles.meta}>
               {category ? (
                 <View style={[styles.categoryBadge, { backgroundColor: theme.backgroundSecondary, borderColor: theme.gold, borderWidth: 1 }]}>
@@ -228,6 +234,33 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     overflow: "hidden",
   },
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    borderBottomWidth: 1,
+  },
+  ownershipBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  ownershipText: {
+    fontSize: 11,
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  headerRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  dateText: {
+    fontSize: 11,
+  },
   content: {
     flexDirection: "row",
     alignItems: "center",
@@ -236,18 +269,8 @@ const styles = StyleSheet.create({
   textContainer: {
     flex: 1,
   },
-  titleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.sm,
-  },
   title: {
-    flex: 1,
     marginBottom: Spacing.xs,
-  },
-  description: {
-    fontSize: 13,
-    marginBottom: Spacing.sm,
   },
   meta: {
     flexDirection: "row",
@@ -265,7 +288,7 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   favoriteIcon: {
-    marginLeft: Spacing.xs,
+    marginRight: Spacing.xs,
   },
   playButtonWrapper: {
     width: 40,

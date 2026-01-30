@@ -65,7 +65,6 @@ export const affirmations = pgTable("affirmations", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
-  description: text("description"), // AI-generated short description for card display
   script: text("script").notNull(),
   categoryId: integer("category_id").references(() => categories.id),
   customCategoryId: integer("custom_category_id").references(() => customCategories.id, { onDelete: "set null" }),

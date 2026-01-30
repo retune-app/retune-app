@@ -1,22 +1,19 @@
 import React from "react";
 import { View, StyleSheet, Image } from "react-native";
 
-import { ThemedText } from "@/components/ThemedText";
-import { Spacing } from "@/constants/theme";
-
 interface HeaderTitleProps {
-  title: string;
+  title?: string;
+  logoOnly?: boolean;
 }
 
-export function HeaderTitle({ title }: HeaderTitleProps) {
+export function HeaderTitle({ logoOnly = false }: HeaderTitleProps) {
   return (
     <View style={styles.container}>
       <Image
         source={require("../../assets/images/icon.png")}
-        style={styles.icon}
+        style={logoOnly ? styles.iconLarge : styles.icon}
         resizeMode="contain"
       />
-      <ThemedText style={styles.title}>{title}</ThemedText>
     </View>
   );
 }
@@ -25,17 +22,16 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "flex-start",
+    justifyContent: "center",
   },
   icon: {
     width: 28,
     height: 28,
-    marginRight: Spacing.sm,
     borderRadius: 6,
   },
-  title: {
-    fontSize: 17,
-    fontWeight: "600",
-    fontFamily: "Nunito_600SemiBold",
+  iconLarge: {
+    width: 38,
+    height: 38,
+    borderRadius: 8,
   },
 });

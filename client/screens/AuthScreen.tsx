@@ -145,11 +145,14 @@ export function AuthScreen() {
       // Apple may not return email after first sign-in, use user ID as fallback
       const email = credential.email || `${credential.user}@privaterelay.appleid.com`;
       // Use only first name for preferred name
+      // Apple only returns name on first sign-in, use email prefix as fallback
       const firstName = credential.fullName?.givenName || undefined;
+      const fallbackName = email.split("@")[0].split(".")[0]; // Get first part of email
+      const cleanFallback = fallbackName.charAt(0).toUpperCase() + fallbackName.slice(1).toLowerCase();
 
       const result = await oauthLogin({
         email,
-        name: firstName || "Friend",
+        name: firstName || cleanFallback,
         provider: "apple",
         providerId: credential.user,
       });

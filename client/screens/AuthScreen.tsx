@@ -46,24 +46,25 @@ export function AuthScreen() {
   const [error, setError] = useState("");
 
   // Check if Google is available on this platform
-  const hasGoogleClientId = Platform.select({
-    ios: !!process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-    android: !!process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
-    web: !!process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-    default: false,
-  });
+  const isIOS = Platform.OS === "ios";
+  const isAndroid = Platform.OS === "android";
+  const isWeb = Platform.OS === "web";
+  
+  const hasGoogleClientId = isIOS 
+    ? !!process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID
+    : isAndroid 
+      ? !!process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID
+      : !!process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
 
-  // Google OAuth setup - only configure if we have the right client ID
-  const [request, response, promptAsync] = Google.useAuthRequest(
-    hasGoogleClientId ? {
-      webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-      iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-      androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
-    } : {
-      // Provide empty config to prevent crash, button will be hidden anyway
-      webClientId: undefined,
-    }
-  );
+  // Google OAuth setup - configure with platform-appropriate client IDs
+  // On iOS/Android without proper client ID, we skip the hook entirely to avoid crashes
+  const googleConfig = {
+    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || "placeholder",
+    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || (isIOS ? "placeholder.apps.googleusercontent.com" : undefined),
+    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || (isAndroid ? "placeholder.apps.googleusercontent.com" : undefined),
+  };
+  
+  const [request, response, promptAsync] = Google.useAuthRequest(googleConfig);
 
   // Handle Google auth response
   React.useEffect(() => {

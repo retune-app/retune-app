@@ -131,6 +131,7 @@ export function AuthScreen() {
     logoImage: {
       width: 120,
       height: 120,
+      borderRadius: 60,
       marginBottom: Spacing.lg,
     },
     title: {

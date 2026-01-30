@@ -1,0 +1,122 @@
+{
+  "id": "ddda6b9b-5d60-4bd1-8b95-931997aef448",
+  "createdAt": "2026-01-30T23:04:43.151Z",
+  "runtimeVersion": "exposdk:54.0.0",
+  "launchAsset": {
+    "key": "bundle-1769814283151-5942",
+    "contentType": "application/javascript",
+    "url": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev/1769814283151-5942/_expo/static/js/android/bundle.js"
+  },
+  "assets": [],
+  "metadata": {},
+  "extra": {
+    "eas": {},
+    "expoClient": {
+      "name": "ReWired",
+      "slug": "subconscious-rewire",
+      "version": "1.0.0",
+      "orientation": "default",
+      "icon": "./assets/images/icon.jpg",
+      "scheme": "subconsciousrewire",
+      "userInterfaceStyle": "automatic",
+      "newArchEnabled": true,
+      "ios": {
+        "supportsTablet": true,
+        "bundleIdentifier": "com.subconsciousrewire.app",
+        "infoPlist": {
+          "NSMicrophoneUsageDescription": "This app needs access to your microphone to record your voice for personalized affirmations.",
+          "UIBackgroundModes": [
+            "audio"
+          ]
+        }
+      },
+      "android": {
+        "adaptiveIcon": {
+          "backgroundColor": "#4A90E2",
+          "foregroundImage": "./assets/images/icon.jpg",
+          "foregroundImageUrl": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev/assets/./assets/images/icon.jpg"
+        },
+        "edgeToEdgeEnabled": true,
+        "predictiveBackGestureEnabled": false,
+        "package": "com.subconsciousrewire.app",
+        "permissions": [
+          "RECORD_AUDIO",
+          "android.permission.RECORD_AUDIO",
+          "android.permission.MODIFY_AUDIO_SETTINGS"
+        ]
+      },
+      "web": {
+        "output": "single",
+        "favicon": "./assets/images/icon.jpg"
+      },
+      "plugins": [
+        [
+          "expo-splash-screen",
+          {
+            "image": "./assets/images/splash-icon.jpg",
+            "imageWidth": 200,
+            "resizeMode": "contain",
+            "backgroundColor": "#F8FAFB",
+            "dark": {
+              "backgroundColor": "#1A1A2E"
+            }
+          }
+        ],
+        "expo-web-browser",
+        [
+          "expo-av",
+          {
+            "microphonePermission": "Allow ReWired to access your microphone to record personalized affirmations."
+          }
+        ]
+      ],
+      "experiments": {
+        "reactCompiler": true
+      },
+      "_internal": {
+        "isDebug": false,
+        "projectRoot": "/home/runner/workspace",
+        "dynamicConfigPath": {},
+        "staticConfigPath": "/home/runner/workspace/app.json",
+        "packageJsonPath": "/home/runner/workspace/package.json",
+        "pluginHistory": {
+          "expo-splash-screen": {
+            "name": "expo-splash-screen",
+            "version": "31.0.11"
+          },
+          "expo-web-browser": {
+            "name": "expo-web-browser",
+            "version": "15.0.9"
+          },
+          "expo-av": {
+            "name": "expo-av",
+            "version": "16.0.8"
+          }
+        }
+      },
+      "sdkVersion": "54.0.0",
+      "platforms": [
+        "ios",
+        "android",
+        "web"
+      ],
+      "androidStatusBar": {
+        "backgroundColor": "#F8FAFB"
+      },
+      "iconUrl": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev/assets/./assets/images/icon.jpg",
+      "hostUri": "ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev/android"
+    },
+    "expoGo": {
+      "debuggerHost": "ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev/android",
+      "developer": {
+        "tool": "expo-cli",
+        "projectRoot": "/home/runner/workspace"
+      },
+      "packagerOpts": {
+        "dev": false
+      },
+      "mainModuleName": "client/index"
+    },
+    "scopeKey": "@anonymous/subconscious-rewire-e22f1ab4-fb82-4813-8d08-bc6a996c7ef8"
+  }
+}

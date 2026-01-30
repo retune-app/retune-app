@@ -184,7 +184,7 @@ export default function HomeScreen() {
           styles.contentContainer,
           {
             paddingTop: headerHeight + Spacing.lg,
-            paddingBottom: tabBarHeight + Spacing.xl,
+            paddingBottom: tabBarHeight + 80 + Spacing.xl,
           },
           filteredAffirmations.length === 0 && styles.emptyContainer,
         ]}

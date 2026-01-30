@@ -162,6 +162,18 @@ The frontend uses `getApiUrl()` from `client/lib/query-client.ts` to determine t
 
 This is necessary because Replit's port configuration maps port 80 to the Expo dev server (8081), while port 5000 routes to the Express backend.
 
+### Voice Selection System
+- **AI Voice Options**: Users can select between two AI voices:
+  - Female voice: "Rachel" (voiceId: 21m00Tcm4TlvDq8ikWAM) - soft, warm tone
+  - Male voice: "Adam" (voiceId: pNInz6obpgDQGcFmaJgB) - deep, calm tone
+- **Personal Voice**: Users can record their voice for cloning and use it for affirmations
+- **Voice Preferences**: User preferences stored in database (preferredVoiceType, preferredAiGender)
+- **In-Player Voice Switching**: Users can change the voice for any affirmation directly from PlayerScreen
+- **Voice Regeneration Endpoint**: POST /api/affirmations/:id/regenerate-voice
+  - Body: { voiceType: "ai" | "personal", voiceGender?: "male" | "female" }
+  - Regenerates the affirmation's audio with the new voice selection
+- **Profile Voice Settings**: Voice preferences can be configured in ProfileScreen settings
+
 ### Default Voice for New Users
 - Users can skip voice setup and immediately use sample affirmations
 - Default ElevenLabs voice: "Rachel" (voiceId: 21m00Tcm4TlvDq8ikWAM)

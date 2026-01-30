@@ -4,7 +4,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { db } from "./db";
-import { affirmations, voiceSamples, categories, users, collections, customCategories } from "@shared/schema";
+import { affirmations, voiceSamples, categories, users, collections, customCategories, notificationSettings } from "@shared/schema";
 import { eq, desc, asc, and } from "drizzle-orm";
 import { openai } from "./replit_integrations/audio/client";
 import {
@@ -1016,6 +1016,117 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting user account:", error);
       res.status(500).json({ error: "Failed to delete account" });
+    }
+  });
+
+  // Get notification settings for current user
+  app.get("/api/notifications/settings", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const userId = req.userId!;
+
+      const [settings] = await db
+        .select()
+        .from(notificationSettings)
+        .where(eq(notificationSettings.userId, userId))
+        .limit(1);
+
+      if (!settings) {
+        // Return default settings if none exist
+        return res.json({
+          morningEnabled: false,
+          morningTime: "08:00",
+          afternoonEnabled: false,
+          afternoonTime: "13:00",
+          eveningEnabled: false,
+          eveningTime: "20:00",
+        });
+      }
+
+      res.json({
+        morningEnabled: settings.morningEnabled,
+        morningTime: settings.morningTime,
+        afternoonEnabled: settings.afternoonEnabled,
+        afternoonTime: settings.afternoonTime,
+        eveningEnabled: settings.eveningEnabled,
+        eveningTime: settings.eveningTime,
+      });
+    } catch (error) {
+      console.error("Error fetching notification settings:", error);
+      res.status(500).json({ error: "Failed to fetch notification settings" });
+    }
+  });
+
+  // Update notification settings for current user
+  app.put("/api/notifications/settings", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const userId = req.userId!;
+      const { 
+        morningEnabled, 
+        morningTime, 
+        afternoonEnabled, 
+        afternoonTime, 
+        eveningEnabled, 
+        eveningTime 
+      } = req.body;
+
+      // Check if settings exist
+      const [existing] = await db
+        .select()
+        .from(notificationSettings)
+        .where(eq(notificationSettings.userId, userId))
+        .limit(1);
+
+      if (existing) {
+        // Update existing settings
+        const [updated] = await db
+          .update(notificationSettings)
+          .set({
+            morningEnabled: morningEnabled ?? existing.morningEnabled,
+            morningTime: morningTime ?? existing.morningTime,
+            afternoonEnabled: afternoonEnabled ?? existing.afternoonEnabled,
+            afternoonTime: afternoonTime ?? existing.afternoonTime,
+            eveningEnabled: eveningEnabled ?? existing.eveningEnabled,
+            eveningTime: eveningTime ?? existing.eveningTime,
+            updatedAt: new Date(),
+          })
+          .where(eq(notificationSettings.userId, userId))
+          .returning();
+
+        return res.json({
+          morningEnabled: updated.morningEnabled,
+          morningTime: updated.morningTime,
+          afternoonEnabled: updated.afternoonEnabled,
+          afternoonTime: updated.afternoonTime,
+          eveningEnabled: updated.eveningEnabled,
+          eveningTime: updated.eveningTime,
+        });
+      } else {
+        // Create new settings
+        const [created] = await db
+          .insert(notificationSettings)
+          .values({
+            userId,
+            morningEnabled: morningEnabled ?? false,
+            morningTime: morningTime ?? "08:00",
+            afternoonEnabled: afternoonEnabled ?? false,
+            afternoonTime: afternoonTime ?? "13:00",
+            eveningEnabled: eveningEnabled ?? false,
+            eveningTime: eveningTime ?? "20:00",
+          })
+          .returning();
+
+        return res.json({
+          morningEnabled: created.morningEnabled,
+          morningTime: created.morningTime,
+          afternoonEnabled: created.afternoonEnabled,
+          afternoonTime: created.afternoonTime,
+          eveningEnabled: created.eveningEnabled,
+          eveningTime: created.eveningTime,
+        });
+      }
+    } catch (error) {
+      console.error("Error updating notification settings:", error);
+      res.status(500).json({ error: "Failed to update notification settings" });
     }
   });
 

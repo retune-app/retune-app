@@ -74,15 +74,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (response.ok) {
         const userData = await response.json();
         setUser(userData.user);
-      } else {
-        setUser(null);
-        await setToken(null);
       }
+      // Don't log out on error - just keep existing user data
+      // This prevents logout when refreshing after profile updates
     } catch (error) {
-      console.error("Failed to fetch user:", error);
-      setUser(null);
+      console.error("Failed to refresh user:", error);
+      // Don't set user to null - keep existing data on network errors
     }
-  }, [setToken]);
+  }, []);
 
   useEffect(() => {
     const checkAuth = async () => {

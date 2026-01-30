@@ -30,6 +30,7 @@ Preferred communication style: Simple, everyday language.
 - **Affirmations**: User-created affirmations with title, script text, audio URL, category, and play count
 - **Voice Samples**: Uploaded voice recordings used for voice cloning
 - **Categories**: Affirmation categories (Career, Health, Confidence, Wealth, Relationships, Sleep)
+- **Notification Settings**: Daily reminder settings with 3 time slots (morning, afternoon, evening) - each with enabled toggle and customizable time
 
 ### Authentication
 - **Session-based auth**: Express-session with secure HTTP-only cookies (web)
@@ -63,6 +64,10 @@ Preferred communication style: Simple, everyday language.
 #### User Data Management (all require auth)
 - `POST /api/user/reset` - Reset all user data (affirmations, voice samples, cloned voice) while keeping account
 - `POST /api/user/account/delete` - Permanently delete user account and all associated data
+
+#### Notification Settings (all require auth)
+- `GET /api/notifications/settings` - Get current notification reminder settings
+- `PUT /api/notifications/settings` - Update notification settings (morningEnabled, morningTime, afternoonEnabled, afternoonTime, eveningEnabled, eveningTime)
 
 ### Audio Pipeline
 1. User records 30-60 second voice sample during onboarding

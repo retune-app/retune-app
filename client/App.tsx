@@ -22,6 +22,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AudioProvider } from "@/contexts/AudioContext";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { BackgroundMusicProvider } from "@/contexts/BackgroundMusicContext";
 import { useTheme } from "@/hooks/useTheme";
 
 SplashScreen.preventAutoHideAsync();
@@ -68,9 +69,11 @@ function AppWithProviders() {
       <GestureHandlerRootView style={styles.root}>
         <KeyboardProvider>
           <AuthProvider>
-            <AudioProvider>
-              <AppContent />
-            </AudioProvider>
+            <BackgroundMusicProvider>
+              <AudioProvider>
+                <AppContent />
+              </AudioProvider>
+            </BackgroundMusicProvider>
           </AuthProvider>
         </KeyboardProvider>
       </GestureHandlerRootView>

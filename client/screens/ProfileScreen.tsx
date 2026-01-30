@@ -18,6 +18,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { Card } from "@/components/Card";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
+import { useBackgroundMusic, BACKGROUND_MUSIC_OPTIONS, BackgroundMusicType } from "@/contexts/BackgroundMusicContext";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { getApiUrl } from "@/lib/query-client";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
@@ -69,6 +70,7 @@ export default function ProfileScreen() {
   const { theme, isDark, themeMode, setThemeMode } = useTheme();
   const navigation = useNavigation<NavigationProp>();
   const { user, logout } = useAuth();
+  const { selectedMusic, setSelectedMusic, volume, setVolume } = useBackgroundMusic();
 
   const queryClient = useQueryClient();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
@@ -279,6 +281,103 @@ export default function ProfileScreen() {
             }
           />
         </View>
+      </View>
+
+      <View style={styles.section}>
+        <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+          BACKGROUND MUSIC
+        </ThemedText>
+        <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
+          {BACKGROUND_MUSIC_OPTIONS.map((option, index) => (
+            <Pressable
+              key={option.id}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setSelectedMusic(option.id);
+              }}
+              style={({ pressed }) => [
+                styles.settingItem,
+                { backgroundColor: pressed ? theme.backgroundSecondary : "transparent" },
+                index < BACKGROUND_MUSIC_OPTIONS.length - 1 && styles.settingItemBorder,
+                index < BACKGROUND_MUSIC_OPTIONS.length - 1 && { borderBottomColor: theme.border },
+              ]}
+              testID={`button-music-${option.id}`}
+            >
+              <View style={[styles.settingIcon, { backgroundColor: theme.backgroundSecondary }]}>
+                <Feather 
+                  name={option.id === 'none' ? 'volume-x' : 'music'} 
+                  size={20} 
+                  color={theme.primary} 
+                />
+              </View>
+              <View style={styles.settingContent}>
+                <ThemedText type="body">{option.name}</ThemedText>
+                <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                  {option.description}
+                </ThemedText>
+              </View>
+              <View style={[
+                styles.radioButton,
+                { borderColor: selectedMusic === option.id ? theme.primary : theme.border },
+              ]}>
+                {selectedMusic === option.id ? (
+                  <View style={[styles.radioButtonInner, { backgroundColor: theme.primary }]} />
+                ) : null}
+              </View>
+            </Pressable>
+          ))}
+        </View>
+        {selectedMusic !== 'none' ? (
+          <View style={[styles.volumeContainer, { backgroundColor: theme.cardBackground }, Shadows.small]}>
+            <View style={styles.volumeRow}>
+              <Feather name="volume-1" size={18} color={theme.textSecondary} />
+              <View style={styles.volumeSliderContainer}>
+                <View 
+                  style={[
+                    styles.volumeTrack, 
+                    { backgroundColor: theme.border }
+                  ]}
+                >
+                  <View 
+                    style={[
+                      styles.volumeFill, 
+                      { backgroundColor: theme.primary, width: `${volume * 100}%` }
+                    ]} 
+                  />
+                </View>
+                <Pressable
+                  style={[
+                    styles.volumeThumb,
+                    { 
+                      backgroundColor: theme.primary,
+                      left: `${volume * 100}%`,
+                      transform: [{ translateX: -10 }],
+                    },
+                  ]}
+                  onPress={() => {}}
+                />
+              </View>
+              <Feather name="volume-2" size={18} color={theme.textSecondary} />
+            </View>
+            <View style={styles.volumeLabels}>
+              <Pressable 
+                onPress={() => setVolume(Math.max(0.1, volume - 0.1))}
+                style={styles.volumeButton}
+              >
+                <Feather name="minus" size={16} color={theme.primary} />
+              </Pressable>
+              <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                Volume: {Math.round(volume * 100)}%
+              </ThemedText>
+              <Pressable 
+                onPress={() => setVolume(Math.min(1, volume + 0.1))}
+                style={styles.volumeButton}
+              >
+                <Feather name="plus" size={16} color={theme.primary} />
+              </Pressable>
+            </View>
+          </View>
+        ) : null}
       </View>
 
       <View style={styles.section}>
@@ -796,5 +895,67 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginTop: Spacing.lg,
+  },
+  settingItemBorder: {
+    borderBottomWidth: 1,
+  },
+  radioButton: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  radioButtonInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+  volumeContainer: {
+    marginTop: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+  },
+  volumeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.md,
+  },
+  volumeSliderContainer: {
+    flex: 1,
+    height: 20,
+    justifyContent: "center",
+    position: "relative",
+  },
+  volumeTrack: {
+    height: 4,
+    borderRadius: 2,
+    width: "100%",
+  },
+  volumeFill: {
+    height: "100%",
+    borderRadius: 2,
+  },
+  volumeThumb: {
+    position: "absolute",
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    top: 0,
+  },
+  volumeLabels: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: Spacing.md,
+    gap: Spacing.lg,
+  },
+  volumeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

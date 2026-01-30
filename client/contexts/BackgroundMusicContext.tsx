@@ -1,0 +1,167 @@
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
+import { Audio } from 'expo-av';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+export type BackgroundMusicType = 
+  | 'none'
+  | '432hz'
+  | '528hz'
+  | 'theta'
+  | 'alpha'
+  | 'delta'
+  | 'beta';
+
+export interface BackgroundMusicOption {
+  id: BackgroundMusicType;
+  name: string;
+  description: string;
+}
+
+export const BACKGROUND_MUSIC_OPTIONS: BackgroundMusicOption[] = [
+  { id: 'none', name: 'None', description: 'No background music' },
+  { id: '432hz', name: '432Hz Healing', description: 'Universal healing frequency' },
+  { id: '528hz', name: '528Hz Love', description: 'Solfeggio love frequency' },
+  { id: 'theta', name: 'Theta Waves', description: 'Deep meditation (6Hz)' },
+  { id: 'alpha', name: 'Alpha Waves', description: 'Relaxation (10Hz)' },
+  { id: 'delta', name: 'Delta Waves', description: 'Deep sleep (2Hz)' },
+  { id: 'beta', name: 'Beta Waves', description: 'Focus & concentration (18Hz)' },
+];
+
+const AUDIO_FILES: Record<Exclude<BackgroundMusicType, 'none'>, any> = {
+  '432hz': require('../../assets/audio/432hz-healing.wav'),
+  '528hz': require('../../assets/audio/528hz-love.wav'),
+  'theta': require('../../assets/audio/theta-waves.wav'),
+  'alpha': require('../../assets/audio/alpha-waves.wav'),
+  'delta': require('../../assets/audio/delta-waves.wav'),
+  'beta': require('../../assets/audio/beta-waves.wav'),
+};
+
+const STORAGE_KEY = '@rewired_background_music';
+const VOLUME_STORAGE_KEY = '@rewired_background_music_volume';
+
+interface BackgroundMusicContextType {
+  selectedMusic: BackgroundMusicType;
+  setSelectedMusic: (type: BackgroundMusicType) => Promise<void>;
+  volume: number;
+  setVolume: (volume: number) => Promise<void>;
+  isPlaying: boolean;
+  startBackgroundMusic: () => Promise<void>;
+  stopBackgroundMusic: () => Promise<void>;
+}
+
+const BackgroundMusicContext = createContext<BackgroundMusicContextType | undefined>(undefined);
+
+export function BackgroundMusicProvider({ children }: { children: React.ReactNode }) {
+  const [selectedMusic, setSelectedMusicState] = useState<BackgroundMusicType>('none');
+  const [volume, setVolumeState] = useState(0.3);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const soundRef = useRef<Audio.Sound | null>(null);
+
+  useEffect(() => {
+    loadSavedPreferences();
+    return () => {
+      if (soundRef.current) {
+        soundRef.current.unloadAsync();
+      }
+    };
+  }, []);
+
+  const loadSavedPreferences = async () => {
+    try {
+      const [savedMusic, savedVolume] = await Promise.all([
+        AsyncStorage.getItem(STORAGE_KEY),
+        AsyncStorage.getItem(VOLUME_STORAGE_KEY),
+      ]);
+      if (savedMusic) {
+        setSelectedMusicState(savedMusic as BackgroundMusicType);
+      }
+      if (savedVolume) {
+        setVolumeState(parseFloat(savedVolume));
+      }
+    } catch (error) {
+      console.error('Error loading background music preferences:', error);
+    }
+  };
+
+  const setSelectedMusic = async (type: BackgroundMusicType) => {
+    setSelectedMusicState(type);
+    await AsyncStorage.setItem(STORAGE_KEY, type);
+    
+    if (isPlaying) {
+      await stopBackgroundMusic();
+      if (type !== 'none') {
+        await startBackgroundMusic();
+      }
+    }
+  };
+
+  const setVolume = async (newVolume: number) => {
+    setVolumeState(newVolume);
+    await AsyncStorage.setItem(VOLUME_STORAGE_KEY, newVolume.toString());
+    
+    if (soundRef.current) {
+      await soundRef.current.setVolumeAsync(newVolume);
+    }
+  };
+
+  const startBackgroundMusic = useCallback(async () => {
+    if (selectedMusic === 'none') return;
+
+    try {
+      if (soundRef.current) {
+        await soundRef.current.unloadAsync();
+      }
+
+      const { sound } = await Audio.Sound.createAsync(
+        AUDIO_FILES[selectedMusic],
+        {
+          isLooping: true,
+          volume: volume,
+          shouldPlay: true,
+        }
+      );
+      
+      soundRef.current = sound;
+      setIsPlaying(true);
+    } catch (error) {
+      console.error('Error starting background music:', error);
+    }
+  }, [selectedMusic, volume]);
+
+  const stopBackgroundMusic = useCallback(async () => {
+    try {
+      if (soundRef.current) {
+        await soundRef.current.stopAsync();
+        await soundRef.current.unloadAsync();
+        soundRef.current = null;
+      }
+      setIsPlaying(false);
+    } catch (error) {
+      console.error('Error stopping background music:', error);
+    }
+  }, []);
+
+  return (
+    <BackgroundMusicContext.Provider
+      value={{
+        selectedMusic,
+        setSelectedMusic,
+        volume,
+        setVolume,
+        isPlaying,
+        startBackgroundMusic,
+        stopBackgroundMusic,
+      }}
+    >
+      {children}
+    </BackgroundMusicContext.Provider>
+  );
+}
+
+export function useBackgroundMusic() {
+  const context = useContext(BackgroundMusicContext);
+  if (!context) {
+    throw new Error('useBackgroundMusic must be used within BackgroundMusicProvider');
+  }
+  return context;
+}

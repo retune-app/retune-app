@@ -18,7 +18,7 @@ export default function HomeStackNavigator() {
         name="Home"
         component={HomeScreen}
         options={{
-          headerTitle: "",
+          title: "Affirmation Library",
         }}
       />
     </Stack.Navigator>

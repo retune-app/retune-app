@@ -18,6 +18,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { WaveformVisualizer } from "@/components/WaveformVisualizer";
 import { RSVPDisplay, WordTiming, RSVPFontSize } from "@/components/RSVPDisplay";
 import { IconButton } from "@/components/IconButton";
+import { AmbientSoundMixer } from "@/components/AmbientSoundMixer";
 import { useTheme } from "@/hooks/useTheme";
 import { useAudio } from "@/contexts/AudioContext";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
@@ -576,6 +577,7 @@ export default function PlayerScreen() {
             onPress={handleFavorite}
             testID="button-favorite"
           />
+          <AmbientSoundMixer compact />
           <IconButton
             icon="share"
             size={24}

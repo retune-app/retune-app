@@ -261,7 +261,7 @@ export default function HomeScreen() {
         contentContainerStyle={[
           styles.contentContainer,
           {
-            paddingTop: insets.top + Spacing.md,
+            paddingTop: Spacing.lg,
             paddingBottom: tabBarHeight + 80 + Spacing.xl,
           },
           filteredAffirmations.length === 0 && styles.emptyContainer,
@@ -282,12 +282,6 @@ export default function HomeScreen() {
         }
       />
 
-      {/* Top edge fade gradient */}
-      <LinearGradient
-        colors={edgeFadeColors}
-        style={[styles.edgeFade, styles.topFade, { height: insets.top + 10 }]}
-        pointerEvents="none"
-      />
 
       {/* Bottom edge fade gradient */}
       <LinearGradient

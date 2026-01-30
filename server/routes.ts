@@ -361,6 +361,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Look up category ID (check default categories first, then custom categories)
       let categoryId: number | null = null;
       let customCategoryId: number | null = null;
+      console.log("Looking up category:", categoryName, "for user:", req.userId);
       if (categoryName) {
         // First check default categories
         const [cat] = await db
@@ -368,6 +369,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .from(categories)
           .where(eq(categories.name, categoryName))
           .limit(1);
+        console.log("Default category lookup result:", cat);
         if (cat) {
           categoryId = cat.id;
         } else {
@@ -380,11 +382,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
               eq(customCategories.userId, req.userId!)
             ))
             .limit(1);
+          console.log("Custom category lookup result:", customCat);
           if (customCat) {
             customCategoryId = customCat.id;
           }
         }
       }
+      console.log("Final categoryId:", categoryId, "customCategoryId:", customCategoryId);
 
       // Get user's voice ID if available (specific to this user)
       const [voiceSample] = await db

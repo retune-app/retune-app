@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { FlatList, View, StyleSheet, RefreshControl, TextInput, Modal, Pressable, Alert, ImageBackground } from "react-native";
 
 const libraryBackgroundDark = require("../../assets/images/library-background.png");
@@ -16,7 +16,9 @@ import { ThemedText } from "@/components/ThemedText";
 import { EmptyState } from "@/components/EmptyState";
 import { SwipeableAffirmationCard } from "@/components/SwipeableAffirmationCard";
 import { CategoryChip } from "@/components/CategoryChip";
+import { WelcomeSection } from "@/components/WelcomeSection";
 import { useTheme } from "@/hooks/useTheme";
+import { useAuth } from "@/contexts/AuthContext";
 import { useAudio } from "@/contexts/AudioContext";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { apiRequest } from "@/lib/query-client";
@@ -39,6 +41,7 @@ export default function HomeScreen() {
   const headerHeight = useHeaderHeight();
   const tabBarHeight = useBottomTabBarHeight();
   const { theme, isDark } = useTheme();
+  const { user } = useAuth();
   const navigation = useNavigation<NavigationProp>();
   const { playAffirmation, currentAffirmation, isPlaying, togglePlayPause } = useAudio();
 
@@ -53,6 +56,30 @@ export default function HomeScreen() {
   const { data: affirmations = [], refetch, isLoading } = useQuery<Affirmation[]>({
     queryKey: ["/api/affirmations"],
   });
+
+  const suggestedAffirmation = useMemo(() => {
+    if (affirmations.length === 0) return null;
+    const hour = new Date().getHours();
+    let targetCategory = "Confidence";
+    if (hour >= 5 && hour < 12) targetCategory = "Confidence";
+    else if (hour >= 12 && hour < 17) targetCategory = "Career";
+    else if (hour >= 17 && hour < 21) targetCategory = "Health";
+    else targetCategory = "Sleep";
+    
+    const categoryMatch = affirmations.find(a => a.categoryName === targetCategory);
+    return categoryMatch || affirmations[0];
+  }, [affirmations]);
+
+  const handleQuickPlay = async () => {
+    const affirmationToPlay = currentAffirmation || suggestedAffirmation;
+    if (affirmationToPlay) {
+      if (currentAffirmation?.id === affirmationToPlay.id) {
+        await togglePlayPause();
+      } else {
+        await playAffirmation(affirmationToPlay);
+      }
+    }
+  };
 
   const { data: categoriesData = [] } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
@@ -130,6 +157,13 @@ export default function HomeScreen() {
 
   const renderHeader = () => (
     <View style={styles.headerContent}>
+      <WelcomeSection
+        userName={user?.name}
+        lastPlayedAffirmation={currentAffirmation}
+        suggestedAffirmation={suggestedAffirmation}
+        onQuickPlay={handleQuickPlay}
+        isPlaying={isPlaying}
+      />
       <View style={[styles.searchContainer, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder }]}>
         <Feather name="search" size={20} color={theme.placeholder} />
         <TextInput

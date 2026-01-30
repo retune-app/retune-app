@@ -5,7 +5,7 @@ import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
@@ -20,8 +20,15 @@ import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBackgroundMusic, BACKGROUND_MUSIC_OPTIONS, BackgroundMusicType } from "@/contexts/BackgroundMusicContext";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
-import { getApiUrl } from "@/lib/query-client";
+import { getApiUrl, apiRequest } from "@/lib/query-client";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
+
+interface CustomCategory {
+  id: number;
+  userId: string;
+  name: string;
+  createdAt: string;
+}
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -86,6 +93,24 @@ export default function ProfileScreen() {
   const { data: stats } = useQuery({
     queryKey: ["/api/user/stats"],
   });
+
+  const { data: customCategories = [] } = useQuery<CustomCategory[]>({
+    queryKey: ["/api/custom-categories"],
+  });
+
+  const deleteCategoryMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/custom-categories/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/custom-categories"] });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    },
+  });
+
+  const handleDeleteCategory = (category: CustomCategory) => {
+    deleteCategoryMutation.mutate(category.id);
+  };
 
   useEffect(() => {
     AsyncStorage.getItem(AUTO_REPLAY_KEY).then((value) => {
@@ -255,6 +280,48 @@ export default function ProfileScreen() {
             onPress={handleVoiceSetup}
           />
         </View>
+      </View>
+
+      <View style={styles.section}>
+        <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+          CUSTOM CATEGORIES
+        </ThemedText>
+        <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
+          {customCategories.length > 0 ? (
+            customCategories.map((category, index) => (
+              <View
+                key={category.id}
+                style={[
+                  styles.customCategoryItem,
+                  index < customCategories.length - 1 && { borderBottomWidth: 1, borderBottomColor: theme.border },
+                ]}
+              >
+                <View style={[styles.settingIcon, { backgroundColor: theme.backgroundSecondary }]}>
+                  <Feather name="tag" size={20} color={theme.primary} />
+                </View>
+                <View style={styles.settingContent}>
+                  <ThemedText type="body">{category.name}</ThemedText>
+                </View>
+                <Pressable
+                  onPress={() => handleDeleteCategory(category)}
+                  style={styles.deleteButton}
+                  testID={`button-delete-category-${category.id}`}
+                >
+                  <Feather name="x" size={18} color={theme.error} />
+                </Pressable>
+              </View>
+            ))
+          ) : (
+            <View style={styles.emptyCategories}>
+              <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "center" }}>
+                No custom categories yet.{"\n"}Add them when creating affirmations.
+              </ThemedText>
+            </View>
+          )}
+        </View>
+        <ThemedText type="caption" style={[styles.categoryCount, { color: theme.textSecondary }]}>
+          {customCategories.length} of 5 custom categories used
+        </ThemedText>
       </View>
 
       <View style={styles.section}>
@@ -815,6 +882,22 @@ const styles = StyleSheet.create({
   },
   settingContent: {
     flex: 1,
+  },
+  customCategoryItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+  },
+  deleteButton: {
+    padding: Spacing.sm,
+  },
+  emptyCategories: {
+    padding: Spacing.xl,
+  },
+  categoryCount: {
+    textAlign: "center",
+    marginTop: Spacing.sm,
   },
   logoutText: {
     fontFamily: "Nunito_600SemiBold",

@@ -163,7 +163,7 @@ export default function CreateScreen() {
             placeholder={
               mode === "ai"
                 ? "e.g., Build confidence in public speaking, achieve financial independence..."
-                : "Write your affirmation script here..."
+                : "Write or paste your affirmation script here..."
             }
             placeholderTextColor={theme.placeholder}
             value={mode === "ai" ? goal : generatedScript}

@@ -31,7 +31,7 @@ export const Colors = {
     tabIconSelected: primaryGold,
     link: primaryGold,
     primary: primaryGold,
-    accent: navyMid,
+    accent: primaryGold,
     success: successTeal,
     error: "#E74C3C",
     warning: "#F39C12",

@@ -61,9 +61,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshUser = useCallback(async () => {
     try {
+      // Get token from storage to ensure we have the latest
+      const storedToken = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
+      const tokenToUse = storedToken || globalAuthToken;
+      
       const headers: Record<string, string> = {};
-      if (globalAuthToken) {
-        headers["X-Auth-Token"] = globalAuthToken;
+      if (tokenToUse) {
+        headers["X-Auth-Token"] = tokenToUse;
       }
       
       const response = await fetch(new URL("/api/auth/me", getApiUrl()).toString(), {

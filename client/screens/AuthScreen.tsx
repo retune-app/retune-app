@@ -2,22 +2,23 @@ import React, { useState } from "react";
 import {
   View,
   StyleSheet,
-  TextInput,
   Text,
   ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
   Pressable,
   Image,
+  Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
+import * as AppleAuthentication from "expo-apple-authentication";
+import * as Google from "expo-auth-session/providers/google";
+import * as WebBrowser from "expo-web-browser";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
-type AuthMode = "login" | "signup";
+WebBrowser.maybeCompleteAuthSession();
 
 // Login screen color palette (gold to dark navy blue)
 const authColors = {
@@ -32,81 +33,126 @@ const authColors = {
   border: "#E0E4EB",
   surface: "#F8F9FB",
   error: "#E74C3C",
+  google: "#4285F4",
+  apple: "#000000",
 };
 
 export function AuthScreen() {
   const insets = useSafeAreaInsets();
-  const { login, signup } = useAuth();
+  const { oauthLogin } = useAuth();
 
-  const [mode, setMode] = useState<AuthMode>("login");
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingProvider, setLoadingProvider] = useState<"google" | "apple" | null>(null);
   const [error, setError] = useState("");
 
-  const toggleMode = () => {
-    setMode(mode === "login" ? "signup" : "login");
-    setError("");
-  };
+  // Google OAuth setup
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+  });
 
-  const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
+  // Handle Google auth response
+  React.useEffect(() => {
+    if (response?.type === "success") {
+      handleGoogleSuccess(response.authentication?.accessToken);
+    } else if (response?.type === "error") {
+      setError("Google sign-in was cancelled or failed");
+      setIsLoading(false);
+      setLoadingProvider(null);
+    }
+  }, [response]);
 
-  const validatePassword = (password: string) => {
-    return password.length >= 8;
-  };
-
-  const handleSubmit = async () => {
-    setError("");
-
-    if (!email.trim() || !password.trim()) {
-      setError("Please fill in all required fields.");
+  const handleGoogleSuccess = async (accessToken?: string) => {
+    if (!accessToken) {
+      setError("Failed to get access token from Google");
+      setIsLoading(false);
+      setLoadingProvider(null);
       return;
     }
-
-    if (!validateEmail(email)) {
-      setError("Please enter a valid email address.");
-      return;
-    }
-
-    if (!validatePassword(password)) {
-      setError("Password must be at least 8 characters long.");
-      return;
-    }
-
-    if (mode === "signup") {
-      if (!name.trim()) {
-        setError("Please enter your name.");
-        return;
-      }
-      if (password !== confirmPassword) {
-        setError("Passwords do not match.");
-        return;
-      }
-    }
-
-    setIsLoading(true);
 
     try {
-      let result;
-      if (mode === "login") {
-        result = await login(email.trim(), password);
-      } else {
-        result = await signup(name.trim(), email.trim(), password);
-      }
+      // Fetch user info from Google
+      const userInfoResponse = await fetch(
+        "https://www.googleapis.com/userinfo/v2/me",
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      const userInfo = await userInfoResponse.json();
+
+      const result = await oauthLogin({
+        email: userInfo.email,
+        name: userInfo.name,
+        provider: "google",
+        providerId: userInfo.id,
+        avatarUrl: userInfo.picture,
+      });
 
       if (!result.success) {
-        setError(result.error || "An error occurred. Please try again.");
+        setError(result.error || "Failed to sign in with Google");
       }
     } catch (err) {
-      setError("An unexpected error occurred. Please try again.");
+      console.error("Google auth error:", err);
+      setError("Failed to complete Google sign-in");
     } finally {
       setIsLoading(false);
+      setLoadingProvider(null);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setError("");
+    setIsLoading(true);
+    setLoadingProvider("google");
+    
+    try {
+      await promptAsync();
+    } catch (err) {
+      console.error("Google prompt error:", err);
+      setError("Failed to initiate Google sign-in");
+      setIsLoading(false);
+      setLoadingProvider(null);
+    }
+  };
+
+  const handleAppleSignIn = async () => {
+    setError("");
+    setIsLoading(true);
+    setLoadingProvider("apple");
+
+    try {
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+
+      // Apple may not return email after first sign-in, use user ID as fallback
+      const email = credential.email || `${credential.user}@privaterelay.appleid.com`;
+      const name = credential.fullName
+        ? `${credential.fullName.givenName || ""} ${credential.fullName.familyName || ""}`.trim()
+        : undefined;
+
+      const result = await oauthLogin({
+        email,
+        name: name || "Apple User",
+        provider: "apple",
+        providerId: credential.user,
+      });
+
+      if (!result.success) {
+        setError(result.error || "Failed to sign in with Apple");
+      }
+    } catch (err: any) {
+      if (err.code === "ERR_REQUEST_CANCELED") {
+        // User cancelled, not an error
+      } else {
+        console.error("Apple auth error:", err);
+        setError("Failed to complete Apple sign-in");
+      }
+    } finally {
+      setIsLoading(false);
+      setLoadingProvider(null);
     }
   };
 
@@ -169,39 +215,15 @@ export function AuthScreen() {
       fontFamily: "Nunito_700Bold",
       fontSize: 20,
       color: authColors.navy,
-      marginBottom: Spacing.lg,
+      marginBottom: Spacing.sm,
       textAlign: "center",
     },
-    inputContainer: {
-      marginBottom: Spacing.md,
-    },
-    inputLabel: {
-      fontFamily: "Nunito_500Medium",
+    formSubtitle: {
+      fontFamily: "Nunito_400Regular",
       fontSize: 14,
       color: authColors.textSecondary,
-      marginBottom: Spacing.xs,
-    },
-    inputWrapper: {
-      flexDirection: "row",
-      alignItems: "center",
-      backgroundColor: authColors.surface,
-      borderRadius: BorderRadius.md,
-      borderWidth: 1,
-      borderColor: authColors.border,
-    },
-    input: {
-      flex: 1,
-      fontFamily: "Nunito_400Regular",
-      fontSize: 16,
-      color: authColors.navy,
-      paddingHorizontal: Spacing.md,
-      paddingVertical: Spacing.md,
-    },
-    inputIcon: {
-      paddingHorizontal: Spacing.md,
-    },
-    eyeButton: {
-      padding: Spacing.md,
+      marginBottom: Spacing.xl,
+      textAlign: "center",
     },
     errorText: {
       fontFamily: "Nunito_500Medium",
@@ -210,37 +232,63 @@ export function AuthScreen() {
       marginBottom: Spacing.md,
       textAlign: "center",
     },
-    submitButton: {
-      borderRadius: BorderRadius.lg,
-      overflow: "hidden",
-      marginTop: Spacing.md,
-    },
-    submitGradient: {
-      paddingVertical: Spacing.md,
+    socialButton: {
+      flexDirection: "row",
       alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: Spacing.md,
+      paddingHorizontal: Spacing.lg,
+      borderRadius: BorderRadius.lg,
+      marginBottom: Spacing.md,
     },
-    submitText: {
-      fontFamily: "Nunito_700Bold",
+    googleButton: {
+      backgroundColor: authColors.white,
+      borderWidth: 1,
+      borderColor: authColors.border,
+    },
+    appleButton: {
+      backgroundColor: authColors.apple,
+    },
+    socialButtonText: {
+      fontFamily: "Nunito_600SemiBold",
       fontSize: 16,
+      marginLeft: Spacing.sm,
+    },
+    googleButtonText: {
       color: authColors.navy,
+    },
+    appleButtonText: {
+      color: authColors.white,
     },
     disabledButton: {
       opacity: 0.6,
     },
-    switchContainer: {
+    dividerContainer: {
       flexDirection: "row",
-      justifyContent: "center",
-      marginTop: Spacing.lg,
+      alignItems: "center",
+      marginVertical: Spacing.lg,
     },
-    switchText: {
+    dividerLine: {
+      flex: 1,
+      height: 1,
+      backgroundColor: authColors.border,
+    },
+    dividerText: {
       fontFamily: "Nunito_400Regular",
-      fontSize: 14,
+      fontSize: 12,
       color: authColors.textSecondary,
+      paddingHorizontal: Spacing.md,
     },
-    switchLink: {
-      fontFamily: "Nunito_700Bold",
-      fontSize: 14,
+    termsText: {
+      fontFamily: "Nunito_400Regular",
+      fontSize: 12,
+      color: authColors.textSecondary,
+      textAlign: "center",
+      lineHeight: 18,
+    },
+    termsLink: {
       color: authColors.gold,
+      fontFamily: "Nunito_600SemiBold",
     },
     securityNote: {
       flexDirection: "row",
@@ -256,6 +304,10 @@ export function AuthScreen() {
       marginLeft: Spacing.xs,
       textAlign: "center",
     },
+    googleIcon: {
+      width: 20,
+      height: 20,
+    },
   });
 
   return (
@@ -267,186 +319,104 @@ export function AuthScreen() {
         end={{ x: 1, y: 1 }}
         style={styles.gradient}
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={{ flex: 1 }}
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
         >
-          <ScrollView
-            contentContainerStyle={styles.scrollContent}
-            keyboardShouldPersistTaps="handled"
-          >
-            <View style={styles.logoContainer}>
-              <Image
-                source={require("../../assets/images/login-logo.jpg")}
-                style={styles.logoImage}
-                resizeMode="contain"
-              />
-              <View style={styles.brandContainer}>
-                <Text style={styles.brandRe}>Re</Text>
-                <Text style={styles.brandWired}>wired</Text>
-              </View>
-              <Text style={styles.subtitle}>
-                Transform your mind with AI-powered affirmations
-              </Text>
+          <View style={styles.logoContainer}>
+            <Image
+              source={require("../../assets/images/login-logo.jpg")}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
+            <View style={styles.brandContainer}>
+              <Text style={styles.brandRe}>Re</Text>
+              <Text style={styles.brandWired}>wired</Text>
             </View>
+            <Text style={styles.subtitle}>
+              Transform your mind with AI-powered affirmations
+            </Text>
+          </View>
 
-            <View style={styles.formContainer}>
-              <Text style={styles.formTitle}>
-                {mode === "login" ? "Welcome Back" : "Create Account"}
-              </Text>
+          <View style={styles.formContainer}>
+            <Text style={styles.formTitle}>Get Started</Text>
+            <Text style={styles.formSubtitle}>
+              Sign in to save your affirmations and sync across devices
+            </Text>
 
-              {mode === "signup" && (
-                <View style={styles.inputContainer}>
-                  <Text style={styles.inputLabel}>Name</Text>
-                  <View style={styles.inputWrapper}>
-                    <Feather
-                      name="user"
-                      size={20}
-                      color={authColors.textSecondary}
-                      style={styles.inputIcon}
-                    />
-                    <TextInput
-                      style={styles.input}
-                      value={name}
-                      onChangeText={setName}
-                      placeholder="Your name"
-                      placeholderTextColor={authColors.textSecondary}
-                      autoCapitalize="words"
-                      testID="input-name"
-                    />
-                  </View>
-                </View>
-              )}
+            {error.length > 0 ? (
+              <Text style={styles.errorText}>{error}</Text>
+            ) : null}
 
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Email</Text>
-                <View style={styles.inputWrapper}>
-                  <Feather
-                    name="mail"
-                    size={20}
-                    color={authColors.textSecondary}
-                    style={styles.inputIcon}
-                  />
-                  <TextInput
-                    style={styles.input}
-                    value={email}
-                    onChangeText={setEmail}
-                    placeholder="you@example.com"
-                    placeholderTextColor={authColors.textSecondary}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoComplete="email"
-                    testID="input-email"
-                  />
-                </View>
-              </View>
-
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Password</Text>
-                <View style={styles.inputWrapper}>
-                  <Feather
-                    name="lock"
-                    size={20}
-                    color={authColors.textSecondary}
-                    style={styles.inputIcon}
-                  />
-                  <TextInput
-                    style={styles.input}
-                    value={password}
-                    onChangeText={setPassword}
-                    placeholder="Minimum 8 characters"
-                    placeholderTextColor={authColors.textSecondary}
-                    secureTextEntry={!showPassword}
-                    autoCapitalize="none"
-                    autoComplete="password"
-                    testID="input-password"
-                  />
-                  <Pressable
-                    style={styles.eyeButton}
-                    onPress={() => setShowPassword(!showPassword)}
-                    testID="button-toggle-password"
-                  >
-                    <Feather
-                      name={showPassword ? "eye-off" : "eye"}
-                      size={20}
-                      color={authColors.textSecondary}
-                    />
-                  </Pressable>
-                </View>
-              </View>
-
-              {mode === "signup" && (
-                <View style={styles.inputContainer}>
-                  <Text style={styles.inputLabel}>Confirm Password</Text>
-                  <View style={styles.inputWrapper}>
-                    <Feather
-                      name="lock"
-                      size={20}
-                      color={authColors.textSecondary}
-                      style={styles.inputIcon}
-                    />
-                    <TextInput
-                      style={styles.input}
-                      value={confirmPassword}
-                      onChangeText={setConfirmPassword}
-                      placeholder="Re-enter your password"
-                      placeholderTextColor={authColors.textSecondary}
-                      secureTextEntry={!showPassword}
-                      autoCapitalize="none"
-                      testID="input-confirm-password"
-                    />
-                  </View>
-                </View>
-              )}
-
-              {error.length > 0 ? (
-                <Text style={styles.errorText}>{error}</Text>
-              ) : null}
-
-              <Pressable
-                style={[styles.submitButton, isLoading && styles.disabledButton]}
-                onPress={handleSubmit}
-                disabled={isLoading}
-                testID="button-submit"
-              >
-                <LinearGradient
-                  colors={[authColors.goldLight, authColors.gold]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.submitGradient}
-                >
-                  {isLoading ? (
-                    <ActivityIndicator color={authColors.navy} />
-                  ) : (
-                    <Text style={styles.submitText}>
-                      {mode === "login" ? "Sign In" : "Create Account"}
-                    </Text>
-                  )}
-                </LinearGradient>
-              </Pressable>
-
-              <View style={styles.switchContainer}>
-                <Text style={styles.switchText}>
-                  {mode === "login"
-                    ? "Don't have an account? "
-                    : "Already have an account? "}
-                </Text>
-                <Pressable onPress={toggleMode} testID="button-switch-mode">
-                  <Text style={styles.switchLink}>
-                    {mode === "login" ? "Sign Up" : "Sign In"}
+            {/* Google Sign In Button */}
+            <Pressable
+              style={[
+                styles.socialButton,
+                styles.googleButton,
+                isLoading && styles.disabledButton,
+              ]}
+              onPress={handleGoogleSignIn}
+              disabled={isLoading || !request}
+              testID="button-google-signin"
+            >
+              {loadingProvider === "google" ? (
+                <ActivityIndicator color={authColors.navy} />
+              ) : (
+                <>
+                  <Feather name="mail" size={20} color={authColors.google} />
+                  <Text style={[styles.socialButtonText, styles.googleButtonText]}>
+                    Continue with Google
                   </Text>
-                </Pressable>
-              </View>
+                </>
+              )}
+            </Pressable>
+
+            {/* Apple Sign In Button - iOS only */}
+            {Platform.OS === "ios" ? (
+              <Pressable
+                style={[
+                  styles.socialButton,
+                  styles.appleButton,
+                  isLoading && styles.disabledButton,
+                ]}
+                onPress={handleAppleSignIn}
+                disabled={isLoading}
+                testID="button-apple-signin"
+              >
+                {loadingProvider === "apple" ? (
+                  <ActivityIndicator color={authColors.white} />
+                ) : (
+                  <>
+                    <Feather name="smartphone" size={20} color={authColors.white} />
+                    <Text style={[styles.socialButtonText, styles.appleButtonText]}>
+                      Continue with Apple
+                    </Text>
+                  </>
+                )}
+              </Pressable>
+            ) : null}
+
+            <View style={styles.dividerContainer}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>secure sign in</Text>
+              <View style={styles.dividerLine} />
             </View>
 
-            <View style={styles.securityNote}>
-              <Feather name="shield" size={14} color="rgba(255,255,255,0.7)" />
-              <Text style={styles.securityText}>
-                Your data is encrypted and securely stored
-              </Text>
-            </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
+            <Text style={styles.termsText}>
+              By continuing, you agree to our{" "}
+              <Text style={styles.termsLink}>Terms of Service</Text>
+              {" "}and{" "}
+              <Text style={styles.termsLink}>Privacy Policy</Text>
+            </Text>
+          </View>
+
+          <View style={styles.securityNote}>
+            <Feather name="shield" size={14} color="rgba(255,255,255,0.7)" />
+            <Text style={styles.securityText}>
+              Your data is encrypted and securely stored
+            </Text>
+          </View>
+        </ScrollView>
       </LinearGradient>
     </View>
   );

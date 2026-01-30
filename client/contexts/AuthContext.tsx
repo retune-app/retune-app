@@ -18,6 +18,14 @@ interface User {
   hasVoiceSample: boolean;
 }
 
+interface OAuthParams {
+  email: string;
+  name: string;
+  provider: "google" | "apple";
+  providerId: string;
+  avatarUrl?: string;
+}
+
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
@@ -27,6 +35,7 @@ interface AuthContextType {
   clearNeedsVoiceSetup: () => void;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signup: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  oauthLogin: (params: OAuthParams) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   updateUserName: (name: string) => void;
@@ -170,6 +179,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const oauthLogin = async (params: OAuthParams) => {
+    try {
+      const response = await fetch(new URL("/api/auth/oauth", getApiUrl()).toString(), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(params),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log("OAuth login response:", JSON.stringify(data));
+        setUser(data.user);
+        if (data.authToken) {
+          await setToken(data.authToken);
+        }
+        // Check if new user needs voice setup
+        if (!data.user.hasVoiceSample) {
+          setNeedsVoiceSetup(true);
+        }
+        return { success: true };
+      } else {
+        return { success: false, error: data.error || "OAuth login failed" };
+      }
+    } catch (error) {
+      console.error("OAuth login error:", error);
+      return { success: false, error: "Network error. Please try again." };
+    }
+  };
+
   const logout = async () => {
     try {
       const headers: Record<string, string> = {};
@@ -207,6 +247,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         clearNeedsVoiceSetup,
         login,
         signup,
+        oauthLogin,
         logout,
         refreshUser,
         updateUserName,

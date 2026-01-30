@@ -565,15 +565,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const script = affirmation.script || affirmation.title || "";
       
+      // Only auto-categorize if no category (default or custom) is set
+      const hasCategory = affirmation.categoryId || affirmation.customCategoryId;
+      
       // Generate AI title and category in parallel
       const [generatedTitle, categoryName] = await Promise.all([
         autoGenerateTitle(script),
-        affirmation.categoryId ? Promise.resolve(null) : autoCategorizе(script),
+        hasCategory ? Promise.resolve(null) : autoCategorizе(script),
       ]);
 
-      // Find category ID if we need to update it
+      // Find category ID if we need to update it (only if no custom category)
       let categoryId = affirmation.categoryId;
-      if (categoryName) {
+      if (categoryName && !affirmation.customCategoryId) {
         const [category] = await db
           .select()
           .from(categories)
@@ -583,18 +586,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Update the affirmation
+      // Update the affirmation (don't change categoryId if customCategoryId is set)
       const [updated] = await db
         .update(affirmations)
         .set({
           title: generatedTitle,
-          categoryId: categoryId,
+          ...(affirmation.customCategoryId ? {} : { categoryId: categoryId }),
           updatedAt: new Date(),
         })
         .where(eq(affirmations.id, parseInt(id)))
         .returning();
 
-      console.log(`Auto-saved affirmation ${id}: title="${generatedTitle}", categoryId=${categoryId}`);
+      console.log(`Auto-saved affirmation ${id}: title="${generatedTitle}", categoryId=${categoryId}, customCategoryId=${affirmation.customCategoryId}`);
       res.json(updated);
     } catch (error) {
       console.error("Error auto-saving affirmation:", error);

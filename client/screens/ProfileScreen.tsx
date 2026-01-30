@@ -316,6 +316,43 @@ export default function ProfileScreen() {
               Default Voice
             </ThemedText>
             <View style={styles.voiceToggleContainer}>
+              {/* My Voice - Left */}
+              <Pressable
+                onPress={() => handleVoiceTypeChange("personal")}
+                style={[
+                  styles.voiceToggleButton,
+                  { 
+                    backgroundColor: voicePreferences?.preferredVoiceType === "personal" 
+                      ? theme.primary 
+                      : theme.backgroundSecondary,
+                    borderColor: voicePreferences?.hasPersonalVoice ? theme.primary : theme.border,
+                  },
+                ]}
+                testID="button-voice-personal"
+              >
+                <Feather 
+                  name="user" 
+                  size={16} 
+                  color={voicePreferences?.preferredVoiceType === "personal" ? "#FFFFFF" : theme.text} 
+                />
+                <View style={styles.voiceButtonTextContainer}>
+                  <Text style={[
+                    styles.voiceToggleText,
+                    { color: voicePreferences?.preferredVoiceType === "personal" ? "#FFFFFF" : theme.text }
+                  ]}>
+                    My Voice
+                  </Text>
+                  {!voicePreferences?.hasPersonalVoice ? (
+                    <Text style={[
+                      styles.voiceNotSetupText,
+                      { color: voicePreferences?.preferredVoiceType === "personal" ? "rgba(255,255,255,0.7)" : theme.textSecondary }
+                    ]}>
+                      (not set up)
+                    </Text>
+                  ) : null}
+                </View>
+              </Pressable>
+              {/* AI Voice - Right */}
               <Pressable
                 onPress={() => handleVoiceTypeChange("ai")}
                 style={[
@@ -342,31 +379,6 @@ export default function ProfileScreen() {
                     ? "#FFFFFF" 
                     : theme.text }
                 ]}>AI Voice</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => handleVoiceTypeChange("personal")}
-                style={[
-                  styles.voiceToggleButton,
-                  { 
-                    backgroundColor: voicePreferences?.preferredVoiceType === "personal" 
-                      ? theme.primary 
-                      : theme.backgroundSecondary,
-                    borderColor: voicePreferences?.hasPersonalVoice ? theme.primary : theme.border,
-                  },
-                ]}
-                testID="button-voice-personal"
-              >
-                <Feather 
-                  name="mic" 
-                  size={16} 
-                  color={voicePreferences?.preferredVoiceType === "personal" ? "#FFFFFF" : theme.text} 
-                />
-                <Text style={[
-                  styles.voiceToggleText,
-                  { color: voicePreferences?.preferredVoiceType === "personal" ? "#FFFFFF" : theme.text }
-                ]}>
-                  {voicePreferences?.hasPersonalVoice ? "My Voice" : "Record Voice"}
-                </Text>
               </Pressable>
             </View>
           </View>
@@ -1233,6 +1245,15 @@ const styles = StyleSheet.create({
   voiceToggleText: {
     fontFamily: "Nunito_600SemiBold",
     fontSize: 14,
+  },
+  voiceButtonTextContainer: {
+    flexDirection: "column",
+    alignItems: "flex-start",
+  },
+  voiceNotSetupText: {
+    fontFamily: "Nunito_400Regular",
+    fontSize: 10,
+    marginTop: -2,
   },
   voiceGenderButton: {
     flex: 1,

@@ -16,6 +16,7 @@ const AUTO_REPLAY_KEY = "@settings/autoReplay";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { ThemedText } from "@/components/ThemedText";
 import { Card } from "@/components/Card";
+import ReminderSettings from "@/components/ReminderSettings";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBackgroundMusic, BACKGROUND_MUSIC_OPTIONS, BackgroundMusicType } from "@/contexts/BackgroundMusicContext";
@@ -280,6 +281,13 @@ export default function ProfileScreen() {
             onPress={handleVoiceSetup}
           />
         </View>
+      </View>
+
+      <View style={styles.section}>
+        <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+          DAILY REMINDERS
+        </ThemedText>
+        <ReminderSettings />
       </View>
 
       <View style={styles.section}>

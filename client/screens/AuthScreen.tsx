@@ -134,14 +134,23 @@ export function AuthScreen() {
       borderRadius: 60,
       marginBottom: Spacing.lg,
     },
-    title: {
-      fontFamily: "Nunito_700Bold",
-      fontSize: 34,
-      color: authColors.navy,
+    brandContainer: {
+      flexDirection: "row",
+      alignItems: "baseline",
       marginBottom: Spacing.xs,
     },
+    brandRe: {
+      fontFamily: "Poppins_600SemiBold",
+      fontSize: 36,
+      color: authColors.navy,
+    },
+    brandWired: {
+      fontFamily: "Poppins_600SemiBold",
+      fontSize: 36,
+      color: authColors.gold,
+    },
     subtitle: {
-      fontFamily: "Nunito_400Regular",
+      fontFamily: "Poppins_400Regular",
       fontSize: 16,
       color: authColors.navyMid,
       textAlign: "center",
@@ -272,7 +281,10 @@ export function AuthScreen() {
                 style={styles.logoImage}
                 resizeMode="contain"
               />
-              <Text style={styles.title}>ReWired</Text>
+              <View style={styles.brandContainer}>
+                <Text style={styles.brandRe}>Re</Text>
+                <Text style={styles.brandWired}>wired</Text>
+              </View>
               <Text style={styles.subtitle}>
                 Transform your mind with AI-powered affirmations
               </Text>

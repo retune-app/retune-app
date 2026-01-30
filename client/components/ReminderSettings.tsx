@@ -136,9 +136,9 @@ export default function ReminderSettings() {
   const handleToggle = async (slot: TimeSlot) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     
+    // Request permission if not granted, but don't block saving settings
     if (!hasPermission) {
-      const granted = await requestPermission();
-      if (!granted) return;
+      requestPermission();
     }
 
     const key = `${slot}Enabled` as keyof NotificationSettings;

@@ -22,7 +22,7 @@ import { Card } from "@/components/Card";
 import ReminderSettings from "@/components/ReminderSettings";
 import { ProgressVisualization } from "@/components/ProgressVisualization";
 import { useTheme } from "@/hooks/useTheme";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth, getAuthToken } from "@/contexts/AuthContext";
 import { useBackgroundMusic, BACKGROUND_MUSIC_OPTIONS, BackgroundMusicType } from "@/contexts/BackgroundMusicContext";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { getApiUrl, apiRequest } from "@/lib/query-client";
@@ -151,12 +151,18 @@ export default function ProfileScreen() {
       const url = new URL("/api/user/reset", getApiUrl()).toString();
       console.log("Resetting data at:", url);
       
+      const authToken = getAuthToken();
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (authToken) {
+        headers["X-Auth-Token"] = authToken;
+      }
+      
       const response = await fetch(url, {
         method: "POST",
         credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers,
       });
       
       console.log("Reset response status:", response.status);
@@ -187,12 +193,18 @@ export default function ProfileScreen() {
       const url = new URL("/api/user/account/delete", getApiUrl()).toString();
       console.log("Deleting account at:", url);
       
+      const authToken = getAuthToken();
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (authToken) {
+        headers["X-Auth-Token"] = authToken;
+      }
+      
       const response = await fetch(url, {
         method: "POST",
         credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers,
       });
       
       console.log("Delete response status:", response.status);
@@ -630,7 +642,7 @@ export default function ProfileScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: theme.cardBackground }]}>
-            <ThemedText type="subtitle" style={styles.modalTitle}>Sign Out</ThemedText>
+            <ThemedText type="h4" style={styles.modalTitle}>Sign Out</ThemedText>
             <ThemedText type="body" style={[styles.modalMessage, { color: theme.textSecondary }]}>
               Are you sure you want to sign out?
             </ThemedText>
@@ -669,7 +681,7 @@ export default function ProfileScreen() {
             <View style={[styles.modalIconContainer, { backgroundColor: "#F5A62320" }]}>
               <Feather name="refresh-cw" size={32} color="#F5A623" />
             </View>
-            <ThemedText type="subtitle" style={styles.modalTitle}>Reset All Data</ThemedText>
+            <ThemedText type="h4" style={styles.modalTitle}>Reset All Data</ThemedText>
             <ThemedText type="body" style={[styles.modalMessage, { color: theme.textSecondary }]}>
               This will permanently delete all your affirmations and voice samples. Your account and preferences will be kept.
             </ThemedText>
@@ -710,7 +722,7 @@ export default function ProfileScreen() {
             <View style={[styles.modalIconContainer, { backgroundColor: "#E74C3C20" }]}>
               <Feather name="alert-triangle" size={32} color="#E74C3C" />
             </View>
-            <ThemedText type="subtitle" style={styles.modalTitle}>Delete Account</ThemedText>
+            <ThemedText type="h4" style={styles.modalTitle}>Delete Account</ThemedText>
             <ThemedText type="body" style={[styles.modalMessage, { color: theme.textSecondary }]}>
               This action cannot be undone. All your data including affirmations, voice samples, and account information will be permanently deleted.
             </ThemedText>
@@ -752,7 +764,7 @@ export default function ProfileScreen() {
               <View style={[styles.modalIconContainer, { backgroundColor: theme.primary + "20" }]}>
                 <Feather name="shield" size={32} color={theme.primary} />
               </View>
-              <ThemedText type="subtitle" style={styles.modalTitle}>Security & Privacy</ThemedText>
+              <ThemedText type="h4" style={styles.modalTitle}>Security & Privacy</ThemedText>
             </View>
             
             <View style={styles.securitySection}>

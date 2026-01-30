@@ -135,7 +135,7 @@ export default function CreateScreen() {
             style={styles.modeButton}
             testID="button-mode-ai"
           >
-            AI Generate
+            Auto
           </Button>
           <Button
             variant={mode === "manual" ? "primary" : "ghost"}

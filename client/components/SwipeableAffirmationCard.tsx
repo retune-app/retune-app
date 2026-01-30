@@ -16,6 +16,7 @@ interface SwipeableAffirmationCardProps {
   onPress: () => void;
   onPlayPress: () => void;
   onLongPress?: () => void;
+  onRename?: (affirmation: Affirmation) => void;
   isActive?: boolean;
   testID?: string;
 }
@@ -25,6 +26,7 @@ export function SwipeableAffirmationCard({
   onPress,
   onPlayPress,
   onLongPress,
+  onRename,
   isActive,
   testID,
 }: SwipeableAffirmationCardProps) {
@@ -66,6 +68,37 @@ export function SwipeableAffirmationCard({
     );
   };
 
+  const handleRename = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    swipeableRef.current?.close();
+    if (onRename) {
+      onRename(affirmation);
+    }
+  };
+
+  const renderLeftActions = (
+    progress: Animated.AnimatedInterpolation<number>,
+    dragX: Animated.AnimatedInterpolation<number>
+  ) => {
+    const scale = dragX.interpolate({
+      inputRange: [0, 80],
+      outputRange: [0, 1],
+      extrapolate: "clamp",
+    });
+
+    return (
+      <RectButton
+        style={[styles.renameButton, { backgroundColor: theme.primary }]}
+        onPress={handleRename}
+        testID={`button-rename-${affirmation.id}`}
+      >
+        <Animated.View style={{ transform: [{ scale }] }}>
+          <Feather name="edit-2" size={24} color="#fff" />
+        </Animated.View>
+      </RectButton>
+    );
+  };
+
   const renderRightActions = (
     progress: Animated.AnimatedInterpolation<number>,
     dragX: Animated.AnimatedInterpolation<number>
@@ -92,9 +125,12 @@ export function SwipeableAffirmationCard({
   return (
     <Swipeable
       ref={swipeableRef}
+      renderLeftActions={renderLeftActions}
       renderRightActions={renderRightActions}
+      leftThreshold={40}
       rightThreshold={40}
       friction={2}
+      overshootLeft={false}
       overshootRight={false}
       enabled={!isActive}
     >
@@ -114,6 +150,14 @@ export function SwipeableAffirmationCard({
 }
 
 const styles = StyleSheet.create({
+  renameButton: {
+    width: 80,
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 16,
+    marginRight: Spacing.sm,
+  },
   deleteButton: {
     width: 80,
     height: "100%",

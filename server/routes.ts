@@ -392,6 +392,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const audioPath = path.join(audioDir, audioFilename);
       fs.writeFileSync(audioPath, Buffer.from(audioResult.audio));
 
+      // Determine voice type based on whether we used personal voice or AI voice
+      const usedPersonalVoice = !!voiceSample?.voiceId;
+
       // Create affirmation record (associated with user)
       const [newAffirmation] = await db
         .insert(affirmations)
@@ -404,6 +407,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           duration: audioResult.duration,
           wordTimings: JSON.stringify(audioResult.wordTimings),
           isManual: isManual || false,
+          voiceType: usedPersonalVoice ? "personal" : "ai",
+          voiceGender: usedPersonalVoice ? null : "female", // Default AI voice is female
         })
         .returning();
 

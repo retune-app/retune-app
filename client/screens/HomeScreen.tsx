@@ -1,7 +1,8 @@
 import React, { useState, useCallback } from "react";
 import { FlatList, View, StyleSheet, RefreshControl, TextInput, Modal, Pressable, Alert, ImageBackground } from "react-native";
 
-const libraryBackground = require("../../assets/images/library-background.png");
+const libraryBackgroundDark = require("../../assets/images/library-background.png");
+const libraryBackgroundLight = require("../../assets/images/library-background-light.png");
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -37,7 +38,7 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
   const tabBarHeight = useBottomTabBarHeight();
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const navigation = useNavigation<NavigationProp>();
   const { playAffirmation, currentAffirmation, isPlaying, togglePlayPause } = useAudio();
 
@@ -183,7 +184,7 @@ export default function HomeScreen() {
 
   return (
     <ImageBackground
-      source={libraryBackground}
+      source={isDark ? libraryBackgroundDark : libraryBackgroundLight}
       style={styles.backgroundImage}
       resizeMode="cover"
     >

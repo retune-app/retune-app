@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, Pressable, Switch, Text, Modal, ActivityIndicator, Image } from "react-native";
+import { View, StyleSheet, Pressable, Switch, Text, Modal, ActivityIndicator, Image, ImageBackground } from "react-native";
+
+const profileBackgroundDark = require("../../assets/images/library-background.png");
+const profileBackgroundLight = require("../../assets/images/library-background-light.png");
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -214,17 +217,22 @@ export default function ProfileScreen() {
   };
 
   return (
-    <KeyboardAwareScrollViewCompat
-      style={[styles.container, { backgroundColor: theme.backgroundRoot }]}
-      contentContainerStyle={[
-        styles.contentContainer,
-        {
-          paddingTop: headerHeight + Spacing.lg,
-          paddingBottom: tabBarHeight + 80 + Spacing.xl,
-        },
-      ]}
-      scrollIndicatorInsets={{ bottom: insets.bottom }}
+    <ImageBackground
+      source={isDark ? profileBackgroundDark : profileBackgroundLight}
+      style={styles.backgroundImage}
+      resizeMode="cover"
     >
+      <KeyboardAwareScrollViewCompat
+        style={styles.container}
+        contentContainerStyle={[
+          styles.contentContainer,
+          {
+            paddingTop: headerHeight + Spacing.lg,
+            paddingBottom: tabBarHeight + 80 + Spacing.xl,
+          },
+        ]}
+        scrollIndicatorInsets={{ bottom: insets.bottom }}
+      >
       <View style={styles.profileHeader}>
         <Image
           source={require("../../assets/images/profile-avatar.jpg")}
@@ -815,11 +823,15 @@ export default function ProfileScreen() {
           </View>
         </View>
       </Modal>
-    </KeyboardAwareScrollViewCompat>
+      </KeyboardAwareScrollViewCompat>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
+  backgroundImage: {
+    flex: 1,
+  },
   container: {
     flex: 1,
   },

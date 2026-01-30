@@ -473,15 +473,26 @@ export default function VoiceSetupScreen() {
 
         <View style={styles.buttonsContainer}>
           {hasRecording && isValidDuration ? (
-            <Button
-              variant="gradient"
-              onPress={handleContinue}
-              loading={uploadMutation.isPending}
-              style={styles.continueButton}
-              testID="button-continue"
-            >
-              Continue
-            </Button>
+            <>
+              <Button
+                variant="gradient"
+                onPress={handleContinue}
+                loading={uploadMutation.isPending}
+                style={styles.continueButton}
+                testID="button-continue"
+              >
+                Save Voice
+              </Button>
+              <Button
+                variant="secondary"
+                onPress={handleReRecord}
+                disabled={uploadMutation.isPending}
+                style={styles.continueButton}
+                testID="button-rerecord"
+              >
+                Re-record
+              </Button>
+            </>
           ) : null}
 
           {hasRecording && !isValidDuration ? (
@@ -489,7 +500,7 @@ export default function VoiceSetupScreen() {
               variant="secondary"
               onPress={handleReRecord}
               style={styles.continueButton}
-              testID="button-rerecord"
+              testID="button-rerecord-short"
             >
               Try Again
             </Button>

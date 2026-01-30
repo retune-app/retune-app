@@ -779,126 +779,100 @@ export default function PlayerScreen() {
           </View>
         </View>
 
-        {/* Voice Selection Section */}
-        <View style={[styles.voiceSection, { backgroundColor: theme.backgroundSecondary }]}>
-          <ThemedText type="caption" style={{ color: theme.textSecondary, marginBottom: Spacing.sm }}>
-            VOICE
-          </ThemedText>
-          
+        {/* Voice Selection - integrated into settings panel */}
+        <View style={[styles.rsvpSettings, { backgroundColor: theme.backgroundSecondary, marginTop: Spacing.lg }]}>
           {isRegeneratingVoice ? (
-            <View style={styles.voiceLoading}>
+            <View style={styles.rsvpSettingsRow}>
               <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                Generating with new voice...
+                Changing voice...
               </ThemedText>
             </View>
           ) : (
             <>
-              {/* Voice Type Toggle (AI vs Personal) */}
-              <View style={styles.voiceToggleRow}>
+              {/* Personal Voice Toggle */}
+              <View style={styles.rsvpSettingsRow}>
+                <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                  Use My Voice
+                </ThemedText>
                 <Pressable
-                  onPress={() => handleVoiceTypeChange("ai")}
+                  onPress={() => {
+                    if (selectedVoiceType === "personal") {
+                      handleVoiceTypeChange("ai");
+                    } else {
+                      handleVoiceTypeChange("personal");
+                    }
+                  }}
                   style={[
-                    styles.voiceOptionButton,
-                    { 
-                      backgroundColor: selectedVoiceType === "ai" ? theme.primary : theme.backgroundTertiary,
-                      borderColor: theme.primary,
-                    },
-                  ]}
-                  testID="button-voice-ai-player"
-                >
-                  <Feather 
-                    name="cpu" 
-                    size={14} 
-                    color={selectedVoiceType === "ai" ? "#FFFFFF" : theme.text} 
-                  />
-                  <ThemedText
-                    type="small"
-                    style={{ 
-                      color: selectedVoiceType === "ai" ? "#FFFFFF" : theme.text,
-                      fontWeight: "600",
-                      marginLeft: 4,
-                    }}
-                  >
-                    AI Voice
-                  </ThemedText>
-                </Pressable>
-                
-                <Pressable
-                  onPress={() => handleVoiceTypeChange("personal")}
-                  style={[
-                    styles.voiceOptionButton,
+                    styles.rsvpToggle,
                     { 
                       backgroundColor: selectedVoiceType === "personal" ? theme.primary : theme.backgroundTertiary,
-                      borderColor: voicePreferences?.hasPersonalVoice ? theme.primary : theme.border,
-                      opacity: voicePreferences?.hasPersonalVoice ? 1 : 0.6,
+                      opacity: voicePreferences?.hasPersonalVoice ? 1 : 0.5,
                     },
                   ]}
-                  testID="button-voice-personal-player"
+                  testID="button-voice-toggle-player"
                 >
-                  <Feather 
-                    name="mic" 
-                    size={14} 
-                    color={selectedVoiceType === "personal" ? "#FFFFFF" : theme.text} 
+                  <View
+                    style={[
+                      styles.rsvpToggleKnob,
+                      { 
+                        backgroundColor: "#FFFFFF",
+                        transform: [{ translateX: selectedVoiceType === "personal" ? 20 : 2 }],
+                      },
+                    ]}
                   />
-                  <ThemedText
-                    type="small"
-                    style={{ 
-                      color: selectedVoiceType === "personal" ? "#FFFFFF" : theme.text,
-                      fontWeight: "600",
-                      marginLeft: 4,
-                    }}
-                  >
-                    {voicePreferences?.hasPersonalVoice ? "My Voice" : "Record Voice"}
-                  </ThemedText>
                 </Pressable>
               </View>
 
-              {/* AI Gender Selection (only when AI is selected) */}
+              {/* AI Gender Selection (only when using AI voice) */}
               {selectedVoiceType === "ai" ? (
-                <View style={styles.voiceGenderRow}>
-                  <Pressable
-                    onPress={() => handleVoiceGenderChange("female")}
-                    style={[
-                      styles.voiceGenderOption,
-                      { 
-                        backgroundColor: selectedVoiceGender === "female" ? theme.primary + "30" : "transparent",
-                        borderColor: selectedVoiceGender === "female" ? theme.primary : theme.border,
-                      },
-                    ]}
-                    testID="button-gender-female-player"
-                  >
-                    <ThemedText
-                      type="small"
-                      style={{ 
-                        color: selectedVoiceGender === "female" ? theme.primary : theme.textSecondary,
-                        fontWeight: selectedVoiceGender === "female" ? "600" : "400",
-                      }}
+                <View style={styles.rsvpSettingsRow}>
+                  <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                    AI Voice
+                  </ThemedText>
+                  <View style={styles.fontSizeButtons}>
+                    <Pressable
+                      onPress={() => handleVoiceGenderChange("female")}
+                      style={[
+                        styles.voiceGenderButton,
+                        {
+                          backgroundColor:
+                            selectedVoiceGender === "female" ? theme.primary : theme.backgroundTertiary,
+                        },
+                      ]}
+                      testID="button-gender-female-player"
                     >
-                      Female (Rachel)
-                    </ThemedText>
-                  </Pressable>
-                  
-                  <Pressable
-                    onPress={() => handleVoiceGenderChange("male")}
-                    style={[
-                      styles.voiceGenderOption,
-                      { 
-                        backgroundColor: selectedVoiceGender === "male" ? theme.primary + "30" : "transparent",
-                        borderColor: selectedVoiceGender === "male" ? theme.primary : theme.border,
-                      },
-                    ]}
-                    testID="button-gender-male-player"
-                  >
-                    <ThemedText
-                      type="small"
-                      style={{ 
-                        color: selectedVoiceGender === "male" ? theme.primary : theme.textSecondary,
-                        fontWeight: selectedVoiceGender === "male" ? "600" : "400",
-                      }}
+                      <ThemedText
+                        type="small"
+                        style={{
+                          color: selectedVoiceGender === "female" ? "#FFFFFF" : theme.text,
+                          fontWeight: "600",
+                        }}
+                      >
+                        Female
+                      </ThemedText>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => handleVoiceGenderChange("male")}
+                      style={[
+                        styles.voiceGenderButton,
+                        {
+                          backgroundColor:
+                            selectedVoiceGender === "male" ? theme.primary : theme.backgroundTertiary,
+                        },
+                      ]}
+                      testID="button-gender-male-player"
                     >
-                      Male (Adam)
-                    </ThemedText>
-                  </Pressable>
+                      <ThemedText
+                        type="small"
+                        style={{
+                          color: selectedVoiceGender === "male" ? "#FFFFFF" : theme.text,
+                          fontWeight: "600",
+                        }}
+                      >
+                        Male
+                      </ThemedText>
+                    </Pressable>
+                  </View>
                 </View>
               ) : null}
             </>
@@ -1072,41 +1046,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     zIndex: 10,
   },
-  voiceSection: {
-    marginTop: Spacing.lg,
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.lg,
-  },
-  voiceLoading: {
-    padding: Spacing.md,
-    alignItems: "center",
-  },
-  voiceToggleRow: {
-    flexDirection: "row",
-    gap: Spacing.sm,
-    marginBottom: Spacing.md,
-  },
-  voiceOptionButton: {
-    flex: 1,
-    flexDirection: "row",
+  voiceGenderButton: {
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.full,
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
-  },
-  voiceGenderRow: {
-    flexDirection: "row",
-    gap: Spacing.sm,
-  },
-  voiceGenderOption: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
   },
 });

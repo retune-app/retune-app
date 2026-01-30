@@ -130,12 +130,13 @@ export default function ProfileScreen() {
   });
 
   const handleVoiceTypeChange = (type: VoiceType) => {
-    if (type === "personal" && !voicePreferences?.hasPersonalVoice) {
-      // Navigate to voice setup if trying to use personal voice without one
-      navigation.navigate("VoiceSetup");
-      return;
-    }
+    // Always update the preference - user can express intent even if voice not set up yet
     updateVoicePreferences.mutate({ preferredVoiceType: type });
+    
+    // If selecting personal voice but none is recorded, prompt to set up
+    if (type === "personal" && !voicePreferences?.hasPersonalVoice) {
+      navigation.navigate("VoiceSetup");
+    }
   };
 
   const handleVoiceGenderChange = (gender: VoiceGender) => {

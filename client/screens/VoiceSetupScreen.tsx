@@ -21,17 +21,19 @@ import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-const READING_PROMPTS = `Your voice is the most powerful tool for rewiring your mind.
+const READING_PROMPTS = `Today is a beautiful day, and I am grateful for every opportunity that comes my way.
 
-When you hear affirmations in your own voice, your subconscious accepts them as truth. This activates your brain's reward centers and creates new neural pathways.
+The sun rises, and with it, so does my potential. I believe in myself and my ability to achieve great things.
 
-I am ready to transform my thinking. I speak positive words, and my mind believes them. Each time I listen, I strengthen new patterns of thought.
+Every step I take moves me closer to my dreams. I am patient with myself and trust the journey I am on.
 
-I am capable of incredible change. My brain is designed for growth. What I repeat, I become.
+When challenges arise, I face them with courage and grace. I learn from every experience and grow stronger each day.
 
-I choose thoughts that serve me. I release what no longer helps me. I am rewiring my mind for the life I want to live.
+I am surrounded by love and support. My relationships are meaningful and bring joy to my life.
 
-This is my voice. This is my power. This is my transformation.`;
+My creativity flows freely, and I express myself authentically. I embrace who I am becoming.
+
+Success is not just a destination but a way of living. I celebrate small victories and keep moving forward.`;
 
 export default function VoiceSetupScreen() {
   const insets = useSafeAreaInsets();
@@ -262,7 +264,7 @@ export default function VoiceSetupScreen() {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const isValidDuration = recordingDuration >= 15;
+  const isValidDuration = recordingDuration >= 20;
 
   if (showPrivacyNotice) {
     return (
@@ -395,7 +397,7 @@ export default function VoiceSetupScreen() {
 
         {!isRecording && !hasRecording ? (
           <ThemedText type="body" style={[styles.description, { color: theme.textSecondary }]}>
-            Record a 15-60 second sample of your voice. When you start recording, we'll show you some fun text to read aloud!
+            Record a 20-60 second sample of your voice. Longer recordings create better voice quality! When you start recording, we'll show you some text to read aloud.
           </ThemedText>
         ) : null}
 
@@ -427,11 +429,15 @@ export default function VoiceSetupScreen() {
             style={[styles.hint, { color: theme.textSecondary }]}
           >
             {isRecording
-              ? recordingDuration < 30
-                ? `Keep reading... ${30 - recordingDuration}s more needed`
-                : "Perfect! You can stop or keep going up to 60s"
+              ? recordingDuration < 20
+                ? `Keep reading... ${20 - recordingDuration}s minimum`
+                : recordingDuration < 40
+                ? "Good! Keep going for better quality..."
+                : "Excellent! You can stop anytime now"
               : hasRecording
-              ? "Recording complete! You can re-record or continue."
+              ? isValidDuration
+                ? "Recording complete! You can re-record or continue."
+                : `Recording too short (${recordingDuration}s). Need at least 20 seconds.`
               : "Tap the microphone to start recording"}
           </ThemedText>
 

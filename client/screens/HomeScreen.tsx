@@ -19,6 +19,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { SwipeableAffirmationCard } from "@/components/SwipeableAffirmationCard";
 import { CategoryChip } from "@/components/CategoryChip";
 import { WelcomeSection } from "@/components/WelcomeSection";
+import { LibraryTip } from "@/components/LibraryTip";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAudio } from "@/contexts/AudioContext";
@@ -55,6 +56,7 @@ export default function HomeScreen() {
   const [affirmationToRename, setAffirmationToRename] = useState<Affirmation | null>(null);
   const [newTitle, setNewTitle] = useState("");
   const [hapticEnabled, setHapticEnabled] = useState(true);
+  const [showSwipeTip, setShowSwipeTip] = useState(false);
 
   useEffect(() => {
     AsyncStorage.getItem("@settings/hapticEnabled").then((value) => {
@@ -62,6 +64,16 @@ export default function HomeScreen() {
         setHapticEnabled(value === "true");
       }
     });
+    AsyncStorage.getItem("@tips/librarySwipe").then((value) => {
+      if (value === null) {
+        setShowSwipeTip(true);
+      }
+    });
+  }, []);
+
+  const dismissSwipeTip = useCallback(() => {
+    setShowSwipeTip(false);
+    AsyncStorage.setItem("@tips/librarySwipe", "seen");
   }, []);
 
   const { data: affirmations = [], refetch, isLoading } = useQuery<Affirmation[]>({
@@ -201,6 +213,9 @@ export default function HomeScreen() {
           />
         )}
       />
+      {filteredAffirmations.length > 0 && (
+        <LibraryTip visible={showSwipeTip} onDismiss={dismissSwipeTip} />
+      )}
     </View>
   );
 

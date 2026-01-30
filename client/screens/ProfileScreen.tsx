@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, Pressable, Switch, Text, Modal, ActivityIndicator } from "react-native";
+import { View, StyleSheet, Pressable, Switch, Text, Modal, ActivityIndicator, Image } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -200,14 +200,10 @@ export default function ProfileScreen() {
       scrollIndicatorInsets={{ bottom: insets.bottom }}
     >
       <View style={styles.profileHeader}>
-        <LinearGradient
-          colors={theme.gradient.primary as [string, string]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.avatarGradient}
-        >
-          <Feather name="user" size={40} color="#FFFFFF" />
-        </LinearGradient>
+        <Image
+          source={require("../../assets/images/profile-avatar.jpg")}
+          style={styles.avatarImage}
+        />
         <ThemedText type="h2" style={styles.displayName}>
           {user?.name || "Welcome"}
         </ThemedText>
@@ -765,6 +761,12 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     alignItems: "center",
     justifyContent: "center",
+    marginBottom: Spacing.lg,
+  },
+  avatarImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     marginBottom: Spacing.lg,
   },
   displayName: {

@@ -373,13 +373,35 @@ export default function VoiceSetupScreen() {
     );
   }
 
+  const handleClose = () => {
+    navigation.goBack();
+  };
+
+  const handleReRecord = () => {
+    setHasRecording(false);
+    setRecordingUri(null);
+    setRecordingDuration(0);
+  };
+
   return (
     <ThemedView style={styles.container}>
+      {/* Close button */}
+      <View style={[styles.closeButtonContainer, { top: insets.top + Spacing.md }]}>
+        <Button
+          variant="ghost"
+          onPress={handleClose}
+          style={styles.closeButton}
+          testID="button-close"
+        >
+          <Feather name="x" size={24} color={theme.text} />
+        </Button>
+      </View>
+
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={[
           styles.content,
-          { paddingTop: insets.top + Spacing["2xl"], paddingBottom: insets.bottom + Spacing["2xl"] },
+          { paddingTop: insets.top + Spacing["2xl"] + 40, paddingBottom: insets.bottom + Spacing["2xl"] },
         ]}
         showsVerticalScrollIndicator={false}
       >
@@ -462,6 +484,17 @@ export default function VoiceSetupScreen() {
             </Button>
           ) : null}
 
+          {hasRecording && !isValidDuration ? (
+            <Button
+              variant="secondary"
+              onPress={handleReRecord}
+              style={styles.continueButton}
+              testID="button-rerecord"
+            >
+              Try Again
+            </Button>
+          ) : null}
+
           <Button
             variant="ghost"
             onPress={handleSkip}
@@ -481,6 +514,15 @@ export default function VoiceSetupScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  closeButtonContainer: {
+    position: "absolute",
+    right: Spacing.md,
+    zIndex: 10,
+  },
+  closeButton: {
+    padding: Spacing.sm,
+    minWidth: 44,
   },
   scrollView: {
     flex: 1,

@@ -38,10 +38,27 @@ async function generateScript(goal: string, category?: string, length?: string):
     long: { sentences: 10, tokens: 400, description: "exactly 10 sentences" },
   };
   
-  const config = lengthConfig[length as keyof typeof lengthConfig] || lengthConfig.medium;
-  console.log(`Generating script with length: ${length}, using config:`, config);
+  // Category-specific tone and style instructions
+  const categoryTones: Record<string, string> = {
+    Confidence: "Use bold, assertive, and powerful language. Write as someone who is unstoppable and radiates self-assurance. Use strong declarative statements like 'I am powerful', 'I command respect', 'I own my greatness'.",
+    Career: "Use professional, ambitious, and driven language. Write as someone who is a high achiever destined for success. Focus on leadership, excellence, and professional growth.",
+    Health: "Use nurturing, calming, and wellness-focused language. Write as someone who deeply cares for their body and mind. Focus on vitality, energy, healing, and holistic well-being.",
+    Wealth: "Use abundant, prosperous, and magnetic language. Write as someone who naturally attracts wealth and opportunities. Focus on financial freedom, abundance mindset, and prosperity consciousness.",
+    Relationships: "Use warm, soft, loving, and gentle language. Write as someone who is deeply connected and emotionally open. Focus on love, connection, harmony, and meaningful bonds.",
+    Sleep: "Use peaceful, soothing, dreamy, and tranquil language. Write as someone drifting into deep rest. Focus on relaxation, surrender, serenity, and restorative sleep.",
+  };
   
-  const systemPrompt = `Write ${config.sentences} affirmation sentences. First person, present tense. No titles, no instructions, no numbering. Just ${config.sentences} sentences.`;
+  const config = lengthConfig[length as keyof typeof lengthConfig] || lengthConfig.medium;
+  console.log(`Generating script with length: ${length}, category: ${category}, using config:`, config);
+  
+  // Get category-specific tone or use neutral tone
+  const toneInstruction = category && categoryTones[category] 
+    ? categoryTones[category] 
+    : "Use positive, empowering, and uplifting language.";
+  
+  const systemPrompt = `Write ${config.sentences} affirmation sentences. First person, present tense. No titles, no instructions, no numbering. Just ${config.sentences} sentences.
+
+TONE AND STYLE: ${toneInstruction}`;
 
   const userPrompt = `${config.sentences} affirmations for: ${goal}. Only ${config.sentences} sentences total.`;
 

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useCallback, useRef, useEff
 import { Audio } from 'expo-av';
 import { Affirmation } from '@shared/schema';
 import { getApiUrl } from '@/lib/query-client';
+import { useBackgroundMusic } from './BackgroundMusicContext';
 
 interface AudioState {
   currentAffirmation: Affirmation | null;
@@ -42,6 +43,8 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const [playbackSpeed, setPlaybackSpeedState] = useState(1);
   const soundRef = useRef<Audio.Sound | null>(null);
   const isOperationInProgress = useRef(false);
+  
+  const { startBackgroundMusic, stopBackgroundMusic, selectedMusic } = useBackgroundMusic();
 
   useEffect(() => {
     const initAudio = async () => {
@@ -143,13 +146,18 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       soundRef.current = sound;
       setCurrentAffirmation(affirmation);
       setIsPlaying(true);
+      
+      // Start background music if selected
+      if (selectedMusic !== 'none') {
+        await startBackgroundMusic();
+      }
     } catch (error) {
       console.error('Error loading audio:', error);
     } finally {
       setIsLoading(false);
       isOperationInProgress.current = false;
     }
-  }, [currentAffirmation?.id, autoReplay, playbackSpeed, unloadCurrentSound]);
+  }, [currentAffirmation?.id, autoReplay, playbackSpeed, unloadCurrentSound, selectedMusic, startBackgroundMusic]);
 
   const togglePlayPause = useCallback(async () => {
     console.log('togglePlayPause called, soundRef exists:', !!soundRef.current);
@@ -172,10 +180,16 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         if (status.isPlaying) {
           await soundRef.current.pauseAsync();
           setIsPlaying(false);
+          // Pause background music too
+          await stopBackgroundMusic();
           console.log('Paused');
         } else {
           await soundRef.current.playAsync();
           setIsPlaying(true);
+          // Resume background music if selected
+          if (selectedMusic !== 'none') {
+            await startBackgroundMusic();
+          }
           console.log('Resumed');
         }
       }
@@ -184,12 +198,13 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     } finally {
       isOperationInProgress.current = false;
     }
-  }, []);
+  }, [selectedMusic, startBackgroundMusic, stopBackgroundMusic]);
 
   const stop = useCallback(async () => {
     await unloadCurrentSound();
+    await stopBackgroundMusic();
     setCurrentAffirmation(null);
-  }, [unloadCurrentSound]);
+  }, [unloadCurrentSound, stopBackgroundMusic]);
 
   const seek = useCallback(async (positionMs: number) => {
     if (!soundRef.current) return;

@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { FlatList, View, StyleSheet, RefreshControl, TextInput, Modal, Pressable, Alert, ImageBackground } from "react-native";
+import Animated, { FadeInUp } from "react-native-reanimated";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const libraryBackgroundDark = require("../../assets/images/library-background.png");
@@ -228,18 +229,20 @@ export default function HomeScreen() {
     />
   );
 
-  const renderItem = ({ item }: { item: Affirmation }) => {
+  const renderItem = ({ item, index }: { item: Affirmation; index: number }) => {
     const isCurrentlyPlaying = currentAffirmation?.id === item.id && isPlaying;
     return (
-      <SwipeableAffirmationCard
-        affirmation={item}
-        onPress={() => handleAffirmationPress(item.id)}
-        onPlayPress={() => handlePlayPress(item)}
-        onRename={handleRenamePress}
-        isActive={isCurrentlyPlaying}
-        testID={`card-affirmation-${item.id}`}
-        hapticEnabled={hapticEnabled}
-      />
+      <Animated.View entering={FadeInUp.delay(index * 50).duration(300).springify()}>
+        <SwipeableAffirmationCard
+          affirmation={item}
+          onPress={() => handleAffirmationPress(item.id)}
+          onPlayPress={() => handlePlayPress(item)}
+          onRename={handleRenamePress}
+          isActive={isCurrentlyPlaying}
+          testID={`card-affirmation-${item.id}`}
+          hapticEnabled={hapticEnabled}
+        />
+      </Animated.View>
     );
   };
 

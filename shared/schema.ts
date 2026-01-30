@@ -41,12 +41,20 @@ export const messages = pgTable("messages", {
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 
-// Affirmation categories
+// Affirmation categories (default system categories)
 export const categories = pgTable("categories", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   icon: text("icon").notNull(),
   color: text("color").notNull(),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
+// Custom categories created by users (max 5 per user)
+export const customCategories = pgTable("custom_categories", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 
@@ -111,6 +119,11 @@ export const usersRelations = relations(users, ({ many }) => ({
   affirmations: many(affirmations),
   voiceSamples: many(voiceSamples),
   collections: many(collections),
+  customCategories: many(customCategories),
+}));
+
+export const customCategoriesRelations = relations(customCategories, ({ one }) => ({
+  user: one(users, { fields: [customCategories.userId], references: [users.id] }),
 }));
 
 export const affirmationsRelations = relations(affirmations, ({ one, many }) => ({
@@ -169,6 +182,11 @@ export const insertCollectionSchema = createInsertSchema(collections).omit({
   createdAt: true,
 });
 
+export const insertCustomCategorySchema = createInsertSchema(customCategories).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type Conversation = typeof conversations.$inferSelect;
 export type InsertConversation = z.infer<typeof insertConversationSchema>;
@@ -182,3 +200,5 @@ export type VoiceSample = typeof voiceSamples.$inferSelect;
 export type InsertVoiceSample = z.infer<typeof insertVoiceSampleSchema>;
 export type Collection = typeof collections.$inferSelect;
 export type InsertCollection = z.infer<typeof insertCollectionSchema>;
+export type CustomCategory = typeof customCategories.$inferSelect;
+export type InsertCustomCategory = z.infer<typeof insertCustomCategorySchema>;

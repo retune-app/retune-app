@@ -358,9 +358,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("Auto-categorized as:", categoryName);
       }
 
-      // Look up category ID
+      // Look up category ID (check default categories first, then custom categories)
       let categoryId: number | null = null;
+      let customCategoryId: number | null = null;
       if (categoryName) {
+        // First check default categories
         const [cat] = await db
           .select()
           .from(categories)
@@ -368,6 +370,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .limit(1);
         if (cat) {
           categoryId = cat.id;
+        } else {
+          // Check custom categories for this user
+          const [customCat] = await db
+            .select()
+            .from(customCategories)
+            .where(and(
+              eq(customCategories.name, categoryName),
+              eq(customCategories.userId, req.userId!)
+            ))
+            .limit(1);
+          if (customCat) {
+            customCategoryId = customCat.id;
+          }
         }
       }
 
@@ -404,6 +419,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           title: title || "My Affirmation",
           script,
           categoryId,
+          customCategoryId,
           audioUrl: `/uploads/${audioFilename}`,
           duration: audioResult.duration,
           wordTimings: JSON.stringify(audioResult.wordTimings),

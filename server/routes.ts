@@ -383,9 +383,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         voiceSample?.voiceId || undefined
       );
 
-      // Save audio file
+      // Save audio file to the audio subdirectory
+      const audioDir = path.join(uploadDir, "audio");
+      if (!fs.existsSync(audioDir)) {
+        fs.mkdirSync(audioDir, { recursive: true });
+      }
       const audioFilename = `affirmation-${Date.now()}.mp3`;
-      const audioPath = path.join(uploadDir, audioFilename);
+      const audioPath = path.join(audioDir, audioFilename);
       fs.writeFileSync(audioPath, Buffer.from(audioResult.audio));
 
       // Create affirmation record (associated with user)
@@ -396,7 +400,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           title: title || "My Affirmation",
           script,
           categoryName: categoryName || null, // Store category name directly
-          audioUrl: `/uploads/${audioFilename}`,
+          audioUrl: `/uploads/audio/${audioFilename}`,
           duration: audioResult.duration,
           wordTimings: JSON.stringify(audioResult.wordTimings),
           isManual: isManual || false,

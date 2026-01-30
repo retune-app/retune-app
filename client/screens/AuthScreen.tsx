@@ -45,12 +45,25 @@ export function AuthScreen() {
   const [loadingProvider, setLoadingProvider] = useState<"google" | "apple" | null>(null);
   const [error, setError] = useState("");
 
-  // Google OAuth setup
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+  // Check if Google is available on this platform
+  const hasGoogleClientId = Platform.select({
+    ios: !!process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+    android: !!process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+    web: !!process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+    default: false,
   });
+
+  // Google OAuth setup - only configure if we have the right client ID
+  const [request, response, promptAsync] = Google.useAuthRequest(
+    hasGoogleClientId ? {
+      webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+      iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+      androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+    } : {
+      // Provide empty config to prevent crash, button will be hidden anyway
+      webClientId: undefined,
+    }
+  );
 
   // Handle Google auth response
   React.useEffect(() => {
@@ -348,30 +361,7 @@ export function AuthScreen() {
               <Text style={styles.errorText}>{error}</Text>
             ) : null}
 
-            {/* Google Sign In Button */}
-            <Pressable
-              style={[
-                styles.socialButton,
-                styles.googleButton,
-                isLoading && styles.disabledButton,
-              ]}
-              onPress={handleGoogleSignIn}
-              disabled={isLoading || !request}
-              testID="button-google-signin"
-            >
-              {loadingProvider === "google" ? (
-                <ActivityIndicator color={authColors.navy} />
-              ) : (
-                <>
-                  <Feather name="mail" size={20} color={authColors.google} />
-                  <Text style={[styles.socialButtonText, styles.googleButtonText]}>
-                    Continue with Google
-                  </Text>
-                </>
-              )}
-            </Pressable>
-
-            {/* Apple Sign In Button - iOS only */}
+            {/* Apple Sign In Button - iOS only, shown first on iOS */}
             {Platform.OS === "ios" ? (
               <Pressable
                 style={[
@@ -390,6 +380,31 @@ export function AuthScreen() {
                     <Feather name="smartphone" size={20} color={authColors.white} />
                     <Text style={[styles.socialButtonText, styles.appleButtonText]}>
                       Continue with Apple
+                    </Text>
+                  </>
+                )}
+              </Pressable>
+            ) : null}
+
+            {/* Google Sign In Button - only show if platform has client ID configured */}
+            {hasGoogleClientId ? (
+              <Pressable
+                style={[
+                  styles.socialButton,
+                  styles.googleButton,
+                  isLoading && styles.disabledButton,
+                ]}
+                onPress={handleGoogleSignIn}
+                disabled={isLoading || !request}
+                testID="button-google-signin"
+              >
+                {loadingProvider === "google" ? (
+                  <ActivityIndicator color={authColors.navy} />
+                ) : (
+                  <>
+                    <Feather name="mail" size={20} color={authColors.google} />
+                    <Text style={[styles.socialButtonText, styles.googleButtonText]}>
+                      Continue with Google
                     </Text>
                   </>
                 )}

@@ -1100,6 +1100,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update user's preferred name
+  app.put("/api/user/name", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { name } = req.body;
+      
+      if (!name || typeof name !== "string" || name.trim().length === 0) {
+        return res.status(400).json({ error: "Name is required" });
+      }
+
+      const trimmedName = name.trim().substring(0, 50); // Max 50 characters
+
+      await db
+        .update(users)
+        .set({ name: trimmedName })
+        .where(eq(users.id, req.userId!));
+
+      res.json({ success: true, name: trimmedName });
+    } catch (error) {
+      console.error("Error updating name:", error);
+      res.status(500).json({ error: "Failed to update name" });
+    }
+  });
+
   // Reset user data - deletes all affirmations and voice samples for the user
   app.post("/api/user/reset", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {

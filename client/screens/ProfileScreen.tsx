@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { View, StyleSheet, Pressable, Switch, Text, Modal, ActivityIndicator, Image, ImageBackground } from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import { View, StyleSheet, Pressable, Switch, Text, Modal, ActivityIndicator, ImageBackground, TextInput } from "react-native";
 
 const profileBackgroundDark = require("../../assets/images/library-background.png");
 const profileBackgroundLight = require("../../assets/images/library-background-light.png");
@@ -104,6 +104,9 @@ export default function ProfileScreen() {
   const [showSecurityModal, setShowSecurityModal] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState("");
+  const nameInputRef = useRef<TextInput>(null);
 
   const { data: stats } = useQuery({
     queryKey: ["/api/user/stats"],
@@ -152,6 +155,34 @@ export default function ProfileScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     },
   });
+
+  const updateNameMutation = useMutation({
+    mutationFn: async (name: string) => {
+      await apiRequest("PUT", "/api/user/name", { name });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setIsEditingName(false);
+    },
+  });
+
+  const handleEditName = () => {
+    setEditedName(user?.name || "");
+    setIsEditingName(true);
+    setTimeout(() => nameInputRef.current?.focus(), 100);
+  };
+
+  const handleSaveName = () => {
+    if (editedName.trim()) {
+      updateNameMutation.mutate(editedName.trim());
+    }
+  };
+
+  const handleCancelEditName = () => {
+    setIsEditingName(false);
+    setEditedName("");
+  };
 
   const handleDeleteCategory = (category: CustomCategory) => {
     deleteCategoryMutation.mutate(category.id);
@@ -286,17 +317,52 @@ export default function ProfileScreen() {
         ]}
         scrollIndicatorInsets={{ bottom: insets.bottom }}
       >
-      <View style={styles.profileHeader}>
-        <Image
-          source={require("../../assets/images/profile-avatar.jpg")}
-          style={styles.avatarImage}
-        />
-        <ThemedText type="h2" style={styles.displayName}>
-          {user?.name || "Welcome"}
+      <View style={styles.section}>
+        <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+          PROFILE
         </ThemedText>
-        <ThemedText type="small" style={{ color: theme.textSecondary }}>
-          {user?.email || "Rewiring your subconscious"}
-        </ThemedText>
+        <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
+          <View style={styles.settingItem}>
+            <View style={[styles.settingIcon, { backgroundColor: theme.backgroundSecondary }]}>
+              <Feather name="user" size={20} color={theme.primary} />
+            </View>
+            <View style={styles.settingContent}>
+              <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                Preferred Name
+              </ThemedText>
+              {isEditingName ? (
+                <TextInput
+                  ref={nameInputRef}
+                  value={editedName}
+                  onChangeText={setEditedName}
+                  onSubmitEditing={handleSaveName}
+                  onBlur={handleCancelEditName}
+                  style={[styles.nameInput, { color: theme.text, borderColor: theme.primary }]}
+                  placeholder="Enter your name"
+                  placeholderTextColor={theme.textSecondary}
+                  autoFocus
+                  testID="input-preferred-name"
+                />
+              ) : (
+                <ThemedText type="body">{user?.name || "Not set"}</ThemedText>
+              )}
+            </View>
+            {isEditingName ? (
+              <View style={styles.nameEditButtons}>
+                <Pressable onPress={handleSaveName} style={styles.nameEditButton} testID="button-save-name">
+                  <Feather name="check" size={20} color={theme.primary} />
+                </Pressable>
+                <Pressable onPress={handleCancelEditName} style={styles.nameEditButton} testID="button-cancel-name">
+                  <Feather name="x" size={20} color={theme.textSecondary} />
+                </Pressable>
+              </View>
+            ) : (
+              <Pressable onPress={handleEditName} testID="button-edit-name">
+                <Feather name="edit-2" size={18} color={theme.primary} />
+              </Pressable>
+            )}
+          </View>
+        </View>
       </View>
 
       <ProgressVisualization
@@ -1017,6 +1083,21 @@ const styles = StyleSheet.create({
   },
   displayName: {
     marginBottom: Spacing.xs,
+  },
+  nameInput: {
+    fontSize: 16,
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.sm,
+    borderWidth: 1,
+    borderRadius: BorderRadius.sm,
+    minWidth: 150,
+  },
+  nameEditButtons: {
+    flexDirection: "row",
+    gap: Spacing.sm,
+  },
+  nameEditButton: {
+    padding: Spacing.xs,
   },
   statsCard: {
     marginBottom: Spacing["2xl"],

@@ -20,7 +20,14 @@ import { apiRequest } from "@/lib/query-client";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import type { Affirmation, Category } from "@shared/schema";
 
-const CATEGORIES = ["All", "Career", "Health", "Confidence", "Wealth", "Relationships", "Sleep"];
+const DEFAULT_CATEGORIES = ["All", "Career", "Health", "Confidence", "Wealth", "Relationships", "Sleep"];
+
+interface CustomCategory {
+  id: number;
+  userId: string;
+  name: string;
+  createdAt: string;
+}
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -47,6 +54,12 @@ export default function HomeScreen() {
   const { data: categoriesData = [] } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
   });
+
+  const { data: customCategories = [] } = useQuery<CustomCategory[]>({
+    queryKey: ["/api/custom-categories"],
+  });
+
+  const allCategories = [...DEFAULT_CATEGORIES, ...customCategories.map(c => c.name)];
 
   const renameMutation = useMutation({
     mutationFn: async ({ id, title }: { id: number; title: string }) => {
@@ -137,7 +150,7 @@ export default function HomeScreen() {
       <FlatList
         horizontal
         showsHorizontalScrollIndicator={false}
-        data={CATEGORIES}
+        data={allCategories}
         keyExtractor={(item) => item}
         contentContainerStyle={styles.categoriesContainer}
         renderItem={({ item }) => (

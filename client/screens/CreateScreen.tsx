@@ -51,6 +51,7 @@ export default function CreateScreen() {
   const [mode, setMode] = useState<"ai" | "manual">("ai");
   const [goal, setGoal] = useState("");
   const [generatedScript, setGeneratedScript] = useState("");
+  const [generatedDescription, setGeneratedDescription] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedLength, setSelectedLength] = useState<LengthOption>("Medium");
   const [regenerateCount, setRegenerateCount] = useState(0);
@@ -99,6 +100,7 @@ export default function CreateScreen() {
     },
     onSuccess: (data) => {
       setGeneratedScript(data.script);
+      setGeneratedDescription(data.description || "");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     },
     onError: () => {
@@ -111,6 +113,7 @@ export default function CreateScreen() {
       const res = await apiRequest("POST", "/api/affirmations/create-with-voice", {
         title: goal.substring(0, 50) || "My Affirmation",
         script: generatedScript,
+        description: generatedDescription || null,
         category: selectedCategory,
         isManual: mode === "manual",
       });

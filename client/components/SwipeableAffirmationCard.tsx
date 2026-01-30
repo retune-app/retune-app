@@ -139,6 +139,7 @@ export function SwipeableAffirmationCard({
       <AffirmationCard
         id={affirmation.id}
         title={affirmation.title}
+        description={affirmation.description}
         category={affirmation.categoryName ?? undefined}
         duration={affirmation.duration ?? undefined}
         isFavorite={affirmation.isFavorite ?? false}

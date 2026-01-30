@@ -75,6 +75,14 @@ export default function PlayerScreen() {
     queryKey: ["/api/affirmations", affirmationId],
   });
 
+  // Query for user's voice status (whether they have a personal voice set up)
+  const { data: voiceStatus } = useQuery<{ hasPersonalVoice: boolean; hasClonedVoice: boolean }>({
+    queryKey: ["/api/voice-samples/status"],
+  });
+
+  // Voice regeneration state
+  const [isRegeneratingVoice, setIsRegeneratingVoice] = useState(false);
+
   // Haptic feedback setting
   const [hapticEnabled, setHapticEnabled] = useState(true);
 
@@ -114,6 +122,63 @@ export default function PlayerScreen() {
       Alert.alert("Error", "Failed to save affirmation");
     },
   });
+
+  // Regenerate voice mutation
+  const regenerateVoiceMutation = useMutation({
+    mutationFn: async ({ voiceType, voiceGender }: { voiceType: "personal" | "ai"; voiceGender?: "male" | "female" }) => {
+      setIsRegeneratingVoice(true);
+      const response = await apiRequest("POST", `/api/affirmations/${affirmationId}/regenerate-voice`, {
+        voiceType,
+        voiceGender,
+      });
+      return response.json();
+    },
+    onSuccess: async (updatedAffirmation) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/affirmations"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/affirmations", affirmationId] });
+      setIsRegeneratingVoice(false);
+      if (hapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      // Auto-play the new audio
+      if (updatedAffirmation) {
+        await playAffirmation(updatedAffirmation);
+      }
+    },
+    onError: () => {
+      setIsRegeneratingVoice(false);
+      if (hapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert("Error", "Failed to regenerate audio with new voice");
+    },
+  });
+
+  // Handle voice switch
+  const handleVoiceSwitch = useCallback((voiceType: "personal" | "ai", voiceGender?: "male" | "female") => {
+    if (hapticEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    
+    // Check if trying to use personal voice but don't have one
+    if (voiceType === "personal" && !voiceStatus?.hasClonedVoice) {
+      Alert.alert(
+        "Personal Voice Not Set Up",
+        "You need to record your voice first. Would you like to do that now?",
+        [
+          { text: "Not Now", style: "cancel" },
+          { text: "Record Voice", onPress: () => navigation.navigate("VoiceSetup" as never) },
+        ]
+      );
+      return;
+    }
+    
+    // Stop current playback before regenerating
+    stop();
+    regenerateVoiceMutation.mutate({ voiceType, voiceGender });
+  }, [voiceStatus, hapticEnabled, stop, regenerateVoiceMutation, navigation]);
+
+  // Get current voice display text
+  const getCurrentVoiceLabel = () => {
+    if (!affirmation) return "Loading...";
+    if (affirmation.voiceType === "personal") return "My Voice";
+    if (affirmation.voiceGender === "male") return "AI Male";
+    return "AI Female";
+  };
 
   const handleSave = useCallback(() => {
     if (hapticEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -740,6 +805,92 @@ export default function PlayerScreen() {
           </View>
         </View>
 
+        <View style={[styles.voiceSection, { backgroundColor: theme.backgroundSecondary }]}>
+          <View style={styles.voiceSectionHeader}>
+            <ThemedText type="small" style={{ color: theme.textSecondary }}>
+              Voice
+            </ThemedText>
+            {isRegeneratingVoice ? (
+              <ThemedText type="small" style={{ color: theme.gold }}>
+                Generating...
+              </ThemedText>
+            ) : (
+              <ThemedText type="small" style={{ color: theme.gold, fontWeight: '600' }}>
+                {getCurrentVoiceLabel()}
+              </ThemedText>
+            )}
+          </View>
+          <View style={styles.voiceOptions}>
+            <Pressable
+              onPress={() => handleVoiceSwitch("personal")}
+              disabled={isRegeneratingVoice}
+              style={[
+                styles.voiceOption,
+                {
+                  backgroundColor: affirmation?.voiceType === "personal" ? theme.primary : theme.backgroundTertiary,
+                  opacity: isRegeneratingVoice ? 0.5 : 1,
+                },
+              ]}
+              testID="button-voice-personal"
+            >
+              <Feather name="user" size={14} color={affirmation?.voiceType === "personal" ? "#FFFFFF" : theme.text} />
+              <ThemedText
+                type="small"
+                style={{
+                  color: affirmation?.voiceType === "personal" ? "#FFFFFF" : theme.text,
+                  marginLeft: 4,
+                }}
+              >
+                My Voice
+              </ThemedText>
+              {!voiceStatus?.hasClonedVoice ? (
+                <Feather name="alert-circle" size={12} color={theme.accent} style={{ marginLeft: 4 }} />
+              ) : null}
+            </Pressable>
+            <Pressable
+              onPress={() => handleVoiceSwitch("ai", "female")}
+              disabled={isRegeneratingVoice}
+              style={[
+                styles.voiceOption,
+                {
+                  backgroundColor: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "female" ? theme.primary : theme.backgroundTertiary,
+                  opacity: isRegeneratingVoice ? 0.5 : 1,
+                },
+              ]}
+              testID="button-voice-ai-female"
+            >
+              <ThemedText
+                type="small"
+                style={{
+                  color: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "female" ? "#FFFFFF" : theme.text,
+                }}
+              >
+                AI Female
+              </ThemedText>
+            </Pressable>
+            <Pressable
+              onPress={() => handleVoiceSwitch("ai", "male")}
+              disabled={isRegeneratingVoice}
+              style={[
+                styles.voiceOption,
+                {
+                  backgroundColor: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "male" ? theme.primary : theme.backgroundTertiary,
+                  opacity: isRegeneratingVoice ? 0.5 : 1,
+                },
+              ]}
+              testID="button-voice-ai-male"
+            >
+              <ThemedText
+                type="small"
+                style={{
+                  color: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "male" ? "#FFFFFF" : theme.text,
+                }}
+              >
+                AI Male
+              </ThemedText>
+            </Pressable>
+          </View>
+        </View>
 
         {showScript && affirmation?.script ? (
           <View style={[styles.scriptPreview, { backgroundColor: theme.backgroundSecondary }]}>
@@ -833,6 +984,31 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
     borderRadius: BorderRadius.lg,
     marginBottom: Spacing.lg,
+  },
+  voiceSection: {
+    width: "100%",
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    marginBottom: Spacing.lg,
+  },
+  voiceSectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: Spacing.md,
+  },
+  voiceOptions: {
+    flexDirection: "row",
+    gap: Spacing.sm,
+  },
+  voiceOption: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
+    borderRadius: BorderRadius.md,
   },
   rsvpSettings: {
     width: "100%",

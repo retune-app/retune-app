@@ -98,6 +98,20 @@ export const authTokens = pgTable("auth_tokens", {
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 
+// Notification settings for daily affirmation reminders
+export const notificationSettings = pgTable("notification_settings", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }).unique(),
+  morningEnabled: boolean("morning_enabled").default(false),
+  morningTime: text("morning_time").default("08:00"), // HH:MM format
+  afternoonEnabled: boolean("afternoon_enabled").default(false),
+  afternoonTime: text("afternoon_time").default("13:00"),
+  eveningEnabled: boolean("evening_enabled").default(false),
+  eveningTime: text("evening_time").default("20:00"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
 // Collections for organizing affirmations
 export const collections = pgTable("collections", {
   id: serial("id").primaryKey(),
@@ -117,11 +131,16 @@ export const affirmationCollections = pgTable("affirmation_collections", {
 });
 
 // Relations
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ many, one }) => ({
   affirmations: many(affirmations),
   voiceSamples: many(voiceSamples),
   collections: many(collections),
   customCategories: many(customCategories),
+  notificationSettings: one(notificationSettings),
+}));
+
+export const notificationSettingsRelations = relations(notificationSettings, ({ one }) => ({
+  user: one(users, { fields: [notificationSettings.userId], references: [users.id] }),
 }));
 
 export const customCategoriesRelations = relations(customCategories, ({ one }) => ({
@@ -189,6 +208,12 @@ export const insertCustomCategorySchema = createInsertSchema(customCategories).o
   createdAt: true,
 });
 
+export const insertNotificationSettingsSchema = createInsertSchema(notificationSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type Conversation = typeof conversations.$inferSelect;
 export type InsertConversation = z.infer<typeof insertConversationSchema>;
@@ -204,3 +229,5 @@ export type Collection = typeof collections.$inferSelect;
 export type InsertCollection = z.infer<typeof insertCollectionSchema>;
 export type CustomCategory = typeof customCategories.$inferSelect;
 export type InsertCustomCategory = z.infer<typeof insertCustomCategorySchema>;
+export type NotificationSettings = typeof notificationSettings.$inferSelect;
+export type InsertNotificationSettings = z.infer<typeof insertNotificationSettingsSchema>;

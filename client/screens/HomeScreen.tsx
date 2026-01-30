@@ -160,7 +160,6 @@ export default function HomeScreen() {
 
   const renderEmpty = () => (
     <EmptyState
-      image={require("../../assets/images/empty-library.png")}
       title="No Affirmations Yet"
       description="Create your first personalized affirmation to start rewiring your subconscious mind."
       actionLabel="Create Affirmation"

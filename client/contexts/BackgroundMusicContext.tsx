@@ -53,7 +53,7 @@ const BackgroundMusicContext = createContext<BackgroundMusicContextType | undefi
 
 export function BackgroundMusicProvider({ children }: { children: React.ReactNode }) {
   const [selectedMusic, setSelectedMusicState] = useState<BackgroundMusicType>('none');
-  const [volume, setVolumeState] = useState(0.3);
+  const [volume, setVolumeState] = useState(0.7);
   const [isPlaying, setIsPlaying] = useState(false);
   const soundRef = useRef<Audio.Sound | null>(null);
 

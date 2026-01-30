@@ -243,7 +243,7 @@ export default function HomeScreen() {
         contentContainerStyle={[
           styles.contentContainer,
           {
-            paddingTop: headerHeight + Spacing.lg,
+            paddingTop: insets.top + Spacing.md,
             paddingBottom: tabBarHeight + 80 + Spacing.xl,
           },
           filteredAffirmations.length === 0 && styles.emptyContainer,
@@ -267,7 +267,7 @@ export default function HomeScreen() {
       {/* Top edge fade gradient */}
       <LinearGradient
         colors={edgeFadeColors}
-        style={[styles.edgeFade, styles.topFade, { height: headerHeight + 20 }]}
+        style={[styles.edgeFade, styles.topFade, { height: insets.top + 10 }]}
         pointerEvents="none"
       />
 
@@ -355,11 +355,11 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: Spacing.lg,
-    height: 48,
+    paddingHorizontal: Spacing.md,
+    height: 44,
     borderRadius: BorderRadius.full,
     borderWidth: 1,
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   searchInput: {
     flex: 1,

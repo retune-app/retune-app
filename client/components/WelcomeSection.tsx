@@ -182,20 +182,20 @@ export function WelcomeSection({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   greetingRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   greetingRowLight: {
     backgroundColor: "rgba(255, 255, 255, 0.7)",
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
     marginHorizontal: -Spacing.lg,
-    marginTop: -Spacing.md,
+    marginTop: 0,
     borderRadius: BorderRadius.md,
   },
   greetingContent: {
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
   quickPlayContent: {
     flexDirection: "row",
     alignItems: "center",
-    padding: Spacing.lg,
+    padding: Spacing.md,
   },
   quickPlayText: {
     flex: 1,

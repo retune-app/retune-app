@@ -161,8 +161,9 @@ export default function ProfileScreen() {
       const response = await apiRequest("PUT", "/api/user/name", { name });
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+    onSuccess: async (data, newName) => {
+      // Force immediate refetch to update the UI
+      await queryClient.refetchQueries({ queryKey: ["/api/auth/me"] });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setIsEditingName(false);
       setEditedName("");
@@ -362,7 +363,12 @@ export default function ProfileScreen() {
                 </Pressable>
               </View>
             ) : (
-              <Pressable onPress={handleEditName} testID="button-edit-name">
+              <Pressable 
+                onPress={handleEditName} 
+                testID="button-edit-name"
+                style={styles.editNameButton}
+                hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+              >
                 <Feather name="edit-2" size={18} color={theme.primary} />
               </Pressable>
             )}
@@ -1132,6 +1138,9 @@ const styles = StyleSheet.create({
   },
   nameEditButton: {
     padding: Spacing.xs,
+  },
+  editNameButton: {
+    padding: Spacing.sm,
   },
   statsCard: {
     marginBottom: Spacing["2xl"],

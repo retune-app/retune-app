@@ -297,6 +297,13 @@ const styles = StyleSheet.create({
     maxWidth: 400,
     borderRadius: BorderRadius.lg,
     padding: Spacing.xl,
+    shadowColor: "#0F1C3F",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 10,
+    borderWidth: 1,
+    borderColor: "rgba(201, 162, 39, 0.3)",
   },
   modalTitle: {
     textAlign: "center",

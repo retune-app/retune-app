@@ -3,14 +3,17 @@ import { pgTable, text, varchar, serial, integer, timestamp, boolean } from "dri
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Users table for basic auth
+// Users table - supports OAuth and password auth
 export const users = pgTable("users", {
   id: varchar("id")
     .primaryKey()
     .default(sql`gen_random_uuid()`),
   email: text("email").notNull().unique(),
-  password: text("password").notNull(),
+  password: text("password"), // Optional for OAuth users
   name: text("name").notNull(),
+  authProvider: text("auth_provider").default("email"), // 'email', 'google', 'apple'
+  providerId: text("provider_id"), // OAuth provider's user ID
+  avatarUrl: text("avatar_url"), // Profile picture from OAuth
   hasVoiceSample: boolean("has_voice_sample").default(false),
   voiceId: text("voice_id"),
   preferredVoiceType: text("preferred_voice_type").default("ai"), // 'personal' or 'ai'
@@ -22,6 +25,17 @@ export const insertUserSchema = createInsertSchema(users).pick({
   email: true,
   password: true,
   name: true,
+  authProvider: true,
+  providerId: true,
+  avatarUrl: true,
+});
+
+export const insertOAuthUserSchema = z.object({
+  email: z.string().email(),
+  name: z.string(),
+  authProvider: z.enum(["google", "apple"]),
+  providerId: z.string(),
+  avatarUrl: z.string().optional(),
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;

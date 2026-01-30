@@ -34,6 +34,16 @@ const RSVP_FONT_SIZE_KEY = "@settings/rsvpFontSize";
 const RSVP_HIGHLIGHT_KEY = "@settings/rsvpHighlight";
 const SHOW_SCRIPT_KEY = "@settings/showScript";
 
+// Voice preference types
+type VoiceType = "personal" | "ai";
+type VoiceGender = "male" | "female";
+
+interface VoicePreferences {
+  preferredVoiceType: VoiceType;
+  preferredAiGender: VoiceGender;
+  hasPersonalVoice: boolean;
+}
+
 type PlayerRouteProp = RouteProp<RootStackParamList, "Player">;
 type PlayerNavigationProp = NativeStackNavigationProp<RootStackParamList, "Player">;
 
@@ -73,6 +83,74 @@ export default function PlayerScreen() {
   const { data: affirmation, isLoading } = useQuery<Affirmation>({
     queryKey: ["/api/affirmations", affirmationId],
   });
+
+  // Voice preferences query
+  const { data: voicePreferences } = useQuery<VoicePreferences>({
+    queryKey: ["/api/voice-preferences"],
+  });
+
+  // State to track current voice selection for this affirmation
+  const [selectedVoiceType, setSelectedVoiceType] = useState<VoiceType>("ai");
+  const [selectedVoiceGender, setSelectedVoiceGender] = useState<VoiceGender>("female");
+  const [isRegeneratingVoice, setIsRegeneratingVoice] = useState(false);
+
+  // Sync voice selection from affirmation data when it loads
+  useEffect(() => {
+    if (affirmation) {
+      // Use affirmation's voice settings if available, otherwise use defaults
+      setSelectedVoiceType((affirmation as any).voiceType || "ai");
+      setSelectedVoiceGender((affirmation as any).voiceGender || "female");
+    }
+  }, [affirmation]);
+
+  // Voice regeneration mutation
+  const regenerateVoiceMutation = useMutation({
+    mutationFn: async ({ voiceType, voiceGender }: { voiceType: VoiceType; voiceGender?: VoiceGender }) => {
+      setIsRegeneratingVoice(true);
+      const result = await apiRequest("POST", `/api/affirmations/${affirmationId}/regenerate-voice`, {
+        voiceType,
+        voiceGender: voiceType === "ai" ? voiceGender : undefined,
+      });
+      return result;
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/affirmations"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/affirmations", affirmationId] });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setIsRegeneratingVoice(false);
+      
+      // Reload the affirmation with new audio
+      if (data && data.audioUrl) {
+        playAffirmation(data);
+      }
+    },
+    onError: (error: any) => {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      setIsRegeneratingVoice(false);
+      Alert.alert("Error", error.message || "Failed to change voice");
+    },
+  });
+
+  const handleVoiceTypeChange = (type: VoiceType) => {
+    if (type === "personal" && !voicePreferences?.hasPersonalVoice) {
+      Alert.alert(
+        "Personal Voice Required",
+        "Please record your voice in Settings to use your personal voice for affirmations.",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Go to Settings", onPress: () => navigation.goBack() },
+        ]
+      );
+      return;
+    }
+    setSelectedVoiceType(type);
+    regenerateVoiceMutation.mutate({ voiceType: type, voiceGender: selectedVoiceGender });
+  };
+
+  const handleVoiceGenderChange = (gender: VoiceGender) => {
+    setSelectedVoiceGender(gender);
+    regenerateVoiceMutation.mutate({ voiceType: "ai", voiceGender: gender });
+  };
 
   const isCurrentlyPlaying = currentAffirmation?.id === affirmationId && isPlaying;
 
@@ -701,6 +779,132 @@ export default function PlayerScreen() {
           </View>
         </View>
 
+        {/* Voice Selection Section */}
+        <View style={[styles.voiceSection, { backgroundColor: theme.backgroundSecondary }]}>
+          <ThemedText type="caption" style={{ color: theme.textSecondary, marginBottom: Spacing.sm }}>
+            VOICE
+          </ThemedText>
+          
+          {isRegeneratingVoice ? (
+            <View style={styles.voiceLoading}>
+              <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                Generating with new voice...
+              </ThemedText>
+            </View>
+          ) : (
+            <>
+              {/* Voice Type Toggle (AI vs Personal) */}
+              <View style={styles.voiceToggleRow}>
+                <Pressable
+                  onPress={() => handleVoiceTypeChange("ai")}
+                  style={[
+                    styles.voiceOptionButton,
+                    { 
+                      backgroundColor: selectedVoiceType === "ai" ? theme.primary : theme.backgroundTertiary,
+                      borderColor: theme.primary,
+                    },
+                  ]}
+                  testID="button-voice-ai-player"
+                >
+                  <Feather 
+                    name="cpu" 
+                    size={14} 
+                    color={selectedVoiceType === "ai" ? "#FFFFFF" : theme.text} 
+                  />
+                  <ThemedText
+                    type="small"
+                    style={{ 
+                      color: selectedVoiceType === "ai" ? "#FFFFFF" : theme.text,
+                      fontWeight: "600",
+                      marginLeft: 4,
+                    }}
+                  >
+                    AI Voice
+                  </ThemedText>
+                </Pressable>
+                
+                <Pressable
+                  onPress={() => handleVoiceTypeChange("personal")}
+                  style={[
+                    styles.voiceOptionButton,
+                    { 
+                      backgroundColor: selectedVoiceType === "personal" ? theme.primary : theme.backgroundTertiary,
+                      borderColor: voicePreferences?.hasPersonalVoice ? theme.primary : theme.border,
+                      opacity: voicePreferences?.hasPersonalVoice ? 1 : 0.6,
+                    },
+                  ]}
+                  testID="button-voice-personal-player"
+                >
+                  <Feather 
+                    name="mic" 
+                    size={14} 
+                    color={selectedVoiceType === "personal" ? "#FFFFFF" : theme.text} 
+                  />
+                  <ThemedText
+                    type="small"
+                    style={{ 
+                      color: selectedVoiceType === "personal" ? "#FFFFFF" : theme.text,
+                      fontWeight: "600",
+                      marginLeft: 4,
+                    }}
+                  >
+                    {voicePreferences?.hasPersonalVoice ? "My Voice" : "Record Voice"}
+                  </ThemedText>
+                </Pressable>
+              </View>
+
+              {/* AI Gender Selection (only when AI is selected) */}
+              {selectedVoiceType === "ai" ? (
+                <View style={styles.voiceGenderRow}>
+                  <Pressable
+                    onPress={() => handleVoiceGenderChange("female")}
+                    style={[
+                      styles.voiceGenderOption,
+                      { 
+                        backgroundColor: selectedVoiceGender === "female" ? theme.primary + "30" : "transparent",
+                        borderColor: selectedVoiceGender === "female" ? theme.primary : theme.border,
+                      },
+                    ]}
+                    testID="button-gender-female-player"
+                  >
+                    <ThemedText
+                      type="small"
+                      style={{ 
+                        color: selectedVoiceGender === "female" ? theme.primary : theme.textSecondary,
+                        fontWeight: selectedVoiceGender === "female" ? "600" : "400",
+                      }}
+                    >
+                      Female (Rachel)
+                    </ThemedText>
+                  </Pressable>
+                  
+                  <Pressable
+                    onPress={() => handleVoiceGenderChange("male")}
+                    style={[
+                      styles.voiceGenderOption,
+                      { 
+                        backgroundColor: selectedVoiceGender === "male" ? theme.primary + "30" : "transparent",
+                        borderColor: selectedVoiceGender === "male" ? theme.primary : theme.border,
+                      },
+                    ]}
+                    testID="button-gender-male-player"
+                  >
+                    <ThemedText
+                      type="small"
+                      style={{ 
+                        color: selectedVoiceGender === "male" ? theme.primary : theme.textSecondary,
+                        fontWeight: selectedVoiceGender === "male" ? "600" : "400",
+                      }}
+                    >
+                      Male (Adam)
+                    </ThemedText>
+                  </Pressable>
+                </View>
+              ) : null}
+            </>
+          )}
+        </View>
+
         {showScript && affirmation?.script ? (
           <View style={[styles.scriptPreview, { backgroundColor: theme.backgroundSecondary }]}>
             <ThemedText type="caption" style={{ color: theme.textSecondary, marginBottom: Spacing.sm }}>
@@ -867,5 +1071,42 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     zIndex: 10,
+  },
+  voiceSection: {
+    marginTop: Spacing.lg,
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+  },
+  voiceLoading: {
+    padding: Spacing.md,
+    alignItems: "center",
+  },
+  voiceToggleRow: {
+    flexDirection: "row",
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  voiceOptionButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+  },
+  voiceGenderRow: {
+    flexDirection: "row",
+    gap: Spacing.sm,
+  },
+  voiceGenderOption: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
   },
 });

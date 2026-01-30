@@ -91,7 +91,7 @@ export default function ProfileScreen() {
   const tabBarHeight = useBottomTabBarHeight();
   const { theme, isDark, themeMode, setThemeMode } = useTheme();
   const navigation = useNavigation<NavigationProp>();
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
   const { selectedMusic, setSelectedMusic, volume, setVolume } = useBackgroundMusic();
 
   const queryClient = useQueryClient();
@@ -161,9 +161,9 @@ export default function ProfileScreen() {
       const response = await apiRequest("PUT", "/api/user/name", { name });
       return response.json();
     },
-    onSuccess: async (data, newName) => {
-      // Force immediate refetch to update the UI
-      await queryClient.refetchQueries({ queryKey: ["/api/auth/me"] });
+    onSuccess: async () => {
+      // Refresh user data from AuthContext to update the UI immediately
+      await refreshUser();
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setIsEditingName(false);
       setEditedName("");

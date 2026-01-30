@@ -4,7 +4,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { db } from "./db";
-import { affirmations, voiceSamples, categories, users, collections } from "@shared/schema";
+import { affirmations, voiceSamples, categories, users, collections, customCategories } from "@shared/schema";
 import { eq, desc, asc, and } from "drizzle-orm";
 import { openai } from "./replit_integrations/audio/client";
 import {
@@ -690,6 +690,112 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching voice sample status:", error);
       res.status(500).json({ error: "Failed to fetch voice sample status" });
+    }
+  });
+
+  // Get user's custom categories (requires auth)
+  app.get("/api/custom-categories", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const userCustomCategories = await db
+        .select()
+        .from(customCategories)
+        .where(eq(customCategories.userId, req.userId!))
+        .orderBy(asc(customCategories.createdAt));
+      
+      res.json(userCustomCategories);
+    } catch (error) {
+      console.error("Error fetching custom categories:", error);
+      res.status(500).json({ error: "Failed to fetch custom categories" });
+    }
+  });
+
+  // Create a custom category (requires auth, max 5 per user)
+  app.post("/api/custom-categories", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { name } = req.body;
+      
+      if (!name || typeof name !== "string" || name.trim().length === 0) {
+        return res.status(400).json({ error: "Category name is required" });
+      }
+      
+      const trimmedName = name.trim();
+      
+      if (trimmedName.length > 30) {
+        return res.status(400).json({ error: "Category name must be 30 characters or less" });
+      }
+      
+      // Check current count
+      const existingCategories = await db
+        .select()
+        .from(customCategories)
+        .where(eq(customCategories.userId, req.userId!));
+      
+      if (existingCategories.length >= 5) {
+        return res.status(400).json({ error: "Maximum of 5 custom categories allowed" });
+      }
+      
+      // Check for duplicate name (case insensitive)
+      const duplicateName = existingCategories.find(
+        c => c.name.toLowerCase() === trimmedName.toLowerCase()
+      );
+      if (duplicateName) {
+        return res.status(400).json({ error: "A category with this name already exists" });
+      }
+      
+      // Also check against default categories
+      const defaultCategories = await db.select().from(categories);
+      const duplicateDefault = defaultCategories.find(
+        c => c.name.toLowerCase() === trimmedName.toLowerCase()
+      );
+      if (duplicateDefault) {
+        return res.status(400).json({ error: "This category already exists as a default category" });
+      }
+      
+      const [newCategory] = await db
+        .insert(customCategories)
+        .values({
+          userId: req.userId!,
+          name: trimmedName,
+        })
+        .returning();
+      
+      res.status(201).json(newCategory);
+    } catch (error) {
+      console.error("Error creating custom category:", error);
+      res.status(500).json({ error: "Failed to create custom category" });
+    }
+  });
+
+  // Delete a custom category (requires auth)
+  app.delete("/api/custom-categories/:id", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const categoryId = parseInt(req.params.id);
+      
+      if (isNaN(categoryId)) {
+        return res.status(400).json({ error: "Invalid category ID" });
+      }
+      
+      // Verify ownership
+      const [category] = await db
+        .select()
+        .from(customCategories)
+        .where(and(
+          eq(customCategories.id, categoryId),
+          eq(customCategories.userId, req.userId!)
+        ));
+      
+      if (!category) {
+        return res.status(404).json({ error: "Category not found" });
+      }
+      
+      await db
+        .delete(customCategories)
+        .where(eq(customCategories.id, categoryId));
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting custom category:", error);
+      res.status(500).json({ error: "Failed to delete custom category" });
     }
   });
 

@@ -66,6 +66,7 @@ export const affirmations = pgTable("affirmations", {
   script: text("script").notNull(),
   categoryId: integer("category_id").references(() => categories.id),
   customCategoryId: integer("custom_category_id").references(() => customCategories.id, { onDelete: "set null" }),
+  categoryName: text("category_name"), // Simple text field for category - simpler than foreign keys
   audioUrl: text("audio_url"),
   duration: integer("duration"),
   wordTimings: text("word_timings"), // JSON string of WordTiming[] for RSVP sync

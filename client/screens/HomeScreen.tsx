@@ -84,31 +84,10 @@ export default function HomeScreen() {
     setRefreshing(false);
   }, [refetch]);
 
-  // Create a map of category ID to name for filtering (default categories)
-  const categoryMap = React.useMemo(() => {
-    const map: Record<number, string> = {};
-    categoriesData.forEach((cat) => {
-      map[cat.id] = cat.name;
-    });
-    return map;
-  }, [categoriesData]);
-
-  // Create a map of custom category ID to name for filtering
-  const customCategoryMap = React.useMemo(() => {
-    const map: Record<number, string> = {};
-    customCategories.forEach((cat) => {
-      map[cat.id] = cat.name;
-    });
-    return map;
-  }, [customCategories]);
-
+  // Simple filtering by categoryName field
   const filteredAffirmations = affirmations.filter((item) => {
     const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase());
-    // Check both default category and custom category
-    const defaultCategoryName = item.categoryId ? categoryMap[item.categoryId] : null;
-    const customCategoryName = item.customCategoryId ? customCategoryMap[item.customCategoryId] : null;
-    const itemCategoryName = defaultCategoryName || customCategoryName;
-    const matchesCategory = selectedCategory === "All" || itemCategoryName === selectedCategory;
+    const matchesCategory = selectedCategory === "All" || item.categoryName === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 

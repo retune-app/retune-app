@@ -358,37 +358,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("Auto-categorized as:", categoryName);
       }
 
-      // Look up category ID (check default categories first, then custom categories)
-      let categoryId: number | null = null;
-      let customCategoryId: number | null = null;
-      console.log("Looking up category:", categoryName, "for user:", req.userId);
-      if (categoryName) {
-        // First check default categories
-        const [cat] = await db
-          .select()
-          .from(categories)
-          .where(eq(categories.name, categoryName))
-          .limit(1);
-        console.log("Default category lookup result:", cat);
-        if (cat) {
-          categoryId = cat.id;
-        } else {
-          // Check custom categories for this user
-          const [customCat] = await db
-            .select()
-            .from(customCategories)
-            .where(and(
-              eq(customCategories.name, categoryName),
-              eq(customCategories.userId, req.userId!)
-            ))
-            .limit(1);
-          console.log("Custom category lookup result:", customCat);
-          if (customCat) {
-            customCategoryId = customCat.id;
-          }
-        }
-      }
-      console.log("Final categoryId:", categoryId, "customCategoryId:", customCategoryId);
+      // Simply use the category name directly - no complex lookups needed
+      console.log("Saving affirmation with category:", categoryName);
 
       // Get user's voice ID if available (specific to this user)
       const [voiceSample] = await db
@@ -422,8 +393,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userId: req.userId!,
           title: title || "My Affirmation",
           script,
-          categoryId,
-          customCategoryId,
+          categoryName: categoryName || null, // Store category name directly
           audioUrl: `/uploads/${audioFilename}`,
           duration: audioResult.duration,
           wordTimings: JSON.stringify(audioResult.wordTimings),
@@ -565,39 +535,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const script = affirmation.script || affirmation.title || "";
       
-      // Only auto-categorize if no category (default or custom) is set
-      const hasCategory = affirmation.categoryId || affirmation.customCategoryId;
+      // Only auto-categorize if no category is set
+      const hasCategory = affirmation.categoryName;
       
       // Generate AI title and category in parallel
-      const [generatedTitle, categoryName] = await Promise.all([
+      const [generatedTitle, newCategoryName] = await Promise.all([
         autoGenerateTitle(script),
         hasCategory ? Promise.resolve(null) : autoCategorizе(script),
       ]);
 
-      // Find category ID if we need to update it (only if no custom category)
-      let categoryId = affirmation.categoryId;
-      if (categoryName && !affirmation.customCategoryId) {
-        const [category] = await db
-          .select()
-          .from(categories)
-          .where(eq(categories.name, categoryName));
-        if (category) {
-          categoryId = category.id;
-        }
-      }
-
-      // Update the affirmation (don't change categoryId if customCategoryId is set)
+      // Update the affirmation - only set categoryName if not already set
       const [updated] = await db
         .update(affirmations)
         .set({
           title: generatedTitle,
-          ...(affirmation.customCategoryId ? {} : { categoryId: categoryId }),
+          ...(hasCategory ? {} : { categoryName: newCategoryName }),
           updatedAt: new Date(),
         })
         .where(eq(affirmations.id, parseInt(id)))
         .returning();
 
-      console.log(`Auto-saved affirmation ${id}: title="${generatedTitle}", categoryId=${categoryId}, customCategoryId=${affirmation.customCategoryId}`);
+      console.log(`Auto-saved affirmation ${id}: title="${generatedTitle}", categoryName=${updated.categoryName}`);
       res.json(updated);
     } catch (error) {
       console.error("Error auto-saving affirmation:", error);

@@ -629,10 +629,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .where(eq(voiceSamples.id, sample.id))
             .returning();
 
-          // Also update the user's voiceId and hasVoiceSample flag
+          // Also update the user's voiceId, hasVoiceSample flag, and auto-switch to personal voice
           await db
             .update(users)
-            .set({ voiceId, hasVoiceSample: true })
+            .set({ voiceId, hasVoiceSample: true, preferredVoiceType: "personal" })
             .where(eq(users.id, req.userId!));
 
           res.json(updatedSample);

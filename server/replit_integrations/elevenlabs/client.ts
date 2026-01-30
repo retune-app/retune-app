@@ -9,7 +9,11 @@ import path from "path";
 let connectionSettings: any;
 
 async function getCredentials() {
-  const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
+  let hostname = process.env.REPLIT_CONNECTORS_HOSTNAME || "";
+  // Remove https:// prefix if already present to avoid double protocol
+  if (hostname.startsWith("https://")) {
+    hostname = hostname.replace("https://", "");
+  }
   const xReplitToken = process.env.REPL_IDENTITY
     ? "repl " + process.env.REPL_IDENTITY
     : process.env.WEB_REPL_RENEWAL

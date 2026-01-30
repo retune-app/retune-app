@@ -129,15 +129,16 @@ export function AuthScreen() {
       marginBottom: Spacing.xxl,
     },
     logoImage: {
-      width: 120,
-      height: 120,
-      borderRadius: 60,
-      marginBottom: Spacing.lg,
+      width: 140,
+      height: 140,
+      borderRadius: 0,
+      marginBottom: Spacing.md,
     },
     title: {
-      fontFamily: "Nunito_700Bold",
-      fontSize: 34,
-      color: authColors.navy,
+      fontFamily: "PlayfairDisplay_400Regular",
+      fontSize: 38,
+      color: authColors.gold,
+      letterSpacing: 1,
       marginBottom: Spacing.xs,
     },
     subtitle: {
@@ -268,11 +269,11 @@ export function AuthScreen() {
           >
             <View style={styles.logoContainer}>
               <Image
-                source={require("../../assets/images/login-logo.jpg")}
+                source={require("../../assets/images/rewired-logo.jpg")}
                 style={styles.logoImage}
                 resizeMode="contain"
               />
-              <Text style={styles.title}>ReWired</Text>
+              <Text style={styles.title}>Rewired</Text>
               <Text style={styles.subtitle}>
                 Transform your mind with AI-powered affirmations
               </Text>

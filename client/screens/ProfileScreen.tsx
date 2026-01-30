@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { View, StyleSheet, Pressable, Switch, Text, Modal, ActivityIndicator, ImageBackground, TextInput } from "react-native";
+import { View, StyleSheet, Pressable, Switch, Text, Modal, ActivityIndicator, ImageBackground, TextInput, Alert } from "react-native";
 
 const profileBackgroundDark = require("../../assets/images/library-background.png");
 const profileBackgroundLight = require("../../assets/images/library-background-light.png");
@@ -158,12 +158,18 @@ export default function ProfileScreen() {
 
   const updateNameMutation = useMutation({
     mutationFn: async (name: string) => {
-      await apiRequest("PUT", "/api/user/name", { name });
+      const response = await apiRequest("PUT", "/api/user/name", { name });
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setIsEditingName(false);
+      setEditedName("");
+    },
+    onError: (error) => {
+      console.error("Failed to update name:", error);
+      Alert.alert("Error", "Failed to update name. Please try again.");
     },
   });
 

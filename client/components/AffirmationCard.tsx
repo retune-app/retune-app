@@ -24,6 +24,7 @@ interface AffirmationCardProps {
   category?: string;
   duration?: number;
   isFavorite?: boolean;
+  createdAt?: Date | string;
   onPress?: () => void;
   onPlayPress?: () => void;
   onLongPress?: () => void;
@@ -39,6 +40,7 @@ export function AffirmationCard({
   category,
   duration,
   isFavorite = false,
+  createdAt,
   onPress,
   onPlayPress,
   onLongPress,
@@ -49,6 +51,20 @@ export function AffirmationCard({
   const scale = useSharedValue(1);
   const breathProgress = useSharedValue(0);
   const glowOpacity = useSharedValue(0);
+
+  const formatCreatedDate = (date?: Date | string) => {
+    if (!date) return null;
+    const d = typeof date === 'string' ? new Date(date) : date;
+    const now = new Date();
+    const diffMs = now.getTime() - d.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return "Today";
+    if (diffDays === 1) return "Yesterday";
+    if (diffDays < 7) return `${diffDays} days ago`;
+    
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
 
   useEffect(() => {
     if (isActive) {
@@ -138,6 +154,24 @@ export function AffirmationCard({
         },
         isActive && { backgroundColor: theme.backgroundSecondary, borderColor: theme.primary, borderWidth: 2 },
       ]}>
+        <View style={[styles.cardHeader, { borderBottomColor: isDark ? 'rgba(255,255,255,0.08)' : theme.border }]}>
+          <View style={styles.ownershipBadge}>
+            <Feather name="user" size={10} color={theme.gold} />
+            <ThemedText style={[styles.ownershipText, { color: theme.gold }]}>
+              My Affirmation
+            </ThemedText>
+          </View>
+          <View style={styles.headerRight}>
+            {isFavorite ? (
+              <Feather name="heart" size={14} color={theme.accent} style={styles.favoriteIcon} />
+            ) : null}
+            {formatCreatedDate(createdAt) ? (
+              <ThemedText style={[styles.dateText, { color: theme.textSecondary }]}>
+                {formatCreatedDate(createdAt)}
+              </ThemedText>
+            ) : null}
+          </View>
+        </View>
         <View style={styles.content}>
           <View style={styles.textContainer}>
             <ThemedText type="h4" numberOfLines={2} style={styles.title}>
@@ -145,8 +179,8 @@ export function AffirmationCard({
             </ThemedText>
             <View style={styles.meta}>
               {category ? (
-                <View style={[styles.categoryBadge, { backgroundColor: theme.backgroundSecondary }]}>
-                  <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                <View style={[styles.categoryBadge, { backgroundColor: theme.backgroundSecondary, borderColor: theme.gold, borderWidth: 1 }]}>
+                  <ThemedText type="caption" style={{ color: theme.gold }}>
                     {category}
                   </ThemedText>
                 </View>
@@ -157,9 +191,6 @@ export function AffirmationCard({
             </View>
           </View>
           <View style={styles.actions}>
-            {isFavorite ? (
-              <Feather name="heart" size={18} color={theme.accent} style={styles.favoriteIcon} />
-            ) : null}
             <Animated.View
               style={[
                 styles.playButtonWrapper,
@@ -196,6 +227,33 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: BorderRadius.lg,
     overflow: "hidden",
+  },
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    borderBottomWidth: 1,
+  },
+  ownershipBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  ownershipText: {
+    fontSize: 11,
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  headerRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  dateText: {
+    fontSize: 11,
   },
   content: {
     flexDirection: "row",

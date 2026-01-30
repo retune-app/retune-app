@@ -137,8 +137,10 @@ export function SwipeableAffirmationCard({
       <AffirmationCard
         id={affirmation.id}
         title={affirmation.title}
+        category={affirmation.category ?? undefined}
         duration={affirmation.duration ?? undefined}
         isFavorite={affirmation.isFavorite ?? false}
+        createdAt={affirmation.createdAt}
         onPress={onPress}
         onPlayPress={onPlayPress}
         onLongPress={onLongPress}

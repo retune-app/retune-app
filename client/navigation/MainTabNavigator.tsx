@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Pressable, StyleSheet, Image } from "react-native";
+import { View, Pressable, StyleSheet } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
@@ -11,9 +11,6 @@ import HomeStackNavigator from "@/navigation/HomeStackNavigator";
 import ProfileStackNavigator from "@/navigation/ProfileStackNavigator";
 import { useTheme } from "@/hooks/useTheme";
 import { Shadows } from "@/constants/theme";
-
-const logoLight = require("../../assets/images/logo-light.jpg");
-const logoDark = require("../../assets/images/logo-dark.jpg");
 
 export type MainTabParamList = {
   HomeTab: undefined;
@@ -47,25 +44,6 @@ function CreateTabButton({ onPress }: { onPress?: () => void }) {
 
 function EmptyComponent() {
   return null;
-}
-
-function ProfileTabIcon({ size, focused }: { size: number; focused: boolean }) {
-  const { isDark } = useTheme();
-  const logoSource = isDark ? logoDark : logoLight;
-  
-  return (
-    <View style={[
-      styles.profileIconContainer,
-      { width: size + 4, height: size + 4 },
-      focused && styles.profileIconFocused
-    ]}>
-      <Image
-        source={logoSource}
-        style={[styles.profileIcon, { width: size, height: size }]}
-        resizeMode="cover"
-      />
-    </View>
-  );
 }
 
 export default function MainTabNavigator() {
@@ -133,8 +111,8 @@ export default function MainTabNavigator() {
         component={ProfileStackNavigator}
         options={{
           title: "Profile",
-          tabBarIcon: ({ size, focused }) => (
-            <ProfileTabIcon size={size} focused={focused} />
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="user" size={size} color={color} />
           ),
         }}
       />
@@ -155,18 +133,5 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     alignItems: "center",
     justifyContent: "center",
-  },
-  profileIconContainer: {
-    borderRadius: 50,
-    overflow: "hidden",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  profileIconFocused: {
-    borderWidth: 2,
-    borderColor: "#C9A227",
-  },
-  profileIcon: {
-    borderRadius: 50,
   },
 });

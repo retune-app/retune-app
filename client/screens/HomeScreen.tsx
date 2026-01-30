@@ -211,7 +211,7 @@ export default function HomeScreen() {
         onRequestClose={handleRenameCancel}
       >
         <Pressable style={styles.modalOverlay} onPress={handleRenameCancel}>
-          <Pressable style={[styles.modalContent, { backgroundColor: theme.card }]} onPress={(e) => e.stopPropagation()}>
+          <Pressable style={[styles.modalContent, { backgroundColor: theme.cardBackground }]} onPress={(e) => e.stopPropagation()}>
             <ThemedText type="title" style={styles.modalTitle}>
               Rename Affirmation
             </ThemedText>

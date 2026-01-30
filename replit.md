@@ -102,11 +102,32 @@ Preferred communication style: Simple, everyday language.
 
 ## Design System
 
-- **Primary Blue**: #4A90E2
-- **Accent Purple**: #7B61FF
+### Color Palette (Serene Empowerment Theme)
+- **Primary Gold**: #C9A227 - Main accent color for buttons, highlights, and interactive elements
+- **Navy Background**: #0F1C3F (dark mode), #1A2D4F (elevated), #243656 (secondary)
+- **White**: #FFFFFF - Text and light mode backgrounds
 - **Success Teal**: #50E3C2
 - **Typography**: Nunito font family (Regular, Medium, SemiBold, Bold)
 - **Border Radius**: Full rounded buttons and chips, rounded cards
+- **Note**: NO PURPLE, NO BLACK - Always use navy tones for dark backgrounds
+
+### UI Enhancement Components
+- **GoldShimmer.tsx**: Animated shimmer effect for gold elements
+- **BreathingPulse.tsx**: Subtle pulsing animation for active play buttons
+- **GradientCard.tsx**: Navy-to-gold gradient card overlays
+- **WelcomeSection.tsx**: Time-based welcome greetings with contextual affirmation suggestions (morning=Confidence, afternoon=Career, evening=Health, night=Sleep)
+- **AmbientSoundMixer.tsx**: Background sound selection UI (binaural beats: 432Hz, 528Hz, theta/alpha/delta/beta waves)
+- **ProgressVisualization.tsx**: Rich progress display with milestone levels (Seedling→Sprout→Sapling→Tree→Forest→Enlightened based on total listens: 10→25→50→100→250)
+
+### Haptic Feedback
+- Session completion: Success notification haptic when affirmation finishes
+- Play/pause toggle: Light impact haptic on playback control
+- Milestone achievement: Success notification when user levels up
+
+### Screen Transitions
+- Default: Fade animation (iOS) / fade_from_bottom (Android)
+- Modal screens: slide_from_bottom
+- PlayerScreen: fade with 250ms duration
 
 ## External Dependencies
 

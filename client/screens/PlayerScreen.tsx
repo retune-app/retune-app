@@ -33,16 +33,7 @@ const CURRENT_SETTINGS_VERSION = "2"; // Increment to reset defaults
 const RSVP_FONT_SIZE_KEY = "@settings/rsvpFontSize";
 const RSVP_HIGHLIGHT_KEY = "@settings/rsvpHighlight";
 const SHOW_SCRIPT_KEY = "@settings/showScript";
-
-// Voice preference types
-type VoiceType = "personal" | "ai";
-type VoiceGender = "male" | "female";
-
-interface VoicePreferences {
-  preferredVoiceType: VoiceType;
-  preferredAiGender: VoiceGender;
-  hasPersonalVoice: boolean;
-}
+const HAPTIC_ENABLED_KEY = "@settings/hapticEnabled";
 
 type PlayerRouteProp = RouteProp<RootStackParamList, "Player">;
 type PlayerNavigationProp = NativeStackNavigationProp<RootStackParamList, "Player">;
@@ -84,73 +75,8 @@ export default function PlayerScreen() {
     queryKey: ["/api/affirmations", affirmationId],
   });
 
-  // Voice preferences query
-  const { data: voicePreferences } = useQuery<VoicePreferences>({
-    queryKey: ["/api/voice-preferences"],
-  });
-
-  // State to track current voice selection for this affirmation
-  const [selectedVoiceType, setSelectedVoiceType] = useState<VoiceType>("ai");
-  const [selectedVoiceGender, setSelectedVoiceGender] = useState<VoiceGender>("female");
-  const [isRegeneratingVoice, setIsRegeneratingVoice] = useState(false);
-
-  // Sync voice selection from affirmation data when it loads
-  useEffect(() => {
-    if (affirmation) {
-      // Use affirmation's voice settings if available, otherwise use defaults
-      setSelectedVoiceType((affirmation as any).voiceType || "ai");
-      setSelectedVoiceGender((affirmation as any).voiceGender || "female");
-    }
-  }, [affirmation]);
-
-  // Voice regeneration mutation
-  const regenerateVoiceMutation = useMutation({
-    mutationFn: async ({ voiceType, voiceGender }: { voiceType: VoiceType; voiceGender?: VoiceGender }) => {
-      setIsRegeneratingVoice(true);
-      const result = await apiRequest("POST", `/api/affirmations/${affirmationId}/regenerate-voice`, {
-        voiceType,
-        voiceGender: voiceType === "ai" ? voiceGender : undefined,
-      });
-      return result;
-    },
-    onSuccess: (data: any) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/affirmations"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/affirmations", affirmationId] });
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      setIsRegeneratingVoice(false);
-      
-      // Reload the affirmation with new audio
-      if (data && data.audioUrl) {
-        playAffirmation(data);
-      }
-    },
-    onError: (error: any) => {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      setIsRegeneratingVoice(false);
-      Alert.alert("Error", error.message || "Failed to change voice");
-    },
-  });
-
-  const handleVoiceTypeChange = (type: VoiceType) => {
-    if (type === "personal" && !voicePreferences?.hasPersonalVoice) {
-      Alert.alert(
-        "Personal Voice Required",
-        "Please record your voice in Settings to use your personal voice for affirmations.",
-        [
-          { text: "Cancel", style: "cancel" },
-          { text: "Go to Settings", onPress: () => navigation.goBack() },
-        ]
-      );
-      return;
-    }
-    setSelectedVoiceType(type);
-    regenerateVoiceMutation.mutate({ voiceType: type, voiceGender: selectedVoiceGender });
-  };
-
-  const handleVoiceGenderChange = (gender: VoiceGender) => {
-    setSelectedVoiceGender(gender);
-    regenerateVoiceMutation.mutate({ voiceType: "ai", voiceGender: gender });
-  };
+  // Haptic feedback setting
+  const [hapticEnabled, setHapticEnabled] = useState(true);
 
   const isCurrentlyPlaying = currentAffirmation?.id === affirmationId && isPlaying;
 
@@ -163,11 +89,11 @@ export default function PlayerScreen() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/affirmations"] });
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (hapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       navigation.goBack();
     },
     onError: () => {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      if (hapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert("Error", "Failed to delete affirmation");
     },
   });
@@ -179,23 +105,23 @@ export default function PlayerScreen() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/affirmations"] });
       queryClient.invalidateQueries({ queryKey: ["/api/affirmations", affirmationId] });
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (hapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setHasSaved(true);
       Alert.alert("Saved", "Affirmation saved to your library with an AI-generated title!");
     },
     onError: () => {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      if (hapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert("Error", "Failed to save affirmation");
     },
   });
 
   const handleSave = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (hapticEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     autoSaveMutation.mutate();
-  }, [autoSaveMutation]);
+  }, [autoSaveMutation, hapticEnabled]);
 
   const handleDelete = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (hapticEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     Alert.alert(
       "Delete Affirmation",
       `Are you sure you want to delete "${affirmation?.title}"?`,
@@ -279,6 +205,10 @@ export default function PlayerScreen() {
       const highlightValue = await AsyncStorage.getItem(RSVP_HIGHLIGHT_KEY);
       if (highlightValue !== null) {
         setRsvpHighlight(highlightValue === "true");
+      }
+      const hapticValue = await AsyncStorage.getItem(HAPTIC_ENABLED_KEY);
+      if (hapticValue !== null) {
+        setHapticEnabled(hapticValue === "true");
       }
     };
 
@@ -414,14 +344,14 @@ export default function PlayerScreen() {
   }, [affirmation?.wordTimings, affirmation?.script, affirmation?.duration]);
 
   const handleToggleRsvp = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (hapticEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const newValue = !rsvpEnabled;
     setRsvpEnabled(newValue);
     await AsyncStorage.setItem(RSVP_ENABLED_KEY, String(newValue));
   };
 
   const handleChangeFontSize = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (hapticEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const sizes: RSVPFontSize[] = ["S", "M", "L", "XL"];
     const currentIndex = sizes.indexOf(rsvpFontSize);
     const nextSize = sizes[(currentIndex + 1) % sizes.length];
@@ -430,17 +360,24 @@ export default function PlayerScreen() {
   };
 
   const handleToggleHighlight = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (hapticEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const newValue = !rsvpHighlight;
     setRsvpHighlight(newValue);
     await AsyncStorage.setItem(RSVP_HIGHLIGHT_KEY, String(newValue));
   };
 
   const handleToggleScript = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (hapticEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const newValue = !showScript;
     setShowScript(newValue);
     await AsyncStorage.setItem(SHOW_SCRIPT_KEY, String(newValue));
+  };
+
+  const handleToggleHaptic = async () => {
+    const newValue = !hapticEnabled;
+    setHapticEnabled(newValue);
+    await AsyncStorage.setItem(HAPTIC_ENABLED_KEY, String(newValue));
+    if (newValue) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
   const favoriteMutation = useMutation({
@@ -452,14 +389,14 @@ export default function PlayerScreen() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/affirmations"] });
       queryClient.invalidateQueries({ queryKey: ["/api/affirmations", affirmationId] });
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (hapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     },
   });
 
   const handlePlayPause = async () => {
     if (!affirmation) return;
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (hapticEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     if (currentAffirmation?.id === affirmationId) {
       await togglePlayPause();
@@ -469,7 +406,7 @@ export default function PlayerScreen() {
   };
 
   const handleAutoReplay = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (hapticEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const newAutoReplay = !autoReplay;
     setAutoReplay(newAutoReplay);
     await AsyncStorage.setItem(AUTO_REPLAY_KEY, String(newAutoReplay));
@@ -480,7 +417,7 @@ export default function PlayerScreen() {
     const currentIndex = speeds.indexOf(playbackSpeed);
     const nextSpeed = speeds[(currentIndex + 1) % speeds.length];
     setPlaybackSpeed(nextSpeed);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (hapticEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
   const handleFavorite = () => {
@@ -703,7 +640,7 @@ export default function PlayerScreen() {
                       onPress={() => {
                         setRsvpFontSize(size);
                         AsyncStorage.setItem(RSVP_FONT_SIZE_KEY, size);
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        if (hapticEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                       }}
                       style={[
                         styles.fontSizeButton,
@@ -777,107 +714,32 @@ export default function PlayerScreen() {
               />
             </Pressable>
           </View>
+
+          <View style={styles.rsvpSettingsRow}>
+            <ThemedText type="small" style={{ color: theme.textSecondary }}>
+              Haptic Feedback
+            </ThemedText>
+            <Pressable
+              onPress={handleToggleHaptic}
+              style={[
+                styles.rsvpToggle,
+                { backgroundColor: hapticEnabled ? theme.primary : theme.backgroundTertiary },
+              ]}
+              testID="button-toggle-haptic"
+            >
+              <View
+                style={[
+                  styles.rsvpToggleKnob,
+                  { 
+                    backgroundColor: "#FFFFFF",
+                    transform: [{ translateX: hapticEnabled ? 20 : 2 }],
+                  },
+                ]}
+              />
+            </Pressable>
+          </View>
         </View>
 
-        {/* Voice Selection - integrated into settings panel */}
-        <View style={[styles.rsvpSettings, { backgroundColor: theme.backgroundSecondary, marginTop: Spacing.lg }]}>
-          {isRegeneratingVoice ? (
-            <View style={styles.rsvpSettingsRow}>
-              <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                Changing voice...
-              </ThemedText>
-            </View>
-          ) : (
-            <>
-              {/* Personal Voice Toggle */}
-              <View style={styles.rsvpSettingsRow}>
-                <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                  Use My Voice
-                </ThemedText>
-                <Pressable
-                  onPress={() => {
-                    if (selectedVoiceType === "personal") {
-                      handleVoiceTypeChange("ai");
-                    } else {
-                      handleVoiceTypeChange("personal");
-                    }
-                  }}
-                  style={[
-                    styles.rsvpToggle,
-                    { 
-                      backgroundColor: selectedVoiceType === "personal" ? theme.primary : theme.backgroundTertiary,
-                      opacity: voicePreferences?.hasPersonalVoice ? 1 : 0.5,
-                    },
-                  ]}
-                  testID="button-voice-toggle-player"
-                >
-                  <View
-                    style={[
-                      styles.rsvpToggleKnob,
-                      { 
-                        backgroundColor: "#FFFFFF",
-                        transform: [{ translateX: selectedVoiceType === "personal" ? 20 : 2 }],
-                      },
-                    ]}
-                  />
-                </Pressable>
-              </View>
-
-              {/* AI Gender Selection (only when using AI voice) */}
-              {selectedVoiceType === "ai" ? (
-                <View style={styles.rsvpSettingsRow}>
-                  <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                    AI Voice
-                  </ThemedText>
-                  <View style={styles.fontSizeButtons}>
-                    <Pressable
-                      onPress={() => handleVoiceGenderChange("female")}
-                      style={[
-                        styles.voiceGenderButton,
-                        {
-                          backgroundColor:
-                            selectedVoiceGender === "female" ? theme.primary : theme.backgroundTertiary,
-                        },
-                      ]}
-                      testID="button-gender-female-player"
-                    >
-                      <ThemedText
-                        type="small"
-                        style={{
-                          color: selectedVoiceGender === "female" ? "#FFFFFF" : theme.text,
-                          fontWeight: "600",
-                        }}
-                      >
-                        Female
-                      </ThemedText>
-                    </Pressable>
-                    <Pressable
-                      onPress={() => handleVoiceGenderChange("male")}
-                      style={[
-                        styles.voiceGenderButton,
-                        {
-                          backgroundColor:
-                            selectedVoiceGender === "male" ? theme.primary : theme.backgroundTertiary,
-                        },
-                      ]}
-                      testID="button-gender-male-player"
-                    >
-                      <ThemedText
-                        type="small"
-                        style={{
-                          color: selectedVoiceGender === "male" ? "#FFFFFF" : theme.text,
-                          fontWeight: "600",
-                        }}
-                      >
-                        Male
-                      </ThemedText>
-                    </Pressable>
-                  </View>
-                </View>
-              ) : null}
-            </>
-          )}
-        </View>
 
         {showScript && affirmation?.script ? (
           <View style={[styles.scriptPreview, { backgroundColor: theme.backgroundSecondary }]}>
@@ -1046,11 +908,4 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     zIndex: 10,
   },
-  voiceGenderButton: {
-    paddingVertical: Spacing.xs,
-    paddingHorizontal: Spacing.md,
-    borderRadius: BorderRadius.full,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
+  });

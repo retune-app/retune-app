@@ -133,16 +133,17 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 12,
     marginRight: 12,
+    justifyContent: 'center',
   },
   title: {
-    fontSize: 15,
-    fontFamily: 'Nunito_600SemiBold',
-    color: '#fff',
+    fontSize: 17,
+    fontFamily: 'Nunito_700Bold',
+    color: '#0F1C3F',
   },
   category: {
-    fontSize: 12,
-    fontFamily: 'Nunito_400Regular',
-    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 13,
+    fontFamily: 'Nunito_500Medium',
+    color: 'rgba(15, 28, 63, 0.7)',
     marginTop: 2,
   },
   playButton: {

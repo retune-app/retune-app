@@ -20,6 +20,7 @@ import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollV
 import { ThemedText } from "@/components/ThemedText";
 import { Card } from "@/components/Card";
 import ReminderSettings from "@/components/ReminderSettings";
+import { ProgressVisualization } from "@/components/ProgressVisualization";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBackgroundMusic, BACKGROUND_MUSIC_OPTIONS, BackgroundMusicType } from "@/contexts/BackgroundMusicContext";
@@ -246,36 +247,12 @@ export default function ProfileScreen() {
         </ThemedText>
       </View>
 
-      <Card style={styles.statsCard}>
-        <View style={styles.statsRow}>
-          <View style={styles.statItem}>
-            <ThemedText type="h2" style={{ color: theme.primary }}>
-              {(stats as any)?.totalListens || 0}
-            </ThemedText>
-            <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-              Total Listens
-            </ThemedText>
-          </View>
-          <View style={[styles.statDivider, { backgroundColor: theme.border }]} />
-          <View style={styles.statItem}>
-            <ThemedText type="h2" style={{ color: theme.accent }}>
-              {(stats as any)?.streak || 0}
-            </ThemedText>
-            <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-              Day Streak
-            </ThemedText>
-          </View>
-          <View style={[styles.statDivider, { backgroundColor: theme.border }]} />
-          <View style={styles.statItem}>
-            <ThemedText type="h2" style={{ color: theme.success }}>
-              {(stats as any)?.affirmationsCount || 0}
-            </ThemedText>
-            <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-              Affirmations
-            </ThemedText>
-          </View>
-        </View>
-      </Card>
+      <ProgressVisualization
+        totalListens={(stats as any)?.totalListens || 0}
+        streak={(stats as any)?.streak || 0}
+        weeklyActivity={[0, 2, 1, 3, 2, 0, 1]}
+        minutesListened={Math.round(((stats as any)?.totalListens || 0) * 2.5)}
+      />
 
       <View style={styles.section}>
         <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>

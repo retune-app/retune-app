@@ -291,6 +291,12 @@ export default function PlayerScreen() {
     loadSettings();
   }, []);
 
+  // Dismiss focus mode tip and mark as shown
+  const dismissFocusModeTip = useCallback(async () => {
+    setShowFocusModeTip(false);
+    await AsyncStorage.setItem(FOCUS_MODE_TIP_SHOWN_KEY, "true");
+  }, []);
+
   // Lock orientation to portrait on unmount only
   useEffect(() => {
     return () => {
@@ -430,11 +436,6 @@ export default function PlayerScreen() {
     setRsvpEnabled(newValue);
     await AsyncStorage.setItem(RSVP_ENABLED_KEY, String(newValue));
   };
-
-  const dismissFocusModeTip = useCallback(async () => {
-    setShowFocusModeTip(false);
-    await AsyncStorage.setItem(FOCUS_MODE_TIP_SHOWN_KEY, "true");
-  }, []);
 
   const handleChangeFontSize = async () => {
     if (hapticEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

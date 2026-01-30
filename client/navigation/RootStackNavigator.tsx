@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
-import { View, StyleSheet, ActivityIndicator } from "react-native";
-import { createNativeStackNavigator, NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { View, StyleSheet, ActivityIndicator, Platform } from "react-native";
+import { createNativeStackNavigator, NativeStackNavigationProp, NativeStackNavigationOptions } from "@react-navigation/native-stack";
 import { NavigationState, useNavigation } from "@react-navigation/native";
 import MainTabNavigator from "@/navigation/MainTabNavigator";
 import VoiceSetupScreen from "@/screens/VoiceSetupScreen";
@@ -59,6 +59,16 @@ export default function RootStackNavigator() {
   const { isAuthenticated, isLoading } = useAuth();
   const [currentRoute, setCurrentRoute] = useState<string>('Main');
 
+  const fadeScreenOptions: NativeStackNavigationOptions = {
+    ...screenOptions,
+    animation: Platform.select({
+      ios: 'fade',
+      android: 'fade_from_bottom',
+      default: 'fade',
+    }),
+    animationDuration: 300,
+  };
+
   const handleStateChange = useCallback((state: NavigationState | undefined) => {
     if (state) {
       const route = state.routes[state.index];
@@ -76,7 +86,7 @@ export default function RootStackNavigator() {
 
   if (!isAuthenticated) {
     return (
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator screenOptions={{ headerShown: false, animation: 'fade' }}>
         <Stack.Screen name="Auth" component={AuthScreen} />
       </Stack.Navigator>
     );
@@ -85,7 +95,7 @@ export default function RootStackNavigator() {
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       <Stack.Navigator 
-        screenOptions={screenOptions}
+        screenOptions={fadeScreenOptions}
         screenListeners={{
           state: (e) => handleStateChange(e.data.state),
         }}
@@ -101,6 +111,7 @@ export default function RootStackNavigator() {
           options={{
             presentation: "fullScreenModal",
             headerShown: false,
+            animation: "fade",
           }}
         />
         <Stack.Screen
@@ -109,6 +120,7 @@ export default function RootStackNavigator() {
           options={{
             headerTitle: "Create Affirmation",
             presentation: "modal",
+            animation: "slide_from_bottom",
           }}
         />
         <Stack.Screen
@@ -117,6 +129,8 @@ export default function RootStackNavigator() {
           options={{
             headerTitle: "",
             headerTransparent: true,
+            animation: "fade",
+            animationDuration: 250,
           }}
         />
       </Stack.Navigator>

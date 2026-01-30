@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 import { Audio } from 'expo-av';
+import * as Haptics from 'expo-haptics';
 import { Affirmation } from '@shared/schema';
 import { getApiUrl } from '@/lib/query-client';
 import { useBackgroundMusic } from './BackgroundMusicContext';
@@ -133,6 +134,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
               setIsPlaying(status.isPlaying);
               if (status.didJustFinish && !autoReplay) {
                 setIsPlaying(false);
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
               }
             } else if ('error' in status) {
               console.error('Audio playback error:', status.error);
@@ -180,12 +182,14 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         if (status.isPlaying) {
           await soundRef.current.pauseAsync();
           setIsPlaying(false);
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           // Pause background music too
           await stopBackgroundMusic();
           console.log('Paused');
         } else {
           await soundRef.current.playAsync();
           setIsPlaying(true);
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           // Resume background music if selected
           if (selectedMusic !== 'none') {
             await startBackgroundMusic();

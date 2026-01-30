@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { View, StyleSheet } from "react-native";
 import Animated, {
   useSharedValue,
@@ -11,6 +11,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 import Svg, { Circle, Path, Defs, LinearGradient as SvgGradient, Stop } from "react-native-svg";
 
 import { ThemedText } from "@/components/ThemedText";
@@ -33,6 +34,16 @@ export function ProgressVisualization({
   const { theme, isDark } = useTheme();
   const progressAnim = useSharedValue(0);
   const streakAnim = useSharedValue(0);
+  const previousListensRef = useRef<number | null>(null);
+
+  const getMilestoneLevel = (listens: number): string => {
+    if (listens < 10) return "Seedling";
+    if (listens < 25) return "Sprout";
+    if (listens < 50) return "Sapling";
+    if (listens < 100) return "Tree";
+    if (listens < 250) return "Forest";
+    return "Enlightened";
+  };
 
   useEffect(() => {
     progressAnim.value = withDelay(
@@ -43,6 +54,15 @@ export function ProgressVisualization({
       500,
       withTiming(1, { duration: 800, easing: Easing.out(Easing.quad) })
     );
+
+    if (previousListensRef.current !== null) {
+      const prevLevel = getMilestoneLevel(previousListensRef.current);
+      const newLevel = getMilestoneLevel(totalListens);
+      if (prevLevel !== newLevel) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+    }
+    previousListensRef.current = totalListens;
   }, [totalListens, streak]);
 
   const days = ["S", "M", "T", "W", "T", "F", "S"];

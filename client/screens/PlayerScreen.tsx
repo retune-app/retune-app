@@ -19,6 +19,7 @@ import { WaveformVisualizer } from "@/components/WaveformVisualizer";
 import { RSVPDisplay, WordTiming, RSVPFontSize } from "@/components/RSVPDisplay";
 import { IconButton } from "@/components/IconButton";
 import { AmbientSoundMixer } from "@/components/AmbientSoundMixer";
+import { FocusModeTip } from "@/components/FocusModeTip";
 import { useTheme } from "@/hooks/useTheme";
 import { useAudio } from "@/contexts/AudioContext";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
@@ -34,6 +35,7 @@ const RSVP_FONT_SIZE_KEY = "@settings/rsvpFontSize";
 const RSVP_HIGHLIGHT_KEY = "@settings/rsvpHighlight";
 const SHOW_SCRIPT_KEY = "@settings/showScript";
 const HAPTIC_ENABLED_KEY = "@settings/hapticEnabled";
+const FOCUS_MODE_TIP_SHOWN_KEY = "@tips/focusMode";
 
 type PlayerRouteProp = RouteProp<RootStackParamList, "Player">;
 type PlayerNavigationProp = NativeStackNavigationProp<RootStackParamList, "Player">;
@@ -85,6 +87,9 @@ export default function PlayerScreen() {
 
   // Haptic feedback setting
   const [hapticEnabled, setHapticEnabled] = useState(true);
+
+  // Focus mode tip (one-time hint)
+  const [showFocusModeTip, setShowFocusModeTip] = useState(false);
 
   const isCurrentlyPlaying = currentAffirmation?.id === affirmationId && isPlaying;
 
@@ -275,6 +280,12 @@ export default function PlayerScreen() {
       if (hapticValue !== null) {
         setHapticEnabled(hapticValue === "true");
       }
+
+      // Check if focus mode tip should be shown (one-time only)
+      const tipShown = await AsyncStorage.getItem(FOCUS_MODE_TIP_SHOWN_KEY);
+      if (tipShown !== "true") {
+        setShowFocusModeTip(true);
+      }
     };
 
     loadSettings();
@@ -342,6 +353,11 @@ export default function PlayerScreen() {
     // Update prev ref for next run
     prevLandscapeRef.current = isLandscape;
     
+    // Auto-dismiss focus mode tip when user rotates to landscape
+    if (justRotatedToLandscape && showFocusModeTip) {
+      dismissFocusModeTip();
+    }
+    
     // Exit fullscreen when rotating back to portrait
     if (justRotatedToPortrait && isInFullscreenMode) {
       console.log('Exiting fullscreen mode - rotated to portrait');
@@ -354,7 +370,7 @@ export default function PlayerScreen() {
       console.log('Entering fullscreen mode - rotated to landscape while playing');
       setIsInFullscreenMode(true);
     }
-  }, [isLandscape, rsvpEnabled, isCurrentlyPlaying, isInFullscreenMode]);
+  }, [isLandscape, rsvpEnabled, isCurrentlyPlaying, isInFullscreenMode, showFocusModeTip, dismissFocusModeTip]);
 
   // Debug: track fullscreen state changes
   useEffect(() => {
@@ -414,6 +430,11 @@ export default function PlayerScreen() {
     setRsvpEnabled(newValue);
     await AsyncStorage.setItem(RSVP_ENABLED_KEY, String(newValue));
   };
+
+  const dismissFocusModeTip = useCallback(async () => {
+    setShowFocusModeTip(false);
+    await AsyncStorage.setItem(FOCUS_MODE_TIP_SHOWN_KEY, "true");
+  }, []);
 
   const handleChangeFontSize = async () => {
     if (hapticEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -666,6 +687,8 @@ export default function PlayerScreen() {
             testID="button-share"
           />
         </View>
+
+        <FocusModeTip visible={showFocusModeTip} onDismiss={dismissFocusModeTip} />
 
         <View style={[styles.rsvpSettings, { backgroundColor: theme.backgroundSecondary }]}>
           <View style={styles.rsvpSettingsRow}>

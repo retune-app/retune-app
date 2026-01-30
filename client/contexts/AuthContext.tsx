@@ -29,6 +29,7 @@ interface AuthContextType {
   signup: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  updateUserName: (name: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -190,6 +191,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Direct update for user name (optimistic update)
+  const updateUserName = useCallback((name: string) => {
+    setUser((prev) => prev ? { ...prev, name } : null);
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -203,6 +209,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signup,
         logout,
         refreshUser,
+        updateUserName,
       }}
     >
       {children}

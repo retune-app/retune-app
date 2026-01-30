@@ -1,12 +1,13 @@
 import React, { useState, useCallback } from "react";
-import { FlatList, View, StyleSheet, RefreshControl, TextInput } from "react-native";
+import { FlatList, View, StyleSheet, RefreshControl, TextInput, Modal, Pressable, Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 
 import { ThemedText } from "@/components/ThemedText";
 import { EmptyState } from "@/components/EmptyState";
@@ -14,7 +15,8 @@ import { SwipeableAffirmationCard } from "@/components/SwipeableAffirmationCard"
 import { CategoryChip } from "@/components/CategoryChip";
 import { useTheme } from "@/hooks/useTheme";
 import { useAudio } from "@/contexts/AudioContext";
-import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
+import { Spacing, BorderRadius } from "@/constants/theme";
+import { apiRequest } from "@/lib/query-client";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import type { Affirmation, Category } from "@shared/schema";
 
@@ -30,9 +32,13 @@ export default function HomeScreen() {
   const navigation = useNavigation<NavigationProp>();
   const { playAffirmation, currentAffirmation, isPlaying, togglePlayPause } = useAudio();
 
+  const queryClient = useQueryClient();
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const [renameModalVisible, setRenameModalVisible] = useState(false);
+  const [affirmationToRename, setAffirmationToRename] = useState<Affirmation | null>(null);
+  const [newTitle, setNewTitle] = useState("");
 
   const { data: affirmations = [], refetch, isLoading } = useQuery<Affirmation[]>({
     queryKey: ["/api/affirmations"],
@@ -40,6 +46,23 @@ export default function HomeScreen() {
 
   const { data: categoriesData = [] } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
+  });
+
+  const renameMutation = useMutation({
+    mutationFn: async ({ id, title }: { id: number; title: string }) => {
+      await apiRequest("PATCH", `/api/affirmations/${id}/rename`, { title });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/affirmations"] });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setRenameModalVisible(false);
+      setAffirmationToRename(null);
+      setNewTitle("");
+    },
+    onError: () => {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert("Error", "Failed to rename affirmation");
+    },
   });
 
   const onRefresh = useCallback(async () => {
@@ -78,6 +101,24 @@ export default function HomeScreen() {
 
   const handleCreatePress = () => {
     navigation.navigate("Create");
+  };
+
+  const handleRenamePress = (affirmation: Affirmation) => {
+    setAffirmationToRename(affirmation);
+    setNewTitle(affirmation.title);
+    setRenameModalVisible(true);
+  };
+
+  const handleRenameSave = () => {
+    if (affirmationToRename && newTitle.trim()) {
+      renameMutation.mutate({ id: affirmationToRename.id, title: newTitle.trim() });
+    }
+  };
+
+  const handleRenameCancel = () => {
+    setRenameModalVisible(false);
+    setAffirmationToRename(null);
+    setNewTitle("");
   };
 
   const renderHeader = () => (
@@ -128,6 +169,7 @@ export default function HomeScreen() {
         affirmation={item}
         onPress={() => handleAffirmationPress(item.id)}
         onPlayPress={() => handlePlayPress(item)}
+        onRename={handleRenamePress}
         isActive={isCurrentlyPlaying}
         testID={`card-affirmation-${item.id}`}
       />
@@ -135,31 +177,77 @@ export default function HomeScreen() {
   };
 
   return (
-    <FlatList
-      style={[styles.container, { backgroundColor: theme.backgroundRoot }]}
-      contentContainerStyle={[
-        styles.contentContainer,
-        {
-          paddingTop: headerHeight + Spacing.lg,
-          paddingBottom: tabBarHeight + Spacing.xl,
-        },
-        filteredAffirmations.length === 0 && styles.emptyContainer,
-      ]}
-      scrollIndicatorInsets={{ bottom: insets.bottom }}
-      data={filteredAffirmations}
-      keyExtractor={(item) => item.id.toString()}
-      renderItem={renderItem}
-      ListHeaderComponent={renderHeader}
-      ListEmptyComponent={renderEmpty}
-      ItemSeparatorComponent={() => <View style={styles.separator} />}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          tintColor={theme.primary}
-        />
-      }
-    />
+    <>
+      <FlatList
+        style={[styles.container, { backgroundColor: theme.backgroundRoot }]}
+        contentContainerStyle={[
+          styles.contentContainer,
+          {
+            paddingTop: headerHeight + Spacing.lg,
+            paddingBottom: tabBarHeight + Spacing.xl,
+          },
+          filteredAffirmations.length === 0 && styles.emptyContainer,
+        ]}
+        scrollIndicatorInsets={{ bottom: insets.bottom }}
+        data={filteredAffirmations}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={renderItem}
+        ListHeaderComponent={renderHeader}
+        ListEmptyComponent={renderEmpty}
+        ItemSeparatorComponent={() => <View style={styles.separator} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={theme.primary}
+          />
+        }
+      />
+
+      <Modal
+        visible={renameModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={handleRenameCancel}
+      >
+        <Pressable style={styles.modalOverlay} onPress={handleRenameCancel}>
+          <Pressable style={[styles.modalContent, { backgroundColor: theme.card }]} onPress={(e) => e.stopPropagation()}>
+            <ThemedText type="title" style={styles.modalTitle}>
+              Rename Affirmation
+            </ThemedText>
+            <TextInput
+              style={[styles.renameInput, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder, color: theme.text }]}
+              value={newTitle}
+              onChangeText={setNewTitle}
+              placeholder="Enter new title"
+              placeholderTextColor={theme.placeholder}
+              autoFocus
+              selectTextOnFocus
+              testID="input-rename-title"
+            />
+            <View style={styles.modalButtons}>
+              <Pressable
+                style={[styles.modalButton, styles.cancelButton, { borderColor: theme.border }]}
+                onPress={handleRenameCancel}
+                testID="button-rename-cancel"
+              >
+                <ThemedText style={{ color: theme.text }}>Cancel</ThemedText>
+              </Pressable>
+              <Pressable
+                style={[styles.modalButton, styles.saveButton, { backgroundColor: theme.primary }]}
+                onPress={handleRenameSave}
+                disabled={!newTitle.trim() || renameMutation.isPending}
+                testID="button-rename-save"
+              >
+                <ThemedText style={{ color: "#fff", fontWeight: "600" }}>
+                  {renameMutation.isPending ? "Saving..." : "Save"}
+                </ThemedText>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </>
   );
 }
 
@@ -197,4 +285,44 @@ const styles = StyleSheet.create({
   separator: {
     height: Spacing.md,
   },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: Spacing.xl,
+  },
+  modalContent: {
+    width: "100%",
+    maxWidth: 400,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.xl,
+  },
+  modalTitle: {
+    textAlign: "center",
+    marginBottom: Spacing.lg,
+  },
+  renameInput: {
+    borderWidth: 1,
+    borderRadius: BorderRadius.md,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    fontSize: 16,
+    marginBottom: Spacing.xl,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    gap: Spacing.md,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.full,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cancelButton: {
+    borderWidth: 1,
+  },
+  saveButton: {},
 });

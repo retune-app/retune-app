@@ -19,6 +19,7 @@ interface SwipeableAffirmationCardProps {
   onRename?: (affirmation: Affirmation) => void;
   isActive?: boolean;
   testID?: string;
+  hapticEnabled?: boolean;
 }
 
 export function SwipeableAffirmationCard({
@@ -29,6 +30,7 @@ export function SwipeableAffirmationCard({
   onRename,
   isActive,
   testID,
+  hapticEnabled = true,
 }: SwipeableAffirmationCardProps) {
   const { theme } = useTheme();
   const queryClient = useQueryClient();
@@ -40,16 +42,16 @@ export function SwipeableAffirmationCard({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/affirmations"] });
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (hapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     },
     onError: () => {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      if (hapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert("Error", "Failed to delete affirmation");
     },
   });
 
   const handleDelete = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (hapticEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     Alert.alert(
       "Delete Affirmation",
       `Are you sure you want to delete "${affirmation.title}"?`,
@@ -69,7 +71,7 @@ export function SwipeableAffirmationCard({
   };
 
   const handleRename = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (hapticEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     swipeableRef.current?.close();
     if (onRename) {
       onRename(affirmation);
@@ -137,7 +139,7 @@ export function SwipeableAffirmationCard({
       <AffirmationCard
         id={affirmation.id}
         title={affirmation.title}
-        category={affirmation.category ?? undefined}
+        category={affirmation.categoryName ?? undefined}
         duration={affirmation.duration ?? undefined}
         isFavorite={affirmation.isFavorite ?? false}
         createdAt={affirmation.createdAt}
@@ -146,6 +148,7 @@ export function SwipeableAffirmationCard({
         onLongPress={onLongPress}
         isActive={isActive}
         testID={testID}
+        hapticEnabled={hapticEnabled}
       />
     </Swipeable>
   );

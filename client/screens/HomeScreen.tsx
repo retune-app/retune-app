@@ -1,5 +1,6 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { FlatList, View, StyleSheet, RefreshControl, TextInput, Modal, Pressable, Alert, ImageBackground } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const libraryBackgroundDark = require("../../assets/images/library-background.png");
 const libraryBackgroundLight = require("../../assets/images/library-background-light.png");
@@ -52,6 +53,15 @@ export default function HomeScreen() {
   const [renameModalVisible, setRenameModalVisible] = useState(false);
   const [affirmationToRename, setAffirmationToRename] = useState<Affirmation | null>(null);
   const [newTitle, setNewTitle] = useState("");
+  const [hapticEnabled, setHapticEnabled] = useState(true);
+
+  useEffect(() => {
+    AsyncStorage.getItem("@settings/hapticEnabled").then((value) => {
+      if (value !== null) {
+        setHapticEnabled(value === "true");
+      }
+    });
+  }, []);
 
   const { data: affirmations = [], refetch, isLoading } = useQuery<Affirmation[]>({
     queryKey: ["/api/affirmations"],
@@ -212,6 +222,7 @@ export default function HomeScreen() {
         onRename={handleRenamePress}
         isActive={isCurrentlyPlaying}
         testID={`card-affirmation-${item.id}`}
+        hapticEnabled={hapticEnabled}
       />
     );
   };

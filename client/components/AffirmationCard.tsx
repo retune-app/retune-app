@@ -30,6 +30,7 @@ interface AffirmationCardProps {
   onLongPress?: () => void;
   isActive?: boolean;
   testID?: string;
+  hapticEnabled?: boolean;
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -46,6 +47,7 @@ export function AffirmationCard({
   onLongPress,
   isActive = false,
   testID,
+  hapticEnabled = true,
 }: AffirmationCardProps) {
   const { theme, isDark } = useTheme();
   const scale = useSharedValue(1);
@@ -118,12 +120,16 @@ export function AffirmationCard({
   };
 
   const handlePress = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (hapticEnabled) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     onPress?.();
   };
 
   const handlePlayPress = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (hapticEnabled) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
     onPlayPress?.();
   };
 

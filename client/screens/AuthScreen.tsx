@@ -95,7 +95,8 @@ export function AuthScreen() {
 
       const result = await oauthLogin({
         email: userInfo.email,
-        name: userInfo.name,
+        // Use only first name (given_name) for preferred name
+        name: userInfo.given_name || userInfo.name?.split(" ")[0] || "Friend",
         provider: "google",
         providerId: userInfo.id,
         avatarUrl: userInfo.picture,
@@ -143,13 +144,12 @@ export function AuthScreen() {
 
       // Apple may not return email after first sign-in, use user ID as fallback
       const email = credential.email || `${credential.user}@privaterelay.appleid.com`;
-      const name = credential.fullName
-        ? `${credential.fullName.givenName || ""} ${credential.fullName.familyName || ""}`.trim()
-        : undefined;
+      // Use only first name for preferred name
+      const firstName = credential.fullName?.givenName || undefined;
 
       const result = await oauthLogin({
         email,
-        name: name || "Apple User",
+        name: firstName || "Friend",
         provider: "apple",
         providerId: credential.user,
       });

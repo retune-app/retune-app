@@ -54,6 +54,8 @@ Preferred communication style: Simple, everyday language.
 - `POST /api/affirmations/create-with-voice` - Create affirmation with TTS audio
 - `POST /api/affirmations/samples` - Create sample affirmations with default voice (for new users)
 - `PATCH /api/affirmations/:id/favorite` - Toggle favorite status
+- `PATCH /api/affirmations/:id/rename` - Rename an affirmation (body: { title })
+- `DELETE /api/affirmations/:id` - Delete an affirmation
 - `POST /api/voice-samples` - Upload voice sample for cloning
 - `GET /api/voice-samples/status` - Check if user has a cloned voice
 - `GET /api/user/stats` - Get user statistics

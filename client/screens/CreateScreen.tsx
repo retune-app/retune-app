@@ -305,7 +305,7 @@ export default function CreateScreen() {
             style={styles.createButton}
             testID="button-create"
           >
-            Create with My Voice
+            Create Affirmation
           </Button>
         ) : null}
       </ScrollView>

@@ -128,7 +128,7 @@ export default function ProfileScreen() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/voice-preferences"] });
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
     },
   });
 
@@ -152,7 +152,7 @@ export default function ProfileScreen() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/custom-categories"] });
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
     },
   });
 
@@ -164,7 +164,7 @@ export default function ProfileScreen() {
     onSuccess: (_, newName) => {
       // Update name directly in state for instant UI update
       updateUserName(newName);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
       setIsEditingName(false);
       setEditedName("");
     },
@@ -207,13 +207,21 @@ export default function ProfileScreen() {
     navigation.navigate("VoiceSetup");
   };
 
-  const handleToggleNotifications = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  const handleToggleNotifications = async () => {
+    try {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (e) {
+      // Haptics not supported on this device
+    }
     setNotificationsEnabled(!notificationsEnabled);
   };
 
   const handleToggleAutoReplay = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (e) {
+      // Haptics not supported
+    }
     const newValue = !autoReplayEnabled;
     setAutoReplayEnabled(newValue);
     await AsyncStorage.setItem(AUTO_REPLAY_KEY, String(newValue));
@@ -246,7 +254,7 @@ export default function ProfileScreen() {
       console.log("Reset response status:", response.status);
       
       if (response.ok) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
         // Invalidate queries to refresh the UI
         queryClient.invalidateQueries({ queryKey: ["/api/affirmations"] });
         queryClient.invalidateQueries({ queryKey: ["/api/voice-samples"] });
@@ -288,7 +296,7 @@ export default function ProfileScreen() {
       console.log("Delete response status:", response.status);
       
       if (response.ok) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
         setShowDeleteAccountModal(false);
         // Short delay to ensure modal closes before navigation
         setTimeout(() => {
@@ -607,7 +615,7 @@ export default function ProfileScreen() {
             <Pressable
               key={option.id}
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
                 setSelectedMusic(option.id);
               }}
               style={({ pressed }) => [
@@ -904,7 +912,7 @@ export default function ProfileScreen() {
               <Pressable
                 onPress={() => {
                   setShowLogoutModal(false);
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
                   logout();
                 }}
                 style={[styles.modalButton, { backgroundColor: "#E74C3C" }]}

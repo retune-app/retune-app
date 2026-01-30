@@ -501,7 +501,8 @@ async function main() {
   setupSignalHandlers();
 
   const domain = getDeploymentDomain();
-  const baseUrl = `https://${domain}`;
+  // Add port 5000 for Replit dev environment (backend serves static bundles on port 5000)
+  const baseUrl = domain.includes(':') ? `https://${domain}` : `https://${domain}:5000`;
   const timestamp = `${Date.now()}-${process.pid}`;
 
   prepareDirectories(timestamp);

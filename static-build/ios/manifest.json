@@ -1,11 +1,11 @@
 {
-  "id": "d14f96c3-8ffa-4819-acec-3c92a59539ba",
-  "createdAt": "2026-01-30T23:04:43.151Z",
+  "id": "92f7ce67-dcf9-4b98-9cc3-2697f7d3d4e9",
+  "createdAt": "2026-01-30T23:12:41.305Z",
   "runtimeVersion": "exposdk:54.0.0",
   "launchAsset": {
-    "key": "bundle-1769814283151-5942",
+    "key": "bundle-1769814761305-6968",
     "contentType": "application/javascript",
-    "url": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev/1769814283151-5942/_expo/static/js/ios/bundle.js"
+    "url": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev:5000/1769814761305-6968/_expo/static/js/ios/bundle.js"
   },
   "assets": [],
   "metadata": {},
@@ -104,10 +104,10 @@
         "backgroundColor": "#F8FAFB"
       },
       "iconUrl": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev/assets/./assets/images/icon.jpg",
-      "hostUri": "ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev/ios"
+      "hostUri": "ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev:5000/ios"
     },
     "expoGo": {
-      "debuggerHost": "ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev/ios",
+      "debuggerHost": "ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev:5000/ios",
       "developer": {
         "tool": "expo-cli",
         "projectRoot": "/home/runner/workspace"

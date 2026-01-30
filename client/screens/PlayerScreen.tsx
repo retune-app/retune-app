@@ -721,8 +721,10 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
   content: {
+    flexGrow: 1,
     paddingHorizontal: Spacing.lg,
     alignItems: "center",
+    justifyContent: "center",
   },
   visualizerContainer: {
     alignItems: "center",

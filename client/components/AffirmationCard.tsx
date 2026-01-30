@@ -25,6 +25,8 @@ interface AffirmationCardProps {
   duration?: number;
   isFavorite?: boolean;
   createdAt?: Date | string;
+  voiceType?: string;
+  voiceGender?: string;
   onPress?: () => void;
   onPlayPress?: () => void;
   onLongPress?: () => void;
@@ -42,6 +44,8 @@ export function AffirmationCard({
   duration,
   isFavorite = false,
   createdAt,
+  voiceType = "ai",
+  voiceGender = "female",
   onPress,
   onPlayPress,
   onLongPress,
@@ -140,6 +144,16 @@ export function AffirmationCard({
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
+  const getVoiceLabel = () => {
+    if (voiceType === "personal") {
+      return { label: "Personal Voice", icon: "mic" as const };
+    }
+    const genderLabel = voiceGender === "male" ? "Male" : "Female";
+    return { label: `AI Voice (${genderLabel})`, icon: "cpu" as const };
+  };
+
+  const voiceInfo = getVoiceLabel();
+
   return (
     <AnimatedPressable
       onPress={handlePress}
@@ -162,9 +176,9 @@ export function AffirmationCard({
       ]}>
         <View style={[styles.cardHeader, { borderBottomColor: isDark ? 'rgba(255,255,255,0.08)' : theme.border }]}>
           <View style={styles.ownershipBadge}>
-            <Feather name="user" size={10} color={theme.gold} />
+            <Feather name={voiceInfo.icon} size={10} color={theme.gold} />
             <ThemedText style={[styles.ownershipText, { color: theme.gold }]}>
-              My Affirmation
+              {voiceInfo.label}
             </ThemedText>
           </View>
           <View style={styles.headerRight}>

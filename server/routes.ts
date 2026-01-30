@@ -479,6 +479,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Rename affirmation (requires auth, must belong to user)
+  app.patch("/api/affirmations/:id/rename", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { title } = req.body;
+
+      if (!title || typeof title !== "string" || title.trim().length === 0) {
+        return res.status(400).json({ error: "Title is required" });
+      }
+
+      const [updated] = await db
+        .update(affirmations)
+        .set({ title: title.trim(), updatedAt: new Date() })
+        .where(and(
+          eq(affirmations.id, parseInt(id)),
+          eq(affirmations.userId, req.userId!)
+        ))
+        .returning();
+
+      if (!updated) {
+        return res.status(404).json({ error: "Affirmation not found" });
+      }
+
+      res.json(updated);
+    } catch (error) {
+      console.error("Error renaming affirmation:", error);
+      res.status(500).json({ error: "Failed to rename affirmation" });
+    }
+  });
+
   // Auto-save affirmation with AI-generated title and category (requires auth)
   app.post("/api/affirmations/:id/auto-save", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {

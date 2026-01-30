@@ -62,9 +62,6 @@ export function MiniPlayer({ currentRoute, onNavigateToPlayer }: MiniPlayerProps
               <Text style={styles.title} numberOfLines={1}>
                 {currentAffirmation.title || 'Now Playing'}
               </Text>
-              <Text style={styles.category} numberOfLines={1}>
-                {currentAffirmation.category}
-              </Text>
             </View>
 
             <Pressable
@@ -134,17 +131,13 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     marginRight: 12,
     justifyContent: 'center',
+    alignItems: 'flex-start',
   },
   title: {
     fontSize: 17,
     fontFamily: 'Nunito_700Bold',
     color: '#0F1C3F',
-  },
-  category: {
-    fontSize: 13,
-    fontFamily: 'Nunito_500Medium',
-    color: 'rgba(15, 28, 63, 0.7)',
-    marginTop: 2,
+    textAlignVertical: 'center',
   },
   playButton: {
     width: 44,

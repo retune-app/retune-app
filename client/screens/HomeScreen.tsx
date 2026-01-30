@@ -1,5 +1,7 @@
 import React, { useState, useCallback } from "react";
-import { FlatList, View, StyleSheet, RefreshControl, TextInput, Modal, Pressable, Alert } from "react-native";
+import { FlatList, View, StyleSheet, RefreshControl, TextInput, Modal, Pressable, Alert, ImageBackground } from "react-native";
+
+const libraryBackground = require("../../assets/images/library-background.png");
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -181,9 +183,13 @@ export default function HomeScreen() {
   };
 
   return (
-    <>
+    <ImageBackground
+      source={libraryBackground}
+      style={styles.backgroundImage}
+      resizeMode="cover"
+    >
       <FlatList
-        style={[styles.container, { backgroundColor: theme.backgroundRoot }]}
+        style={styles.container}
         contentContainerStyle={[
           styles.contentContainer,
           {
@@ -251,11 +257,14 @@ export default function HomeScreen() {
           </Pressable>
         </Pressable>
       </Modal>
-    </>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
+  backgroundImage: {
+    flex: 1,
+  },
   container: {
     flex: 1,
   },

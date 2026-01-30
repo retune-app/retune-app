@@ -251,10 +251,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "File not found" });
       }
       
-      // Set CORS headers for mobile audio playback
+      // Set CORS headers for mobile audio playback (especially iOS AVPlayer)
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
       res.setHeader('Access-Control-Allow-Headers', 'Range, Accept-Encoding');
+      res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Range, Accept-Ranges');
+      res.setHeader('Accept-Ranges', 'bytes');
       
       // Set appropriate content type based on extension
       const ext = path.extname(filename).toLowerCase();

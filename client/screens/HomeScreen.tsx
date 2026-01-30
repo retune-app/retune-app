@@ -12,6 +12,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import { LinearGradient } from "expo-linear-gradient";
 
 import { ThemedText } from "@/components/ThemedText";
 import { EmptyState } from "@/components/EmptyState";
@@ -227,6 +228,10 @@ export default function HomeScreen() {
     );
   };
 
+  const edgeFadeColors = isDark 
+    ? ["rgba(15, 28, 63, 0.95)", "rgba(15, 28, 63, 0)"] as const
+    : ["rgba(255, 255, 255, 0.95)", "rgba(255, 255, 255, 0)"] as const;
+
   return (
     <ImageBackground
       source={isDark ? libraryBackgroundDark : libraryBackgroundLight}
@@ -259,6 +264,20 @@ export default function HomeScreen() {
         }
       />
 
+      {/* Top edge fade gradient */}
+      <LinearGradient
+        colors={edgeFadeColors}
+        style={[styles.edgeFade, styles.topFade, { height: headerHeight + 20 }]}
+        pointerEvents="none"
+      />
+
+      {/* Bottom edge fade gradient */}
+      <LinearGradient
+        colors={[...edgeFadeColors].reverse() as unknown as readonly [string, string, ...string[]]}
+        style={[styles.edgeFade, styles.bottomFade, { height: tabBarHeight + 40 }]}
+        pointerEvents="none"
+      />
+
       <Modal
         visible={renameModalVisible}
         transparent
@@ -267,7 +286,7 @@ export default function HomeScreen() {
       >
         <Pressable style={styles.modalOverlay} onPress={handleRenameCancel}>
           <Pressable style={[styles.modalContent, { backgroundColor: theme.cardBackground }]} onPress={(e) => e.stopPropagation()}>
-            <ThemedText type="title" style={styles.modalTitle}>
+            <ThemedText type="h3" style={styles.modalTitle}>
               Rename Affirmation
             </ThemedText>
             <TextInput
@@ -312,6 +331,17 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+  },
+  edgeFade: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+  },
+  topFade: {
+    top: 0,
+  },
+  bottomFade: {
+    bottom: 0,
   },
   contentContainer: {
     paddingHorizontal: Spacing.lg,

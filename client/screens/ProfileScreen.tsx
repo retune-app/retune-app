@@ -1049,6 +1049,24 @@ export default function ProfileScreen() {
         </View>
       </Modal>
       </KeyboardAwareScrollViewCompat>
+
+      {/* Top edge fade gradient */}
+      <LinearGradient
+        colors={isDark 
+          ? ["rgba(15, 28, 63, 0.95)", "rgba(15, 28, 63, 0)"] 
+          : ["rgba(255, 255, 255, 0.95)", "rgba(255, 255, 255, 0)"]}
+        style={[styles.edgeFade, styles.topFade, { height: headerHeight + 20 }]}
+        pointerEvents="none"
+      />
+
+      {/* Bottom edge fade gradient */}
+      <LinearGradient
+        colors={isDark 
+          ? ["rgba(15, 28, 63, 0)", "rgba(15, 28, 63, 0.95)"] 
+          : ["rgba(255, 255, 255, 0)", "rgba(255, 255, 255, 0.95)"]}
+        style={[styles.edgeFade, styles.bottomFade, { height: tabBarHeight + 40 }]}
+        pointerEvents="none"
+      />
     </ImageBackground>
   );
 }
@@ -1059,6 +1077,17 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+  },
+  edgeFade: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+  },
+  topFade: {
+    top: 0,
+  },
+  bottomFade: {
+    bottom: 0,
   },
   contentContainer: {
     paddingHorizontal: Spacing.lg,

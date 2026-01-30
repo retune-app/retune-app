@@ -66,6 +66,7 @@ export default function PlayerScreen() {
   const [showScript, setShowScript] = useState(false);
   const [isLandscape, setIsLandscape] = useState(false);
   const [isInFullscreenMode, setIsInFullscreenMode] = useState(false);
+  const [hasSaved, setHasSaved] = useState(false);
   const prevLandscapeRef = useRef(false);
 
   const { data: affirmation, isLoading } = useQuery<Affirmation>({
@@ -100,6 +101,7 @@ export default function PlayerScreen() {
       queryClient.invalidateQueries({ queryKey: ["/api/affirmations"] });
       queryClient.invalidateQueries({ queryKey: ["/api/affirmations", affirmationId] });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setHasSaved(true);
       Alert.alert("Saved", "Affirmation saved to your library with an AI-generated title!");
     },
     onError: () => {
@@ -132,7 +134,7 @@ export default function PlayerScreen() {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerLeft: () => (
-        isNew ? (
+        isNew && !hasSaved ? (
           <HeaderButton
             onPress={handleSave}
             testID="button-save-affirmation"
@@ -161,7 +163,7 @@ export default function PlayerScreen() {
         </HeaderButton>
       ),
     });
-  }, [navigation, handleSave, handleDelete, autoSaveMutation.isPending, theme, isNew]);
+  }, [navigation, handleSave, handleDelete, autoSaveMutation.isPending, theme, isNew, hasSaved]);
 
   useEffect(() => {
     const loadSettings = async () => {

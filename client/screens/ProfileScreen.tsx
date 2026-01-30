@@ -336,7 +336,6 @@ export default function ProfileScreen() {
                   value={editedName}
                   onChangeText={setEditedName}
                   onSubmitEditing={handleSaveName}
-                  onBlur={handleCancelEditName}
                   style={[styles.nameInput, { color: theme.text, borderColor: theme.primary }]}
                   placeholder="Enter your name"
                   placeholderTextColor={theme.textSecondary}

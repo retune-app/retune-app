@@ -16,6 +16,16 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const AUTO_REPLAY_KEY = "@settings/autoReplay";
 
+// Voice preference types
+type VoiceType = "personal" | "ai";
+type VoiceGender = "male" | "female";
+
+interface VoicePreferences {
+  preferredVoiceType: VoiceType;
+  preferredAiGender: VoiceGender;
+  hasPersonalVoice: boolean;
+}
+
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { ThemedText } from "@/components/ThemedText";
 import { Card } from "@/components/Card";
@@ -102,6 +112,35 @@ export default function ProfileScreen() {
   const { data: customCategories = [] } = useQuery<CustomCategory[]>({
     queryKey: ["/api/custom-categories"],
   });
+
+  // Voice preferences query
+  const { data: voicePreferences, isLoading: isLoadingVoicePrefs } = useQuery<VoicePreferences>({
+    queryKey: ["/api/voice-preferences"],
+  });
+
+  // Voice preferences mutation
+  const updateVoicePreferences = useMutation({
+    mutationFn: async (updates: { preferredVoiceType?: VoiceType; preferredAiGender?: VoiceGender }) => {
+      await apiRequest("PUT", "/api/voice-preferences", updates);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/voice-preferences"] });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    },
+  });
+
+  const handleVoiceTypeChange = (type: VoiceType) => {
+    if (type === "personal" && !voicePreferences?.hasPersonalVoice) {
+      // Navigate to voice setup if trying to use personal voice without one
+      navigation.navigate("VoiceSetup");
+      return;
+    }
+    updateVoicePreferences.mutate({ preferredVoiceType: type });
+  };
+
+  const handleVoiceGenderChange = (gender: VoiceGender) => {
+    updateVoicePreferences.mutate({ preferredAiGender: gender });
+  };
 
   const deleteCategoryMutation = useMutation({
     mutationFn: async (id: number) => {
@@ -268,13 +307,131 @@ export default function ProfileScreen() {
 
       <View style={styles.section}>
         <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-          VOICE
+          VOICE PREFERENCES
         </ThemedText>
         <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
+          {/* Voice Type Selection */}
+          <View style={styles.voicePreferenceSection}>
+            <ThemedText type="body" style={styles.voicePreferenceLabel}>
+              Default Voice
+            </ThemedText>
+            <View style={styles.voiceToggleContainer}>
+              <Pressable
+                onPress={() => handleVoiceTypeChange("ai")}
+                style={[
+                  styles.voiceToggleButton,
+                  { 
+                    backgroundColor: voicePreferences?.preferredVoiceType === "ai" || !voicePreferences?.preferredVoiceType 
+                      ? theme.primary 
+                      : theme.backgroundSecondary,
+                    borderColor: theme.primary,
+                  },
+                ]}
+                testID="button-voice-ai"
+              >
+                <Feather 
+                  name="cpu" 
+                  size={16} 
+                  color={voicePreferences?.preferredVoiceType === "ai" || !voicePreferences?.preferredVoiceType 
+                    ? "#FFFFFF" 
+                    : theme.text} 
+                />
+                <Text style={[
+                  styles.voiceToggleText,
+                  { color: voicePreferences?.preferredVoiceType === "ai" || !voicePreferences?.preferredVoiceType 
+                    ? "#FFFFFF" 
+                    : theme.text }
+                ]}>AI Voice</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => handleVoiceTypeChange("personal")}
+                style={[
+                  styles.voiceToggleButton,
+                  { 
+                    backgroundColor: voicePreferences?.preferredVoiceType === "personal" 
+                      ? theme.primary 
+                      : theme.backgroundSecondary,
+                    borderColor: voicePreferences?.hasPersonalVoice ? theme.primary : theme.border,
+                  },
+                ]}
+                testID="button-voice-personal"
+              >
+                <Feather 
+                  name="mic" 
+                  size={16} 
+                  color={voicePreferences?.preferredVoiceType === "personal" ? "#FFFFFF" : theme.text} 
+                />
+                <Text style={[
+                  styles.voiceToggleText,
+                  { color: voicePreferences?.preferredVoiceType === "personal" ? "#FFFFFF" : theme.text }
+                ]}>
+                  {voicePreferences?.hasPersonalVoice ? "My Voice" : "Record Voice"}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+
+          {/* AI Gender Selection - only show when AI voice is selected */}
+          {(voicePreferences?.preferredVoiceType === "ai" || !voicePreferences?.preferredVoiceType) ? (
+            <View style={[styles.voicePreferenceSection, { borderTopWidth: 1, borderTopColor: theme.border }]}>
+              <ThemedText type="body" style={styles.voicePreferenceLabel}>
+                AI Voice Gender
+              </ThemedText>
+              <View style={styles.voiceToggleContainer}>
+                <Pressable
+                  onPress={() => handleVoiceGenderChange("female")}
+                  style={[
+                    styles.voiceGenderButton,
+                    { 
+                      backgroundColor: voicePreferences?.preferredAiGender === "female" || !voicePreferences?.preferredAiGender
+                        ? theme.primary 
+                        : theme.backgroundSecondary,
+                      borderColor: theme.primary,
+                    },
+                  ]}
+                  testID="button-gender-female"
+                >
+                  <Text style={[
+                    styles.voiceToggleText,
+                    { color: voicePreferences?.preferredAiGender === "female" || !voicePreferences?.preferredAiGender
+                      ? "#FFFFFF" 
+                      : theme.text }
+                  ]}>Female</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => handleVoiceGenderChange("male")}
+                  style={[
+                    styles.voiceGenderButton,
+                    { 
+                      backgroundColor: voicePreferences?.preferredAiGender === "male" 
+                        ? theme.primary 
+                        : theme.backgroundSecondary,
+                      borderColor: theme.primary,
+                    },
+                  ]}
+                  testID="button-gender-male"
+                >
+                  <Text style={[
+                    styles.voiceToggleText,
+                    { color: voicePreferences?.preferredAiGender === "male" ? "#FFFFFF" : theme.text }
+                  ]}>Male</Text>
+                </Pressable>
+              </View>
+              <ThemedText type="caption" style={[styles.voiceGenderHint, { color: theme.textSecondary }]}>
+                {voicePreferences?.preferredAiGender === "male" 
+                  ? "Adam - calm, deep voice" 
+                  : "Rachel - soft, warm voice"}
+              </ThemedText>
+            </View>
+          ) : null}
+        </View>
+
+        {/* Voice Sample Card */}
+        <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground, marginTop: Spacing.md }, Shadows.small]}>
           <SettingItem
             icon="mic"
             label="Voice Sample"
-            value="Re-record your voice"
+            value={voicePreferences?.hasPersonalVoice ? "Re-record your voice" : "Record your voice for personalized affirmations"}
             onPress={handleVoiceSetup}
           />
         </View>
@@ -1051,5 +1208,44 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
+  },
+  voicePreferenceSection: {
+    padding: Spacing.md,
+  },
+  voicePreferenceLabel: {
+    marginBottom: Spacing.sm,
+  },
+  voiceToggleContainer: {
+    flexDirection: "row",
+    gap: Spacing.sm,
+  },
+  voiceToggleButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.xs,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+  },
+  voiceToggleText: {
+    fontFamily: "Nunito_600SemiBold",
+    fontSize: 14,
+  },
+  voiceGenderButton: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+  },
+  voiceGenderHint: {
+    marginTop: Spacing.sm,
+    textAlign: "center",
+    fontStyle: "italic",
   },
 });

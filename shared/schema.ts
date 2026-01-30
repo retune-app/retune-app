@@ -13,6 +13,8 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   hasVoiceSample: boolean("has_voice_sample").default(false),
   voiceId: text("voice_id"),
+  preferredVoiceType: text("preferred_voice_type").default("ai"), // 'personal' or 'ai'
+  preferredAiGender: text("preferred_ai_gender").default("female"), // 'male' or 'female'
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 
@@ -70,6 +72,8 @@ export const affirmations = pgTable("affirmations", {
   audioUrl: text("audio_url"),
   duration: integer("duration"),
   wordTimings: text("word_timings"), // JSON string of WordTiming[] for RSVP sync
+  voiceType: text("voice_type").default("ai"), // 'personal' or 'ai' - which voice was used
+  voiceGender: text("voice_gender").default("female"), // 'male' or 'female' for AI voices
   isManual: boolean("is_manual").default(false),
   isFavorite: boolean("is_favorite").default(false),
   playCount: integer("play_count").default(0),

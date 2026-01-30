@@ -674,6 +674,158 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // AI Voice IDs - calm, soothing voices from ElevenLabs
+  const AI_VOICES = {
+    female: "21m00Tcm4TlvDq8ikWAM", // Rachel - soft, warm female voice
+    male: "pNInz6obpgDQGcFmaJgB",   // Adam - deep, calm male voice
+  };
+
+  // Get user's voice preferences
+  app.get("/api/voice-preferences", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const [user] = await db
+        .select({
+          preferredVoiceType: users.preferredVoiceType,
+          preferredAiGender: users.preferredAiGender,
+          hasVoiceSample: users.hasVoiceSample,
+          voiceId: users.voiceId,
+        })
+        .from(users)
+        .where(eq(users.id, req.userId!));
+
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      res.json({
+        preferredVoiceType: user.preferredVoiceType || "ai",
+        preferredAiGender: user.preferredAiGender || "female",
+        hasPersonalVoice: !!user.hasVoiceSample && !!user.voiceId,
+      });
+    } catch (error) {
+      console.error("Error fetching voice preferences:", error);
+      res.status(500).json({ error: "Failed to fetch voice preferences" });
+    }
+  });
+
+  // Update user's voice preferences
+  app.put("/api/voice-preferences", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { preferredVoiceType, preferredAiGender } = req.body;
+
+      const updates: Record<string, string> = {};
+      
+      if (preferredVoiceType && ["personal", "ai"].includes(preferredVoiceType)) {
+        updates.preferredVoiceType = preferredVoiceType;
+      }
+      
+      if (preferredAiGender && ["male", "female"].includes(preferredAiGender)) {
+        updates.preferredAiGender = preferredAiGender;
+      }
+
+      if (Object.keys(updates).length === 0) {
+        return res.status(400).json({ error: "No valid preferences provided" });
+      }
+
+      await db
+        .update(users)
+        .set(updates)
+        .where(eq(users.id, req.userId!));
+
+      res.json({ success: true, ...updates });
+    } catch (error) {
+      console.error("Error updating voice preferences:", error);
+      res.status(500).json({ error: "Failed to update voice preferences" });
+    }
+  });
+
+  // Regenerate affirmation audio with different voice
+  app.post("/api/affirmations/:id/regenerate-voice", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const affirmationId = parseInt(req.params.id, 10);
+      const { voiceType, voiceGender } = req.body;
+
+      if (!voiceType || !["personal", "ai"].includes(voiceType)) {
+        return res.status(400).json({ error: "Invalid voice type. Must be 'personal' or 'ai'" });
+      }
+
+      if (voiceType === "ai" && voiceGender && !["male", "female"].includes(voiceGender)) {
+        return res.status(400).json({ error: "Invalid voice gender. Must be 'male' or 'female'" });
+      }
+
+      // Get the affirmation
+      const [affirmation] = await db
+        .select()
+        .from(affirmations)
+        .where(and(eq(affirmations.id, affirmationId), eq(affirmations.userId, req.userId!)));
+
+      if (!affirmation) {
+        return res.status(404).json({ error: "Affirmation not found" });
+      }
+
+      // Determine which voice ID to use
+      let voiceIdToUse: string | undefined;
+      
+      if (voiceType === "personal") {
+        // Get user's cloned voice
+        const [user] = await db
+          .select({ voiceId: users.voiceId, hasVoiceSample: users.hasVoiceSample })
+          .from(users)
+          .where(eq(users.id, req.userId!));
+
+        if (!user?.voiceId || !user?.hasVoiceSample) {
+          return res.status(400).json({ 
+            error: "No personal voice available. Please record a voice sample first." 
+          });
+        }
+        voiceIdToUse = user.voiceId;
+      } else {
+        // Use AI voice based on gender
+        const gender = voiceGender || "female";
+        voiceIdToUse = AI_VOICES[gender as keyof typeof AI_VOICES];
+      }
+
+      // Generate new audio
+      const audioResult = await generateAudio(affirmation.script, voiceIdToUse);
+      
+      // Save audio to file
+      const audioDir = path.join(process.cwd(), "uploads", "audio");
+      if (!fs.existsSync(audioDir)) {
+        fs.mkdirSync(audioDir, { recursive: true });
+      }
+      
+      const audioFileName = `affirmation-${affirmationId}-${Date.now()}.mp3`;
+      const audioPath = path.join(audioDir, audioFileName);
+      fs.writeFileSync(audioPath, Buffer.from(audioResult.audio));
+      
+      const audioUrl = `/uploads/audio/${audioFileName}`;
+
+      // Update affirmation with new audio
+      await db
+        .update(affirmations)
+        .set({
+          audioUrl,
+          duration: audioResult.duration,
+          wordTimings: JSON.stringify(audioResult.wordTimings),
+          voiceType,
+          voiceGender: voiceType === "ai" ? (voiceGender || "female") : null,
+          updatedAt: new Date(),
+        })
+        .where(eq(affirmations.id, affirmationId));
+
+      // Fetch updated affirmation
+      const [updated] = await db
+        .select()
+        .from(affirmations)
+        .where(eq(affirmations.id, affirmationId));
+
+      res.json(updated);
+    } catch (error) {
+      console.error("Error regenerating voice:", error);
+      res.status(500).json({ error: "Failed to regenerate voice" });
+    }
+  });
+
   // Get user's custom categories (requires auth)
   app.get("/api/custom-categories", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {

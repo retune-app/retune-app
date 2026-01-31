@@ -480,8 +480,12 @@ export default function ProfileScreen() {
       <ProgressVisualization
         totalListens={(stats as any)?.totalListens || 0}
         streak={(stats as any)?.streak || 0}
-        weeklyActivity={[0, 2, 1, 3, 2, 0, 1]}
-        minutesListened={Math.round(((stats as any)?.totalListens || 0) * 2.5)}
+        weeklyActivity={
+          (stats as any)?.weeklyData 
+            ? (stats as any).weeklyData.map((d: { minutes: number }) => d.minutes)
+            : [0, 0, 0, 0, 0, 0, 0]
+        }
+        minutesListened={(stats as any)?.totalMinutesThisWeek || 0}
       />
 
       <View style={styles.section}>

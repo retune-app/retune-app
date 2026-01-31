@@ -64,7 +64,7 @@ export default function BreathingScreen() {
   const headerHeight = useHeaderHeight();
   const { theme, isDark } = useTheme();
   const { user } = useAuth();
-  const { currentAffirmation, isPlaying: isAudioPlaying, playAffirmation, togglePlayPause } = useAudio();
+  const { currentAffirmation, isPlaying: isAudioPlaying, playAffirmation, togglePlayPause, breathingAffirmation } = useAudio();
   const { selectedMusic, setSelectedMusic, startBackgroundMusic, stopBackgroundMusic, isPlaying: isMusicPlaying } = useBackgroundMusic();
   const queryClient = useQueryClient();
 
@@ -94,8 +94,11 @@ export default function BreathingScreen() {
     ? affirmations[Math.floor(Math.random() * Math.min(affirmations.length, 5))]
     : null;
 
-  // Get suggested affirmation based on time of day (for Welcome Section)
+  // Get suggested affirmation - prioritize breathing affirmation, then time-based
   const suggestedAffirmation = React.useMemo(() => {
+    // If user has selected a breathing affirmation, use that
+    if (breathingAffirmation) return breathingAffirmation;
+    
     if (affirmations.length === 0) return null;
     const hour = new Date().getHours();
     let targetCategory = "Confidence";
@@ -106,7 +109,7 @@ export default function BreathingScreen() {
     
     const categoryMatch = affirmations.find(a => a.category === targetCategory);
     return categoryMatch || affirmations[0];
-  }, [affirmations]);
+  }, [affirmations, breathingAffirmation]);
 
   // Quick play handler for WelcomeSection
   const handleQuickPlay = async () => {
@@ -309,12 +312,9 @@ export default function BreathingScreen() {
     
     if (wasNaturalCompletion && completedDuration > 0) {
       try {
-        await apiRequest('/api/breathing-sessions', {
-          method: 'POST',
-          body: JSON.stringify({
-            techniqueId: selectedTechnique.id,
-            durationSeconds: completedDuration,
-          }),
+        await apiRequest('POST', '/api/breathing-sessions', {
+          techniqueId: selectedTechnique.id,
+          durationSeconds: completedDuration,
         });
         queryClient.invalidateQueries({ queryKey: ['/api/breathing-sessions/today'] });
         queryClient.invalidateQueries({ queryKey: ['/api/breathing-sessions/streak'] });

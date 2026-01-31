@@ -1,17 +1,16 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
+import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
 import { useAudio } from '@/contexts/AudioContext';
 import { useTheme } from '@/hooks/useTheme';
+import { BorderRadius, Shadows } from '@/constants/theme';
 
-// Use consistent gold for mini player regardless of theme
 const MINI_PLAYER_GOLD = "#C9A227";
-const MINI_PLAYER_GOLD_DARK = "#B8922A"; // Slightly darker for gradient
 
 interface MiniPlayerProps {
   currentRoute?: string;
@@ -20,10 +19,9 @@ interface MiniPlayerProps {
 
 export function MiniPlayer({ currentRoute, onNavigateToPlayer }: MiniPlayerProps) {
   const { currentAffirmation, isPlaying, isLoading, togglePlayPause, position, duration } = useAudio();
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const insets = useSafeAreaInsets();
 
-  // Don't show mini player if no affirmation, on Player screen, or on Breathe tab
   if (!currentAffirmation || currentRoute === 'Player' || currentRoute === 'BreatheTab') {
     return null;
   }
@@ -42,49 +40,62 @@ export function MiniPlayer({ currentRoute, onNavigateToPlayer }: MiniPlayerProps
 
   return (
     <Animated.View
-      entering={FadeInDown.duration(300)}
-      exiting={FadeOutDown.duration(300)}
-      style={[styles.container, { bottom: 80 + insets.bottom }]}
+      entering={FadeInUp.duration(250).springify()}
+      exiting={FadeOutDown.duration(200)}
+      style={[styles.container, { bottom: 94 + insets.bottom }]}
     >
       <Pressable onPress={handlePress} style={styles.pressable}>
-        <LinearGradient
-          colors={[MINI_PLAYER_GOLD, MINI_PLAYER_GOLD_DARK]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.gradient}
+        <BlurView
+          intensity={isDark ? 60 : 80}
+          tint={isDark ? "dark" : "light"}
+          style={styles.blurContainer}
         >
-          <View style={styles.progressBar}>
-            <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
-          </View>
-
-          <View style={styles.content}>
-            <View style={styles.iconContainer}>
-              <Feather name="headphones" size={20} color="#fff" />
+          <View style={[styles.innerContainer, { backgroundColor: isDark ? 'rgba(15, 28, 63, 0.7)' : 'rgba(255, 255, 255, 0.8)' }]}>
+            <View style={styles.progressBar}>
+              <View style={[styles.progressFill, { width: `${progress * 100}%`, backgroundColor: MINI_PLAYER_GOLD }]} />
             </View>
 
-            <View style={styles.textContainer}>
-              <Text style={styles.title} numberOfLines={1}>
-                {currentAffirmation.title || 'Now Playing'}
-              </Text>
-            </View>
+            <View style={styles.content}>
+              <View style={[styles.waveformIndicator, { backgroundColor: `${MINI_PLAYER_GOLD}30` }]}>
+                {isPlaying ? (
+                  <View style={styles.waveformBars}>
+                    <Animated.View style={[styles.waveBar, styles.waveBar1, { backgroundColor: MINI_PLAYER_GOLD }]} />
+                    <Animated.View style={[styles.waveBar, styles.waveBar2, { backgroundColor: MINI_PLAYER_GOLD }]} />
+                    <Animated.View style={[styles.waveBar, styles.waveBar3, { backgroundColor: MINI_PLAYER_GOLD }]} />
+                  </View>
+                ) : (
+                  <Feather name="headphones" size={16} color={MINI_PLAYER_GOLD} />
+                )}
+              </View>
 
-            <Pressable
-              onPress={handlePlayPause}
-              style={styles.playButton}
-              testID="mini-player-toggle"
-            >
-              {isLoading ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <Feather
-                  name={isPlaying ? 'pause' : 'play'}
-                  size={24}
-                  color="#fff"
-                />
-              )}
-            </Pressable>
+              <View style={styles.textContainer}>
+                <Text style={[styles.title, { color: theme.text }]} numberOfLines={1}>
+                  {currentAffirmation.title || 'Now Playing'}
+                </Text>
+                <Text style={[styles.category, { color: theme.textSecondary }]} numberOfLines={1}>
+                  {currentAffirmation.categoryName || 'Affirmation'}
+                </Text>
+              </View>
+
+              <Pressable
+                onPress={handlePlayPause}
+                style={[styles.playButton, { backgroundColor: MINI_PLAYER_GOLD }]}
+                testID="mini-player-toggle"
+              >
+                {isLoading ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Feather
+                    name={isPlaying ? 'pause' : 'play'}
+                    size={18}
+                    color="#fff"
+                    style={isPlaying ? {} : { marginLeft: 2 }}
+                  />
+                )}
+              </Pressable>
+            </View>
           </View>
-        </LinearGradient>
+        </BlurView>
       </Pressable>
     </Animated.View>
   );
@@ -93,61 +104,83 @@ export function MiniPlayer({ currentRoute, onNavigateToPlayer }: MiniPlayerProps
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    left: 16,
-    right: 16,
-    zIndex: 1000,
-    shadowColor: '#0F1C3F',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    left: 12,
+    right: 12,
+    zIndex: 999,
+    ...Shadows.medium,
   },
   pressable: {
-    borderRadius: 16,
+    borderRadius: BorderRadius.lg,
     overflow: 'hidden',
   },
-  gradient: {
-    borderRadius: 16,
+  blurContainer: {
+    borderRadius: BorderRadius.lg,
+    overflow: 'hidden',
+  },
+  innerContainer: {
+    borderRadius: BorderRadius.lg,
+    overflow: 'hidden',
+    borderWidth: 0.5,
+    borderColor: 'rgba(201, 162, 39, 0.3)',
   },
   progressBar: {
-    height: 3,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    height: 2,
+    backgroundColor: 'rgba(201, 162, 39, 0.2)',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#fff',
+    borderRadius: 1,
   },
   content: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
   },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  waveformIndicator: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  waveformBars: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  waveBar: {
+    width: 2,
+    borderRadius: 1,
+  },
+  waveBar1: {
+    height: 8,
+  },
+  waveBar2: {
+    height: 14,
+  },
+  waveBar3: {
+    height: 10,
+  },
   textContainer: {
     flex: 1,
-    marginLeft: 12,
-    marginRight: 12,
-    justifyContent: 'center',
-    alignItems: 'flex-start',
+    marginLeft: 10,
+    marginRight: 10,
   },
   title: {
-    fontSize: 17,
+    fontSize: 14,
     fontFamily: 'Nunito_700Bold',
-    color: '#0F1C3F',
-    textAlignVertical: 'center',
+    lineHeight: 18,
+  },
+  category: {
+    fontSize: 11,
+    fontFamily: 'Nunito_400Regular',
+    marginTop: 1,
   },
   playButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
   },

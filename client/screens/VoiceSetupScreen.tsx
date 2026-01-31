@@ -110,6 +110,7 @@ export default function VoiceSetupScreen() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/user/profile"] });
       queryClient.invalidateQueries({ queryKey: ["/api/voice-samples/status"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/voice-preferences"] });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       navigation.goBack();
     },

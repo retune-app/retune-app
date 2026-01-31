@@ -425,6 +425,21 @@ export default function ProfileScreen() {
 
       <View style={styles.section}>
         <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+          AMBIENT SOUNDS
+        </ThemedText>
+        <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
+          <SettingItem
+            icon="headphones"
+            label="Sound Library"
+            value={selectedMusic !== 'none' ? BACKGROUND_MUSIC_OPTIONS.find(o => o.id === selectedMusic)?.name : 'No sound selected'}
+            onPress={() => navigation.navigate("SoundLibrary")}
+            testID="button-sound-library"
+          />
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
           DAILY REMINDERS
         </ThemedText>
         <ReminderSettings />
@@ -492,103 +507,6 @@ export default function ProfileScreen() {
             }
           />
         </View>
-      </View>
-
-      <View style={styles.section}>
-        <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-          BACKGROUND MUSIC
-        </ThemedText>
-        <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
-          {BACKGROUND_MUSIC_OPTIONS.map((option, index) => (
-            <Pressable
-              key={option.id}
-              onPress={() => {
-                try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
-                setSelectedMusic(option.id);
-              }}
-              style={({ pressed }) => [
-                styles.settingItem,
-                { backgroundColor: pressed ? theme.backgroundSecondary : "transparent" },
-                index < BACKGROUND_MUSIC_OPTIONS.length - 1 && styles.settingItemBorder,
-                index < BACKGROUND_MUSIC_OPTIONS.length - 1 && { borderBottomColor: theme.border },
-              ]}
-              testID={`button-music-${option.id}`}
-            >
-              <View style={[styles.settingIcon, { backgroundColor: theme.backgroundSecondary }]}>
-                <Feather 
-                  name={option.id === 'none' ? 'volume-x' : 'music'} 
-                  size={20} 
-                  color={theme.primary} 
-                />
-              </View>
-              <View style={styles.settingContent}>
-                <ThemedText type="body">{option.name}</ThemedText>
-                <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                  {option.description}
-                </ThemedText>
-              </View>
-              <View style={[
-                styles.radioButton,
-                { borderColor: selectedMusic === option.id ? theme.primary : theme.border },
-              ]}>
-                {selectedMusic === option.id ? (
-                  <View style={[styles.radioButtonInner, { backgroundColor: theme.primary }]} />
-                ) : null}
-              </View>
-            </Pressable>
-          ))}
-        </View>
-        {selectedMusic !== 'none' ? (
-          <View style={[styles.volumeContainer, { backgroundColor: theme.cardBackground }, Shadows.small]}>
-            <View style={styles.volumeRow}>
-              <Feather name="volume-1" size={18} color={theme.textSecondary} />
-              <View style={styles.volumeSliderContainer}>
-                <View 
-                  style={[
-                    styles.volumeTrack, 
-                    { backgroundColor: theme.border }
-                  ]}
-                >
-                  <View 
-                    style={[
-                      styles.volumeFill, 
-                      { backgroundColor: theme.primary, width: `${volume * 100}%` }
-                    ]} 
-                  />
-                </View>
-                <Pressable
-                  style={[
-                    styles.volumeThumb,
-                    { 
-                      backgroundColor: theme.primary,
-                      left: `${volume * 100}%`,
-                      transform: [{ translateX: -10 }],
-                    },
-                  ]}
-                  onPress={() => {}}
-                />
-              </View>
-              <Feather name="volume-2" size={18} color={theme.textSecondary} />
-            </View>
-            <View style={styles.volumeLabels}>
-              <Pressable 
-                onPress={() => setVolume(Math.max(0.1, volume - 0.1))}
-                style={styles.volumeButton}
-              >
-                <Feather name="minus" size={16} color={theme.primary} />
-              </Pressable>
-              <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                Volume: {Math.round(volume * 100)}%
-              </ThemedText>
-              <Pressable 
-                onPress={() => setVolume(Math.min(1, volume + 0.1))}
-                style={styles.volumeButton}
-              >
-                <Feather name="plus" size={16} color={theme.primary} />
-              </Pressable>
-            </View>
-          </View>
-        ) : null}
       </View>
 
       <View style={styles.section}>

@@ -19,22 +19,30 @@ export interface BackgroundMusicOption {
   id: BackgroundMusicType;
   name: string;
   description: string;
-  category: 'binaural' | 'nature';
+  category: 'nature' | 'binaural' | 'solfeggio';
+  icon: string;
 }
 
 export const BACKGROUND_MUSIC_OPTIONS: BackgroundMusicOption[] = [
-  { id: 'none', name: 'None', description: 'No background music', category: 'binaural' },
-  { id: 'rain', name: 'Rain', description: 'Gentle rainfall', category: 'nature' },
-  { id: 'ocean', name: 'Ocean', description: 'Calming ocean waves', category: 'nature' },
-  { id: 'forest', name: 'Forest', description: 'Nature sounds & birds', category: 'nature' },
-  { id: 'wind', name: 'Wind', description: 'Soft wind ambience', category: 'nature' },
-  { id: '432hz', name: '432Hz Healing', description: 'Universal healing frequency', category: 'binaural' },
-  { id: '528hz', name: '528Hz Love', description: 'Solfeggio love frequency', category: 'binaural' },
-  { id: 'theta', name: 'Theta Waves', description: 'Deep meditation (6Hz)', category: 'binaural' },
-  { id: 'alpha', name: 'Alpha Waves', description: 'Relaxation (10Hz)', category: 'binaural' },
-  { id: 'delta', name: 'Delta Waves', description: 'Deep sleep (2Hz)', category: 'binaural' },
-  { id: 'beta', name: 'Beta Waves', description: 'Focus & concentration (18Hz)', category: 'binaural' },
+  { id: 'none', name: 'None', description: 'No background music', category: 'nature', icon: 'volume-x' },
+  { id: 'rain', name: 'Rain', description: 'Gentle rainfall', category: 'nature', icon: 'cloud-rain' },
+  { id: 'ocean', name: 'Ocean', description: 'Calming ocean waves', category: 'nature', icon: 'droplet' },
+  { id: 'forest', name: 'Forest', description: 'Nature sounds & birds', category: 'nature', icon: 'feather' },
+  { id: 'wind', name: 'Wind', description: 'Soft wind ambience', category: 'nature', icon: 'wind' },
+  { id: '432hz', name: '432Hz Healing', description: 'Universal healing frequency', category: 'solfeggio', icon: 'heart' },
+  { id: '528hz', name: '528Hz Love', description: 'Solfeggio love frequency', category: 'solfeggio', icon: 'sun' },
+  { id: 'theta', name: 'Theta Waves', description: 'Deep meditation (6Hz)', category: 'binaural', icon: 'moon' },
+  { id: 'alpha', name: 'Alpha Waves', description: 'Relaxation (10Hz)', category: 'binaural', icon: 'sunrise' },
+  { id: 'delta', name: 'Delta Waves', description: 'Deep sleep (2Hz)', category: 'binaural', icon: 'cloud' },
+  { id: 'beta', name: 'Beta Waves', description: 'Focus & concentration (18Hz)', category: 'binaural', icon: 'zap' },
 ];
+
+export const getSoundsByCategory = () => {
+  const nature = BACKGROUND_MUSIC_OPTIONS.filter(o => o.category === 'nature' && o.id !== 'none');
+  const binaural = BACKGROUND_MUSIC_OPTIONS.filter(o => o.category === 'binaural');
+  const solfeggio = BACKGROUND_MUSIC_OPTIONS.filter(o => o.category === 'solfeggio');
+  return { nature, binaural, solfeggio };
+};
 
 const AUDIO_FILES: Record<Exclude<BackgroundMusicType, 'none'>, any> = {
   '432hz': require('../../assets/audio/432hz-healing.wav'),

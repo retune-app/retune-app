@@ -24,18 +24,9 @@ interface AmbientSoundMixerProps {
   compact?: boolean;
 }
 
-const MUSIC_ICONS: Record<BackgroundMusicType, string> = {
-  none: "volume-x",
-  rain: "cloud-rain",
-  ocean: "anchor",
-  forest: "feather",
-  wind: "wind",
-  "432hz": "radio",
-  "528hz": "heart",
-  theta: "moon",
-  alpha: "sun",
-  delta: "cloud",
-  beta: "zap",
+const getIconForMusic = (id: BackgroundMusicType): string => {
+  const option = BACKGROUND_MUSIC_OPTIONS.find(o => o.id === id);
+  return option?.icon || 'music';
 };
 
 export function AmbientSoundMixer({ compact = false }: AmbientSoundMixerProps) {
@@ -93,7 +84,7 @@ export function AmbientSoundMixer({ compact = false }: AmbientSoundMixerProps) {
         >
           <Animated.View style={pulseStyle}>
             <Feather
-              name={MUSIC_ICONS[selectedMusic] as any}
+              name={getIconForMusic(selectedMusic) as any}
               size={20}
               color={selectedMusic === "none" ? theme.textSecondary : theme.gold}
             />
@@ -171,7 +162,45 @@ export function AmbientSoundMixer({ compact = false }: AmbientSoundMixerProps) {
                   >
                     <View style={[styles.optionIcon, { backgroundColor: theme.backgroundTertiary }]}>
                       <Feather
-                        name={MUSIC_ICONS[option.id] as any}
+                        name={option.icon as any}
+                        size={20}
+                        color={selectedMusic === option.id ? theme.gold : theme.textSecondary}
+                      />
+                    </View>
+                    <View style={styles.optionText}>
+                      <ThemedText type="body" style={{ fontWeight: "600" }}>
+                        {option.name}
+                      </ThemedText>
+                      <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                        {option.description}
+                      </ThemedText>
+                    </View>
+                    {selectedMusic === option.id ? (
+                      <Feather name="check-circle" size={20} color={theme.gold} />
+                    ) : null}
+                  </Pressable>
+                ))}
+
+                <ThemedText type="caption" style={[styles.sectionLabel, { color: theme.textSecondary }]}>
+                  Solfeggio Frequencies
+                </ThemedText>
+                {BACKGROUND_MUSIC_OPTIONS.filter(o => o.category === 'solfeggio').map((option) => (
+                  <Pressable
+                    key={option.id}
+                    onPress={() => handleSelectMusic(option.id)}
+                    style={[
+                      styles.optionItem,
+                      {
+                        backgroundColor: selectedMusic === option.id
+                          ? theme.gold + "20"
+                          : theme.backgroundSecondary,
+                        borderColor: selectedMusic === option.id ? theme.gold : "transparent",
+                      },
+                    ]}
+                  >
+                    <View style={[styles.optionIcon, { backgroundColor: theme.backgroundTertiary }]}>
+                      <Feather
+                        name={option.icon as any}
                         size={20}
                         color={selectedMusic === option.id ? theme.gold : theme.textSecondary}
                       />
@@ -193,7 +222,7 @@ export function AmbientSoundMixer({ compact = false }: AmbientSoundMixerProps) {
                 <ThemedText type="caption" style={[styles.sectionLabel, { color: theme.textSecondary }]}>
                   Binaural Beats
                 </ThemedText>
-                {BACKGROUND_MUSIC_OPTIONS.filter(o => o.category === 'binaural' && o.id !== 'none').map((option) => (
+                {BACKGROUND_MUSIC_OPTIONS.filter(o => o.category === 'binaural').map((option) => (
                   <Pressable
                     key={option.id}
                     onPress={() => handleSelectMusic(option.id)}
@@ -209,7 +238,7 @@ export function AmbientSoundMixer({ compact = false }: AmbientSoundMixerProps) {
                   >
                     <View style={[styles.optionIcon, { backgroundColor: theme.backgroundTertiary }]}>
                       <Feather
-                        name={MUSIC_ICONS[option.id] as any}
+                        name={option.icon as any}
                         size={20}
                         color={selectedMusic === option.id ? theme.gold : theme.textSecondary}
                       />
@@ -282,7 +311,7 @@ export function AmbientSoundMixer({ compact = false }: AmbientSoundMixerProps) {
             ]}
           >
             <Feather
-              name={MUSIC_ICONS[option.id] as any}
+              name={option.icon as any}
               size={16}
               color={selectedMusic === option.id ? theme.gold : theme.textSecondary}
             />

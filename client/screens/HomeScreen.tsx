@@ -252,6 +252,7 @@ export default function HomeScreen() {
 
   return (
     <ImageBackground
+      key={isDark ? "dark-bg" : "light-bg"}
       source={isDark ? libraryBackgroundDark : libraryBackgroundLight}
       style={styles.backgroundImage}
       resizeMode="cover"

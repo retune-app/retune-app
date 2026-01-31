@@ -4,7 +4,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { db } from "./db";
-import { affirmations, voiceSamples, categories, users, collections, customCategories, notificationSettings } from "@shared/schema";
+import { affirmations, voiceSamples, categories, users, collections, customCategories, notificationSettings, listeningSessions } from "@shared/schema";
 import { eq, desc, asc, and } from "drizzle-orm";
 import { openai } from "./replit_integrations/audio/client";
 import {
@@ -618,10 +618,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Increment play count (requires auth)
+  // Increment play count and record listening session (requires auth)
   app.post("/api/affirmations/:id/play", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { id } = req.params;
+      const { durationSeconds } = req.body || {};
 
       const [affirmation] = await db
         .select()
@@ -635,6 +636,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Affirmation not found" });
       }
 
+      // Update play count
       const [updated] = await db
         .update(affirmations)
         .set({
@@ -643,6 +645,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })
         .where(eq(affirmations.id, parseInt(id)))
         .returning();
+
+      // Record listening session for analytics
+      const now = new Date();
+      const dateKey = now.toISOString().split('T')[0]; // YYYY-MM-DD
+      await db.insert(listeningSessions).values({
+        userId: req.userId!,
+        affirmationId: parseInt(id),
+        durationSeconds: durationSeconds || Math.round((affirmation.duration || 0) / 1000),
+        dateKey,
+      });
+      
+      console.log(`Recorded listening session for user ${req.userId}, affirmation ${id}, date ${dateKey}`);
 
       res.json(updated);
     } catch (error) {

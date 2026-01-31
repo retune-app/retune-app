@@ -85,30 +85,45 @@ export default function BreathingScreen() {
   const remainingTime = selectedDuration - elapsedTime;
   const totalCycles = getCyclesForDuration(selectedTechnique, selectedDuration);
 
-  // Handle orientation changes
+  // Handle orientation changes - auto-enter landscape mode when device is tilted
   useEffect(() => {
     const checkOrientation = async () => {
       const orientation = await ScreenOrientation.getOrientationAsync();
-      setIsLandscape(
+      const isLandscapeOrientation = 
         orientation === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
-        orientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT
-      );
+        orientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT;
+      setIsLandscape(isLandscapeOrientation);
     };
 
     checkOrientation();
 
     const subscription = ScreenOrientation.addOrientationChangeListener((event) => {
       const newOrientation = event.orientationInfo.orientation;
-      setIsLandscape(
+      const isLandscapeOrientation = 
         newOrientation === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
-        newOrientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT
-      );
+        newOrientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT;
+      
+      setIsLandscape(isLandscapeOrientation);
+      
+      // Auto-enter landscape fullscreen mode when device is tilted to landscape
+      if (isLandscapeOrientation && !showLandscapeMode) {
+        setShowLandscapeMode(true);
+      }
     });
 
     return () => {
       ScreenOrientation.removeOrientationChangeListener(subscription);
     };
-  }, []);
+  }, [showLandscapeMode]);
+
+  // Lock orientation when landscape mode is active
+  useEffect(() => {
+    if (showLandscapeMode) {
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+    } else {
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+    }
+  }, [showLandscapeMode]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -275,15 +290,17 @@ export default function BreathingScreen() {
     }
   };
 
-  const enterFullscreen = async () => {
+  const enterFullscreen = () => {
     setShowLandscapeMode(true);
-    await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
-    handleStart();
+    // Orientation lock is handled by the useEffect
+    if (!isPlaying) {
+      handleStart();
+    }
   };
 
-  const exitFullscreen = async () => {
+  const exitFullscreen = () => {
     setShowLandscapeMode(false);
-    await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+    // Orientation lock is handled by the useEffect
     handleStop();
   };
 

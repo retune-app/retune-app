@@ -635,65 +635,70 @@ export default function BreathingScreen() {
           </Animated.View>
         ) : null}
 
-        {/* Control Buttons */}
-        <Animated.View 
-          entering={FadeIn.delay(600).duration(600)} 
-          style={styles.controlSection}
-        >
-          {!isPlaying ? (
-            <View style={styles.startButtons}>
-              <Pressable onPress={handleStart} testID="button-start-breathing">
-                <LinearGradient
-                  colors={[selectedTechnique.color, `${selectedTechnique.color}CC`]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={[styles.startButton, Shadows.medium]}
-                >
-                  <Feather name="play" size={18} color="#FFFFFF" />
-                  <Text style={styles.startButtonText}>Start</Text>
-                </LinearGradient>
-              </Pressable>
-
-              <Pressable 
-                onPress={enterFullscreen} 
-                style={[styles.fullscreenButton, { backgroundColor: theme.backgroundSecondary }]}
-              >
-                <Feather name="maximize-2" size={16} color={theme.text} />
-              </Pressable>
-            </View>
-          ) : (
-            <View style={styles.playingControls}>
-              <Pressable
-                onPress={handleStop}
-                style={[styles.controlButton, { backgroundColor: theme.backgroundSecondary }]}
-                testID="button-stop-breathing"
-              >
-                <Feather name="square" size={24} color={theme.text} />
-              </Pressable>
-              <Pressable
-                onPress={isPlaying ? handlePause : handleResume}
-                testID="button-pause-breathing"
-              >
-                <LinearGradient
-                  colors={[selectedTechnique.color, `${selectedTechnique.color}CC`]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={[styles.pauseButton, Shadows.medium]}
-                >
-                  <Feather name="pause" size={28} color="#FFFFFF" />
-                </LinearGradient>
-              </Pressable>
-              <Pressable
-                onPress={() => setShowLandscapeMode(true)}
-                style={[styles.controlButton, { backgroundColor: theme.backgroundSecondary }]}
-              >
-                <Feather name="maximize-2" size={20} color={theme.text} />
-              </Pressable>
-            </View>
-          )}
-        </Animated.View>
-
       </ScrollView>
+
+      {/* Floating Maximize Button - Top Left */}
+      {!isPlaying ? (
+        <Animated.View 
+          entering={FadeIn.delay(400).duration(400)}
+          style={[styles.floatingMaximizeButton, { top: insets.top + Spacing.md }]}
+        >
+          <Pressable 
+            onPress={enterFullscreen} 
+            style={[styles.fullscreenButton, { backgroundColor: theme.backgroundSecondary }, Shadows.medium]}
+          >
+            <Feather name="maximize-2" size={20} color={theme.text} />
+          </Pressable>
+        </Animated.View>
+      ) : null}
+
+      {/* Floating Control Buttons - Bottom Right */}
+      <Animated.View 
+        entering={FadeIn.delay(600).duration(600)} 
+        style={[styles.floatingControlSection, { bottom: insets.bottom + 180 }]}
+      >
+        {!isPlaying ? (
+          <Pressable onPress={handleStart} testID="button-start-breathing">
+            <LinearGradient
+              colors={[selectedTechnique.color, `${selectedTechnique.color}CC`]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={[styles.floatingStartButton, Shadows.large]}
+            >
+              <Feather name="play" size={24} color="#FFFFFF" />
+            </LinearGradient>
+          </Pressable>
+        ) : (
+          <View style={styles.floatingPlayingControls}>
+            <Pressable
+              onPress={handleStop}
+              style={[styles.floatingControlButton, { backgroundColor: theme.backgroundSecondary }, Shadows.medium]}
+              testID="button-stop-breathing"
+            >
+              <Feather name="square" size={20} color={theme.text} />
+            </Pressable>
+            <Pressable
+              onPress={isPlaying ? handlePause : handleResume}
+              testID="button-pause-breathing"
+            >
+              <LinearGradient
+                colors={[selectedTechnique.color, `${selectedTechnique.color}CC`]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[styles.floatingPauseButton, Shadows.large]}
+              >
+                <Feather name="pause" size={28} color="#FFFFFF" />
+              </LinearGradient>
+            </Pressable>
+            <Pressable
+              onPress={() => setShowLandscapeMode(true)}
+              style={[styles.floatingControlButton, { backgroundColor: theme.backgroundSecondary }, Shadows.medium]}
+            >
+              <Feather name="maximize-2" size={20} color={theme.text} />
+            </Pressable>
+          </View>
+        )}
+      </Animated.View>
 
       {/* Technique Selection Modal */}
       <Modal
@@ -891,53 +896,46 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
   },
 
-  // Control Section
-  controlSection: {
-    alignItems: "center",
-    marginTop: Spacing.sm,
-  },
-  startButtons: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.sm,
-  },
-  startButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.xl,
-    borderRadius: BorderRadius.full,
-    gap: Spacing.sm,
-  },
-  startButtonText: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    fontWeight: "600",
-  },
+  // Floating Buttons
   fullscreenButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
   },
-  playingControls: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.lg,
+  floatingMaximizeButton: {
+    position: "absolute",
+    left: Spacing.lg,
+    zIndex: 10,
   },
-  controlButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+  floatingControlSection: {
+    position: "absolute",
+    right: Spacing.lg,
+    zIndex: 10,
+  },
+  floatingStartButton: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     alignItems: "center",
     justifyContent: "center",
   },
-  pauseButton: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+  floatingPlayingControls: {
+    alignItems: "center",
+    gap: Spacing.md,
+  },
+  floatingControlButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  floatingPauseButton: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     alignItems: "center",
     justifyContent: "center",
   },

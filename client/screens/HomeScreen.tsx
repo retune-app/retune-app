@@ -47,7 +47,7 @@ export default function HomeScreen() {
   const { theme, isDark } = useTheme();
   const { user } = useAuth();
   const navigation = useNavigation<NavigationProp>();
-  const { playAffirmation, currentAffirmation, isPlaying, togglePlayPause } = useAudio();
+  const { playAffirmation, currentAffirmation, isPlaying, togglePlayPause, breathingAffirmation, setBreathingAffirmation } = useAudio();
 
   const queryClient = useQueryClient();
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -223,8 +223,13 @@ export default function HomeScreen() {
     />
   );
 
+  const handleSetForBreathing = useCallback((affirmation: Affirmation) => {
+    setBreathingAffirmation(affirmation);
+  }, [setBreathingAffirmation]);
+
   const renderItem = ({ item, index }: { item: Affirmation; index: number }) => {
     const isCurrentlyPlaying = currentAffirmation?.id === item.id && isPlaying;
+    const isBreathingSelected = breathingAffirmation?.id === item.id;
     return (
       <Animated.View entering={FadeInUp.delay(index * 50).duration(300).springify()}>
         <SwipeableAffirmationCard
@@ -232,7 +237,9 @@ export default function HomeScreen() {
           onPress={() => handleAffirmationPress(item.id)}
           onPlayPress={() => handlePlayPress(item)}
           onRename={handleRenamePress}
+          onSetForBreathing={handleSetForBreathing}
           isActive={isCurrentlyPlaying}
+          isBreathingAffirmation={isBreathingSelected}
           testID={`card-affirmation-${item.id}`}
           hapticEnabled={hapticEnabled}
         />

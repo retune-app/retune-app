@@ -17,7 +17,9 @@ interface SwipeableAffirmationCardProps {
   onPlayPress: () => void;
   onLongPress?: () => void;
   onRename?: (affirmation: Affirmation) => void;
+  onSetForBreathing?: (affirmation: Affirmation) => void;
   isActive?: boolean;
+  isBreathingAffirmation?: boolean;
   testID?: string;
   hapticEnabled?: boolean;
 }
@@ -28,7 +30,9 @@ export function SwipeableAffirmationCard({
   onPlayPress,
   onLongPress,
   onRename,
+  onSetForBreathing,
   isActive,
+  isBreathingAffirmation,
   testID,
   hapticEnabled = true,
 }: SwipeableAffirmationCardProps) {
@@ -78,26 +82,45 @@ export function SwipeableAffirmationCard({
     }
   };
 
+  const handleSetForBreathing = () => {
+    if (hapticEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    swipeableRef.current?.close();
+    if (onSetForBreathing) {
+      onSetForBreathing(affirmation);
+    }
+  };
+
   const renderLeftActions = (
     progress: Animated.AnimatedInterpolation<number>,
     dragX: Animated.AnimatedInterpolation<number>
   ) => {
     const scale = dragX.interpolate({
-      inputRange: [0, 80],
+      inputRange: [0, 160],
       outputRange: [0, 1],
       extrapolate: "clamp",
     });
 
     return (
-      <RectButton
-        style={[styles.renameButton, { backgroundColor: theme.primary }]}
-        onPress={handleRename}
-        testID={`button-rename-${affirmation.id}`}
-      >
-        <Animated.View style={{ transform: [{ scale }] }}>
-          <Feather name="edit-2" size={24} color="#fff" />
-        </Animated.View>
-      </RectButton>
+      <View style={styles.leftActionsContainer}>
+        <RectButton
+          style={[styles.breathingButton, { backgroundColor: isBreathingAffirmation ? '#4ECDC4' : '#2E7D6E' }]}
+          onPress={handleSetForBreathing}
+          testID={`button-breathing-${affirmation.id}`}
+        >
+          <Animated.View style={{ transform: [{ scale }] }}>
+            <Feather name="wind" size={24} color="#fff" />
+          </Animated.View>
+        </RectButton>
+        <RectButton
+          style={[styles.renameButton, { backgroundColor: theme.primary }]}
+          onPress={handleRename}
+          testID={`button-rename-${affirmation.id}`}
+        >
+          <Animated.View style={{ transform: [{ scale }] }}>
+            <Feather name="edit-2" size={24} color="#fff" />
+          </Animated.View>
+        </RectButton>
+      </View>
     );
   };
 
@@ -158,8 +181,19 @@ export function SwipeableAffirmationCard({
 }
 
 const styles = StyleSheet.create({
+  leftActionsContainer: {
+    flexDirection: "row",
+  },
+  breathingButton: {
+    width: 70,
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 16,
+    marginRight: Spacing.xs,
+  },
   renameButton: {
-    width: 80,
+    width: 70,
     height: "100%",
     justifyContent: "center",
     alignItems: "center",

@@ -1,10 +1,13 @@
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 import { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Affirmation } from '@shared/schema';
 import { getApiUrl, apiRequest } from '@/lib/query-client';
 import { useBackgroundMusic } from './BackgroundMusicContext';
 import { queryClient } from '@/lib/query-client';
+
+const BREATHING_AFFIRMATION_KEY = '@breathing/selectedAffirmation';
 
 interface AudioState {
   currentAffirmation: Affirmation | null;
@@ -14,6 +17,7 @@ interface AudioState {
   isLoading: boolean;
   autoReplay: boolean;
   playbackSpeed: number;
+  breathingAffirmation: Affirmation | null;
 }
 
 interface AudioContextType extends AudioState {
@@ -23,6 +27,7 @@ interface AudioContextType extends AudioState {
   seek: (position: number) => Promise<void>;
   setAutoReplay: (enabled: boolean) => void;
   setPlaybackSpeed: (speed: number) => void;
+  setBreathingAffirmation: (affirmation: Affirmation | null) => void;
 }
 
 const AudioContext = createContext<AudioContextType | null>(null);
@@ -43,11 +48,42 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [autoReplay, setAutoReplayState] = useState(true);
   const [playbackSpeed, setPlaybackSpeedState] = useState(1);
+  const [breathingAffirmation, setBreathingAffirmationState] = useState<Affirmation | null>(null);
   const soundRef = useRef<Audio.Sound | null>(null);
   const isOperationInProgress = useRef(false);
   const hasRecordedListenRef = useRef(false);
   
   const { startBackgroundMusic, stopBackgroundMusic, selectedMusic } = useBackgroundMusic();
+
+  // Load saved breathing affirmation on mount
+  useEffect(() => {
+    const loadBreathingAffirmation = async () => {
+      try {
+        const saved = await AsyncStorage.getItem(BREATHING_AFFIRMATION_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          setBreathingAffirmationState(parsed);
+        }
+      } catch (error) {
+        console.error('Error loading breathing affirmation:', error);
+      }
+    };
+    loadBreathingAffirmation();
+  }, []);
+
+  const setBreathingAffirmation = useCallback(async (affirmation: Affirmation | null) => {
+    setBreathingAffirmationState(affirmation);
+    try {
+      if (affirmation) {
+        await AsyncStorage.setItem(BREATHING_AFFIRMATION_KEY, JSON.stringify(affirmation));
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } else {
+        await AsyncStorage.removeItem(BREATHING_AFFIRMATION_KEY);
+      }
+    } catch (error) {
+      console.error('Error saving breathing affirmation:', error);
+    }
+  }, []);
 
   // Record a listen when audio finishes
   const recordListen = useCallback(async (affirmationId: number) => {
@@ -280,12 +316,14 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         autoReplay,
         playbackSpeed,
+        breathingAffirmation,
         playAffirmation,
         togglePlayPause,
         stop,
         seek,
         setAutoReplay,
         setPlaybackSpeed,
+        setBreathingAffirmation,
       }}
     >
       {children}

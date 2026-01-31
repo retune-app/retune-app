@@ -12,7 +12,7 @@ Preferred communication style: Simple, everyday language.
 
 ### Frontend (React Native + Expo)
 - **Framework**: Expo SDK 54 with React Native, targeting iOS, Android, and web
-- **Navigation**: React Navigation with native stack and bottom tabs (3 tabs: Library, Create +, Profile)
+- **Navigation**: React Navigation with native stack and bottom tabs (4 tabs: Library, Create +, Breathe, Profile)
 - **State Management**: TanStack Query for server state and caching
 - **Styling**: Custom theme system with light/dark mode support, Nunito font family
 - **Animations**: React Native Reanimated for fluid UI animations
@@ -99,8 +99,22 @@ Preferred communication style: Simple, everyday language.
 - **PlayerScreen**: Audio player with waveform visualization, playback controls, and RSVP mode for synchronized word display
 - **VoiceSetupScreen**: Record voice sample for cloning (fullscreen modal)
 - **VoiceSettingsScreen**: Dedicated screen for voice preferences - toggle between personal/AI voice, select gender, browse and preview 21 available voices
+- **BreathingScreen**: Standalone breathing mode with 3 techniques, animated breathing circle, duration selector, and binaural beats integration
 - **ProfileScreen**: User settings, stats, simplified voice settings entry point
 - **AnalyticsScreen**: Detailed analytics with today's progress, streak details (current vs best), lifetime stats, weekly chart, and category breakdown
+
+### Breathing Mode System
+- **Standalone Tab**: 4th tab in bottom navigation with "wind" icon for easy access
+- **Breathing Techniques**: 
+  - Box Breathing (4-4-4-4): Focus and grounding with 4s inhale, 4s hold, 4s exhale, 4s hold
+  - 4-7-8 Relaxation: Sleep and anxiety relief with 4s inhale, 7s hold, 8s exhale
+  - Coherent Breathing (5-5): Heart coherence with 5s inhale, 5s exhale
+- **BreathingCircle Component**: Animated circle using React Native Reanimated that expands/contracts in sync with breath phases
+- **Duration Options**: 1, 3, 5, or 10 minute sessions with cycle tracking
+- **Audio Integration**: Uses existing BackgroundMusicContext for binaural beats during breathing
+- **Haptic Feedback**: Light haptic pulse on breath phase transitions (can be toggled)
+- **Pre-Affirmation Breathing**: QuickBreathingModal triggered from PlayerScreen's "Breathe First" button for 3 quick breaths before affirmations
+- **Key files**: `shared/breathingTechniques.ts`, `client/components/BreathingCircle.tsx`, `client/screens/BreathingScreen.tsx`, `client/components/QuickBreathingModal.tsx`
 
 ### Analytics System
 - **Listening Sessions Table**: Tracks each completed listen with user ID, affirmation ID, duration, and date

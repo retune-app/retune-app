@@ -363,24 +363,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Simply use the category name directly - no complex lookups needed
       console.log("Saving affirmation with category:", categoryName);
 
-      // Get user's voice ID if available (specific to this user)
-      const [voiceSample] = await db
-        .select()
-        .from(voiceSamples)
-        .where(and(
-          eq(voiceSamples.userId, req.userId!),
-          eq(voiceSamples.status, "ready")
-        ))
-        .orderBy(desc(voiceSamples.createdAt))
-        .limit(1);
+      // Get user's voice preferences and voice sample
+      const [userWithPrefs] = await db
+        .select({
+          voiceId: users.voiceId,
+          hasVoiceSample: users.hasVoiceSample,
+          preferredVoiceType: users.preferredVoiceType,
+          preferredAiGender: users.preferredAiGender,
+          preferredMaleVoiceId: users.preferredMaleVoiceId,
+          preferredFemaleVoiceId: users.preferredFemaleVoiceId,
+        })
+        .from(users)
+        .where(eq(users.id, req.userId!));
 
-      console.log("Voice sample found:", voiceSample);
-      console.log("Using voiceId:", voiceSample?.voiceId);
+      // Determine which voice ID to use based on preferences
+      let voiceIdToUse: string | undefined;
+      let usedPersonalVoice = false;
+      let usedGender = userWithPrefs?.preferredAiGender || "female";
+
+      if (userWithPrefs?.preferredVoiceType === "personal" && userWithPrefs?.voiceId && userWithPrefs?.hasVoiceSample) {
+        // Use personal cloned voice
+        voiceIdToUse = userWithPrefs.voiceId;
+        usedPersonalVoice = true;
+        console.log("Using personal voice:", voiceIdToUse);
+      } else {
+        // Use AI voice based on gender preference
+        if (usedGender === "male") {
+          voiceIdToUse = userWithPrefs?.preferredMaleVoiceId || VOICE_OPTIONS.male[0].id;
+        } else {
+          voiceIdToUse = userWithPrefs?.preferredFemaleVoiceId || VOICE_OPTIONS.female[0].id;
+        }
+        console.log("Using AI voice:", voiceIdToUse, "for gender:", usedGender);
+      }
 
       // Generate audio with word timings
       const audioResult = await generateAudio(
         script,
-        voiceSample?.voiceId || undefined
+        voiceIdToUse
       );
 
       // Save audio file to the audio subdirectory
@@ -391,9 +410,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const audioFilename = `affirmation-${Date.now()}.mp3`;
       const audioPath = path.join(audioDir, audioFilename);
       fs.writeFileSync(audioPath, Buffer.from(audioResult.audio));
-
-      // Determine voice type based on whether we used personal voice or AI voice
-      const usedPersonalVoice = !!voiceSample?.voiceId;
 
       // Create affirmation record (associated with user)
       const [newAffirmation] = await db
@@ -408,7 +424,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           wordTimings: JSON.stringify(audioResult.wordTimings),
           isManual: isManual || false,
           voiceType: usedPersonalVoice ? "personal" : "ai",
-          voiceGender: usedPersonalVoice ? null : "female", // Default AI voice is female
+          voiceGender: usedPersonalVoice ? null : usedGender,
         })
         .returning();
 
@@ -696,11 +712,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // AI Voice IDs - calm, soothing voices from ElevenLabs
-  const AI_VOICES = {
-    female: "21m00Tcm4TlvDq8ikWAM", // Rachel - soft, warm female voice
-    male: "ErXwobaYiN019PkySvjV",   // Antoni - warm, friendly male voice
+  // AI Voice options - all available voices from ElevenLabs
+  const VOICE_OPTIONS = {
+    female: [
+      { id: "21m00Tcm4TlvDq8ikWAM", name: "Rachel", description: "Soft, warm tone" },
+      { id: "XB0fDUnXU5powFXDhCwa", name: "Charlotte", description: "Warm, British accent" },
+      { id: "EXAVITQu4vr4xnSDxMaL", name: "Bella", description: "Soft, gentle" },
+    ],
+    male: [
+      { id: "ErXwobaYiN019PkySvjV", name: "Antoni", description: "Warm, friendly" },
+      { id: "onwK4e9ZLuTAKqWW03F9", name: "Daniel", description: "Clear, professional" },
+      { id: "pNInz6obpgDQGcFmaJgB", name: "Adam", description: "Deep, calm" },
+    ],
   };
+
+  // Get available AI voices
+  app.get("/api/voices", async (req: Request, res: Response) => {
+    res.json(VOICE_OPTIONS);
+  });
 
   // Get user's voice preferences
   app.get("/api/voice-preferences", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
@@ -709,6 +738,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .select({
           preferredVoiceType: users.preferredVoiceType,
           preferredAiGender: users.preferredAiGender,
+          preferredMaleVoiceId: users.preferredMaleVoiceId,
+          preferredFemaleVoiceId: users.preferredFemaleVoiceId,
           hasVoiceSample: users.hasVoiceSample,
           voiceId: users.voiceId,
         })
@@ -722,6 +753,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         preferredVoiceType: user.preferredVoiceType || "ai",
         preferredAiGender: user.preferredAiGender || "female",
+        preferredMaleVoiceId: user.preferredMaleVoiceId || "ErXwobaYiN019PkySvjV",
+        preferredFemaleVoiceId: user.preferredFemaleVoiceId || "21m00Tcm4TlvDq8ikWAM",
         hasPersonalVoice: !!user.hasVoiceSample && !!user.voiceId,
       });
     } catch (error) {
@@ -733,7 +766,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update user's voice preferences
   app.put("/api/voice-preferences", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { preferredVoiceType, preferredAiGender } = req.body;
+      const { preferredVoiceType, preferredAiGender, preferredMaleVoiceId, preferredFemaleVoiceId } = req.body;
 
       const updates: Record<string, string> = {};
       
@@ -743,6 +776,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (preferredAiGender && ["male", "female"].includes(preferredAiGender)) {
         updates.preferredAiGender = preferredAiGender;
+      }
+
+      // Validate and set male voice ID
+      if (preferredMaleVoiceId) {
+        const validMaleVoice = VOICE_OPTIONS.male.find(v => v.id === preferredMaleVoiceId);
+        if (validMaleVoice) {
+          updates.preferredMaleVoiceId = preferredMaleVoiceId;
+        }
+      }
+
+      // Validate and set female voice ID
+      if (preferredFemaleVoiceId) {
+        const validFemaleVoice = VOICE_OPTIONS.female.find(v => v.id === preferredFemaleVoiceId);
+        if (validFemaleVoice) {
+          updates.preferredFemaleVoiceId = preferredFemaleVoiceId;
+        }
       }
 
       if (Object.keys(updates).length === 0) {
@@ -802,9 +851,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         voiceIdToUse = user.voiceId;
       } else {
-        // Use AI voice based on gender
+        // Use AI voice based on gender - get user's preferred voice for that gender
         const gender = voiceGender || "female";
-        voiceIdToUse = AI_VOICES[gender as keyof typeof AI_VOICES];
+        const [userPrefs] = await db
+          .select({
+            preferredMaleVoiceId: users.preferredMaleVoiceId,
+            preferredFemaleVoiceId: users.preferredFemaleVoiceId,
+          })
+          .from(users)
+          .where(eq(users.id, req.userId!));
+        
+        if (gender === "male") {
+          voiceIdToUse = userPrefs?.preferredMaleVoiceId || VOICE_OPTIONS.male[0].id;
+        } else {
+          voiceIdToUse = userPrefs?.preferredFemaleVoiceId || VOICE_OPTIONS.female[0].id;
+        }
       }
 
       // Generate new audio

@@ -99,6 +99,14 @@ Preferred communication style: Simple, everyday language.
 - **PlayerScreen**: Audio player with waveform visualization, playback controls, and RSVP mode for synchronized word display
 - **VoiceSetupScreen**: Record voice sample for cloning (fullscreen modal)
 - **ProfileScreen**: User settings, stats, voice sample management
+- **AnalyticsScreen**: Detailed analytics with today's progress, streak details (current vs best), lifetime stats, weekly chart, and category breakdown
+
+### Analytics System
+- **Listening Sessions Table**: Tracks each completed listen with user ID, affirmation ID, duration, and date
+- **Streak Calculation**: Counts consecutive days with at least one listening session
+- **Best Streak**: Tracks the longest consecutive streak in user history
+- **Category Breakdown**: Shows which affirmation categories the user listens to most
+- **Weekly Chart**: Bar chart showing minutes listened each day for the past 7 days
 
 ## Design System
 

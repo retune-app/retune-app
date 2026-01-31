@@ -661,7 +661,7 @@ export default function BreathingScreen() {
                   end={{ x: 1, y: 1 }}
                   style={[styles.startButton, Shadows.medium]}
                 >
-                  <Feather name="play" size={24} color="#FFFFFF" />
+                  <Feather name="play" size={18} color="#FFFFFF" />
                   <Text style={styles.startButtonText}>Start</Text>
                 </LinearGradient>
               </Pressable>
@@ -670,7 +670,7 @@ export default function BreathingScreen() {
                 onPress={enterFullscreen} 
                 style={[styles.fullscreenButton, { backgroundColor: theme.backgroundSecondary }]}
               >
-                <Feather name="maximize-2" size={20} color={theme.text} />
+                <Feather name="maximize-2" size={16} color={theme.text} />
               </Pressable>
             </View>
           ) : (
@@ -947,31 +947,31 @@ const styles = StyleSheet.create({
   // Control Section
   controlSection: {
     alignItems: "center",
-    marginTop: Spacing.lg,
+    marginTop: Spacing.sm,
   },
   startButtons: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.md,
+    gap: Spacing.sm,
   },
   startButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: Spacing.lg,
-    paddingHorizontal: Spacing.xxl,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
     borderRadius: BorderRadius.full,
-    gap: Spacing.md,
+    gap: Spacing.sm,
   },
   startButtonText: {
     color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "700",
+    fontSize: 15,
+    fontWeight: "600",
   },
   fullscreenButton: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
   },

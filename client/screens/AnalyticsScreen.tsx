@@ -4,6 +4,7 @@ import {
   StyleSheet,
   ScrollView,
   Pressable,
+  Text,
 } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -108,9 +109,9 @@ export default function AnalyticsScreen() {
       >
         <Animated.View style={animatedStyle}>
           <View style={styles.section}>
-            <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+            <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>
               TODAY
-            </ThemedText>
+            </Text>
             <LinearGradient
               colors={[theme.gold + "20", theme.gold + "05"]}
               start={{ x: 0, y: 0 }}
@@ -132,9 +133,9 @@ export default function AnalyticsScreen() {
           </View>
 
           <View style={styles.section}>
-            <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+            <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>
               STREAKS
-            </ThemedText>
+            </Text>
             <View style={styles.streakRow}>
               <View style={[styles.streakCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
                 <View style={[styles.streakIconContainer, { backgroundColor: theme.gold + "20" }]}>
@@ -163,9 +164,9 @@ export default function AnalyticsScreen() {
           </View>
 
           <View style={styles.section}>
-            <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+            <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>
               LIFETIME STATS
-            </ThemedText>
+            </Text>
             <View style={[styles.lifetimeCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
               <View style={styles.lifetimeRow}>
                 <View style={styles.lifetimeStat}>
@@ -206,9 +207,9 @@ export default function AnalyticsScreen() {
           </View>
 
           <View style={styles.section}>
-            <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+            <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>
               THIS WEEK
-            </ThemedText>
+            </Text>
             <View style={[styles.weeklyCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
               <View style={styles.weeklyHeader}>
                 <ThemedText type="body" style={{ fontWeight: "600" }}>
@@ -251,9 +252,9 @@ export default function AnalyticsScreen() {
           </View>
 
           <View style={styles.section}>
-            <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+            <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>
               CATEGORY BREAKDOWN
-            </ThemedText>
+            </Text>
             <View style={[styles.categoryCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
               {(stats?.categoryBreakdown?.length ?? 0) > 0 ? (
                 stats?.categoryBreakdown?.map((cat, index) => (
@@ -336,10 +337,10 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     marginBottom: Spacing.md,
-    letterSpacing: 1,
-    fontSize: 12,
-    lineHeight: 20,
-    paddingTop: 4,
+    letterSpacing: 1.5,
+    fontSize: 13,
+    lineHeight: 24,
+    fontWeight: "600" as const,
   },
   todayCard: {
     borderRadius: BorderRadius.lg,

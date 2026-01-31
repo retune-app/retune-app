@@ -18,6 +18,8 @@ export const users = pgTable("users", {
   voiceId: text("voice_id"),
   preferredVoiceType: text("preferred_voice_type").default("ai"), // 'personal' or 'ai'
   preferredAiGender: text("preferred_ai_gender").default("female"), // 'male' or 'female'
+  preferredMaleVoiceId: text("preferred_male_voice_id").default("ErXwobaYiN019PkySvjV"), // Default: Antoni
+  preferredFemaleVoiceId: text("preferred_female_voice_id").default("21m00Tcm4TlvDq8ikWAM"), // Default: Rachel
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 

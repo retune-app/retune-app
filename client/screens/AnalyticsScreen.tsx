@@ -335,9 +335,10 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xl,
   },
   sectionTitle: {
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
     letterSpacing: 1,
-    fontSize: 11,
+    fontSize: 12,
+    lineHeight: 16,
   },
   todayCard: {
     borderRadius: BorderRadius.lg,

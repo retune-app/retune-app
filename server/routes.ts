@@ -824,6 +824,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Generate preview using user's personal cloned voice
+  app.post("/api/voices/preview-personal", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      // Get user's cloned voice ID
+      const [user] = await db
+        .select({
+          voiceId: users.voiceId,
+          hasVoiceSample: users.hasVoiceSample,
+          name: users.name,
+        })
+        .from(users)
+        .where(eq(users.id, req.userId!));
+
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      if (!user.voiceId || !user.hasVoiceSample) {
+        return res.status(400).json({ error: "No personal voice recorded. Please record your voice first." });
+      }
+
+      console.log(`Generating personal voice preview for user ${user.name} (voice: ${user.voiceId})`);
+
+      // Generate TTS using user's cloned voice
+      const audioBuffer = await generateAudioSimple(PREVIEW_PHRASE, user.voiceId);
+
+      // Return audio as base64
+      const base64Audio = Buffer.from(audioBuffer).toString("base64");
+      res.json({ 
+        audio: base64Audio,
+        voiceName: "My Voice",
+      });
+    } catch (error) {
+      console.error("Error generating personal voice preview:", error);
+      res.status(500).json({ error: "Failed to generate personal voice preview" });
+    }
+  });
+
   // Get user's voice preferences
   app.get("/api/voice-preferences", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {

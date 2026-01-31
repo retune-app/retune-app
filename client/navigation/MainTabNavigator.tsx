@@ -7,22 +7,22 @@ import { Platform } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 
-import HomeStackNavigator from "@/navigation/HomeStackNavigator";
 import BreathingStackNavigator from "@/navigation/BreathingStackNavigator";
+import HomeStackNavigator from "@/navigation/HomeStackNavigator";
 import ProfileStackNavigator from "@/navigation/ProfileStackNavigator";
 import { useTheme } from "@/hooks/useTheme";
 import { Shadows } from "@/constants/theme";
 
 export type MainTabParamList = {
-  HomeTab: undefined;
-  CreateTab: undefined;
   BreatheTab: undefined;
-  ProfileTab: undefined;
+  CreateTab: undefined;
+  AffirmTab: undefined;
+  SettingsTab: undefined;
 };
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-function CreateTabButton({ onPress }: { onPress?: () => void }) {
+function CreateTabButton({ onPress }: { onPress?: (e?: any) => void }) {
   const { theme } = useTheme();
 
   const handlePress = () => {
@@ -94,16 +94,6 @@ export default function MainTabNavigator() {
         }}
       />
       <Tab.Screen
-        name="HomeTab"
-        component={HomeStackNavigator}
-        options={{
-          title: "Library",
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="book-open" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
         name="CreateTab"
         component={EmptyComponent}
         options={{
@@ -114,18 +104,26 @@ export default function MainTabNavigator() {
         listeners={({ navigation }) => ({
           tabPress: (e) => {
             e.preventDefault();
-            navigation.navigate("Create");
+            (navigation as any).navigate("Create");
           },
         })}
       />
       <Tab.Screen
-        name="ProfileTab"
+        name="AffirmTab"
+        component={HomeStackNavigator}
+        options={{
+          title: "Affirm",
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="book-open" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="SettingsTab"
         component={ProfileStackNavigator}
         options={{
-          title: "Profile",
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="user" size={size} color={color} />
-          ),
+          tabBarButton: () => null,
+          tabBarItemStyle: { display: "none" },
         }}
       />
     </Tab.Navigator>

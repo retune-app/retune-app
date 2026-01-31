@@ -136,7 +136,7 @@ export default function RootStackNavigator() {
           component={AnalyticsScreen}
           options={{
             headerTitle: "Analytics",
-            headerBackTitle: "Profile",
+            headerBackTitle: "Settings",
             animation: "slide_from_right",
           }}
         />
@@ -145,7 +145,7 @@ export default function RootStackNavigator() {
           component={VoiceSettingsScreen}
           options={{
             headerTitle: "Voice Settings",
-            headerBackTitle: "Profile",
+            headerBackTitle: "Settings",
             animation: "slide_from_right",
           }}
         />
@@ -154,7 +154,7 @@ export default function RootStackNavigator() {
           component={SoundLibraryScreen}
           options={{
             headerTitle: "Sound Library",
-            headerBackTitle: "Profile",
+            headerBackTitle: "Settings",
             animation: "slide_from_right",
           }}
         />

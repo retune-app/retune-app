@@ -5,7 +5,7 @@ import ProfileScreen from "@/screens/ProfileScreen";
 import { useScreenOptions } from "@/hooks/useScreenOptions";
 
 export type ProfileStackParamList = {
-  Profile: undefined;
+  Settings: undefined;
 };
 
 const Stack = createNativeStackNavigator<ProfileStackParamList>();
@@ -16,10 +16,10 @@ export default function ProfileStackNavigator() {
   return (
     <Stack.Navigator screenOptions={screenOptions}>
       <Stack.Screen
-        name="Profile"
+        name="Settings"
         component={ProfileScreen}
         options={{
-          title: "Profile",
+          title: "Settings",
         }}
       />
     </Stack.Navigator>

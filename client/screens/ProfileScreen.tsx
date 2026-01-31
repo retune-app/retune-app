@@ -488,6 +488,17 @@ export default function ProfileScreen() {
         minutesListened={(stats as any)?.totalMinutesThisWeek || 0}
       />
 
+      <Pressable
+        onPress={() => navigation.navigate("Analytics")}
+        style={[styles.analyticsButton, { borderColor: theme.gold + "40" }]}
+      >
+        <Feather name="bar-chart-2" size={18} color={theme.gold} />
+        <ThemedText type="body" style={[styles.analyticsButtonText, { color: theme.gold }]}>
+          View Detailed Analytics
+        </ThemedText>
+        <Feather name="chevron-right" size={18} color={theme.gold} />
+      </Pressable>
+
       <View style={styles.section}>
         <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
           VOICE PREFERENCES
@@ -1561,5 +1572,22 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
+  },
+  analyticsButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.xl,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    gap: Spacing.sm,
+  },
+  analyticsButtonText: {
+    fontWeight: "600",
+    flex: 1,
+    textAlign: "center",
   },
 });

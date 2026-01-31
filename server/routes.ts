@@ -1136,6 +1136,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      // Calculate best streak ever (longest consecutive run in history)
+      let bestStreak = 0;
+      if (uniqueDates.length > 0) {
+        let currentRun = 1;
+        const sortedDates = [...uniqueDates].sort(); // ascending order
+        for (let i = 1; i < sortedDates.length; i++) {
+          const prevDate = new Date(sortedDates[i - 1]);
+          const currDate = new Date(sortedDates[i]);
+          const diffDays = Math.round((currDate.getTime() - prevDate.getTime()) / 86400000);
+          if (diffDays === 1) {
+            currentRun++;
+          } else {
+            bestStreak = Math.max(bestStreak, currentRun);
+            currentRun = 1;
+          }
+        }
+        bestStreak = Math.max(bestStreak, currentRun);
+      }
+
       // Calculate weekly data (last 7 days)
       const weeklyData: { day: string; minutes: number; date: string }[] = [];
       const dayNames = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -1157,12 +1176,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const totalMinutesThisWeek = weeklyData.reduce((sum, d) => sum + d.minutes, 0);
 
+      // Today's minutes
+      const todaySessions = sessions.filter(s => s.dateKey === today);
+      const minutesToday = Math.round(todaySessions.reduce((sum, s) => sum + (s.durationSeconds || 0), 0) / 60);
+
+      // Lifetime total minutes
+      const lifetimeMinutes = Math.round(sessions.reduce((sum, s) => sum + (s.durationSeconds || 0), 0) / 60);
+
+      // Category breakdown (by play count from affirmations)
+      const categoryBreakdown: { category: string; listens: number; minutes: number }[] = [];
+      const categoryMap = new Map<string, { listens: number; minutes: number }>();
+      
+      for (const aff of allAffirmations) {
+        const cat = aff.category || 'Uncategorized';
+        const existing = categoryMap.get(cat) || { listens: 0, minutes: 0 };
+        existing.listens += aff.playCount || 0;
+        // Estimate minutes based on duration
+        existing.minutes += Math.round(((aff.duration || 0) / 1000 / 60) * (aff.playCount || 0));
+        categoryMap.set(cat, existing);
+      }
+      
+      categoryMap.forEach((value, key) => {
+        categoryBreakdown.push({ category: key, ...value });
+      });
+      categoryBreakdown.sort((a, b) => b.listens - a.listens);
+
       res.json({
         totalListens,
         streak,
+        bestStreak,
         affirmationsCount: allAffirmations.length,
         weeklyData,
         totalMinutesThisWeek,
+        minutesToday,
+        lifetimeMinutes,
+        categoryBreakdown,
+        totalDaysActive: uniqueDates.length,
       });
     } catch (error) {
       console.error("Error fetching user stats:", error);

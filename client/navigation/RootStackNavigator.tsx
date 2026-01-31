@@ -6,6 +6,7 @@ import MainTabNavigator from "@/navigation/MainTabNavigator";
 import VoiceSetupScreen from "@/screens/VoiceSetupScreen";
 import CreateScreen from "@/screens/CreateScreen";
 import PlayerScreen from "@/screens/PlayerScreen";
+import AnalyticsScreen from "@/screens/AnalyticsScreen";
 import { AuthScreen } from "@/screens/AuthScreen";
 import { MiniPlayer } from "@/components/MiniPlayer";
 import { useScreenOptions } from "@/hooks/useScreenOptions";
@@ -18,6 +19,7 @@ export type RootStackParamList = {
   VoiceSetup: undefined;
   Create: undefined;
   Player: { affirmationId: number; isNew?: boolean };
+  Analytics: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -131,6 +133,14 @@ export default function RootStackNavigator() {
             headerTransparent: true,
             animation: "fade",
             animationDuration: 250,
+          }}
+        />
+        <Stack.Screen
+          name="Analytics"
+          component={AnalyticsScreen}
+          options={{
+            headerTitle: "Analytics",
+            animation: "slide_from_right",
           }}
         />
       </Stack.Navigator>

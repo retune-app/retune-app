@@ -1,225 +1,61 @@
 # Rewired
 
 ## Overview
-
-Rewired is a mobile app (React Native/Expo) that helps users rewire their subconscious mind through personalized audio affirmations. Users describe their goals, AI generates affirmation scripts, and the app uses voice cloning technology to play the affirmations back in the user's own voice. The app follows a "Serene Empowerment" design aesthetic that blends therapeutic tranquility with motivational energy.
+Rewired is a mobile application (React Native/Expo) designed to help users reprogram their subconscious mind through personalized audio affirmations. Users define their goals, and an AI generates affirmation scripts. The app then utilizes voice cloning technology to play these affirmations back in the user's own voice. The project aims to blend therapeutic tranquility with motivational energy, offering a "Serene Empowerment" aesthetic. The business vision is to provide an accessible and personalized tool for mental well-being and personal growth.
 
 ## User Preferences
-
 Preferred communication style: Simple, everyday language.
 
 ## System Architecture
 
-### Frontend (React Native + Expo)
-- **Framework**: Expo SDK 54 with React Native, targeting iOS, Android, and web
-- **Navigation**: React Navigation with native stack and bottom tabs (4 tabs: Library, Create +, Breathe, Profile)
-- **State Management**: TanStack Query for server state and caching
-- **Styling**: Custom theme system with light/dark mode support, Nunito font family
-- **Animations**: React Native Reanimated for fluid UI animations
-- **Audio**: expo-av for recording voice samples and playing affirmations
+### Core Technologies
+- **Frontend**: React Native with Expo SDK 54, targeting iOS, Android, and web.
+- **Backend**: Express 5 (Node.js) server.
+- **Database**: PostgreSQL with Drizzle ORM.
+- **State Management**: TanStack Query for server state and caching.
+- **Styling**: Custom theme system with light/dark mode and Nunito font family.
+- **Animations**: React Native Reanimated for fluid UI.
+- **Audio**: `expo-av` for recording and playback.
 
-### Backend (Express + Node.js)
-- **API Server**: Express 5 running on port 5000
-- **Database**: PostgreSQL with Drizzle ORM for schema management and queries
-- **File Uploads**: Multer for handling audio file uploads (voice samples)
-- **AI Integration**: OpenAI API for generating affirmation scripts from user goals
-- **Voice Cloning**: ElevenLabs API for cloning user voices and text-to-speech synthesis
+### Key Features
+- **Personalized Affirmations**: Users input goals, AI generates scripts, and voice cloning plays them in the user's voice.
+- **Audio Pipeline**: Involves user voice sample recording, ElevenLabs voice cloning, AI script generation, text-to-speech synthesis, and audio streaming.
+- **Global Audio Player**: A single-instance audio player with a MiniPlayer component for consistent playback control across the app.
+- **RSVP Mode**: Rapid Serial Visual Presentation of affirmation text, synchronized with audio playback, using word timing data from ElevenLabs.
+- **Breathing Mode**: A dedicated feature offering various breathing techniques (Box, 4-7-8, Coherent) with animated visuals, duration selection, and binaural beats integration.
+- **User Analytics**: Tracks listening sessions, streaks, and category breakdowns to provide insights into user progress.
+- **Authentication**: Session-based for web, token-based for mobile, secured with bcrypt and data isolation.
+- **Notification Settings**: Customizable daily reminder settings for affirmations.
+- **Voice Selection System**: Users can choose from various AI voices or clone their own voice, with preferences stored and manageable through a dedicated UI.
 
-### Key Data Models
-- **Users**: Basic auth with voice sample tracking and cloned voice ID storage
-- **Affirmations**: User-created affirmations with title, script text, audio URL, category, and play count
-- **Voice Samples**: Uploaded voice recordings used for voice cloning
-- **Categories**: Affirmation categories (Career, Health, Confidence, Wealth, Relationships, Sleep)
-- **Notification Settings**: Daily reminder settings with 3 time slots (morning, afternoon, evening) - each with enabled toggle and customizable time
-
-### Authentication
-- **Session-based auth**: Express-session with secure HTTP-only cookies (web)
-- **Token-based auth**: Database-backed auth tokens for mobile apps (X-Auth-Token header)
-- **Password hashing**: bcrypt with 12 salt rounds
-- **Data isolation**: All user data (affirmations, voice samples) is associated with user IDs
-- **Frontend AuthContext**: React context for auth state management with login, signup, logout functions
-- **Auth tokens table**: `auth_tokens` table stores persistent tokens for mobile auth across server restarts
-
-### API Endpoints
-
-#### Authentication
-- `POST /api/auth/signup` - Register new user (expects name, email, password)
-- `POST /api/auth/login` - Login user (expects email, password)
-- `POST /api/auth/logout` - Logout current user
-- `GET /api/auth/me` - Get current authenticated user
-
-#### Affirmations (all require auth)
-- `GET /api/affirmations` - List all affirmations
-- `GET /api/affirmations/:id` - Get single affirmation
-- `POST /api/affirmations/generate-script` - Generate AI script from goal
-- `POST /api/affirmations/create-with-voice` - Create affirmation with TTS audio
-- `POST /api/affirmations/samples` - Create sample affirmations with default voice (for new users)
-- `PATCH /api/affirmations/:id/favorite` - Toggle favorite status
-- `PATCH /api/affirmations/:id/rename` - Rename an affirmation (body: { title })
-- `DELETE /api/affirmations/:id` - Delete an affirmation
-- `POST /api/voice-samples` - Upload voice sample for cloning
-- `GET /api/voice-samples/status` - Check if user has a cloned voice
-- `GET /api/user/stats` - Get user statistics
-
-#### User Data Management (all require auth)
-- `POST /api/user/reset` - Reset all user data (affirmations, voice samples, cloned voice) while keeping account
-- `POST /api/user/account/delete` - Permanently delete user account and all associated data
-
-#### Notification Settings (all require auth)
-- `GET /api/notifications/settings` - Get current notification reminder settings
-- `PUT /api/notifications/settings` - Update notification settings (morningEnabled, morningTime, afternoonEnabled, afternoonTime, eveningEnabled, eveningTime)
-
-### Audio Pipeline
-1. User records 30-60 second voice sample during onboarding
-2. Sample uploaded to server and sent to ElevenLabs for voice cloning
-3. Cloned voice ID stored in database
-4. When creating affirmations, AI generates script from goal description
-5. Script synthesized to audio using cloned voice (or default voice)
-6. Audio stored and streamed for playback
-
-### Global Audio Player (AudioContext)
-- **AudioContext Provider**: Centralized audio state management wrapping the entire app
-- **Single-instance playback**: Only one affirmation can play at a time; starting new playback automatically stops previous
-- **MiniPlayer**: Floating bar above tab navigation showing current track with play/pause, progress, and tap-to-navigate
-- **State sharing**: All screens (HomeScreen, PlayerScreen) share playback state via useAudio hook
-- **Key files**: `client/contexts/AudioContext.tsx`, `client/components/MiniPlayer.tsx`
-
-### RSVP Mode (Rapid Serial Visual Presentation)
-- **Word-by-word display**: Shows one word at a time synchronized with audio playback
-- **Word timings from ElevenLabs**: Uses `/with-timestamps` endpoint to get character-level timing, parsed into word-level data
-- **Fallback timing**: For legacy affirmations without timestamps, generates approximate timing based on word length
-- **ORP highlighting**: Optional highlighting of Optimal Recognition Point (center letter of each word)
-- **Customizable settings**: Font size (S/M/L/XL), highlight toggle, RSVP on/off - all persisted to AsyncStorage
-- **Key files**: `client/components/RSVPDisplay.tsx`, `server/replit_integrations/elevenlabs/client.ts`
-
-## Screen Structure
-
-- **HomeScreen**: Library of affirmations with search and category filters
-- **CreateScreen**: Create new affirmation (AI Generate or Manual mode)
-- **PlayerScreen**: Audio player with waveform visualization, playback controls, and RSVP mode for synchronized word display
-- **VoiceSetupScreen**: Record voice sample for cloning (fullscreen modal)
-- **VoiceSettingsScreen**: Dedicated screen for voice preferences - toggle between personal/AI voice, select gender, browse and preview 21 available voices
-- **BreathingScreen**: Standalone breathing mode with 3 techniques, animated breathing circle, duration selector, and binaural beats integration
-- **ProfileScreen**: User settings, stats, simplified voice settings entry point
-- **AnalyticsScreen**: Detailed analytics with today's progress, streak details (current vs best), lifetime stats, weekly chart, and category breakdown
-
-### Breathing Mode System
-- **Standalone Tab**: 4th tab in bottom navigation with "wind" icon for easy access
-- **Breathing Techniques**: 
-  - Box Breathing (4-4-4-4): Focus and grounding with 4s inhale, 4s hold, 4s exhale, 4s hold
-  - 4-7-8 Relaxation: Sleep and anxiety relief with 4s inhale, 7s hold, 8s exhale
-  - Coherent Breathing (5-5): Heart coherence with 5s inhale, 5s exhale
-- **BreathingCircle Component**: Animated circle using React Native Reanimated that expands/contracts in sync with breath phases
-- **Duration Options**: 1, 3, 5, or 10 minute sessions with cycle tracking
-- **Audio Integration**: Uses existing BackgroundMusicContext for binaural beats during breathing
-- **Haptic Feedback**: Light haptic pulse on breath phase transitions (can be toggled)
-- **Pre-Affirmation Breathing**: QuickBreathingModal triggered from PlayerScreen's "Breathe First" button for 3 quick breaths before affirmations
-- **Key files**: `shared/breathingTechniques.ts`, `client/components/BreathingCircle.tsx`, `client/screens/BreathingScreen.tsx`, `client/components/QuickBreathingModal.tsx`
-
-### Analytics System
-- **Listening Sessions Table**: Tracks each completed listen with user ID, affirmation ID, duration, and date
-- **Streak Calculation**: Counts consecutive days with at least one listening session
-- **Best Streak**: Tracks the longest consecutive streak in user history
-- **Category Breakdown**: Shows which affirmation categories the user listens to most
-- **Weekly Chart**: Bar chart showing minutes listened each day for the past 7 days
-
-## Design System
-
-### Color Palette (Serene Empowerment Theme)
-- **Primary Gold**: #C9A227 - Main accent color for buttons, highlights, and interactive elements
-- **Navy Background**: #0F1C3F (dark mode), #1A2D4F (elevated), #243656 (secondary)
-- **White**: #FFFFFF - Text and light mode backgrounds
-- **Success Teal**: #50E3C2
-- **Typography**: Nunito font family (Regular, Medium, SemiBold, Bold)
-- **Border Radius**: Full rounded buttons and chips, rounded cards
-- **Note**: NO PURPLE, NO BLACK - Always use navy tones for dark backgrounds
-
-### UI Enhancement Components
-- **GoldShimmer.tsx**: Animated shimmer effect for gold elements
-- **BreathingPulse.tsx**: Subtle pulsing animation for active play buttons
-- **GradientCard.tsx**: Navy-to-gold gradient card overlays
-- **WelcomeSection.tsx**: Time-based welcome greetings with contextual affirmation suggestions (morning=Confidence, afternoon=Career, evening=Health, night=Sleep)
-- **AmbientSoundMixer.tsx**: Background sound selection UI (binaural beats: 432Hz, 528Hz, theta/alpha/delta/beta waves)
-- **ProgressVisualization.tsx**: Rich progress display with milestone levels (Seedling→Sprout→Sapling→Tree→Forest→Enlightened based on total listens: 10→25→50→100→250)
-
-### Haptic Feedback
-- Session completion: Success notification haptic when affirmation finishes
-- Play/pause toggle: Light impact haptic on playback control
-- Milestone achievement: Success notification when user levels up
-
-### Screen Transitions
-- Default: Fade animation (iOS) / fade_from_bottom (Android)
-- Modal screens: slide_from_bottom
-- PlayerScreen: fade with 250ms duration
+### UI/UX Design
+- **Theme**: "Serene Empowerment" with a color palette of Primary Gold (#C9A227) and Navy backgrounds (#0F1C3F, #1A2D4F, #243656).
+- **Typography**: Nunito font family.
+- **Components**: Includes `GoldShimmer`, `BreathingPulse`, `GradientCard`, `WelcomeSection`, `AmbientSoundMixer`, and `ProgressVisualization` for enhanced user experience.
+- **Haptic Feedback**: Integrated for key interactions and milestones.
+- **Screen Transitions**: Default fade for iOS, fade_from_bottom for Android, slide_from_bottom for modals.
 
 ## External Dependencies
 
 ### AI Services
-- **OpenAI API**: GPT-4o for generating affirmation scripts from user goals. Accessed via Replit AI Integrations connector.
-- **ElevenLabs API**: Voice cloning (Instant Voice Cloning) and text-to-speech synthesis. Accessed via Replit Connectors for credential management.
+- **OpenAI API**: Used for generating affirmation scripts.
+- **ElevenLabs API**: Used for voice cloning (Instant Voice Cloning) and text-to-speech synthesis.
 
 ### Database
-- **PostgreSQL**: Primary database provisioned through Replit. Connection via `DATABASE_URL` environment variable. Schema managed with Drizzle Kit.
+- **PostgreSQL**: The primary database, managed with Drizzle ORM.
 
 ### Key npm Packages
-- `expo-av`: Audio recording and playback
-- `expo-file-system`: File handling for audio uploads
-- `drizzle-orm` + `pg`: Database ORM and PostgreSQL driver
-- `multer`: Multipart form handling for file uploads
-- `elevenlabs`: Official ElevenLabs SDK
-- `@tanstack/react-query`: Data fetching and caching
-- `expo-linear-gradient`: Gradient backgrounds and buttons
+- `expo-av`: Audio recording and playback.
+- `expo-file-system`: File handling.
+- `drizzle-orm` + `pg`: Database ORM and driver.
+- `multer`: Multipart form data handling.
+- `elevenlabs`: Official ElevenLabs SDK.
+- `@tanstack/react-query`: Data fetching and caching.
+- `expo-linear-gradient`: Gradient backgrounds.
 
-### Web Compatibility
-- **PagerViewCompat**: Platform-specific wrapper component for `react-native-pager-view`
-  - `PagerViewCompat.web.tsx`: Simple View-based fallback for web (pager-view not supported on web)
-  - `PagerViewCompat.native.tsx`: Uses native react-native-pager-view for iOS/Android
-  - Used in CreateScreen for script history navigation
-
-### Environment Variables Required
-- `DATABASE_URL`: PostgreSQL connection string
-- `AI_INTEGRATIONS_OPENAI_API_KEY`: OpenAI API key via Replit
-- `AI_INTEGRATIONS_OPENAI_BASE_URL`: Replit AI proxy URL
-- `REPLIT_CONNECTORS_HOSTNAME`: For ElevenLabs credential fetching
-- `EXPO_PUBLIC_DOMAIN`: API server domain for mobile client
-
-### API URL Configuration
-The frontend uses `getApiUrl()` from `client/lib/query-client.ts` to determine the backend URL:
-- **Web on localhost**: Uses `http://localhost:5000` directly
-- **Web on Replit domain**: Uses `https://domain.replit.dev:5000` (port 5000 explicitly)
-- **Native apps (iOS/Android)**: Uses `https://domain.replit.dev:5000`
-
-This is necessary because Replit's port configuration maps port 80 to the Expo dev server (8081), while port 5000 routes to the Express backend.
-
-### Voice Selection System
-- **AI Voice Options**: Users can choose from 9 female and 12 male voices from ElevenLabs:
-  - Female voices: Sarah (default), Laura, Alice, Matilda, Jessica, Bella, Lily, Rachel (legacy), Charlotte (legacy)
-  - Male voices: Roger (default), Charlie, George, Liam, Will, Eric, Chris, Brian, Daniel, Adam, Bill, Antoni (legacy)
-- **Personal Voice**: Users can record their voice for cloning and use it for affirmations
-- **Voice Preferences**: User preferences stored in database (preferredVoiceType, preferredAiGender, preferredMaleVoiceId, preferredFemaleVoiceId)
-- **Profile Voice Settings**: Voice selection UI in ProfileScreen shows voice cards for current gender preference
-- **Voice Preview**: Auto-plays when selecting a voice
-  - Preview phrase: "I am strong, capable, and worthy of success."
-  - Tapping a voice card selects it AND plays the preview automatically
-  - Volume icon appears next to voice name while playing
-  - Tapping already-selected voice toggles preview playback
-- **API Endpoints**:
-  - GET /api/voices - Returns available voice options
-  - GET /api/voice-preferences - Get user's voice preferences
-  - PUT /api/voice-preferences - Update voice preferences (voiceType, gender, or specific voice IDs)
-  - POST /api/voices/preview - Generate voice preview audio (body: { voiceId }, returns base64 audio)
-  - POST /api/affirmations/:id/regenerate-voice - Regenerate audio with different voice
-
-### Default Voice for New Users
-- Users can skip voice setup and immediately use sample affirmations
-- Default ElevenLabs voice: "Rachel" (voiceId: 21m00Tcm4TlvDq8ikWAM)
-- POST /api/affirmations/samples creates 3 starter affirmations:
-  - "Morning Confidence" (Confidence category)
-  - "Abundance Mindset" (Wealth category)
-  - "Inner Peace" (Health category)
-
-## Development Commands
-- `npm run dev` - Start both frontend and backend
-- `npm run server:dev` - Start backend only
-- `npm run expo:dev` - Start Expo dev server
-- `npm run db:push` - Push schema changes to database
+### Environment Variables
+- `DATABASE_URL`
+- `AI_INTEGRATIONS_OPENAI_API_KEY`
+- `AI_INTEGRATIONS_OPENAI_BASE_URL`
+- `REPLIT_CONNECTORS_HOSTNAME`
+- `EXPO_PUBLIC_DOMAIN`

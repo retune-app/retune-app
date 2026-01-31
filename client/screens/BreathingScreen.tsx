@@ -693,23 +693,6 @@ export default function BreathingScreen() {
           )}
         </Animated.View>
 
-        {/* Current Affirmation Preview */}
-        {backgroundAffirmation && !isPlaying ? (
-          <Animated.View 
-            entering={FadeIn.delay(800).duration(600)}
-            style={[styles.affirmationPreview, { backgroundColor: theme.cardBackground }]}
-          >
-            <View style={styles.affirmationPreviewHeader}>
-              <Feather name="book-open" size={16} color={ACCENT_GOLD} />
-              <ThemedText type="caption" style={{ marginLeft: Spacing.sm, color: theme.textSecondary }}>
-                Current Affirmation
-              </ThemedText>
-            </View>
-            <ThemedText type="body" numberOfLines={2} style={styles.affirmationPreviewText}>
-              {backgroundAffirmation.title}
-            </ThemedText>
-          </Animated.View>
-        ) : null}
       </ScrollView>
 
       {/* Technique Selection Modal */}
@@ -957,21 +940,6 @@ const styles = StyleSheet.create({
     borderRadius: 36,
     alignItems: "center",
     justifyContent: "center",
-  },
-
-  // Affirmation Preview
-  affirmationPreview: {
-    marginTop: Spacing.xl,
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.lg,
-  },
-  affirmationPreviewHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: Spacing.sm,
-  },
-  affirmationPreviewText: {
-    fontWeight: "500",
   },
 
   // Modal Styles

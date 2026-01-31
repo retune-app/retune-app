@@ -131,7 +131,7 @@ export function ProgressVisualization({
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               <Feather name="wind" size={10} color={theme.textSecondary} style={{ marginRight: 3 }} />
               <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                breaths
+                breath sessions
               </ThemedText>
             </View>
           </View>
@@ -170,9 +170,9 @@ export function ProgressVisualization({
       </View>
 
       <View style={[styles.weeklyCard, { backgroundColor: theme.backgroundSecondary }]}>
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Feather name="wind" size={14} color={theme.textSecondary} style={{ marginRight: 6 }} />
-          <ThemedText type="small" style={[styles.weeklyTitle, { color: theme.textSecondary }]}>
+        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: Spacing.md }}>
+          <Feather name="wind" size={14} color={theme.textSecondary} style={{ marginRight: 6, marginTop: 1 }} />
+          <ThemedText type="small" style={{ color: theme.textSecondary, fontWeight: "600" }}>
             Breathing This Week
           </ThemedText>
         </View>

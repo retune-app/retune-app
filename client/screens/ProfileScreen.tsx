@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import { View, StyleSheet, Pressable, Switch, Text, Modal, ActivityIndicator, ImageBackground, TextInput, Alert, Platform } from "react-native";
-import { Audio } from "expo-av";
 
 const profileBackgroundDark = require("../../assets/images/library-background.png");
 const profileBackgroundLight = require("../../assets/images/library-background-light.png");
@@ -71,9 +70,10 @@ interface SettingItemProps {
   onPress?: () => void;
   showArrow?: boolean;
   rightElement?: React.ReactNode;
+  testID?: string;
 }
 
-function SettingItem({ icon, label, value, onPress, showArrow = true, rightElement }: SettingItemProps) {
+function SettingItem({ icon, label, value, onPress, showArrow = true, rightElement, testID }: SettingItemProps) {
   const { theme } = useTheme();
 
   return (
@@ -83,6 +83,7 @@ function SettingItem({ icon, label, value, onPress, showArrow = true, rightEleme
         styles.settingItem,
         { backgroundColor: pressed ? theme.backgroundSecondary : "transparent" },
       ]}
+      testID={testID}
     >
       <View style={[styles.settingIcon, { backgroundColor: theme.backgroundSecondary }]}>
         <Feather name={icon} size={20} color={theme.primary} />
@@ -122,10 +123,6 @@ export default function ProfileScreen() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState("");
   const nameInputRef = useRef<TextInput>(null);
-  const [previewingVoiceId, setPreviewingVoiceId] = useState<string | null>(null);
-  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
-  const previewSoundRef = useRef<Audio.Sound | null>(null);
-
   const { data: stats } = useQuery({
     queryKey: ["/api/user/stats"],
   });
@@ -143,114 +140,6 @@ export default function ProfileScreen() {
   const { data: voiceOptions } = useQuery<VoiceOptions>({
     queryKey: ["/api/voices"],
   });
-
-  // Voice preferences mutation
-  const updateVoicePreferences = useMutation({
-    mutationFn: async (updates: { 
-      preferredVoiceType?: VoiceType; 
-      preferredAiGender?: VoiceGender;
-      preferredMaleVoiceId?: string;
-      preferredFemaleVoiceId?: string;
-    }) => {
-      await apiRequest("PUT", "/api/voice-preferences", updates);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/voice-preferences"] });
-      try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
-    },
-  });
-
-  const handleVoiceTypeChange = (type: VoiceType) => {
-    // Always update the preference - user can express intent even if voice not set up yet
-    updateVoicePreferences.mutate({ preferredVoiceType: type });
-    
-    // If selecting personal voice but none is recorded, prompt to set up
-    if (type === "personal" && !voicePreferences?.hasPersonalVoice) {
-      navigation.navigate("VoiceSetup");
-    }
-  };
-
-  const handleVoiceGenderChange = (gender: VoiceGender) => {
-    updateVoicePreferences.mutate({ preferredAiGender: gender });
-  };
-
-  const handleVoicePreview = async (voiceId: string) => {
-    try {
-      if (previewingVoiceId === voiceId) {
-        if (previewSoundRef.current) {
-          await previewSoundRef.current.stopAsync();
-          await previewSoundRef.current.unloadAsync();
-          previewSoundRef.current = null;
-        }
-        setPreviewingVoiceId(null);
-        return;
-      }
-
-      if (previewSoundRef.current) {
-        await previewSoundRef.current.stopAsync();
-        await previewSoundRef.current.unloadAsync();
-        previewSoundRef.current = null;
-      }
-
-      setIsPreviewLoading(true);
-      setPreviewingVoiceId(voiceId);
-      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
-
-      const token = await getAuthToken();
-      const response = await fetch(
-        new URL("/api/voices/preview", getApiUrl()).toString(),
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { "X-Auth-Token": token } : {}),
-          },
-          body: JSON.stringify({ voiceId }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to generate preview");
-      }
-
-      const data = await response.json();
-      const audioUri = `data:audio/mpeg;base64,${data.audio}`;
-      
-      await Audio.setAudioModeAsync({
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: false,
-      });
-
-      const { sound } = await Audio.Sound.createAsync(
-        { uri: audioUri },
-        { shouldPlay: true }
-      );
-      
-      previewSoundRef.current = sound;
-      setIsPreviewLoading(false);
-
-      sound.setOnPlaybackStatusUpdate((status) => {
-        if (status.isLoaded && status.didJustFinish) {
-          setPreviewingVoiceId(null);
-          sound.unloadAsync();
-          previewSoundRef.current = null;
-        }
-      });
-    } catch (error) {
-      console.error("Voice preview error:", error);
-      setIsPreviewLoading(false);
-      setPreviewingVoiceId(null);
-      Alert.alert("Preview Error", "Could not play voice preview. Please try again.");
-    }
-  };
-
-  useEffect(() => {
-    return () => {
-      if (previewSoundRef.current) {
-        previewSoundRef.current.unloadAsync();
-      }
-    };
-  }, []);
 
   const deleteCategoryMutation = useMutation({
     mutationFn: async (id: number) => {
@@ -408,6 +297,25 @@ export default function ProfileScreen() {
     }
   };
 
+  const getCurrentVoiceLabel = () => {
+    if (voicePreferences?.preferredVoiceType === "personal" && voicePreferences?.hasPersonalVoice) {
+      return "Using your personal voice";
+    }
+    
+    const gender = voicePreferences?.preferredAiGender || "female";
+    const voices = gender === "male" ? voiceOptions?.male : voiceOptions?.female;
+    const selectedId = gender === "male" 
+      ? voicePreferences?.preferredMaleVoiceId 
+      : voicePreferences?.preferredFemaleVoiceId;
+    
+    const selectedVoice = voices?.find(v => v.id === selectedId);
+    if (selectedVoice) {
+      return `${selectedVoice.name} (${gender === "male" ? "Male" : "Female"})`;
+    }
+    
+    return "AI Voice";
+  };
+
   return (
     <ImageBackground
       source={isDark ? profileBackgroundDark : profileBackgroundLight}
@@ -505,197 +413,12 @@ export default function ProfileScreen() {
           VOICE PREFERENCES
         </ThemedText>
         <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
-          {/* Voice Type Selection */}
-          <View style={styles.voicePreferenceSection}>
-            <ThemedText type="body" style={styles.voicePreferenceLabel}>
-              Default Voice
-            </ThemedText>
-            <View style={styles.voiceToggleContainer}>
-              {/* My Voice - Left */}
-              <Pressable
-                onPress={() => handleVoiceTypeChange("personal")}
-                style={[
-                  styles.voiceToggleButton,
-                  { 
-                    backgroundColor: voicePreferences?.preferredVoiceType === "personal" 
-                      ? ACCENT_GOLD 
-                      : theme.backgroundSecondary,
-                    borderColor: voicePreferences?.hasPersonalVoice ? ACCENT_GOLD : theme.border,
-                  },
-                ]}
-                testID="button-voice-personal"
-              >
-                <Feather 
-                  name="user" 
-                  size={16} 
-                  color={voicePreferences?.preferredVoiceType === "personal" ? "#FFFFFF" : theme.text} 
-                />
-                <View style={styles.voiceButtonTextContainer}>
-                  <Text style={[
-                    styles.voiceToggleText,
-                    { color: voicePreferences?.preferredVoiceType === "personal" ? "#FFFFFF" : theme.text }
-                  ]}>
-                    My Voice
-                  </Text>
-                  {!voicePreferences?.hasPersonalVoice ? (
-                    <Text style={[
-                      styles.voiceNotSetupText,
-                      { color: voicePreferences?.preferredVoiceType === "personal" ? "rgba(255,255,255,0.7)" : theme.textSecondary }
-                    ]}>
-                      (not set up)
-                    </Text>
-                  ) : null}
-                </View>
-              </Pressable>
-              {/* AI Voice - Right */}
-              <Pressable
-                onPress={() => handleVoiceTypeChange("ai")}
-                style={[
-                  styles.voiceToggleButton,
-                  { 
-                    backgroundColor: voicePreferences?.preferredVoiceType === "ai" || !voicePreferences?.preferredVoiceType 
-                      ? ACCENT_GOLD 
-                      : theme.backgroundSecondary,
-                    borderColor: ACCENT_GOLD,
-                  },
-                ]}
-                testID="button-voice-ai"
-              >
-                <Feather 
-                  name="cpu" 
-                  size={16} 
-                  color={voicePreferences?.preferredVoiceType === "ai" || !voicePreferences?.preferredVoiceType 
-                    ? "#FFFFFF" 
-                    : theme.text} 
-                />
-                <Text style={[
-                  styles.voiceToggleText,
-                  { color: voicePreferences?.preferredVoiceType === "ai" || !voicePreferences?.preferredVoiceType 
-                    ? "#FFFFFF" 
-                    : theme.text }
-                ]}>AI Voice</Text>
-              </Pressable>
-            </View>
-          </View>
-
-          {/* AI Voice Selection - only show when AI voice is selected */}
-          {(voicePreferences?.preferredVoiceType === "ai" || !voicePreferences?.preferredVoiceType) ? (
-            <View style={[styles.voicePreferenceSection, { borderTopWidth: 1, borderTopColor: theme.border }]}>
-              {/* Gender Toggle */}
-              <ThemedText type="body" style={styles.voicePreferenceLabel}>
-                Voice Gender
-              </ThemedText>
-              <View style={styles.voiceToggleContainer}>
-                <Pressable
-                  onPress={() => handleVoiceGenderChange("female")}
-                  style={[
-                    styles.voiceGenderButton,
-                    { 
-                      backgroundColor: voicePreferences?.preferredAiGender === "female" || !voicePreferences?.preferredAiGender
-                        ? ACCENT_GOLD 
-                        : theme.backgroundSecondary,
-                      borderColor: ACCENT_GOLD,
-                    },
-                  ]}
-                  testID="button-gender-female"
-                >
-                  <Text style={[
-                    styles.voiceToggleText,
-                    { color: voicePreferences?.preferredAiGender === "female" || !voicePreferences?.preferredAiGender
-                      ? "#FFFFFF" 
-                      : theme.text }
-                  ]}>Female</Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => handleVoiceGenderChange("male")}
-                  style={[
-                    styles.voiceGenderButton,
-                    { 
-                      backgroundColor: voicePreferences?.preferredAiGender === "male" 
-                        ? ACCENT_GOLD 
-                        : theme.backgroundSecondary,
-                      borderColor: ACCENT_GOLD,
-                    },
-                  ]}
-                  testID="button-gender-male"
-                >
-                  <Text style={[
-                    styles.voiceToggleText,
-                    { color: voicePreferences?.preferredAiGender === "male" ? "#FFFFFF" : theme.text }
-                  ]}>Male</Text>
-                </Pressable>
-              </View>
-
-              {/* Voice Selection Cards */}
-              <ThemedText type="body" style={[styles.voicePreferenceLabel, { marginTop: Spacing.lg }]}>
-                Select Voice
-              </ThemedText>
-              <View style={styles.voiceCardsContainer}>
-                {(voicePreferences?.preferredAiGender === "male" ? voiceOptions?.male : voiceOptions?.female)?.map((voice) => {
-                  const isSelected = voicePreferences?.preferredAiGender === "male"
-                    ? voicePreferences?.preferredMaleVoiceId === voice.id
-                    : voicePreferences?.preferredFemaleVoiceId === voice.id;
-                  const isPlaying = previewingVoiceId === voice.id;
-                  const isLoading = isPreviewLoading && previewingVoiceId === voice.id;
-                  
-                  return (
-                    <Pressable
-                      key={voice.id}
-                      onPress={() => {
-                        if (!isSelected) {
-                          if (voicePreferences?.preferredAiGender === "male") {
-                            updateVoicePreferences.mutate({ preferredMaleVoiceId: voice.id });
-                          } else {
-                            updateVoicePreferences.mutate({ preferredFemaleVoiceId: voice.id });
-                          }
-                        }
-                        handleVoicePreview(voice.id);
-                      }}
-                      style={[
-                        styles.voiceCard,
-                        { 
-                          backgroundColor: isSelected ? ACCENT_GOLD + "20" : theme.backgroundSecondary,
-                          borderColor: isSelected ? ACCENT_GOLD : theme.border,
-                          borderWidth: isSelected ? 2 : 1,
-                        },
-                      ]}
-                      testID={`voice-card-${voice.id}`}
-                    >
-                      <View style={styles.voiceCardContent}>
-                        <View style={styles.voiceCardNameRow}>
-                          <ThemedText type="body" style={[{ fontWeight: "600" }, isSelected ? { color: ACCENT_GOLD } : undefined]}>
-                            {voice.name}
-                          </ThemedText>
-                          {isLoading ? (
-                            <ActivityIndicator size="small" color={ACCENT_GOLD} style={{ marginLeft: Spacing.sm }} />
-                          ) : isPlaying ? (
-                            <Feather name="volume-2" size={16} color={ACCENT_GOLD} style={{ marginLeft: Spacing.sm }} />
-                          ) : null}
-                        </View>
-                        <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                          {voice.description}
-                        </ThemedText>
-                      </View>
-                      {isSelected ? (
-                        <View style={[styles.voiceCardCheck, { backgroundColor: ACCENT_GOLD }]}>
-                          <Feather name="check" size={14} color="#FFFFFF" />
-                        </View>
-                      ) : null}
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-          ) : null}
-        </View>
-
-        {/* Voice Sample Card */}
-        <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground, marginTop: Spacing.md }, Shadows.small]}>
           <SettingItem
             icon="mic"
-            label="Voice Sample"
-            value={voicePreferences?.hasPersonalVoice ? "Re-record your voice" : "Record your voice for personalized affirmations"}
-            onPress={handleVoiceSetup}
+            label="Voice Settings"
+            value={getCurrentVoiceLabel()}
+            onPress={() => navigation.navigate("VoiceSettings")}
+            testID="button-voice-settings"
           />
         </View>
       </View>

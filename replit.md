@@ -29,10 +29,18 @@ Preferred communication style: Simple, everyday language.
 - **Notification Settings**: Customizable daily reminder settings for affirmations.
 - **Voice Selection System**: Users can choose from various AI voices or clone their own voice, with preferences stored and manageable through a dedicated UI.
 
+### Navigation Structure
+- **2-Tab Navigation**: Breathe (left), Affirm (right) with middle Create (+) button
+- **Settings Access**: Floating settings button (gear icon) on Breathe and Affirm screens, positioned bottom-right above tab bar
+- **Affirmation Selection**: Swipe left on affirmation cards to "Set for Breathing" - persisted in AsyncStorage with key `@breathing/selectedAffirmation`
+- **Breathing Priority**: Selected breathing affirmation takes precedence over time-based suggestions
+
 ### UI/UX Design
 - **Theme**: "Serene Empowerment" with a color palette of Primary Gold (#C9A227) and Navy backgrounds (#0F1C3F, #1A2D4F, #243656).
+- **Color Hierarchy**: Gold (#C9A227) for breathing metrics, Purple (#9C27B0) for affirmation metrics.
 - **Typography**: Nunito font family.
-- **Components**: Includes `GoldShimmer`, `BreathingPulse`, `GradientCard`, `WelcomeSection`, `AmbientSoundMixer`, and `ProgressVisualization` for enhanced user experience.
+- **Components**: Includes `GoldShimmer`, `BreathingPulse`, `GradientCard`, `WelcomeSection`, `AmbientSoundMixer`, `ProgressVisualization`, `FloatingSettingsButton`, `SwipeableAffirmationCard`, and `MiniPlayer` for enhanced user experience.
+- **Mini Player**: Compact pill-shaped design with blur effect, waveform indicator when playing, positioned 94px + insets.bottom from screen bottom.
 - **Haptic Feedback**: Integrated for key interactions and milestones.
 - **Screen Transitions**: Default fade for iOS, fade_from_bottom for Android, slide_from_bottom for modals.
 

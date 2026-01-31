@@ -20,9 +20,22 @@ const AUTO_REPLAY_KEY = "@settings/autoReplay";
 type VoiceType = "personal" | "ai";
 type VoiceGender = "male" | "female";
 
+interface VoiceOption {
+  id: string;
+  name: string;
+  description: string;
+}
+
+interface VoiceOptions {
+  female: VoiceOption[];
+  male: VoiceOption[];
+}
+
 interface VoicePreferences {
   preferredVoiceType: VoiceType;
   preferredAiGender: VoiceGender;
+  preferredMaleVoiceId: string;
+  preferredFemaleVoiceId: string;
   hasPersonalVoice: boolean;
 }
 
@@ -119,9 +132,19 @@ export default function ProfileScreen() {
     queryKey: ["/api/voice-preferences"],
   });
 
+  // Available voices query
+  const { data: voiceOptions } = useQuery<VoiceOptions>({
+    queryKey: ["/api/voices"],
+  });
+
   // Voice preferences mutation
   const updateVoicePreferences = useMutation({
-    mutationFn: async (updates: { preferredVoiceType?: VoiceType; preferredAiGender?: VoiceGender }) => {
+    mutationFn: async (updates: { 
+      preferredVoiceType?: VoiceType; 
+      preferredAiGender?: VoiceGender;
+      preferredMaleVoiceId?: string;
+      preferredFemaleVoiceId?: string;
+    }) => {
       await apiRequest("PUT", "/api/voice-preferences", updates);
     },
     onSuccess: () => {
@@ -454,11 +477,12 @@ export default function ProfileScreen() {
             </View>
           </View>
 
-          {/* AI Gender Selection - only show when AI voice is selected */}
+          {/* AI Voice Selection - only show when AI voice is selected */}
           {(voicePreferences?.preferredVoiceType === "ai" || !voicePreferences?.preferredVoiceType) ? (
             <View style={[styles.voicePreferenceSection, { borderTopWidth: 1, borderTopColor: theme.border }]}>
+              {/* Gender Toggle */}
               <ThemedText type="body" style={styles.voicePreferenceLabel}>
-                AI Voice Gender
+                Voice Gender
               </ThemedText>
               <View style={styles.voiceToggleContainer}>
                 <Pressable
@@ -500,11 +524,54 @@ export default function ProfileScreen() {
                   ]}>Male</Text>
                 </Pressable>
               </View>
-              <ThemedText type="caption" style={[styles.voiceGenderHint, { color: theme.textSecondary }]}>
-                {voicePreferences?.preferredAiGender === "male" 
-                  ? "Adam - calm, deep voice" 
-                  : "Rachel - soft, warm voice"}
+
+              {/* Voice Selection Cards */}
+              <ThemedText type="body" style={[styles.voicePreferenceLabel, { marginTop: Spacing.lg }]}>
+                Select Voice
               </ThemedText>
+              <View style={styles.voiceCardsContainer}>
+                {(voicePreferences?.preferredAiGender === "male" ? voiceOptions?.male : voiceOptions?.female)?.map((voice) => {
+                  const isSelected = voicePreferences?.preferredAiGender === "male"
+                    ? voicePreferences?.preferredMaleVoiceId === voice.id
+                    : voicePreferences?.preferredFemaleVoiceId === voice.id;
+                  
+                  return (
+                    <Pressable
+                      key={voice.id}
+                      onPress={() => {
+                        if (voicePreferences?.preferredAiGender === "male") {
+                          updateVoicePreferences.mutate({ preferredMaleVoiceId: voice.id });
+                        } else {
+                          updateVoicePreferences.mutate({ preferredFemaleVoiceId: voice.id });
+                        }
+                      }}
+                      style={[
+                        styles.voiceCard,
+                        { 
+                          backgroundColor: isSelected ? theme.primary + "20" : theme.backgroundSecondary,
+                          borderColor: isSelected ? theme.primary : theme.border,
+                          borderWidth: isSelected ? 2 : 1,
+                        },
+                      ]}
+                      testID={`voice-card-${voice.id}`}
+                    >
+                      <View style={styles.voiceCardContent}>
+                        <ThemedText type="bodyBold" style={isSelected ? { color: theme.primary } : undefined}>
+                          {voice.name}
+                        </ThemedText>
+                        <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                          {voice.description}
+                        </ThemedText>
+                      </View>
+                      {isSelected ? (
+                        <View style={[styles.voiceCardCheck, { backgroundColor: theme.primary }]}>
+                          <Feather name="check" size={14} color="#FFFFFF" />
+                        </View>
+                      ) : null}
+                    </Pressable>
+                  );
+                })}
+              </View>
             </View>
           ) : null}
         </View>
@@ -1357,5 +1424,25 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
     textAlign: "center",
     fontStyle: "italic",
+  },
+  voiceCardsContainer: {
+    gap: Spacing.sm,
+  },
+  voiceCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+  },
+  voiceCardContent: {
+    flex: 1,
+    gap: 2,
+  },
+  voiceCardCheck: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

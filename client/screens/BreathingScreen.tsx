@@ -32,6 +32,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import BreathingCircle from "@/components/BreathingCircle";
 import { WelcomeSection } from "@/components/WelcomeSection";
+import { FocusTimer } from "@/components/FocusTimer";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAudio } from "@/contexts/AudioContext";
@@ -73,8 +74,10 @@ export default function BreathingScreen() {
   const [isLandscape, setIsLandscape] = useState(false);
   const [showLandscapeMode, setShowLandscapeMode] = useState(false);
   const [audioSource, setAudioSource] = useState<'none' | 'music' | 'affirmation'>('none');
+  const [showFocusTimer, setShowFocusTimer] = useState(false);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const sessionCompletedNaturally = useRef(false);
   const affirmationSoundRef = useRef<Audio.Sound | null>(null);
 
   // Fetch affirmations for background display
@@ -232,6 +235,7 @@ export default function BreathingScreen() {
       timerRef.current = setInterval(() => {
         setElapsedTime((prev) => {
           if (prev >= selectedDuration - 1) {
+            sessionCompletedNaturally.current = true;
             handleStop();
             return 0;
           }
@@ -288,18 +292,46 @@ export default function BreathingScreen() {
   };
 
   const handleStop = async () => {
+    const wasNaturalCompletion = sessionCompletedNaturally.current;
+    sessionCompletedNaturally.current = false;
+    
     setIsPlaying(false);
     setElapsedTime(0);
     setCyclesCompleted(0);
     setShowLandscapeMode(false);
     try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
     
+    if (wasNaturalCompletion) {
+      setShowFocusTimer(true);
+    } else {
+      if (isMusicPlaying) {
+        await stopBackgroundMusic();
+      }
+      if (audioSource === 'affirmation') {
+        await stopAffirmationLoop();
+      }
+    }
+  };
+
+  const handleFocusTimerClose = async () => {
+    setShowFocusTimer(false);
     if (isMusicPlaying) {
       await stopBackgroundMusic();
     }
     if (audioSource === 'affirmation') {
       await stopAffirmationLoop();
     }
+  };
+
+  const handleFocusTimerComplete = async (minutes: number) => {
+    setShowFocusTimer(false);
+    if (isMusicPlaying) {
+      await stopBackgroundMusic();
+    }
+    if (audioSource === 'affirmation') {
+      await stopAffirmationLoop();
+    }
+    try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
   };
 
   const handleCycleComplete = () => {
@@ -757,6 +789,14 @@ export default function BreathingScreen() {
           </View>
         </Pressable>
       </Modal>
+
+      {/* Focus Timer Modal */}
+      <FocusTimer
+        visible={showFocusTimer}
+        onClose={handleFocusTimerClose}
+        onComplete={handleFocusTimerComplete}
+        continueAudio={audioSource !== 'none'}
+      />
     </ThemedView>
   );
 }

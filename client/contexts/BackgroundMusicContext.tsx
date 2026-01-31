@@ -108,11 +108,34 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
     setSelectedMusicState(type);
     await AsyncStorage.setItem(STORAGE_KEY, type);
     
-    if (isPlaying) {
-      await stopBackgroundMusic();
-      if (type !== 'none') {
-        await startBackgroundMusic();
+    // Stop current music first
+    if (soundRef.current) {
+      await soundRef.current.stopAsync();
+      await soundRef.current.unloadAsync();
+      soundRef.current = null;
+    }
+    
+    // Start playing the new sound immediately if it's not 'none'
+    if (type !== 'none') {
+      try {
+        console.log('Loading and playing sound:', type);
+        const { sound } = await Audio.Sound.createAsync(
+          AUDIO_FILES[type],
+          {
+            isLooping: true,
+            volume: volume,
+            shouldPlay: true,
+          }
+        );
+        soundRef.current = sound;
+        setIsPlaying(true);
+        console.log('Sound started playing:', type);
+      } catch (error) {
+        console.error('Error starting sound:', error);
+        setIsPlaying(false);
       }
+    } else {
+      setIsPlaying(false);
     }
   };
 

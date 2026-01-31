@@ -10,7 +10,6 @@ import CreateScreen from "@/screens/CreateScreen";
 import PlayerScreen from "@/screens/PlayerScreen";
 import AnalyticsScreen from "@/screens/AnalyticsScreen";
 import { AuthScreen } from "@/screens/AuthScreen";
-import { MiniPlayer } from "@/components/MiniPlayer";
 import { useScreenOptions } from "@/hooks/useScreenOptions";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/hooks/useTheme";
@@ -28,20 +27,6 @@ export type RootStackParamList = {
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-function MiniPlayerWrapper({ currentRoute }: { currentRoute: string }) {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  
-  const handleNavigateToPlayer = useCallback((affirmationId: number) => {
-    navigation.navigate('Player', { affirmationId, isNew: false });
-  }, [navigation]);
-  
-  return (
-    <MiniPlayer 
-      currentRoute={currentRoute} 
-      onNavigateToPlayer={handleNavigateToPlayer}
-    />
-  );
-}
 
 function VoiceSetupNavigator() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -175,7 +160,6 @@ export default function RootStackNavigator() {
         />
       </Stack.Navigator>
       <VoiceSetupNavigator />
-      <MiniPlayerWrapper currentRoute={currentRoute} />
     </View>
   );
 }

@@ -20,7 +20,7 @@ const CATEGORY_INFO = {
   nature: {
     title: "Nature Sounds",
     subtitle: "Immerse yourself in peaceful natural environments",
-    emoji: "leaf",
+    emoji: "cloud-rain",
     color: "#4CAF50",
   },
   binaural: {

@@ -440,6 +440,28 @@ export default function ProfileScreen() {
 
       <View style={styles.section}>
         <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+          AFFIRMATION PLAYBACK
+        </ThemedText>
+        <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
+          <SettingItem
+            icon="repeat"
+            label="Auto-Replay"
+            value={autoReplayEnabled ? "Affirmations loop automatically" : "Play once then stop"}
+            showArrow={false}
+            rightElement={
+              <Switch
+                value={autoReplayEnabled}
+                onValueChange={handleToggleAutoReplay}
+                trackColor={{ false: theme.border, true: ACCENT_GOLD + "80" }}
+                thumbColor={autoReplayEnabled ? ACCENT_GOLD : theme.textSecondary}
+              />
+            }
+          />
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
           DAILY REMINDERS
         </ThemedText>
         <ReminderSettings />
@@ -485,28 +507,6 @@ export default function ProfileScreen() {
         <ThemedText type="caption" style={[styles.categoryCount, { color: theme.textSecondary }]}>
           {customCategories.length} of 5 custom categories used
         </ThemedText>
-      </View>
-
-      <View style={styles.section}>
-        <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-          PLAYBACK
-        </ThemedText>
-        <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
-          <SettingItem
-            icon="repeat"
-            label="Auto-Replay"
-            value={autoReplayEnabled ? "Affirmations loop automatically" : "Play once then stop"}
-            showArrow={false}
-            rightElement={
-              <Switch
-                value={autoReplayEnabled}
-                onValueChange={handleToggleAutoReplay}
-                trackColor={{ false: theme.border, true: ACCENT_GOLD + "80" }}
-                thumbColor={autoReplayEnabled ? ACCENT_GOLD : theme.textSecondary}
-              />
-            }
-          />
-        </View>
       </View>
 
       <View style={styles.section}>

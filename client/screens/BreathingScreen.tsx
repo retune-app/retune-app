@@ -443,6 +443,21 @@ export default function BreathingScreen() {
           />
         </Animated.View>
 
+        {/* Maximize Button - Below greeting on left */}
+        {!isPlaying ? (
+          <Animated.View 
+            entering={FadeIn.delay(300).duration(400)}
+            style={styles.inlineMaximizeButton}
+          >
+            <Pressable 
+              onPress={enterFullscreen} 
+              style={[styles.fullscreenButton, { backgroundColor: theme.backgroundSecondary }, Shadows.medium]}
+            >
+              <Feather name="maximize-2" size={20} color={theme.text} />
+            </Pressable>
+          </Animated.View>
+        ) : null}
+
         {/* Breathing Circle - Hero Element */}
         <Animated.View 
           entering={FadeIn.delay(200).duration(800)} 
@@ -476,6 +491,25 @@ export default function BreathingScreen() {
             </View>
           ) : null}
         </Animated.View>
+
+        {/* Play Button - Above Box Breathing on right */}
+        {!isPlaying ? (
+          <Animated.View 
+            entering={FadeIn.delay(350).duration(400)}
+            style={styles.inlinePlayButton}
+          >
+            <Pressable onPress={handleStart} testID="button-start-breathing">
+              <LinearGradient
+                colors={[selectedTechnique.color, `${selectedTechnique.color}CC`]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[styles.floatingStartButton, Shadows.large]}
+              >
+                <Feather name="play" size={24} color="#FFFFFF" />
+              </LinearGradient>
+            </Pressable>
+          </Animated.View>
+        ) : null}
 
         {/* Technique Selector Card */}
         {!isPlaying ? (
@@ -637,38 +671,12 @@ export default function BreathingScreen() {
 
       </ScrollView>
 
-      {/* Floating Maximize Button - Top Right Corner */}
-      {!isPlaying ? (
+      {/* Floating Playing Controls - Only visible when breathing is active */}
+      {isPlaying ? (
         <Animated.View 
-          entering={FadeIn.delay(400).duration(400)}
-          style={[styles.floatingMaximizeButton, { top: insets.top + Spacing.lg }]}
+          entering={FadeIn.duration(400)} 
+          style={[styles.floatingControlSection, { bottom: insets.bottom + 160 }]}
         >
-          <Pressable 
-            onPress={enterFullscreen} 
-            style={[styles.fullscreenButton, { backgroundColor: theme.backgroundSecondary }, Shadows.medium]}
-          >
-            <Feather name="maximize-2" size={20} color={theme.text} />
-          </Pressable>
-        </Animated.View>
-      ) : null}
-
-      {/* Floating Control Buttons - Bottom Right Corner above mini player */}
-      <Animated.View 
-        entering={FadeIn.delay(600).duration(600)} 
-        style={[styles.floatingControlSection, { bottom: insets.bottom + 160 }]}
-      >
-        {!isPlaying ? (
-          <Pressable onPress={handleStart} testID="button-start-breathing">
-            <LinearGradient
-              colors={[selectedTechnique.color, `${selectedTechnique.color}CC`]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={[styles.floatingStartButton, Shadows.large]}
-            >
-              <Feather name="play" size={24} color="#FFFFFF" />
-            </LinearGradient>
-          </Pressable>
-        ) : (
           <View style={styles.floatingPlayingControls}>
             <Pressable
               onPress={handleStop}
@@ -697,8 +705,8 @@ export default function BreathingScreen() {
               <Feather name="maximize-2" size={20} color={theme.text} />
             </Pressable>
           </View>
-        )}
-      </Animated.View>
+        </Animated.View>
+      ) : null}
 
       {/* Technique Selection Modal */}
       <Modal
@@ -904,10 +912,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  floatingMaximizeButton: {
-    position: "absolute",
-    right: Spacing.lg,
-    zIndex: 10,
+  inlineMaximizeButton: {
+    alignSelf: "flex-start",
+    marginBottom: Spacing.md,
+  },
+  inlinePlayButton: {
+    alignSelf: "flex-end",
+    marginBottom: Spacing.md,
+    marginTop: -Spacing.lg,
   },
   floatingControlSection: {
     position: "absolute",

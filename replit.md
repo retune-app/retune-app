@@ -147,6 +147,12 @@ Preferred communication style: Simple, everyday language.
 - `@tanstack/react-query`: Data fetching and caching
 - `expo-linear-gradient`: Gradient backgrounds and buttons
 
+### Web Compatibility
+- **PagerViewCompat**: Platform-specific wrapper component for `react-native-pager-view`
+  - `PagerViewCompat.web.tsx`: Simple View-based fallback for web (pager-view not supported on web)
+  - `PagerViewCompat.native.tsx`: Uses native react-native-pager-view for iOS/Android
+  - Used in CreateScreen for script history navigation
+
 ### Environment Variables Required
 - `DATABASE_URL`: PostgreSQL connection string
 - `AI_INTEGRATIONS_OPENAI_API_KEY`: OpenAI API key via Replit
@@ -175,10 +181,15 @@ This is necessary because Replit's port configuration maps port 80 to the Expo d
 - **Personal Voice**: Users can record their voice for cloning and use it for affirmations
 - **Voice Preferences**: User preferences stored in database (preferredVoiceType, preferredAiGender, preferredMaleVoiceId, preferredFemaleVoiceId)
 - **Profile Voice Settings**: Voice selection UI in ProfileScreen shows voice cards for current gender preference
+- **Voice Preview**: Users can listen to voice samples before selecting
+  - Preview phrase: "I am strong, capable, and worthy of success."
+  - ProfileScreen shows play button on each voice card
+  - Preview audio is generated using ElevenLabs TTS and plays immediately
 - **API Endpoints**:
   - GET /api/voices - Returns available voice options
   - GET /api/voice-preferences - Get user's voice preferences
   - PUT /api/voice-preferences - Update voice preferences (voiceType, gender, or specific voice IDs)
+  - POST /api/voices/preview - Generate voice preview audio (body: { voiceId }, returns base64 audio)
   - POST /api/affirmations/:id/regenerate-voice - Regenerate audio with different voice
 
 ### Default Voice for New Users

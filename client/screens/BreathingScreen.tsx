@@ -637,11 +637,11 @@ export default function BreathingScreen() {
 
       </ScrollView>
 
-      {/* Floating Maximize Button - Left side below welcome section */}
+      {/* Floating Maximize Button - Just below greeting */}
       {!isPlaying ? (
         <Animated.View 
           entering={FadeIn.delay(400).duration(400)}
-          style={[styles.floatingMaximizeButton, { top: insets.top + 280 }]}
+          style={[styles.floatingMaximizeButton, { top: insets.top + 60 }]}
         >
           <Pressable 
             onPress={enterFullscreen} 
@@ -652,10 +652,10 @@ export default function BreathingScreen() {
         </Animated.View>
       ) : null}
 
-      {/* Floating Control Buttons - Right side aligned with Box Breathing */}
+      {/* Floating Control Buttons - Above Box Breathing */}
       <Animated.View 
         entering={FadeIn.delay(600).duration(600)} 
-        style={[styles.floatingControlSection, { bottom: insets.bottom + 340 }]}
+        style={[styles.floatingControlSection, { bottom: insets.bottom + 420 }]}
       >
         {!isPlaying ? (
           <Pressable onPress={handleStart} testID="button-start-breathing">

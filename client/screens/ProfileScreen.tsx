@@ -410,7 +410,7 @@ export default function ProfileScreen() {
 
       <View style={styles.section}>
         <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-          VOICE PREFERENCES
+          AUDIO & VOICE
         </ThemedText>
         <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
           <SettingItem
@@ -420,14 +420,6 @@ export default function ProfileScreen() {
             onPress={() => navigation.navigate("VoiceSettings")}
             testID="button-voice-settings"
           />
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-          AMBIENT SOUNDS
-        </ThemedText>
-        <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
           <SettingItem
             icon="headphones"
             label="Sound Library"
@@ -435,18 +427,10 @@ export default function ProfileScreen() {
             onPress={() => navigation.navigate("SoundLibrary")}
             testID="button-sound-library"
           />
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-          AFFIRMATION PLAYBACK
-        </ThemedText>
-        <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
           <SettingItem
             icon="repeat"
             label="Auto-Replay"
-            value={autoReplayEnabled ? "Affirmations loop automatically" : "Play once then stop"}
+            value={autoReplayEnabled ? "Loop continuously" : "Play once"}
             showArrow={false}
             rightElement={
               <Switch
@@ -576,7 +560,7 @@ export default function ProfileScreen() {
 
       <View style={styles.section}>
         <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-          ABOUT
+          SUPPORT & INFO
         </ThemedText>
         <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
           <SettingItem
@@ -599,9 +583,25 @@ export default function ProfileScreen() {
 
       <View style={styles.section}>
         <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-          DATA MANAGEMENT
+          ACCOUNT ACTIONS
         </ThemedText>
         <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
+          <Pressable
+            onPress={() => setShowLogoutModal(true)}
+            style={({ pressed }) => [
+              styles.settingItem,
+              { backgroundColor: pressed ? theme.backgroundSecondary : "transparent" },
+            ]}
+            testID="button-logout"
+          >
+            <View style={[styles.settingIcon, { backgroundColor: theme.backgroundSecondary }]}>
+              <Feather name="log-out" size={20} color={theme.primary} />
+            </View>
+            <View style={styles.settingContent}>
+              <ThemedText type="body">Sign Out</ThemedText>
+            </View>
+            <Feather name="chevron-right" size={20} color={theme.textSecondary} />
+          </Pressable>
           <Pressable
             onPress={() => setShowResetModal(true)}
             style={({ pressed }) => [
@@ -639,29 +639,6 @@ export default function ProfileScreen() {
               </ThemedText>
             </View>
             <Feather name="chevron-right" size={20} color={theme.textSecondary} />
-          </Pressable>
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-          ACCOUNT
-        </ThemedText>
-        <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
-          <Pressable
-            onPress={() => setShowLogoutModal(true)}
-            style={({ pressed }) => [
-              styles.settingItem,
-              { backgroundColor: pressed ? theme.backgroundSecondary : "transparent" },
-            ]}
-            testID="button-logout"
-          >
-            <View style={[styles.settingIcon, { backgroundColor: "#E74C3C20" }]}>
-              <Feather name="log-out" size={20} color="#E74C3C" />
-            </View>
-            <View style={styles.settingContent}>
-              <Text style={[styles.logoutText, { color: "#E74C3C" }]}>Sign Out</Text>
-            </View>
           </Pressable>
         </View>
       </View>

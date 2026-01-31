@@ -1241,7 +1241,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const categoryMap = new Map<string, { listens: number; minutes: number }>();
       
       for (const aff of allAffirmations) {
-        const cat = aff.category || 'Uncategorized';
+        const cat = aff.categoryName || 'Uncategorized';
         const existing = categoryMap.get(cat) || { listens: 0, minutes: 0 };
         existing.listens += aff.playCount || 0;
         // Estimate minutes based on duration

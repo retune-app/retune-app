@@ -21,7 +21,7 @@ export default function BreathingStackNavigator() {
         name="Breathing"
         component={BreathingScreen}
         options={{
-          headerTitle: "Breathe",
+          headerShown: false,
         }}
       />
     </Stack.Navigator>

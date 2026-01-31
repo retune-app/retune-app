@@ -187,6 +187,17 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
           await stopBackgroundMusic();
           console.log('Paused');
         } else {
+          // Check if audio has finished (position at or near end)
+          const isAtEnd = status.durationMillis && 
+            status.positionMillis >= status.durationMillis - 100;
+          
+          if (isAtEnd) {
+            // Seek to beginning before playing
+            await soundRef.current.setPositionAsync(0);
+            setPosition(0);
+            console.log('Restarting from beginning');
+          }
+          
           await soundRef.current.playAsync();
           setIsPlaying(true);
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

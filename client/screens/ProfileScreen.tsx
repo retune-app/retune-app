@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import { View, StyleSheet, Pressable, Switch, Text, Modal, ActivityIndicator, ImageBackground, TextInput, Alert } from "react-native";
+import { View, StyleSheet, Pressable, Switch, Text, Modal, ActivityIndicator, ImageBackground, TextInput, Alert, Platform } from "react-native";
+import { Audio } from "expo-av";
 
 const profileBackgroundDark = require("../../assets/images/library-background.png");
 const profileBackgroundLight = require("../../assets/images/library-background-light.png");
@@ -118,6 +119,9 @@ export default function ProfileScreen() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState("");
   const nameInputRef = useRef<TextInput>(null);
+  const [previewingVoiceId, setPreviewingVoiceId] = useState<string | null>(null);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const previewSoundRef = useRef<Audio.Sound | null>(null);
 
   const { data: stats } = useQuery({
     queryKey: ["/api/user/stats"],
@@ -166,6 +170,79 @@ export default function ProfileScreen() {
   const handleVoiceGenderChange = (gender: VoiceGender) => {
     updateVoicePreferences.mutate({ preferredAiGender: gender });
   };
+
+  const handleVoicePreview = async (voiceId: string) => {
+    try {
+      if (previewingVoiceId === voiceId) {
+        if (previewSoundRef.current) {
+          await previewSoundRef.current.stopAsync();
+          await previewSoundRef.current.unloadAsync();
+          previewSoundRef.current = null;
+        }
+        setPreviewingVoiceId(null);
+        return;
+      }
+
+      if (previewSoundRef.current) {
+        await previewSoundRef.current.stopAsync();
+        await previewSoundRef.current.unloadAsync();
+        previewSoundRef.current = null;
+      }
+
+      setIsPreviewLoading(true);
+      setPreviewingVoiceId(voiceId);
+      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+
+      const token = await getAuthToken();
+      const response = await fetch(
+        new URL(`/api/voices/preview?voiceId=${voiceId}`, getApiUrl()).toString(),
+        {
+          headers: token ? { "X-Auth-Token": token } : {},
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to generate preview");
+      }
+
+      const audioBlob = await response.blob();
+      const audioUri = URL.createObjectURL(audioBlob);
+      
+      await Audio.setAudioModeAsync({
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: false,
+      });
+
+      const { sound } = await Audio.Sound.createAsync(
+        { uri: audioUri },
+        { shouldPlay: true }
+      );
+      
+      previewSoundRef.current = sound;
+      setIsPreviewLoading(false);
+
+      sound.setOnPlaybackStatusUpdate((status) => {
+        if (status.isLoaded && status.didJustFinish) {
+          setPreviewingVoiceId(null);
+          sound.unloadAsync();
+          previewSoundRef.current = null;
+        }
+      });
+    } catch (error) {
+      console.error("Voice preview error:", error);
+      setIsPreviewLoading(false);
+      setPreviewingVoiceId(null);
+      Alert.alert("Preview Error", "Could not play voice preview. Please try again.");
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (previewSoundRef.current) {
+        previewSoundRef.current.unloadAsync();
+      }
+    };
+  }, []);
 
   const deleteCategoryMutation = useMutation({
     mutationFn: async (id: number) => {
@@ -563,11 +640,31 @@ export default function ProfileScreen() {
                           {voice.description}
                         </ThemedText>
                       </View>
-                      {isSelected ? (
-                        <View style={[styles.voiceCardCheck, { backgroundColor: theme.primary }]}>
-                          <Feather name="check" size={14} color="#FFFFFF" />
-                        </View>
-                      ) : null}
+                      <View style={styles.voiceCardActions}>
+                        <Pressable
+                          onPress={(e) => {
+                            e.stopPropagation();
+                            handleVoicePreview(voice.id);
+                          }}
+                          style={[styles.voicePreviewButton, { backgroundColor: theme.backgroundSecondary }]}
+                          testID={`button-preview-${voice.id}`}
+                        >
+                          {isPreviewLoading && previewingVoiceId === voice.id ? (
+                            <ActivityIndicator size="small" color={theme.primary} />
+                          ) : (
+                            <Feather 
+                              name={previewingVoiceId === voice.id ? "stop-circle" : "play-circle"} 
+                              size={20} 
+                              color={theme.primary} 
+                            />
+                          )}
+                        </Pressable>
+                        {isSelected ? (
+                          <View style={[styles.voiceCardCheck, { backgroundColor: theme.primary }]}>
+                            <Feather name="check" size={14} color="#FFFFFF" />
+                          </View>
+                        ) : null}
+                      </View>
                     </Pressable>
                   );
                 })}
@@ -1442,6 +1539,18 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  voiceCardActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  voicePreviewButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
   },

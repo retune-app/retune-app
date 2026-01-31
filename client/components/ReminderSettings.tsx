@@ -216,13 +216,15 @@ export default function ReminderSettings() {
             </ThemedText>
           </Pressable>
         </View>
-        <Switch
-          value={isEnabled as boolean}
-          onValueChange={() => handleToggle(slot)}
-          trackColor={{ false: theme.border, true: theme.primary + "80" }}
-          thumbColor={isEnabled ? theme.primary : theme.textSecondary}
-          testID={`switch-${slot}`}
-        />
+        <View style={[styles.switchWrapper, { borderColor: isEnabled ? theme.primary + "60" : theme.primary + "40" }]}>
+          <Switch
+            value={isEnabled as boolean}
+            onValueChange={() => handleToggle(slot)}
+            trackColor={{ false: theme.border, true: theme.primary + "80" }}
+            thumbColor={isEnabled ? theme.primary : theme.textSecondary}
+            testID={`switch-${slot}`}
+          />
+        </View>
       </View>
     );
   };
@@ -335,6 +337,11 @@ const styles = StyleSheet.create({
   slotContent: {
     flex: 1,
     gap: 2,
+  },
+  switchWrapper: {
+    borderWidth: 1.5,
+    borderRadius: 16,
+    padding: 2,
   },
   permissionButton: {
     flexDirection: "row",

@@ -53,7 +53,7 @@ export default function MainTabNavigator() {
 
   return (
     <Tab.Navigator
-      initialRouteName="HomeTab"
+      initialRouteName="BreatheTab"
       screenOptions={{
         tabBarActiveTintColor: theme.tabIconSelected,
         tabBarInactiveTintColor: theme.tabIconDefault,
@@ -84,6 +84,16 @@ export default function MainTabNavigator() {
       }}
     >
       <Tab.Screen
+        name="BreatheTab"
+        component={BreathingStackNavigator}
+        options={{
+          title: "Breathe",
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="wind" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
         name="HomeTab"
         component={HomeStackNavigator}
         options={{
@@ -107,16 +117,6 @@ export default function MainTabNavigator() {
             navigation.navigate("Create");
           },
         })}
-      />
-      <Tab.Screen
-        name="BreatheTab"
-        component={BreathingStackNavigator}
-        options={{
-          title: "Breathe",
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="wind" size={size} color={color} />
-          ),
-        }}
       />
       <Tab.Screen
         name="ProfileTab"

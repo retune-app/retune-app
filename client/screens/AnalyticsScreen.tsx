@@ -619,12 +619,13 @@ const styles = StyleSheet.create({
   categoryCard: {
     borderRadius: BorderRadius.lg,
     overflow: "hidden",
+    padding: Spacing.md,
   },
   categoryRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: Spacing.md,
+    paddingVertical: Spacing.sm,
   },
   categoryLeft: {
     flexDirection: "row",

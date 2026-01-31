@@ -90,6 +90,7 @@ export const affirmations = pgTable("affirmations", {
   wordTimings: text("word_timings"), // JSON string of WordTiming[] for RSVP sync
   voiceType: text("voice_type").default("ai"), // 'personal' or 'ai' - which voice was used
   voiceGender: text("voice_gender").default("female"), // 'male' or 'female' for AI voices
+  aiVoiceId: text("ai_voice_id"), // ElevenLabs voice ID used for this affirmation
   isManual: boolean("is_manual").default(false),
   isFavorite: boolean("is_favorite").default(false),
   playCount: integer("play_count").default(0),

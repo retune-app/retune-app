@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   View,
   StyleSheet,
@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Modal,
   Pressable,
+  Dimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
@@ -16,6 +17,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import PagerView from "react-native-pager-view";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -50,12 +52,14 @@ export default function CreateScreen() {
 
   const [mode, setMode] = useState<"ai" | "manual">("ai");
   const [goal, setGoal] = useState("");
-  const [generatedScript, setGeneratedScript] = useState("");
+  const [scriptHistory, setScriptHistory] = useState<string[]>([]);
+  const [currentScriptIndex, setCurrentScriptIndex] = useState(0);
+  const [manualScript, setManualScript] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedLength, setSelectedLength] = useState<LengthOption>("Medium");
-  const [regenerateCount, setRegenerateCount] = useState(0);
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
+  const pagerRef = useRef<PagerView>(null);
 
   const { data: customCategories = [] } = useQuery<CustomCategory[]>({
     queryKey: ["/api/custom-categories"],
@@ -98,7 +102,15 @@ export default function CreateScreen() {
       return res.json();
     },
     onSuccess: (data) => {
-      setGeneratedScript(data.script);
+      setScriptHistory((prev) => {
+        const newHistory = [...prev, data.script].slice(-3);
+        const newIndex = newHistory.length - 1;
+        setCurrentScriptIndex(newIndex);
+        setTimeout(() => {
+          pagerRef.current?.setPage(newIndex);
+        }, 100);
+        return newHistory;
+      });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     },
     onError: () => {
@@ -106,11 +118,13 @@ export default function CreateScreen() {
     },
   });
 
+  const currentScript = mode === "ai" ? scriptHistory[currentScriptIndex] || "" : manualScript;
+
   const createMutation = useMutation({
     mutationFn: async () => {
       const res = await apiRequest("POST", "/api/affirmations/create-with-voice", {
         title: goal.substring(0, 50) || "My Affirmation",
-        script: generatedScript,
+        script: currentScript,
         category: selectedCategory,
         isManual: mode === "manual",
       });
@@ -139,11 +153,10 @@ export default function CreateScreen() {
   };
 
   const handleRegenerate = () => {
-    if (regenerateCount >= 3) {
-      Alert.alert("Limit Reached", "You've reached the maximum number of regenerations.");
+    if (scriptHistory.length >= 3) {
+      Alert.alert("Limit Reached", "You've generated all 3 script variations. Swipe to compare them.");
       return;
     }
-    setRegenerateCount((prev) => prev + 1);
     generateMutation.mutate({
       goalText: goal,
       category: selectedCategory,
@@ -152,7 +165,7 @@ export default function CreateScreen() {
   };
 
   const handleCreate = () => {
-    if (!generatedScript.trim()) {
+    if (!currentScript.trim()) {
       Alert.alert("Generate Script First", "Please generate or write a script first.");
       return;
     }
@@ -208,14 +221,14 @@ export default function CreateScreen() {
                 : "Write or paste your affirmation script here..."
             }
             placeholderTextColor={theme.placeholder}
-            value={mode === "ai" ? goal : generatedScript}
-            onChangeText={mode === "ai" ? setGoal : setGeneratedScript}
+            value={mode === "ai" ? goal : manualScript}
+            onChangeText={mode === "ai" ? setGoal : setManualScript}
             multiline
             textAlignVertical="top"
             testID="input-goal"
           />
           <ThemedText type="caption" style={[styles.charCount, { color: theme.textSecondary }]}>
-            {(mode === "ai" ? goal : generatedScript).length} characters
+            {(mode === "ai" ? goal : manualScript).length} characters
           </ThemedText>
         </View>
 
@@ -277,27 +290,72 @@ export default function CreateScreen() {
           </Button>
         )}
 
-        {generatedScript && mode === "ai" ? (
+        {scriptHistory.length > 0 && mode === "ai" ? (
           <Card style={styles.scriptCard}>
             <View style={styles.scriptHeader}>
               <ThemedText type="h4">Generated Script</ThemedText>
-              <IconButton
-                icon="refresh-cw"
-                size={18}
-                onPress={handleRegenerate}
-                testID="button-regenerate"
-              />
+              {scriptHistory.length < 3 ? (
+                <IconButton
+                  icon="refresh-cw"
+                  size={18}
+                  onPress={handleRegenerate}
+                  loading={generateMutation.isPending}
+                  testID="button-regenerate"
+                />
+              ) : null}
             </View>
-            <ThemedText type="body" style={styles.scriptText}>
-              {generatedScript}
-            </ThemedText>
-            <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-              Regenerations: {regenerateCount}/3
+            <PagerView
+              ref={pagerRef}
+              style={styles.pagerView}
+              initialPage={0}
+              onPageSelected={(e) => setCurrentScriptIndex(e.nativeEvent.position)}
+            >
+              {scriptHistory.map((script, index) => (
+                <View key={index} style={styles.scriptPage}>
+                  <ScrollView 
+                    style={styles.scriptScrollView}
+                    showsVerticalScrollIndicator={false}
+                    nestedScrollEnabled
+                  >
+                    <ThemedText type="body" style={styles.scriptText}>
+                      {script}
+                    </ThemedText>
+                  </ScrollView>
+                </View>
+              ))}
+            </PagerView>
+            <View style={styles.paginationContainer}>
+              {scriptHistory.map((_, index) => (
+                <Pressable
+                  key={index}
+                  onPress={() => {
+                    setCurrentScriptIndex(index);
+                    pagerRef.current?.setPage(index);
+                  }}
+                  style={styles.dotTouchArea}
+                >
+                  <View
+                    style={[
+                      styles.paginationDot,
+                      {
+                        backgroundColor: index === currentScriptIndex 
+                          ? theme.primary 
+                          : `${theme.primary}40`,
+                      },
+                    ]}
+                  />
+                </Pressable>
+              ))}
+            </View>
+            <ThemedText type="caption" style={[styles.swipeHint, { color: theme.textSecondary }]}>
+              {scriptHistory.length < 3 
+                ? `${scriptHistory.length}/3 scripts generated` 
+                : "Swipe to compare scripts"}
             </ThemedText>
           </Card>
         ) : null}
 
-        {(generatedScript || mode === "manual") && (mode === "manual" ? generatedScript : true) ? (
+        {(scriptHistory.length > 0 || (mode === "manual" && manualScript.trim())) ? (
           <Button
             variant="gradient"
             onPress={handleCreate}
@@ -428,8 +486,35 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   scriptText: {
-    marginBottom: Spacing.md,
     lineHeight: 26,
+  },
+  pagerView: {
+    height: 200,
+    marginBottom: Spacing.sm,
+  },
+  scriptPage: {
+    flex: 1,
+  },
+  scriptScrollView: {
+    flex: 1,
+  },
+  paginationContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: Spacing.sm,
+    marginBottom: Spacing.sm,
+  },
+  dotTouchArea: {
+    padding: Spacing.xs,
+  },
+  paginationDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  swipeHint: {
+    textAlign: "center",
   },
   createButton: {
     marginTop: Spacing.lg,

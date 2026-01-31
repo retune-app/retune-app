@@ -652,10 +652,10 @@ export default function BreathingScreen() {
         </Animated.View>
       ) : null}
 
-      {/* Floating Control Buttons - Right side near Box Breathing */}
+      {/* Floating Control Buttons - Right side aligned with Box Breathing */}
       <Animated.View 
         entering={FadeIn.delay(600).duration(600)} 
-        style={[styles.floatingControlSection, { bottom: insets.bottom + 280 }]}
+        style={[styles.floatingControlSection, { bottom: insets.bottom + 340 }]}
       >
         {!isPlaying ? (
           <Pressable onPress={handleStart} testID="button-start-breathing">

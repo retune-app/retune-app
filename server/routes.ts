@@ -10,6 +10,7 @@ import { openai } from "./replit_integrations/audio/client";
 import {
   cloneVoice,
   textToSpeech as elevenLabsTTS,
+  getElevenLabsClient,
   type WordTiming,
 } from "./replit_integrations/elevenlabs/client";
 import { setupAuth, requireAuth, optionalAuth, AuthenticatedRequest } from "./auth";
@@ -162,6 +163,27 @@ Respond with ONLY the category name, nothing else.`,
   } catch (error) {
     console.error("Auto-categorization failed:", error);
     return "Confidence"; // Default fallback
+  }
+}
+
+// Simple audio generation for voice previews (no word timings needed)
+async function generateAudioSimple(text: string, voiceId: string): Promise<ArrayBuffer> {
+  try {
+    const client = await getElevenLabsClient();
+    const audio = await client.textToSpeech.convert(voiceId, {
+      text,
+      model_id: "eleven_multilingual_v2",
+    });
+    
+    // Collect chunks into a buffer
+    const chunks: Buffer[] = [];
+    for await (const chunk of audio) {
+      chunks.push(Buffer.from(chunk));
+    }
+    return Buffer.concat(chunks).buffer;
+  } catch (error) {
+    console.error("Simple TTS failed:", error);
+    throw error;
   }
 }
 
@@ -729,6 +751,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get available AI voices
   app.get("/api/voices", async (req: Request, res: Response) => {
     res.json(VOICE_OPTIONS);
+  });
+
+  // Preview phrase for voice testing
+  const PREVIEW_PHRASE = "I am strong, capable, and worthy of success.";
+
+  // Generate voice preview audio
+  app.post("/api/voices/preview", async (req: Request, res: Response) => {
+    try {
+      const { voiceId } = req.body;
+
+      if (!voiceId) {
+        return res.status(400).json({ error: "Voice ID is required" });
+      }
+
+      // Validate the voice ID exists in our options
+      const allVoices = [...VOICE_OPTIONS.female, ...VOICE_OPTIONS.male];
+      const validVoice = allVoices.find(v => v.id === voiceId);
+      if (!validVoice) {
+        return res.status(400).json({ error: "Invalid voice ID" });
+      }
+
+      console.log(`Generating voice preview for ${validVoice.name} (${voiceId})`);
+
+      // Generate TTS without timestamps (simpler, faster)
+      const audioBuffer = await generateAudioSimple(PREVIEW_PHRASE, voiceId);
+
+      // Return audio as base64
+      const base64Audio = Buffer.from(audioBuffer).toString("base64");
+      res.json({ 
+        audio: base64Audio,
+        voiceName: validVoice.name,
+      });
+    } catch (error) {
+      console.error("Error generating voice preview:", error);
+      res.status(500).json({ error: "Failed to generate voice preview" });
+    }
   });
 
   // Get user's voice preferences

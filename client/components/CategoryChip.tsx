@@ -11,6 +11,9 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Animation } from "@/constants/theme";
 
+// Use consistent gold for selected state regardless of theme
+const CATEGORY_GOLD = "#C9A227";
+
 interface CategoryChipProps {
   label: string;
   isSelected?: boolean;
@@ -61,8 +64,8 @@ export function CategoryChip({
       style={[
         styles.chip,
         {
-          backgroundColor: isSelected ? theme.primary : theme.backgroundSecondary,
-          borderColor: isSelected ? theme.primary : theme.border,
+          backgroundColor: isSelected ? CATEGORY_GOLD : theme.backgroundSecondary,
+          borderColor: isSelected ? CATEGORY_GOLD : theme.border,
         },
         animatedStyle,
       ]}

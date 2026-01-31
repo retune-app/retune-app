@@ -9,6 +9,10 @@ import * as Haptics from 'expo-haptics';
 import { useAudio } from '@/contexts/AudioContext';
 import { useTheme } from '@/hooks/useTheme';
 
+// Use consistent gold for mini player regardless of theme
+const MINI_PLAYER_GOLD = "#C9A227";
+const MINI_PLAYER_GOLD_DARK = "#B8922A"; // Slightly darker for gradient
+
 interface MiniPlayerProps {
   currentRoute?: string;
   onNavigateToPlayer?: (affirmationId: number) => void;
@@ -44,7 +48,7 @@ export function MiniPlayer({ currentRoute, onNavigateToPlayer }: MiniPlayerProps
     >
       <Pressable onPress={handlePress} style={styles.pressable}>
         <LinearGradient
-          colors={[theme.primary, theme.accent]}
+          colors={[MINI_PLAYER_GOLD, MINI_PLAYER_GOLD_DARK]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.gradient}

@@ -105,13 +105,19 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
   };
 
   const startBackgroundMusic = useCallback(async () => {
-    if (selectedMusic === 'none') return;
+    console.log('startBackgroundMusic called, selectedMusic:', selectedMusic);
+    if (selectedMusic === 'none') {
+      console.log('Background music is set to none, skipping');
+      return;
+    }
 
     try {
       if (soundRef.current) {
+        console.log('Unloading previous background music');
         await soundRef.current.unloadAsync();
       }
 
+      console.log('Loading background music:', selectedMusic);
       const { sound } = await Audio.Sound.createAsync(
         AUDIO_FILES[selectedMusic],
         {
@@ -123,6 +129,7 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
       
       soundRef.current = sound;
       setIsPlaying(true);
+      console.log('Background music started successfully');
     } catch (error) {
       console.error('Error starting background music:', error);
     }

@@ -410,6 +410,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("Using personal voice:", voiceIdToUse);
       } else {
         // Use AI voice based on gender preference
+        console.log("Voice preferences loaded:", {
+          preferredMaleVoiceId: userWithPrefs?.preferredMaleVoiceId,
+          preferredFemaleVoiceId: userWithPrefs?.preferredFemaleVoiceId,
+          preferredAiGender: userWithPrefs?.preferredAiGender
+        });
         if (usedGender === "male") {
           voiceIdToUse = userWithPrefs?.preferredMaleVoiceId || VOICE_OPTIONS.male[0].id;
         } else {

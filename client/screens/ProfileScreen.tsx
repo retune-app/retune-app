@@ -395,6 +395,7 @@ export default function ProfileScreen() {
         }
         totalBreathingMinutes={(stats as any)?.meditation?.minutesThisWeek || 0}
         affirmationsCreated={(stats as any)?.affirmationsCount || 0}
+        totalListens={(stats as any)?.totalListens || 0}
       />
 
       <Pressable

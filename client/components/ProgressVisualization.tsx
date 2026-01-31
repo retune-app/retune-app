@@ -24,6 +24,7 @@ interface ProgressVisualizationProps {
   weeklyBreathingMinutes: number[];
   totalBreathingMinutes: number;
   affirmationsCreated?: number;
+  totalListens?: number;
 }
 
 export function ProgressVisualization({
@@ -32,6 +33,7 @@ export function ProgressVisualization({
   weeklyBreathingMinutes = [0, 0, 0, 0, 0, 0, 0],
   totalBreathingMinutes = 0,
   affirmationsCreated = 0,
+  totalListens = 0,
 }: ProgressVisualizationProps) {
   const { theme, isDark } = useTheme();
   const progressAnim = useSharedValue(0);
@@ -207,9 +209,14 @@ export function ProgressVisualization({
           })}
         </View>
         <View style={styles.weeklyFooter}>
-          <Feather name="wind" size={12} color={theme.textSecondary} />
+          <Feather name="wind" size={12} color={theme.gold} />
           <ThemedText type="caption" style={{ color: theme.textSecondary, marginLeft: 4 }}>
-            {totalBreathingMinutes} min this week
+            {totalBreathingMinutes} min
+          </ThemedText>
+          <View style={styles.footerDot} />
+          <Feather name="headphones" size={12} color="#9C27B0" />
+          <ThemedText type="caption" style={{ color: theme.textSecondary, marginLeft: 4 }}>
+            {totalListens} listens
           </ThemedText>
           <View style={styles.footerDot} />
           <Feather name="file-plus" size={12} color={theme.textSecondary} />

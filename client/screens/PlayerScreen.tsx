@@ -21,6 +21,7 @@ import { IconButton } from "@/components/IconButton";
 import { AmbientSoundMixer } from "@/components/AmbientSoundMixer";
 import { FocusModeTip } from "@/components/FocusModeTip";
 import { ThemedModal } from "@/components/ThemedModal";
+import QuickBreathingModal from "@/components/QuickBreathingModal";
 import { useTheme } from "@/hooks/useTheme";
 import { useAudio } from "@/contexts/AudioContext";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
@@ -99,6 +100,7 @@ export default function PlayerScreen() {
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [showVoiceSetupModal, setShowVoiceSetupModal] = useState(false);
+  const [showBreathingModal, setShowBreathingModal] = useState(false);
 
   const isCurrentlyPlaying = currentAffirmation?.id === affirmationId && isPlaying;
 
@@ -673,14 +675,17 @@ export default function PlayerScreen() {
             onPress={handleFavorite}
             testID="button-favorite"
           />
+          <Pressable
+            onPress={() => setShowBreathingModal(true)}
+            style={[styles.breatheButton, { backgroundColor: theme.backgroundSecondary }]}
+            testID="button-breathe-first"
+          >
+            <Feather name="wind" size={20} color={theme.primary} />
+            <ThemedText type="small" style={{ color: theme.primary, marginLeft: 6, fontWeight: "600" }}>
+              Breathe
+            </ThemedText>
+          </Pressable>
           <AmbientSoundMixer compact />
-          <IconButton
-            icon="share"
-            size={24}
-            color={theme.textSecondary}
-            onPress={() => Alert.alert("Share", "Sharing coming soon!")}
-            testID="button-share"
-          />
         </View>
 
         <FocusModeTip visible={showFocusModeTip} onDismiss={dismissFocusModeTip} />
@@ -1003,6 +1008,17 @@ export default function PlayerScreen() {
           },
         ]}
       />
+
+      <QuickBreathingModal
+        visible={showBreathingModal}
+        onClose={() => setShowBreathingModal(false)}
+        onComplete={() => {
+          setShowBreathingModal(false);
+          if (affirmation) {
+            playAffirmation(affirmation);
+          }
+        }}
+      />
     </ThemedView>
   );
 }
@@ -1078,6 +1094,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: Spacing["2xl"],
     marginBottom: Spacing["2xl"],
+  },
+  breatheButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.full,
   },
   scriptPreview: {
     width: "100%",

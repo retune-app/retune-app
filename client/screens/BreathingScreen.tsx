@@ -420,18 +420,6 @@ export default function BreathingScreen() {
   // Portrait Mode - Main Screen
   return (
     <ThemedView style={styles.container}>
-      {/* Affirmation background */}
-      {backgroundAffirmation ? (
-        <View style={styles.affirmationBackground}>
-          <LinearGradient
-            colors={[`${theme.navy}00`, theme.navy, theme.navy]}
-            style={styles.affirmationGradient}
-          />
-          <Text style={[styles.affirmationBgText, { color: `${theme.text}10` }]}>
-            {backgroundAffirmation.script}
-          </Text>
-        </View>
-      ) : null}
 
       <ScrollView
         style={styles.scrollView}
@@ -795,30 +783,6 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     paddingHorizontal: Spacing.lg,
-  },
-
-  // Affirmation Background
-  affirmationBackground: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 300,
-    overflow: "hidden",
-  },
-  affirmationGradient: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 1,
-  },
-  affirmationBgText: {
-    fontSize: 48,
-    fontWeight: "800",
-    lineHeight: 56,
-    padding: Spacing.lg,
   },
 
   // Circle Section

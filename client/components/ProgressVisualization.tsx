@@ -23,6 +23,7 @@ interface ProgressVisualizationProps {
   streak: number;
   weeklyActivity: number[];
   minutesListened: number;
+  affirmationsCreated?: number;
 }
 
 export function ProgressVisualization({
@@ -30,6 +31,7 @@ export function ProgressVisualization({
   streak = 0,
   weeklyActivity = [0, 0, 0, 0, 0, 0, 0],
   minutesListened = 0,
+  affirmationsCreated = 0,
 }: ProgressVisualizationProps) {
   const { theme, isDark } = useTheme();
   const progressAnim = useSharedValue(0);
@@ -207,7 +209,12 @@ export function ProgressVisualization({
         <View style={styles.weeklyFooter}>
           <Feather name="clock" size={12} color={theme.textSecondary} />
           <ThemedText type="caption" style={{ color: theme.textSecondary, marginLeft: 4 }}>
-            {minutesListened} min total this week
+            {minutesListened} min this week
+          </ThemedText>
+          <View style={styles.footerDot} />
+          <Feather name="file-plus" size={12} color={theme.textSecondary} />
+          <ThemedText type="caption" style={{ color: theme.textSecondary, marginLeft: 4 }}>
+            {affirmationsCreated} created
           </ThemedText>
         </View>
       </View>
@@ -286,5 +293,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: Spacing.md,
     justifyContent: "center",
+    flexWrap: "wrap",
+  },
+  footerDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "#999",
+    marginHorizontal: Spacing.sm,
   },
 });

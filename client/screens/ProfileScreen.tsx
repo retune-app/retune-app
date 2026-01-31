@@ -486,6 +486,7 @@ export default function ProfileScreen() {
             : [0, 0, 0, 0, 0, 0, 0]
         }
         minutesListened={(stats as any)?.totalMinutesThisWeek || 0}
+        affirmationsCreated={(stats as any)?.affirmationsCount || 0}
       />
 
       <Pressable

@@ -202,6 +202,18 @@ export default function AnalyticsScreen() {
                     Days Active
                   </ThemedText>
                 </View>
+
+                <View style={[styles.divider, { backgroundColor: theme.border }]} />
+
+                <View style={styles.lifetimeStat}>
+                  <Feather name="file-plus" size={20} color={theme.gold} style={styles.lifetimeIcon} />
+                  <ThemedText type="h3" style={styles.lifetimeNumber}>
+                    {stats?.affirmationsCount || 0}
+                  </ThemedText>
+                  <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                    Created
+                  </ThemedText>
+                </View>
               </View>
             </View>
           </View>

@@ -15,6 +15,7 @@ import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import * as ScreenOrientation from "expo-screen-orientation";
+import { Audio } from "expo-av";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -25,6 +26,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useQuery } from "@tanstack/react-query";
 import { BlurView } from "expo-blur";
+import { getApiUrl } from "@/lib/query-client";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -47,6 +49,7 @@ interface Affirmation {
   title: string;
   script: string;
   category: string;
+  audioUrl?: string;
 }
 
 export default function BreathingScreen() {
@@ -67,6 +70,7 @@ export default function BreathingScreen() {
   const [audioSource, setAudioSource] = useState<'none' | 'music' | 'affirmation'>('none');
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const affirmationSoundRef = useRef<Audio.Sound | null>(null);
 
   // Fetch affirmations for background display
   const { data: affirmations = [] } = useQuery<Affirmation[]>({
@@ -106,13 +110,75 @@ export default function BreathingScreen() {
     };
   }, []);
 
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
       if (isPlaying && isMusicPlaying) {
         stopBackgroundMusic();
       }
+      if (affirmationSoundRef.current) {
+        affirmationSoundRef.current.unloadAsync();
+      }
     };
+  }, []);
+
+  // Affirmation audio playback functions
+  const startAffirmationLoop = useCallback(async () => {
+    if (!backgroundAffirmation?.audioUrl) return;
+    
+    try {
+      // Unload any existing sound
+      if (affirmationSoundRef.current) {
+        await affirmationSoundRef.current.unloadAsync();
+        affirmationSoundRef.current = null;
+      }
+      
+      const audioUri = `${getApiUrl()}${backgroundAffirmation.audioUrl}`;
+      const { sound } = await Audio.Sound.createAsync(
+        { uri: audioUri },
+        { 
+          shouldPlay: true, 
+          isLooping: true,
+          volume: 1.0,
+        }
+      );
+      affirmationSoundRef.current = sound;
+    } catch (error) {
+      console.error('Error playing affirmation loop:', error);
+    }
+  }, [backgroundAffirmation]);
+
+  const stopAffirmationLoop = useCallback(async () => {
+    if (affirmationSoundRef.current) {
+      try {
+        await affirmationSoundRef.current.stopAsync();
+        await affirmationSoundRef.current.unloadAsync();
+      } catch (error) {
+        console.error('Error stopping affirmation:', error);
+      }
+      affirmationSoundRef.current = null;
+    }
+  }, []);
+
+  const pauseAffirmationLoop = useCallback(async () => {
+    if (affirmationSoundRef.current) {
+      try {
+        await affirmationSoundRef.current.pauseAsync();
+      } catch (error) {
+        console.error('Error pausing affirmation:', error);
+      }
+    }
+  }, []);
+
+  const resumeAffirmationLoop = useCallback(async () => {
+    if (affirmationSoundRef.current) {
+      try {
+        await affirmationSoundRef.current.playAsync();
+      } catch (error) {
+        console.error('Error resuming affirmation:', error);
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -144,11 +210,12 @@ export default function BreathingScreen() {
     setCyclesCompleted(0);
     try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
     
-    // Start background music if selected
+    // Start audio based on selected source
     if (audioSource === 'music' && selectedMusic !== 'none') {
       await startBackgroundMusic();
+    } else if (audioSource === 'affirmation') {
+      await startAffirmationLoop();
     }
-    // TODO: Add affirmation playback when audioSource === 'affirmation'
   };
 
   const handlePause = async () => {
@@ -158,7 +225,9 @@ export default function BreathingScreen() {
     if (isMusicPlaying) {
       await stopBackgroundMusic();
     }
-    // TODO: Pause affirmation playback
+    if (audioSource === 'affirmation') {
+      await pauseAffirmationLoop();
+    }
   };
 
   const handleResume = async () => {
@@ -167,8 +236,9 @@ export default function BreathingScreen() {
     
     if (audioSource === 'music' && selectedMusic !== 'none') {
       await startBackgroundMusic();
+    } else if (audioSource === 'affirmation') {
+      await resumeAffirmationLoop();
     }
-    // TODO: Resume affirmation playback
   };
 
   const handleStop = async () => {
@@ -181,7 +251,9 @@ export default function BreathingScreen() {
     if (isMusicPlaying) {
       await stopBackgroundMusic();
     }
-    // TODO: Stop affirmation playback
+    if (audioSource === 'affirmation') {
+      await stopAffirmationLoop();
+    }
   };
 
   const handleCycleComplete = () => {
@@ -520,6 +592,16 @@ export default function BreathingScreen() {
                   ))}
                 </View>
               ) : null}
+              
+              {/* Affirmation info - only show when Affirmation is selected */}
+              {audioSource === 'affirmation' && backgroundAffirmation ? (
+                <View style={styles.affirmationAudioInfo}>
+                  <Feather name="repeat" size={14} color={ACCENT_GOLD} />
+                  <ThemedText type="small" style={{ marginLeft: Spacing.xs, color: theme.textSecondary, flex: 1 }} numberOfLines={1}>
+                    "{backgroundAffirmation.title}" will loop during breathing
+                  </ThemedText>
+                </View>
+              ) : null}
             </View>
           </Animated.View>
         ) : null}
@@ -824,6 +906,12 @@ const styles = StyleSheet.create({
   musicTypePillText: {
     fontSize: 12,
     fontWeight: "500",
+  },
+  affirmationAudioInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
   },
 
   // Control Section

@@ -17,6 +17,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Animation, Shadows } from "@/constants/theme";
+import { getVoiceDisplayName } from "@shared/voiceMapping";
 
 interface AffirmationCardProps {
   id: number;
@@ -27,6 +28,7 @@ interface AffirmationCardProps {
   createdAt?: Date | string;
   voiceType?: string;
   voiceGender?: string;
+  aiVoiceId?: string;
   onPress?: () => void;
   onPlayPress?: () => void;
   onLongPress?: () => void;
@@ -46,6 +48,7 @@ export function AffirmationCard({
   createdAt,
   voiceType = "ai",
   voiceGender = "female",
+  aiVoiceId,
   onPress,
   onPlayPress,
   onLongPress,
@@ -146,10 +149,10 @@ export function AffirmationCard({
 
   const getVoiceLabel = () => {
     if (voiceType === "personal") {
-      return { label: "Personal Voice", icon: "mic" as const };
+      return { label: "My Voice", icon: "mic" as const };
     }
-    const genderLabel = voiceGender === "male" ? "Male" : "Female";
-    return { label: `AI Voice (${genderLabel})`, icon: "cpu" as const };
+    const voiceName = getVoiceDisplayName(voiceType, voiceGender, aiVoiceId);
+    return { label: `AI Voice (${voiceName})`, icon: "cpu" as const };
   };
 
   const voiceInfo = getVoiceLabel();

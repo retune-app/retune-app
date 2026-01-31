@@ -25,6 +25,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { useAudio } from "@/contexts/AudioContext";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { apiRequest } from "@/lib/query-client";
+import { getVoiceDisplayName } from "@shared/voiceMapping";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import type { Affirmation } from "@shared/schema";
 
@@ -185,8 +186,8 @@ export default function PlayerScreen() {
   const getCurrentVoiceLabel = () => {
     if (!affirmation) return "Loading...";
     if (affirmation.voiceType === "personal") return "My Voice";
-    if (affirmation.voiceGender === "male") return "AI Male";
-    return "AI Female";
+    const voiceName = getVoiceDisplayName(affirmation.voiceType, affirmation.voiceGender, affirmation.aiVoiceId);
+    return voiceName;
   };
 
   const handleSave = useCallback(() => {

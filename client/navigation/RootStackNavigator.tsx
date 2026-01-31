@@ -140,6 +140,7 @@ export default function RootStackNavigator() {
           component={AnalyticsScreen}
           options={{
             headerTitle: "Analytics",
+            headerBackTitle: "Profile",
             animation: "slide_from_right",
           }}
         />

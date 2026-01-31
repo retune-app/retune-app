@@ -1254,6 +1254,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       categoryBreakdown.sort((a, b) => b.listens - a.listens);
 
+      // Get breathing/meditation sessions for additional KPIs
+      const breathingSessionsData = await db
+        .select()
+        .from(breathingSessions)
+        .where(eq(breathingSessions.userId, req.userId!))
+        .orderBy(desc(breathingSessions.completedAt));
+
+      // Breathing stats
+      const breathingUniqueDates = [...new Set(breathingSessionsData.map(s => s.dateKey))].sort().reverse();
+      
+      // Calculate breathing streak
+      let breathingStreak = 0;
+      if (breathingUniqueDates.length > 0 && (breathingUniqueDates[0] === today || breathingUniqueDates[0] === yesterday)) {
+        breathingStreak = 1;
+        let checkDate = new Date(breathingUniqueDates[0]);
+        
+        for (let i = 1; i < breathingUniqueDates.length; i++) {
+          const prevDay = new Date(checkDate.getTime() - 86400000).toISOString().split('T')[0];
+          if (breathingUniqueDates[i] === prevDay) {
+            breathingStreak++;
+            checkDate = new Date(breathingUniqueDates[i]);
+          } else {
+            break;
+          }
+        }
+      }
+
+      // Best breathing streak
+      let bestBreathingStreak = 0;
+      if (breathingUniqueDates.length > 0) {
+        let currentRun = 1;
+        const sortedBreathingDates = [...breathingUniqueDates].sort();
+        for (let i = 1; i < sortedBreathingDates.length; i++) {
+          const prevDate = new Date(sortedBreathingDates[i - 1]);
+          const currDate = new Date(sortedBreathingDates[i]);
+          const diffDays = Math.round((currDate.getTime() - prevDate.getTime()) / 86400000);
+          if (diffDays === 1) {
+            currentRun++;
+          } else {
+            bestBreathingStreak = Math.max(bestBreathingStreak, currentRun);
+            currentRun = 1;
+          }
+        }
+        bestBreathingStreak = Math.max(bestBreathingStreak, currentRun);
+      }
+
+      // Weekly breathing data
+      const breathingWeeklyData: { day: string; minutes: number; date: string }[] = [];
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(Date.now() - i * 86400000);
+        const dateKey = date.toISOString().split('T')[0];
+        const dayName = dayNames[date.getDay()];
+        
+        const daySessions = breathingSessionsData.filter(s => s.dateKey === dateKey);
+        const totalSeconds = daySessions.reduce((sum, s) => sum + (s.durationSeconds || 0), 0);
+        
+        breathingWeeklyData.push({
+          day: dayName,
+          minutes: Math.round(totalSeconds / 60),
+          date: dateKey,
+        });
+      }
+
+      const breathingMinutesThisWeek = breathingWeeklyData.reduce((sum, d) => sum + d.minutes, 0);
+      
+      // Today's breathing minutes
+      const todayBreathingSessions = breathingSessionsData.filter(s => s.dateKey === today);
+      const breathingMinutesToday = Math.round(todayBreathingSessions.reduce((sum, s) => sum + (s.durationSeconds || 0), 0) / 60);
+      
+      // Lifetime breathing minutes
+      const lifetimeBreathingMinutes = Math.round(breathingSessionsData.reduce((sum, s) => sum + (s.durationSeconds || 0), 0) / 60);
+
+      // Total mindful minutes (affirmations + breathing)
+      const totalMindfulMinutesToday = minutesToday + breathingMinutesToday;
+      const totalMindfulMinutesWeek = totalMinutesThisWeek + breathingMinutesThisWeek;
+      const totalMindfulMinutesLifetime = lifetimeMinutes + lifetimeBreathingMinutes;
+
+      // Technique breakdown for breathing
+      const techniqueBreakdown: { technique: string; sessions: number; minutes: number }[] = [];
+      const techniqueMap = new Map<string, { sessions: number; minutes: number }>();
+      
+      for (const session of breathingSessionsData) {
+        const tech = session.techniqueId || 'unknown';
+        const existing = techniqueMap.get(tech) || { sessions: 0, minutes: 0 };
+        existing.sessions += 1;
+        existing.minutes += Math.round(session.durationSeconds / 60);
+        techniqueMap.set(tech, existing);
+      }
+      
+      techniqueMap.forEach((value, key) => {
+        techniqueBreakdown.push({ technique: key, ...value });
+      });
+      techniqueBreakdown.sort((a, b) => b.sessions - a.sessions);
+
       res.json({
         totalListens,
         streak,
@@ -1265,6 +1359,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         lifetimeMinutes,
         categoryBreakdown,
         totalDaysActive: uniqueDates.length,
+        // Meditation/Breathing KPIs
+        meditation: {
+          streak: breathingStreak,
+          bestStreak: bestBreathingStreak,
+          minutesToday: breathingMinutesToday,
+          minutesThisWeek: breathingMinutesThisWeek,
+          lifetimeMinutes: lifetimeBreathingMinutes,
+          totalSessions: breathingSessionsData.length,
+          daysActive: breathingUniqueDates.length,
+          weeklyData: breathingWeeklyData,
+          techniqueBreakdown,
+        },
+        // Combined mindful stats
+        mindfulMinutes: {
+          today: totalMindfulMinutesToday,
+          thisWeek: totalMindfulMinutesWeek,
+          lifetime: totalMindfulMinutesLifetime,
+        },
       });
     } catch (error) {
       console.error("Error fetching user stats:", error);

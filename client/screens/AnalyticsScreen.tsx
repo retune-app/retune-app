@@ -25,6 +25,24 @@ import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 
+interface MeditationStats {
+  streak: number;
+  bestStreak: number;
+  minutesToday: number;
+  minutesThisWeek: number;
+  lifetimeMinutes: number;
+  totalSessions: number;
+  daysActive: number;
+  weeklyData: { day: string; minutes: number; date: string }[];
+  techniqueBreakdown: { technique: string; sessions: number; minutes: number }[];
+}
+
+interface MindfulMinutes {
+  today: number;
+  thisWeek: number;
+  lifetime: number;
+}
+
 interface StatsData {
   totalListens: number;
   streak: number;
@@ -36,6 +54,8 @@ interface StatsData {
   lifetimeMinutes: number;
   categoryBreakdown: { category: string; listens: number; minutes: number }[];
   totalDaysActive: number;
+  meditation?: MeditationStats;
+  mindfulMinutes?: MindfulMinutes;
 }
 
 export default function AnalyticsScreen() {
@@ -323,6 +343,223 @@ export default function AnalyticsScreen() {
                   </ThemedText>
                   <ThemedText type="caption" style={{ color: theme.textSecondary }}>
                     Complete some affirmations to see your breakdown
+                  </ThemedText>
+                </View>
+              )}
+            </View>
+          </View>
+
+          {/* Meditation / Breathing Section */}
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+              MEDITATION & BREATHING
+            </Text>
+            
+            {/* Combined Mindful Minutes Card */}
+            <LinearGradient
+              colors={["#9C27B0" + "20", "#9C27B0" + "05"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={[styles.todayCard, { borderColor: "#9C27B0" + "40", marginBottom: Spacing.md }]}
+            >
+              <View style={styles.todayContent}>
+                <Feather name="heart" size={32} color="#9C27B0" />
+                <View style={styles.todayText}>
+                  <Text style={[styles.todayMinutes, { color: "#9C27B0" }]}>
+                    {formatMinutes(stats?.mindfulMinutes?.today || 0)}
+                  </Text>
+                  <Text style={[styles.todayLabel, { color: theme.textSecondary }]}>
+                    total mindful minutes today
+                  </Text>
+                </View>
+              </View>
+            </LinearGradient>
+
+            {/* Meditation Streaks */}
+            <View style={[styles.streakRow, { marginBottom: Spacing.md }]}>
+              <View style={[styles.streakCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
+                <View style={[styles.streakIconContainer, { backgroundColor: "#9C27B0" + "20" }]}>
+                  <Feather name="wind" size={24} color="#9C27B0" />
+                </View>
+                <Text style={[styles.streakNumber, { color: theme.text }]}>
+                  {stats?.meditation?.streak || 0}
+                </Text>
+                <Text style={[styles.streakLabel, { color: theme.textSecondary }]}>
+                  Breathing Streak
+                </Text>
+              </View>
+              <View style={[styles.streakCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
+                <View style={[styles.streakIconContainer, { backgroundColor: "#9C27B0" + "20" }]}>
+                  <Feather name="award" size={24} color="#9C27B0" />
+                </View>
+                <Text style={[styles.streakNumber, { color: theme.text }]}>
+                  {stats?.meditation?.bestStreak || 0}
+                </Text>
+                <Text style={[styles.streakLabel, { color: theme.textSecondary }]}>
+                  Best Streak
+                </Text>
+              </View>
+            </View>
+
+            {/* Meditation Stats */}
+            <View style={[styles.lifetimeCard, { backgroundColor: theme.cardBackground }, Shadows.small, { marginBottom: Spacing.md }]}>
+              <View style={styles.lifetimeRow}>
+                <View style={styles.lifetimeStat}>
+                  <Feather name="activity" size={20} color="#9C27B0" style={styles.lifetimeIcon} />
+                  <ThemedText type="h3" style={styles.lifetimeNumber}>
+                    {stats?.meditation?.totalSessions || 0}
+                  </ThemedText>
+                  <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                    Sessions
+                  </ThemedText>
+                </View>
+
+                <View style={[styles.divider, { backgroundColor: theme.border }]} />
+
+                <View style={styles.lifetimeStat}>
+                  <Feather name="clock" size={20} color="#9C27B0" style={styles.lifetimeIcon} />
+                  <ThemedText type="h3" style={styles.lifetimeNumber}>
+                    {formatMinutes(stats?.meditation?.lifetimeMinutes || 0)}
+                  </ThemedText>
+                  <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                    Total Time
+                  </ThemedText>
+                </View>
+
+                <View style={[styles.divider, { backgroundColor: theme.border }]} />
+
+                <View style={styles.lifetimeStat}>
+                  <Feather name="calendar" size={20} color="#9C27B0" style={styles.lifetimeIcon} />
+                  <ThemedText type="h3" style={styles.lifetimeNumber}>
+                    {stats?.meditation?.daysActive || 0}
+                  </ThemedText>
+                  <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                    Days Active
+                  </ThemedText>
+                </View>
+              </View>
+            </View>
+
+            {/* Breathing Weekly Chart */}
+            <View style={[styles.weeklyCard, { backgroundColor: theme.cardBackground }, Shadows.small, { marginBottom: Spacing.md }]}>
+              <View style={styles.weeklyHeader}>
+                <ThemedText type="body" style={{ fontWeight: "600" }}>
+                  {formatMinutes(stats?.meditation?.minutesThisWeek || 0)}
+                </ThemedText>
+                <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                  breathing this week
+                </ThemedText>
+              </View>
+              <View style={styles.weeklyChart}>
+                {(stats?.meditation?.weeklyData || []).map((day, index) => {
+                  const maxMinutes = Math.max(...(stats?.meditation?.weeklyData?.map((d) => d.minutes) || [1]), 1);
+                  const height = day.minutes > 0 ? Math.max((day.minutes / maxMinutes) * 60, 8) : 4;
+                  const isToday = index === 6;
+                  return (
+                    <View key={day.date} style={styles.dayColumn}>
+                      <View
+                        style={[
+                          styles.dayBar,
+                          {
+                            height,
+                            backgroundColor: isToday ? "#9C27B0" : "#9C27B0" + "60",
+                          },
+                        ]}
+                      />
+                      <ThemedText
+                        type="caption"
+                        style={[
+                          styles.dayLabel,
+                          { color: isToday ? "#9C27B0" : theme.textSecondary },
+                        ]}
+                      >
+                        {day.day}
+                      </ThemedText>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+
+            {/* Technique Breakdown */}
+            <View style={[styles.categoryCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
+              <ThemedText type="body" style={{ fontWeight: "600", marginBottom: Spacing.md }}>
+                Breathing Techniques
+              </ThemedText>
+              {(stats?.meditation?.techniqueBreakdown?.length ?? 0) > 0 ? (
+                stats?.meditation?.techniqueBreakdown?.map((tech, index) => {
+                  const maxSessions = Math.max(...(stats?.meditation?.techniqueBreakdown?.map((t) => t.sessions) || [1]), 1);
+                  const getTechniqueLabel = (id: string) => {
+                    const labels: Record<string, string> = {
+                      box: "Box Breathing",
+                      "478": "4-7-8 Relaxing",
+                      coherent: "Coherent Breathing",
+                    };
+                    return labels[id] || id;
+                  };
+                  const getTechniqueIcon = (id: string): keyof typeof Feather.glyphMap => {
+                    const icons: Record<string, keyof typeof Feather.glyphMap> = {
+                      box: "square",
+                      "478": "moon",
+                      coherent: "heart",
+                    };
+                    return icons[id] || "wind";
+                  };
+                  return (
+                    <View
+                      key={tech.technique}
+                      style={[
+                        styles.categoryRow,
+                        index < (stats?.meditation?.techniqueBreakdown?.length ?? 0) - 1 && {
+                          borderBottomWidth: 1,
+                          borderBottomColor: theme.border,
+                        },
+                      ]}
+                    >
+                      <View style={styles.categoryLeft}>
+                        <View
+                          style={[
+                            styles.categoryIcon,
+                            { backgroundColor: "#9C27B0" + "20" },
+                          ]}
+                        >
+                          <Feather
+                            name={getTechniqueIcon(tech.technique)}
+                            size={16}
+                            color="#9C27B0"
+                          />
+                        </View>
+                        <View>
+                          <ThemedText type="body">{getTechniqueLabel(tech.technique)}</ThemedText>
+                          <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                            {tech.sessions} sessions - {formatMinutes(tech.minutes)}
+                          </ThemedText>
+                        </View>
+                      </View>
+                      <View style={styles.categoryRight}>
+                        <View style={styles.categoryBarContainer}>
+                          <View
+                            style={[
+                              styles.categoryBar,
+                              {
+                                width: `${(tech.sessions / maxSessions) * 100}%`,
+                                backgroundColor: "#9C27B0",
+                              },
+                            ]}
+                          />
+                        </View>
+                      </View>
+                    </View>
+                  );
+                })
+              ) : (
+                <View style={styles.emptyCategory}>
+                  <Feather name="wind" size={32} color={theme.textSecondary} />
+                  <ThemedText type="body" style={{ color: theme.textSecondary, marginTop: Spacing.sm }}>
+                    No breathing data yet
+                  </ThemedText>
+                  <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                    Complete some breathing sessions to see your stats
                   </ThemedText>
                 </View>
               )}

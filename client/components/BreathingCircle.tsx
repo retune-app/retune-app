@@ -126,8 +126,8 @@ export default function BreathingCircle({
   }));
 
   const outerRingStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: interpolate(scale.value, [0.6, 1], [1.1, 1.3]) }],
-    opacity: interpolate(scale.value, [0.6, 1], [0.1, 0.3]),
+    transform: [{ scale: interpolate(scale.value, [0.6, 1], [1.0, 1.15]) }],
+    opacity: interpolate(scale.value, [0.6, 1], [0.1, 0.25]),
   }));
 
   const phaseColor = technique.color || ACCENT_GOLD;

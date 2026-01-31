@@ -64,6 +64,7 @@ export default function BreathingScreen() {
   const [showTechniqueSelector, setShowTechniqueSelector] = useState(false);
   const [isLandscape, setIsLandscape] = useState(false);
   const [showLandscapeMode, setShowLandscapeMode] = useState(false);
+  const [audioSource, setAudioSource] = useState<'none' | 'music' | 'affirmation'>('none');
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -143,9 +144,11 @@ export default function BreathingScreen() {
     setCyclesCompleted(0);
     try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
     
-    if (selectedMusic !== 'none') {
+    // Start background music if selected
+    if (audioSource === 'music' && selectedMusic !== 'none') {
       await startBackgroundMusic();
     }
+    // TODO: Add affirmation playback when audioSource === 'affirmation'
   };
 
   const handlePause = async () => {
@@ -155,15 +158,17 @@ export default function BreathingScreen() {
     if (isMusicPlaying) {
       await stopBackgroundMusic();
     }
+    // TODO: Pause affirmation playback
   };
 
   const handleResume = async () => {
     setIsPlaying(true);
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
     
-    if (selectedMusic !== 'none') {
+    if (audioSource === 'music' && selectedMusic !== 'none') {
       await startBackgroundMusic();
     }
+    // TODO: Resume affirmation playback
   };
 
   const handleStop = async () => {
@@ -176,6 +181,7 @@ export default function BreathingScreen() {
     if (isMusicPlaying) {
       await stopBackgroundMusic();
     }
+    // TODO: Stop affirmation playback
   };
 
   const handleCycleComplete = () => {
@@ -231,14 +237,6 @@ export default function BreathingScreen() {
       >
         <StatusBar hidden />
         <View style={[styles.landscapeContainer, { backgroundColor: theme.navy }]}>
-          {/* Affirmation text in background */}
-          {backgroundAffirmation ? (
-            <View style={styles.landscapeAffirmationBg}>
-              <Text style={styles.landscapeAffirmationText} numberOfLines={4}>
-                {backgroundAffirmation.script}
-              </Text>
-            </View>
-          ) : null}
 
           {/* Close button */}
           <Pressable
@@ -436,26 +434,93 @@ export default function BreathingScreen() {
               </View>
             </View>
 
-            {/* Sound Toggle */}
-            <Pressable
-              onPress={() => {
-                const sounds: BackgroundMusicType[] = ['none', '432hz', '528hz', 'theta', 'alpha'];
-                const currentIndex = sounds.indexOf(selectedMusic);
-                const nextIndex = (currentIndex + 1) % sounds.length;
-                setSelectedMusic(sounds[nextIndex]);
-                try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
-              }}
-              style={[styles.soundToggle, { backgroundColor: theme.backgroundSecondary }]}
-            >
-              <Feather 
-                name={selectedMusic === 'none' ? 'volume-x' : 'volume-2'} 
-                size={18} 
-                color={selectedMusic === 'none' ? theme.textSecondary : ACCENT_GOLD} 
-              />
-              <ThemedText type="small" style={{ marginLeft: Spacing.sm, color: theme.text }}>
-                {selectedMusic === 'none' ? 'No Sound' : BACKGROUND_MUSIC_OPTIONS.find(m => m.id === selectedMusic)?.name || 'Sound'}
+            {/* Audio Source Selector */}
+            <View style={styles.audioSourceSection}>
+              <ThemedText type="small" style={[styles.durationLabel, { color: theme.textSecondary }]}>
+                Background Audio
               </ThemedText>
-            </Pressable>
+              <View style={[styles.audioSourceToggle, { backgroundColor: theme.backgroundSecondary }]}>
+                <Pressable
+                  onPress={() => {
+                    setAudioSource('none');
+                    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+                  }}
+                  style={[
+                    styles.audioSourceOption,
+                    audioSource === 'none' && styles.audioSourceOptionActive,
+                    audioSource === 'none' && { backgroundColor: theme.cardBackground },
+                  ]}
+                >
+                  <Feather name="volume-x" size={16} color={audioSource === 'none' ? ACCENT_GOLD : theme.textSecondary} />
+                  <Text style={[styles.audioSourceText, { color: audioSource === 'none' ? theme.text : theme.textSecondary }]}>
+                    None
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => {
+                    setAudioSource('music');
+                    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+                  }}
+                  style={[
+                    styles.audioSourceOption,
+                    audioSource === 'music' && styles.audioSourceOptionActive,
+                    audioSource === 'music' && { backgroundColor: theme.cardBackground },
+                  ]}
+                >
+                  <Feather name="music" size={16} color={audioSource === 'music' ? ACCENT_GOLD : theme.textSecondary} />
+                  <Text style={[styles.audioSourceText, { color: audioSource === 'music' ? theme.text : theme.textSecondary }]}>
+                    Music
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => {
+                    setAudioSource('affirmation');
+                    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+                  }}
+                  style={[
+                    styles.audioSourceOption,
+                    audioSource === 'affirmation' && styles.audioSourceOptionActive,
+                    audioSource === 'affirmation' && { backgroundColor: theme.cardBackground },
+                  ]}
+                >
+                  <Feather name="mic" size={16} color={audioSource === 'affirmation' ? ACCENT_GOLD : theme.textSecondary} />
+                  <Text style={[styles.audioSourceText, { color: audioSource === 'affirmation' ? theme.text : theme.textSecondary }]}>
+                    Affirmation
+                  </Text>
+                </Pressable>
+              </View>
+              
+              {/* Music Type Selector - only show when Music is selected */}
+              {audioSource === 'music' ? (
+                <View style={styles.musicTypeRow}>
+                  {BACKGROUND_MUSIC_OPTIONS.filter(m => m.id !== 'none').map((option) => (
+                    <Pressable
+                      key={option.id}
+                      onPress={() => {
+                        setSelectedMusic(option.id);
+                        try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+                      }}
+                      style={[
+                        styles.musicTypePill,
+                        {
+                          backgroundColor: selectedMusic === option.id ? `${ACCENT_GOLD}30` : 'transparent',
+                          borderColor: selectedMusic === option.id ? ACCENT_GOLD : theme.border,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.musicTypePillText,
+                          { color: selectedMusic === option.id ? ACCENT_GOLD : theme.textSecondary },
+                        ]}
+                      >
+                        {option.name}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              ) : null}
+            </View>
           </Animated.View>
         ) : null}
 
@@ -648,7 +713,8 @@ const styles = StyleSheet.create({
   circleSection: {
     alignItems: "center",
     marginBottom: Spacing.xl,
-    paddingVertical: Spacing.lg,
+    marginTop: Spacing.xl,
+    paddingVertical: Spacing.md,
   },
   statsRow: {
     flexDirection: "row",
@@ -713,15 +779,51 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 
-  // Sound Toggle
-  soundToggle: {
+  // Audio Source Selector
+  audioSourceSection: {
+    marginBottom: Spacing.lg,
+  },
+  audioSourceToggle: {
+    flexDirection: "row",
+    borderRadius: BorderRadius.lg,
+    padding: 4,
+    marginBottom: Spacing.sm,
+  },
+  audioSourceOption: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.md,
+    gap: 6,
+  },
+  audioSourceOptionActive: {
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  audioSourceText: {
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  musicTypeRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: Spacing.xs,
+    marginTop: Spacing.sm,
+  },
+  musicTypePill: {
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
     borderRadius: BorderRadius.full,
-    alignSelf: "flex-start",
-    marginBottom: Spacing.lg,
+    borderWidth: 1,
+  },
+  musicTypePillText: {
+    fontSize: 12,
+    fontWeight: "500",
   },
 
   // Control Section

@@ -490,7 +490,7 @@ export default function ProfileScreen() {
 
       <Pressable
         onPress={() => navigation.navigate("Analytics")}
-        style={[styles.analyticsButton, { borderColor: theme.gold + "40" }]}
+        style={[styles.analyticsButton, { borderColor: theme.gold, backgroundColor: isDark ? theme.cardBackground : "rgba(255, 255, 255, 0.95)" }]}
       >
         <Feather name="bar-chart-2" size={18} color={theme.gold} />
         <ThemedText type="body" style={[styles.analyticsButtonText, { color: theme.gold }]}>

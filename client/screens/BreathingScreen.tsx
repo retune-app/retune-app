@@ -1,19 +1,33 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   View,
   StyleSheet,
   Pressable,
   ScrollView,
   Text,
+  Dimensions,
+  Modal,
+  StatusBar,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
-import { Audio } from "expo-av";
+import * as ScreenOrientation from "expo-screen-orientation";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  Easing,
+  FadeIn,
+  FadeOut,
+} from "react-native-reanimated";
+import { useQuery } from "@tanstack/react-query";
+import { BlurView } from "expo-blur";
 
 import { ThemedText } from "@/components/ThemedText";
+import { ThemedView } from "@/components/ThemedView";
 import BreathingCircle from "@/components/BreathingCircle";
 import { useTheme } from "@/hooks/useTheme";
 import { useBackgroundMusic, BACKGROUND_MUSIC_OPTIONS, type BackgroundMusicType } from "@/contexts/BackgroundMusicContext";
@@ -24,10 +38,16 @@ import {
   getTotalCycleDuration,
   getCyclesForDuration,
   type BreathingTechnique,
-  type BreathPhase,
 } from "@shared/breathingTechniques";
 
 const ACCENT_GOLD = "#C9A227";
+
+interface Affirmation {
+  id: number;
+  title: string;
+  script: string;
+  category: string;
+}
 
 export default function BreathingScreen() {
   const insets = useSafeAreaInsets();
@@ -41,12 +61,49 @@ export default function BreathingScreen() {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [cyclesCompleted, setCyclesCompleted] = useState(0);
   const [hapticsEnabled, setHapticsEnabled] = useState(true);
+  const [showTechniqueSelector, setShowTechniqueSelector] = useState(false);
+  const [isLandscape, setIsLandscape] = useState(false);
+  const [showLandscapeMode, setShowLandscapeMode] = useState(false);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const wasPlayingMusicRef = useRef(false);
+
+  // Fetch affirmations for background display
+  const { data: affirmations = [] } = useQuery<Affirmation[]>({
+    queryKey: ["/api/affirmations"],
+  });
+
+  // Get a random affirmation or the first one
+  const backgroundAffirmation = affirmations.length > 0 
+    ? affirmations[Math.floor(Math.random() * Math.min(affirmations.length, 5))]
+    : null;
 
   const remainingTime = selectedDuration - elapsedTime;
   const totalCycles = getCyclesForDuration(selectedTechnique, selectedDuration);
+
+  // Handle orientation changes
+  useEffect(() => {
+    const checkOrientation = async () => {
+      const orientation = await ScreenOrientation.getOrientationAsync();
+      setIsLandscape(
+        orientation === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
+        orientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT
+      );
+    };
+
+    checkOrientation();
+
+    const subscription = ScreenOrientation.addOrientationChangeListener((event) => {
+      const newOrientation = event.orientationInfo.orientation;
+      setIsLandscape(
+        newOrientation === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
+        newOrientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT
+      );
+    });
+
+    return () => {
+      ScreenOrientation.removeOrientationChangeListener(subscription);
+    };
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -113,6 +170,7 @@ export default function BreathingScreen() {
     setIsPlaying(false);
     setElapsedTime(0);
     setCyclesCompleted(0);
+    setShowLandscapeMode(false);
     try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
     
     if (isMusicPlaying) {
@@ -134,276 +192,409 @@ export default function BreathingScreen() {
   const selectTechnique = (technique: BreathingTechnique) => {
     if (!isPlaying) {
       setSelectedTechnique(technique);
+      setShowTechniqueSelector(false);
       try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
     }
   };
 
-  return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: theme.backgroundRoot }]}
-      contentContainerStyle={[
-        styles.contentContainer,
-        {
-          paddingTop: headerHeight + Spacing.lg,
-          paddingBottom: insets.bottom + 100,
-        },
-      ]}
-      showsVerticalScrollIndicator={false}
-    >
-      <View style={styles.techniqueSection}>
-        <ThemedText type="h3" style={styles.sectionTitle}>
-          Choose Technique
-        </ThemedText>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.techniqueCards}
-        >
-          {BREATHING_TECHNIQUES.map((technique) => (
-            <Pressable
-              key={technique.id}
-              onPress={() => selectTechnique(technique)}
-              style={[
-                styles.techniqueCard,
-                {
-                  backgroundColor:
-                    selectedTechnique.id === technique.id
-                      ? `${technique.color}20`
-                      : theme.cardBackground,
-                  borderColor:
-                    selectedTechnique.id === technique.id
-                      ? technique.color
-                      : theme.border,
-                },
-                Shadows.small,
-              ]}
-              testID={`technique-${technique.id}`}
-            >
-              <View
-                style={[
-                  styles.techniqueIcon,
-                  { backgroundColor: `${technique.color}30` },
-                ]}
-              >
-                <Feather
-                  name={technique.icon as any}
-                  size={24}
-                  color={technique.color}
-                />
+  const enterFullscreen = async () => {
+    setShowLandscapeMode(true);
+    await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+    handleStart();
+  };
+
+  const exitFullscreen = async () => {
+    setShowLandscapeMode(false);
+    await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+    handleStop();
+  };
+
+  const getTimeOfDay = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return { greeting: "Good morning", suggestion: "Start your day with calm focus" };
+    if (hour < 17) return { greeting: "Good afternoon", suggestion: "Take a mindful pause" };
+    if (hour < 21) return { greeting: "Good evening", suggestion: "Unwind and relax" };
+    return { greeting: "Good night", suggestion: "Prepare for restful sleep" };
+  };
+
+  const { greeting, suggestion } = getTimeOfDay();
+
+  // Landscape Fullscreen Mode
+  if (showLandscapeMode) {
+    return (
+      <Modal
+        visible={showLandscapeMode}
+        animationType="fade"
+        statusBarTranslucent
+        supportedOrientations={["landscape-left", "landscape-right", "portrait"]}
+        presentationStyle="fullScreen"
+      >
+        <StatusBar hidden />
+        <View style={[styles.landscapeContainer, { backgroundColor: theme.navy }]}>
+          {/* Affirmation text in background */}
+          {backgroundAffirmation ? (
+            <View style={styles.landscapeAffirmationBg}>
+              <Text style={styles.landscapeAffirmationText} numberOfLines={4}>
+                {backgroundAffirmation.script}
+              </Text>
+            </View>
+          ) : null}
+
+          {/* Close button */}
+          <Pressable
+            onPress={exitFullscreen}
+            style={[styles.landscapeCloseButton, { top: insets.top + 16 }]}
+          >
+            <BlurView intensity={40} tint="dark" style={styles.blurButton}>
+              <Feather name="x" size={24} color="#FFFFFF" />
+            </BlurView>
+          </Pressable>
+
+          {/* Main content - centered breathing circle */}
+          <View style={styles.landscapeContent}>
+            {/* Left side - technique info */}
+            <View style={styles.landscapeSidePanel}>
+              <Text style={[styles.landscapeTechniqueName, { color: selectedTechnique.color }]}>
+                {selectedTechnique.name}
+              </Text>
+              <Text style={styles.landscapePhaseLabel}>
+                {selectedTechnique.benefits}
+              </Text>
+            </View>
+
+            {/* Center - breathing circle */}
+            <View style={styles.landscapeCircleContainer}>
+              <BreathingCircle
+                technique={selectedTechnique}
+                isPlaying={isPlaying}
+                onCycleComplete={handleCycleComplete}
+                hapticsEnabled={hapticsEnabled}
+                size={Math.min(Dimensions.get("window").height - 80, 320)}
+              />
+            </View>
+
+            {/* Right side - stats and controls */}
+            <View style={styles.landscapeSidePanel}>
+              <View style={styles.landscapeStats}>
+                <Text style={styles.landscapeStatLabel}>Time Left</Text>
+                <Text style={styles.landscapeStatValue}>{formatTime(remainingTime)}</Text>
               </View>
-              <ThemedText type="body" style={styles.techniqueName}>
-                {technique.name}
-              </ThemedText>
-              <ThemedText
-                type="caption"
-                style={[styles.techniqueDesc, { color: theme.textSecondary }]}
-              >
-                {technique.description}
-              </ThemedText>
-            </Pressable>
-          ))}
-        </ScrollView>
-      </View>
-
-      <View style={styles.circleSection}>
-        <BreathingCircle
-          technique={selectedTechnique}
-          isPlaying={isPlaying}
-          onCycleComplete={handleCycleComplete}
-          hapticsEnabled={hapticsEnabled}
-          size={280}
-        />
-
-        {isPlaying ? (
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                Time Left
-              </ThemedText>
-              <ThemedText type="h3">{formatTime(remainingTime)}</ThemedText>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                Cycles
-              </ThemedText>
-              <ThemedText type="h3">
-                {cyclesCompleted}/{totalCycles}
-              </ThemedText>
-            </View>
-          </View>
-        ) : null}
-      </View>
-
-      {!isPlaying ? (
-        <>
-          <View style={styles.section}>
-            <ThemedText type="h4" style={styles.sectionTitle}>
-              Duration
-            </ThemedText>
-            <View style={styles.durationRow}>
-              {DURATION_OPTIONS.map((option) => (
+              <View style={styles.landscapeStats}>
+                <Text style={styles.landscapeStatLabel}>Cycles</Text>
+                <Text style={styles.landscapeStatValue}>{cyclesCompleted}/{totalCycles}</Text>
+              </View>
+              
+              <View style={styles.landscapeControlsRow}>
                 <Pressable
-                  key={option.value}
-                  onPress={() => {
-                    setSelectedDuration(option.value);
-                    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
-                  }}
-                  style={[
-                    styles.durationButton,
-                    {
-                      backgroundColor:
-                        selectedDuration === option.value
-                          ? ACCENT_GOLD
-                          : theme.backgroundSecondary,
-                      borderColor:
-                        selectedDuration === option.value
-                          ? ACCENT_GOLD
-                          : theme.border,
-                    },
-                  ]}
-                  testID={`duration-${option.value}`}
+                  onPress={handleStop}
+                  style={styles.landscapeStopButton}
                 >
-                  <Text
-                    style={[
-                      styles.durationText,
-                      {
-                        color:
-                          selectedDuration === option.value
-                            ? "#FFFFFF"
-                            : theme.text,
-                      },
-                    ]}
-                  >
-                    {option.label}
-                  </Text>
+                  <Feather name="square" size={20} color="#FFFFFF" />
                 </Pressable>
-              ))}
+                <Pressable
+                  onPress={isPlaying ? handlePause : handleResume}
+                >
+                  <LinearGradient
+                    colors={[selectedTechnique.color, `${selectedTechnique.color}CC`]}
+                    style={styles.landscapePlayButton}
+                  >
+                    <Feather name={isPlaying ? "pause" : "play"} size={24} color="#FFFFFF" />
+                  </LinearGradient>
+                </Pressable>
+              </View>
             </View>
           </View>
+        </View>
+      </Modal>
+    );
+  }
 
-          <View style={styles.section}>
-            <ThemedText type="h4" style={styles.sectionTitle}>
-              Background Sound
-            </ThemedText>
-            <View style={styles.soundRow}>
-              {BACKGROUND_MUSIC_OPTIONS.map((sound) => {
-                const iconName = sound.id === 'none' ? 'volume-x' : 
-                  sound.id === 'theta' || sound.id === 'alpha' || sound.id === 'delta' || sound.id === 'beta' ? 'radio' : 'activity';
-                return (
+  // Portrait Mode - Main Screen
+  return (
+    <ThemedView style={styles.container}>
+      {/* Affirmation background */}
+      {backgroundAffirmation ? (
+        <View style={styles.affirmationBackground}>
+          <LinearGradient
+            colors={[`${theme.navy}00`, theme.navy, theme.navy]}
+            style={styles.affirmationGradient}
+          />
+          <Text style={[styles.affirmationBgText, { color: `${theme.text}10` }]}>
+            {backgroundAffirmation.script}
+          </Text>
+        </View>
+      ) : null}
+
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[
+          styles.contentContainer,
+          {
+            paddingTop: headerHeight + Spacing.lg,
+            paddingBottom: insets.bottom + 120,
+          },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Welcome Section */}
+        <Animated.View entering={FadeIn.duration(600)} style={styles.welcomeSection}>
+          <ThemedText type="h2" style={styles.greeting}>{greeting}</ThemedText>
+          <ThemedText type="body" style={[styles.suggestion, { color: theme.textSecondary }]}>
+            {suggestion}
+          </ThemedText>
+        </Animated.View>
+
+        {/* Breathing Circle - Hero Element */}
+        <Animated.View 
+          entering={FadeIn.delay(200).duration(800)} 
+          style={styles.circleSection}
+        >
+          <BreathingCircle
+            technique={selectedTechnique}
+            isPlaying={isPlaying}
+            onCycleComplete={handleCycleComplete}
+            hapticsEnabled={hapticsEnabled}
+            size={280}
+          />
+
+          {isPlaying ? (
+            <View style={styles.statsRow}>
+              <View style={styles.statItem}>
+                <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                  Time Left
+                </ThemedText>
+                <ThemedText type="h3">{formatTime(remainingTime)}</ThemedText>
+              </View>
+              <View style={[styles.statDivider, { backgroundColor: theme.border }]} />
+              <View style={styles.statItem}>
+                <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                  Cycles
+                </ThemedText>
+                <ThemedText type="h3">
+                  {cyclesCompleted}/{totalCycles}
+                </ThemedText>
+              </View>
+            </View>
+          ) : null}
+        </Animated.View>
+
+        {/* Technique Selector Card */}
+        {!isPlaying ? (
+          <Animated.View entering={FadeIn.delay(400).duration(600)}>
+            <Pressable
+              onPress={() => setShowTechniqueSelector(true)}
+              style={[styles.techniqueCard, { backgroundColor: theme.cardBackground }, Shadows.medium]}
+            >
+              <View style={styles.techniqueCardContent}>
+                <View style={[styles.techniqueIconSmall, { backgroundColor: `${selectedTechnique.color}30` }]}>
+                  <Feather name={selectedTechnique.icon as any} size={24} color={selectedTechnique.color} />
+                </View>
+                <View style={styles.techniqueCardInfo}>
+                  <ThemedText type="body" style={{ fontWeight: "600" }}>
+                    {selectedTechnique.name}
+                  </ThemedText>
+                  <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                    {selectedTechnique.benefits}
+                  </ThemedText>
+                </View>
+                <Feather name="chevron-right" size={20} color={theme.textSecondary} />
+              </View>
+            </Pressable>
+
+            {/* Duration Pills */}
+            <View style={styles.durationSection}>
+              <ThemedText type="small" style={[styles.durationLabel, { color: theme.textSecondary }]}>
+                Duration
+              </ThemedText>
+              <View style={styles.durationRow}>
+                {DURATION_OPTIONS.map((option) => (
                   <Pressable
-                    key={sound.id}
+                    key={option.value}
                     onPress={() => {
-                      setSelectedMusic(sound.id);
+                      setSelectedDuration(option.value);
                       try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
                     }}
                     style={[
-                      styles.soundButton,
+                      styles.durationPill,
                       {
-                        backgroundColor:
-                          selectedMusic === sound.id
-                            ? `${ACCENT_GOLD}20`
-                            : theme.backgroundSecondary,
-                        borderColor:
-                          selectedMusic === sound.id ? ACCENT_GOLD : theme.border,
+                        backgroundColor: selectedDuration === option.value ? ACCENT_GOLD : theme.backgroundSecondary,
+                        borderColor: selectedDuration === option.value ? ACCENT_GOLD : theme.border,
                       },
                     ]}
-                    testID={`sound-${sound.id}`}
+                    testID={`duration-${option.value}`}
                   >
-                    <Feather
-                      name={iconName as any}
-                      size={20}
-                      color={selectedMusic === sound.id ? ACCENT_GOLD : theme.textSecondary}
-                    />
                     <Text
                       style={[
-                        styles.soundText,
-                        {
-                          color:
-                            selectedMusic === sound.id ? ACCENT_GOLD : theme.text,
-                        },
+                        styles.durationPillText,
+                        { color: selectedDuration === option.value ? "#FFFFFF" : theme.text },
                       ]}
                     >
-                      {sound.name}
+                      {option.label}
                     </Text>
                   </Pressable>
-                );
-              })}
-            </View>
-          </View>
-
-          <View style={styles.section}>
-            <Pressable
-              onPress={() => setHapticsEnabled(!hapticsEnabled)}
-              style={[styles.settingRow, { backgroundColor: theme.cardBackground }]}
-            >
-              <View style={styles.settingInfo}>
-                <Feather name="smartphone" size={20} color={theme.text} />
-                <ThemedText type="body" style={{ marginLeft: Spacing.md }}>
-                  Haptic Feedback
-                </ThemedText>
+                ))}
               </View>
-              <View
+            </View>
+
+            {/* Sound Toggle */}
+            <Pressable
+              onPress={() => {
+                const sounds: BackgroundMusicType[] = ['none', '432hz', '528hz', 'theta', 'alpha'];
+                const currentIndex = sounds.indexOf(selectedMusic);
+                const nextIndex = (currentIndex + 1) % sounds.length;
+                setSelectedMusic(sounds[nextIndex]);
+                try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+              }}
+              style={[styles.soundToggle, { backgroundColor: theme.backgroundSecondary }]}
+            >
+              <Feather 
+                name={selectedMusic === 'none' ? 'volume-x' : 'volume-2'} 
+                size={18} 
+                color={selectedMusic === 'none' ? theme.textSecondary : ACCENT_GOLD} 
+              />
+              <ThemedText type="small" style={{ marginLeft: Spacing.sm, color: theme.text }}>
+                {selectedMusic === 'none' ? 'No Sound' : BACKGROUND_MUSIC_OPTIONS.find(m => m.id === selectedMusic)?.name || 'Sound'}
+              </ThemedText>
+            </Pressable>
+          </Animated.View>
+        ) : null}
+
+        {/* Control Buttons */}
+        <Animated.View 
+          entering={FadeIn.delay(600).duration(600)} 
+          style={styles.controlSection}
+        >
+          {!isPlaying ? (
+            <View style={styles.startButtons}>
+              <Pressable onPress={handleStart} testID="button-start-breathing">
+                <LinearGradient
+                  colors={[selectedTechnique.color, `${selectedTechnique.color}CC`]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={[styles.startButton, Shadows.medium]}
+                >
+                  <Feather name="play" size={24} color="#FFFFFF" />
+                  <Text style={styles.startButtonText}>Start</Text>
+                </LinearGradient>
+              </Pressable>
+
+              <Pressable 
+                onPress={enterFullscreen} 
+                style={[styles.fullscreenButton, { backgroundColor: theme.backgroundSecondary }]}
+              >
+                <Feather name="maximize-2" size={20} color={theme.text} />
+              </Pressable>
+            </View>
+          ) : (
+            <View style={styles.playingControls}>
+              <Pressable
+                onPress={handleStop}
+                style={[styles.controlButton, { backgroundColor: theme.backgroundSecondary }]}
+                testID="button-stop-breathing"
+              >
+                <Feather name="square" size={24} color={theme.text} />
+              </Pressable>
+              <Pressable
+                onPress={isPlaying ? handlePause : handleResume}
+                testID="button-pause-breathing"
+              >
+                <LinearGradient
+                  colors={[selectedTechnique.color, `${selectedTechnique.color}CC`]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={[styles.pauseButton, Shadows.medium]}
+                >
+                  <Feather name="pause" size={28} color="#FFFFFF" />
+                </LinearGradient>
+              </Pressable>
+              <Pressable
+                onPress={() => setShowLandscapeMode(true)}
+                style={[styles.controlButton, { backgroundColor: theme.backgroundSecondary }]}
+              >
+                <Feather name="maximize-2" size={20} color={theme.text} />
+              </Pressable>
+            </View>
+          )}
+        </Animated.View>
+
+        {/* Current Affirmation Preview */}
+        {backgroundAffirmation && !isPlaying ? (
+          <Animated.View 
+            entering={FadeIn.delay(800).duration(600)}
+            style={[styles.affirmationPreview, { backgroundColor: theme.cardBackground }]}
+          >
+            <View style={styles.affirmationPreviewHeader}>
+              <Feather name="book-open" size={16} color={ACCENT_GOLD} />
+              <ThemedText type="caption" style={{ marginLeft: Spacing.sm, color: theme.textSecondary }}>
+                Current Affirmation
+              </ThemedText>
+            </View>
+            <ThemedText type="body" numberOfLines={2} style={styles.affirmationPreviewText}>
+              {backgroundAffirmation.title}
+            </ThemedText>
+          </Animated.View>
+        ) : null}
+      </ScrollView>
+
+      {/* Technique Selection Modal */}
+      <Modal
+        visible={showTechniqueSelector}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowTechniqueSelector(false)}
+      >
+        <Pressable 
+          style={styles.modalOverlay} 
+          onPress={() => setShowTechniqueSelector(false)}
+        >
+          <View style={[styles.modalContent, { backgroundColor: theme.backgroundRoot }]}>
+            <View style={styles.modalHandle} />
+            <ThemedText type="h3" style={styles.modalTitle}>
+              Choose Your Breathing Technique
+            </ThemedText>
+            <ThemedText type="body" style={[styles.modalSubtitle, { color: theme.textSecondary }]}>
+              Each technique offers unique benefits for your mind and body
+            </ThemedText>
+
+            {BREATHING_TECHNIQUES.map((technique) => (
+              <Pressable
+                key={technique.id}
+                onPress={() => selectTechnique(technique)}
                 style={[
-                  styles.toggle,
+                  styles.techniqueOption,
                   {
-                    backgroundColor: hapticsEnabled ? ACCENT_GOLD : theme.backgroundSecondary,
+                    backgroundColor: selectedTechnique.id === technique.id
+                      ? `${technique.color}20`
+                      : theme.cardBackground,
+                    borderColor: selectedTechnique.id === technique.id
+                      ? technique.color
+                      : theme.border,
                   },
                 ]}
               >
-                <View
-                  style={[
-                    styles.toggleKnob,
-                    {
-                      transform: [{ translateX: hapticsEnabled ? 20 : 0 }],
-                    },
-                  ]}
-                />
-              </View>
-            </Pressable>
+                <View style={[styles.techniqueOptionIcon, { backgroundColor: `${technique.color}30` }]}>
+                  <Feather name={technique.icon as any} size={28} color={technique.color} />
+                </View>
+                <View style={styles.techniqueOptionInfo}>
+                  <ThemedText type="body" style={{ fontWeight: "700" }}>
+                    {technique.name}
+                  </ThemedText>
+                  <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: 2 }}>
+                    {technique.pattern}
+                  </ThemedText>
+                  <ThemedText type="small" style={{ color: technique.color, marginTop: 4 }}>
+                    {technique.benefits}
+                  </ThemedText>
+                </View>
+                {selectedTechnique.id === technique.id ? (
+                  <Feather name="check-circle" size={24} color={technique.color} />
+                ) : null}
+              </Pressable>
+            ))}
           </View>
-        </>
-      ) : null}
-
-      <View style={styles.controlSection}>
-        {!isPlaying ? (
-          <Pressable onPress={handleStart} testID="button-start-breathing">
-            <LinearGradient
-              colors={[selectedTechnique.color, `${selectedTechnique.color}CC`]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={[styles.startButton, Shadows.medium]}
-            >
-              <Feather name="play" size={28} color="#FFFFFF" />
-              <Text style={styles.startButtonText}>Start Breathing</Text>
-            </LinearGradient>
-          </Pressable>
-        ) : (
-          <View style={styles.playingControls}>
-            <Pressable
-              onPress={handleStop}
-              style={[styles.controlButton, { backgroundColor: theme.backgroundSecondary }]}
-              testID="button-stop-breathing"
-            >
-              <Feather name="square" size={24} color={theme.text} />
-            </Pressable>
-            <Pressable
-              onPress={isPlaying ? handlePause : handleResume}
-              testID="button-pause-breathing"
-            >
-              <LinearGradient
-                colors={[selectedTechnique.color, `${selectedTechnique.color}CC`]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={[styles.pauseButton, Shadows.medium]}
-              >
-                <Feather name="pause" size={28} color="#FFFFFF" />
-              </LinearGradient>
-            </Pressable>
-          </View>
-        )}
-      </View>
-    </ScrollView>
+        </Pressable>
+      </Modal>
+    </ThemedView>
   );
 }
 
@@ -411,44 +602,53 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  scrollView: {
+    flex: 1,
+  },
   contentContainer: {
     paddingHorizontal: Spacing.lg,
   },
-  sectionTitle: {
-    marginBottom: Spacing.md,
-  },
-  techniqueSection: {
+  
+  // Welcome Section
+  welcomeSection: {
     marginBottom: Spacing.xl,
   },
-  techniqueCards: {
-    gap: Spacing.md,
-    paddingRight: Spacing.lg,
-  },
-  techniqueCard: {
-    width: 160,
-    padding: Spacing.md,
-    borderRadius: BorderRadius.lg,
-    borderWidth: 2,
-  },
-  techniqueIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: Spacing.sm,
-  },
-  techniqueName: {
-    fontWeight: "600",
+  greeting: {
     marginBottom: Spacing.xs,
   },
-  techniqueDesc: {
-    fontSize: 12,
+  suggestion: {
+    fontSize: 16,
   },
+
+  // Affirmation Background
+  affirmationBackground: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 300,
+    overflow: "hidden",
+  },
+  affirmationGradient: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1,
+  },
+  affirmationBgText: {
+    fontSize: 48,
+    fontWeight: "800",
+    lineHeight: 56,
+    padding: Spacing.lg,
+  },
+
+  // Circle Section
   circleSection: {
     alignItems: "center",
     marginBottom: Spacing.xl,
-    paddingVertical: Spacing.xl,
+    paddingVertical: Spacing.lg,
   },
   statsRow: {
     flexDirection: "row",
@@ -463,71 +663,76 @@ const styles = StyleSheet.create({
   statDivider: {
     width: 1,
     height: 40,
-    backgroundColor: "rgba(255,255,255,0.2)",
     marginHorizontal: Spacing.lg,
   },
-  section: {
-    marginBottom: Spacing.xl,
+
+  // Technique Card
+  techniqueCard: {
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    marginBottom: Spacing.lg,
+  },
+  techniqueCardContent: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  techniqueIconSmall: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  techniqueCardInfo: {
+    flex: 1,
+    marginLeft: Spacing.md,
+  },
+
+  // Duration
+  durationSection: {
+    marginBottom: Spacing.lg,
+  },
+  durationLabel: {
+    marginBottom: Spacing.sm,
+    textTransform: "uppercase",
+    letterSpacing: 1,
   },
   durationRow: {
     flexDirection: "row",
     gap: Spacing.sm,
   },
-  durationButton: {
+  durationPill: {
     flex: 1,
     paddingVertical: Spacing.md,
     borderRadius: BorderRadius.full,
     borderWidth: 1,
     alignItems: "center",
   },
-  durationText: {
+  durationPillText: {
     fontWeight: "600",
     fontSize: 14,
   },
-  soundRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: Spacing.sm,
-  },
-  soundButton: {
+
+  // Sound Toggle
+  soundToggle: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
     borderRadius: BorderRadius.full,
-    borderWidth: 1,
-    gap: Spacing.xs,
+    alignSelf: "flex-start",
+    marginBottom: Spacing.lg,
   },
-  soundText: {
-    fontSize: 13,
-    fontWeight: "500",
-  },
-  settingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: Spacing.md,
-    borderRadius: BorderRadius.lg,
-  },
-  settingInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  toggle: {
-    width: 48,
-    height: 28,
-    borderRadius: 14,
-    padding: 4,
-  },
-  toggleKnob: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: "#FFFFFF",
-  },
+
+  // Control Section
   controlSection: {
-    marginTop: Spacing.lg,
     alignItems: "center",
+    marginTop: Spacing.lg,
+  },
+  startButtons: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.md,
   },
   startButton: {
     flexDirection: "row",
@@ -542,6 +747,13 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 18,
     fontWeight: "700",
+  },
+  fullscreenButton: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: "center",
+    justifyContent: "center",
   },
   playingControls: {
     flexDirection: "row",
@@ -559,6 +771,166 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  // Affirmation Preview
+  affirmationPreview: {
+    marginTop: Spacing.xl,
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+  },
+  affirmationPreviewHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Spacing.sm,
+  },
+  affirmationPreviewText: {
+    fontWeight: "500",
+  },
+
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: Spacing.lg,
+    paddingBottom: 48,
+  },
+  modalHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: "rgba(255,255,255,0.3)",
+    borderRadius: 2,
+    alignSelf: "center",
+    marginBottom: Spacing.lg,
+  },
+  modalTitle: {
+    marginBottom: Spacing.sm,
+  },
+  modalSubtitle: {
+    marginBottom: Spacing.xl,
+  },
+  techniqueOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 2,
+    marginBottom: Spacing.md,
+  },
+  techniqueOptionIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  techniqueOptionInfo: {
+    flex: 1,
+    marginLeft: Spacing.md,
+  },
+
+  // Landscape Mode
+  landscapeContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  landscapeAffirmationBg: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 48,
+    opacity: 0.1,
+  },
+  landscapeAffirmationText: {
+    fontSize: 32,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    textAlign: "center",
+    lineHeight: 44,
+  },
+  landscapeCloseButton: {
+    position: "absolute",
+    right: 24,
+    zIndex: 10,
+  },
+  blurButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  landscapeContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
+    paddingHorizontal: 48,
+  },
+  landscapeSidePanel: {
+    width: 180,
+    alignItems: "center",
+  },
+  landscapeTechniqueName: {
+    fontSize: 20,
+    fontWeight: "700",
+    marginBottom: 8,
+  },
+  landscapePhaseLabel: {
+    fontSize: 14,
+    color: "rgba(255,255,255,0.7)",
+    textAlign: "center",
+  },
+  landscapeCircleContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  landscapeStats: {
+    alignItems: "center",
+    marginBottom: Spacing.lg,
+  },
+  landscapeStatLabel: {
+    fontSize: 12,
+    color: "rgba(255,255,255,0.6)",
+    marginBottom: 4,
+  },
+  landscapeStatValue: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
+  landscapeControlsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.md,
+    marginTop: Spacing.lg,
+  },
+  landscapeStopButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  landscapePlayButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: "center",
     justifyContent: "center",
   },

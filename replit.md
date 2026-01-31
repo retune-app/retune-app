@@ -177,15 +177,9 @@ The frontend uses `getApiUrl()` from `client/lib/query-client.ts` to determine t
 This is necessary because Replit's port configuration maps port 80 to the Expo dev server (8081), while port 5000 routes to the Express backend.
 
 ### Voice Selection System
-- **AI Voice Options**: Users can choose from 3 female and 3 male voices:
-  - Female voices:
-    - Rachel (21m00Tcm4TlvDq8ikWAM) - Soft, warm tone (default)
-    - Charlotte (XB0fDUnXU5powFXDhCwa) - Warm, British accent
-    - Bella (EXAVITQu4vr4xnSDxMaL) - Soft, gentle
-  - Male voices:
-    - Antoni (ErXwobaYiN019PkySvjV) - Warm, friendly (default)
-    - Daniel (onwK4e9ZLuTAKqWW03F9) - Clear, professional
-    - Adam (pNInz6obpgDQGcFmaJgB) - Deep, calm
+- **AI Voice Options**: Users can choose from 9 female and 12 male voices from ElevenLabs:
+  - Female voices: Sarah (default), Laura, Alice, Matilda, Jessica, Bella, Lily, Rachel (legacy), Charlotte (legacy)
+  - Male voices: Roger (default), Charlie, George, Liam, Will, Eric, Chris, Brian, Daniel, Adam, Bill, Antoni (legacy)
 - **Personal Voice**: Users can record their voice for cloning and use it for affirmations
 - **Voice Preferences**: User preferences stored in database (preferredVoiceType, preferredAiGender, preferredMaleVoiceId, preferredFemaleVoiceId)
 - **Profile Voice Settings**: Voice selection UI in ProfileScreen shows voice cards for current gender preference

@@ -754,17 +754,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // AI Voice options - all available voices from ElevenLabs
+  // AI Voice options - expanded selection from ElevenLabs
   const VOICE_OPTIONS = {
     female: [
-      { id: "21m00Tcm4TlvDq8ikWAM", name: "Rachel", description: "Soft, warm tone" },
-      { id: "XB0fDUnXU5powFXDhCwa", name: "Charlotte", description: "Warm, British accent" },
-      { id: "EXAVITQu4vr4xnSDxMaL", name: "Bella", description: "Soft, gentle" },
+      { id: "EXAVITQu4vr4xnSDxMaL", name: "Sarah", description: "Mature, reassuring, confident" },
+      { id: "FGY2WhTYpPnrIDTdsKH5", name: "Laura", description: "Enthusiastic, quirky" },
+      { id: "Xb7hH8MSUJpSbSDYk0k2", name: "Alice", description: "Clear, engaging, British" },
+      { id: "XrExE9yKIg1WjnnlVkGX", name: "Matilda", description: "Knowledgeable, professional" },
+      { id: "cgSgspJ2msm6clMCkdW9", name: "Jessica", description: "Playful, bright, warm" },
+      { id: "hpp4J3VqNfWAUOO0d1Us", name: "Bella", description: "Professional, warm" },
+      { id: "pFZP5JQG7iQjIQuC4Bku", name: "Lily", description: "Velvety, British actress" },
+      { id: "21m00Tcm4TlvDq8ikWAM", name: "Rachel", description: "Soft, warm tone (legacy)" },
+      { id: "XB0fDUnXU5powFXDhCwa", name: "Charlotte", description: "Warm, British (legacy)" },
     ],
     male: [
-      { id: "ErXwobaYiN019PkySvjV", name: "Antoni", description: "Warm, friendly" },
-      { id: "onwK4e9ZLuTAKqWW03F9", name: "Daniel", description: "Clear, professional" },
-      { id: "pNInz6obpgDQGcFmaJgB", name: "Adam", description: "Deep, calm" },
+      { id: "CwhRBWXzGAHq8TQ4Fs17", name: "Roger", description: "Laid-back, casual, resonant" },
+      { id: "IKne3meq5aSn9XLyUdCD", name: "Charlie", description: "Deep, confident, Australian" },
+      { id: "JBFqnCBsd6RMkjVDRZzb", name: "George", description: "Warm, captivating storyteller, British" },
+      { id: "TX3LPaxmHKxFdv7VOQHJ", name: "Liam", description: "Energetic, social media creator" },
+      { id: "bIHbv24MWmeRgasZH58o", name: "Will", description: "Relaxed, optimistic" },
+      { id: "cjVigY5qzO86Huf0OWal", name: "Eric", description: "Smooth, trustworthy" },
+      { id: "iP95p4xoKVk53GoZ742B", name: "Chris", description: "Charming, down-to-earth" },
+      { id: "nPczCjzI2devNBz1zQrb", name: "Brian", description: "Deep, resonant, comforting" },
+      { id: "onwK4e9ZLuTAKqWW03F9", name: "Daniel", description: "Steady, professional, British" },
+      { id: "pNInz6obpgDQGcFmaJgB", name: "Adam", description: "Dominant, firm" },
+      { id: "pqHfZKP75CvOlQylNhV4", name: "Bill", description: "Wise, mature, balanced" },
+      { id: "ErXwobaYiN019PkySvjV", name: "Antoni", description: "Warm, friendly (legacy)" },
     ],
   };
 

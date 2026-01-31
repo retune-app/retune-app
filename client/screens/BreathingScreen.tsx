@@ -438,7 +438,7 @@ export default function BreathingScreen() {
         contentContainerStyle={[
           styles.contentContainer,
           {
-            paddingTop: headerHeight + Spacing.lg,
+            paddingTop: insets.top + Spacing.lg,
             paddingBottom: insets.bottom + 120,
           },
         ]}

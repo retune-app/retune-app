@@ -181,10 +181,11 @@ This is necessary because Replit's port configuration maps port 80 to the Expo d
 - **Personal Voice**: Users can record their voice for cloning and use it for affirmations
 - **Voice Preferences**: User preferences stored in database (preferredVoiceType, preferredAiGender, preferredMaleVoiceId, preferredFemaleVoiceId)
 - **Profile Voice Settings**: Voice selection UI in ProfileScreen shows voice cards for current gender preference
-- **Voice Preview**: Users can listen to voice samples before selecting
+- **Voice Preview**: Auto-plays when selecting a voice
   - Preview phrase: "I am strong, capable, and worthy of success."
-  - ProfileScreen shows play button on each voice card
-  - Preview audio is generated using ElevenLabs TTS and plays immediately
+  - Tapping a voice card selects it AND plays the preview automatically
+  - Volume icon appears next to voice name while playing
+  - Tapping already-selected voice toggles preview playback
 - **API Endpoints**:
   - GET /api/voices - Returns available voice options
   - GET /api/voice-preferences - Get user's voice preferences

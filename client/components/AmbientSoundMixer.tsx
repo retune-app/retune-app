@@ -26,6 +26,10 @@ interface AmbientSoundMixerProps {
 
 const MUSIC_ICONS: Record<BackgroundMusicType, string> = {
   none: "volume-x",
+  rain: "cloud-rain",
+  ocean: "anchor",
+  forest: "feather",
+  wind: "wind",
   "432hz": "radio",
   "528hz": "heart",
   theta: "moon",
@@ -116,7 +120,80 @@ export function AmbientSoundMixer({ compact = false }: AmbientSoundMixerProps) {
               </ThemedText>
 
               <ScrollView style={styles.optionsList} showsVerticalScrollIndicator={false}>
-                {BACKGROUND_MUSIC_OPTIONS.map((option) => (
+                <Pressable
+                  onPress={() => handleSelectMusic('none')}
+                  style={[
+                    styles.optionItem,
+                    {
+                      backgroundColor: selectedMusic === 'none'
+                        ? theme.gold + "20"
+                        : theme.backgroundSecondary,
+                      borderColor: selectedMusic === 'none' ? theme.gold : "transparent",
+                    },
+                  ]}
+                >
+                  <View style={[styles.optionIcon, { backgroundColor: theme.backgroundTertiary }]}>
+                    <Feather
+                      name="volume-x"
+                      size={20}
+                      color={selectedMusic === 'none' ? theme.gold : theme.textSecondary}
+                    />
+                  </View>
+                  <View style={styles.optionText}>
+                    <ThemedText type="body" style={{ fontWeight: "600" }}>
+                      None
+                    </ThemedText>
+                    <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                      No background music
+                    </ThemedText>
+                  </View>
+                  {selectedMusic === 'none' ? (
+                    <Feather name="check-circle" size={20} color={theme.gold} />
+                  ) : null}
+                </Pressable>
+
+                <ThemedText type="caption" style={[styles.sectionLabel, { color: theme.textSecondary }]}>
+                  Nature Sounds
+                </ThemedText>
+                {BACKGROUND_MUSIC_OPTIONS.filter(o => o.category === 'nature').map((option) => (
+                  <Pressable
+                    key={option.id}
+                    onPress={() => handleSelectMusic(option.id)}
+                    style={[
+                      styles.optionItem,
+                      {
+                        backgroundColor: selectedMusic === option.id
+                          ? theme.gold + "20"
+                          : theme.backgroundSecondary,
+                        borderColor: selectedMusic === option.id ? theme.gold : "transparent",
+                      },
+                    ]}
+                  >
+                    <View style={[styles.optionIcon, { backgroundColor: theme.backgroundTertiary }]}>
+                      <Feather
+                        name={MUSIC_ICONS[option.id] as any}
+                        size={20}
+                        color={selectedMusic === option.id ? theme.gold : theme.textSecondary}
+                      />
+                    </View>
+                    <View style={styles.optionText}>
+                      <ThemedText type="body" style={{ fontWeight: "600" }}>
+                        {option.name}
+                      </ThemedText>
+                      <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                        {option.description}
+                      </ThemedText>
+                    </View>
+                    {selectedMusic === option.id ? (
+                      <Feather name="check-circle" size={20} color={theme.gold} />
+                    ) : null}
+                  </Pressable>
+                ))}
+
+                <ThemedText type="caption" style={[styles.sectionLabel, { color: theme.textSecondary }]}>
+                  Binaural Beats
+                </ThemedText>
+                {BACKGROUND_MUSIC_OPTIONS.filter(o => o.category === 'binaural' && o.id !== 'none').map((option) => (
                   <Pressable
                     key={option.id}
                     onPress={() => handleSelectMusic(option.id)}
@@ -309,7 +386,16 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   optionsList: {
-    maxHeight: 300,
+    maxHeight: 400,
+  },
+  sectionLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    marginTop: Spacing.md,
+    marginBottom: Spacing.sm,
+    marginLeft: Spacing.xs,
   },
   optionItem: {
     flexDirection: "row",

@@ -9,22 +9,31 @@ export type BackgroundMusicType =
   | 'theta'
   | 'alpha'
   | 'delta'
-  | 'beta';
+  | 'beta'
+  | 'rain'
+  | 'ocean'
+  | 'forest'
+  | 'wind';
 
 export interface BackgroundMusicOption {
   id: BackgroundMusicType;
   name: string;
   description: string;
+  category: 'binaural' | 'nature';
 }
 
 export const BACKGROUND_MUSIC_OPTIONS: BackgroundMusicOption[] = [
-  { id: 'none', name: 'None', description: 'No background music' },
-  { id: '432hz', name: '432Hz Healing', description: 'Universal healing frequency' },
-  { id: '528hz', name: '528Hz Love', description: 'Solfeggio love frequency' },
-  { id: 'theta', name: 'Theta Waves', description: 'Deep meditation (6Hz)' },
-  { id: 'alpha', name: 'Alpha Waves', description: 'Relaxation (10Hz)' },
-  { id: 'delta', name: 'Delta Waves', description: 'Deep sleep (2Hz)' },
-  { id: 'beta', name: 'Beta Waves', description: 'Focus & concentration (18Hz)' },
+  { id: 'none', name: 'None', description: 'No background music', category: 'binaural' },
+  { id: 'rain', name: 'Rain', description: 'Gentle rainfall', category: 'nature' },
+  { id: 'ocean', name: 'Ocean', description: 'Calming ocean waves', category: 'nature' },
+  { id: 'forest', name: 'Forest', description: 'Nature sounds & birds', category: 'nature' },
+  { id: 'wind', name: 'Wind', description: 'Soft wind ambience', category: 'nature' },
+  { id: '432hz', name: '432Hz Healing', description: 'Universal healing frequency', category: 'binaural' },
+  { id: '528hz', name: '528Hz Love', description: 'Solfeggio love frequency', category: 'binaural' },
+  { id: 'theta', name: 'Theta Waves', description: 'Deep meditation (6Hz)', category: 'binaural' },
+  { id: 'alpha', name: 'Alpha Waves', description: 'Relaxation (10Hz)', category: 'binaural' },
+  { id: 'delta', name: 'Delta Waves', description: 'Deep sleep (2Hz)', category: 'binaural' },
+  { id: 'beta', name: 'Beta Waves', description: 'Focus & concentration (18Hz)', category: 'binaural' },
 ];
 
 const AUDIO_FILES: Record<Exclude<BackgroundMusicType, 'none'>, any> = {
@@ -34,6 +43,10 @@ const AUDIO_FILES: Record<Exclude<BackgroundMusicType, 'none'>, any> = {
   'alpha': require('../../assets/audio/alpha-waves.wav'),
   'delta': require('../../assets/audio/delta-waves.wav'),
   'beta': require('../../assets/audio/beta-waves.wav'),
+  'rain': require('../../assets/audio/rain-ambient.wav'),
+  'ocean': require('../../assets/audio/ocean-waves.wav'),
+  'forest': require('../../assets/audio/forest-birds.wav'),
+  'wind': require('../../assets/audio/wind-gentle.wav'),
 };
 
 const STORAGE_KEY = '@rewired_background_music';

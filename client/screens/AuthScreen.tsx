@@ -50,18 +50,20 @@ export function AuthScreen() {
   const isAndroid = Platform.OS === "android";
   const isWeb = Platform.OS === "web";
   
-  // On iOS, Google auth requires an iOS-specific client ID from Google Cloud Console
-  // Since we don't have one configured, Google Sign-In is not available on iOS
-  // Users on iOS should use Apple Sign-In instead
-  const hasGoogleClientId = isWeb && !!process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+  // Platform-specific auth strategy:
+  // - iOS: Apple Sign-In (no Google iOS client ID configured)
+  // - Android: Google Sign-In (uses web client ID with Expo proxy)
+  // - Web: Google Sign-In
+  const hasGoogleClientId = (isWeb || isAndroid) && !!process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
 
-  // Google OAuth setup - only use on web where we have a valid client ID
-  // On iOS/Android, we use Apple Sign-In instead to avoid crashes
+  // Google OAuth setup - works on web and Android using web client ID
+  // On iOS, we use Apple Sign-In instead
   const [request, response, promptAsync] = Google.useAuthRequest(
-    isWeb ? {
+    (isWeb || isAndroid) ? {
       webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+      // Android uses the web client ID through Expo's auth proxy
     } : {
-      // Provide a dummy config for non-web platforms - the hook won't be used
+      // Provide a dummy config for iOS - the hook won't be used there
       clientId: "unused",
     }
   );

@@ -52,6 +52,8 @@ export default function VoiceSettingsScreen() {
 
   const [previewingVoiceId, setPreviewingVoiceId] = useState<string | null>(null);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const [isPersonalPreviewPlaying, setIsPersonalPreviewPlaying] = useState(false);
+  const [isPersonalPreviewLoading, setIsPersonalPreviewLoading] = useState(false);
   const previewSoundRef = useRef<Audio.Sound | null>(null);
 
   const { data: voicePreferences, isLoading: isLoadingVoicePrefs } = useQuery<VoicePreferences>({
@@ -159,6 +161,77 @@ export default function VoiceSettingsScreen() {
     }
   };
 
+  const handlePersonalVoicePreview = async () => {
+    try {
+      if (isPersonalPreviewPlaying) {
+        if (previewSoundRef.current) {
+          await previewSoundRef.current.stopAsync();
+          await previewSoundRef.current.unloadAsync();
+          previewSoundRef.current = null;
+        }
+        setIsPersonalPreviewPlaying(false);
+        return;
+      }
+
+      if (previewSoundRef.current) {
+        await previewSoundRef.current.stopAsync();
+        await previewSoundRef.current.unloadAsync();
+        previewSoundRef.current = null;
+      }
+      setPreviewingVoiceId(null);
+
+      setIsPersonalPreviewLoading(true);
+      setIsPersonalPreviewPlaying(true);
+      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+
+      const token = await getAuthToken();
+      const response = await fetch(
+        new URL("/api/voices/preview-personal", getApiUrl()).toString(),
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { "X-Auth-Token": token } : {}),
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to generate preview");
+      }
+
+      const data = await response.json();
+      const audioUri = `data:audio/mpeg;base64,${data.audio}`;
+      
+      await Audio.setAudioModeAsync({
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: false,
+      });
+
+      const { sound } = await Audio.Sound.createAsync(
+        { uri: audioUri },
+        { shouldPlay: true }
+      );
+      
+      previewSoundRef.current = sound;
+      setIsPersonalPreviewLoading(false);
+
+      sound.setOnPlaybackStatusUpdate((status) => {
+        if (status.isLoaded && status.didJustFinish) {
+          setIsPersonalPreviewPlaying(false);
+          sound.unloadAsync();
+          previewSoundRef.current = null;
+        }
+      });
+    } catch (error) {
+      console.error("Personal voice preview error:", error);
+      setIsPersonalPreviewLoading(false);
+      setIsPersonalPreviewPlaying(false);
+      Alert.alert("Preview Error", "Could not play your voice preview. Please try again.");
+    }
+  };
+
   useEffect(() => {
     return () => {
       if (previewSoundRef.current) {
@@ -253,6 +326,46 @@ export default function VoiceSettingsScreen() {
               ]}>AI Voice</Text>
             </Pressable>
           </View>
+
+          {voicePreferences?.hasPersonalVoice ? (
+            <View style={[styles.personalPreviewSection, { borderTopColor: theme.border }]}>
+              <View style={styles.personalPreviewInfo}>
+                <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                  Your voice is ready! Tap to preview how you sound:
+                </ThemedText>
+              </View>
+              <Pressable
+                onPress={handlePersonalVoicePreview}
+                style={[
+                  styles.personalPreviewButton,
+                  { 
+                    backgroundColor: isPersonalPreviewPlaying ? ACCENT_GOLD + "20" : theme.backgroundSecondary,
+                    borderColor: ACCENT_GOLD,
+                  },
+                ]}
+                testID="button-preview-personal-voice"
+              >
+                {isPersonalPreviewLoading ? (
+                  <ActivityIndicator size="small" color={ACCENT_GOLD} />
+                ) : (
+                  <Feather 
+                    name={isPersonalPreviewPlaying ? "pause" : "play"} 
+                    size={18} 
+                    color={ACCENT_GOLD} 
+                  />
+                )}
+                <Text style={[styles.personalPreviewButtonText, { color: ACCENT_GOLD }]}>
+                  {isPersonalPreviewPlaying ? "Stop Preview" : "Preview My Voice"}
+                </Text>
+                {isPersonalPreviewPlaying && !isPersonalPreviewLoading ? (
+                  <Feather name="volume-2" size={16} color={ACCENT_GOLD} style={{ marginLeft: Spacing.xs }} />
+                ) : null}
+              </Pressable>
+              <ThemedText type="caption" style={[styles.previewPhraseText, { color: theme.textSecondary }]}>
+                "I am strong, capable, and worthy of success."
+              </ThemedText>
+            </View>
+          ) : null}
         </View>
       </View>
 
@@ -481,5 +594,32 @@ const styles = StyleSheet.create({
   },
   recordButtonText: {
     flex: 1,
+  },
+  personalPreviewSection: {
+    marginTop: Spacing.md,
+    paddingTop: Spacing.md,
+    borderTopWidth: 1,
+  },
+  personalPreviewInfo: {
+    marginBottom: Spacing.sm,
+  },
+  personalPreviewButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1,
+    gap: Spacing.sm,
+  },
+  personalPreviewButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  previewPhraseText: {
+    marginTop: Spacing.sm,
+    fontStyle: "italic",
+    textAlign: "center",
   },
 });

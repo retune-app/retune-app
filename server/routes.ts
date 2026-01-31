@@ -1148,16 +1148,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
       ];
 
+      // Get user's voice preferences to use their preferred voice
+      const [userPrefs] = await db
+        .select({
+          preferredAiGender: users.preferredAiGender,
+          preferredMaleVoiceId: users.preferredMaleVoiceId,
+          preferredFemaleVoiceId: users.preferredFemaleVoiceId,
+        })
+        .from(users)
+        .where(eq(users.id, req.userId!));
+
+      // Determine voice to use based on preferences
+      const gender = userPrefs?.preferredAiGender || "female";
+      let voiceIdToUse: string;
+      if (gender === "male") {
+        voiceIdToUse = userPrefs?.preferredMaleVoiceId || VOICE_OPTIONS.male[0].id;
+      } else {
+        voiceIdToUse = userPrefs?.preferredFemaleVoiceId || VOICE_OPTIONS.female[0].id;
+      }
+      console.log("Creating sample affirmations with voice:", voiceIdToUse, "gender:", gender);
+
       const createdAffirmations = [];
+
+      // Ensure audio subdirectory exists
+      const audioDir = path.join(uploadDir, "audio");
+      if (!fs.existsSync(audioDir)) {
+        fs.mkdirSync(audioDir, { recursive: true });
+      }
 
       for (const sample of sampleAffirmations) {
         try {
-          // Generate audio with default voice (Rachel)
-          const audioResult = await generateAudio(sample.script);
+          // Generate audio with user's preferred voice
+          const audioResult = await generateAudio(sample.script, voiceIdToUse);
           
-          // Save audio file
+          // Save audio file to audio subdirectory
           const audioFilename = `affirmation-${Date.now()}-${Math.random().toString(36).slice(2)}.mp3`;
-          const audioPath = path.join(uploadDir, audioFilename);
+          const audioPath = path.join(audioDir, audioFilename);
           fs.writeFileSync(audioPath, Buffer.from(audioResult.audio));
 
           // Create affirmation record
@@ -1168,13 +1194,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
               title: sample.title,
               script: sample.script,
               categoryId: sample.categoryId,
-              audioUrl: `/uploads/${audioFilename}`,
+              audioUrl: `/uploads/audio/${audioFilename}`,
               duration: audioResult.duration,
               wordTimings: JSON.stringify(audioResult.wordTimings),
               isManual: false,
               voiceType: "ai",
-              voiceGender: "female",
-              aiVoiceId: "21m00Tcm4TlvDq8ikWAM", // Rachel - default voice
+              voiceGender: gender,
+              aiVoiceId: voiceIdToUse,
             })
             .returning();
 

@@ -141,24 +141,24 @@ export default function AnalyticsScreen() {
                 <View style={[styles.streakIconContainer, { backgroundColor: theme.gold + "20" }]}>
                   <Feather name="zap" size={24} color={theme.gold} />
                 </View>
-                <ThemedText type="h3" style={styles.streakNumber}>
+                <Text style={[styles.streakNumber, { color: theme.text }]}>
                   {stats?.streak || 0}
-                </ThemedText>
-                <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                </Text>
+                <Text style={[styles.streakLabel, { color: theme.textSecondary }]}>
                   Current Streak
-                </ThemedText>
+                </Text>
               </View>
 
               <View style={[styles.streakCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
                 <View style={[styles.streakIconContainer, { backgroundColor: "#50E3C2" + "20" }]}>
                   <Feather name="award" size={24} color="#50E3C2" />
                 </View>
-                <ThemedText type="h3" style={styles.streakNumber}>
+                <Text style={[styles.streakNumber, { color: theme.text }]}>
                   {stats?.bestStreak || 0}
-                </ThemedText>
-                <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                </Text>
+                <Text style={[styles.streakLabel, { color: theme.textSecondary }]}>
                   Best Streak
-                </ThemedText>
+                </Text>
               </View>
             </View>
           </View>
@@ -377,10 +377,16 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   streakNumber: {
-    fontSize: 32,
-    fontWeight: "700",
-    lineHeight: 40,
+    fontSize: 36,
+    fontWeight: "700" as const,
+    lineHeight: 48,
     marginBottom: Spacing.xs,
+    textAlign: "center" as const,
+  },
+  streakLabel: {
+    fontSize: 12,
+    lineHeight: 16,
+    textAlign: "center" as const,
   },
   lifetimeCard: {
     borderRadius: BorderRadius.lg,

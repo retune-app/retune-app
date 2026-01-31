@@ -52,6 +52,9 @@ import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { getApiUrl, apiRequest } from "@/lib/query-client";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
+// Use consistent gold for accent buttons regardless of theme
+const ACCENT_GOLD = "#C9A227";
+
 interface CustomCategory {
   id: number;
   userId: string;
@@ -499,9 +502,9 @@ export default function ProfileScreen() {
                   styles.voiceToggleButton,
                   { 
                     backgroundColor: voicePreferences?.preferredVoiceType === "personal" 
-                      ? theme.primary 
+                      ? ACCENT_GOLD 
                       : theme.backgroundSecondary,
-                    borderColor: voicePreferences?.hasPersonalVoice ? theme.primary : theme.border,
+                    borderColor: voicePreferences?.hasPersonalVoice ? ACCENT_GOLD : theme.border,
                   },
                 ]}
                 testID="button-voice-personal"
@@ -535,9 +538,9 @@ export default function ProfileScreen() {
                   styles.voiceToggleButton,
                   { 
                     backgroundColor: voicePreferences?.preferredVoiceType === "ai" || !voicePreferences?.preferredVoiceType 
-                      ? theme.primary 
+                      ? ACCENT_GOLD 
                       : theme.backgroundSecondary,
-                    borderColor: theme.primary,
+                    borderColor: ACCENT_GOLD,
                   },
                 ]}
                 testID="button-voice-ai"
@@ -573,9 +576,9 @@ export default function ProfileScreen() {
                     styles.voiceGenderButton,
                     { 
                       backgroundColor: voicePreferences?.preferredAiGender === "female" || !voicePreferences?.preferredAiGender
-                        ? theme.primary 
+                        ? ACCENT_GOLD 
                         : theme.backgroundSecondary,
-                      borderColor: theme.primary,
+                      borderColor: ACCENT_GOLD,
                     },
                   ]}
                   testID="button-gender-female"
@@ -593,9 +596,9 @@ export default function ProfileScreen() {
                     styles.voiceGenderButton,
                     { 
                       backgroundColor: voicePreferences?.preferredAiGender === "male" 
-                        ? theme.primary 
+                        ? ACCENT_GOLD 
                         : theme.backgroundSecondary,
-                      borderColor: theme.primary,
+                      borderColor: ACCENT_GOLD,
                     },
                   ]}
                   testID="button-gender-male"
@@ -635,8 +638,8 @@ export default function ProfileScreen() {
                       style={[
                         styles.voiceCard,
                         { 
-                          backgroundColor: isSelected ? theme.primary + "20" : theme.backgroundSecondary,
-                          borderColor: isSelected ? theme.primary : theme.border,
+                          backgroundColor: isSelected ? ACCENT_GOLD + "20" : theme.backgroundSecondary,
+                          borderColor: isSelected ? ACCENT_GOLD : theme.border,
                           borderWidth: isSelected ? 2 : 1,
                         },
                       ]}
@@ -644,13 +647,13 @@ export default function ProfileScreen() {
                     >
                       <View style={styles.voiceCardContent}>
                         <View style={styles.voiceCardNameRow}>
-                          <ThemedText type="body" style={[{ fontWeight: "600" }, isSelected ? { color: theme.primary } : undefined]}>
+                          <ThemedText type="body" style={[{ fontWeight: "600" }, isSelected ? { color: ACCENT_GOLD } : undefined]}>
                             {voice.name}
                           </ThemedText>
                           {isLoading ? (
-                            <ActivityIndicator size="small" color={theme.primary} style={{ marginLeft: Spacing.sm }} />
+                            <ActivityIndicator size="small" color={ACCENT_GOLD} style={{ marginLeft: Spacing.sm }} />
                           ) : isPlaying ? (
-                            <Feather name="volume-2" size={16} color={theme.primary} style={{ marginLeft: Spacing.sm }} />
+                            <Feather name="volume-2" size={16} color={ACCENT_GOLD} style={{ marginLeft: Spacing.sm }} />
                           ) : null}
                         </View>
                         <ThemedText type="caption" style={{ color: theme.textSecondary }}>
@@ -658,7 +661,7 @@ export default function ProfileScreen() {
                         </ThemedText>
                       </View>
                       {isSelected ? (
-                        <View style={[styles.voiceCardCheck, { backgroundColor: theme.primary }]}>
+                        <View style={[styles.voiceCardCheck, { backgroundColor: ACCENT_GOLD }]}>
                           <Feather name="check" size={14} color="#FFFFFF" />
                         </View>
                       ) : null}
@@ -744,8 +747,8 @@ export default function ProfileScreen() {
               <Switch
                 value={autoReplayEnabled}
                 onValueChange={handleToggleAutoReplay}
-                trackColor={{ false: theme.border, true: theme.primary + "80" }}
-                thumbColor={autoReplayEnabled ? theme.primary : theme.textSecondary}
+                trackColor={{ false: theme.border, true: ACCENT_GOLD + "80" }}
+                thumbColor={autoReplayEnabled ? ACCENT_GOLD : theme.textSecondary}
               />
             }
           />

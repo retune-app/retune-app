@@ -119,6 +119,16 @@ export const authTokens = pgTable("auth_tokens", {
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 
+// Listening sessions for analytics tracking
+export const listeningSessions = pgTable("listening_sessions", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  affirmationId: integer("affirmation_id").references(() => affirmations.id, { onDelete: "set null" }),
+  durationSeconds: integer("duration_seconds").default(0), // How long they listened
+  completedAt: timestamp("completed_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  dateKey: text("date_key").notNull(), // YYYY-MM-DD format for easy grouping
+});
+
 // Notification settings for daily affirmation reminders
 export const notificationSettings = pgTable("notification_settings", {
   id: serial("id").primaryKey(),
@@ -158,6 +168,12 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   collections: many(collections),
   customCategories: many(customCategories),
   notificationSettings: one(notificationSettings),
+  listeningSessions: many(listeningSessions),
+}));
+
+export const listeningSessionsRelations = relations(listeningSessions, ({ one }) => ({
+  user: one(users, { fields: [listeningSessions.userId], references: [users.id] }),
+  affirmation: one(affirmations, { fields: [listeningSessions.affirmationId], references: [affirmations.id] }),
 }));
 
 export const notificationSettingsRelations = relations(notificationSettings, ({ one }) => ({
@@ -235,6 +251,11 @@ export const insertNotificationSettingsSchema = createInsertSchema(notificationS
   updatedAt: true,
 });
 
+export const insertListeningSessionSchema = createInsertSchema(listeningSessions).omit({
+  id: true,
+  completedAt: true,
+});
+
 // Types
 export type Conversation = typeof conversations.$inferSelect;
 export type InsertConversation = z.infer<typeof insertConversationSchema>;
@@ -252,3 +273,5 @@ export type CustomCategory = typeof customCategories.$inferSelect;
 export type InsertCustomCategory = z.infer<typeof insertCustomCategorySchema>;
 export type NotificationSettings = typeof notificationSettings.$inferSelect;
 export type InsertNotificationSettings = z.infer<typeof insertNotificationSettingsSchema>;
+export type ListeningSession = typeof listeningSessions.$inferSelect;
+export type InsertListeningSession = z.infer<typeof insertListeningSessionSchema>;

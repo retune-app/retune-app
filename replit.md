@@ -98,7 +98,8 @@ Preferred communication style: Simple, everyday language.
 - **CreateScreen**: Create new affirmation (AI Generate or Manual mode)
 - **PlayerScreen**: Audio player with waveform visualization, playback controls, and RSVP mode for synchronized word display
 - **VoiceSetupScreen**: Record voice sample for cloning (fullscreen modal)
-- **ProfileScreen**: User settings, stats, voice sample management
+- **VoiceSettingsScreen**: Dedicated screen for voice preferences - toggle between personal/AI voice, select gender, browse and preview 21 available voices
+- **ProfileScreen**: User settings, stats, simplified voice settings entry point
 - **AnalyticsScreen**: Detailed analytics with today's progress, streak details (current vs best), lifetime stats, weekly chart, and category breakdown
 
 ### Analytics System

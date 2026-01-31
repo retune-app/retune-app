@@ -20,6 +20,7 @@ import { RSVPDisplay, WordTiming, RSVPFontSize } from "@/components/RSVPDisplay"
 import { IconButton } from "@/components/IconButton";
 import { AmbientSoundMixer } from "@/components/AmbientSoundMixer";
 import { FocusModeTip } from "@/components/FocusModeTip";
+import { ThemedModal } from "@/components/ThemedModal";
 import { useTheme } from "@/hooks/useTheme";
 import { useAudio } from "@/contexts/AudioContext";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
@@ -91,6 +92,13 @@ export default function PlayerScreen() {
   // Focus mode tip (one-time hint)
   const [showFocusModeTip, setShowFocusModeTip] = useState(false);
 
+  // Modal states
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showSaveSuccessModal, setShowSaveSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [showVoiceSetupModal, setShowVoiceSetupModal] = useState(false);
+
   const isCurrentlyPlaying = currentAffirmation?.id === affirmationId && isPlaying;
 
   const deleteMutation = useMutation({
@@ -107,7 +115,8 @@ export default function PlayerScreen() {
     },
     onError: () => {
       if (hapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert("Error", "Failed to delete affirmation");
+      setErrorMessage("We couldn't delete this affirmation. Please try again.");
+      setShowErrorModal(true);
     },
   });
 
@@ -120,11 +129,12 @@ export default function PlayerScreen() {
       queryClient.invalidateQueries({ queryKey: ["/api/affirmations", affirmationId] });
       if (hapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setHasSaved(true);
-      Alert.alert("Saved", "Affirmation saved to your library with an AI-generated title!");
+      setShowSaveSuccessModal(true);
     },
     onError: () => {
       if (hapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert("Error", "Failed to save affirmation");
+      setErrorMessage("We couldn't save this affirmation. Please try again.");
+      setShowErrorModal(true);
     },
   });
 
@@ -151,7 +161,8 @@ export default function PlayerScreen() {
     onError: () => {
       setIsRegeneratingVoice(false);
       if (hapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert("Error", "Failed to regenerate audio with new voice");
+      setErrorMessage("We couldn't regenerate the audio. Please try again.");
+      setShowErrorModal(true);
     },
   });
 
@@ -161,14 +172,7 @@ export default function PlayerScreen() {
     
     // Check if trying to use personal voice but don't have one
     if (voiceType === "personal" && !voiceStatus?.hasClonedVoice) {
-      Alert.alert(
-        "Personal Voice Not Set Up",
-        "You need to record your voice first. Would you like to do that now?",
-        [
-          { text: "Not Now", style: "cancel" },
-          { text: "Record Voice", onPress: () => navigation.navigate("VoiceSetup" as never) },
-        ]
-      );
+      setShowVoiceSetupModal(true);
       return;
     }
     
@@ -192,19 +196,8 @@ export default function PlayerScreen() {
 
   const handleDelete = useCallback(() => {
     if (hapticEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    Alert.alert(
-      "Delete Affirmation",
-      `Are you sure you want to delete "${affirmation?.title}"?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: () => deleteMutation.mutate(),
-        },
-      ]
-    );
-  }, [affirmation?.title, deleteMutation]);
+    setShowDeleteModal(true);
+  }, [hapticEnabled]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -927,6 +920,88 @@ export default function PlayerScreen() {
           </View>
         ) : null}
       </ScrollView>
+
+      {/* Delete Confirmation Modal */}
+      <ThemedModal
+        visible={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        type="delete"
+        title="Remove this affirmation?"
+        highlightText={affirmation?.title}
+        message="This action cannot be undone."
+        buttons={[
+          {
+            text: "Keep",
+            onPress: () => setShowDeleteModal(false),
+            style: "secondary",
+          },
+          {
+            text: "Remove",
+            onPress: () => {
+              setShowDeleteModal(false);
+              deleteMutation.mutate();
+            },
+            style: "destructive",
+          },
+        ]}
+      />
+
+      {/* Save Success Modal */}
+      <ThemedModal
+        visible={showSaveSuccessModal}
+        onClose={() => setShowSaveSuccessModal(false)}
+        type="success"
+        title="Added to Your Library"
+        message="Your affirmation has been saved and is ready to inspire you."
+        buttons={[
+          {
+            text: "Continue",
+            onPress: () => setShowSaveSuccessModal(false),
+            style: "primary",
+          },
+        ]}
+        autoDismiss={3000}
+      />
+
+      {/* Error Modal */}
+      <ThemedModal
+        visible={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        type="warning"
+        title="Something went wrong"
+        message={errorMessage}
+        buttons={[
+          {
+            text: "OK",
+            onPress: () => setShowErrorModal(false),
+            style: "primary",
+          },
+        ]}
+      />
+
+      {/* Voice Setup Modal */}
+      <ThemedModal
+        visible={showVoiceSetupModal}
+        onClose={() => setShowVoiceSetupModal(false)}
+        type="info"
+        title="Record Your Voice"
+        message="Create a personalized experience by recording your own voice. It only takes a minute."
+        buttons={[
+          {
+            text: "Not Now",
+            onPress: () => setShowVoiceSetupModal(false),
+            style: "secondary",
+          },
+          {
+            text: "Record",
+            onPress: () => {
+              setShowVoiceSetupModal(false);
+              navigation.navigate("VoiceSetup" as never);
+            },
+            style: "primary",
+          },
+        ]}
+      />
     </ThemedView>
   );
 }

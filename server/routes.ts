@@ -699,7 +699,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // AI Voice IDs - calm, soothing voices from ElevenLabs
   const AI_VOICES = {
     female: "21m00Tcm4TlvDq8ikWAM", // Rachel - soft, warm female voice
-    male: "TxGEqnHWrfWFTfGW9XjX",   // Josh - lighter, younger male voice
+    male: "ErXwobaYiN019PkySvjV",   // Antoni - warm, friendly male voice
   };
 
   // Get user's voice preferences

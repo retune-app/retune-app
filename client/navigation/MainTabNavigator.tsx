@@ -8,6 +8,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 
 import HomeStackNavigator from "@/navigation/HomeStackNavigator";
+import BreathingStackNavigator from "@/navigation/BreathingStackNavigator";
 import ProfileStackNavigator from "@/navigation/ProfileStackNavigator";
 import { useTheme } from "@/hooks/useTheme";
 import { Shadows } from "@/constants/theme";
@@ -15,6 +16,7 @@ import { Shadows } from "@/constants/theme";
 export type MainTabParamList = {
   HomeTab: undefined;
   CreateTab: undefined;
+  BreatheTab: undefined;
   ProfileTab: undefined;
 };
 
@@ -105,6 +107,16 @@ export default function MainTabNavigator() {
             navigation.navigate("Create");
           },
         })}
+      />
+      <Tab.Screen
+        name="BreatheTab"
+        component={BreathingStackNavigator}
+        options={{
+          title: "Breathe",
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="wind" size={size} color={color} />
+          ),
+        }}
       />
       <Tab.Screen
         name="ProfileTab"

@@ -95,8 +95,6 @@ export default function ProfileScreen() {
   const { selectedMusic, setSelectedMusic, volume, setVolume } = useBackgroundMusic();
 
   const queryClient = useQueryClient();
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [reminderTime, setReminderTime] = useState("8:00 AM");
   const [autoReplayEnabled, setAutoReplayEnabled] = useState(true);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
@@ -207,15 +205,6 @@ export default function ProfileScreen() {
     navigation.navigate("VoiceSetup");
   };
 
-  const handleToggleNotifications = async () => {
-    try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch (e) {
-      // Haptics not supported on this device
-    }
-    setNotificationsEnabled(!notificationsEnabled);
-  };
-
   const handleToggleAutoReplay = async () => {
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -225,10 +214,6 @@ export default function ProfileScreen() {
     const newValue = !autoReplayEnabled;
     setAutoReplayEnabled(newValue);
     await AsyncStorage.setItem(AUTO_REPLAY_KEY, String(newValue));
-  };
-
-  const handleReminderTime = () => {
-    // Time picker coming soon
   };
 
   const handleResetData = async () => {
@@ -765,35 +750,6 @@ export default function ProfileScreen() {
               <Feather name="check" size={20} color={theme.primary} />
             ) : null}
           </Pressable>
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-          NOTIFICATIONS
-        </ThemedText>
-        <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
-          <SettingItem
-            icon="bell"
-            label="Daily Reminders"
-            showArrow={false}
-            rightElement={
-              <Switch
-                value={notificationsEnabled}
-                onValueChange={handleToggleNotifications}
-                trackColor={{ false: theme.border, true: theme.primary + "80" }}
-                thumbColor={notificationsEnabled ? theme.primary : theme.textSecondary}
-              />
-            }
-          />
-          {notificationsEnabled ? (
-            <SettingItem
-              icon="clock"
-              label="Reminder Time"
-              value={reminderTime}
-              onPress={handleReminderTime}
-            />
-          ) : null}
         </View>
       </View>
 

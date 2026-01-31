@@ -50,18 +50,21 @@ export function AuthScreen() {
   const isAndroid = Platform.OS === "android";
   const isWeb = Platform.OS === "web";
   
+  // On iOS, Google auth requires an iOS-specific client ID from Google Cloud Console
+  // Since we don't have one configured, Google Sign-In is not available on iOS
+  // Users on iOS should use Apple Sign-In instead
   const hasGoogleClientId = isIOS 
-    ? !!process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID
+    ? false  // No iOS client ID available - use Apple Sign-In on iOS
     : isAndroid 
       ? !!process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID
       : !!process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
 
-  // Google OAuth setup - configure with platform-appropriate client IDs
-  // On iOS/Android without proper client ID, we skip the hook entirely to avoid crashes
+  // Google OAuth setup - only provide client IDs that actually exist
+  // This prevents crashes from invalid placeholder client IDs
   const googleConfig = {
-    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || "placeholder",
-    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || (isIOS ? "placeholder.apps.googleusercontent.com" : undefined),
-    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || (isAndroid ? "placeholder.apps.googleusercontent.com" : undefined),
+    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
   };
   
   const [request, response, promptAsync] = Google.useAuthRequest(googleConfig);

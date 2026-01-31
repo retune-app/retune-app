@@ -20,10 +20,11 @@ Preferred communication style: Simple, everyday language.
 ### Key Features
 - **Personalized Affirmations**: Users input goals, AI generates scripts, and voice cloning plays them in the user's voice.
 - **Audio Pipeline**: Involves user voice sample recording, ElevenLabs voice cloning, AI script generation, text-to-speech synthesis, and audio streaming.
-- **Global Audio Player**: A single-instance audio player with a MiniPlayer component for consistent playback control across the app.
+- **Global Audio Player**: A single-instance audio player for consistent playback control across the app.
 - **RSVP Mode**: Rapid Serial Visual Presentation of affirmation text, synchronized with audio playback, using word timing data from ElevenLabs.
 - **Breathing Mode**: A dedicated feature offering various breathing techniques (Box, 4-7-8, Coherent) with animated visuals, duration selection, and binaural beats integration.
-- **User Analytics**: Tracks listening sessions, streaks, and category breakdowns to provide insights into user progress.
+- **User Analytics**: Tracks listening sessions, streaks, and category breakdowns to provide insights into user progress. Includes meditation KPIs (breathing streaks, mindful minutes, technique breakdown, weekly breathing charts).
+- **Sound Library**: Dedicated screen for browsing ambient sounds categorized into Nature, Solfeggio, and Binaural categories with auto-play on selection.
 - **Authentication**: Session-based for web, token-based for mobile, secured with bcrypt and data isolation.
 - **Notification Settings**: Customizable daily reminder settings for affirmations.
 - **Voice Selection System**: Users can choose from various AI voices or clone their own voice, with preferences stored and manageable through a dedicated UI.

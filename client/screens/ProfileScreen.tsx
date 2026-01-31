@@ -556,7 +556,7 @@ export default function ProfileScreen() {
                       testID={`voice-card-${voice.id}`}
                     >
                       <View style={styles.voiceCardContent}>
-                        <ThemedText type="bodyBold" style={isSelected ? { color: theme.primary } : undefined}>
+                        <ThemedText type="body" style={[{ fontWeight: "600" }, isSelected ? { color: theme.primary } : undefined]}>
                           {voice.name}
                         </ThemedText>
                         <ThemedText type="caption" style={{ color: theme.textSecondary }}>

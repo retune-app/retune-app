@@ -15,6 +15,7 @@ import Animated, {
 
 import { useTheme } from "@/hooks/useTheme";
 import { BorderRadius, Shadows } from "@/constants/theme";
+import { useAudio } from "@/contexts/AudioContext";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -29,7 +30,12 @@ export function FloatingSettingsButton({ bottomOffset = 100 }: FloatingSettingsB
   const { theme, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
+  const { currentAffirmation } = useAudio();
   const scale = useSharedValue(1);
+  
+  const isMiniPlayerVisible = !!currentAffirmation;
+  const miniPlayerHeight = 60;
+  const adjustedBottom = isMiniPlayerVisible ? bottomOffset + miniPlayerHeight : bottomOffset;
 
   const handlePress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -47,7 +53,7 @@ export function FloatingSettingsButton({ bottomOffset = 100 }: FloatingSettingsB
     styles.button,
     animatedStyle,
     {
-      bottom: bottomOffset,
+      bottom: adjustedBottom,
       right: 16,
       backgroundColor: Platform.OS === "ios" ? "transparent" : theme.backgroundSecondary,
     },

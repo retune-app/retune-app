@@ -14,9 +14,9 @@ import * as Haptics from "expo-haptics";
 import { Audio } from "expo-av";
 
 import { ThemedText } from "@/components/ThemedText";
-import { Card } from "@/components/Card";
 import BreathingCircle from "@/components/BreathingCircle";
 import { useTheme } from "@/hooks/useTheme";
+import { useBackgroundMusic, BACKGROUND_MUSIC_OPTIONS, type BackgroundMusicType } from "@/contexts/BackgroundMusicContext";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import {
   BREATHING_TECHNIQUES,
@@ -29,28 +29,21 @@ import {
 
 const ACCENT_GOLD = "#C9A227";
 
-const AMBIENT_SOUNDS = [
-  { id: "none", name: "No Sound", icon: "volume-x" },
-  { id: "432hz", name: "432 Hz", icon: "activity" },
-  { id: "528hz", name: "528 Hz", icon: "activity" },
-  { id: "theta", name: "Theta Waves", icon: "radio" },
-];
-
 export default function BreathingScreen() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
   const { theme, isDark } = useTheme();
+  const { selectedMusic, setSelectedMusic, startBackgroundMusic, stopBackgroundMusic, isPlaying: isMusicPlaying } = useBackgroundMusic();
 
   const [selectedTechnique, setSelectedTechnique] = useState<BreathingTechnique>(BREATHING_TECHNIQUES[0]);
   const [selectedDuration, setSelectedDuration] = useState(180);
-  const [selectedSound, setSelectedSound] = useState("none");
   const [isPlaying, setIsPlaying] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [cyclesCompleted, setCyclesCompleted] = useState(0);
   const [hapticsEnabled, setHapticsEnabled] = useState(true);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const soundRef = useRef<Audio.Sound | null>(null);
+  const wasPlayingMusicRef = useRef(false);
 
   const remainingTime = selectedDuration - elapsedTime;
   const totalCycles = getCyclesForDuration(selectedTechnique, selectedDuration);
@@ -58,7 +51,9 @@ export default function BreathingScreen() {
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
-      if (soundRef.current) soundRef.current.unloadAsync();
+      if (isPlaying && isMusicPlaying) {
+        stopBackgroundMusic();
+      }
     };
   }, []);
 
@@ -85,28 +80,44 @@ export default function BreathingScreen() {
     };
   }, [isPlaying, selectedDuration]);
 
-  const handleStart = () => {
+  const handleStart = async () => {
     setIsPlaying(true);
     setElapsedTime(0);
     setCyclesCompleted(0);
     try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
+    
+    if (selectedMusic !== 'none') {
+      await startBackgroundMusic();
+    }
   };
 
-  const handlePause = () => {
+  const handlePause = async () => {
     setIsPlaying(false);
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
+    
+    if (isMusicPlaying) {
+      await stopBackgroundMusic();
+    }
   };
 
-  const handleResume = () => {
+  const handleResume = async () => {
     setIsPlaying(true);
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+    
+    if (selectedMusic !== 'none') {
+      await startBackgroundMusic();
+    }
   };
 
-  const handleStop = () => {
+  const handleStop = async () => {
     setIsPlaying(false);
     setElapsedTime(0);
     setCyclesCompleted(0);
     try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
+    
+    if (isMusicPlaying) {
+      await stopBackgroundMusic();
+    }
   };
 
   const handleCycleComplete = () => {
@@ -276,44 +287,48 @@ export default function BreathingScreen() {
               Background Sound
             </ThemedText>
             <View style={styles.soundRow}>
-              {AMBIENT_SOUNDS.map((sound) => (
-                <Pressable
-                  key={sound.id}
-                  onPress={() => {
-                    setSelectedSound(sound.id);
-                    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
-                  }}
-                  style={[
-                    styles.soundButton,
-                    {
-                      backgroundColor:
-                        selectedSound === sound.id
-                          ? `${ACCENT_GOLD}20`
-                          : theme.backgroundSecondary,
-                      borderColor:
-                        selectedSound === sound.id ? ACCENT_GOLD : theme.border,
-                    },
-                  ]}
-                  testID={`sound-${sound.id}`}
-                >
-                  <Feather
-                    name={sound.icon as any}
-                    size={20}
-                    color={selectedSound === sound.id ? ACCENT_GOLD : theme.textSecondary}
-                  />
-                  <Text
+              {BACKGROUND_MUSIC_OPTIONS.map((sound) => {
+                const iconName = sound.id === 'none' ? 'volume-x' : 
+                  sound.id === 'theta' || sound.id === 'alpha' || sound.id === 'delta' || sound.id === 'beta' ? 'radio' : 'activity';
+                return (
+                  <Pressable
+                    key={sound.id}
+                    onPress={() => {
+                      setSelectedMusic(sound.id);
+                      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+                    }}
                     style={[
-                      styles.soundText,
+                      styles.soundButton,
                       {
-                        color:
-                          selectedSound === sound.id ? ACCENT_GOLD : theme.text,
+                        backgroundColor:
+                          selectedMusic === sound.id
+                            ? `${ACCENT_GOLD}20`
+                            : theme.backgroundSecondary,
+                        borderColor:
+                          selectedMusic === sound.id ? ACCENT_GOLD : theme.border,
                       },
                     ]}
+                    testID={`sound-${sound.id}`}
                   >
-                    {sound.name}
-                  </Text>
-                </Pressable>
-              ))}
+                    <Feather
+                      name={iconName as any}
+                      size={20}
+                      color={selectedMusic === sound.id ? ACCENT_GOLD : theme.textSecondary}
+                    />
+                    <Text
+                      style={[
+                        styles.soundText,
+                        {
+                          color:
+                            selectedMusic === sound.id ? ACCENT_GOLD : theme.text,
+                        },
+                      ]}
+                    >
+                      {sound.name}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
           </View>
 

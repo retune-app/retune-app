@@ -128,18 +128,21 @@ export function ProgressVisualization({
             <ThemedText type="h2" style={styles.circleNumber}>
               {breathingSessions}
             </ThemedText>
-            <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-              sessions
-            </ThemedText>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <Feather name="wind" size={10} color={theme.textSecondary} style={{ marginRight: 3 }} />
+              <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                breaths
+              </ThemedText>
+            </View>
           </View>
         </Animated.View>
 
         <View style={styles.statsColumn}>
           <View style={[styles.statCard, { backgroundColor: theme.backgroundSecondary }]}>
             <View style={styles.statHeader}>
-              <Feather name="zap" size={16} color={theme.gold} />
+              <Feather name="wind" size={16} color={theme.gold} />
               <ThemedText type="caption" style={{ color: theme.textSecondary, marginLeft: 4 }}>
-                Level
+                Breathing Level
               </ThemedText>
             </View>
             <ThemedText type="h4" style={{ color: theme.gold }}>
@@ -154,9 +157,9 @@ export function ProgressVisualization({
 
           <Animated.View style={[styles.statCard, { backgroundColor: theme.backgroundSecondary }, streakStyle]}>
             <View style={styles.statHeader}>
-              <Feather name="trending-up" size={16} color="#FF6B4A" />
+              <Feather name="wind" size={16} color="#FF6B4A" />
               <ThemedText type="caption" style={{ color: theme.textSecondary, marginLeft: 4 }}>
-                Streak
+                Breathing Streak
               </ThemedText>
             </View>
             <ThemedText type="h4" style={{ color: "#FF6B4A" }}>
@@ -167,9 +170,12 @@ export function ProgressVisualization({
       </View>
 
       <View style={[styles.weeklyCard, { backgroundColor: theme.backgroundSecondary }]}>
-        <ThemedText type="small" style={[styles.weeklyTitle, { color: theme.textSecondary }]}>
-          This Week
-        </ThemedText>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Feather name="wind" size={14} color={theme.textSecondary} style={{ marginRight: 6 }} />
+          <ThemedText type="small" style={[styles.weeklyTitle, { color: theme.textSecondary }]}>
+            Breathing This Week
+          </ThemedText>
+        </View>
         <View style={styles.weeklyChart}>
           {weeklyBreathingMinutes.map((minutes, index) => {
             const height = maxActivity > 0 ? (minutes / maxActivity) * 40 : 0;

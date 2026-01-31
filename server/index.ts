@@ -121,7 +121,7 @@ function getAppName(): string {
   }
 }
 
-function serveExpoManifest(platform: string, res: Response) {
+function serveExpoManifest(platform: string, req: Request, res: Response) {
   const manifestPath = path.resolve(
     process.cwd(),
     "static-build",
@@ -139,7 +139,31 @@ function serveExpoManifest(platform: string, res: Response) {
   res.setHeader("expo-sfv-version", "0");
   res.setHeader("content-type", "application/json");
 
-  const manifest = fs.readFileSync(manifestPath, "utf-8");
+  // Get the current host to dynamically rewrite URLs
+  const forwardedProto = req.header("x-forwarded-proto") || req.protocol || "https";
+  const forwardedHost = req.header("x-forwarded-host") || req.get("host");
+  const currentBaseUrl = `${forwardedProto}://${forwardedHost}`;
+
+  let manifest = fs.readFileSync(manifestPath, "utf-8");
+  
+  // Dynamically replace any old base URLs with the current host
+  // This handles the case where the manifest was built on a different domain
+  manifest = manifest.replace(
+    /https?:\/\/[^"]+?(?=\/\d+-\d+\/_expo)/g,
+    currentBaseUrl
+  );
+  
+  // Also update hostUri and debuggerHost
+  const hostWithoutProtocol = forwardedHost || "";
+  manifest = manifest.replace(
+    /"hostUri"\s*:\s*"[^"]+"/g,
+    `"hostUri": "${hostWithoutProtocol}/${platform}"`
+  );
+  manifest = manifest.replace(
+    /"debuggerHost"\s*:\s*"[^"]+"/g,
+    `"debuggerHost": "${hostWithoutProtocol}/${platform}"`
+  );
+
   res.send(manifest);
 }
 
@@ -196,7 +220,7 @@ function configureExpoAndLanding(app: express.Application) {
 
     const platform = req.header("expo-platform");
     if (platform && (platform === "ios" || platform === "android")) {
-      return serveExpoManifest(platform, res);
+      return serveExpoManifest(platform, req, res);
     }
 
     if (req.path === "/") {

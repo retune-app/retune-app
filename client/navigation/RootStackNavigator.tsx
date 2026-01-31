@@ -4,6 +4,7 @@ import { createNativeStackNavigator, NativeStackNavigationProp, NativeStackNavig
 import { NavigationState, useNavigation } from "@react-navigation/native";
 import MainTabNavigator from "@/navigation/MainTabNavigator";
 import VoiceSetupScreen from "@/screens/VoiceSetupScreen";
+import VoiceSettingsScreen from "@/screens/VoiceSettingsScreen";
 import CreateScreen from "@/screens/CreateScreen";
 import PlayerScreen from "@/screens/PlayerScreen";
 import AnalyticsScreen from "@/screens/AnalyticsScreen";
@@ -17,6 +18,7 @@ export type RootStackParamList = {
   Auth: undefined;
   Main: undefined;
   VoiceSetup: undefined;
+  VoiceSettings: undefined;
   Create: undefined;
   Player: { affirmationId: number; isNew?: boolean };
   Analytics: undefined;
@@ -140,6 +142,15 @@ export default function RootStackNavigator() {
           component={AnalyticsScreen}
           options={{
             headerTitle: "Analytics",
+            headerBackTitle: "Profile",
+            animation: "slide_from_right",
+          }}
+        />
+        <Stack.Screen
+          name="VoiceSettings"
+          component={VoiceSettingsScreen}
+          options={{
+            headerTitle: "Voice Settings",
             headerBackTitle: "Profile",
             animation: "slide_from_right",
           }}

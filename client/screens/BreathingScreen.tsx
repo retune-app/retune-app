@@ -33,7 +33,6 @@ import { ThemedView } from "@/components/ThemedView";
 import BreathingCircle from "@/components/BreathingCircle";
 import { WelcomeSection } from "@/components/WelcomeSection";
 import { FocusTimer } from "@/components/FocusTimer";
-import { DailyGoalProgress } from "@/components/DailyGoalProgress";
 import { useTheme } from "@/hooks/useTheme";
 import { useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/query-client";
@@ -491,11 +490,6 @@ export default function BreathingScreen() {
             onQuickPlay={handleQuickPlay}
             isPlaying={isAudioPlaying}
           />
-        </Animated.View>
-
-        {/* Daily Goal Progress */}
-        <Animated.View entering={FadeIn.delay(100).duration(500)}>
-          <DailyGoalProgress />
         </Animated.View>
 
         {/* Breathing Circle - Hero Element */}

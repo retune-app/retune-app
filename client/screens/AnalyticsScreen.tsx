@@ -121,12 +121,12 @@ export default function AnalyticsScreen() {
               <View style={styles.todayContent}>
                 <Feather name="sun" size={32} color={theme.gold} />
                 <View style={styles.todayText}>
-                  <ThemedText type="h3" style={[styles.todayMinutes, { color: theme.gold }]}>
+                  <Text style={[styles.todayMinutes, { color: theme.gold }]}>
                     {formatMinutes(stats?.minutesToday || 0)}
-                  </ThemedText>
-                  <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                  </Text>
+                  <Text style={[styles.todayLabel, { color: theme.textSecondary }]}>
                     listened today
-                  </ThemedText>
+                  </Text>
                 </View>
               </View>
             </LinearGradient>
@@ -355,8 +355,13 @@ const styles = StyleSheet.create({
     marginLeft: Spacing.md,
   },
   todayMinutes: {
-    fontSize: 28,
-    fontWeight: "700",
+    fontSize: 32,
+    fontWeight: "700" as const,
+    lineHeight: 44,
+  },
+  todayLabel: {
+    fontSize: 14,
+    lineHeight: 20,
   },
   streakRow: {
     flexDirection: "row",

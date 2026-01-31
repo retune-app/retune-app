@@ -153,12 +153,13 @@ export default function BreathingScreen() {
     };
   }, [showLandscapeMode]);
 
-  // Lock orientation when landscape mode is active
+  // Lock orientation when landscape mode is active, unlock to allow auto-detection otherwise
   useEffect(() => {
     if (showLandscapeMode) {
       ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
     } else {
-      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+      // Unlock orientation to allow auto-detection of landscape tilt
+      ScreenOrientation.unlockAsync();
     }
   }, [showLandscapeMode]);
 

@@ -23,8 +23,8 @@ export function MiniPlayer({ currentRoute, onNavigateToPlayer }: MiniPlayerProps
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
 
-  // Don't show mini player if no affirmation or if on Player screen
-  if (!currentAffirmation || currentRoute === 'Player') {
+  // Don't show mini player if no affirmation, on Player screen, or on Breathe tab
+  if (!currentAffirmation || currentRoute === 'Player' || currentRoute === 'BreatheTab') {
     return null;
   }
 

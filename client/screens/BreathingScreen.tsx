@@ -443,21 +443,6 @@ export default function BreathingScreen() {
           />
         </Animated.View>
 
-        {/* Maximize Button - Below greeting on left */}
-        {!isPlaying ? (
-          <Animated.View 
-            entering={FadeIn.delay(300).duration(400)}
-            style={styles.inlineMaximizeButton}
-          >
-            <Pressable 
-              onPress={enterFullscreen} 
-              style={[styles.fullscreenButton, { backgroundColor: theme.backgroundSecondary }, Shadows.medium]}
-            >
-              <Feather name="maximize-2" size={20} color={theme.text} />
-            </Pressable>
-          </Animated.View>
-        ) : null}
-
         {/* Breathing Circle - Hero Element */}
         <Animated.View 
           entering={FadeIn.delay(200).duration(800)} 
@@ -492,12 +477,18 @@ export default function BreathingScreen() {
           ) : null}
         </Animated.View>
 
-        {/* Play Button - Above Box Breathing on right */}
+        {/* Control Buttons - Right side, stacked vertically */}
         {!isPlaying ? (
           <Animated.View 
             entering={FadeIn.delay(350).duration(400)}
-            style={styles.inlinePlayButton}
+            style={styles.inlineControlButtons}
           >
+            <Pressable 
+              onPress={enterFullscreen} 
+              style={[styles.fullscreenButton, { backgroundColor: theme.backgroundSecondary }, Shadows.medium]}
+            >
+              <Feather name="maximize-2" size={20} color={theme.text} />
+            </Pressable>
             <Pressable onPress={handleStart} testID="button-start-breathing">
               <LinearGradient
                 colors={[selectedTechnique.color, `${selectedTechnique.color}CC`]}
@@ -912,12 +903,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  inlineMaximizeButton: {
-    alignSelf: "flex-start",
-    marginBottom: Spacing.md,
-  },
-  inlinePlayButton: {
+  inlineControlButtons: {
     alignSelf: "flex-end",
+    alignItems: "center",
+    gap: Spacing.sm,
     marginBottom: Spacing.md,
     marginTop: -Spacing.lg,
   },

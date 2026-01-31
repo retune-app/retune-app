@@ -76,7 +76,14 @@ export default function RootStackNavigator() {
   const handleStateChange = useCallback((state: NavigationState | undefined) => {
     if (state) {
       const route = state.routes[state.index];
-      setCurrentRoute(route?.name ?? 'Main');
+      // Check if we're in Main (tabs) and get the active tab name
+      if (route?.name === 'Main' && route.state) {
+        const tabState = route.state as NavigationState;
+        const activeTab = tabState.routes[tabState.index]?.name;
+        setCurrentRoute(activeTab ?? 'Main');
+      } else {
+        setCurrentRoute(route?.name ?? 'Main');
+      }
     }
   }, []);
 

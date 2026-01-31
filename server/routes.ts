@@ -1107,10 +1107,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
         0
       );
 
+      // Get all listening sessions for this user
+      const sessions = await db
+        .select()
+        .from(listeningSessions)
+        .where(eq(listeningSessions.userId, req.userId!))
+        .orderBy(desc(listeningSessions.completedAt));
+
+      // Calculate streak - consecutive days with activity
+      const uniqueDates = [...new Set(sessions.map(s => s.dateKey))].sort().reverse();
+      let streak = 0;
+      const today = new Date().toISOString().split('T')[0];
+      const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+      
+      // Check if most recent activity was today or yesterday
+      if (uniqueDates.length > 0 && (uniqueDates[0] === today || uniqueDates[0] === yesterday)) {
+        streak = 1;
+        let checkDate = new Date(uniqueDates[0]);
+        
+        for (let i = 1; i < uniqueDates.length; i++) {
+          const prevDay = new Date(checkDate.getTime() - 86400000).toISOString().split('T')[0];
+          if (uniqueDates[i] === prevDay) {
+            streak++;
+            checkDate = new Date(uniqueDates[i]);
+          } else {
+            break;
+          }
+        }
+      }
+
+      // Calculate weekly data (last 7 days)
+      const weeklyData: { day: string; minutes: number; date: string }[] = [];
+      const dayNames = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+      
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(Date.now() - i * 86400000);
+        const dateKey = date.toISOString().split('T')[0];
+        const dayName = dayNames[date.getDay()];
+        
+        const daySessions = sessions.filter(s => s.dateKey === dateKey);
+        const totalSeconds = daySessions.reduce((sum, s) => sum + (s.durationSeconds || 0), 0);
+        
+        weeklyData.push({
+          day: dayName,
+          minutes: Math.round(totalSeconds / 60),
+          date: dateKey,
+        });
+      }
+
+      const totalMinutesThisWeek = weeklyData.reduce((sum, d) => sum + d.minutes, 0);
+
       res.json({
         totalListens,
-        streak: 0,
+        streak,
         affirmationsCount: allAffirmations.length,
+        weeklyData,
+        totalMinutesThisWeek,
       });
     } catch (error) {
       console.error("Error fetching user stats:", error);

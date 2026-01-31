@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, Pressable, ActivityIndicator } from 'react-nati
 import { BlurView } from 'expo-blur';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
@@ -14,13 +16,13 @@ const MINI_PLAYER_GOLD = "#C9A227";
 
 interface MiniPlayerProps {
   currentRoute?: string;
-  onNavigateToPlayer?: (affirmationId: number) => void;
 }
 
-export function MiniPlayer({ currentRoute, onNavigateToPlayer }: MiniPlayerProps) {
+export function MiniPlayer({ currentRoute }: MiniPlayerProps) {
   const { currentAffirmation, isPlaying, isLoading, togglePlayPause, position, duration } = useAudio();
   const { theme, isDark } = useTheme();
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<NativeStackNavigationProp<any>>();
 
   if (!currentAffirmation || currentRoute === 'Player' || currentRoute === 'BreatheTab') {
     return null;
@@ -30,7 +32,7 @@ export function MiniPlayer({ currentRoute, onNavigateToPlayer }: MiniPlayerProps
 
   const handlePress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    onNavigateToPlayer?.(currentAffirmation.id);
+    navigation.navigate('Player', { affirmationId: currentAffirmation.id });
   };
 
   const handlePlayPause = async () => {

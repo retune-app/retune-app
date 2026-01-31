@@ -675,8 +675,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .orderBy(desc(voiceSamples.createdAt))
         .limit(1);
 
+      // Also check user's voiceId field directly
+      const [user] = await db
+        .select({ voiceId: users.voiceId })
+        .from(users)
+        .where(eq(users.id, req.userId!))
+        .limit(1);
+
+      const hasClonedVoice = !!(sample?.status === "ready" && sample?.voiceId) || !!user?.voiceId;
+
       res.json({
         hasVoiceSample: !!sample && sample.status === "ready",
+        hasClonedVoice,
+        hasPersonalVoice: hasClonedVoice,
         status: sample?.status || null,
       });
     } catch (error) {

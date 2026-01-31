@@ -2,8 +2,9 @@ import React, { createContext, useContext, useState, useCallback, useRef, useEff
 import { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
 import { Affirmation } from '@shared/schema';
-import { getApiUrl } from '@/lib/query-client';
+import { getApiUrl, apiRequest } from '@/lib/query-client';
 import { useBackgroundMusic } from './BackgroundMusicContext';
+import { queryClient } from '@/lib/query-client';
 
 interface AudioState {
   currentAffirmation: Affirmation | null;
@@ -44,8 +45,26 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const [playbackSpeed, setPlaybackSpeedState] = useState(1);
   const soundRef = useRef<Audio.Sound | null>(null);
   const isOperationInProgress = useRef(false);
+  const hasRecordedListenRef = useRef(false);
   
   const { startBackgroundMusic, stopBackgroundMusic, selectedMusic } = useBackgroundMusic();
+
+  // Record a listen when audio finishes
+  const recordListen = useCallback(async (affirmationId: number) => {
+    if (hasRecordedListenRef.current) return; // Already recorded for this session
+    hasRecordedListenRef.current = true;
+    
+    try {
+      await apiRequest("POST", `/api/affirmations/${affirmationId}/play`);
+      // Invalidate stats cache to refresh analytics
+      queryClient.invalidateQueries({ queryKey: ["/api/user/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/affirmations"] });
+      console.log("Recorded listen for affirmation:", affirmationId);
+    } catch (error) {
+      console.error("Error recording listen:", error);
+      hasRecordedListenRef.current = false; // Allow retry on error
+    }
+  }, []);
 
   useEffect(() => {
     const initAudio = async () => {
@@ -111,6 +130,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
     isOperationInProgress.current = true;
     setIsLoading(true);
+    hasRecordedListenRef.current = false; // Reset listen tracking for new affirmation
     await unloadCurrentSound();
 
     try {
@@ -132,9 +152,13 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
               setPosition(status.positionMillis || 0);
               setDuration(status.durationMillis || 0);
               setIsPlaying(status.isPlaying);
-              if (status.didJustFinish && !autoReplay) {
-                setIsPlaying(false);
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              if (status.didJustFinish) {
+                // Record the listen (only once per playback session)
+                recordListen(affirmation.id);
+                if (!autoReplay) {
+                  setIsPlaying(false);
+                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                }
               }
             } else if ('error' in status) {
               console.error('Audio playback error:', status.error);
@@ -159,7 +183,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
       isOperationInProgress.current = false;
     }
-  }, [currentAffirmation?.id, autoReplay, playbackSpeed, unloadCurrentSound, selectedMusic, startBackgroundMusic]);
+  }, [currentAffirmation?.id, autoReplay, playbackSpeed, unloadCurrentSound, selectedMusic, startBackgroundMusic, recordListen]);
 
   const togglePlayPause = useCallback(async () => {
     console.log('togglePlayPause called, soundRef exists:', !!soundRef.current);

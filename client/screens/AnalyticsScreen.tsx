@@ -338,7 +338,8 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
     letterSpacing: 1,
     fontSize: 12,
-    lineHeight: 16,
+    lineHeight: 20,
+    paddingTop: 4,
   },
   todayCard: {
     borderRadius: BorderRadius.lg,

@@ -447,6 +447,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           isManual: isManual || false,
           voiceType: usedPersonalVoice ? "personal" : "ai",
           voiceGender: usedPersonalVoice ? null : usedGender,
+          aiVoiceId: usedPersonalVoice ? null : voiceIdToUse,
         })
         .returning();
 
@@ -950,6 +951,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           wordTimings: JSON.stringify(audioResult.wordTimings),
           voiceType,
           voiceGender: voiceType === "ai" ? (voiceGender || "female") : null,
+          aiVoiceId: voiceType === "ai" ? voiceIdToUse : null,
           updatedAt: new Date(),
         })
         .where(eq(affirmations.id, affirmationId));
@@ -1165,6 +1167,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               duration: audioResult.duration,
               wordTimings: JSON.stringify(audioResult.wordTimings),
               isManual: false,
+              voiceType: "ai",
+              voiceGender: "female",
+              aiVoiceId: "21m00Tcm4TlvDq8ikWAM", // Rachel - default voice
             })
             .returning();
 

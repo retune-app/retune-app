@@ -145,6 +145,7 @@ export function SwipeableAffirmationCard({
         createdAt={affirmation.createdAt}
         voiceType={affirmation.voiceType ?? "ai"}
         voiceGender={affirmation.voiceGender ?? "female"}
+        aiVoiceId={affirmation.aiVoiceId ?? undefined}
         onPress={onPress}
         onPlayPress={onPlayPress}
         onLongPress={onLongPress}

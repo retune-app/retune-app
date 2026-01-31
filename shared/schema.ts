@@ -129,6 +129,16 @@ export const listeningSessions = pgTable("listening_sessions", {
   dateKey: text("date_key").notNull(), // YYYY-MM-DD format for easy grouping
 });
 
+// Breathing sessions for daily goal tracking
+export const breathingSessions = pgTable("breathing_sessions", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  techniqueId: text("technique_id").notNull(), // box, 478, coherent, etc.
+  durationSeconds: integer("duration_seconds").notNull(),
+  completedAt: timestamp("completed_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  dateKey: text("date_key").notNull(), // YYYY-MM-DD format for easy grouping
+});
+
 // Notification settings for daily affirmation reminders
 export const notificationSettings = pgTable("notification_settings", {
   id: serial("id").primaryKey(),
@@ -174,6 +184,10 @@ export const usersRelations = relations(users, ({ many, one }) => ({
 export const listeningSessionsRelations = relations(listeningSessions, ({ one }) => ({
   user: one(users, { fields: [listeningSessions.userId], references: [users.id] }),
   affirmation: one(affirmations, { fields: [listeningSessions.affirmationId], references: [affirmations.id] }),
+}));
+
+export const breathingSessionsRelations = relations(breathingSessions, ({ one }) => ({
+  user: one(users, { fields: [breathingSessions.userId], references: [users.id] }),
 }));
 
 export const notificationSettingsRelations = relations(notificationSettings, ({ one }) => ({
@@ -256,6 +270,11 @@ export const insertListeningSessionSchema = createInsertSchema(listeningSessions
   completedAt: true,
 });
 
+export const insertBreathingSessionSchema = createInsertSchema(breathingSessions).omit({
+  id: true,
+  completedAt: true,
+});
+
 // Types
 export type Conversation = typeof conversations.$inferSelect;
 export type InsertConversation = z.infer<typeof insertConversationSchema>;
@@ -275,3 +294,5 @@ export type NotificationSettings = typeof notificationSettings.$inferSelect;
 export type InsertNotificationSettings = z.infer<typeof insertNotificationSettingsSchema>;
 export type ListeningSession = typeof listeningSessions.$inferSelect;
 export type InsertListeningSession = z.infer<typeof insertListeningSessionSchema>;
+export type BreathingSession = typeof breathingSessions.$inferSelect;
+export type InsertBreathingSession = z.infer<typeof insertBreathingSessionSchema>;

@@ -33,7 +33,10 @@ import { ThemedView } from "@/components/ThemedView";
 import BreathingCircle from "@/components/BreathingCircle";
 import { WelcomeSection } from "@/components/WelcomeSection";
 import { FocusTimer } from "@/components/FocusTimer";
+import { DailyGoalProgress } from "@/components/DailyGoalProgress";
 import { useTheme } from "@/hooks/useTheme";
+import { useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/query-client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAudio } from "@/contexts/AudioContext";
 import { useBackgroundMusic, BACKGROUND_MUSIC_OPTIONS, type BackgroundMusicType } from "@/contexts/BackgroundMusicContext";
@@ -63,6 +66,7 @@ export default function BreathingScreen() {
   const { user } = useAuth();
   const { currentAffirmation, isPlaying: isAudioPlaying, playAffirmation, togglePlayPause } = useAudio();
   const { selectedMusic, setSelectedMusic, startBackgroundMusic, stopBackgroundMusic, isPlaying: isMusicPlaying } = useBackgroundMusic();
+  const queryClient = useQueryClient();
 
   const [selectedTechnique, setSelectedTechnique] = useState<BreathingTechnique>(BREATHING_TECHNIQUES[0]);
   const [selectedDuration, setSelectedDuration] = useState(180);
@@ -293,6 +297,7 @@ export default function BreathingScreen() {
 
   const handleStop = async () => {
     const wasNaturalCompletion = sessionCompletedNaturally.current;
+    const completedDuration = elapsedTime;
     sessionCompletedNaturally.current = false;
     
     setIsPlaying(false);
@@ -301,7 +306,20 @@ export default function BreathingScreen() {
     setShowLandscapeMode(false);
     try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
     
-    if (wasNaturalCompletion) {
+    if (wasNaturalCompletion && completedDuration > 0) {
+      try {
+        await apiRequest('/api/breathing-sessions', {
+          method: 'POST',
+          body: JSON.stringify({
+            techniqueId: selectedTechnique.id,
+            durationSeconds: completedDuration,
+          }),
+        });
+        queryClient.invalidateQueries({ queryKey: ['/api/breathing-sessions/today'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/breathing-sessions/streak'] });
+      } catch (error) {
+        console.error('Error recording breathing session:', error);
+      }
       setShowFocusTimer(true);
     } else {
       if (isMusicPlaying) {
@@ -473,6 +491,11 @@ export default function BreathingScreen() {
             onQuickPlay={handleQuickPlay}
             isPlaying={isAudioPlaying}
           />
+        </Animated.View>
+
+        {/* Daily Goal Progress */}
+        <Animated.View entering={FadeIn.delay(100).duration(500)}>
+          <DailyGoalProgress />
         </Animated.View>
 
         {/* Breathing Circle - Hero Element */}

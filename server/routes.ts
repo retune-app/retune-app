@@ -4,8 +4,8 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { db } from "./db";
-import { affirmations, voiceSamples, categories, users, collections, customCategories, notificationSettings, listeningSessions } from "@shared/schema";
-import { eq, desc, asc, and } from "drizzle-orm";
+import { affirmations, voiceSamples, categories, users, collections, customCategories, notificationSettings, listeningSessions, breathingSessions } from "@shared/schema";
+import { eq, desc, asc, and, sql, sum } from "drizzle-orm";
 import { openai } from "./replit_integrations/audio/client";
 import {
   cloneVoice,
@@ -1647,6 +1647,134 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating notification settings:", error);
       res.status(500).json({ error: "Failed to update notification settings" });
+    }
+  });
+
+  // ============ Breathing Sessions API ============
+  
+  // Record a breathing session
+  app.post("/api/breathing-sessions", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const { techniqueId, durationSeconds } = req.body;
+      
+      if (!techniqueId || typeof durationSeconds !== 'number' || durationSeconds <= 0) {
+        return res.status(400).json({ error: "Invalid session data" });
+      }
+
+      const today = new Date();
+      const dateKey = today.toISOString().split('T')[0]; // YYYY-MM-DD
+
+      const [session] = await db
+        .insert(breathingSessions)
+        .values({
+          userId,
+          techniqueId,
+          durationSeconds,
+          dateKey,
+        })
+        .returning();
+
+      res.json(session);
+    } catch (error) {
+      console.error("Error recording breathing session:", error);
+      res.status(500).json({ error: "Failed to record breathing session" });
+    }
+  });
+
+  // Get today's breathing progress
+  app.get("/api/breathing-sessions/today", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const today = new Date();
+      const dateKey = today.toISOString().split('T')[0]; // YYYY-MM-DD
+
+      const sessions = await db
+        .select({
+          totalSeconds: sql<number>`COALESCE(SUM(${breathingSessions.durationSeconds}), 0)::int`,
+          sessionCount: sql<number>`COUNT(*)::int`,
+        })
+        .from(breathingSessions)
+        .where(and(
+          eq(breathingSessions.userId, userId),
+          eq(breathingSessions.dateKey, dateKey)
+        ));
+
+      const result = sessions[0] || { totalSeconds: 0, sessionCount: 0 };
+      
+      res.json({
+        totalMinutes: Math.floor(result.totalSeconds / 60),
+        totalSeconds: result.totalSeconds,
+        sessionCount: result.sessionCount,
+        dateKey,
+        goalMinutes: 5, // Default daily goal
+      });
+    } catch (error) {
+      console.error("Error getting today's breathing progress:", error);
+      res.status(500).json({ error: "Failed to get breathing progress" });
+    }
+  });
+
+  // Get breathing streak (consecutive days)
+  app.get("/api/breathing-sessions/streak", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      // Get distinct dates with breathing sessions, ordered by date desc
+      const sessionsResult = await db
+        .select({
+          dateKey: breathingSessions.dateKey,
+        })
+        .from(breathingSessions)
+        .where(eq(breathingSessions.userId, userId))
+        .groupBy(breathingSessions.dateKey)
+        .orderBy(desc(breathingSessions.dateKey));
+
+      const dates = sessionsResult.map(s => s.dateKey);
+      
+      if (dates.length === 0) {
+        return res.json({ streak: 0, lastActiveDate: null });
+      }
+
+      // Calculate streak
+      let streak = 0;
+      const today = new Date().toISOString().split('T')[0];
+      const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+      
+      // Check if most recent session was today or yesterday
+      if (dates[0] !== today && dates[0] !== yesterday) {
+        return res.json({ streak: 0, lastActiveDate: dates[0] });
+      }
+
+      // Count consecutive days
+      let currentDate = new Date(dates[0]);
+      for (const dateKey of dates) {
+        const sessionDate = new Date(dateKey);
+        const diffDays = Math.floor((currentDate.getTime() - sessionDate.getTime()) / 86400000);
+        
+        if (diffDays <= 1) {
+          streak++;
+          currentDate = sessionDate;
+        } else {
+          break;
+        }
+      }
+
+      res.json({ streak, lastActiveDate: dates[0] });
+    } catch (error) {
+      console.error("Error getting breathing streak:", error);
+      res.status(500).json({ error: "Failed to get breathing streak" });
     }
   });
 

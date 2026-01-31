@@ -616,16 +616,21 @@ export default function ProfileScreen() {
                   const isSelected = voicePreferences?.preferredAiGender === "male"
                     ? voicePreferences?.preferredMaleVoiceId === voice.id
                     : voicePreferences?.preferredFemaleVoiceId === voice.id;
+                  const isPlaying = previewingVoiceId === voice.id;
+                  const isLoading = isPreviewLoading && previewingVoiceId === voice.id;
                   
                   return (
                     <Pressable
                       key={voice.id}
                       onPress={() => {
-                        if (voicePreferences?.preferredAiGender === "male") {
-                          updateVoicePreferences.mutate({ preferredMaleVoiceId: voice.id });
-                        } else {
-                          updateVoicePreferences.mutate({ preferredFemaleVoiceId: voice.id });
+                        if (!isSelected) {
+                          if (voicePreferences?.preferredAiGender === "male") {
+                            updateVoicePreferences.mutate({ preferredMaleVoiceId: voice.id });
+                          } else {
+                            updateVoicePreferences.mutate({ preferredFemaleVoiceId: voice.id });
+                          }
                         }
+                        handleVoicePreview(voice.id);
                       }}
                       style={[
                         styles.voiceCard,
@@ -638,38 +643,25 @@ export default function ProfileScreen() {
                       testID={`voice-card-${voice.id}`}
                     >
                       <View style={styles.voiceCardContent}>
-                        <ThemedText type="body" style={[{ fontWeight: "600" }, isSelected ? { color: theme.primary } : undefined]}>
-                          {voice.name}
-                        </ThemedText>
+                        <View style={styles.voiceCardNameRow}>
+                          <ThemedText type="body" style={[{ fontWeight: "600" }, isSelected ? { color: theme.primary } : undefined]}>
+                            {voice.name}
+                          </ThemedText>
+                          {isLoading ? (
+                            <ActivityIndicator size="small" color={theme.primary} style={{ marginLeft: Spacing.sm }} />
+                          ) : isPlaying ? (
+                            <Feather name="volume-2" size={16} color={theme.primary} style={{ marginLeft: Spacing.sm }} />
+                          ) : null}
+                        </View>
                         <ThemedText type="caption" style={{ color: theme.textSecondary }}>
                           {voice.description}
                         </ThemedText>
                       </View>
-                      <View style={styles.voiceCardActions}>
-                        <Pressable
-                          onPress={(e) => {
-                            e.stopPropagation();
-                            handleVoicePreview(voice.id);
-                          }}
-                          style={[styles.voicePreviewButton, { backgroundColor: theme.backgroundSecondary }]}
-                          testID={`button-preview-${voice.id}`}
-                        >
-                          {isPreviewLoading && previewingVoiceId === voice.id ? (
-                            <ActivityIndicator size="small" color={theme.primary} />
-                          ) : (
-                            <Feather 
-                              name={previewingVoiceId === voice.id ? "stop-circle" : "play-circle"} 
-                              size={20} 
-                              color={theme.primary} 
-                            />
-                          )}
-                        </Pressable>
-                        {isSelected ? (
-                          <View style={[styles.voiceCardCheck, { backgroundColor: theme.primary }]}>
-                            <Feather name="check" size={14} color="#FFFFFF" />
-                          </View>
-                        ) : null}
-                      </View>
+                      {isSelected ? (
+                        <View style={[styles.voiceCardCheck, { backgroundColor: theme.primary }]}>
+                          <Feather name="check" size={14} color="#FFFFFF" />
+                        </View>
+                      ) : null}
                     </Pressable>
                   );
                 })}
@@ -1539,6 +1531,10 @@ const styles = StyleSheet.create({
   voiceCardContent: {
     flex: 1,
     gap: 2,
+  },
+  voiceCardNameRow: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   voiceCardCheck: {
     width: 24,

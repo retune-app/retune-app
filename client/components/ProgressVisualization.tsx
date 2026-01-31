@@ -128,10 +128,12 @@ export function ProgressVisualization({
             <ThemedText type="h2" style={styles.circleNumber}>
               {breathingSessions}
             </ThemedText>
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <Feather name="wind" size={10} color={theme.textSecondary} style={{ marginRight: 3 }} />
+            <View style={{ alignItems: "center" }}>
               <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                breath sessions
+                breath
+              </ThemedText>
+              <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: -2 }}>
+                sessions
               </ThemedText>
             </View>
           </View>

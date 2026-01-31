@@ -376,6 +376,7 @@ const styles = StyleSheet.create({
   streakNumber: {
     fontSize: 32,
     fontWeight: "700",
+    lineHeight: 40,
     marginBottom: Spacing.xs,
   },
   lifetimeCard: {

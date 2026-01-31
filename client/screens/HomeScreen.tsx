@@ -19,7 +19,6 @@ import { ThemedText } from "@/components/ThemedText";
 import { EmptyState } from "@/components/EmptyState";
 import { SwipeableAffirmationCard } from "@/components/SwipeableAffirmationCard";
 import { CategoryChip } from "@/components/CategoryChip";
-import { WelcomeSection } from "@/components/WelcomeSection";
 import { LibraryTip } from "@/components/LibraryTip";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
@@ -181,13 +180,7 @@ export default function HomeScreen() {
 
   const renderHeader = () => (
     <View style={styles.headerContent}>
-      <WelcomeSection
-        userName={user?.name}
-        lastPlayedAffirmation={currentAffirmation}
-        suggestedAffirmation={suggestedAffirmation}
-        onQuickPlay={handleQuickPlay}
-        isPlaying={isPlaying}
-      />
+      {/* Search bar at top of Library */}
       <View style={[styles.searchContainer, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder }]}>
         <Feather name="search" size={20} color={theme.placeholder} />
         <TextInput

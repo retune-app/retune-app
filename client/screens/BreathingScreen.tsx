@@ -31,7 +31,10 @@ import { getApiUrl } from "@/lib/query-client";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import BreathingCircle from "@/components/BreathingCircle";
+import { WelcomeSection } from "@/components/WelcomeSection";
 import { useTheme } from "@/hooks/useTheme";
+import { useAuth } from "@/contexts/AuthContext";
+import { useAudio } from "@/contexts/AudioContext";
 import { useBackgroundMusic, BACKGROUND_MUSIC_OPTIONS, type BackgroundMusicType } from "@/contexts/BackgroundMusicContext";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import {
@@ -56,6 +59,8 @@ export default function BreathingScreen() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
   const { theme, isDark } = useTheme();
+  const { user } = useAuth();
+  const { currentAffirmation, isPlaying: isAudioPlaying, playAffirmation, togglePlayPause } = useAudio();
   const { selectedMusic, setSelectedMusic, startBackgroundMusic, stopBackgroundMusic, isPlaying: isMusicPlaying } = useBackgroundMusic();
 
   const [selectedTechnique, setSelectedTechnique] = useState<BreathingTechnique>(BREATHING_TECHNIQUES[0]);
@@ -77,10 +82,36 @@ export default function BreathingScreen() {
     queryKey: ["/api/affirmations"],
   });
 
-  // Get a random affirmation or the first one
+  // Get a random affirmation or the first one for background
   const backgroundAffirmation = affirmations.length > 0 
     ? affirmations[Math.floor(Math.random() * Math.min(affirmations.length, 5))]
     : null;
+
+  // Get suggested affirmation based on time of day (for Welcome Section)
+  const suggestedAffirmation = React.useMemo(() => {
+    if (affirmations.length === 0) return null;
+    const hour = new Date().getHours();
+    let targetCategory = "Confidence";
+    if (hour >= 5 && hour < 12) targetCategory = "Confidence";
+    else if (hour >= 12 && hour < 17) targetCategory = "Career";
+    else if (hour >= 17 && hour < 21) targetCategory = "Health";
+    else targetCategory = "Sleep";
+    
+    const categoryMatch = affirmations.find(a => a.category === targetCategory);
+    return categoryMatch || affirmations[0];
+  }, [affirmations]);
+
+  // Quick play handler for WelcomeSection
+  const handleQuickPlay = async () => {
+    const affirmationToPlay = currentAffirmation || suggestedAffirmation;
+    if (affirmationToPlay) {
+      if (currentAffirmation?.id === affirmationToPlay.id) {
+        await togglePlayPause();
+      } else {
+        await playAffirmation(affirmationToPlay as any);
+      }
+    }
+  };
 
   const remainingTime = selectedDuration - elapsedTime;
   const totalCycles = getCyclesForDuration(selectedTechnique, selectedDuration);
@@ -304,16 +335,6 @@ export default function BreathingScreen() {
     handleStop();
   };
 
-  const getTimeOfDay = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return { greeting: "Good morning", suggestion: "Start your day with calm focus" };
-    if (hour < 17) return { greeting: "Good afternoon", suggestion: "Take a mindful pause" };
-    if (hour < 21) return { greeting: "Good evening", suggestion: "Unwind and relax" };
-    return { greeting: "Good night", suggestion: "Prepare for restful sleep" };
-  };
-
-  const { greeting, suggestion } = getTimeOfDay();
-
   // Landscape Fullscreen Mode
   if (showLandscapeMode) {
     return (
@@ -423,12 +444,15 @@ export default function BreathingScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Welcome Section */}
-        <Animated.View entering={FadeIn.duration(600)} style={styles.welcomeSection}>
-          <ThemedText type="h2" style={styles.greeting}>{greeting}</ThemedText>
-          <ThemedText type="body" style={[styles.suggestion, { color: theme.textSecondary }]}>
-            {suggestion}
-          </ThemedText>
+        {/* Welcome Section with Continue Card */}
+        <Animated.View entering={FadeIn.duration(600)}>
+          <WelcomeSection
+            userName={user?.name}
+            lastPlayedAffirmation={currentAffirmation}
+            suggestedAffirmation={suggestedAffirmation as any}
+            onQuickPlay={handleQuickPlay}
+            isPlaying={isAudioPlaying}
+          />
         </Animated.View>
 
         {/* Breathing Circle - Hero Element */}
@@ -771,17 +795,6 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     paddingHorizontal: Spacing.lg,
-  },
-  
-  // Welcome Section
-  welcomeSection: {
-    marginBottom: Spacing.xl,
-  },
-  greeting: {
-    marginBottom: Spacing.xs,
-  },
-  suggestion: {
-    fontSize: 16,
   },
 
   // Affirmation Background

@@ -17,7 +17,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import PagerView from "react-native-pager-view";
+import PagerView, { PagerViewRef } from "@/components/PagerViewCompat";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -59,7 +59,7 @@ export default function CreateScreen() {
   const [selectedLength, setSelectedLength] = useState<LengthOption>("Medium");
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
-  const pagerRef = useRef<PagerView>(null);
+  const pagerRef = useRef<PagerViewRef>(null);
 
   const { data: customCategories = [] } = useQuery<CustomCategory[]>({
     queryKey: ["/api/custom-categories"],

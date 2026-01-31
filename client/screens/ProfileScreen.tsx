@@ -195,9 +195,14 @@ export default function ProfileScreen() {
 
       const token = await getAuthToken();
       const response = await fetch(
-        new URL(`/api/voices/preview?voiceId=${voiceId}`, getApiUrl()).toString(),
+        new URL("/api/voices/preview", getApiUrl()).toString(),
         {
-          headers: token ? { "X-Auth-Token": token } : {},
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { "X-Auth-Token": token } : {}),
+          },
+          body: JSON.stringify({ voiceId }),
         }
       );
 
@@ -205,8 +210,8 @@ export default function ProfileScreen() {
         throw new Error("Failed to generate preview");
       }
 
-      const audioBlob = await response.blob();
-      const audioUri = URL.createObjectURL(audioBlob);
+      const data = await response.json();
+      const audioUri = `data:audio/mpeg;base64,${data.audio}`;
       
       await Audio.setAudioModeAsync({
         playsInSilentModeIOS: true,

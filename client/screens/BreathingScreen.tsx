@@ -970,8 +970,8 @@ const styles = StyleSheet.create({
     alignSelf: "flex-end",
     alignItems: "center",
     gap: Spacing.sm,
-    marginBottom: Spacing.md,
-    marginTop: -Spacing.lg,
+    marginBottom: Spacing.lg,
+    marginTop: -Spacing.xl * 2,
   },
   floatingControlSection: {
     position: "absolute",

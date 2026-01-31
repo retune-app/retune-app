@@ -386,14 +386,14 @@ export default function ProfileScreen() {
       </View>
 
       <ProgressVisualization
-        totalListens={(stats as any)?.totalListens || 0}
-        streak={(stats as any)?.streak || 0}
-        weeklyActivity={
-          (stats as any)?.weeklyData 
-            ? (stats as any).weeklyData.map((d: { minutes: number }) => d.minutes)
+        breathingSessions={(stats as any)?.meditation?.totalSessions || 0}
+        breathingStreak={(stats as any)?.meditation?.streak || 0}
+        weeklyBreathingMinutes={
+          (stats as any)?.meditation?.weeklyData 
+            ? (stats as any).meditation.weeklyData.map((d: { minutes: number }) => d.minutes)
             : [0, 0, 0, 0, 0, 0, 0]
         }
-        minutesListened={(stats as any)?.totalMinutesThisWeek || 0}
+        totalBreathingMinutes={(stats as any)?.meditation?.minutesThisWeek || 0}
         affirmationsCreated={(stats as any)?.affirmationsCount || 0}
       />
 

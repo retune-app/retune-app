@@ -19,32 +19,32 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 
 interface ProgressVisualizationProps {
-  totalListens: number;
-  streak: number;
-  weeklyActivity: number[];
-  minutesListened: number;
+  breathingSessions: number;
+  breathingStreak: number;
+  weeklyBreathingMinutes: number[];
+  totalBreathingMinutes: number;
   affirmationsCreated?: number;
 }
 
 export function ProgressVisualization({
-  totalListens = 0,
-  streak = 0,
-  weeklyActivity = [0, 0, 0, 0, 0, 0, 0],
-  minutesListened = 0,
+  breathingSessions = 0,
+  breathingStreak = 0,
+  weeklyBreathingMinutes = [0, 0, 0, 0, 0, 0, 0],
+  totalBreathingMinutes = 0,
   affirmationsCreated = 0,
 }: ProgressVisualizationProps) {
   const { theme, isDark } = useTheme();
   const progressAnim = useSharedValue(0);
   const streakAnim = useSharedValue(0);
-  const previousListensRef = useRef<number | null>(null);
+  const previousSessionsRef = useRef<number | null>(null);
 
-  const getMilestoneLevel = (listens: number): string => {
-    if (listens < 10) return "Seedling";
-    if (listens < 25) return "Sprout";
-    if (listens < 50) return "Sapling";
-    if (listens < 100) return "Tree";
-    if (listens < 250) return "Forest";
-    return "Enlightened";
+  const getMilestoneLevel = (sessions: number): string => {
+    if (sessions < 7) return "Beginner";
+    if (sessions < 21) return "Explorer";
+    if (sessions < 50) return "Practitioner";
+    if (sessions < 100) return "Devotee";
+    if (sessions < 250) return "Master";
+    return "Zen";
   };
 
   useEffect(() => {
@@ -57,29 +57,29 @@ export function ProgressVisualization({
       withTiming(1, { duration: 800, easing: Easing.out(Easing.quad) })
     );
 
-    if (previousListensRef.current !== null) {
-      const prevLevel = getMilestoneLevel(previousListensRef.current);
-      const newLevel = getMilestoneLevel(totalListens);
+    if (previousSessionsRef.current !== null) {
+      const prevLevel = getMilestoneLevel(previousSessionsRef.current);
+      const newLevel = getMilestoneLevel(breathingSessions);
       if (prevLevel !== newLevel) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
     }
-    previousListensRef.current = totalListens;
-  }, [totalListens, streak]);
+    previousSessionsRef.current = breathingSessions;
+  }, [breathingSessions, breathingStreak]);
 
   const days = ["S", "M", "T", "W", "T", "F", "S"];
-  const maxActivity = Math.max(...weeklyActivity, 1);
+  const maxActivity = Math.max(...weeklyBreathingMinutes, 1);
 
-  const getMilestone = (listens: number): { level: string; next: number; progress: number } => {
-    if (listens < 10) return { level: "Seedling", next: 10, progress: listens / 10 };
-    if (listens < 25) return { level: "Sprout", next: 25, progress: (listens - 10) / 15 };
-    if (listens < 50) return { level: "Sapling", next: 50, progress: (listens - 25) / 25 };
-    if (listens < 100) return { level: "Tree", next: 100, progress: (listens - 50) / 50 };
-    if (listens < 250) return { level: "Forest", next: 250, progress: (listens - 100) / 150 };
-    return { level: "Enlightened", next: 0, progress: 1 };
+  const getMilestone = (sessions: number): { level: string; next: number; progress: number } => {
+    if (sessions < 7) return { level: "Beginner", next: 7, progress: sessions / 7 };
+    if (sessions < 21) return { level: "Explorer", next: 21, progress: (sessions - 7) / 14 };
+    if (sessions < 50) return { level: "Practitioner", next: 50, progress: (sessions - 21) / 29 };
+    if (sessions < 100) return { level: "Devotee", next: 100, progress: (sessions - 50) / 50 };
+    if (sessions < 250) return { level: "Master", next: 250, progress: (sessions - 100) / 150 };
+    return { level: "Zen", next: 0, progress: 1 };
   };
 
-  const milestone = getMilestone(totalListens);
+  const milestone = getMilestone(breathingSessions);
 
   const circleProgress = useAnimatedStyle(() => ({
     transform: [{ scale: interpolate(progressAnim.value, [0, 1], [0.8, 1]) }],
@@ -124,10 +124,10 @@ export function ProgressVisualization({
           </Svg>
           <View style={styles.circleContent}>
             <ThemedText type="h2" style={styles.circleNumber}>
-              {totalListens}
+              {breathingSessions}
             </ThemedText>
             <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-              listens
+              sessions
             </ThemedText>
           </View>
         </Animated.View>
@@ -145,7 +145,7 @@ export function ProgressVisualization({
             </ThemedText>
             {milestone.next > 0 ? (
               <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                {milestone.next - totalListens} to next
+                {milestone.next - breathingSessions} to next
               </ThemedText>
             ) : null}
           </View>
@@ -158,7 +158,7 @@ export function ProgressVisualization({
               </ThemedText>
             </View>
             <ThemedText type="h4" style={{ color: "#FF6B4A" }}>
-              {streak} {streak === 1 ? "day" : "days"}
+              {breathingStreak} {breathingStreak === 1 ? "day" : "days"}
             </ThemedText>
           </Animated.View>
         </View>
@@ -169,8 +169,8 @@ export function ProgressVisualization({
           This Week
         </ThemedText>
         <View style={styles.weeklyChart}>
-          {weeklyActivity.map((activity, index) => {
-            const height = maxActivity > 0 ? (activity / maxActivity) * 40 : 0;
+          {weeklyBreathingMinutes.map((minutes, index) => {
+            const height = maxActivity > 0 ? (minutes / maxActivity) * 40 : 0;
             const isToday = index === new Date().getDay();
             
             return (
@@ -180,7 +180,7 @@ export function ProgressVisualization({
                     colors={
                       isToday
                         ? [theme.goldLight, theme.gold]
-                        : activity > 0
+                        : minutes > 0
                         ? [theme.gold + "60", theme.gold + "30"]
                         : [theme.backgroundTertiary, theme.backgroundTertiary]
                     }
@@ -207,9 +207,9 @@ export function ProgressVisualization({
           })}
         </View>
         <View style={styles.weeklyFooter}>
-          <Feather name="clock" size={12} color={theme.textSecondary} />
+          <Feather name="wind" size={12} color={theme.textSecondary} />
           <ThemedText type="caption" style={{ color: theme.textSecondary, marginLeft: 4 }}>
-            {minutesListened} min this week
+            {totalBreathingMinutes} min this week
           </ThemedText>
           <View style={styles.footerDot} />
           <Feather name="file-plus" size={12} color={theme.textSecondary} />

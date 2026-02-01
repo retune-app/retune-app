@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
+import { useNavigation } from "@react-navigation/native";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
@@ -62,6 +63,7 @@ interface Affirmation {
 export default function BreathingScreen() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
+  const navigation = useNavigation<any>();
   const { theme, isDark } = useTheme();
   const { user } = useAuth();
   const { currentAffirmation, isPlaying: isAudioPlaying, playAffirmation, togglePlayPause, breathingAffirmation } = useAudio();
@@ -635,6 +637,7 @@ export default function BreathingScreen() {
                   onPress={() => {
                     setAudioSource('music');
                     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+                    navigation.navigate('SoundLibrary');
                   }}
                   style={[
                     styles.optionPill,

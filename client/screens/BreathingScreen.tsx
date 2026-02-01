@@ -401,8 +401,92 @@ export default function BreathingScreen() {
     const isCurrentlyLandscape = screenWidth > screenHeight;
     const circleSize = isCurrentlyLandscape 
       ? Math.min(screenHeight - 80, 320)
-      : Math.min(screenWidth - 80, 280);
+      : Math.min(screenWidth * 0.7, 260);
 
+    // Portrait fullscreen layout
+    if (!isCurrentlyLandscape) {
+      return (
+        <Modal
+          visible={showLandscapeMode}
+          animationType="fade"
+          statusBarTranslucent
+          supportedOrientations={["landscape-left", "landscape-right", "portrait"]}
+          presentationStyle="fullScreen"
+        >
+          <StatusBar hidden />
+          <View style={[styles.landscapeContainer, { backgroundColor: theme.navy }]}>
+            {/* Close button */}
+            <Pressable
+              onPress={exitFullscreen}
+              style={[styles.landscapeCloseButton, { top: insets.top + 16 }]}
+            >
+              <BlurView intensity={40} tint="dark" style={styles.blurButton}>
+                <Feather name="x" size={24} color="#FFFFFF" />
+              </BlurView>
+            </Pressable>
+
+            {/* Portrait layout: vertical stack with proper spacing */}
+            <View style={styles.portraitFullscreenWrapper}>
+              {/* Top section - technique info */}
+              <View style={styles.portraitTopSection}>
+                <Text style={[styles.landscapeTechniqueName, { color: selectedTechnique.color }]}>
+                  {selectedTechnique.name}
+                </Text>
+                <Text style={styles.landscapePhaseLabel}>
+                  {selectedTechnique.benefits}
+                </Text>
+              </View>
+
+              {/* Center section - breathing circle (takes remaining space) */}
+              <View style={styles.portraitCenterSection}>
+                <BreathingCircle
+                  technique={selectedTechnique}
+                  isPlaying={isPlaying}
+                  onCycleComplete={handleCycleComplete}
+                  hapticsEnabled={hapticsEnabled}
+                  size={circleSize}
+                />
+              </View>
+
+              {/* Bottom section - stats and controls */}
+              <View style={styles.portraitBottomSection}>
+                <View style={styles.portraitStatsRow}>
+                  <View style={styles.portraitStatItem}>
+                    <Text style={styles.landscapeStatLabel}>Time Left</Text>
+                    <Text style={styles.landscapeStatValue}>{formatTime(remainingTime)}</Text>
+                  </View>
+                  <View style={styles.portraitStatItem}>
+                    <Text style={styles.landscapeStatLabel}>Cycles</Text>
+                    <Text style={styles.landscapeStatValue}>{cyclesCompleted}/{totalCycles}</Text>
+                  </View>
+                </View>
+                
+                <View style={styles.portraitControlsRow}>
+                  <Pressable
+                    onPress={handleStop}
+                    style={styles.landscapeStopButton}
+                  >
+                    <Feather name="square" size={20} color="#FFFFFF" />
+                  </Pressable>
+                  <Pressable
+                    onPress={isPlaying ? handlePause : handleResume}
+                  >
+                    <LinearGradient
+                      colors={[selectedTechnique.color, `${selectedTechnique.color}CC`]}
+                      style={styles.landscapePlayButton}
+                    >
+                      <Feather name={isPlaying ? "pause" : "play"} size={24} color="#FFFFFF" />
+                    </LinearGradient>
+                  </Pressable>
+                </View>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      );
+    }
+
+    // Landscape fullscreen layout
     return (
       <Modal
         visible={showLandscapeMode}
@@ -424,16 +508,10 @@ export default function BreathingScreen() {
             </BlurView>
           </Pressable>
 
-          {/* Main content - adapts to orientation */}
-          <View style={[
-            styles.landscapeContent,
-            !isCurrentlyLandscape && styles.portraitFullscreenContent
-          ]}>
-            {/* Technique info - top in portrait, left in landscape */}
-            <View style={[
-              styles.landscapeSidePanel,
-              !isCurrentlyLandscape && styles.portraitTopPanel
-            ]}>
+          {/* Landscape layout: horizontal row */}
+          <View style={styles.landscapeContent}>
+            {/* Left side - technique info */}
+            <View style={styles.landscapeSidePanel}>
               <Text style={[styles.landscapeTechniqueName, { color: selectedTechnique.color }]}>
                 {selectedTechnique.name}
               </Text>
@@ -453,23 +531,15 @@ export default function BreathingScreen() {
               />
             </View>
 
-            {/* Stats and controls - bottom in portrait, right in landscape */}
-            <View style={[
-              styles.landscapeSidePanel,
-              !isCurrentlyLandscape && styles.portraitBottomPanel
-            ]}>
-              <View style={[
-                styles.landscapeStatsRow,
-                !isCurrentlyLandscape && styles.portraitStatsRow
-              ]}>
-                <View style={styles.landscapeStats}>
-                  <Text style={styles.landscapeStatLabel}>Time Left</Text>
-                  <Text style={styles.landscapeStatValue}>{formatTime(remainingTime)}</Text>
-                </View>
-                <View style={styles.landscapeStats}>
-                  <Text style={styles.landscapeStatLabel}>Cycles</Text>
-                  <Text style={styles.landscapeStatValue}>{cyclesCompleted}/{totalCycles}</Text>
-                </View>
+            {/* Right side - stats and controls */}
+            <View style={styles.landscapeSidePanel}>
+              <View style={styles.landscapeStats}>
+                <Text style={styles.landscapeStatLabel}>Time Left</Text>
+                <Text style={styles.landscapeStatValue}>{formatTime(remainingTime)}</Text>
+              </View>
+              <View style={styles.landscapeStats}>
+                <Text style={styles.landscapeStatLabel}>Cycles</Text>
+                <Text style={styles.landscapeStatValue}>{cyclesCompleted}/{totalCycles}</Text>
               </View>
               
               <View style={styles.landscapeControlsRow}>
@@ -1221,22 +1291,39 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   // Portrait fullscreen mode styles
-  portraitFullscreenContent: {
+  portraitFullscreenWrapper: {
+    flex: 1,
     flexDirection: "column",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.xl,
+    paddingTop: Spacing.xl * 2,
+    paddingBottom: Spacing.xl * 2,
   },
-  portraitTopPanel: {
-    width: "100%",
-    marginBottom: Spacing.lg,
+  portraitTopSection: {
+    alignItems: "center",
   },
-  portraitBottomPanel: {
-    width: "100%",
-    marginTop: Spacing.lg,
+  portraitCenterSection: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  portraitBottomSection: {
+    alignItems: "center",
+    gap: Spacing.lg,
   },
   portraitStatsRow: {
     flexDirection: "row",
     justifyContent: "center",
-    gap: Spacing.xl * 2,
+    gap: Spacing.xl * 3,
+  },
+  portraitStatItem: {
+    alignItems: "center",
+  },
+  portraitControlsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.md,
   },
 });

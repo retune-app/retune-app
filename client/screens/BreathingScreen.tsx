@@ -467,23 +467,20 @@ export default function BreathingScreen() {
     );
   }
 
-  // Portrait Mode - Main Screen
+  // Portrait Mode - Main Screen (Fixed Layout - No Scroll)
   return (
     <ThemedView style={styles.container}>
-
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={[
-          styles.contentContainer,
+      <View
+        style={[
+          styles.fixedContent,
           {
-            paddingTop: insets.top + Spacing.lg,
-            paddingBottom: insets.bottom + (currentAffirmation ? 180 : 120),
+            paddingTop: insets.top + Spacing.md,
+            paddingBottom: insets.bottom + Spacing.md,
           },
         ]}
-        showsVerticalScrollIndicator={false}
       >
         {/* Welcome Section at Top */}
-        <Animated.View entering={FadeIn.duration(600)}>
+        <Animated.View entering={FadeIn.duration(600)} style={styles.welcomeWrapper}>
           <WelcomeSection
             userName={user?.name}
             lastPlayedAffirmation={currentAffirmation}
@@ -493,16 +490,16 @@ export default function BreathingScreen() {
           />
         </Animated.View>
 
-        {/* Technique Selector Card - Below Welcome */}
+        {/* Technique Selector Card - Compact */}
         {!isPlaying ? (
-          <Animated.View entering={FadeIn.delay(100).duration(600)}>
+          <Animated.View entering={FadeIn.delay(100).duration(600)} style={styles.techniqueWrapper}>
             <Pressable
               onPress={() => setShowTechniqueSelector(true)}
               style={[styles.techniqueCard, { backgroundColor: theme.cardBackground }, Shadows.medium]}
             >
               <View style={styles.techniqueCardContent}>
                 <View style={[styles.techniqueIconSmall, { backgroundColor: `${selectedTechnique.color}30` }]}>
-                  <Feather name={selectedTechnique.icon as any} size={24} color={selectedTechnique.color} />
+                  <Feather name={selectedTechnique.icon as any} size={22} color={selectedTechnique.color} />
                 </View>
                 <View style={styles.techniqueCardInfo}>
                   <ThemedText type="body" style={{ fontWeight: "600" }}>
@@ -529,7 +526,7 @@ export default function BreathingScreen() {
               isPlaying={isPlaying}
               onCycleComplete={handleCycleComplete}
               hapticsEnabled={hapticsEnabled}
-              size={280}
+              size={260}
             />
           </View>
 
@@ -554,27 +551,36 @@ export default function BreathingScreen() {
           ) : null}
         </Animated.View>
 
-        {/* Control Buttons - Vertical on far right, above duration */}
+        {/* Control Buttons - Horizontal below circle */}
         {!isPlaying ? (
           <Animated.View 
             entering={FadeIn.delay(350).duration(400)}
-            style={styles.controlButtonsRight}
+            style={styles.controlButtonsHorizontal}
           >
             <Pressable 
               onPress={enterFullscreen} 
-              style={[styles.fullscreenButton, { backgroundColor: theme.backgroundSecondary }, Shadows.medium]}
+              style={[styles.secondaryControlButton, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border }, Shadows.small]}
             >
-              <Feather name="maximize-2" size={20} color={theme.text} />
+              <Feather name="maximize-2" size={22} color={theme.text} />
+              <ThemedText type="caption" style={{ marginTop: 4 }}>Expand</ThemedText>
             </Pressable>
             <Pressable onPress={handleStart} testID="button-start-breathing">
               <LinearGradient
                 colors={[selectedTechnique.color, `${selectedTechnique.color}CC`]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                style={[styles.floatingStartButton, Shadows.large]}
+                style={[styles.primaryPlayButton, Shadows.large]}
               >
-                <Feather name="play" size={24} color="#FFFFFF" />
+                <Feather name="play" size={28} color="#FFFFFF" />
+                <Text style={styles.primaryButtonText}>Start</Text>
               </LinearGradient>
+            </Pressable>
+            <Pressable 
+              onPress={() => setHapticsEnabled(!hapticsEnabled)} 
+              style={[styles.secondaryControlButton, { backgroundColor: hapticsEnabled ? `${ACCENT_GOLD}20` : theme.backgroundSecondary, borderColor: hapticsEnabled ? ACCENT_GOLD : theme.border }, Shadows.small]}
+            >
+              <Feather name="smartphone" size={22} color={hapticsEnabled ? ACCENT_GOLD : theme.textSecondary} />
+              <ThemedText type="caption" style={{ marginTop: 4, color: hapticsEnabled ? ACCENT_GOLD : theme.textSecondary }}>Haptics</ThemedText>
             </Pressable>
           </Animated.View>
         ) : null}
@@ -726,7 +732,7 @@ export default function BreathingScreen() {
           </Animated.View>
         ) : null}
 
-      </ScrollView>
+      </View>
 
       {/* Floating Playing Controls - Only visible when breathing is active */}
       {isPlaying ? (
@@ -842,6 +848,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  fixedContent: {
+    flex: 1,
+    paddingHorizontal: Spacing.lg,
+  },
+  welcomeWrapper: {
+    marginBottom: Spacing.sm,
+  },
+  techniqueWrapper: {
+    marginBottom: Spacing.sm,
+  },
   scrollView: {
     flex: 1,
   },
@@ -852,9 +868,9 @@ const styles = StyleSheet.create({
   // Circle Section
   circleSection: {
     alignItems: "center",
-    marginBottom: Spacing.xl,
-    marginTop: Spacing.xl,
-    paddingVertical: Spacing.md,
+    flex: 1,
+    justifyContent: "center",
+    paddingVertical: Spacing.sm,
   },
   circleContainer: {
     position: "relative",
@@ -873,6 +889,35 @@ const styles = StyleSheet.create({
     top: 380,
     alignItems: "center",
     gap: Spacing.sm,
+  },
+  controlButtonsHorizontal: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: Spacing.lg,
+    marginTop: Spacing.md,
+    marginBottom: Spacing.lg,
+  },
+  primaryPlayButton: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  primaryButtonText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "600",
+    marginTop: 2,
+  },
+  secondaryControlButton: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
   },
   statsRow: {
     flexDirection: "row",

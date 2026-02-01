@@ -404,7 +404,9 @@ export default function BreathingScreen() {
       ? Math.min(screenHeight - 80, 320)
       : Math.min(screenWidth * 0.7, 260);
 
-    // Portrait fullscreen layout
+    // Portrait fullscreen layout - clean, centered design for max focus
+    const portraitCircleSize = Math.min(screenWidth * 0.85, screenHeight * 0.45);
+    
     if (!isCurrentlyLandscape) {
       return (
         <Modal
@@ -426,7 +428,7 @@ export default function BreathingScreen() {
               </BlurView>
             </Pressable>
 
-            {/* Portrait layout: vertical stack with proper spacing */}
+            {/* Portrait layout: centered circle with stats/controls at bottom */}
             <View style={[
               styles.portraitFullscreenWrapper,
               { 
@@ -434,24 +436,14 @@ export default function BreathingScreen() {
                 paddingBottom: insets.bottom + Spacing.xl,
               }
             ]}>
-              {/* Top section - technique info */}
-              <View style={styles.portraitTopSection}>
-                <Text style={[styles.landscapeTechniqueName, { color: selectedTechnique.color }]}>
-                  {selectedTechnique.name}
-                </Text>
-                <Text style={styles.landscapePhaseLabel}>
-                  {selectedTechnique.benefits}
-                </Text>
-              </View>
-
-              {/* Center section - breathing circle (takes remaining space) */}
+              {/* Center section - breathing circle (centered in available space) */}
               <View style={styles.portraitCenterSection}>
                 <BreathingCircle
                   technique={selectedTechnique}
                   isPlaying={isPlaying}
                   onCycleComplete={handleCycleComplete}
                   hapticsEnabled={hapticsEnabled}
-                  size={circleSize}
+                  size={portraitCircleSize}
                 />
               </View>
 

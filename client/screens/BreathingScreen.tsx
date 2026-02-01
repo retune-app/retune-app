@@ -34,7 +34,6 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import BreathingCircle from "@/components/BreathingCircle";
 import { WelcomeSection } from "@/components/WelcomeSection";
-import { FocusTimer } from "@/components/FocusTimer";
 import { useTheme } from "@/hooks/useTheme";
 import { useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/query-client";
@@ -82,7 +81,7 @@ export default function BreathingScreen() {
   const [showLandscapeMode, setShowLandscapeMode] = useState(false);
   const [musicEnabled, setMusicEnabled] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(false);
-  const [showFocusTimer, setShowFocusTimer] = useState(false);
+  const [showCompletionAnimation, setShowCompletionAnimation] = useState(false);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const sessionCompletedNaturally = useRef(false);
@@ -321,47 +320,19 @@ export default function BreathingScreen() {
     setShowLandscapeMode(false);
     try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
     
+    if (isMusicPlaying) {
+      await stopBackgroundMusic();
+    }
+    if (voiceEnabled) {
+      await stopAffirmationLoop();
+    }
+    
     if (wasNaturalCompletion && completedDuration > 0) {
-      try {
-        await apiRequest('POST', '/api/breathing-sessions', {
-          techniqueId: selectedTechnique.id,
-          durationSeconds: completedDuration,
-        });
-        queryClient.invalidateQueries({ queryKey: ['/api/breathing-sessions/today'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/breathing-sessions/streak'] });
-      } catch (error) {
-        console.error('Error recording breathing session:', error);
-      }
-      setShowFocusTimer(true);
-    } else {
-      if (isMusicPlaying) {
-        await stopBackgroundMusic();
-      }
-      if (voiceEnabled) {
-        await stopAffirmationLoop();
-      }
+      setShowCompletionAnimation(true);
+      setTimeout(() => {
+        setShowCompletionAnimation(false);
+      }, 2500);
     }
-  };
-
-  const handleFocusTimerClose = async () => {
-    setShowFocusTimer(false);
-    if (isMusicPlaying) {
-      await stopBackgroundMusic();
-    }
-    if (voiceEnabled) {
-      await stopAffirmationLoop();
-    }
-  };
-
-  const handleFocusTimerComplete = async (minutes: number) => {
-    setShowFocusTimer(false);
-    if (isMusicPlaying) {
-      await stopBackgroundMusic();
-    }
-    if (voiceEnabled) {
-      await stopAffirmationLoop();
-    }
-    try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
   };
 
   const handleCycleComplete = () => {
@@ -1024,13 +995,28 @@ export default function BreathingScreen() {
         </Pressable>
       </Modal>
 
-      {/* Focus Timer Modal */}
-      <FocusTimer
-        visible={showFocusTimer}
-        onClose={handleFocusTimerClose}
-        onComplete={handleFocusTimerComplete}
-        continueAudio={musicEnabled || voiceEnabled}
-      />
+      {/* Completion Animation Modal */}
+      <Modal
+        visible={showCompletionAnimation}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+      >
+        <View style={styles.completionOverlay}>
+          <Animated.View 
+            entering={FadeIn.duration(400)}
+            style={styles.completionContent}
+          >
+            <View style={[styles.completionIconContainer, { backgroundColor: `${selectedTechnique.color}20` }]}>
+              <Feather name="check-circle" size={64} color={selectedTechnique.color} />
+            </View>
+            <ThemedText type="h2" style={styles.completionTitle}>Well Done!</ThemedText>
+            <ThemedText type="body" style={styles.completionSubtitle}>
+              {formatTime(selectedDuration)} of mindful breathing completed
+            </ThemedText>
+          </Animated.View>
+        </View>
+      </Modal>
 
     </ThemedView>
   );
@@ -1281,6 +1267,32 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     padding: Spacing.lg,
     paddingBottom: 48,
+  },
+  completionOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(15, 28, 63, 0.95)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  completionContent: {
+    alignItems: "center",
+    padding: Spacing.xl,
+  },
+  completionIconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: Spacing.lg,
+  },
+  completionTitle: {
+    color: "#FFFFFF",
+    marginBottom: Spacing.sm,
+  },
+  completionSubtitle: {
+    color: "rgba(255,255,255,0.7)",
+    textAlign: "center",
   },
   modalHandle: {
     width: 40,

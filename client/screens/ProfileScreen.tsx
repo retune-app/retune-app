@@ -15,6 +15,7 @@ import * as Haptics from "expo-haptics";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const AUTO_REPLAY_KEY = "@settings/autoReplay";
+const BACKGROUND_WALLPAPER_KEY = "@settings/backgroundWallpaper";
 
 // Voice preference types
 type VoiceType = "personal" | "ai";
@@ -114,6 +115,7 @@ export default function ProfileScreen() {
 
   const queryClient = useQueryClient();
   const [autoReplayEnabled, setAutoReplayEnabled] = useState(true);
+  const [backgroundWallpaperEnabled, setBackgroundWallpaperEnabled] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
@@ -196,6 +198,11 @@ export default function ProfileScreen() {
         setAutoReplayEnabled(value === "true");
       }
     });
+    AsyncStorage.getItem(BACKGROUND_WALLPAPER_KEY).then((value) => {
+      if (value !== null) {
+        setBackgroundWallpaperEnabled(value === "true");
+      }
+    });
   }, []);
 
   const handleVoiceSetup = () => {
@@ -211,6 +218,17 @@ export default function ProfileScreen() {
     const newValue = !autoReplayEnabled;
     setAutoReplayEnabled(newValue);
     await AsyncStorage.setItem(AUTO_REPLAY_KEY, String(newValue));
+  };
+
+  const handleToggleBackgroundWallpaper = async () => {
+    try {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (e) {
+      // Haptics not supported
+    }
+    const newValue = !backgroundWallpaperEnabled;
+    setBackgroundWallpaperEnabled(newValue);
+    await AsyncStorage.setItem(BACKGROUND_WALLPAPER_KEY, String(newValue));
   };
 
   const handleResetData = async () => {
@@ -316,12 +334,8 @@ export default function ProfileScreen() {
     return "AI Voice";
   };
 
-  return (
-    <ImageBackground
-      source={isDark ? profileBackgroundDark : profileBackgroundLight}
-      style={styles.backgroundImage}
-      resizeMode="cover"
-    >
+  const containerContent = (
+    <>
       <KeyboardAwareScrollViewCompat
         style={styles.container}
         contentContainerStyle={[
@@ -556,6 +570,20 @@ export default function ProfileScreen() {
               <Feather name="check" size={20} color={theme.primary} />
             ) : null}
           </Pressable>
+          <SettingItem
+            icon="image"
+            label="Background Wallpaper"
+            value={backgroundWallpaperEnabled ? "Meditation theme enabled" : "Off"}
+            showArrow={false}
+            rightElement={
+              <Switch
+                value={backgroundWallpaperEnabled}
+                onValueChange={handleToggleBackgroundWallpaper}
+                trackColor={{ false: theme.border, true: ACCENT_GOLD + "80" }}
+                thumbColor={backgroundWallpaperEnabled ? ACCENT_GOLD : theme.textSecondary}
+              />
+            }
+          />
         </View>
       </View>
 
@@ -841,7 +869,25 @@ export default function ProfileScreen() {
         style={[styles.edgeFade, styles.bottomFade, { height: tabBarHeight + 40 }]}
         pointerEvents="none"
       />
-    </ImageBackground>
+    </>
+  );
+
+  if (backgroundWallpaperEnabled) {
+    return (
+      <ImageBackground
+        source={isDark ? profileBackgroundDark : profileBackgroundLight}
+        style={styles.backgroundImage}
+        resizeMode="cover"
+      >
+        {containerContent}
+      </ImageBackground>
+    );
+  }
+
+  return (
+    <View style={[styles.backgroundImage, { backgroundColor: isDark ? '#0F1C3F' : '#F8FAFB' }]}>
+      {containerContent}
+    </View>
   );
 }
 

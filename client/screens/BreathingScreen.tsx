@@ -745,7 +745,9 @@ export default function BreathingScreen() {
             </Pressable>
             <Pressable 
               onPressIn={() => {
-                try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); } catch (e) {}
+                if (hapticsEnabled) {
+                  try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); } catch (e) {}
+                }
               }}
               onPress={handleStart}
               testID="button-start-breathing"

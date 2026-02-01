@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { View, StyleSheet, Pressable, Switch, Text, Modal, ActivityIndicator, ImageBackground, TextInput, Alert, Platform } from "react-native";
+import { View, StyleSheet, Pressable, Switch, Text, Modal, ActivityIndicator, ImageBackground, TextInput, Alert, Platform, ScrollView } from "react-native";
 
 const profileBackgroundDark = require("../../assets/images/library-background.png");
 const profileBackgroundLight = require("../../assets/images/library-background-light.png");

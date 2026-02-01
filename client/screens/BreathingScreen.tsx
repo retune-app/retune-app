@@ -27,6 +27,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useQuery } from "@tanstack/react-query";
 import { BlurView } from "expo-blur";
+import Svg, { Circle } from "react-native-svg";
 import { getApiUrl } from "@/lib/query-client";
 
 import { ThemedText } from "@/components/ThemedText";
@@ -127,6 +128,7 @@ export default function BreathingScreen() {
 
   const remainingTime = selectedDuration - elapsedTime;
   const totalCycles = getCyclesForDuration(selectedTechnique, selectedDuration);
+  const progressPercent = selectedDuration > 0 ? Math.round((elapsedTime / selectedDuration) * 100) : 0;
 
   // Handle orientation changes - auto-enter landscape mode when device is tilted
   useEffect(() => {
@@ -626,6 +628,40 @@ export default function BreathingScreen() {
           ]}
         >
           <View style={styles.circleContainer}>
+            {/* Progress Ring - Only visible when playing */}
+            {isPlaying ? (
+              <View style={styles.progressRingContainer}>
+                <Svg 
+                  width={Math.min(SCREEN_WIDTH * 0.85, SCREEN_HEIGHT * 0.45) + 40} 
+                  height={Math.min(SCREEN_WIDTH * 0.85, SCREEN_HEIGHT * 0.45) + 40}
+                  style={styles.progressRing}
+                >
+                  {/* Background ring */}
+                  <Circle
+                    cx={(Math.min(SCREEN_WIDTH * 0.85, SCREEN_HEIGHT * 0.45) + 40) / 2}
+                    cy={(Math.min(SCREEN_WIDTH * 0.85, SCREEN_HEIGHT * 0.45) + 40) / 2}
+                    r={(Math.min(SCREEN_WIDTH * 0.85, SCREEN_HEIGHT * 0.45) + 20) / 2}
+                    stroke={`${selectedTechnique.color}15`}
+                    strokeWidth={3}
+                    fill="transparent"
+                  />
+                  {/* Progress ring */}
+                  <Circle
+                    cx={(Math.min(SCREEN_WIDTH * 0.85, SCREEN_HEIGHT * 0.45) + 40) / 2}
+                    cy={(Math.min(SCREEN_WIDTH * 0.85, SCREEN_HEIGHT * 0.45) + 40) / 2}
+                    r={(Math.min(SCREEN_WIDTH * 0.85, SCREEN_HEIGHT * 0.45) + 20) / 2}
+                    stroke={selectedTechnique.color}
+                    strokeWidth={3}
+                    fill="transparent"
+                    strokeDasharray={`${Math.PI * (Math.min(SCREEN_WIDTH * 0.85, SCREEN_HEIGHT * 0.45) + 20)}`}
+                    strokeDashoffset={Math.PI * (Math.min(SCREEN_WIDTH * 0.85, SCREEN_HEIGHT * 0.45) + 20) * (1 - progressPercent / 100)}
+                    strokeLinecap="round"
+                    rotation="-90"
+                    origin={`${(Math.min(SCREEN_WIDTH * 0.85, SCREEN_HEIGHT * 0.45) + 40) / 2}, ${(Math.min(SCREEN_WIDTH * 0.85, SCREEN_HEIGHT * 0.45) + 40) / 2}`}
+                  />
+                </Svg>
+              </View>
+            ) : null}
             <BreathingCircle
               technique={selectedTechnique}
               isPlaying={isPlaying}
@@ -814,6 +850,13 @@ export default function BreathingScreen() {
             <View style={[styles.statDivider, { backgroundColor: theme.border }]} />
             <View style={styles.statItem}>
               <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                Progress
+              </ThemedText>
+              <ThemedText type="h2" style={{ color: selectedTechnique.color }}>{progressPercent}%</ThemedText>
+            </View>
+            <View style={[styles.statDivider, { backgroundColor: theme.border }]} />
+            <View style={styles.statItem}>
+              <ThemedText type="caption" style={{ color: theme.textSecondary }}>
                 Cycles
               </ThemedText>
               <ThemedText type="h2" style={{ color: theme.text }}>
@@ -961,6 +1004,14 @@ const styles = StyleSheet.create({
     position: "relative",
     alignItems: "center",
     justifyContent: "center",
+  },
+  progressRingContainer: {
+    position: "absolute",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  progressRing: {
+    position: "absolute",
   },
   circleControlButtons: {
     position: "absolute",

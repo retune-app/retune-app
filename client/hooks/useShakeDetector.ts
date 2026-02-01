@@ -3,8 +3,9 @@ import { Platform } from "react-native";
 import { Accelerometer, AccelerometerMeasurement } from "expo-sensors";
 import * as Haptics from "expo-haptics";
 
-const SHAKE_THRESHOLD = 1.8;
+const SHAKE_THRESHOLD = 2.5;
 const SHAKE_COOLDOWN_MS = 1500;
+const STARTUP_DELAY_MS = 2000;
 
 interface UseShakeDetectorOptions {
   onShake: () => void;
@@ -17,6 +18,8 @@ export function useShakeDetector({ onShake, enabled = true }: UseShakeDetectorOp
   const lastX = useRef(0);
   const lastY = useRef(0);
   const lastZ = useRef(0);
+  const startTime = useRef(0);
+  const isInitialized = useRef(false);
 
   useEffect(() => {
     if (!enabled || Platform.OS === "web") {
@@ -24,6 +27,8 @@ export function useShakeDetector({ onShake, enabled = true }: UseShakeDetectorOp
     }
 
     let subscription: ReturnType<typeof Accelerometer.addListener> | null = null;
+    startTime.current = Date.now();
+    isInitialized.current = false;
 
     const startListening = async () => {
       const isAvailable = await Accelerometer.isAvailableAsync();
@@ -36,6 +41,24 @@ export function useShakeDetector({ onShake, enabled = true }: UseShakeDetectorOp
       subscription = Accelerometer.addListener((data: AccelerometerMeasurement) => {
         const { x, y, z } = data;
         const currentTime = Date.now();
+
+        // Ignore readings during startup period
+        if (currentTime - startTime.current < STARTUP_DELAY_MS) {
+          lastX.current = x;
+          lastY.current = y;
+          lastZ.current = z;
+          lastUpdate.current = currentTime;
+          return;
+        }
+
+        if (!isInitialized.current) {
+          isInitialized.current = true;
+          lastX.current = x;
+          lastY.current = y;
+          lastZ.current = z;
+          lastUpdate.current = currentTime;
+          return;
+        }
 
         if (currentTime - lastUpdate.current > 100) {
           const diffTime = currentTime - lastUpdate.current;

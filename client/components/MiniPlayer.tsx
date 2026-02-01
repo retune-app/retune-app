@@ -80,6 +80,17 @@ export function MiniPlayer({ currentRoute }: MiniPlayerProps) {
               </View>
 
               <Pressable
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  navigation.navigate("Main", { screen: "SettingsTab" } as any);
+                }}
+                style={[styles.settingsButton, { backgroundColor: `${MINI_PLAYER_GOLD}20` }]}
+                testID="mini-player-settings"
+              >
+                <Feather name="settings" size={16} color={MINI_PLAYER_GOLD} />
+              </Pressable>
+
+              <Pressable
                 onPress={handlePlayPause}
                 style={[styles.playButton, { backgroundColor: MINI_PLAYER_GOLD }]}
                 testID="mini-player-toggle"
@@ -178,6 +189,14 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontFamily: 'Nunito_400Regular',
     marginTop: 1,
+  },
+  settingsButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
   },
   playButton: {
     width: 36,

@@ -523,13 +523,40 @@ export default function BreathingScreen() {
           entering={FadeIn.delay(200).duration(800)} 
           style={styles.circleSection}
         >
-          <BreathingCircle
-            technique={selectedTechnique}
-            isPlaying={isPlaying}
-            onCycleComplete={handleCycleComplete}
-            hapticsEnabled={hapticsEnabled}
-            size={280}
-          />
+          <View style={styles.circleContainer}>
+            <BreathingCircle
+              technique={selectedTechnique}
+              isPlaying={isPlaying}
+              onCycleComplete={handleCycleComplete}
+              hapticsEnabled={hapticsEnabled}
+              size={280}
+            />
+
+            {/* Control Buttons - Positioned on circle right side */}
+            {!isPlaying ? (
+              <Animated.View 
+                entering={FadeIn.delay(350).duration(400)}
+                style={styles.circleControlButtons}
+              >
+                <Pressable 
+                  onPress={enterFullscreen} 
+                  style={[styles.fullscreenButton, { backgroundColor: theme.backgroundSecondary }, Shadows.medium]}
+                >
+                  <Feather name="maximize-2" size={20} color={theme.text} />
+                </Pressable>
+                <Pressable onPress={handleStart} testID="button-start-breathing">
+                  <LinearGradient
+                    colors={[selectedTechnique.color, `${selectedTechnique.color}CC`]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={[styles.floatingStartButton, Shadows.large]}
+                  >
+                    <Feather name="play" size={24} color="#FFFFFF" />
+                  </LinearGradient>
+                </Pressable>
+              </Animated.View>
+            ) : null}
+          </View>
 
           {isPlaying ? (
             <View style={styles.statsRow}>
@@ -551,31 +578,6 @@ export default function BreathingScreen() {
             </View>
           ) : null}
         </Animated.View>
-
-        {/* Control Buttons - Right side, stacked vertically */}
-        {!isPlaying ? (
-          <Animated.View 
-            entering={FadeIn.delay(350).duration(400)}
-            style={styles.inlineControlButtons}
-          >
-            <Pressable 
-              onPress={enterFullscreen} 
-              style={[styles.fullscreenButton, { backgroundColor: theme.backgroundSecondary }, Shadows.medium]}
-            >
-              <Feather name="maximize-2" size={20} color={theme.text} />
-            </Pressable>
-            <Pressable onPress={handleStart} testID="button-start-breathing">
-              <LinearGradient
-                colors={[selectedTechnique.color, `${selectedTechnique.color}CC`]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={[styles.floatingStartButton, Shadows.large]}
-              >
-                <Feather name="play" size={24} color="#FFFFFF" />
-              </LinearGradient>
-            </Pressable>
-          </Animated.View>
-        ) : null}
 
         {/* Duration Pills */}
         {!isPlaying ? (
@@ -853,6 +855,17 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xl,
     marginTop: Spacing.xl,
     paddingVertical: Spacing.md,
+  },
+  circleContainer: {
+    position: "relative",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  circleControlButtons: {
+    position: "absolute",
+    right: -70,
+    alignItems: "center",
+    gap: Spacing.sm,
   },
   statsRow: {
     flexDirection: "row",

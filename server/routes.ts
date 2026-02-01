@@ -4,7 +4,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { db } from "./db";
-import { affirmations, voiceSamples, categories, users, collections, customCategories, notificationSettings, listeningSessions, breathingSessions } from "@shared/schema";
+import { affirmations, voiceSamples, categories, users, collections, customCategories, notificationSettings, listeningSessions, breathingSessions, supportRequests } from "@shared/schema";
 import { eq, desc, asc, and, sql, sum } from "drizzle-orm";
 import { openai } from "./replit_integrations/audio/client";
 import {
@@ -1962,6 +1962,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error generating ambient sounds:", error);
       res.status(500).json({ error: "Failed to generate ambient sounds", details: error.message });
+    }
+  });
+
+  // Support request submission
+  app.post("/api/support", optionalAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { email, subject, message } = req.body;
+      
+      if (!email || !subject || !message) {
+        return res.status(400).json({ error: "Email, subject, and message are required" });
+      }
+
+      const userId = req.user?.id || null;
+
+      const [request] = await db
+        .insert(supportRequests)
+        .values({
+          userId,
+          email,
+          subject,
+          message,
+        })
+        .returning();
+
+      res.json({ success: true, requestId: request.id });
+    } catch (error: any) {
+      console.error("Error submitting support request:", error);
+      res.status(500).json({ error: "Failed to submit support request" });
     }
   });
 

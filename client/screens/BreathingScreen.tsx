@@ -692,7 +692,7 @@ export default function BreathingScreen() {
                       styles.optionPill,
                       {
                         backgroundColor: selectedDuration === option.value ? selectedTechnique.color : 'transparent',
-                        borderColor: selectedDuration === option.value ? selectedTechnique.color : theme.border,
+                        borderColor: selectedDuration === option.value ? selectedTechnique.color : `${ACCENT_GOLD}50`,
                       },
                     ]}
                     testID={`duration-${option.value}`}
@@ -722,7 +722,7 @@ export default function BreathingScreen() {
                     styles.optionPill,
                     { 
                       backgroundColor: (!musicEnabled && !voiceEnabled) ? selectedTechnique.color : 'transparent',
-                      borderColor: (!musicEnabled && !voiceEnabled) ? selectedTechnique.color : theme.border,
+                      borderColor: (!musicEnabled && !voiceEnabled) ? selectedTechnique.color : `${ACCENT_GOLD}50`,
                     },
                   ]}
                 >
@@ -749,7 +749,7 @@ export default function BreathingScreen() {
                     styles.optionPill,
                     { 
                       backgroundColor: musicEnabled ? selectedTechnique.color : 'transparent',
-                      borderColor: musicEnabled ? selectedTechnique.color : theme.border,
+                      borderColor: musicEnabled ? selectedTechnique.color : `${ACCENT_GOLD}50`,
                     },
                   ]}
                 >
@@ -784,7 +784,7 @@ export default function BreathingScreen() {
                     styles.optionPill,
                     { 
                       backgroundColor: voiceEnabled ? selectedTechnique.color : 'transparent',
-                      borderColor: voiceEnabled ? selectedTechnique.color : theme.border,
+                      borderColor: voiceEnabled ? selectedTechnique.color : `${ACCENT_GOLD}50`,
                     },
                   ]}
                 >

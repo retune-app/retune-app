@@ -597,7 +597,7 @@ export default function BreathingScreen() {
           <Animated.View entering={FadeIn.delay(100).duration(600)} style={styles.techniqueWrapper}>
             <Pressable
               onPress={() => setShowTechniqueSelector(true)}
-              style={[styles.techniqueCard, { backgroundColor: theme.cardBackground, borderWidth: 1, borderColor: `${ACCENT_GOLD}30` }, Shadows.medium]}
+              style={[styles.techniqueCard, { backgroundColor: theme.cardBackground, borderWidth: 2, borderColor: `${ACCENT_GOLD}60` }, Shadows.medium]}
             >
               <View style={styles.techniqueCardContent}>
                 <View style={[styles.techniqueIconSmall, { backgroundColor: `${selectedTechnique.color}30` }]}>

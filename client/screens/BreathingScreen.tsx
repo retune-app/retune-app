@@ -500,6 +500,7 @@ export default function BreathingScreen() {
             lastPlayedAffirmation={currentAffirmation}
             suggestedAffirmation={suggestedAffirmation as any}
             onQuickPlay={handleQuickPlay}
+            onSettingsPress={() => navigation.navigate("Main", { screen: "SettingsTab" })}
             isPlaying={isAudioPlaying}
           />
         </Animated.View>

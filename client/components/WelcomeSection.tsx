@@ -24,6 +24,7 @@ interface WelcomeSectionProps {
   suggestedAffirmation?: Affirmation | null;
   onQuickPlay?: () => void;
   onSuggestionPress?: () => void;
+  onSettingsPress?: () => void;
   isPlaying?: boolean;
 }
 
@@ -77,6 +78,7 @@ export function WelcomeSection({
   suggestedAffirmation,
   onQuickPlay,
   onSuggestionPress,
+  onSettingsPress,
   isPlaying = false,
 }: WelcomeSectionProps) {
   const { theme, isDark } = useTheme();
@@ -111,6 +113,11 @@ export function WelcomeSection({
     onQuickPlay?.();
   };
 
+  const handleSettingsPress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onSettingsPress?.();
+  };
+
   return (
     <View style={styles.container}>
       <View style={[
@@ -128,6 +135,15 @@ export function WelcomeSection({
             {suggestion}
           </ThemedText>
         </View>
+        {onSettingsPress ? (
+          <Pressable
+            onPress={handleSettingsPress}
+            style={[styles.settingsButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
+            testID="button-welcome-settings"
+          >
+            <Feather name="settings" size={22} color={theme.textSecondary} />
+          </Pressable>
+        ) : null}
       </View>
     </View>
   );
@@ -153,6 +169,14 @@ const styles = StyleSheet.create({
   },
   greetingContent: {
     flex: 1,
+  },
+  settingsButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: Spacing.sm,
   },
   greetingHeader: {
     flexDirection: "row",

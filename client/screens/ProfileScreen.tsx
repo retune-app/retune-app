@@ -17,6 +17,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const AUTO_REPLAY_KEY = "@settings/autoReplay";
 const BACKGROUND_WALLPAPER_KEY = "@settings/backgroundWallpaper";
+const PROGRESS_INDICATOR_KEY = "@settings/progressIndicator";
 
 // Voice preference types
 type VoiceType = "personal" | "ai";
@@ -117,6 +118,7 @@ export default function ProfileScreen() {
   const queryClient = useQueryClient();
   const [autoReplayEnabled, setAutoReplayEnabled] = useState(true);
   const [backgroundWallpaperEnabled, setBackgroundWallpaperEnabled] = useState(false);
+  const [progressIndicatorEnabled, setProgressIndicatorEnabled] = useState(true);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
@@ -211,6 +213,11 @@ export default function ProfileScreen() {
         setBackgroundWallpaperEnabled(value === "true");
       }
     });
+    AsyncStorage.getItem(PROGRESS_INDICATOR_KEY).then((value) => {
+      if (value !== null) {
+        setProgressIndicatorEnabled(value === "true");
+      }
+    });
   }, []);
 
   const handleVoiceSetup = () => {
@@ -237,6 +244,17 @@ export default function ProfileScreen() {
     const newValue = !backgroundWallpaperEnabled;
     setBackgroundWallpaperEnabled(newValue);
     await AsyncStorage.setItem(BACKGROUND_WALLPAPER_KEY, String(newValue));
+  };
+
+  const handleToggleProgressIndicator = async () => {
+    try {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (e) {
+      // Haptics not supported
+    }
+    const newValue = !progressIndicatorEnabled;
+    setProgressIndicatorEnabled(newValue);
+    await AsyncStorage.setItem(PROGRESS_INDICATOR_KEY, String(newValue));
   };
 
   const handleResetData = async () => {
@@ -673,6 +691,20 @@ export default function ProfileScreen() {
                 onValueChange={handleToggleBackgroundWallpaper}
                 trackColor={{ false: theme.border, true: ACCENT_GOLD + "80" }}
                 thumbColor={backgroundWallpaperEnabled ? ACCENT_GOLD : theme.textSecondary}
+              />
+            }
+          />
+          <SettingItem
+            icon="activity"
+            label="Progress Indicator"
+            value={progressIndicatorEnabled ? "Show ring during breathing" : "Off"}
+            showArrow={false}
+            rightElement={
+              <Switch
+                value={progressIndicatorEnabled}
+                onValueChange={handleToggleProgressIndicator}
+                trackColor={{ false: theme.border, true: ACCENT_GOLD + "80" }}
+                thumbColor={progressIndicatorEnabled ? ACCENT_GOLD : theme.textSecondary}
               />
             }
           />

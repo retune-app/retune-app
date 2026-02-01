@@ -28,7 +28,10 @@ import Animated, {
 import { useQuery } from "@tanstack/react-query";
 import { BlurView } from "expo-blur";
 import Svg, { Circle } from "react-native-svg";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getApiUrl } from "@/lib/query-client";
+
+const PROGRESS_INDICATOR_KEY = "@settings/progressIndicator";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -82,6 +85,7 @@ export default function BreathingScreen() {
   const [musicEnabled, setMusicEnabled] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [showCompletionAnimation, setShowCompletionAnimation] = useState(false);
+  const [progressIndicatorEnabled, setProgressIndicatorEnabled] = useState(true);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const sessionCompletedNaturally = useRef(false);
@@ -165,6 +169,15 @@ export default function BreathingScreen() {
     // Unlock orientation to allow natural device rotation
     ScreenOrientation.unlockAsync();
   }, [showLandscapeMode]);
+
+  // Load progress indicator setting
+  useEffect(() => {
+    AsyncStorage.getItem(PROGRESS_INDICATOR_KEY).then((value) => {
+      if (value !== null) {
+        setProgressIndicatorEnabled(value === "true");
+      }
+    });
+  }, []);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -411,35 +424,37 @@ export default function BreathingScreen() {
               {/* Center section - breathing circle (centered in available space) */}
               <View style={styles.portraitCenterSection}>
                 {/* Progress Ring */}
-                <View style={styles.progressRingContainer}>
-                  <Svg 
-                    width={portraitCircleSize + 40} 
-                    height={portraitCircleSize + 40}
-                    style={styles.progressRing}
-                  >
-                    <Circle
-                      cx={(portraitCircleSize + 40) / 2}
-                      cy={(portraitCircleSize + 40) / 2}
-                      r={(portraitCircleSize + 20) / 2}
-                      stroke={`${selectedTechnique.color}15`}
-                      strokeWidth={3}
-                      fill="transparent"
-                    />
-                    <Circle
-                      cx={(portraitCircleSize + 40) / 2}
-                      cy={(portraitCircleSize + 40) / 2}
-                      r={(portraitCircleSize + 20) / 2}
-                      stroke={selectedTechnique.color}
-                      strokeWidth={3}
-                      fill="transparent"
-                      strokeDasharray={`${Math.PI * (portraitCircleSize + 20)}`}
-                      strokeDashoffset={Math.PI * (portraitCircleSize + 20) * (1 - progressPercent / 100)}
-                      strokeLinecap="round"
-                      rotation="-90"
-                      origin={`${(portraitCircleSize + 40) / 2}, ${(portraitCircleSize + 40) / 2}`}
-                    />
-                  </Svg>
-                </View>
+                {progressIndicatorEnabled ? (
+                  <View style={styles.progressRingContainer}>
+                    <Svg 
+                      width={portraitCircleSize + 40} 
+                      height={portraitCircleSize + 40}
+                      style={styles.progressRing}
+                    >
+                      <Circle
+                        cx={(portraitCircleSize + 40) / 2}
+                        cy={(portraitCircleSize + 40) / 2}
+                        r={(portraitCircleSize + 20) / 2}
+                        stroke={`${selectedTechnique.color}15`}
+                        strokeWidth={3}
+                        fill="transparent"
+                      />
+                      <Circle
+                        cx={(portraitCircleSize + 40) / 2}
+                        cy={(portraitCircleSize + 40) / 2}
+                        r={(portraitCircleSize + 20) / 2}
+                        stroke={selectedTechnique.color}
+                        strokeWidth={3}
+                        fill="transparent"
+                        strokeDasharray={`${Math.PI * (portraitCircleSize + 20)}`}
+                        strokeDashoffset={Math.PI * (portraitCircleSize + 20) * (1 - progressPercent / 100)}
+                        strokeLinecap="round"
+                        rotation="-90"
+                        origin={`${(portraitCircleSize + 40) / 2}, ${(portraitCircleSize + 40) / 2}`}
+                      />
+                    </Svg>
+                  </View>
+                ) : null}
                 <BreathingCircle
                   technique={selectedTechnique}
                   isPlaying={isPlaying}
@@ -528,35 +543,37 @@ export default function BreathingScreen() {
             {/* Center - breathing circle */}
             <View style={styles.landscapeCircleContainer}>
               {/* Progress Ring */}
-              <View style={styles.progressRingContainer}>
-                <Svg 
-                  width={circleSize + 40} 
-                  height={circleSize + 40}
-                  style={styles.progressRing}
-                >
-                  <Circle
-                    cx={(circleSize + 40) / 2}
-                    cy={(circleSize + 40) / 2}
-                    r={(circleSize + 20) / 2}
-                    stroke={`${selectedTechnique.color}15`}
-                    strokeWidth={3}
-                    fill="transparent"
-                  />
-                  <Circle
-                    cx={(circleSize + 40) / 2}
-                    cy={(circleSize + 40) / 2}
-                    r={(circleSize + 20) / 2}
-                    stroke={selectedTechnique.color}
-                    strokeWidth={3}
-                    fill="transparent"
-                    strokeDasharray={`${Math.PI * (circleSize + 20)}`}
-                    strokeDashoffset={Math.PI * (circleSize + 20) * (1 - progressPercent / 100)}
-                    strokeLinecap="round"
-                    rotation="-90"
-                    origin={`${(circleSize + 40) / 2}, ${(circleSize + 40) / 2}`}
-                  />
-                </Svg>
-              </View>
+              {progressIndicatorEnabled ? (
+                <View style={styles.progressRingContainer}>
+                  <Svg 
+                    width={circleSize + 40} 
+                    height={circleSize + 40}
+                    style={styles.progressRing}
+                  >
+                    <Circle
+                      cx={(circleSize + 40) / 2}
+                      cy={(circleSize + 40) / 2}
+                      r={(circleSize + 20) / 2}
+                      stroke={`${selectedTechnique.color}15`}
+                      strokeWidth={3}
+                      fill="transparent"
+                    />
+                    <Circle
+                      cx={(circleSize + 40) / 2}
+                      cy={(circleSize + 40) / 2}
+                      r={(circleSize + 20) / 2}
+                      stroke={selectedTechnique.color}
+                      strokeWidth={3}
+                      fill="transparent"
+                      strokeDasharray={`${Math.PI * (circleSize + 20)}`}
+                      strokeDashoffset={Math.PI * (circleSize + 20) * (1 - progressPercent / 100)}
+                      strokeLinecap="round"
+                      rotation="-90"
+                      origin={`${(circleSize + 40) / 2}, ${(circleSize + 40) / 2}`}
+                    />
+                  </Svg>
+                </View>
+              ) : null}
               <BreathingCircle
                 technique={selectedTechnique}
                 isPlaying={isPlaying}
@@ -666,8 +683,8 @@ export default function BreathingScreen() {
           ]}
         >
           <View style={styles.circleContainer}>
-            {/* Progress Ring - Only visible when playing */}
-            {isPlaying ? (
+            {/* Progress Ring - Only visible when playing and enabled */}
+            {isPlaying && progressIndicatorEnabled ? (
               <View style={styles.progressRingContainer}>
                 <Svg 
                   width={Math.min(SCREEN_WIDTH * 0.85, SCREEN_HEIGHT * 0.45) + 40} 

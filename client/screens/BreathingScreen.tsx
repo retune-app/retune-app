@@ -79,7 +79,8 @@ export default function BreathingScreen() {
   const [showTechniqueSelector, setShowTechniqueSelector] = useState(false);
   const [isLandscape, setIsLandscape] = useState(false);
   const [showLandscapeMode, setShowLandscapeMode] = useState(false);
-  const [audioSource, setAudioSource] = useState<'none' | 'music' | 'affirmation'>('none');
+  const [musicEnabled, setMusicEnabled] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [showFocusTimer, setShowFocusTimer] = useState(false);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -269,15 +270,16 @@ export default function BreathingScreen() {
     setCyclesCompleted(0);
     try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
     
-    // Start audio based on selected source
-    if (audioSource === 'music') {
+    // Start audio based on selected sources (both can be enabled)
+    if (musicEnabled) {
       if (selectedMusic === 'none') {
-        // No music selected, default to rain (setSelectedMusic also starts playback)
+        // No music selected, default to rain
         await setSelectedMusic('rain');
       } else {
         await startBackgroundMusic();
       }
-    } else if (audioSource === 'affirmation') {
+    }
+    if (voiceEnabled) {
       await startAffirmationLoop();
     }
   };
@@ -289,7 +291,7 @@ export default function BreathingScreen() {
     if (isMusicPlaying) {
       await stopBackgroundMusic();
     }
-    if (audioSource === 'affirmation') {
+    if (voiceEnabled) {
       await pauseAffirmationLoop();
     }
   };
@@ -298,13 +300,14 @@ export default function BreathingScreen() {
     setIsPlaying(true);
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
     
-    if (audioSource === 'music') {
+    if (musicEnabled) {
       if (selectedMusic === 'none') {
         await setSelectedMusic('rain');
       } else {
         await startBackgroundMusic();
       }
-    } else if (audioSource === 'affirmation') {
+    }
+    if (voiceEnabled) {
       await resumeAffirmationLoop();
     }
   };
@@ -336,7 +339,7 @@ export default function BreathingScreen() {
       if (isMusicPlaying) {
         await stopBackgroundMusic();
       }
-      if (audioSource === 'affirmation') {
+      if (voiceEnabled) {
         await stopAffirmationLoop();
       }
     }
@@ -347,7 +350,7 @@ export default function BreathingScreen() {
     if (isMusicPlaying) {
       await stopBackgroundMusic();
     }
-    if (audioSource === 'affirmation') {
+    if (voiceEnabled) {
       await stopAffirmationLoop();
     }
   };
@@ -357,7 +360,7 @@ export default function BreathingScreen() {
     if (isMusicPlaying) {
       await stopBackgroundMusic();
     }
-    if (audioSource === 'affirmation') {
+    if (voiceEnabled) {
       await stopAffirmationLoop();
     }
     try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
@@ -620,34 +623,46 @@ export default function BreathingScreen() {
               <View style={styles.optionPillsRow}>
                 <Pressable
                   onPress={() => {
-                    setAudioSource('none');
+                    setMusicEnabled(false);
+                    setVoiceEnabled(false);
                     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
                   }}
                   style={[
                     styles.optionPill,
                     { 
-                      backgroundColor: audioSource === 'none' ? ACCENT_GOLD : 'transparent',
-                      borderColor: audioSource === 'none' ? ACCENT_GOLD : theme.border,
+                      backgroundColor: (!musicEnabled && !voiceEnabled) ? ACCENT_GOLD : 'transparent',
+                      borderColor: (!musicEnabled && !voiceEnabled) ? ACCENT_GOLD : theme.border,
                     },
                   ]}
                 >
-                  <Text style={[styles.optionPillText, { color: audioSource === 'none' ? "#FFFFFF" : theme.text }]}>Off</Text>
+                  <Text style={[styles.optionPillText, { color: (!musicEnabled && !voiceEnabled) ? "#FFFFFF" : theme.text }]}>Off</Text>
                 </Pressable>
                 <Pressable
                   onPress={() => {
-                    setAudioSource('music');
+                    if (musicEnabled) {
+                      // Already enabled - navigate to sound library to change selection
+                      navigation.navigate('SoundLibrary');
+                    } else {
+                      // Enable music
+                      setMusicEnabled(true);
+                      navigation.navigate('SoundLibrary');
+                    }
                     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
-                    navigation.navigate('SoundLibrary');
+                  }}
+                  onLongPress={() => {
+                    // Long press toggles music off
+                    setMusicEnabled(false);
+                    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
                   }}
                   style={[
                     styles.optionPill,
                     { 
-                      backgroundColor: audioSource === 'music' ? ACCENT_GOLD : 'transparent',
-                      borderColor: audioSource === 'music' ? ACCENT_GOLD : theme.border,
+                      backgroundColor: musicEnabled ? ACCENT_GOLD : 'transparent',
+                      borderColor: musicEnabled ? ACCENT_GOLD : theme.border,
                     },
                   ]}
                 >
-                  <Text style={[styles.optionPillText, { color: audioSource === 'music' ? "#FFFFFF" : theme.text }]} numberOfLines={1}>
+                  <Text style={[styles.optionPillText, { color: musicEnabled ? "#FFFFFF" : theme.text }]} numberOfLines={1}>
                     {selectedMusic !== 'none' 
                       ? BACKGROUND_MUSIC_OPTIONS.find(o => o.id === selectedMusic)?.name || 'Music'
                       : 'Music'}
@@ -655,29 +670,34 @@ export default function BreathingScreen() {
                 </Pressable>
                 <Pressable
                   onPress={() => {
-                    if (audioSource === 'affirmation') {
-                      // Already selected - navigate to Affirm tab to show selected affirmation
+                    if (voiceEnabled) {
+                      // Already enabled - navigate to Affirm tab to show selected affirmation
                       if (breathingAffirmation) {
-                        // Use context to request highlight, then navigate
                         requestHighlightAffirmation(breathingAffirmation.id);
                         navigation.navigate('AffirmTab');
                       } else {
                         navigation.navigate('AffirmTab');
                       }
                     } else {
-                      setAudioSource('affirmation');
+                      // Enable voice
+                      setVoiceEnabled(true);
                     }
                     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+                  }}
+                  onLongPress={() => {
+                    // Long press toggles voice off
+                    setVoiceEnabled(false);
+                    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
                   }}
                   style={[
                     styles.optionPill,
                     { 
-                      backgroundColor: audioSource === 'affirmation' ? ACCENT_GOLD : 'transparent',
-                      borderColor: audioSource === 'affirmation' ? ACCENT_GOLD : theme.border,
+                      backgroundColor: voiceEnabled ? ACCENT_GOLD : 'transparent',
+                      borderColor: voiceEnabled ? ACCENT_GOLD : theme.border,
                     },
                   ]}
                 >
-                  <Text style={[styles.optionPillText, { color: audioSource === 'affirmation' ? "#FFFFFF" : theme.text }]}>Voice</Text>
+                  <Text style={[styles.optionPillText, { color: voiceEnabled ? "#FFFFFF" : theme.text }]}>Voice</Text>
                 </Pressable>
               </View>
             </View>
@@ -807,7 +827,7 @@ export default function BreathingScreen() {
         visible={showFocusTimer}
         onClose={handleFocusTimerClose}
         onComplete={handleFocusTimerComplete}
-        continueAudio={audioSource !== 'none'}
+        continueAudio={musicEnabled || voiceEnabled}
       />
 
       {/* Floating Settings Button - Top Right */}

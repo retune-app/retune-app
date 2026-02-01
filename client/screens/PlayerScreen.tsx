@@ -575,6 +575,13 @@ export default function PlayerScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
+        <View style={styles.myAffirmationBanner}>
+          <View style={[styles.bannerAccent, { backgroundColor: theme.primary }]} />
+          <ThemedText type="caption" style={[styles.bannerText, { color: theme.primary }]}>
+            My Affirmation
+          </ThemedText>
+        </View>
+
         <View style={styles.visualizerContainer}>
           {rsvpEnabled ? (
             <RSVPDisplay
@@ -594,12 +601,6 @@ export default function PlayerScreen() {
         </View>
 
         <View style={styles.infoContainer}>
-          <View style={styles.myAffirmationBanner}>
-            <View style={[styles.bannerAccent, { backgroundColor: theme.primary }]} />
-            <ThemedText type="caption" style={[styles.bannerText, { color: theme.primary }]}>
-              My Affirmation
-            </ThemedText>
-          </View>
           <ThemedText type="h2" style={styles.title} numberOfLines={2}>
             {affirmation?.title || "Loading..."}
           </ThemedText>
@@ -1057,7 +1058,8 @@ const styles = StyleSheet.create({
   myAffirmationBanner: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: Spacing.md,
+    justifyContent: "center",
+    marginBottom: Spacing.lg,
   },
   bannerAccent: {
     width: 3,

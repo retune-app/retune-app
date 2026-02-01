@@ -654,13 +654,7 @@ export default function BreathingScreen() {
                     },
                   ]}
                 >
-                  <Text style={[styles.optionPillText, { color: audioSource === 'affirmation' ? "#FFFFFF" : theme.text }]} numberOfLines={1}>
-                    {backgroundAffirmation?.title 
-                      ? backgroundAffirmation.title.length > 10 
-                        ? backgroundAffirmation.title.substring(0, 10) + '...'
-                        : backgroundAffirmation.title
-                      : 'Voice'}
-                  </Text>
+                  <Text style={[styles.optionPillText, { color: audioSource === 'affirmation' ? "#FFFFFF" : theme.text }]}>Voice</Text>
                 </Pressable>
               </View>
             </View>

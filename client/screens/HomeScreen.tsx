@@ -1,7 +1,8 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef } from "react";
-import { FlatList, View, StyleSheet, RefreshControl, TextInput, Modal, Pressable, Alert, ImageBackground } from "react-native";
+import { FlatList, View, StyleSheet, RefreshControl, TextInput, Modal, Pressable, Alert, ImageBackground, Platform } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { BlurView } from "expo-blur";
 
 const libraryBackgroundDark = require("../../assets/images/library-background.png");
 const libraryBackgroundLight = require("../../assets/images/library-background-light.png");
@@ -217,47 +218,65 @@ export default function HomeScreen() {
     navigation.navigate("Main", { screen: "SettingsTab" } as any);
   };
 
+  const FIXED_HEADER_HEIGHT = 110;
+
   const renderHeader = () => (
     <View style={styles.headerContent}>
-      {/* Search bar with settings button */}
-      <View style={styles.searchRow}>
-        <Pressable
-          onPress={handleSettingsPress}
-          style={[styles.headerSettingsButton, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder }]}
-          testID="button-header-settings"
-        >
-          <Feather name="settings" size={20} color={theme.gold} />
-        </Pressable>
-        <View style={[styles.searchContainer, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder }]}>
-          <Feather name="search" size={18} color={theme.placeholder} />
-          <TextInput
-            style={[styles.searchInput, { color: theme.text }]}
-            placeholder="Search affirmations..."
-            placeholderTextColor={theme.placeholder}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            testID="input-search"
-          />
-        </View>
-      </View>
-      <FlatList
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        data={allCategories}
-        keyExtractor={(item) => item}
-        contentContainerStyle={styles.categoriesContainer}
-        renderItem={({ item }) => (
-          <CategoryChip
-            label={item}
-            isSelected={selectedCategory === item}
-            onPress={() => setSelectedCategory(item)}
-            testID={`chip-category-${item.toLowerCase()}`}
-          />
-        )}
-      />
       {filteredAffirmations.length > 0 && (
         <LibraryTip visible={showSwipeTip} onDismiss={dismissSwipeTip} />
       )}
+    </View>
+  );
+
+  const renderFixedHeader = () => (
+    <View style={[styles.fixedHeader, { paddingTop: insets.top + Spacing.sm }]}>
+      {Platform.OS === "ios" ? (
+        <BlurView
+          intensity={80}
+          tint={isDark ? "dark" : "light"}
+          style={StyleSheet.absoluteFill}
+        />
+      ) : (
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: isDark ? 'rgba(15, 28, 63, 0.95)' : 'rgba(255, 255, 255, 0.95)' }]} />
+      )}
+      <View style={styles.fixedHeaderContent}>
+        {/* Search bar with settings button */}
+        <View style={styles.searchRow}>
+          <Pressable
+            onPress={handleSettingsPress}
+            style={[styles.headerSettingsButton, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder }]}
+            testID="button-header-settings"
+          >
+            <Feather name="settings" size={20} color={theme.gold} />
+          </Pressable>
+          <View style={[styles.searchContainer, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder }]}>
+            <Feather name="search" size={18} color={theme.placeholder} />
+            <TextInput
+              style={[styles.searchInput, { color: theme.text }]}
+              placeholder="Search affirmations..."
+              placeholderTextColor={theme.placeholder}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              testID="input-search"
+            />
+          </View>
+        </View>
+        <FlatList
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          data={allCategories}
+          keyExtractor={(item) => item}
+          contentContainerStyle={styles.categoriesContainer}
+          renderItem={({ item }) => (
+            <CategoryChip
+              label={item}
+              isSelected={selectedCategory === item}
+              onPress={() => setSelectedCategory(item)}
+              testID={`chip-category-${item.toLowerCase()}`}
+            />
+          )}
+        />
+      </View>
     </View>
   );
 
@@ -327,12 +346,12 @@ export default function HomeScreen() {
         contentContainerStyle={[
           styles.contentContainer,
           {
-            paddingTop: insets.top + Spacing.md,
+            paddingTop: insets.top + FIXED_HEADER_HEIGHT + Spacing.sm,
             paddingBottom: tabBarHeight + 80 + Spacing.xl,
           },
           filteredAffirmations.length === 0 && styles.emptyContainer,
         ]}
-        scrollIndicatorInsets={{ bottom: insets.bottom }}
+        scrollIndicatorInsets={{ bottom: insets.bottom, top: FIXED_HEADER_HEIGHT }}
         data={filteredAffirmations}
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderItem}
@@ -350,14 +369,18 @@ export default function HomeScreen() {
             refreshing={refreshing}
             onRefresh={onRefresh}
             tintColor={theme.primary}
+            progressViewOffset={FIXED_HEADER_HEIGHT}
           />
         }
       />
 
-      {/* Top edge fade gradient */}
+      {/* Fixed Header */}
+      {renderFixedHeader()}
+
+      {/* Top edge fade gradient - hidden since we have fixed header */}
       <LinearGradient
         colors={edgeFadeColors}
-        style={[styles.edgeFade, styles.topFade, { height: insets.top + 10 }]}
+        style={[styles.edgeFade, styles.topFade, { height: 0 }]}
         pointerEvents="none"
       />
 
@@ -452,7 +475,19 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   headerContent: {
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.sm,
+  },
+  fixedHeader: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 100,
+    overflow: "hidden",
+  },
+  fixedHeaderContent: {
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.sm,
   },
   searchRow: {
     flexDirection: "row",

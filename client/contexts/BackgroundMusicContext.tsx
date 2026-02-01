@@ -45,16 +45,16 @@ export const getSoundsByCategory = () => {
 };
 
 const AUDIO_FILES: Record<Exclude<BackgroundMusicType, 'none'>, any> = {
-  '432hz': require('../../assets/audio/432hz-healing.wav'),
-  '528hz': require('../../assets/audio/528hz-love.wav'),
-  'theta': require('../../assets/audio/theta-waves.wav'),
-  'alpha': require('../../assets/audio/alpha-waves.wav'),
-  'delta': require('../../assets/audio/delta-waves.wav'),
-  'beta': require('../../assets/audio/beta-waves.wav'),
-  'rain': require('../../assets/audio/rain-ambient.wav'),
-  'ocean': require('../../assets/audio/ocean-waves.wav'),
-  'forest': require('../../assets/audio/forest-birds.wav'),
-  'wind': require('../../assets/audio/wind-gentle.wav'),
+  '432hz': require('../../assets/audio/432hz-healing.mp3'),
+  '528hz': require('../../assets/audio/528hz-love.mp3'),
+  'theta': require('../../assets/audio/theta-waves.mp3'),
+  'alpha': require('../../assets/audio/alpha-waves.mp3'),
+  'delta': require('../../assets/audio/delta-waves.mp3'),
+  'beta': require('../../assets/audio/beta-waves.mp3'),
+  'rain': require('../../assets/audio/rain-ambient.mp3'),
+  'ocean': require('../../assets/audio/ocean-waves.mp3'),
+  'forest': require('../../assets/audio/forest-birds.mp3'),
+  'wind': require('../../assets/audio/wind-gentle.mp3'),
 };
 
 const STORAGE_KEY = '@rewired_background_music';

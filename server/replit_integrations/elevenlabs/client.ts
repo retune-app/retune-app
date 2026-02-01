@@ -379,3 +379,44 @@ export async function deleteVoice(voiceId: string): Promise<void> {
     throw new Error("Failed to delete voice");
   }
 }
+
+/**
+ * Generate sound effects using ElevenLabs Sound Effects API.
+ * Creates high-quality ambient sounds from text descriptions.
+ * @param text - Description of the sound to generate (e.g., "soft rain falling on leaves")
+ * @param durationSeconds - Duration of the sound (0.5 to 22 seconds)
+ * @param promptInfluence - How strictly to follow the prompt (0.0 to 1.0, default 0.3)
+ * @returns Audio buffer in MP3 format
+ */
+export async function generateSoundEffect(
+  text: string,
+  durationSeconds: number = 22,
+  promptInfluence: number = 0.3
+): Promise<ArrayBuffer> {
+  const apiKey = await getCredentials();
+
+  console.log(`Generating sound effect: "${text}" (${durationSeconds}s)`);
+
+  const response = await fetch("https://api.elevenlabs.io/v1/sound-generation", {
+    method: "POST",
+    headers: {
+      "xi-api-key": apiKey,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      text,
+      duration_seconds: durationSeconds,
+      prompt_influence: promptInfluence,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    console.error("Sound generation error:", error);
+    throw new Error(`Sound generation failed: ${response.statusText}`);
+  }
+
+  const audioBuffer = await response.arrayBuffer();
+  console.log(`Sound effect generated: ${audioBuffer.byteLength} bytes`);
+  return audioBuffer;
+}

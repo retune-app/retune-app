@@ -11,6 +11,7 @@ import {
   cloneVoice,
   textToSpeech as elevenLabsTTS,
   getElevenLabsClient,
+  generateSoundEffect,
   type WordTiming,
 } from "./replit_integrations/elevenlabs/client";
 import { setupAuth, requireAuth, optionalAuth, AuthenticatedRequest } from "./auth";
@@ -1887,6 +1888,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error getting breathing streak:", error);
       res.status(500).json({ error: "Failed to get breathing streak" });
+    }
+  });
+
+  // Generate ambient sounds using ElevenLabs Sound Effects API
+  app.post("/api/admin/generate-ambient-sounds", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const audioDir = path.join(process.cwd(), "assets", "audio");
+      
+      // Sound prompts for each ambient type
+      const soundConfigs = [
+        { filename: "rain-ambient.mp3", prompt: "Gentle rain falling on leaves and soft ground, peaceful and calming ambient rainfall for meditation and relaxation" },
+        { filename: "ocean-waves.mp3", prompt: "Peaceful ocean waves gently lapping on a sandy beach at sunset, calming sea ambience for relaxation and sleep" },
+        { filename: "forest-birds.mp3", prompt: "Serene forest ambience with gentle birdsong, rustling leaves, and distant woodland sounds, peaceful nature atmosphere" },
+        { filename: "wind-gentle.mp3", prompt: "Soft gentle breeze blowing through trees and grass, calming wind ambience for meditation and focus" },
+        { filename: "432hz-healing.mp3", prompt: "Deep resonant 432Hz healing frequency tone, pure and sustained, for meditation and spiritual healing" },
+        { filename: "528hz-love.mp3", prompt: "Pure 528Hz solfeggio love frequency tone, sustained and harmonious, for transformation and DNA healing" },
+        { filename: "theta-waves.mp3", prompt: "Deep theta brainwave binaural beat at 6Hz, layered with soft ambient tones for deep meditation and creativity" },
+        { filename: "alpha-waves.mp3", prompt: "Relaxing alpha brainwave binaural beat at 10Hz, with gentle ambient background for relaxation and calm focus" },
+        { filename: "delta-waves.mp3", prompt: "Deep delta brainwave binaural beat at 2Hz, with soft dreamy ambient tones for deep sleep and restoration" },
+        { filename: "beta-waves.mp3", prompt: "Energizing beta brainwave binaural beat at 18Hz, with subtle ambient background for focus and concentration" },
+      ];
+
+      const results: { filename: string; success: boolean; error?: string }[] = [];
+
+      for (const config of soundConfigs) {
+        try {
+          console.log(`Generating: ${config.filename}`);
+          const audioBuffer = await generateSoundEffect(config.prompt, 22, 0.3);
+          
+          const filePath = path.join(audioDir, config.filename);
+          fs.writeFileSync(filePath, Buffer.from(audioBuffer));
+          
+          results.push({ filename: config.filename, success: true });
+          console.log(`Successfully generated: ${config.filename}`);
+        } catch (error: any) {
+          console.error(`Failed to generate ${config.filename}:`, error.message);
+          results.push({ filename: config.filename, success: false, error: error.message });
+        }
+      }
+
+      res.json({ 
+        message: "Ambient sound generation complete", 
+        results,
+        successCount: results.filter(r => r.success).length,
+        failureCount: results.filter(r => !r.success).length
+      });
+    } catch (error: any) {
+      console.error("Error generating ambient sounds:", error);
+      res.status(500).json({ error: "Failed to generate ambient sounds", details: error.message });
     }
   });
 

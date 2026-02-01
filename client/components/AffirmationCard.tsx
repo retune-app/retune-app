@@ -358,8 +358,8 @@ const styles = StyleSheet.create({
     marginRight: Spacing.xs,
   },
   lengthBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
     borderRadius: BorderRadius.xs,
     borderWidth: 1,
   },

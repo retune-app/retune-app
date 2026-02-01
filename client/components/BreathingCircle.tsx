@@ -120,6 +120,11 @@ export default function BreathingCircle({
     opacity: opacity.value,
   }));
 
+  const outerGlowStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: interpolate(scale.value, [0.6, 1], [0.95, 1.2]) }],
+    opacity: interpolate(scale.value, [0.6, 1], [0.3, 0.7]),
+  }));
+
   const innerGlowStyle = useAnimatedStyle(() => ({
     transform: [{ scale: interpolate(scale.value, [0.6, 1], [0.8, 1.1]) }],
     opacity: interpolate(scale.value, [0.6, 1], [0.2, 0.5]),
@@ -134,6 +139,21 @@ export default function BreathingCircle({
 
   return (
     <View style={[styles.container, { width: size, height: size }]}>
+      {isPlaying ? (
+        <Animated.View
+          style={[
+            styles.outerGlow,
+            outerGlowStyle,
+            {
+              width: size * 1.1,
+              height: size * 1.1,
+              borderRadius: size * 0.55,
+              backgroundColor: phaseColor,
+            },
+          ]}
+        />
+      ) : null}
+
       <Animated.View
         style={[
           styles.outerRing,
@@ -203,6 +223,9 @@ const styles = StyleSheet.create({
   container: {
     alignItems: "center",
     justifyContent: "center",
+  },
+  outerGlow: {
+    position: "absolute",
   },
   outerRing: {
     position: "absolute",

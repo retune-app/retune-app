@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from "react";
+import React from "react";
 import { View, StyleSheet, Pressable, ImageBackground, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
@@ -10,8 +10,6 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { useBackgroundMusic, getSoundsByCategory, BackgroundMusicOption, BackgroundMusicType } from "@/contexts/BackgroundMusicContext";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
-
-const PREVIEW_DURATION = 5000; // 5 seconds preview
 
 const profileBackgroundDark = require("../../assets/images/library-background.png");
 const profileBackgroundLight = require("../../assets/images/library-background-light.png");
@@ -151,65 +149,14 @@ export default function SoundLibraryScreen() {
   const headerHeight = useHeaderHeight();
   const { theme, isDark } = useTheme();
   const { selectedMusic, setSelectedMusic, volume, setVolume } = useBackgroundMusic();
-  const previewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [previewTimeLeft, setPreviewTimeLeft] = useState<number | null>(null);
-  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   
   const { nature, binaural, solfeggio } = getSoundsByCategory();
 
-  // Cleanup timers on unmount
-  useEffect(() => {
-    return () => {
-      if (previewTimerRef.current) {
-        clearTimeout(previewTimerRef.current);
-      }
-      if (countdownRef.current) {
-        clearInterval(countdownRef.current);
-      }
-    };
-  }, []);
-
   const handleSelectMusic = async (id: BackgroundMusicType) => {
-    // Clear any existing preview timer
-    if (previewTimerRef.current) {
-      clearTimeout(previewTimerRef.current);
-      previewTimerRef.current = null;
-    }
-    if (countdownRef.current) {
-      clearInterval(countdownRef.current);
-      countdownRef.current = null;
-    }
-    
     await setSelectedMusic(id);
-    
-    // Set up preview timer for non-'none' selections
-    if (id !== 'none') {
-      setPreviewTimeLeft(5);
-      
-      // Countdown timer for display
-      countdownRef.current = setInterval(() => {
-        setPreviewTimeLeft(prev => {
-          if (prev === null || prev <= 1) {
-            if (countdownRef.current) clearInterval(countdownRef.current);
-            return null;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-      
-      // Auto-stop after 5 seconds
-      previewTimerRef.current = setTimeout(async () => {
-        await setSelectedMusic('none');
-        setPreviewTimeLeft(null);
-      }, PREVIEW_DURATION);
-    } else {
-      setPreviewTimeLeft(null);
-    }
   };
 
-  const currentSelection = selectedMusic === 'none' 
-    ? null 
-    : [...nature, ...binaural, ...solfeggio].find(o => o.id === selectedMusic);
+  const currentSelection = [...nature, ...binaural, ...solfeggio].find(o => o.id === selectedMusic);
 
   return (
     <ImageBackground
@@ -235,7 +182,7 @@ export default function SoundLibraryScreen() {
             <View style={styles.currentHeader}>
               <Feather name="volume-2" size={20} color={ACCENT_GOLD} />
               <ThemedText type="caption" style={{ color: theme.textSecondary, marginLeft: Spacing.xs }}>
-                {previewTimeLeft !== null ? `PREVIEW (${previewTimeLeft}s)` : 'CURRENTLY PLAYING'}
+                CURRENTLY SELECTED
               </ThemedText>
             </View>
             <View style={styles.currentContent}>
@@ -286,17 +233,6 @@ export default function SoundLibraryScreen() {
                 </Pressable>
               </View>
             </View>
-
-            {/* Turn Off Button */}
-            <Pressable
-              onPress={() => handleSelectMusic('none')}
-              style={[styles.turnOffButton, { borderColor: theme.border }]}
-            >
-              <Feather name="x-circle" size={16} color={theme.textSecondary} />
-              <ThemedText type="small" style={{ color: theme.textSecondary, marginLeft: Spacing.xs }}>
-                Turn Off Sound
-              </ThemedText>
-            </Pressable>
           </View>
         </Animated.View>
         ) : null}
@@ -412,14 +348,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
-  },
-  turnOffButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
   },
   categorySection: {
     gap: Spacing.sm,

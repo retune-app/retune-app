@@ -424,7 +424,7 @@ export default function ProfileScreen() {
           <SettingItem
             icon="headphones"
             label="Sound Library"
-            value={selectedMusic !== 'none' ? BACKGROUND_MUSIC_OPTIONS.find(o => o.id === selectedMusic)?.name : 'No sound selected'}
+            value={BACKGROUND_MUSIC_OPTIONS.find(o => o.id === selectedMusic)?.name || 'Rain'}
             onPress={() => navigation.navigate("SoundLibrary")}
             testID="button-sound-library"
           />

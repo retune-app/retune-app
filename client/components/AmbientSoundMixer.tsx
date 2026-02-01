@@ -111,38 +111,6 @@ export function AmbientSoundMixer({ compact = false }: AmbientSoundMixerProps) {
               </ThemedText>
 
               <ScrollView style={styles.optionsList} showsVerticalScrollIndicator={false}>
-                <Pressable
-                  onPress={() => handleSelectMusic('none')}
-                  style={[
-                    styles.optionItem,
-                    {
-                      backgroundColor: selectedMusic === 'none'
-                        ? theme.gold + "20"
-                        : theme.backgroundSecondary,
-                      borderColor: selectedMusic === 'none' ? theme.gold : "transparent",
-                    },
-                  ]}
-                >
-                  <View style={[styles.optionIcon, { backgroundColor: theme.backgroundTertiary }]}>
-                    <Feather
-                      name="volume-x"
-                      size={20}
-                      color={selectedMusic === 'none' ? theme.gold : theme.textSecondary}
-                    />
-                  </View>
-                  <View style={styles.optionText}>
-                    <ThemedText type="body" style={{ fontWeight: "600" }}>
-                      None
-                    </ThemedText>
-                    <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                      No background music
-                    </ThemedText>
-                  </View>
-                  {selectedMusic === 'none' ? (
-                    <Feather name="check-circle" size={20} color={theme.gold} />
-                  ) : null}
-                </Pressable>
-
                 <ThemedText type="caption" style={[styles.sectionLabel, { color: theme.textSecondary }]}>
                   Nature Sounds
                 </ThemedText>

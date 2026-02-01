@@ -24,10 +24,10 @@ interface BenefitSectionProps {
 }
 
 function BenefitSection({ icon, iconColor, iconBgColor, title, subtitle, description, bullets }: BenefitSectionProps) {
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   
   return (
-    <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }]}>
+    <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground, borderColor: isDark ? "#C9A22770" : "#C9A22740" }]}>
       <View style={styles.sectionHeader}>
         <View style={[styles.sectionIcon, { backgroundColor: iconBgColor }]}>
           <Feather name={icon as any} size={24} color={iconColor} />

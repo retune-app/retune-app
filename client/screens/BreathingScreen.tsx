@@ -311,7 +311,6 @@ export default function BreathingScreen() {
 
   const handleStop = async () => {
     const wasNaturalCompletion = sessionCompletedNaturally.current;
-    const completedDuration = elapsedTime;
     sessionCompletedNaturally.current = false;
     
     setIsPlaying(false);
@@ -327,7 +326,7 @@ export default function BreathingScreen() {
       await stopAffirmationLoop();
     }
     
-    if (wasNaturalCompletion && completedDuration > 0) {
+    if (wasNaturalCompletion) {
       setShowCompletionAnimation(true);
       setTimeout(() => {
         setShowCompletionAnimation(false);

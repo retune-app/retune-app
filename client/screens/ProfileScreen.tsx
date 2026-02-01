@@ -763,7 +763,7 @@ export default function ProfileScreen() {
             <View style={styles.settingContent}>
               <ThemedText type="body">Reset All Data</ThemedText>
               <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                Clear affirmations and voice samples
+                Remove all affirmations and voice samples
               </ThemedText>
             </View>
             <Feather name="chevron-right" size={20} color={theme.textSecondary} />

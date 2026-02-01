@@ -28,6 +28,7 @@ import { IconButton } from "@/components/IconButton";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { apiRequest } from "@/lib/query-client";
+import { useAudio } from "@/contexts/AudioContext";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
 interface CustomCategory {
@@ -49,6 +50,7 @@ export default function CreateScreen() {
   const { theme } = useTheme();
   const navigation = useNavigation<NavigationProp>();
   const queryClient = useQueryClient();
+  const { breathingAffirmation, setBreathingAffirmation } = useAudio();
 
   const [mode, setMode] = useState<"ai" | "manual">("ai");
   const [goal, setGoal] = useState("");
@@ -133,6 +135,12 @@ export default function CreateScreen() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/affirmations"] });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      
+      // Auto-select first affirmation for breathing if none selected yet
+      if (!breathingAffirmation) {
+        setBreathingAffirmation(data);
+      }
+      
       navigation.navigate("Player", { affirmationId: data.id, isNew: true });
     },
     onError: () => {

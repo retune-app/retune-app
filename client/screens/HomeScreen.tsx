@@ -67,6 +67,7 @@ export default function HomeScreen() {
   const [newTitle, setNewTitle] = useState("");
   const [hapticEnabled, setHapticEnabled] = useState(true);
   const [showSwipeTip, setShowSwipeTip] = useState(false);
+  const [backgroundWallpaperEnabled, setBackgroundWallpaperEnabled] = useState(false);
 
   useEffect(() => {
     AsyncStorage.getItem("@settings/hapticEnabled").then((value) => {
@@ -77,6 +78,11 @@ export default function HomeScreen() {
     AsyncStorage.getItem("@tips/librarySwipe").then((value) => {
       if (value === null) {
         setShowSwipeTip(true);
+      }
+    });
+    AsyncStorage.getItem("@settings/backgroundWallpaper").then((value) => {
+      if (value !== null) {
+        setBackgroundWallpaperEnabled(value === "true");
       }
     });
   }, []);
@@ -333,13 +339,8 @@ export default function HomeScreen() {
     ? ["rgba(15, 28, 63, 0.95)", "rgba(15, 28, 63, 0)"] as const
     : ["rgba(255, 255, 255, 0.95)", "rgba(255, 255, 255, 0)"] as const;
 
-  return (
-    <ImageBackground
-      key={isDark ? "dark-bg" : "light-bg"}
-      source={isDark ? libraryBackgroundDark : libraryBackgroundLight}
-      style={styles.backgroundImage}
-      resizeMode="cover"
-    >
+  const containerContent = (
+    <>
       <FlatList
         ref={flatListRef}
         style={styles.container}
@@ -437,7 +438,26 @@ export default function HomeScreen() {
 
       {/* Floating Settings Button */}
       <FloatingSettingsButton bottomOffset={tabBarHeight + 16} />
-    </ImageBackground>
+    </>
+  );
+
+  if (backgroundWallpaperEnabled) {
+    return (
+      <ImageBackground
+        key={isDark ? "dark-bg" : "light-bg"}
+        source={isDark ? libraryBackgroundDark : libraryBackgroundLight}
+        style={styles.backgroundImage}
+        resizeMode="cover"
+      >
+        {containerContent}
+      </ImageBackground>
+    );
+  }
+
+  return (
+    <View style={[styles.backgroundImage, { backgroundColor: isDark ? '#0F1C3F' : '#F8FAFB' }]}>
+      {containerContent}
+    </View>
   );
 }
 

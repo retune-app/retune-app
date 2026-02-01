@@ -155,8 +155,6 @@ export default function BreathingCircle({
 
   const phaseColor = technique.color || ACCENT_GOLD;
 
-  const shimmerRadius = size / 2;
-
   return (
     <View style={[styles.container, { width: size, height: size }]}>
       <Animated.View

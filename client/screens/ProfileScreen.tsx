@@ -652,6 +652,11 @@ export default function ProfileScreen() {
             value="Version 1.0.0"
           />
           <SettingItem
+            icon="heart"
+            label="Benefits for Wellbeing"
+            onPress={() => navigation.navigate("Benefits" as never)}
+          />
+          <SettingItem
             icon="shield"
             label="Security & Privacy"
             onPress={() => navigation.navigate("SecurityPrivacy" as never)}

@@ -394,8 +394,15 @@ export default function BreathingScreen() {
     handleStop();
   };
 
-  // Landscape Fullscreen Mode
+  // Fullscreen Mode - responsive to orientation
   if (showLandscapeMode) {
+    const screenWidth = Dimensions.get("window").width;
+    const screenHeight = Dimensions.get("window").height;
+    const isCurrentlyLandscape = screenWidth > screenHeight;
+    const circleSize = isCurrentlyLandscape 
+      ? Math.min(screenHeight - 80, 320)
+      : Math.min(screenWidth - 80, 280);
+
     return (
       <Modal
         visible={showLandscapeMode}
@@ -417,10 +424,16 @@ export default function BreathingScreen() {
             </BlurView>
           </Pressable>
 
-          {/* Main content - centered breathing circle */}
-          <View style={styles.landscapeContent}>
-            {/* Left side - technique info */}
-            <View style={styles.landscapeSidePanel}>
+          {/* Main content - adapts to orientation */}
+          <View style={[
+            styles.landscapeContent,
+            !isCurrentlyLandscape && styles.portraitFullscreenContent
+          ]}>
+            {/* Technique info - top in portrait, left in landscape */}
+            <View style={[
+              styles.landscapeSidePanel,
+              !isCurrentlyLandscape && styles.portraitTopPanel
+            ]}>
               <Text style={[styles.landscapeTechniqueName, { color: selectedTechnique.color }]}>
                 {selectedTechnique.name}
               </Text>
@@ -436,19 +449,27 @@ export default function BreathingScreen() {
                 isPlaying={isPlaying}
                 onCycleComplete={handleCycleComplete}
                 hapticsEnabled={hapticsEnabled}
-                size={Math.min(Dimensions.get("window").height - 80, 320)}
+                size={circleSize}
               />
             </View>
 
-            {/* Right side - stats and controls */}
-            <View style={styles.landscapeSidePanel}>
-              <View style={styles.landscapeStats}>
-                <Text style={styles.landscapeStatLabel}>Time Left</Text>
-                <Text style={styles.landscapeStatValue}>{formatTime(remainingTime)}</Text>
-              </View>
-              <View style={styles.landscapeStats}>
-                <Text style={styles.landscapeStatLabel}>Cycles</Text>
-                <Text style={styles.landscapeStatValue}>{cyclesCompleted}/{totalCycles}</Text>
+            {/* Stats and controls - bottom in portrait, right in landscape */}
+            <View style={[
+              styles.landscapeSidePanel,
+              !isCurrentlyLandscape && styles.portraitBottomPanel
+            ]}>
+              <View style={[
+                styles.landscapeStatsRow,
+                !isCurrentlyLandscape && styles.portraitStatsRow
+              ]}>
+                <View style={styles.landscapeStats}>
+                  <Text style={styles.landscapeStatLabel}>Time Left</Text>
+                  <Text style={styles.landscapeStatValue}>{formatTime(remainingTime)}</Text>
+                </View>
+                <View style={styles.landscapeStats}>
+                  <Text style={styles.landscapeStatLabel}>Cycles</Text>
+                  <Text style={styles.landscapeStatValue}>{cyclesCompleted}/{totalCycles}</Text>
+                </View>
               </View>
               
               <View style={styles.landscapeControlsRow}>
@@ -1195,5 +1216,27 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     alignItems: "center",
     justifyContent: "center",
+  },
+  landscapeStatsRow: {
+    alignItems: "center",
+  },
+  // Portrait fullscreen mode styles
+  portraitFullscreenContent: {
+    flexDirection: "column",
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.xl,
+  },
+  portraitTopPanel: {
+    width: "100%",
+    marginBottom: Spacing.lg,
+  },
+  portraitBottomPanel: {
+    width: "100%",
+    marginTop: Spacing.lg,
+  },
+  portraitStatsRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: Spacing.xl * 2,
   },
 });

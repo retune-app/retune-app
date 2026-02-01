@@ -364,10 +364,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   lengthText: {
-    fontSize: 9,
+    fontSize: 8,
     fontWeight: "700",
     textTransform: "uppercase",
     letterSpacing: 0.3,
+    lineHeight: 10,
   },
   playButtonWrapper: {
     width: 40,

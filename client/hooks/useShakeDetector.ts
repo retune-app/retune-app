@@ -3,9 +3,11 @@ import { Platform } from "react-native";
 import { Accelerometer, AccelerometerMeasurement } from "expo-sensors";
 import * as Haptics from "expo-haptics";
 
-const SHAKE_THRESHOLD = 2.5;
-const SHAKE_COOLDOWN_MS = 1500;
-const STARTUP_DELAY_MS = 2000;
+const SHAKE_THRESHOLD = 1.5;
+const SHAKE_COUNT_THRESHOLD = 3;
+const SHAKE_TIME_WINDOW_MS = 500;
+const SHAKE_COOLDOWN_MS = 2000;
+const STARTUP_DELAY_MS = 3000;
 
 interface UseShakeDetectorOptions {
   onShake: () => void;
@@ -14,12 +16,10 @@ interface UseShakeDetectorOptions {
 
 export function useShakeDetector({ onShake, enabled = true }: UseShakeDetectorOptions) {
   const lastShakeTime = useRef(0);
-  const lastUpdate = useRef(0);
-  const lastX = useRef(0);
-  const lastY = useRef(0);
-  const lastZ = useRef(0);
+  const shakeCount = useRef(0);
+  const lastShakeEventTime = useRef(0);
   const startTime = useRef(0);
-  const isInitialized = useRef(false);
+  const lastMagnitude = useRef(0);
 
   useEffect(() => {
     if (!enabled || Platform.OS === "web") {
@@ -28,7 +28,7 @@ export function useShakeDetector({ onShake, enabled = true }: UseShakeDetectorOp
 
     let subscription: ReturnType<typeof Accelerometer.addListener> | null = null;
     startTime.current = Date.now();
-    isInitialized.current = false;
+    shakeCount.current = 0;
 
     const startListening = async () => {
       const isAvailable = await Accelerometer.isAvailableAsync();
@@ -44,45 +44,35 @@ export function useShakeDetector({ onShake, enabled = true }: UseShakeDetectorOp
 
         // Ignore readings during startup period
         if (currentTime - startTime.current < STARTUP_DELAY_MS) {
-          lastX.current = x;
-          lastY.current = y;
-          lastZ.current = z;
-          lastUpdate.current = currentTime;
           return;
         }
 
-        if (!isInitialized.current) {
-          isInitialized.current = true;
-          lastX.current = x;
-          lastY.current = y;
-          lastZ.current = z;
-          lastUpdate.current = currentTime;
-          return;
-        }
+        // Calculate magnitude of acceleration (excluding gravity ~1g)
+        const magnitude = Math.sqrt(x * x + y * y + z * z);
+        const delta = Math.abs(magnitude - lastMagnitude.current);
+        lastMagnitude.current = magnitude;
 
-        if (currentTime - lastUpdate.current > 100) {
-          const diffTime = currentTime - lastUpdate.current;
-          lastUpdate.current = currentTime;
+        // Detect a shake event (rapid change in acceleration)
+        if (delta > SHAKE_THRESHOLD) {
+          // Reset count if too much time passed since last shake event
+          if (currentTime - lastShakeEventTime.current > SHAKE_TIME_WINDOW_MS) {
+            shakeCount.current = 0;
+          }
 
-          const deltaX = Math.abs(x - lastX.current);
-          const deltaY = Math.abs(y - lastY.current);
-          const deltaZ = Math.abs(z - lastZ.current);
+          shakeCount.current++;
+          lastShakeEventTime.current = currentTime;
 
-          const acceleration = (deltaX + deltaY + deltaZ) / diffTime * 10000;
-
-          if (acceleration > SHAKE_THRESHOLD) {
+          // Trigger if we have enough shake events in the time window
+          if (shakeCount.current >= SHAKE_COUNT_THRESHOLD) {
             if (currentTime - lastShakeTime.current > SHAKE_COOLDOWN_MS) {
               lastShakeTime.current = currentTime;
+              shakeCount.current = 0;
               try {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
               } catch (e) {}
               onShake();
             }
           }
-
-          lastX.current = x;
-          lastY.current = y;
-          lastZ.current = z;
         }
       });
     };

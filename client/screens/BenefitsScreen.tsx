@@ -151,7 +151,7 @@ export default function BenefitsScreen() {
 
       <ScrollView 
         style={styles.scrollView}
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 120 }]}
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 180 }]}
         showsVerticalScrollIndicator={false}
       >
         <View style={[styles.heroSection, { backgroundColor: theme.primary + "15" }]}>

@@ -1892,6 +1892,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Generate ambient sounds using ElevenLabs Sound Effects API
+  // Regenerate a single ambient sound
+  app.post("/api/admin/regenerate-sound/:filename", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { filename } = req.params;
+      const { prompt } = req.body;
+      
+      if (!prompt) {
+        return res.status(400).json({ error: "Prompt is required" });
+      }
+      
+      const audioDir = path.join(process.cwd(), "assets", "audio");
+      console.log(`Regenerating: ${filename} with prompt: ${prompt}`);
+      
+      const audioBuffer = await generateSoundEffect(prompt, 22, 0.3);
+      const filePath = path.join(audioDir, filename);
+      fs.writeFileSync(filePath, Buffer.from(audioBuffer));
+      
+      console.log(`Successfully regenerated: ${filename}`);
+      res.json({ success: true, filename, bytes: audioBuffer.byteLength });
+    } catch (error: any) {
+      console.error("Error regenerating sound:", error);
+      res.status(500).json({ error: "Failed to regenerate sound", details: error.message });
+    }
+  });
+
   app.post("/api/admin/generate-ambient-sounds", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const audioDir = path.join(process.cwd(), "assets", "audio");
@@ -1901,7 +1926,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         { filename: "rain-ambient.mp3", prompt: "Gentle rain falling on leaves and soft ground, peaceful and calming ambient rainfall for meditation and relaxation" },
         { filename: "ocean-waves.mp3", prompt: "Peaceful ocean waves gently lapping on a sandy beach at sunset, calming sea ambience for relaxation and sleep" },
         { filename: "forest-birds.mp3", prompt: "Serene forest ambience with gentle birdsong, rustling leaves, and distant woodland sounds, peaceful nature atmosphere" },
-        { filename: "wind-gentle.mp3", prompt: "Soft gentle breeze blowing through trees and grass, calming wind ambience for meditation and focus" },
+        { filename: "wind-gentle.mp3", prompt: "Steady wind blowing through trees with audible whooshing and rustling sounds, continuous breeze ambience, clear wind noise for relaxation" },
         { filename: "432hz-healing.mp3", prompt: "Deep resonant 432Hz healing frequency tone, pure and sustained, for meditation and spiritual healing" },
         { filename: "528hz-love.mp3", prompt: "Pure 528Hz solfeggio love frequency tone, sustained and harmonious, for transformation and DNA healing" },
         { filename: "theta-waves.mp3", prompt: "Deep theta brainwave binaural beat at 6Hz, layered with soft ambient tones for deep meditation and creativity" },

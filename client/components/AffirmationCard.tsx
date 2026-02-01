@@ -33,6 +33,7 @@ interface AffirmationCardProps {
   onPlayPress?: () => void;
   onLongPress?: () => void;
   isActive?: boolean;
+  isBreathingAffirmation?: boolean;
   testID?: string;
   hapticEnabled?: boolean;
 }
@@ -53,6 +54,7 @@ export function AffirmationCard({
   onPlayPress,
   onLongPress,
   isActive = false,
+  isBreathingAffirmation = false,
   testID,
   hapticEnabled = true,
 }: AffirmationCardProps) {
@@ -167,16 +169,21 @@ export function AffirmationCard({
       style={[animatedStyle]}
       testID={testID}
     >
-      <View style={[
-        styles.card,
-        Shadows.small,
-        { 
-          backgroundColor: theme.cardBackground,
-          borderColor: isDark ? 'transparent' : theme.border,
-          borderWidth: isDark ? 0 : 1,
-        },
-        isActive && { backgroundColor: theme.backgroundSecondary, borderColor: theme.primary, borderWidth: 2 },
-      ]}>
+      <View style={styles.cardWrapper}>
+        {isBreathingAffirmation ? (
+          <View style={[styles.breathingAccent, { backgroundColor: theme.gold }]} />
+        ) : null}
+        <View style={[
+          styles.card,
+          Shadows.small,
+          { 
+            backgroundColor: theme.cardBackground,
+            borderColor: isDark ? 'transparent' : theme.border,
+            borderWidth: isDark ? 0 : 1,
+          },
+          isActive && { backgroundColor: theme.backgroundSecondary, borderColor: theme.primary, borderWidth: 2 },
+          isBreathingAffirmation && { borderLeftWidth: 0, borderTopLeftRadius: 0, borderBottomLeftRadius: 0 },
+        ]}>
         <View style={[styles.cardHeader, { borderBottomColor: isDark ? 'rgba(255,255,255,0.08)' : theme.border }]}>
           <View style={styles.ownershipBadge}>
             <Feather name={voiceInfo.icon} size={10} color={theme.gold} />
@@ -205,6 +212,14 @@ export function AffirmationCard({
                 <View style={[styles.categoryBadge, { backgroundColor: theme.backgroundSecondary, borderColor: theme.gold, borderWidth: 1 }]}>
                   <ThemedText type="caption" style={{ color: theme.gold }}>
                     {category}
+                  </ThemedText>
+                </View>
+              ) : null}
+              {isBreathingAffirmation ? (
+                <View style={[styles.breathingBadge, { backgroundColor: '#2E7D6E' }]}>
+                  <Feather name="wind" size={10} color="#fff" style={{ marginRight: 3 }} />
+                  <ThemedText type="caption" style={{ color: '#fff', fontWeight: '600' }}>
+                    Breathing
                   </ThemedText>
                 </View>
               ) : null}
@@ -241,13 +256,25 @@ export function AffirmationCard({
             </Animated.View>
           </View>
         </View>
+        </View>
       </View>
     </AnimatedPressable>
   );
 }
 
 const styles = StyleSheet.create({
+  cardWrapper: {
+    flexDirection: "row",
+    borderRadius: BorderRadius.lg,
+    overflow: "hidden",
+  },
+  breathingAccent: {
+    width: 4,
+    borderTopLeftRadius: BorderRadius.lg,
+    borderBottomLeftRadius: BorderRadius.lg,
+  },
   card: {
+    flex: 1,
     borderRadius: BorderRadius.lg,
     overflow: "hidden",
   },
@@ -295,6 +322,13 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   categoryBadge: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    borderRadius: BorderRadius.xs,
+  },
+  breathingBadge: {
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: Spacing.sm,
     paddingVertical: 2,
     borderRadius: BorderRadius.xs,

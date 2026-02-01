@@ -176,6 +176,7 @@ export function SwipeableAffirmationCard({
         onPlayPress={onPlayPress}
         onLongPress={onLongPress}
         isActive={isActive}
+        isBreathingAffirmation={isBreathingAffirmation}
         testID={testID}
         hapticEnabled={hapticEnabled}
       />

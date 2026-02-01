@@ -123,7 +123,7 @@ export async function textToSpeech(
 
   // Add natural pauses between sentences for more meditative pacing
   // This is applied internally - the original text remains unchanged for display
-  const textWithPauses = addSentencePauses(text, 1.0);
+  const textWithPauses = addSentencePauses(text, 1.5);
 
   // Use the with-timestamps endpoint for word timing data
   const response = await fetch(

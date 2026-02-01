@@ -1,4 +1,4 @@
-# Design Guidelines: ReWired
+# Design Guidelines: Rewired
 
 ## 1. Brand Identity
 
@@ -6,7 +6,7 @@
 
 **Aesthetic Direction**: **Serene Empowerment** - A calming yet purposeful aesthetic that blends therapeutic tranquility with motivational energy. Think meditation app meets personal coaching.
 
-**Brand Name**: "ReWired" (capital R, capital W)
+**Brand Name**: "Rewired" (capital R, capital W)
 
 **Memorable Element**: The voice wave visualization during recording and playback - a dynamic, flowing waveform that represents the user's unique voice signature, reinforcing the personal nature of subconscious reprogramming.
 
@@ -128,7 +128,7 @@
 ## 7. Assets
 
 **App Identity**:
-- `icon.jpg` - ReWired logo (head with leaf motif) - Device home screen
+- `icon.jpg` - Rewired logo (head with leaf motif) - Device home screen
 - `splash-icon.jpg` - Same logo on gradient background - Launch screen
 
 **Onboarding/Empty States**:

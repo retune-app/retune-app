@@ -25,6 +25,7 @@ interface AmbientSoundMixerProps {
 }
 
 const getIconForMusic = (id: BackgroundMusicType): string => {
+  if (id === 'none') return 'volume-x';
   const option = BACKGROUND_MUSIC_OPTIONS.find(o => o.id === id);
   return option?.icon || 'music';
 };
@@ -111,6 +112,40 @@ export function AmbientSoundMixer({ compact = false }: AmbientSoundMixerProps) {
               </ThemedText>
 
               <ScrollView style={styles.optionsList} showsVerticalScrollIndicator={false}>
+                {/* No Sound Option */}
+                <Pressable
+                  onPress={() => handleSelectMusic('none')}
+                  style={[
+                    styles.optionItem,
+                    {
+                      backgroundColor: selectedMusic === 'none'
+                        ? theme.gold + "20"
+                        : theme.backgroundSecondary,
+                      borderColor: selectedMusic === 'none' ? theme.gold : "transparent",
+                      marginBottom: Spacing.md,
+                    },
+                  ]}
+                >
+                  <View style={[styles.optionIcon, { backgroundColor: theme.backgroundTertiary }]}>
+                    <Feather
+                      name="volume-x"
+                      size={20}
+                      color={selectedMusic === 'none' ? theme.gold : theme.textSecondary}
+                    />
+                  </View>
+                  <View style={styles.optionText}>
+                    <ThemedText type="body" style={{ fontWeight: "600" }}>
+                      No Sound
+                    </ThemedText>
+                    <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                      Play affirmation without background music
+                    </ThemedText>
+                  </View>
+                  {selectedMusic === 'none' ? (
+                    <Feather name="check-circle" size={20} color={theme.gold} />
+                  ) : null}
+                </Pressable>
+
                 <ThemedText type="caption" style={[styles.sectionLabel, { color: theme.textSecondary }]}>
                   Nature Sounds
                 </ThemedText>
@@ -263,6 +298,35 @@ export function AmbientSoundMixer({ compact = false }: AmbientSoundMixerProps) {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.optionsRow}
       >
+        {/* No Sound Option */}
+        <Pressable
+          onPress={() => handleSelectMusic('none')}
+          style={({ pressed }) => [
+            styles.optionChip,
+            {
+              backgroundColor: selectedMusic === 'none'
+                ? theme.gold + "25"
+                : theme.backgroundSecondary,
+              borderColor: selectedMusic === 'none' ? theme.gold : theme.border,
+              opacity: pressed ? 0.8 : 1,
+            },
+          ]}
+        >
+          <Feather
+            name="volume-x"
+            size={16}
+            color={selectedMusic === 'none' ? theme.gold : theme.textSecondary}
+          />
+          <ThemedText
+            type="small"
+            style={{
+              color: selectedMusic === 'none' ? theme.gold : theme.text,
+              marginLeft: Spacing.xs,
+            }}
+          >
+            Off
+          </ThemedText>
+        </Pressable>
         {BACKGROUND_MUSIC_OPTIONS.map((option) => (
           <Pressable
             key={option.id}

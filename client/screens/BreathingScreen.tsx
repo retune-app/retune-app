@@ -744,30 +744,33 @@ export default function BreathingScreen() {
               <ThemedText type="caption" style={{ marginTop: 2, fontSize: 9, color: hapticsEnabled ? ACCENT_GOLD : theme.textSecondary }}>Haptics</ThemedText>
             </Pressable>
             <Pressable 
-              onPress={() => {
+              onPressIn={() => {
                 try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); } catch (e) {}
-                handleStart();
-              }} 
+              }}
+              onPress={handleStart}
               testID="button-start-breathing"
-              style={({ pressed }) => [
-                { transform: [{ scale: pressed ? 0.92 : 1 }] },
-              ]}
             >
-              <LinearGradient
-                colors={[selectedTechnique.color, `${selectedTechnique.color}BB`]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={[styles.primaryPlayButton, Shadows.large, { 
-                  shadowColor: selectedTechnique.color,
-                  shadowOffset: { width: 0, height: 6 },
-                  shadowOpacity: 0.4,
-                  shadowRadius: 12,
-                  elevation: 8,
-                }]}
-              >
-                <Feather name="play" size={28} color="#FFFFFF" />
-                <Text style={styles.primaryButtonText}>Start</Text>
-              </LinearGradient>
+              {({ pressed }) => (
+                <Animated.View
+                  style={[
+                    styles.startButtonShadow,
+                    { 
+                      shadowColor: selectedTechnique.color,
+                      transform: [{ scale: pressed ? 0.9 : 1 }],
+                    },
+                  ]}
+                >
+                  <LinearGradient
+                    colors={[selectedTechnique.color, `${selectedTechnique.color}99`]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.primaryPlayButton}
+                  >
+                    <Feather name="play" size={28} color="#FFFFFF" />
+                    <Text style={styles.primaryButtonText}>Start</Text>
+                  </LinearGradient>
+                </Animated.View>
+              )}
             </Pressable>
             <Pressable 
               onPress={enterFullscreen} 
@@ -1121,12 +1124,20 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xl * 2.5,
     marginBottom: Spacing.xl,
   },
+  startButtonShadow: {
+    borderRadius: 40,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+    elevation: 12,
+  },
   primaryPlayButton: {
     width: 80,
     height: 80,
     borderRadius: 40,
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden",
   },
   primaryButtonText: {
     color: "#FFFFFF",

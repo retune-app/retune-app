@@ -50,6 +50,7 @@ import {
 } from "@shared/breathingTechniques";
 
 const ACCENT_GOLD = "#C9A227";
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 interface Affirmation {
   id: number;
@@ -627,7 +628,10 @@ export default function BreathingScreen() {
         {/* Breathing Circle - Hero Element */}
         <Animated.View 
           entering={FadeIn.delay(200).duration(800)} 
-          style={styles.circleSection}
+          style={[
+            styles.circleSection,
+            isPlaying && styles.circleSectionPlaying
+          ]}
         >
           <View style={styles.circleContainer}>
             <BreathingCircle
@@ -635,7 +639,7 @@ export default function BreathingScreen() {
               isPlaying={isPlaying}
               onCycleComplete={handleCycleComplete}
               hapticsEnabled={hapticsEnabled}
-              size={isPlaying ? 300 : 260}
+              size={isPlaying ? Math.min(SCREEN_WIDTH * 0.85, SCREEN_HEIGHT * 0.45) : 260}
             />
           </View>
 
@@ -956,6 +960,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "flex-start",
     paddingTop: Spacing.md,
+  },
+  circleSectionPlaying: {
+    justifyContent: "center",
+    paddingTop: 0,
   },
   circleContainer: {
     position: "relative",

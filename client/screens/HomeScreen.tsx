@@ -9,7 +9,7 @@ const libraryBackgroundLight = require("../../assets/images/library-background-l
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
+import { useNavigation, useRoute, RouteProp, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
@@ -80,12 +80,15 @@ export default function HomeScreen() {
         setShowSwipeTip(true);
       }
     });
-    AsyncStorage.getItem("@settings/backgroundWallpaper").then((value) => {
-      if (value !== null) {
-        setBackgroundWallpaperEnabled(value === "true");
-      }
-    });
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      AsyncStorage.getItem("@settings/backgroundWallpaper").then((value) => {
+        setBackgroundWallpaperEnabled(value === "true");
+      });
+    }, [])
+  );
 
   const dismissSwipeTip = useCallback(() => {
     setShowSwipeTip(false);

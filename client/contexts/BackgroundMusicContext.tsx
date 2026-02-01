@@ -24,7 +24,6 @@ export interface BackgroundMusicOption {
 }
 
 export const BACKGROUND_MUSIC_OPTIONS: BackgroundMusicOption[] = [
-  { id: 'none', name: 'None', description: 'No background music', category: 'nature', icon: 'volume-x' },
   { id: 'rain', name: 'Rain', description: 'Gentle rainfall', category: 'nature', icon: 'cloud-rain' },
   { id: 'ocean', name: 'Ocean', description: 'Calming ocean waves', category: 'nature', icon: 'droplet' },
   { id: 'forest', name: 'Forest', description: 'Nature sounds & birds', category: 'nature', icon: 'feather' },
@@ -38,7 +37,7 @@ export const BACKGROUND_MUSIC_OPTIONS: BackgroundMusicOption[] = [
 ];
 
 export const getSoundsByCategory = () => {
-  const nature = BACKGROUND_MUSIC_OPTIONS.filter(o => o.category === 'nature' && o.id !== 'none');
+  const nature = BACKGROUND_MUSIC_OPTIONS.filter(o => o.category === 'nature');
   const binaural = BACKGROUND_MUSIC_OPTIONS.filter(o => o.category === 'binaural');
   const solfeggio = BACKGROUND_MUSIC_OPTIONS.filter(o => o.category === 'solfeggio');
   return { nature, binaural, solfeggio };
@@ -93,9 +92,11 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
         AsyncStorage.getItem(STORAGE_KEY),
         AsyncStorage.getItem(VOLUME_STORAGE_KEY),
       ]);
-      if (savedMusic) {
+      if (savedMusic && savedMusic !== 'none') {
+        // Only load saved preference if it's not 'none' (legacy value)
         setSelectedMusicState(savedMusic as BackgroundMusicType);
       }
+      // If savedMusic is 'none' or null, keep the default 'rain'
       if (savedVolume) {
         setVolumeState(parseFloat(savedVolume));
       }

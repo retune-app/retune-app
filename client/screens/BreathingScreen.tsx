@@ -531,7 +531,7 @@ export default function BreathingScreen() {
           </Pressable>
 
           {/* Landscape layout: horizontal row */}
-          <View style={styles.landscapeContent}>
+          <View style={[styles.landscapeContent, { paddingLeft: Math.max(insets.left, 48), paddingRight: Math.max(insets.right, 48) }]}>
             {/* Left side - technique info */}
             <View style={styles.landscapeSidePanel}>
               <Text style={[styles.landscapeTechniqueName, { color: selectedTechnique.color }]}>
@@ -1388,7 +1388,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     width: "100%",
-    paddingHorizontal: 48,
   },
   landscapeSidePanel: {
     width: 180,

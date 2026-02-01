@@ -440,6 +440,36 @@ export default function BreathingScreen() {
             ]}>
               {/* Center section - breathing circle (centered in available space) */}
               <View style={styles.portraitCenterSection}>
+                {/* Progress Ring */}
+                <View style={styles.progressRingContainer}>
+                  <Svg 
+                    width={portraitCircleSize + 40} 
+                    height={portraitCircleSize + 40}
+                    style={styles.progressRing}
+                  >
+                    <Circle
+                      cx={(portraitCircleSize + 40) / 2}
+                      cy={(portraitCircleSize + 40) / 2}
+                      r={(portraitCircleSize + 20) / 2}
+                      stroke={`${selectedTechnique.color}15`}
+                      strokeWidth={3}
+                      fill="transparent"
+                    />
+                    <Circle
+                      cx={(portraitCircleSize + 40) / 2}
+                      cy={(portraitCircleSize + 40) / 2}
+                      r={(portraitCircleSize + 20) / 2}
+                      stroke={selectedTechnique.color}
+                      strokeWidth={3}
+                      fill="transparent"
+                      strokeDasharray={`${Math.PI * (portraitCircleSize + 20)}`}
+                      strokeDashoffset={Math.PI * (portraitCircleSize + 20) * (1 - progressPercent / 100)}
+                      strokeLinecap="round"
+                      rotation="-90"
+                      origin={`${(portraitCircleSize + 40) / 2}, ${(portraitCircleSize + 40) / 2}`}
+                    />
+                  </Svg>
+                </View>
                 <BreathingCircle
                   technique={selectedTechnique}
                   isPlaying={isPlaying}
@@ -455,6 +485,10 @@ export default function BreathingScreen() {
                   <View style={styles.portraitStatItem}>
                     <Text style={styles.landscapeStatLabel}>Time Left</Text>
                     <Text style={styles.landscapeStatValue}>{formatTime(remainingTime)}</Text>
+                  </View>
+                  <View style={styles.portraitStatItem}>
+                    <Text style={styles.landscapeStatLabel}>Progress</Text>
+                    <Text style={[styles.landscapeStatValue, { color: selectedTechnique.color }]}>{progressPercent}%</Text>
                   </View>
                   <View style={styles.portraitStatItem}>
                     <Text style={styles.landscapeStatLabel}>Cycles</Text>
@@ -523,6 +557,36 @@ export default function BreathingScreen() {
 
             {/* Center - breathing circle */}
             <View style={styles.landscapeCircleContainer}>
+              {/* Progress Ring */}
+              <View style={styles.progressRingContainer}>
+                <Svg 
+                  width={circleSize + 40} 
+                  height={circleSize + 40}
+                  style={styles.progressRing}
+                >
+                  <Circle
+                    cx={(circleSize + 40) / 2}
+                    cy={(circleSize + 40) / 2}
+                    r={(circleSize + 20) / 2}
+                    stroke={`${selectedTechnique.color}15`}
+                    strokeWidth={3}
+                    fill="transparent"
+                  />
+                  <Circle
+                    cx={(circleSize + 40) / 2}
+                    cy={(circleSize + 40) / 2}
+                    r={(circleSize + 20) / 2}
+                    stroke={selectedTechnique.color}
+                    strokeWidth={3}
+                    fill="transparent"
+                    strokeDasharray={`${Math.PI * (circleSize + 20)}`}
+                    strokeDashoffset={Math.PI * (circleSize + 20) * (1 - progressPercent / 100)}
+                    strokeLinecap="round"
+                    rotation="-90"
+                    origin={`${(circleSize + 40) / 2}, ${(circleSize + 40) / 2}`}
+                  />
+                </Svg>
+              </View>
               <BreathingCircle
                 technique={selectedTechnique}
                 isPlaying={isPlaying}
@@ -537,6 +601,10 @@ export default function BreathingScreen() {
               <View style={styles.landscapeStats}>
                 <Text style={styles.landscapeStatLabel}>Time Left</Text>
                 <Text style={styles.landscapeStatValue}>{formatTime(remainingTime)}</Text>
+              </View>
+              <View style={styles.landscapeStats}>
+                <Text style={styles.landscapeStatLabel}>Progress</Text>
+                <Text style={[styles.landscapeStatValue, { color: selectedTechnique.color }]}>{progressPercent}%</Text>
               </View>
               <View style={styles.landscapeStats}>
                 <Text style={styles.landscapeStatLabel}>Cycles</Text>

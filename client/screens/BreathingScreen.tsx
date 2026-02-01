@@ -530,26 +530,28 @@ export default function BreathingScreen() {
             />
           </View>
 
-          {isPlaying ? (
-            <View style={styles.statsRow}>
-              <View style={styles.statItem}>
-                <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                  Time Left
-                </ThemedText>
-                <ThemedText type="h3">{formatTime(remainingTime)}</ThemedText>
-              </View>
-              <View style={[styles.statDivider, { backgroundColor: theme.border }]} />
-              <View style={styles.statItem}>
-                <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                  Cycles
-                </ThemedText>
-                <ThemedText type="h3">
-                  {cyclesCompleted}/{totalCycles}
-                </ThemedText>
-              </View>
-            </View>
-          ) : null}
         </Animated.View>
+
+        {/* Stats Row - Below circle during active session */}
+        {isPlaying ? (
+          <View style={styles.activeStatsRow}>
+            <View style={styles.statItem}>
+              <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                Time Left
+              </ThemedText>
+              <ThemedText type="h2" style={{ color: theme.text }}>{formatTime(remainingTime)}</ThemedText>
+            </View>
+            <View style={[styles.statDivider, { backgroundColor: theme.border }]} />
+            <View style={styles.statItem}>
+              <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                Cycles
+              </ThemedText>
+              <ThemedText type="h2" style={{ color: theme.text }}>
+                {cyclesCompleted}/{totalCycles}
+              </ThemedText>
+            </View>
+          </View>
+        ) : null}
 
         {/* Control Buttons - Horizontal below circle */}
         {!isPlaying ? (
@@ -734,19 +736,20 @@ export default function BreathingScreen() {
 
       </View>
 
-      {/* Floating Playing Controls - Only visible when breathing is active */}
+      {/* Playing Controls - Horizontal row at bottom during active session */}
       {isPlaying ? (
         <Animated.View 
           entering={FadeIn.duration(400)} 
-          style={[styles.floatingControlSection, { bottom: insets.bottom + 160 }]}
+          style={[styles.playingControlsBottom, { paddingBottom: insets.bottom + 100 }]}
         >
-          <View style={styles.floatingPlayingControls}>
+          <View style={styles.playingControlsRow}>
             <Pressable
               onPress={handleStop}
-              style={[styles.floatingControlButton, { backgroundColor: theme.backgroundSecondary }, Shadows.medium]}
+              style={[styles.playingSecondaryButton, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border }, Shadows.small]}
               testID="button-stop-breathing"
             >
               <Feather name="square" size={20} color={theme.text} />
+              <ThemedText type="caption" style={{ marginTop: 4 }}>Stop</ThemedText>
             </Pressable>
             <Pressable
               onPress={isPlaying ? handlePause : handleResume}
@@ -756,16 +759,17 @@ export default function BreathingScreen() {
                 colors={[selectedTechnique.color, `${selectedTechnique.color}CC`]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                style={[styles.floatingPauseButton, Shadows.large]}
+                style={[styles.playingPrimaryButton, Shadows.large]}
               >
-                <Feather name="pause" size={28} color="#FFFFFF" />
+                <Feather name="pause" size={32} color="#FFFFFF" />
               </LinearGradient>
             </Pressable>
             <Pressable
               onPress={() => setShowLandscapeMode(true)}
-              style={[styles.floatingControlButton, { backgroundColor: theme.backgroundSecondary }, Shadows.medium]}
+              style={[styles.playingSecondaryButton, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border }, Shadows.small]}
             >
               <Feather name="maximize-2" size={20} color={theme.text} />
+              <ThemedText type="caption" style={{ marginTop: 4 }}>Expand</ThemedText>
             </Pressable>
           </View>
         </Animated.View>
@@ -869,8 +873,8 @@ const styles = StyleSheet.create({
   circleSection: {
     alignItems: "center",
     flex: 1,
-    justifyContent: "center",
-    paddingVertical: Spacing.sm,
+    justifyContent: "flex-start",
+    paddingTop: Spacing.md,
   },
   circleContainer: {
     position: "relative",
@@ -924,6 +928,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: Spacing.xl,
     paddingHorizontal: Spacing.xl,
+  },
+  activeStatsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: Spacing.xl,
+    marginTop: Spacing.xl,
+    marginBottom: Spacing.lg,
   },
   statItem: {
     alignItems: "center",
@@ -1077,6 +1089,30 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  playingControlsBottom: {
+    paddingHorizontal: Spacing.lg,
+  },
+  playingControlsRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: Spacing.xl,
+  },
+  playingSecondaryButton: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+  },
+  playingPrimaryButton: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
     alignItems: "center",
     justifyContent: "center",
   },

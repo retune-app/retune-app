@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { View, StyleSheet, Pressable, Switch, Text, Modal, ActivityIndicator, ImageBackground, TextInput, Alert, Platform, ScrollView } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 
 const profileBackgroundDark = require("../../assets/images/library-background.png");
 const profileBackgroundLight = require("../../assets/images/library-background-light.png");
@@ -851,7 +852,15 @@ export default function ProfileScreen() {
         animationType="fade"
         onRequestClose={() => setShowSupportModal(false)}
       >
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView 
+          style={styles.modalOverlay} 
+          behavior="padding"
+          keyboardVerticalOffset={0}
+        >
+          <Pressable 
+            style={StyleSheet.absoluteFill} 
+            onPress={() => setShowSupportModal(false)} 
+          />
           <View style={[styles.supportModalContent, { backgroundColor: theme.cardBackground }]}>
             {supportSuccess ? (
               <>
@@ -973,7 +982,7 @@ export default function ProfileScreen() {
               </>
             )}
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
       </KeyboardAwareScrollViewCompat>
 

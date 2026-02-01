@@ -477,7 +477,7 @@ export default function BreathingScreen() {
           styles.contentContainer,
           {
             paddingTop: insets.top + Spacing.lg,
-            paddingBottom: insets.bottom + 120,
+            paddingBottom: insets.bottom + (currentAffirmation ? 180 : 120),
           },
         ]}
         showsVerticalScrollIndicator={false}

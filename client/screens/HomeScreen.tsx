@@ -125,6 +125,29 @@ export default function HomeScreen() {
     }
   }, [highlightAffirmationId, affirmations, clearHighlightAffirmation]);
 
+  // Also check for highlight when screen gains focus (for navigation from Breathing)
+  useFocusEffect(
+    useCallback(() => {
+      if (highlightAffirmationId && affirmations.length > 0 && !highlightedAffirmationId) {
+        setSelectedCategory("All");
+        setSearchQuery("");
+        setHighlightedAffirmationId(highlightAffirmationId);
+        
+        const index = affirmations.findIndex(a => a.id === highlightAffirmationId);
+        if (index !== -1 && flatListRef.current) {
+          setTimeout(() => {
+            flatListRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.3 });
+          }, 300);
+        }
+        
+        setTimeout(() => {
+          setHighlightedAffirmationId(null);
+          clearHighlightAffirmation();
+        }, 3500);
+      }
+    }, [highlightAffirmationId, affirmations, highlightedAffirmationId, clearHighlightAffirmation])
+  );
+
   const suggestedAffirmation = useMemo(() => {
     if (affirmations.length === 0) return null;
     const hour = new Date().getHours();

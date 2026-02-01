@@ -158,14 +158,10 @@ export default function BreathingScreen() {
     };
   }, [showLandscapeMode]);
 
-  // Lock orientation when landscape mode is active, force portrait when closing
+  // Allow free rotation - don't lock orientation in landscape mode
   useEffect(() => {
-    if (showLandscapeMode) {
-      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
-    } else {
-      // Force back to portrait when closing landscape mode
-      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
-    }
+    // Unlock orientation to allow natural device rotation
+    ScreenOrientation.unlockAsync();
   }, [showLandscapeMode]);
 
   // Cleanup on unmount

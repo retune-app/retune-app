@@ -1575,6 +1575,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Clear all affirmations only (keeps voice samples)
+  app.post("/api/affirmations/clear-all", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const userId = req.userId!;
+
+      // Delete all affirmations for this user
+      const deletedAffirmations = await db
+        .delete(affirmations)
+        .where(eq(affirmations.userId, userId))
+        .returning();
+
+      res.json({ 
+        success: true, 
+        deletedCount: deletedAffirmations.length
+      });
+    } catch (error) {
+      console.error("Error clearing affirmations:", error);
+      res.status(500).json({ error: "Failed to clear affirmations" });
+    }
+  });
+
   // Reset user data - deletes all affirmations and voice samples for the user
   app.post("/api/user/reset", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {

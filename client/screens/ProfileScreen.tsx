@@ -120,7 +120,9 @@ export default function ProfileScreen() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
+  const [showClearAffirmationsModal, setShowClearAffirmationsModal] = useState(false);
   const [showSupportModal, setShowSupportModal] = useState(false);
+  const [isClearingAffirmations, setIsClearingAffirmations] = useState(false);
   const [supportSubject, setSupportSubject] = useState("");
   const [supportMessage, setSupportMessage] = useState("");
   const [supportEmail, setSupportEmail] = useState("");
@@ -276,6 +278,42 @@ export default function ProfileScreen() {
       setShowResetModal(false);
     } finally {
       setIsResetting(false);
+    }
+  };
+
+  const handleClearAffirmations = async () => {
+    setIsClearingAffirmations(true);
+    try {
+      const url = new URL("/api/affirmations/clear-all", getApiUrl()).toString();
+      
+      const authToken = getAuthToken();
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (authToken) {
+        headers["X-Auth-Token"] = authToken;
+      }
+      
+      const response = await fetch(url, {
+        method: "POST",
+        credentials: "include",
+        headers,
+      });
+      
+      if (response.ok) {
+        try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
+        queryClient.invalidateQueries({ queryKey: ["/api/affirmations"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/user/stats"] });
+        setShowClearAffirmationsModal(false);
+      } else {
+        try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error); } catch (e) {}
+        setShowClearAffirmationsModal(false);
+      }
+    } catch (error) {
+      console.error("Clear affirmations error:", error);
+      setShowClearAffirmationsModal(false);
+    } finally {
+      setIsClearingAffirmations(false);
     }
   };
 
@@ -693,6 +731,25 @@ export default function ProfileScreen() {
             <Feather name="chevron-right" size={20} color={theme.textSecondary} />
           </Pressable>
           <Pressable
+            onPress={() => setShowClearAffirmationsModal(true)}
+            style={({ pressed }) => [
+              styles.settingItem,
+              { backgroundColor: pressed ? theme.backgroundSecondary : "transparent" },
+            ]}
+            testID="button-clear-affirmations"
+          >
+            <View style={[styles.settingIcon, { backgroundColor: "#9C27B020" }]}>
+              <Feather name="file-minus" size={20} color="#9C27B0" />
+            </View>
+            <View style={styles.settingContent}>
+              <ThemedText type="body">Clear All Affirmations</ThemedText>
+              <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                Remove all affirmations, keep voice
+              </ThemedText>
+            </View>
+            <Feather name="chevron-right" size={20} color={theme.textSecondary} />
+          </Pressable>
+          <Pressable
             onPress={() => setShowResetModal(true)}
             style={({ pressed }) => [
               styles.settingItem,
@@ -763,6 +820,47 @@ export default function ProfileScreen() {
                 testID="button-confirm-logout"
               >
                 <Text style={styles.confirmLogoutText}>Sign Out</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showClearAffirmationsModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowClearAffirmationsModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: theme.cardBackground }]}>
+            <View style={[styles.modalIconContainer, { backgroundColor: "#9C27B020" }]}>
+              <Feather name="file-minus" size={32} color="#9C27B0" />
+            </View>
+            <ThemedText type="h4" style={styles.modalTitle}>Clear All Affirmations</ThemedText>
+            <ThemedText type="body" style={[styles.modalMessage, { color: theme.textSecondary }]}>
+              This will permanently delete all your affirmations. Your voice samples and account settings will be kept.
+            </ThemedText>
+            <View style={styles.modalButtons}>
+              <Pressable
+                onPress={() => setShowClearAffirmationsModal(false)}
+                style={[styles.modalButton, { backgroundColor: theme.backgroundSecondary }]}
+                testID="button-cancel-clear-affirmations"
+                disabled={isClearingAffirmations}
+              >
+                <ThemedText type="body">Cancel</ThemedText>
+              </Pressable>
+              <Pressable
+                onPress={handleClearAffirmations}
+                style={[styles.modalButton, { backgroundColor: "#9C27B0" }]}
+                testID="button-confirm-clear-affirmations"
+                disabled={isClearingAffirmations}
+              >
+                {isClearingAffirmations ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={styles.confirmLogoutText}>Clear Affirmations</Text>
+                )}
               </Pressable>
             </View>
           </View>

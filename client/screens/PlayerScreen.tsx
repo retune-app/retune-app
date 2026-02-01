@@ -204,6 +204,14 @@ export default function PlayerScreen() {
 
   useLayoutEffect(() => {
     navigation.setOptions({
+      headerTitle: () => (
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <View style={{ width: 3, height: 14, borderRadius: 2, backgroundColor: theme.primary, marginRight: 8 }} />
+          <ThemedText type="caption" style={{ color: theme.primary, textTransform: 'uppercase', letterSpacing: 2, fontWeight: '600', fontSize: 11 }}>
+            My Affirmation
+          </ThemedText>
+        </View>
+      ),
       headerLeft: () => (
         isNew && !hasSaved ? (
           <HeaderButton
@@ -575,13 +583,6 @@ export default function PlayerScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.myAffirmationBanner}>
-          <View style={[styles.bannerAccent, { backgroundColor: theme.primary }]} />
-          <ThemedText type="caption" style={[styles.bannerText, { color: theme.primary }]}>
-            My Affirmation
-          </ThemedText>
-        </View>
-
         <View style={styles.visualizerContainer}>
           {rsvpEnabled ? (
             <RSVPDisplay

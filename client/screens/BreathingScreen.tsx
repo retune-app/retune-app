@@ -743,12 +743,27 @@ export default function BreathingScreen() {
               <Feather name="smartphone" size={18} color={hapticsEnabled ? ACCENT_GOLD : theme.textSecondary} />
               <ThemedText type="caption" style={{ marginTop: 2, fontSize: 9, color: hapticsEnabled ? ACCENT_GOLD : theme.textSecondary }}>Haptics</ThemedText>
             </Pressable>
-            <Pressable onPress={handleStart} testID="button-start-breathing">
+            <Pressable 
+              onPress={() => {
+                try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); } catch (e) {}
+                handleStart();
+              }} 
+              testID="button-start-breathing"
+              style={({ pressed }) => [
+                { transform: [{ scale: pressed ? 0.92 : 1 }] },
+              ]}
+            >
               <LinearGradient
-                colors={[selectedTechnique.color, `${selectedTechnique.color}CC`]}
+                colors={[selectedTechnique.color, `${selectedTechnique.color}BB`]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                style={[styles.primaryPlayButton, Shadows.large]}
+                style={[styles.primaryPlayButton, Shadows.large, { 
+                  shadowColor: selectedTechnique.color,
+                  shadowOffset: { width: 0, height: 6 },
+                  shadowOpacity: 0.4,
+                  shadowRadius: 12,
+                  elevation: 8,
+                }]}
               >
                 <Feather name="play" size={28} color="#FFFFFF" />
                 <Text style={styles.primaryButtonText}>Start</Text>

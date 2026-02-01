@@ -359,7 +359,7 @@ const styles = StyleSheet.create({
   },
   lengthBadge: {
     paddingHorizontal: 5,
-    paddingVertical: 1,
+    paddingVertical: 0,
     borderRadius: BorderRadius.xs,
     borderWidth: 1,
   },

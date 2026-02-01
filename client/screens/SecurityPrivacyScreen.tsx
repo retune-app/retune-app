@@ -154,7 +154,15 @@ export default function SecurityPrivacyScreen() {
                 <Feather name="check" size={14} color="#10B981" />
               </View>
               <ThemedText type="small" style={{ color: theme.textSecondary, flex: 1 }}>
-                We never sell your data to third parties
+                We collect only what's needed to power your experience: account info, affirmations, voice samples, and usage stats
+              </ThemedText>
+            </View>
+            <View style={styles.assuranceItem}>
+              <View style={[styles.checkIcon, { backgroundColor: "#10B98120" }]}>
+                <Feather name="check" size={14} color="#10B981" />
+              </View>
+              <ThemedText type="small" style={{ color: theme.textSecondary, flex: 1 }}>
+                We never sell or share your data to third parties
               </ThemedText>
             </View>
             <View style={styles.assuranceItem}>
@@ -171,14 +179,6 @@ export default function SecurityPrivacyScreen() {
               </View>
               <ThemedText type="small" style={{ color: theme.textSecondary, flex: 1 }}>
                 Voice data can be removed from ElevenLabs
-              </ThemedText>
-            </View>
-            <View style={styles.assuranceItem}>
-              <View style={[styles.checkIcon, { backgroundColor: "#10B98120" }]}>
-                <Feather name="check" size={14} color="#10B981" />
-              </View>
-              <ThemedText type="small" style={{ color: theme.textSecondary, flex: 1 }}>
-                Industry-standard security practices
               </ThemedText>
             </View>
           </View>

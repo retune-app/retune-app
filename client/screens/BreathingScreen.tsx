@@ -658,7 +658,11 @@ export default function BreathingScreen() {
                     if (audioSource === 'affirmation') {
                       // Already selected - navigate to Affirm tab to show selected affirmation
                       if (breathingAffirmation) {
-                        navigation.navigate('AffirmTab', { highlightAffirmationId: breathingAffirmation.id });
+                        // Navigate to nested screen with params
+                        navigation.navigate('AffirmTab', { 
+                          screen: 'Home', 
+                          params: { highlightAffirmationId: breathingAffirmation.id } 
+                        } as any);
                       } else {
                         navigation.navigate('AffirmTab');
                       }

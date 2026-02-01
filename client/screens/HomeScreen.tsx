@@ -416,10 +416,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   highlightedCard: {
+    borderWidth: 2,
+    borderColor: '#C9A227',
+    borderRadius: 16,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOpacity: 1,
+    shadowRadius: 16,
+    elevation: 12,
   },
   edgeFade: {
     position: "absolute",

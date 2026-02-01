@@ -10,7 +10,6 @@ import CreateScreen from "@/screens/CreateScreen";
 import PlayerScreen from "@/screens/PlayerScreen";
 import AnalyticsScreen from "@/screens/AnalyticsScreen";
 import { AuthScreen } from "@/screens/AuthScreen";
-import { MiniPlayer } from "@/components/MiniPlayer";
 import { useScreenOptions } from "@/hooks/useScreenOptions";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/hooks/useTheme";
@@ -160,7 +159,6 @@ export default function RootStackNavigator() {
           }}
         />
       </Stack.Navigator>
-      <MiniPlayer currentRoute={currentRoute} />
       <VoiceSetupNavigator />
     </View>
   );

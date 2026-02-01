@@ -15,7 +15,6 @@ import Animated, {
 
 import { useTheme } from "@/hooks/useTheme";
 import { BorderRadius, Shadows } from "@/constants/theme";
-import { useAudio } from "@/contexts/AudioContext";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -25,26 +24,17 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 interface FloatingSettingsButtonProps {
   bottomOffset?: number;
   topOffset?: number;
-  hideOnMiniPlayer?: boolean;
 }
 
-export function FloatingSettingsButton({ bottomOffset, topOffset, hideOnMiniPlayer = true }: FloatingSettingsButtonProps) {
+export function FloatingSettingsButton({ bottomOffset, topOffset }: FloatingSettingsButtonProps) {
   const { theme, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
-  const { currentAffirmation } = useAudio();
   const scale = useSharedValue(1);
   
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
-  
-  const isMiniPlayerVisible = !!currentAffirmation;
-  
-  // Early return AFTER all hooks are called
-  if (hideOnMiniPlayer && isMiniPlayerVisible) {
-    return null;
-  }
 
   const handlePress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

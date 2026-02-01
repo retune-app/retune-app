@@ -831,7 +831,7 @@ export default function BreathingScreen() {
       />
 
       {/* Floating Settings Button - Top Right */}
-      {!isPlaying ? <FloatingSettingsButton topOffset={insets.top + Spacing.sm} hideOnMiniPlayer={false} /> : null}
+      {!isPlaying ? <FloatingSettingsButton topOffset={insets.top + Spacing.sm} /> : null}
     </ThemedView>
   );
 }

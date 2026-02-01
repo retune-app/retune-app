@@ -122,7 +122,7 @@ export function WelcomeSection({
     <View style={styles.container}>
       <View style={[
         styles.greetingRow,
-        !isDark && styles.greetingRowLight,
+        isDark ? styles.greetingRowDark : styles.greetingRowLight,
       ]}>
         <View style={styles.greetingContent}>
           <View style={styles.greetingHeader}>
@@ -163,6 +163,16 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(201, 162, 39, 0.12)",
     borderWidth: 1,
     borderColor: "rgba(201, 162, 39, 0.25)",
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    marginHorizontal: -Spacing.lg,
+    marginTop: 0,
+    borderRadius: BorderRadius.md,
+  },
+  greetingRowDark: {
+    backgroundColor: "rgba(201, 162, 39, 0.15)",
+    borderWidth: 1,
+    borderColor: "rgba(201, 162, 39, 0.3)",
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     marginHorizontal: -Spacing.lg,

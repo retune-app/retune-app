@@ -526,32 +526,11 @@ export default function BreathingScreen() {
               isPlaying={isPlaying}
               onCycleComplete={handleCycleComplete}
               hapticsEnabled={hapticsEnabled}
-              size={260}
+              size={isPlaying ? 300 : 260}
             />
           </View>
 
         </Animated.View>
-
-        {/* Stats Row - Below circle during active session */}
-        {isPlaying ? (
-          <View style={styles.activeStatsRow}>
-            <View style={styles.statItem}>
-              <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                Time Left
-              </ThemedText>
-              <ThemedText type="h2" style={{ color: theme.text }}>{formatTime(remainingTime)}</ThemedText>
-            </View>
-            <View style={[styles.statDivider, { backgroundColor: theme.border }]} />
-            <View style={styles.statItem}>
-              <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                Cycles
-              </ThemedText>
-              <ThemedText type="h2" style={{ color: theme.text }}>
-                {cyclesCompleted}/{totalCycles}
-              </ThemedText>
-            </View>
-          </View>
-        ) : null}
 
         {/* Control Buttons - Horizontal below circle */}
         {!isPlaying ? (
@@ -686,6 +665,24 @@ export default function BreathingScreen() {
           entering={FadeIn.duration(400)} 
           style={[styles.playingControlsBottom, { paddingBottom: insets.bottom + 100 }]}
         >
+          {/* Stats Row - Above controls */}
+          <View style={styles.activeStatsRow}>
+            <View style={styles.statItem}>
+              <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                Time Left
+              </ThemedText>
+              <ThemedText type="h2" style={{ color: theme.text }}>{formatTime(remainingTime)}</ThemedText>
+            </View>
+            <View style={[styles.statDivider, { backgroundColor: theme.border }]} />
+            <View style={styles.statItem}>
+              <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                Cycles
+              </ThemedText>
+              <ThemedText type="h2" style={{ color: theme.text }}>
+                {cyclesCompleted}/{totalCycles}
+              </ThemedText>
+            </View>
+          </View>
           <View style={styles.playingControlsRow}>
             <Pressable
               onPress={handleStop}
@@ -878,7 +875,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: Spacing.xl,
-    marginTop: Spacing.xl,
     marginBottom: Spacing.lg,
   },
   statItem: {

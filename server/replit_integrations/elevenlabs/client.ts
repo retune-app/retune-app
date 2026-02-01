@@ -5,19 +5,221 @@ import { ElevenLabsClient } from "elevenlabs";
 import WebSocket from "ws";
 import fs from "fs";
 import path from "path";
+import { spawn } from "child_process";
+import { writeFile, unlink, readFile } from "fs/promises";
+import { randomUUID } from "crypto";
+import { tmpdir } from "os";
+import { join } from "path";
+
+// Pause duration between sentences in seconds
+const SENTENCE_PAUSE_SECONDS = 1.5;
 
 /**
- * Add natural pauses between sentences for more meditative audio pacing.
- * Inserts SSML-style break tags after sentence-ending punctuation.
- * This is applied internally before TTS - the original text remains unchanged for display.
- * @param text - The original text
- * @param pauseSeconds - Pause duration in seconds (default 0.6)
- * @returns Text with SSML break tags inserted after sentences
+ * Find indices of words that end sentences (ending with . ! ?)
  */
-function addSentencePauses(text: string, pauseSeconds: number = 0.6): string {
-  // Insert break tags after sentence-ending punctuation (. ! ?) followed by space or end
-  // This regex matches: period/exclamation/question mark, optionally followed by quotes, then space or end
-  return text.replace(/([.!?]["']?)\s+/g, `$1 <break time="${pauseSeconds}s"/> `);
+function findSentenceEndIndices(words: WordTiming[]): number[] {
+  const indices: number[] = [];
+  for (let i = 0; i < words.length; i++) {
+    const word = words[i].word;
+    // Check if word ends with sentence-ending punctuation
+    if (/[.!?]["']?$/.test(word)) {
+      indices.push(i);
+    }
+  }
+  return indices;
+}
+
+/**
+ * Adjust word timings to account for inserted pauses after sentences.
+ * Each word after a sentence ending gets shifted by the cumulative pause duration.
+ */
+function adjustWordTimingsForPauses(
+  wordTimings: WordTiming[],
+  sentenceEndIndices: number[],
+  pauseMs: number
+): WordTiming[] {
+  if (sentenceEndIndices.length === 0) return wordTimings;
+  
+  const adjusted: WordTiming[] = [];
+  let cumulativePause = 0;
+  let nextPauseIndex = 0;
+  
+  for (let i = 0; i < wordTimings.length; i++) {
+    const word = wordTimings[i];
+    
+    // Add cumulative pause offset to timing
+    adjusted.push({
+      word: word.word,
+      startMs: word.startMs + cumulativePause,
+      endMs: word.endMs + cumulativePause,
+    });
+    
+    // If this word is a sentence ending (but not the last word), add pause for subsequent words
+    if (nextPauseIndex < sentenceEndIndices.length && 
+        i === sentenceEndIndices[nextPauseIndex] && 
+        i < wordTimings.length - 1) {
+      cumulativePause += pauseMs;
+      nextPauseIndex++;
+    }
+  }
+  
+  return adjusted;
+}
+
+/**
+ * Insert silence into audio at specified positions using ffmpeg.
+ * Creates a new audio file with silence inserted after each sentence.
+ */
+async function insertSilenceIntoAudio(
+  audioBuffer: Buffer,
+  wordTimings: WordTiming[],
+  sentenceEndIndices: number[],
+  pauseSeconds: number
+): Promise<Buffer> {
+  if (sentenceEndIndices.length === 0 || sentenceEndIndices.every(i => i >= wordTimings.length - 1)) {
+    return audioBuffer; // No pauses needed
+  }
+
+  const inputPath = join(tmpdir(), `input-${randomUUID()}.mp3`);
+  const outputPath = join(tmpdir(), `output-${randomUUID()}.mp3`);
+  const silencePath = join(tmpdir(), `silence-${randomUUID()}.mp3`);
+  const concatListPath = join(tmpdir(), `concat-${randomUUID()}.txt`);
+
+  try {
+    // Write input audio to temp file
+    await writeFile(inputPath, audioBuffer);
+    
+    // Generate a silence file
+    await new Promise<void>((resolve, reject) => {
+      const ffmpeg = spawn("ffmpeg", [
+        "-f", "lavfi",
+        "-i", `anullsrc=r=44100:cl=mono`,
+        "-t", pauseSeconds.toString(),
+        "-q:a", "9",
+        "-acodec", "libmp3lame",
+        "-y",
+        silencePath,
+      ]);
+      ffmpeg.stderr.on("data", () => {});
+      ffmpeg.on("close", (code) => {
+        if (code === 0) resolve();
+        else reject(new Error(`ffmpeg silence generation exited with code ${code}`));
+      });
+      ffmpeg.on("error", reject);
+    });
+
+    // Get positions where we need to split (in seconds) - at the end of each sentence word
+    // Only include sentence endings that aren't the last word
+    const splitPositions: number[] = [];
+    for (const idx of sentenceEndIndices) {
+      if (idx < wordTimings.length - 1) {
+        splitPositions.push(wordTimings[idx].endMs / 1000);
+      }
+    }
+    
+    if (splitPositions.length === 0) {
+      return audioBuffer; // No splits needed
+    }
+
+    // Create segments and interleave with silence
+    const segments: string[] = [];
+    let lastPos = 0;
+    
+    for (let i = 0; i < splitPositions.length; i++) {
+      const segmentPath = join(tmpdir(), `segment-${randomUUID()}-${i}.mp3`);
+      const startTime = lastPos;
+      const endTime = splitPositions[i];
+      
+      // Extract segment
+      await new Promise<void>((resolve, reject) => {
+        const ffmpeg = spawn("ffmpeg", [
+          "-i", inputPath,
+          "-ss", startTime.toString(),
+          "-to", endTime.toString(),
+          "-c", "copy",
+          "-y",
+          segmentPath,
+        ]);
+        ffmpeg.stderr.on("data", () => {});
+        ffmpeg.on("close", (code) => {
+          if (code === 0) resolve();
+          else reject(new Error(`ffmpeg segment extraction exited with code ${code}`));
+        });
+        ffmpeg.on("error", reject);
+      });
+      
+      segments.push(segmentPath);
+      lastPos = endTime;
+    }
+    
+    // Extract final segment (from last split to end)
+    const finalSegmentPath = join(tmpdir(), `segment-${randomUUID()}-final.mp3`);
+    await new Promise<void>((resolve, reject) => {
+      const ffmpeg = spawn("ffmpeg", [
+        "-i", inputPath,
+        "-ss", lastPos.toString(),
+        "-c", "copy",
+        "-y",
+        finalSegmentPath,
+      ]);
+      ffmpeg.stderr.on("data", () => {});
+      ffmpeg.on("close", (code) => {
+        if (code === 0) resolve();
+        else reject(new Error(`ffmpeg final segment extraction exited with code ${code}`));
+      });
+      ffmpeg.on("error", reject);
+    });
+    segments.push(finalSegmentPath);
+
+    // Create concat list file - interleave segments with silence
+    let concatContent = "";
+    for (let i = 0; i < segments.length; i++) {
+      concatContent += `file '${segments[i]}'\n`;
+      // Add silence after each segment except the last
+      if (i < segments.length - 1) {
+        concatContent += `file '${silencePath}'\n`;
+      }
+    }
+    await writeFile(concatListPath, concatContent);
+
+    // Concatenate all segments with silence
+    await new Promise<void>((resolve, reject) => {
+      const ffmpeg = spawn("ffmpeg", [
+        "-f", "concat",
+        "-safe", "0",
+        "-i", concatListPath,
+        "-c", "copy",
+        "-y",
+        outputPath,
+      ]);
+      ffmpeg.stderr.on("data", () => {});
+      ffmpeg.on("close", (code) => {
+        if (code === 0) resolve();
+        else reject(new Error(`ffmpeg concat exited with code ${code}`));
+      });
+      ffmpeg.on("error", reject);
+    });
+
+    // Read the output
+    const result = await readFile(outputPath);
+    
+    // Clean up temp files
+    const filesToClean = [inputPath, outputPath, silencePath, concatListPath, ...segments];
+    await Promise.all(filesToClean.map(f => unlink(f).catch(() => {})));
+    
+    return result;
+  } catch (error) {
+    console.error("Error inserting silence into audio:", error);
+    // Clean up on error
+    await Promise.all([
+      unlink(inputPath).catch(() => {}),
+      unlink(outputPath).catch(() => {}),
+      unlink(silencePath).catch(() => {}),
+      unlink(concatListPath).catch(() => {}),
+    ]);
+    // Return original audio if processing fails
+    return audioBuffer;
+  }
 }
 
 let connectionSettings: any;
@@ -121,12 +323,6 @@ export async function textToSpeech(
 ): Promise<{ audio: ArrayBuffer; duration: number; wordTimings: WordTiming[] }> {
   const apiKey = await getCredentials();
 
-  // Add natural pauses between sentences for more meditative pacing
-  // This is applied internally - the original text remains unchanged for display
-  const textWithPauses = addSentencePauses(text, 5.0);
-  console.log("Original text:", text);
-  console.log("Text with pauses:", textWithPauses);
-
   // Use the with-timestamps endpoint for word timing data
   const response = await fetch(
     `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/with-timestamps`,
@@ -137,7 +333,7 @@ export async function textToSpeech(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        text: textWithPauses,
+        text,
         model_id: "eleven_multilingual_v2",
         voice_settings: {
           stability: 0.5,
@@ -159,10 +355,35 @@ export async function textToSpeech(
   
   // Decode base64 audio
   const audioBase64 = result.audio_base64;
-  const audioBuffer = Uint8Array.from(atob(audioBase64), c => c.charCodeAt(0)).buffer;
+  const rawAudioBuffer = Buffer.from(audioBase64, 'base64');
   
   // Parse character-level timing into word-level timing
-  const wordTimings = parseCharacterTimingsToWords(result.alignment);
+  let wordTimings = parseCharacterTimingsToWords(result.alignment);
+  
+  // Find sentence endings and insert pauses into both audio and timing data
+  const sentenceEndIndices = findSentenceEndIndices(wordTimings);
+  console.log(`Found ${sentenceEndIndices.length} sentence endings in ${wordTimings.length} words`);
+  
+  // Post-process: insert silence between sentences and adjust timings
+  let finalAudioBuffer: Buffer = rawAudioBuffer;
+  if (sentenceEndIndices.length > 0 && SENTENCE_PAUSE_SECONDS > 0) {
+    // Insert silence into audio
+    finalAudioBuffer = await insertSilenceIntoAudio(
+      rawAudioBuffer,
+      wordTimings,
+      sentenceEndIndices,
+      SENTENCE_PAUSE_SECONDS
+    );
+    
+    // Adjust word timings to account for inserted pauses
+    wordTimings = adjustWordTimingsForPauses(
+      wordTimings,
+      sentenceEndIndices,
+      SENTENCE_PAUSE_SECONDS * 1000 // Convert to ms
+    );
+    
+    console.log(`Inserted ${sentenceEndIndices.length} pauses of ${SENTENCE_PAUSE_SECONDS}s each`);
+  }
   
   // Calculate duration from the last word's end time, or estimate if no timing data
   let estimatedDuration: number;
@@ -180,8 +401,11 @@ export async function textToSpeech(
     estimatedDuration = Math.max(1, Math.ceil((wordCount / 150) * 60));
   }
 
+  // Convert Buffer to ArrayBuffer properly
+  const audioArrayBuffer = new Uint8Array(finalAudioBuffer).buffer as ArrayBuffer;
+
   return {
-    audio: audioBuffer,
+    audio: audioArrayBuffer,
     duration: estimatedDuration,
     wordTimings,
   };

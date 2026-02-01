@@ -213,19 +213,32 @@ export default function HomeScreen() {
     setNewTitle("");
   };
 
+  const handleSettingsPress = () => {
+    navigation.navigate("Main", { screen: "SettingsTab" } as any);
+  };
+
   const renderHeader = () => (
     <View style={styles.headerContent}>
-      {/* Search bar at top of Library */}
-      <View style={[styles.searchContainer, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder }]}>
-        <Feather name="search" size={20} color={theme.placeholder} />
-        <TextInput
-          style={[styles.searchInput, { color: theme.text }]}
-          placeholder="Search affirmations..."
-          placeholderTextColor={theme.placeholder}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          testID="input-search"
-        />
+      {/* Search bar with settings button */}
+      <View style={styles.searchRow}>
+        <Pressable
+          onPress={handleSettingsPress}
+          style={[styles.headerSettingsButton, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder }]}
+          testID="button-header-settings"
+        >
+          <Feather name="settings" size={20} color={theme.placeholder} />
+        </Pressable>
+        <View style={[styles.searchContainer, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder }]}>
+          <Feather name="search" size={18} color={theme.placeholder} />
+          <TextInput
+            style={[styles.searchInput, { color: theme.text }]}
+            placeholder="Search affirmations..."
+            placeholderTextColor={theme.placeholder}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            testID="input-search"
+          />
+        </View>
       </View>
       <FlatList
         horizontal
@@ -441,14 +454,28 @@ const styles = StyleSheet.create({
   headerContent: {
     marginBottom: Spacing.lg,
   },
+  searchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Spacing.md,
+    gap: Spacing.sm,
+  },
+  headerSettingsButton: {
+    width: 44,
+    height: 44,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   searchContainer: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: Spacing.md,
     height: 44,
     borderRadius: BorderRadius.full,
     borderWidth: 1,
-    marginBottom: Spacing.md,
   },
   searchInput: {
     flex: 1,

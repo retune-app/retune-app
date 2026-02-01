@@ -133,8 +133,8 @@ const styles = StyleSheet.create({
   innerContainer: {
     borderRadius: BorderRadius.lg,
     overflow: 'hidden',
-    borderWidth: 0.5,
-    borderColor: 'rgba(201, 162, 39, 0.3)',
+    borderWidth: 1,
+    borderColor: 'rgba(201, 162, 39, 0.4)',
   },
   progressBar: {
     height: 2,

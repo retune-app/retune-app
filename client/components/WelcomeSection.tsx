@@ -125,15 +125,17 @@ export function WelcomeSection({
 
   return (
     <View style={styles.container}>
-      <View style={[
-        styles.greetingRow,
-        isDark ? styles.greetingRowDark : styles.greetingRowLight,
-      ]}>
+      <Pressable
+        onPress={handleToggleTheme}
+        style={[
+          styles.greetingRow,
+          isDark ? styles.greetingRowDark : styles.greetingRowLight,
+        ]}
+        testID="button-toggle-theme-banner"
+      >
         <View style={styles.greetingContent}>
           <View style={styles.greetingHeader}>
-            <Pressable onPress={handleToggleTheme} testID="button-toggle-theme-icon">
-              <Feather name={icon as any} size={20} color={theme.gold} />
-            </Pressable>
+            <Feather name={icon as any} size={20} color={theme.gold} />
             <ThemedText type="h2" style={[styles.greeting, { color: theme.text }]}>
               {greeting}, {displayName}
             </ThemedText>
@@ -142,25 +144,19 @@ export function WelcomeSection({
             {suggestion}
           </ThemedText>
         </View>
-        <View style={styles.headerButtons}>
+        {onSettingsPress ? (
           <Pressable
-            onPress={handleToggleTheme}
-            style={[styles.themeButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
-            testID="button-toggle-theme"
+            onPress={(e) => {
+              e.stopPropagation();
+              handleSettingsPress();
+            }}
+            style={[styles.settingsButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
+            testID="button-welcome-settings"
           >
-            <Feather name={isDark ? "sun" : "moon"} size={18} color={theme.gold} />
+            <Feather name="settings" size={22} color={theme.gold} />
           </Pressable>
-          {onSettingsPress ? (
-            <Pressable
-              onPress={handleSettingsPress}
-              style={[styles.settingsButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
-              testID="button-welcome-settings"
-            >
-              <Feather name="settings" size={22} color={theme.gold} />
-            </Pressable>
-          ) : null}
-        </View>
-      </View>
+        ) : null}
+      </Pressable>
     </View>
   );
 }
@@ -197,18 +193,6 @@ const styles = StyleSheet.create({
   },
   greetingContent: {
     flex: 1,
-  },
-  headerButtons: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.xs,
-  },
-  themeButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: "center",
-    alignItems: "center",
   },
   settingsButton: {
     width: 40,

@@ -228,7 +228,8 @@ export default function SoundLibraryScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Current Selection Card */}
+        {/* Current Selection Card - Only show when a sound is selected */}
+        {currentSelection ? (
         <Animated.View entering={FadeIn.duration(400)}>
           <View style={[styles.currentCard, { backgroundColor: theme.cardBackground }, Shadows.medium]}>
             <View style={styles.currentHeader}>
@@ -238,88 +239,67 @@ export default function SoundLibraryScreen() {
               </ThemedText>
             </View>
             <View style={styles.currentContent}>
-              {currentSelection ? (
-                <>
-                  <View style={[styles.currentIconContainer, { backgroundColor: `${ACCENT_GOLD}20` }]}>
-                    <Feather name={currentSelection.icon as any} size={24} color={ACCENT_GOLD} />
-                  </View>
-                  <View style={styles.currentInfo}>
-                    <ThemedText type="h4" style={{ color: ACCENT_GOLD }}>
-                      {currentSelection.name}
-                    </ThemedText>
-                    <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                      {currentSelection.description}
-                    </ThemedText>
-                  </View>
-                </>
-              ) : (
-                <>
-                  <View style={[styles.currentIconContainer, { backgroundColor: theme.backgroundSecondary }]}>
-                    <Feather name="volume-x" size={24} color={theme.textSecondary} />
-                  </View>
-                  <View style={styles.currentInfo}>
-                    <ThemedText type="h4" style={{ color: theme.textSecondary }}>
-                      No Sound Selected
-                    </ThemedText>
-                    <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                      Choose a sound below to enhance your experience
-                    </ThemedText>
-                  </View>
-                </>
-              )}
+              <View style={[styles.currentIconContainer, { backgroundColor: `${ACCENT_GOLD}20` }]}>
+                <Feather name={currentSelection.icon as any} size={24} color={ACCENT_GOLD} />
+              </View>
+              <View style={styles.currentInfo}>
+                <ThemedText type="h4" style={{ color: ACCENT_GOLD }}>
+                  {currentSelection.name}
+                </ThemedText>
+                <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                  {currentSelection.description}
+                </ThemedText>
+              </View>
             </View>
 
             {/* Volume Control */}
-            {currentSelection ? (
-              <View style={styles.volumeSection}>
-                <View style={styles.volumeRow}>
-                  <Feather name="volume-1" size={16} color={theme.textSecondary} />
-                  <View style={styles.volumeSliderContainer}>
-                    <View style={[styles.volumeTrack, { backgroundColor: theme.border }]}>
-                      <View 
-                        style={[
-                          styles.volumeFill, 
-                          { backgroundColor: ACCENT_GOLD, width: `${volume * 100}%` }
-                        ]} 
-                      />
-                    </View>
+            <View style={styles.volumeSection}>
+              <View style={styles.volumeRow}>
+                <Feather name="volume-1" size={16} color={theme.textSecondary} />
+                <View style={styles.volumeSliderContainer}>
+                  <View style={[styles.volumeTrack, { backgroundColor: theme.border }]}>
+                    <View 
+                      style={[
+                        styles.volumeFill, 
+                        { backgroundColor: ACCENT_GOLD, width: `${volume * 100}%` }
+                      ]} 
+                    />
                   </View>
-                  <Feather name="volume-2" size={16} color={theme.textSecondary} />
                 </View>
-                <View style={styles.volumeControls}>
-                  <Pressable 
-                    onPress={() => setVolume(Math.max(0.1, volume - 0.1))}
-                    style={[styles.volumeButton, { backgroundColor: theme.backgroundSecondary }]}
-                  >
-                    <Feather name="minus" size={14} color={theme.primary} />
-                  </Pressable>
-                  <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                    {Math.round(volume * 100)}%
-                  </ThemedText>
-                  <Pressable 
-                    onPress={() => setVolume(Math.min(1, volume + 0.1))}
-                    style={[styles.volumeButton, { backgroundColor: theme.backgroundSecondary }]}
-                  >
-                    <Feather name="plus" size={14} color={theme.primary} />
-                  </Pressable>
-                </View>
+                <Feather name="volume-2" size={16} color={theme.textSecondary} />
               </View>
-            ) : null}
+              <View style={styles.volumeControls}>
+                <Pressable 
+                  onPress={() => setVolume(Math.max(0.1, volume - 0.1))}
+                  style={[styles.volumeButton, { backgroundColor: theme.backgroundSecondary }]}
+                >
+                  <Feather name="minus" size={14} color={theme.primary} />
+                </Pressable>
+                <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                  {Math.round(volume * 100)}%
+                </ThemedText>
+                <Pressable 
+                  onPress={() => setVolume(Math.min(1, volume + 0.1))}
+                  style={[styles.volumeButton, { backgroundColor: theme.backgroundSecondary }]}
+                >
+                  <Feather name="plus" size={14} color={theme.primary} />
+                </Pressable>
+              </View>
+            </View>
 
             {/* Turn Off Button */}
-            {currentSelection ? (
-              <Pressable
-                onPress={() => handleSelectMusic('none')}
-                style={[styles.turnOffButton, { borderColor: theme.border }]}
-              >
-                <Feather name="x-circle" size={16} color={theme.textSecondary} />
-                <ThemedText type="small" style={{ color: theme.textSecondary, marginLeft: Spacing.xs }}>
-                  Turn Off Sound
-                </ThemedText>
-              </Pressable>
-            ) : null}
+            <Pressable
+              onPress={() => handleSelectMusic('none')}
+              style={[styles.turnOffButton, { borderColor: theme.border }]}
+            >
+              <Feather name="x-circle" size={16} color={theme.textSecondary} />
+              <ThemedText type="small" style={{ color: theme.textSecondary, marginLeft: Spacing.xs }}>
+                Turn Off Sound
+              </ThemedText>
+            </Pressable>
           </View>
         </Animated.View>
+        ) : null}
 
         {/* Category Sections */}
         <CategorySection

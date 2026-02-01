@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from "react";
+import React, { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { FlatList, View, StyleSheet, RefreshControl, TextInput, Modal, Pressable, Alert, ImageBackground } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -8,7 +8,7 @@ const libraryBackgroundLight = require("../../assets/images/library-background-l
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
@@ -40,6 +40,10 @@ interface CustomCategory {
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
+type AffirmTabRouteParams = {
+  highlightAffirmationId?: number;
+};
+
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
@@ -47,7 +51,11 @@ export default function HomeScreen() {
   const { theme, isDark } = useTheme();
   const { user } = useAuth();
   const navigation = useNavigation<NavigationProp>();
+  const route = useRoute<RouteProp<{ AffirmTab: AffirmTabRouteParams }, 'AffirmTab'>>();
   const { playAffirmation, currentAffirmation, isPlaying, togglePlayPause, breathingAffirmation, setBreathingAffirmation } = useAudio();
+  
+  const flatListRef = useRef<FlatList<Affirmation>>(null);
+  const [highlightedAffirmationId, setHighlightedAffirmationId] = useState<number | null>(null);
 
   const queryClient = useQueryClient();
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -80,6 +88,31 @@ export default function HomeScreen() {
   const { data: affirmations = [], refetch, isLoading } = useQuery<Affirmation[]>({
     queryKey: ["/api/affirmations"],
   });
+
+  // Handle navigation param to highlight and scroll to affirmation
+  useEffect(() => {
+    const highlightId = route.params?.highlightAffirmationId;
+    if (highlightId && affirmations.length > 0) {
+      setHighlightedAffirmationId(highlightId);
+      
+      // Find the index of the affirmation to scroll to
+      const index = affirmations.findIndex(a => a.id === highlightId);
+      if (index !== -1 && flatListRef.current) {
+        // Small delay to ensure FlatList is rendered
+        setTimeout(() => {
+          flatListRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.3 });
+        }, 300);
+      }
+      
+      // Clear highlight after 3 seconds
+      setTimeout(() => {
+        setHighlightedAffirmationId(null);
+      }, 3000);
+      
+      // Clear the param to prevent re-triggering
+      navigation.setParams({ highlightAffirmationId: undefined } as any);
+    }
+  }, [route.params?.highlightAffirmationId, affirmations]);
 
   const suggestedAffirmation = useMemo(() => {
     if (affirmations.length === 0) return null;
@@ -242,20 +275,23 @@ export default function HomeScreen() {
   const renderItem = ({ item, index }: { item: Affirmation; index: number }) => {
     const isCurrentlyPlaying = currentAffirmation?.id === item.id && isPlaying;
     const isBreathingSelected = breathingAffirmation?.id === item.id;
+    const isHighlighted = highlightedAffirmationId === item.id;
     return (
       <Animated.View entering={FadeInUp.delay(index * 50).duration(300).springify()}>
-        <SwipeableAffirmationCard
-          affirmation={item}
-          onPress={() => handleAffirmationPress(item.id)}
-          onPlayPress={() => handlePlayPress(item)}
-          onRename={handleRenamePress}
-          onSetForBreathing={handleSetForBreathing}
-          onAfterDelete={handleAfterDelete}
-          isActive={isCurrentlyPlaying}
-          isBreathingAffirmation={isBreathingSelected}
-          testID={`card-affirmation-${item.id}`}
-          hapticEnabled={hapticEnabled}
-        />
+        <View style={isHighlighted ? [styles.highlightedCard, { shadowColor: theme.gold }] : undefined}>
+          <SwipeableAffirmationCard
+            affirmation={item}
+            onPress={() => handleAffirmationPress(item.id)}
+            onPlayPress={() => handlePlayPress(item)}
+            onRename={handleRenamePress}
+            onSetForBreathing={handleSetForBreathing}
+            onAfterDelete={handleAfterDelete}
+            isActive={isCurrentlyPlaying}
+            isBreathingAffirmation={isBreathingSelected}
+            testID={`card-affirmation-${item.id}`}
+            hapticEnabled={hapticEnabled}
+          />
+        </View>
       </Animated.View>
     );
   };
@@ -272,6 +308,7 @@ export default function HomeScreen() {
       resizeMode="cover"
     >
       <FlatList
+        ref={flatListRef}
         style={styles.container}
         contentContainerStyle={[
           styles.contentContainer,
@@ -287,6 +324,12 @@ export default function HomeScreen() {
         renderItem={renderItem}
         ListHeaderComponent={renderHeader}
         ListEmptyComponent={renderEmpty}
+        onScrollToIndexFailed={(info) => {
+          // Handle scroll failure gracefully
+          setTimeout(() => {
+            flatListRef.current?.scrollToIndex({ index: info.index, animated: true });
+          }, 100);
+        }}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         refreshControl={
           <RefreshControl
@@ -367,6 +410,12 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+  },
+  highlightedCard: {
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 12,
+    elevation: 8,
   },
   edgeFade: {
     position: "absolute",

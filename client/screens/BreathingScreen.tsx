@@ -655,7 +655,16 @@ export default function BreathingScreen() {
                 </Pressable>
                 <Pressable
                   onPress={() => {
-                    setAudioSource('affirmation');
+                    if (audioSource === 'affirmation') {
+                      // Already selected - navigate to Affirm tab to show selected affirmation
+                      if (breathingAffirmation) {
+                        navigation.navigate('AffirmTab', { highlightAffirmationId: breathingAffirmation.id });
+                      } else {
+                        navigation.navigate('AffirmTab');
+                      }
+                    } else {
+                      setAudioSource('affirmation');
+                    }
                     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
                   }}
                   style={[

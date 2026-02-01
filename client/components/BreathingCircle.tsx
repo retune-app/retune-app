@@ -4,7 +4,6 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  withRepeat,
   Easing,
   interpolate,
   runOnJS,
@@ -41,7 +40,6 @@ export default function BreathingCircle({
   const opacity = useSharedValue(0.3);
   const phaseIndex = useSharedValue(0);
   const countdown = useSharedValue(0);
-  const shimmerRotation = useSharedValue(0);
   const [currentPhase, setCurrentPhase] = React.useState<BreathPhase>("inhale");
   const [currentCountdown, setCurrentCountdown] = React.useState(0);
 
@@ -131,28 +129,6 @@ export default function BreathingCircle({
     opacity: interpolate(scale.value, [0.6, 1], [0.1, 0.25]),
   }));
 
-  const shimmerStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${shimmerRotation.value}deg` }],
-    opacity: isPlaying ? 0.9 : 0,
-  }));
-
-  // Shimmer rotation animation - synced to breathing cycle
-  useEffect(() => {
-    if (isPlaying) {
-      const cycleDuration = technique.phases.reduce((sum, p) => sum + p.duration, 0) * 1000;
-      shimmerRotation.value = withRepeat(
-        withTiming(360, {
-          duration: cycleDuration,
-          easing: Easing.linear,
-        }),
-        -1,
-        false
-      );
-    } else {
-      shimmerRotation.value = withTiming(0, { duration: 500 });
-    }
-  }, [isPlaying, technique]);
-
   const phaseColor = technique.color || ACCENT_GOLD;
 
   return (
@@ -169,30 +145,6 @@ export default function BreathingCircle({
           },
         ]}
       />
-
-      {/* Shimmer glow that rotates around the outer ring */}
-      <Animated.View
-        style={[
-          styles.shimmerContainer,
-          shimmerStyle,
-          {
-            width: size,
-            height: size,
-          },
-        ]}
-      >
-        <View
-          style={[
-            styles.shimmerDot,
-            {
-              backgroundColor: phaseColor,
-              shadowColor: phaseColor,
-              top: 0,
-              left: size / 2 - 6,
-            },
-          ]}
-        />
-      </Animated.View>
 
       <Animated.View
         style={[
@@ -254,19 +206,6 @@ const styles = StyleSheet.create({
   outerRing: {
     position: "absolute",
     borderWidth: 2,
-  },
-  shimmerContainer: {
-    position: "absolute",
-  },
-  shimmerDot: {
-    position: "absolute",
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 10,
-    elevation: 5,
   },
   innerGlow: {
     position: "absolute",

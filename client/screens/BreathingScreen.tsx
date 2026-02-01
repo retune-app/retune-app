@@ -587,13 +587,65 @@ export default function BreathingScreen() {
           </Animated.View>
         ) : null}
 
-        {/* Duration Pills */}
+        {/* Duration & Audio Row */}
         {!isPlaying ? (
-          <Animated.View entering={FadeIn.delay(400).duration(600)}>
+          <Animated.View entering={FadeIn.delay(400).duration(600)} style={styles.bottomControls}>
+            {/* Duration Section */}
             <View style={styles.durationSection}>
-              <ThemedText type="small" style={[styles.durationLabel, { color: theme.textSecondary }]}>
-                Duration
-              </ThemedText>
+              <View style={styles.durationHeaderRow}>
+                <ThemedText type="small" style={[styles.durationLabel, { color: theme.textSecondary }]}>
+                  Duration
+                </ThemedText>
+                {/* Audio Toggle inline */}
+                <View style={styles.inlineAudioToggle}>
+                  <Pressable
+                    onPress={async () => {
+                      setAudioSource('none');
+                      await stopBackgroundMusic();
+                      await stopAffirmationLoop();
+                      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+                    }}
+                    style={[
+                      styles.inlineAudioOption,
+                      audioSource === 'none' && { backgroundColor: `${ACCENT_GOLD}25` },
+                    ]}
+                  >
+                    <Feather name="volume-x" size={16} color={audioSource === 'none' ? ACCENT_GOLD : theme.textSecondary} />
+                  </Pressable>
+                  <Pressable
+                    onPress={async () => {
+                      setAudioSource('music');
+                      await stopAffirmationLoop();
+                      if (selectedMusic !== 'none') {
+                        await startBackgroundMusic();
+                      }
+                      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+                    }}
+                    style={[
+                      styles.inlineAudioOption,
+                      audioSource === 'music' && { backgroundColor: `${ACCENT_GOLD}25` },
+                    ]}
+                  >
+                    <Feather name="music" size={16} color={audioSource === 'music' ? ACCENT_GOLD : theme.textSecondary} />
+                  </Pressable>
+                  <Pressable
+                    onPress={async () => {
+                      setAudioSource('affirmation');
+                      await stopBackgroundMusic();
+                      if (backgroundAffirmation) {
+                        await startAffirmationLoop();
+                      }
+                      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+                    }}
+                    style={[
+                      styles.inlineAudioOption,
+                      audioSource === 'affirmation' && { backgroundColor: `${ACCENT_GOLD}25` },
+                    ]}
+                  >
+                    <Feather name="mic" size={16} color={audioSource === 'affirmation' ? ACCENT_GOLD : theme.textSecondary} />
+                  </Pressable>
+                </View>
+              </View>
               <View style={styles.durationRow}>
                 {DURATION_OPTIONS.map((option) => (
                   <Pressable
@@ -621,59 +673,6 @@ export default function BreathingScreen() {
                     </Text>
                   </Pressable>
                 ))}
-              </View>
-            </View>
-
-            {/* Compact Audio Toggle - Icons only */}
-            <View style={styles.compactAudioRow}>
-              <ThemedText type="caption" style={{ color: theme.textSecondary }}>Audio</ThemedText>
-              <View style={styles.compactAudioToggle}>
-                <Pressable
-                  onPress={async () => {
-                    setAudioSource('none');
-                    await stopBackgroundMusic();
-                    await stopAffirmationLoop();
-                    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
-                  }}
-                  style={[
-                    styles.compactAudioOption,
-                    audioSource === 'none' && { backgroundColor: `${ACCENT_GOLD}20` },
-                  ]}
-                >
-                  <Feather name="volume-x" size={18} color={audioSource === 'none' ? ACCENT_GOLD : theme.textSecondary} />
-                </Pressable>
-                <Pressable
-                  onPress={async () => {
-                    setAudioSource('music');
-                    await stopAffirmationLoop();
-                    if (selectedMusic !== 'none') {
-                      await startBackgroundMusic();
-                    }
-                    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
-                  }}
-                  style={[
-                    styles.compactAudioOption,
-                    audioSource === 'music' && { backgroundColor: `${ACCENT_GOLD}20` },
-                  ]}
-                >
-                  <Feather name="music" size={18} color={audioSource === 'music' ? ACCENT_GOLD : theme.textSecondary} />
-                </Pressable>
-                <Pressable
-                  onPress={async () => {
-                    setAudioSource('affirmation');
-                    await stopBackgroundMusic();
-                    if (backgroundAffirmation) {
-                      await startAffirmationLoop();
-                    }
-                    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
-                  }}
-                  style={[
-                    styles.compactAudioOption,
-                    audioSource === 'affirmation' && { backgroundColor: `${ACCENT_GOLD}20` },
-                  ]}
-                >
-                  <Feather name="mic" size={18} color={audioSource === 'affirmation' ? ACCENT_GOLD : theme.textSecondary} />
-                </Pressable>
               </View>
             </View>
           </Animated.View>
@@ -787,8 +786,8 @@ export default function BreathingScreen() {
         continueAudio={audioSource !== 'none'}
       />
 
-      {/* Floating Settings Button */}
-      {!isPlaying ? <FloatingSettingsButton bottomOffset={insets.bottom + 100} /> : null}
+      {/* Floating Settings Button - Top Right */}
+      {!isPlaying ? <FloatingSettingsButton topOffset={insets.top + Spacing.sm} hideOnMiniPlayer={false} /> : null}
     </ThemedView>
   );
 }
@@ -914,14 +913,33 @@ const styles = StyleSheet.create({
     marginLeft: Spacing.md,
   },
 
-  // Duration
+  // Bottom Controls
+  bottomControls: {
+    marginBottom: Spacing.md,
+  },
   durationSection: {
+    marginBottom: Spacing.xs,
+  },
+  durationHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: Spacing.sm,
   },
   durationLabel: {
-    marginBottom: Spacing.sm,
     textTransform: "uppercase",
     letterSpacing: 1,
+  },
+  inlineAudioToggle: {
+    flexDirection: "row",
+    gap: 4,
+  },
+  inlineAudioOption: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
   },
   durationRow: {
     flexDirection: "row",
@@ -939,24 +957,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 
-  // Compact Audio Toggle
-  compactAudioRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: Spacing.sm,
-  },
-  compactAudioToggle: {
-    flexDirection: "row",
-    gap: Spacing.xs,
-  },
-  compactAudioOption: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: "center",
-    justifyContent: "center",
-  },
 
   // Floating Buttons
   fullscreenButton: {

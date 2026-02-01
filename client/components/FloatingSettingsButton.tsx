@@ -24,9 +24,11 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface FloatingSettingsButtonProps {
   bottomOffset?: number;
+  topOffset?: number;
+  hideOnMiniPlayer?: boolean;
 }
 
-export function FloatingSettingsButton({ bottomOffset = 100 }: FloatingSettingsButtonProps) {
+export function FloatingSettingsButton({ bottomOffset, topOffset, hideOnMiniPlayer = true }: FloatingSettingsButtonProps) {
   const { theme, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
@@ -35,7 +37,7 @@ export function FloatingSettingsButton({ bottomOffset = 100 }: FloatingSettingsB
   
   const isMiniPlayerVisible = !!currentAffirmation;
   
-  if (isMiniPlayerVisible) {
+  if (hideOnMiniPlayer && isMiniPlayerVisible) {
     return null;
   }
 
@@ -51,12 +53,15 @@ export function FloatingSettingsButton({ bottomOffset = 100 }: FloatingSettingsB
     transform: [{ scale: scale.value }],
   }));
 
+  const positionStyle = topOffset !== undefined 
+    ? { top: topOffset, right: 16 }
+    : { bottom: bottomOffset ?? 100, right: 16 };
+
   const buttonStyle = [
     styles.button,
     animatedStyle,
+    positionStyle,
     {
-      bottom: bottomOffset,
-      right: 16,
       backgroundColor: Platform.OS === "ios" ? "transparent" : theme.backgroundSecondary,
     },
     Platform.OS !== "ios" && Shadows.small,

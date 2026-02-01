@@ -56,6 +56,8 @@ const AUDIO_FILES: Record<Exclude<BackgroundMusicType, 'none'>, any> = {
   'wind': require('../../assets/audio/wind-gentle.mp3'),
 };
 
+export const getAudioFile = (type: Exclude<BackgroundMusicType, 'none'>) => AUDIO_FILES[type];
+
 const STORAGE_KEY = '@rewired_background_music';
 const VOLUME_STORAGE_KEY = '@rewired_background_music_volume';
 

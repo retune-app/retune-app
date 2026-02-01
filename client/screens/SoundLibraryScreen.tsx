@@ -1,14 +1,15 @@
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { View, StyleSheet, Pressable, ImageBackground, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
+import { Audio } from "expo-av";
 
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
-import { useBackgroundMusic, getSoundsByCategory, BackgroundMusicOption, BackgroundMusicType } from "@/contexts/BackgroundMusicContext";
+import { useBackgroundMusic, getSoundsByCategory, BackgroundMusicOption, BackgroundMusicType, getAudioFile } from "@/contexts/BackgroundMusicContext";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 
 const profileBackgroundDark = require("../../assets/images/library-background.png");
@@ -40,30 +41,25 @@ const CATEGORY_INFO = {
 interface SoundItemProps {
   option: BackgroundMusicOption;
   isSelected: boolean;
+  isPreviewing: boolean;
   onSelect: () => void;
+  onPreview: () => void;
 }
 
-function SoundItem({ option, isSelected, onSelect }: SoundItemProps) {
+function SoundItem({ option, isSelected, isPreviewing, onSelect, onPreview }: SoundItemProps) {
   const { theme } = useTheme();
 
   return (
-    <Pressable
-      onPress={() => {
-        try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
-        onSelect();
-      }}
-      style={({ pressed }) => [
+    <View
+      style={[
         styles.soundItem,
         { 
           backgroundColor: isSelected 
             ? `${ACCENT_GOLD}20` 
-            : pressed 
-              ? theme.backgroundSecondary 
-              : theme.cardBackground,
+            : theme.cardBackground,
           borderColor: isSelected ? ACCENT_GOLD : theme.border,
         },
       ]}
-      testID={`button-sound-${option.id}`}
     >
       <View style={[
         styles.soundIconContainer, 
@@ -86,15 +82,39 @@ function SoundItem({ option, isSelected, onSelect }: SoundItemProps) {
           {option.description}
         </ThemedText>
       </View>
-      <View style={[
-        styles.radioButton,
-        { borderColor: isSelected ? ACCENT_GOLD : theme.border },
-      ]}>
+      <Pressable
+        onPress={() => {
+          try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+          onPreview();
+        }}
+        style={[
+          styles.previewButton,
+          { backgroundColor: isPreviewing ? ACCENT_GOLD : theme.backgroundSecondary }
+        ]}
+        testID={`button-preview-${option.id}`}
+      >
+        <Feather 
+          name={isPreviewing ? "pause" : "play"} 
+          size={16} 
+          color={isPreviewing ? "#FFFFFF" : theme.primary} 
+        />
+      </Pressable>
+      <Pressable
+        onPress={() => {
+          try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+          onSelect();
+        }}
+        style={[
+          styles.radioButton,
+          { borderColor: isSelected ? ACCENT_GOLD : theme.border },
+        ]}
+        testID={`button-sound-${option.id}`}
+      >
         {isSelected ? (
           <View style={[styles.radioButtonInner, { backgroundColor: ACCENT_GOLD }]} />
         ) : null}
-      </View>
-    </Pressable>
+      </Pressable>
+    </View>
   );
 }
 
@@ -102,11 +122,13 @@ interface CategorySectionProps {
   category: keyof typeof CATEGORY_INFO;
   options: BackgroundMusicOption[];
   selectedMusic: BackgroundMusicType;
+  previewingId: BackgroundMusicType | null;
   onSelectMusic: (id: BackgroundMusicType) => void;
+  onPreviewMusic: (id: BackgroundMusicType) => void;
   index: number;
 }
 
-function CategorySection({ category, options, selectedMusic, onSelectMusic, index }: CategorySectionProps) {
+function CategorySection({ category, options, selectedMusic, previewingId, onSelectMusic, onPreviewMusic, index }: CategorySectionProps) {
   const { theme } = useTheme();
   const info = CATEGORY_INFO[category];
 
@@ -136,13 +158,17 @@ function CategorySection({ category, options, selectedMusic, onSelectMusic, inde
             key={option.id}
             option={option}
             isSelected={selectedMusic === option.id}
+            isPreviewing={previewingId === option.id}
             onSelect={() => onSelectMusic(option.id)}
+            onPreview={() => onPreviewMusic(option.id)}
           />
         ))}
       </View>
     </Animated.View>
   );
 }
+
+const PREVIEW_DURATION = 5000; // 5 seconds
 
 export default function SoundLibraryScreen() {
   const insets = useSafeAreaInsets();
@@ -151,8 +177,88 @@ export default function SoundLibraryScreen() {
   const { selectedMusic, setSelectedMusic, volume, setVolume } = useBackgroundMusic();
   
   const { nature, binaural, solfeggio } = getSoundsByCategory();
+  
+  const [previewingId, setPreviewingId] = useState<BackgroundMusicType | null>(null);
+  const previewSoundRef = useRef<Audio.Sound | null>(null);
+  const previewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (previewSoundRef.current) {
+        previewSoundRef.current.unloadAsync();
+      }
+      if (previewTimerRef.current) {
+        clearTimeout(previewTimerRef.current);
+      }
+    };
+  }, []);
+
+  const handlePreviewMusic = async (id: BackgroundMusicType) => {
+    // If already previewing this sound, stop it
+    if (previewingId === id) {
+      if (previewSoundRef.current) {
+        await previewSoundRef.current.stopAsync();
+        await previewSoundRef.current.unloadAsync();
+        previewSoundRef.current = null;
+      }
+      if (previewTimerRef.current) {
+        clearTimeout(previewTimerRef.current);
+        previewTimerRef.current = null;
+      }
+      setPreviewingId(null);
+      return;
+    }
+
+    // Stop any existing preview
+    if (previewSoundRef.current) {
+      await previewSoundRef.current.stopAsync();
+      await previewSoundRef.current.unloadAsync();
+      previewSoundRef.current = null;
+    }
+    if (previewTimerRef.current) {
+      clearTimeout(previewTimerRef.current);
+      previewTimerRef.current = null;
+    }
+
+    // Start new preview
+    try {
+      const audioFile = getAudioFile(id as Exclude<BackgroundMusicType, 'none'>);
+      const { sound } = await Audio.Sound.createAsync(
+        audioFile,
+        { volume: volume, shouldPlay: true }
+      );
+      previewSoundRef.current = sound;
+      setPreviewingId(id);
+
+      // Auto-stop after 5 seconds
+      previewTimerRef.current = setTimeout(async () => {
+        if (previewSoundRef.current) {
+          await previewSoundRef.current.stopAsync();
+          await previewSoundRef.current.unloadAsync();
+          previewSoundRef.current = null;
+        }
+        setPreviewingId(null);
+      }, PREVIEW_DURATION);
+    } catch (error) {
+      console.error('Error previewing sound:', error);
+      setPreviewingId(null);
+    }
+  };
 
   const handleSelectMusic = async (id: BackgroundMusicType) => {
+    // Stop any preview when selecting
+    if (previewSoundRef.current) {
+      await previewSoundRef.current.stopAsync();
+      await previewSoundRef.current.unloadAsync();
+      previewSoundRef.current = null;
+    }
+    if (previewTimerRef.current) {
+      clearTimeout(previewTimerRef.current);
+      previewTimerRef.current = null;
+    }
+    setPreviewingId(null);
+    
     await setSelectedMusic(id);
   };
 
@@ -242,21 +348,27 @@ export default function SoundLibraryScreen() {
           category="nature"
           options={nature}
           selectedMusic={selectedMusic}
+          previewingId={previewingId}
           onSelectMusic={handleSelectMusic}
+          onPreviewMusic={handlePreviewMusic}
           index={0}
         />
         <CategorySection
           category="solfeggio"
           options={solfeggio}
           selectedMusic={selectedMusic}
+          previewingId={previewingId}
           onSelectMusic={handleSelectMusic}
+          onPreviewMusic={handlePreviewMusic}
           index={1}
         />
         <CategorySection
           category="binaural"
           options={binaural}
           selectedMusic={selectedMusic}
+          previewingId={previewingId}
           onSelectMusic={handleSelectMusic}
+          onPreviewMusic={handlePreviewMusic}
           index={2}
         />
         
@@ -392,6 +504,14 @@ const styles = StyleSheet.create({
   },
   soundName: {
     marginBottom: 2,
+  },
+  previewButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: Spacing.sm,
   },
   radioButton: {
     width: 22,

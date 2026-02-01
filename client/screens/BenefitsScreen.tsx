@@ -242,6 +242,8 @@ const styles = StyleSheet.create({
   sectionCard: {
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
+    borderWidth: 1,
+    borderColor: "#C9A22740",
   },
   sectionHeader: {
     flexDirection: "row",

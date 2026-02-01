@@ -35,8 +35,13 @@ export function FloatingSettingsButton({ bottomOffset, topOffset, hideOnMiniPlay
   const { currentAffirmation } = useAudio();
   const scale = useSharedValue(1);
   
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+  
   const isMiniPlayerVisible = !!currentAffirmation;
   
+  // Early return AFTER all hooks are called
   if (hideOnMiniPlayer && isMiniPlayerVisible) {
     return null;
   }
@@ -48,10 +53,6 @@ export function FloatingSettingsButton({ bottomOffset, topOffset, hideOnMiniPlay
     });
     navigation.navigate("Main", { screen: "SettingsTab" } as any);
   };
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
 
   const positionStyle = topOffset !== undefined 
     ? { top: topOffset, right: 16 }

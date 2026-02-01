@@ -226,7 +226,7 @@ export default function HomeScreen() {
           style={[styles.headerSettingsButton, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder }]}
           testID="button-header-settings"
         >
-          <Feather name="settings" size={20} color={theme.placeholder} />
+          <Feather name="settings" size={20} color={theme.gold} />
         </Pressable>
         <View style={[styles.searchContainer, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder }]}>
           <Feather name="search" size={18} color={theme.placeholder} />

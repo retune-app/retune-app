@@ -43,6 +43,7 @@ Preferred communication style: Simple, everyday language.
 - **Mini Player**: Compact pill-shaped design with blur effect, waveform indicator when playing, positioned 94px + insets.bottom from screen bottom.
 - **Haptic Feedback**: Integrated for key interactions and milestones.
 - **Screen Transitions**: Default fade for iOS, fade_from_bottom for Android, slide_from_bottom for modals.
+- **Background Wallpaper**: Optional meditation-themed background images (disabled by default). Stored in AsyncStorage with key `@settings/backgroundWallpaper`. When enabled, shows `library-background.png` (dark) or `library-background-light.png` (light). When disabled, uses solid colors: #0F1C3F (dark) or #F8FAFB (light).
 
 ## External Dependencies
 

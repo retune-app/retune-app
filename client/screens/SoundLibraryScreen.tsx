@@ -50,7 +50,11 @@ function SoundItem({ option, isSelected, isPreviewing, onSelect, onPreview }: So
   const { theme } = useTheme();
 
   return (
-    <View
+    <Pressable
+      onPress={() => {
+        try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+        onSelect();
+      }}
       style={[
         styles.soundItem,
         { 
@@ -60,6 +64,7 @@ function SoundItem({ option, isSelected, isPreviewing, onSelect, onPreview }: So
           borderColor: isSelected ? ACCENT_GOLD : theme.border,
         },
       ]}
+      testID={`button-sound-${option.id}`}
     >
       <View style={[
         styles.soundIconContainer, 
@@ -83,7 +88,8 @@ function SoundItem({ option, isSelected, isPreviewing, onSelect, onPreview }: So
         </ThemedText>
       </View>
       <Pressable
-        onPress={() => {
+        onPress={(e) => {
+          e.stopPropagation();
           try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
           onPreview();
         }}
@@ -99,22 +105,17 @@ function SoundItem({ option, isSelected, isPreviewing, onSelect, onPreview }: So
           color={isPreviewing ? "#FFFFFF" : theme.primary} 
         />
       </Pressable>
-      <Pressable
-        onPress={() => {
-          try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
-          onSelect();
-        }}
+      <View
         style={[
           styles.radioButton,
           { borderColor: isSelected ? ACCENT_GOLD : theme.border },
         ]}
-        testID={`button-sound-${option.id}`}
       >
         {isSelected ? (
           <View style={[styles.radioButtonInner, { backgroundColor: ACCENT_GOLD }]} />
         ) : null}
-      </Pressable>
-    </View>
+      </View>
+    </Pressable>
   );
 }
 
@@ -487,7 +488,8 @@ const styles = StyleSheet.create({
   soundItem: {
     flexDirection: "row",
     alignItems: "center",
-    padding: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.lg,
     borderBottomWidth: 1,
     borderWidth: 0,
   },

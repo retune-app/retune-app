@@ -129,53 +129,6 @@ export function WelcomeSection({
           </ThemedText>
         </View>
       </View>
-
-      {hasQuickAction ? (
-        <Animated.View style={[pulseStyle]}>
-          <Pressable
-            onPress={handleQuickPlay}
-            style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}
-          >
-            <LinearGradient
-              colors={isDark ? [theme.navyMid, "#243656"] : ["rgba(255, 255, 255, 0.95)", "rgba(255, 255, 255, 0.85)"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={[
-                styles.quickPlayCard,
-                Shadows.small,
-                { 
-                  borderColor: isDark ? theme.gold + "40" : theme.gold + "60",
-                  backgroundColor: isDark ? undefined : "rgba(255, 255, 255, 0.9)",
-                },
-              ]}
-            >
-              <View style={styles.quickPlayContent}>
-                <View style={styles.quickPlayText}>
-                  <ThemedText type="caption" style={{ color: theme.gold }}>
-                    {lastPlayedAffirmation ? "CONTINUE WHERE YOU LEFT OFF" : "SUGGESTED FOR YOU"}
-                  </ThemedText>
-                  <ThemedText type="h4" numberOfLines={1} style={styles.quickPlayTitle}>
-                    {lastPlayedAffirmation?.title || suggestedAffirmation?.title || "Daily Affirmation"}
-                  </ThemedText>
-                  <View style={styles.categoryBadge}>
-                    <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                      {lastPlayedAffirmation?.categoryName || suggestedAffirmation?.categoryName || suggestedCategory}
-                    </ThemedText>
-                  </View>
-                </View>
-                <LinearGradient
-                  colors={theme.gradient.primary as [string, string]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.playButton}
-                >
-                  <Feather name={isPlaying ? "pause" : "play"} size={24} color="#FFFFFF" />
-                </LinearGradient>
-              </View>
-            </LinearGradient>
-          </Pressable>
-        </Animated.View>
-      ) : null}
     </View>
   );
 }

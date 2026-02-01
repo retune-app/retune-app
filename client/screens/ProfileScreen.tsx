@@ -666,6 +666,7 @@ export default function ProfileScreen() {
             icon="info"
             label="About Rewired"
             value="Version 1.0.0"
+            showArrow={false}
           />
         </View>
       </View>

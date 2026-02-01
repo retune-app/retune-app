@@ -594,6 +594,12 @@ export default function PlayerScreen() {
         </View>
 
         <View style={styles.infoContainer}>
+          <View style={styles.myAffirmationBanner}>
+            <View style={[styles.bannerAccent, { backgroundColor: theme.primary }]} />
+            <ThemedText type="caption" style={[styles.bannerText, { color: theme.primary }]}>
+              My Affirmation
+            </ThemedText>
+          </View>
           <ThemedText type="h2" style={styles.title} numberOfLines={2}>
             {affirmation?.title || "Loading..."}
           </ThemedText>
@@ -1047,6 +1053,23 @@ const styles = StyleSheet.create({
     width: "100%",
     alignItems: "center",
     marginBottom: Spacing["3xl"],
+  },
+  myAffirmationBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Spacing.md,
+  },
+  bannerAccent: {
+    width: 3,
+    height: 14,
+    borderRadius: 2,
+    marginRight: Spacing.sm,
+  },
+  bannerText: {
+    textTransform: "uppercase",
+    letterSpacing: 2,
+    fontWeight: "600",
+    fontSize: 11,
   },
   title: {
     textAlign: "center",

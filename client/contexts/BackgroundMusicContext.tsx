@@ -60,6 +60,8 @@ export const getAudioFile = (type: Exclude<BackgroundMusicType, 'none'>) => AUDI
 
 const STORAGE_KEY = '@rewired_background_music';
 const VOLUME_STORAGE_KEY = '@rewired_background_music_volume';
+const MUSIC_SETTINGS_VERSION_KEY = '@rewired_background_music_version';
+const CURRENT_MUSIC_VERSION = '2'; // Increment to reset default to 'none'
 
 interface BackgroundMusicContextType {
   selectedMusic: BackgroundMusicType;
@@ -90,15 +92,24 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
 
   const loadSavedPreferences = async () => {
     try {
-      const [savedMusic, savedVolume] = await Promise.all([
+      const [savedMusic, savedVolume, savedVersion] = await Promise.all([
         AsyncStorage.getItem(STORAGE_KEY),
         AsyncStorage.getItem(VOLUME_STORAGE_KEY),
+        AsyncStorage.getItem(MUSIC_SETTINGS_VERSION_KEY),
       ]);
-      if (savedMusic) {
+      
+      // Check if we need to reset to new default (version changed)
+      if (savedVersion !== CURRENT_MUSIC_VERSION) {
+        // Reset to 'none' for new default behavior
+        await AsyncStorage.setItem(STORAGE_KEY, 'none');
+        await AsyncStorage.setItem(MUSIC_SETTINGS_VERSION_KEY, CURRENT_MUSIC_VERSION);
+        setSelectedMusicState('none');
+      } else if (savedMusic) {
         // Load saved preference (including 'none' for no background music)
         setSelectedMusicState(savedMusic as BackgroundMusicType);
       }
-      // If null, keep the default 'none' (no background music)
+      // If null and version matches, keep the default 'none' (no background music)
+      
       if (savedVolume) {
         setVolumeState(parseFloat(savedVolume));
       }

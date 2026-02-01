@@ -18,6 +18,7 @@ interface AudioState {
   autoReplay: boolean;
   playbackSpeed: number;
   breathingAffirmation: Affirmation | null;
+  highlightAffirmationId: number | null;
 }
 
 interface AudioContextType extends AudioState {
@@ -28,6 +29,8 @@ interface AudioContextType extends AudioState {
   setAutoReplay: (enabled: boolean) => void;
   setPlaybackSpeed: (speed: number) => void;
   setBreathingAffirmation: (affirmation: Affirmation | null) => void;
+  requestHighlightAffirmation: (id: number) => void;
+  clearHighlightAffirmation: () => void;
 }
 
 const AudioContext = createContext<AudioContextType | null>(null);
@@ -49,11 +52,20 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const [autoReplay, setAutoReplayState] = useState(true);
   const [playbackSpeed, setPlaybackSpeedState] = useState(1);
   const [breathingAffirmation, setBreathingAffirmationState] = useState<Affirmation | null>(null);
+  const [highlightAffirmationId, setHighlightAffirmationId] = useState<number | null>(null);
   const soundRef = useRef<Audio.Sound | null>(null);
   const isOperationInProgress = useRef(false);
   const hasRecordedListenRef = useRef(false);
   
   const { startBackgroundMusic, stopBackgroundMusic, selectedMusic } = useBackgroundMusic();
+
+  const requestHighlightAffirmation = useCallback((id: number) => {
+    setHighlightAffirmationId(id);
+  }, []);
+
+  const clearHighlightAffirmation = useCallback(() => {
+    setHighlightAffirmationId(null);
+  }, []);
 
   // Load saved breathing affirmation on mount
   useEffect(() => {
@@ -317,6 +329,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         autoReplay,
         playbackSpeed,
         breathingAffirmation,
+        highlightAffirmationId,
         playAffirmation,
         togglePlayPause,
         stop,
@@ -324,6 +337,8 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         setAutoReplay,
         setPlaybackSpeed,
         setBreathingAffirmation,
+        requestHighlightAffirmation,
+        clearHighlightAffirmation,
       }}
     >
       {children}

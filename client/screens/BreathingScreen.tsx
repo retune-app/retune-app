@@ -66,7 +66,7 @@ export default function BreathingScreen() {
   const navigation = useNavigation<any>();
   const { theme, isDark } = useTheme();
   const { user } = useAuth();
-  const { currentAffirmation, isPlaying: isAudioPlaying, playAffirmation, togglePlayPause, breathingAffirmation } = useAudio();
+  const { currentAffirmation, isPlaying: isAudioPlaying, playAffirmation, togglePlayPause, breathingAffirmation, requestHighlightAffirmation } = useAudio();
   const { selectedMusic, setSelectedMusic, startBackgroundMusic, stopBackgroundMusic, isPlaying: isMusicPlaying } = useBackgroundMusic();
   const queryClient = useQueryClient();
 
@@ -658,14 +658,10 @@ export default function BreathingScreen() {
                     if (audioSource === 'affirmation') {
                       // Already selected - navigate to Affirm tab to show selected affirmation
                       if (breathingAffirmation) {
-                        console.log('Navigating to AffirmTab with highlightAffirmationId:', breathingAffirmation.id);
-                        // Navigate to nested screen with params
-                        navigation.navigate('AffirmTab', { 
-                          screen: 'Home', 
-                          params: { highlightAffirmationId: breathingAffirmation.id } 
-                        } as any);
+                        // Use context to request highlight, then navigate
+                        requestHighlightAffirmation(breathingAffirmation.id);
+                        navigation.navigate('AffirmTab');
                       } else {
-                        console.log('No breathing affirmation, navigating to AffirmTab');
                         navigation.navigate('AffirmTab');
                       }
                     } else {

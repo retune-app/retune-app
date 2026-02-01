@@ -52,7 +52,7 @@ export default function HomeScreen() {
   const { user } = useAuth();
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<RouteProp<HomeScreenRouteParams, 'Home'>>();
-  const { playAffirmation, currentAffirmation, isPlaying, togglePlayPause, breathingAffirmation, setBreathingAffirmation } = useAudio();
+  const { playAffirmation, currentAffirmation, isPlaying, togglePlayPause, breathingAffirmation, setBreathingAffirmation, highlightAffirmationId, clearHighlightAffirmation } = useAudio();
   
   const flatListRef = useRef<FlatList<Affirmation>>(null);
   const [highlightedAffirmationId, setHighlightedAffirmationId] = useState<number | null>(null);
@@ -89,40 +89,31 @@ export default function HomeScreen() {
     queryKey: ["/api/affirmations"],
   });
 
-  // Handle navigation param to highlight and scroll to affirmation
+  // Handle context-based highlight request for affirmation
   useEffect(() => {
-    console.log('HomeScreen route.params:', JSON.stringify(route.params));
-    const highlightId = route.params?.highlightAffirmationId;
-    console.log('highlightId:', highlightId, 'affirmations.length:', affirmations.length);
-    if (highlightId && affirmations.length > 0) {
-      console.log('Setting highlight for affirmation ID:', highlightId);
+    if (highlightAffirmationId && affirmations.length > 0) {
       // Reset filters so the affirmation is visible
       setSelectedCategory("All");
       setSearchQuery("");
       
-      setHighlightedAffirmationId(highlightId);
+      setHighlightedAffirmationId(highlightAffirmationId);
       
       // Find the index of the affirmation in the unfiltered list (since we reset to "All")
-      const index = affirmations.findIndex(a => a.id === highlightId);
-      console.log('Found index:', index);
+      const index = affirmations.findIndex(a => a.id === highlightAffirmationId);
       if (index !== -1 && flatListRef.current) {
         // Delay to ensure filters are applied and FlatList is re-rendered
         setTimeout(() => {
-          console.log('Scrolling to index:', index);
           flatListRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.3 });
         }, 500);
       }
       
       // Clear highlight after 3.5 seconds
       setTimeout(() => {
-        console.log('Clearing highlight');
         setHighlightedAffirmationId(null);
+        clearHighlightAffirmation();
       }, 3500);
-      
-      // Clear the param to prevent re-triggering
-      navigation.setParams({ highlightAffirmationId: undefined } as any);
     }
-  }, [route.params?.highlightAffirmationId, affirmations]);
+  }, [highlightAffirmationId, affirmations, clearHighlightAffirmation]);
 
   const suggestedAffirmation = useMemo(() => {
     if (affirmations.length === 0) return null;

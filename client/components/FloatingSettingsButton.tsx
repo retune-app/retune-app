@@ -34,8 +34,10 @@ export function FloatingSettingsButton({ bottomOffset = 100 }: FloatingSettingsB
   const scale = useSharedValue(1);
   
   const isMiniPlayerVisible = !!currentAffirmation;
-  const miniPlayerHeight = 70;
-  const adjustedBottom = isMiniPlayerVisible ? bottomOffset + miniPlayerHeight + 10 : bottomOffset;
+  
+  if (isMiniPlayerVisible) {
+    return null;
+  }
 
   const handlePress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -53,7 +55,7 @@ export function FloatingSettingsButton({ bottomOffset = 100 }: FloatingSettingsB
     styles.button,
     animatedStyle,
     {
-      bottom: adjustedBottom,
+      bottom: bottomOffset,
       right: 16,
       backgroundColor: Platform.OS === "ios" ? "transparent" : theme.backgroundSecondary,
     },

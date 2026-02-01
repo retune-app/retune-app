@@ -125,7 +125,7 @@ export default function SecurityPrivacyScreen() {
 
       <ScrollView 
         style={styles.scrollView}
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.xl }]}
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 120 }]}
         showsVerticalScrollIndicator={false}
       >
         <View style={[styles.heroSection, { backgroundColor: theme.primary + "15" }]}>
@@ -150,25 +150,33 @@ export default function SecurityPrivacyScreen() {
           </ThemedText>
           <View style={styles.assuranceList}>
             <View style={styles.assuranceItem}>
-              <ThemedText style={styles.assuranceEmoji}>🌟</ThemedText>
+              <View style={[styles.checkIcon, { backgroundColor: "#10B98120" }]}>
+                <Feather name="check" size={14} color="#10B981" />
+              </View>
               <ThemedText type="small" style={{ color: theme.textSecondary, flex: 1 }}>
                 We never sell your data to third parties
               </ThemedText>
             </View>
             <View style={styles.assuranceItem}>
-              <ThemedText style={styles.assuranceEmoji}>🌟</ThemedText>
+              <View style={[styles.checkIcon, { backgroundColor: "#10B98120" }]}>
+                <Feather name="check" size={14} color="#10B981" />
+              </View>
               <ThemedText type="small" style={{ color: theme.textSecondary, flex: 1 }}>
                 You can delete all your data at any time
               </ThemedText>
             </View>
             <View style={styles.assuranceItem}>
-              <ThemedText style={styles.assuranceEmoji}>🌟</ThemedText>
+              <View style={[styles.checkIcon, { backgroundColor: "#10B98120" }]}>
+                <Feather name="check" size={14} color="#10B981" />
+              </View>
               <ThemedText type="small" style={{ color: theme.textSecondary, flex: 1 }}>
                 Voice data can be removed from ElevenLabs
               </ThemedText>
             </View>
             <View style={styles.assuranceItem}>
-              <ThemedText style={styles.assuranceEmoji}>🌟</ThemedText>
+              <View style={[styles.checkIcon, { backgroundColor: "#10B98120" }]}>
+                <Feather name="check" size={14} color="#10B981" />
+              </View>
               <ThemedText type="small" style={{ color: theme.textSecondary, flex: 1 }}>
                 Industry-standard security practices
               </ThemedText>
@@ -285,7 +293,12 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     gap: Spacing.sm,
   },
-  assuranceEmoji: {
-    fontSize: 16,
+  checkIcon: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 1,
   },
 });

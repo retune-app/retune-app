@@ -268,8 +268,13 @@ export default function BreathingScreen() {
     try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
     
     // Start audio based on selected source
-    if (audioSource === 'music' && selectedMusic !== 'none') {
-      await startBackgroundMusic();
+    if (audioSource === 'music') {
+      if (selectedMusic === 'none') {
+        // No music selected, default to rain (setSelectedMusic also starts playback)
+        await setSelectedMusic('rain');
+      } else {
+        await startBackgroundMusic();
+      }
     } else if (audioSource === 'affirmation') {
       await startAffirmationLoop();
     }
@@ -291,8 +296,12 @@ export default function BreathingScreen() {
     setIsPlaying(true);
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
     
-    if (audioSource === 'music' && selectedMusic !== 'none') {
-      await startBackgroundMusic();
+    if (audioSource === 'music') {
+      if (selectedMusic === 'none') {
+        await setSelectedMusic('rain');
+      } else {
+        await startBackgroundMusic();
+      }
     } else if (audioSource === 'affirmation') {
       await resumeAffirmationLoop();
     }

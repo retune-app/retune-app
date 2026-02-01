@@ -141,7 +141,7 @@ export function WelcomeSection({
             style={[styles.settingsButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
             testID="button-welcome-settings"
           >
-            <Feather name="settings" size={22} color={theme.textSecondary} />
+            <Feather name="settings" size={22} color={theme.gold} />
           </Pressable>
         ) : null}
       </View>

@@ -221,17 +221,14 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       setCurrentAffirmation(affirmation);
       setIsPlaying(true);
       
-      // Start background music if selected
-      if (selectedMusic !== 'none') {
-        await startBackgroundMusic();
-      }
+      // Background music is NOT auto-started - user must manually enable it from player controls
     } catch (error) {
       console.error('Error loading audio:', error);
     } finally {
       setIsLoading(false);
       isOperationInProgress.current = false;
     }
-  }, [currentAffirmation?.id, autoReplay, playbackSpeed, unloadCurrentSound, selectedMusic, startBackgroundMusic, recordListen]);
+  }, [currentAffirmation?.id, autoReplay, playbackSpeed, unloadCurrentSound, recordListen]);
 
   const togglePlayPause = useCallback(async () => {
     console.log('togglePlayPause called, soundRef exists:', !!soundRef.current);
@@ -273,10 +270,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
           await soundRef.current.playAsync();
           setIsPlaying(true);
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          // Resume background music if selected
-          if (selectedMusic !== 'none') {
-            await startBackgroundMusic();
-          }
+          // Background music is NOT auto-resumed - user controls it manually
           console.log('Resumed');
         }
       }
@@ -285,7 +279,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     } finally {
       isOperationInProgress.current = false;
     }
-  }, [selectedMusic, startBackgroundMusic, stopBackgroundMusic]);
+  }, [stopBackgroundMusic]);
 
   const stop = useCallback(async () => {
     await unloadCurrentSound();

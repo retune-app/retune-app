@@ -292,6 +292,17 @@ export default function SoundLibraryScreen() {
           onSelectMusic={handleSelectMusic}
           index={2}
         />
+        
+        {/* Headphones note for binaural beats */}
+        <Animated.View 
+          entering={FadeInDown.delay(300).duration(400)}
+          style={[styles.headphonesNote, { backgroundColor: `${theme.primary}15` }]}
+        >
+          <Feather name="headphones" size={16} color={theme.primary} />
+          <ThemedText type="caption" style={[styles.headphonesText, { color: theme.textSecondary }]}>
+            Binaural beats require headphones to work properly. Each ear needs to hear a slightly different frequency for your brain to perceive the beat.
+          </ThemedText>
+        </Animated.View>
       </ScrollView>
     </ImageBackground>
   );
@@ -436,5 +447,17 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
+  },
+  headphonesNote: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: Spacing.sm,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    marginTop: Spacing.xs,
+  },
+  headphonesText: {
+    flex: 1,
+    lineHeight: 18,
   },
 });

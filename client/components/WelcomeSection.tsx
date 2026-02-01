@@ -160,7 +160,9 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   greetingRowLight: {
-    backgroundColor: "rgba(255, 255, 255, 0.7)",
+    backgroundColor: "rgba(201, 162, 39, 0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(201, 162, 39, 0.25)",
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     marginHorizontal: -Spacing.lg,

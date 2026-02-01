@@ -30,7 +30,6 @@ import { AudioProvider } from "@/contexts/AudioContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { BackgroundMusicProvider } from "@/contexts/BackgroundMusicContext";
 import { useTheme } from "@/hooks/useTheme";
-import { useShakeDetector } from "@/hooks/useShakeDetector";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -48,13 +47,7 @@ function AppContent() {
 }
 
 function AppWithProviders() {
-  const { theme, isDark, setThemeMode } = useTheme();
-
-  useShakeDetector({
-    onShake: () => {
-      setThemeMode(isDark ? "light" : "dark");
-    },
-  });
+  const { theme } = useTheme();
 
   const [fontsLoaded, fontError] = useFonts({
     Nunito_400Regular,

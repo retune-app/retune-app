@@ -149,6 +149,15 @@ export function AffirmationCard({
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
+  const getLengthLabel = (seconds?: number): { label: string; color: string } => {
+    if (!seconds || seconds <= 0) return { label: "", color: theme.textSecondary };
+    if (seconds < 30) return { label: "Short", color: "#4CAF50" }; // Green
+    if (seconds <= 60) return { label: "Med", color: theme.gold }; // Gold
+    return { label: "Long", color: "#9C27B0" }; // Purple
+  };
+
+  const lengthInfo = getLengthLabel(duration);
+
   const getVoiceLabel = () => {
     if (voiceType === "personal") {
       return { label: "My Voice", icon: "mic" as const };
@@ -192,6 +201,13 @@ export function AffirmationCard({
             </ThemedText>
           </View>
           <View style={styles.headerRight}>
+            {lengthInfo.label ? (
+              <View style={[styles.lengthBadge, { borderColor: lengthInfo.color }]}>
+                <ThemedText style={[styles.lengthText, { color: lengthInfo.color }]}>
+                  {lengthInfo.label}
+                </ThemedText>
+              </View>
+            ) : null}
             {isFavorite ? (
               <Feather name="heart" size={14} color={theme.accent} style={styles.favoriteIcon} />
             ) : null}
@@ -340,6 +356,18 @@ const styles = StyleSheet.create({
   },
   favoriteIcon: {
     marginRight: Spacing.xs,
+  },
+  lengthBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: BorderRadius.xs,
+    borderWidth: 1,
+  },
+  lengthText: {
+    fontSize: 9,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.3,
   },
   playButtonWrapper: {
     width: 40,

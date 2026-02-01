@@ -93,21 +93,25 @@ export default function HomeScreen() {
   useEffect(() => {
     const highlightId = route.params?.highlightAffirmationId;
     if (highlightId && affirmations.length > 0) {
+      // Reset filters so the affirmation is visible
+      setSelectedCategory("All");
+      setSearchQuery("");
+      
       setHighlightedAffirmationId(highlightId);
       
-      // Find the index of the affirmation to scroll to
+      // Find the index of the affirmation in the unfiltered list (since we reset to "All")
       const index = affirmations.findIndex(a => a.id === highlightId);
       if (index !== -1 && flatListRef.current) {
-        // Small delay to ensure FlatList is rendered
+        // Delay to ensure filters are applied and FlatList is re-rendered
         setTimeout(() => {
           flatListRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.3 });
-        }, 300);
+        }, 500);
       }
       
       // Clear highlight after 3 seconds
       setTimeout(() => {
         setHighlightedAffirmationId(null);
-      }, 3000);
+      }, 3500);
       
       // Clear the param to prevent re-triggering
       navigation.setParams({ highlightAffirmationId: undefined } as any);

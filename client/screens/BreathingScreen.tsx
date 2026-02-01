@@ -539,11 +539,11 @@ export default function BreathingScreen() {
             style={styles.controlButtonsHorizontal}
           >
             <Pressable 
-              onPress={enterFullscreen} 
-              style={[styles.secondaryControlButton, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border }, Shadows.small]}
+              onPress={() => setHapticsEnabled(!hapticsEnabled)} 
+              style={[styles.secondaryControlButton, { backgroundColor: hapticsEnabled ? `${ACCENT_GOLD}20` : theme.backgroundSecondary, borderColor: hapticsEnabled ? ACCENT_GOLD : theme.border }, Shadows.small]}
             >
-              <Feather name="maximize-2" size={22} color={theme.text} />
-              <ThemedText type="caption" style={{ marginTop: 4 }}>Expand</ThemedText>
+              <Feather name="smartphone" size={22} color={hapticsEnabled ? ACCENT_GOLD : theme.textSecondary} />
+              <ThemedText type="caption" style={{ marginTop: 4, color: hapticsEnabled ? ACCENT_GOLD : theme.textSecondary }}>Haptics</ThemedText>
             </Pressable>
             <Pressable onPress={handleStart} testID="button-start-breathing">
               <LinearGradient
@@ -557,11 +557,11 @@ export default function BreathingScreen() {
               </LinearGradient>
             </Pressable>
             <Pressable 
-              onPress={() => setHapticsEnabled(!hapticsEnabled)} 
-              style={[styles.secondaryControlButton, { backgroundColor: hapticsEnabled ? `${ACCENT_GOLD}20` : theme.backgroundSecondary, borderColor: hapticsEnabled ? ACCENT_GOLD : theme.border }, Shadows.small]}
+              onPress={enterFullscreen} 
+              style={[styles.secondaryControlButton, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border }, Shadows.small]}
             >
-              <Feather name="smartphone" size={22} color={hapticsEnabled ? ACCENT_GOLD : theme.textSecondary} />
-              <ThemedText type="caption" style={{ marginTop: 4, color: hapticsEnabled ? ACCENT_GOLD : theme.textSecondary }}>Haptics</ThemedText>
+              <Feather name="maximize-2" size={22} color={theme.text} />
+              <ThemedText type="caption" style={{ marginTop: 4 }}>Expand</ThemedText>
             </Pressable>
           </Animated.View>
         ) : null}

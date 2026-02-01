@@ -426,7 +426,13 @@ export default function BreathingScreen() {
             </Pressable>
 
             {/* Portrait layout: vertical stack with proper spacing */}
-            <View style={styles.portraitFullscreenWrapper}>
+            <View style={[
+              styles.portraitFullscreenWrapper,
+              { 
+                paddingTop: insets.top + Spacing.xl,
+                paddingBottom: insets.bottom + Spacing.xl,
+              }
+            ]}>
               {/* Top section - technique info */}
               <View style={styles.portraitTopSection}>
                 <Text style={[styles.landscapeTechniqueName, { color: selectedTechnique.color }]}>
@@ -1297,8 +1303,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.xl * 2,
-    paddingBottom: Spacing.xl * 2,
   },
   portraitTopSection: {
     alignItems: "center",

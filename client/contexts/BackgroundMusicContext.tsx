@@ -74,7 +74,7 @@ interface BackgroundMusicContextType {
 const BackgroundMusicContext = createContext<BackgroundMusicContextType | undefined>(undefined);
 
 export function BackgroundMusicProvider({ children }: { children: React.ReactNode }) {
-  const [selectedMusic, setSelectedMusicState] = useState<BackgroundMusicType>('rain');
+  const [selectedMusic, setSelectedMusicState] = useState<BackgroundMusicType>('none');
   const [volume, setVolumeState] = useState(0.7);
   const [isPlaying, setIsPlaying] = useState(false);
   const soundRef = useRef<Audio.Sound | null>(null);
@@ -94,11 +94,11 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
         AsyncStorage.getItem(STORAGE_KEY),
         AsyncStorage.getItem(VOLUME_STORAGE_KEY),
       ]);
-      if (savedMusic && savedMusic !== 'none') {
-        // Only load saved preference if it's not 'none' (legacy value)
+      if (savedMusic) {
+        // Load saved preference (including 'none' for no background music)
         setSelectedMusicState(savedMusic as BackgroundMusicType);
       }
-      // If savedMusic is 'none' or null, keep the default 'rain'
+      // If null, keep the default 'none' (no background music)
       if (savedVolume) {
         setVolumeState(parseFloat(savedVolume));
       }

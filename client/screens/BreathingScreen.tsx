@@ -767,9 +767,9 @@ export default function BreathingScreen() {
                       // Already enabled - navigate to Affirm tab to show selected affirmation
                       if (breathingAffirmation) {
                         requestHighlightAffirmation(breathingAffirmation.id);
-                        navigation.navigate('AffirmTab');
+                        navigation.navigate("Main", { screen: "AffirmTab" });
                       } else {
-                        navigation.navigate('AffirmTab');
+                        navigation.navigate("Main", { screen: "AffirmTab" });
                       }
                     } else {
                       // Enable voice

@@ -635,7 +635,11 @@ export default function BreathingScreen() {
                     },
                   ]}
                 >
-                  <Text style={[styles.optionPillText, { color: audioSource === 'music' ? "#FFFFFF" : theme.text }]}>Music</Text>
+                  <Text style={[styles.optionPillText, { color: audioSource === 'music' ? "#FFFFFF" : theme.text }]} numberOfLines={1}>
+                    {selectedMusic !== 'none' 
+                      ? BACKGROUND_MUSIC_OPTIONS.find(o => o.id === selectedMusic)?.name || 'Music'
+                      : 'Music'}
+                  </Text>
                 </Pressable>
                 <Pressable
                   onPress={() => {
@@ -650,7 +654,13 @@ export default function BreathingScreen() {
                     },
                   ]}
                 >
-                  <Text style={[styles.optionPillText, { color: audioSource === 'affirmation' ? "#FFFFFF" : theme.text }]}>Voice</Text>
+                  <Text style={[styles.optionPillText, { color: audioSource === 'affirmation' ? "#FFFFFF" : theme.text }]} numberOfLines={1}>
+                    {backgroundAffirmation?.title 
+                      ? backgroundAffirmation.title.length > 10 
+                        ? backgroundAffirmation.title.substring(0, 10) + '...'
+                        : backgroundAffirmation.title
+                      : 'Voice'}
+                  </Text>
                 </Pressable>
               </View>
             </View>

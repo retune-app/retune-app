@@ -939,7 +939,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   techniqueWrapper: {
-    marginBottom: Spacing.sm,
+    marginBottom: 0,
   },
   scrollView: {
     flex: 1,
@@ -978,7 +978,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     gap: Spacing.lg,
-    marginTop: Spacing.md,
+    marginTop: Spacing.xl,
     marginBottom: Spacing.xl * 2,
   },
   primaryPlayButton: {

@@ -31,6 +31,7 @@ import { getApiUrl } from "@/lib/query-client";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import BreathingCircle from "@/components/BreathingCircle";
+import { WelcomeSection } from "@/components/WelcomeSection";
 import { FocusTimer } from "@/components/FocusTimer";
 import { FloatingSettingsButton } from "@/components/FloatingSettingsButton";
 import { useTheme } from "@/hooks/useTheme";
@@ -63,7 +64,7 @@ export default function BreathingScreen() {
   const headerHeight = useHeaderHeight();
   const { theme, isDark } = useTheme();
   const { user } = useAuth();
-  const { currentAffirmation, breathingAffirmation } = useAudio();
+  const { currentAffirmation, isPlaying: isAudioPlaying, playAffirmation, togglePlayPause, breathingAffirmation } = useAudio();
   const { selectedMusic, setSelectedMusic, startBackgroundMusic, stopBackgroundMusic, isPlaying: isMusicPlaying } = useBackgroundMusic();
   const queryClient = useQueryClient();
 
@@ -92,6 +93,34 @@ export default function BreathingScreen() {
   const backgroundAffirmation = affirmations.length > 0 
     ? affirmations[Math.floor(Math.random() * Math.min(affirmations.length, 5))]
     : null;
+
+  // Get suggested affirmation - prioritize breathing affirmation, then time-based
+  const suggestedAffirmation = React.useMemo(() => {
+    if (breathingAffirmation) return breathingAffirmation;
+    
+    if (affirmations.length === 0) return null;
+    const hour = new Date().getHours();
+    let targetCategory = "Confidence";
+    if (hour >= 5 && hour < 12) targetCategory = "Confidence";
+    else if (hour >= 12 && hour < 17) targetCategory = "Career";
+    else if (hour >= 17 && hour < 21) targetCategory = "Health";
+    else targetCategory = "Sleep";
+    
+    const categoryMatch = affirmations.find(a => a.category === targetCategory);
+    return categoryMatch || affirmations[0];
+  }, [affirmations, breathingAffirmation]);
+
+  // Quick play handler for WelcomeSection
+  const handleQuickPlay = async () => {
+    const affirmationToPlay = currentAffirmation || suggestedAffirmation;
+    if (affirmationToPlay) {
+      if (currentAffirmation?.id === affirmationToPlay.id) {
+        await togglePlayPause();
+      } else {
+        await playAffirmation(affirmationToPlay as any);
+      }
+    }
+  };
 
   const remainingTime = selectedDuration - elapsedTime;
   const totalCycles = getCyclesForDuration(selectedTechnique, selectedDuration);
@@ -453,9 +482,20 @@ export default function BreathingScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Technique Selector Card - At Top */}
+        {/* Welcome Section at Top */}
+        <Animated.View entering={FadeIn.duration(600)}>
+          <WelcomeSection
+            userName={user?.name}
+            lastPlayedAffirmation={currentAffirmation}
+            suggestedAffirmation={suggestedAffirmation as any}
+            onQuickPlay={handleQuickPlay}
+            isPlaying={isAudioPlaying}
+          />
+        </Animated.View>
+
+        {/* Technique Selector Card - Below Welcome */}
         {!isPlaying ? (
-          <Animated.View entering={FadeIn.duration(600)}>
+          <Animated.View entering={FadeIn.delay(100).duration(600)}>
             <Pressable
               onPress={() => setShowTechniqueSelector(true)}
               style={[styles.techniqueCard, { backgroundColor: theme.cardBackground }, Shadows.medium]}

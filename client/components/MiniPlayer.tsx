@@ -24,7 +24,7 @@ export function MiniPlayer({ currentRoute }: MiniPlayerProps) {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
 
-  if (!currentAffirmation || currentRoute === 'Player' || currentRoute === 'BreatheTab') {
+  if (!currentAffirmation || currentRoute === 'Player') {
     return null;
   }
 

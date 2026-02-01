@@ -31,7 +31,6 @@ import { getApiUrl } from "@/lib/query-client";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import BreathingCircle from "@/components/BreathingCircle";
-import { WelcomeSection } from "@/components/WelcomeSection";
 import { FocusTimer } from "@/components/FocusTimer";
 import { FloatingSettingsButton } from "@/components/FloatingSettingsButton";
 import { useTheme } from "@/hooks/useTheme";
@@ -64,7 +63,7 @@ export default function BreathingScreen() {
   const headerHeight = useHeaderHeight();
   const { theme, isDark } = useTheme();
   const { user } = useAuth();
-  const { currentAffirmation, isPlaying: isAudioPlaying, playAffirmation, togglePlayPause, breathingAffirmation } = useAudio();
+  const { currentAffirmation, breathingAffirmation } = useAudio();
   const { selectedMusic, setSelectedMusic, startBackgroundMusic, stopBackgroundMusic, isPlaying: isMusicPlaying } = useBackgroundMusic();
   const queryClient = useQueryClient();
 
@@ -93,35 +92,6 @@ export default function BreathingScreen() {
   const backgroundAffirmation = affirmations.length > 0 
     ? affirmations[Math.floor(Math.random() * Math.min(affirmations.length, 5))]
     : null;
-
-  // Get suggested affirmation - prioritize breathing affirmation, then time-based
-  const suggestedAffirmation = React.useMemo(() => {
-    // If user has selected a breathing affirmation, use that
-    if (breathingAffirmation) return breathingAffirmation;
-    
-    if (affirmations.length === 0) return null;
-    const hour = new Date().getHours();
-    let targetCategory = "Confidence";
-    if (hour >= 5 && hour < 12) targetCategory = "Confidence";
-    else if (hour >= 12 && hour < 17) targetCategory = "Career";
-    else if (hour >= 17 && hour < 21) targetCategory = "Health";
-    else targetCategory = "Sleep";
-    
-    const categoryMatch = affirmations.find(a => a.category === targetCategory);
-    return categoryMatch || affirmations[0];
-  }, [affirmations, breathingAffirmation]);
-
-  // Quick play handler for WelcomeSection
-  const handleQuickPlay = async () => {
-    const affirmationToPlay = currentAffirmation || suggestedAffirmation;
-    if (affirmationToPlay) {
-      if (currentAffirmation?.id === affirmationToPlay.id) {
-        await togglePlayPause();
-      } else {
-        await playAffirmation(affirmationToPlay as any);
-      }
-    }
-  };
 
   const remainingTime = selectedDuration - elapsedTime;
   const totalCycles = getCyclesForDuration(selectedTechnique, selectedDuration);
@@ -483,16 +453,30 @@ export default function BreathingScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Welcome Section with Continue Card */}
-        <Animated.View entering={FadeIn.duration(600)}>
-          <WelcomeSection
-            userName={user?.name}
-            lastPlayedAffirmation={currentAffirmation}
-            suggestedAffirmation={suggestedAffirmation as any}
-            onQuickPlay={handleQuickPlay}
-            isPlaying={isAudioPlaying}
-          />
-        </Animated.View>
+        {/* Technique Selector Card - At Top */}
+        {!isPlaying ? (
+          <Animated.View entering={FadeIn.duration(600)}>
+            <Pressable
+              onPress={() => setShowTechniqueSelector(true)}
+              style={[styles.techniqueCard, { backgroundColor: theme.cardBackground }, Shadows.medium]}
+            >
+              <View style={styles.techniqueCardContent}>
+                <View style={[styles.techniqueIconSmall, { backgroundColor: `${selectedTechnique.color}30` }]}>
+                  <Feather name={selectedTechnique.icon as any} size={24} color={selectedTechnique.color} />
+                </View>
+                <View style={styles.techniqueCardInfo}>
+                  <ThemedText type="body" style={{ fontWeight: "600" }}>
+                    {selectedTechnique.name}
+                  </ThemedText>
+                  <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                    {selectedTechnique.benefits}
+                  </ThemedText>
+                </View>
+                <Feather name="chevron-right" size={20} color={theme.textSecondary} />
+              </View>
+            </Pressable>
+          </Animated.View>
+        ) : null}
 
         {/* Breathing Circle - Hero Element */}
         <Animated.View 
@@ -553,30 +537,9 @@ export default function BreathingScreen() {
           </Animated.View>
         ) : null}
 
-        {/* Technique Selector Card */}
+        {/* Duration Pills */}
         {!isPlaying ? (
           <Animated.View entering={FadeIn.delay(400).duration(600)}>
-            <Pressable
-              onPress={() => setShowTechniqueSelector(true)}
-              style={[styles.techniqueCard, { backgroundColor: theme.cardBackground }, Shadows.medium]}
-            >
-              <View style={styles.techniqueCardContent}>
-                <View style={[styles.techniqueIconSmall, { backgroundColor: `${selectedTechnique.color}30` }]}>
-                  <Feather name={selectedTechnique.icon as any} size={24} color={selectedTechnique.color} />
-                </View>
-                <View style={styles.techniqueCardInfo}>
-                  <ThemedText type="body" style={{ fontWeight: "600" }}>
-                    {selectedTechnique.name}
-                  </ThemedText>
-                  <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                    {selectedTechnique.benefits}
-                  </ThemedText>
-                </View>
-                <Feather name="chevron-right" size={20} color={theme.textSecondary} />
-              </View>
-            </Pressable>
-
-            {/* Duration Pills */}
             <View style={styles.durationSection}>
               <ThemedText type="small" style={[styles.durationLabel, { color: theme.textSecondary }]}>
                 Duration

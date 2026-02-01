@@ -221,7 +221,7 @@ export default function PlayerScreen() {
             <Feather 
               name="save" 
               size={22} 
-              color={autoSaveMutation.isPending ? theme.textSecondary : theme.primary} 
+              color={autoSaveMutation.isPending ? theme.textSecondary : "#4CAF50"} 
             />
           </HeaderButton>
         ) : (

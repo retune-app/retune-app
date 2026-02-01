@@ -139,6 +139,17 @@ export const breathingSessions = pgTable("breathing_sessions", {
   dateKey: text("date_key").notNull(), // YYYY-MM-DD format for easy grouping
 });
 
+// Support requests from users
+export const supportRequests = pgTable("support_requests", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "set null" }),
+  email: text("email").notNull(),
+  subject: text("subject").notNull(),
+  message: text("message").notNull(),
+  status: text("status").default("pending"), // pending, in_progress, resolved
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
 // Notification settings for daily affirmation reminders
 export const notificationSettings = pgTable("notification_settings", {
   id: serial("id").primaryKey(),
@@ -275,6 +286,12 @@ export const insertBreathingSessionSchema = createInsertSchema(breathingSessions
   completedAt: true,
 });
 
+export const insertSupportRequestSchema = createInsertSchema(supportRequests).omit({
+  id: true,
+  createdAt: true,
+  status: true,
+});
+
 // Types
 export type Conversation = typeof conversations.$inferSelect;
 export type InsertConversation = z.infer<typeof insertConversationSchema>;
@@ -296,3 +313,5 @@ export type ListeningSession = typeof listeningSessions.$inferSelect;
 export type InsertListeningSession = z.infer<typeof insertListeningSessionSchema>;
 export type BreathingSession = typeof breathingSessions.$inferSelect;
 export type InsertBreathingSession = z.infer<typeof insertBreathingSessionSchema>;
+export type SupportRequest = typeof supportRequests.$inferSelect;
+export type InsertSupportRequest = z.infer<typeof insertSupportRequestSchema>;

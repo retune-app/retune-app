@@ -554,11 +554,11 @@ export default function BreathingScreen() {
           ) : null}
         </Animated.View>
 
-        {/* Control Buttons - Below circle, above duration */}
+        {/* Control Buttons - Vertical on far right, above duration */}
         {!isPlaying ? (
           <Animated.View 
             entering={FadeIn.delay(350).duration(400)}
-            style={styles.controlButtonsRow}
+            style={styles.controlButtonsRight}
           >
             <Pressable 
               onPress={enterFullscreen} 
@@ -867,12 +867,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: Spacing.sm,
   },
-  controlButtonsRow: {
-    flexDirection: "row",
-    justifyContent: "center",
+  controlButtonsRight: {
+    position: "absolute",
+    right: Spacing.lg,
+    top: 380,
     alignItems: "center",
-    gap: Spacing.md,
-    marginBottom: Spacing.xl,
+    gap: Spacing.sm,
   },
   statsRow: {
     flexDirection: "row",

@@ -978,8 +978,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     gap: Spacing.lg,
-    marginTop: Spacing.xl,
-    marginBottom: Spacing.xl * 2,
+    marginTop: Spacing.xl * 2.5,
+    marginBottom: Spacing.xl,
   },
   primaryPlayButton: {
     width: 80,

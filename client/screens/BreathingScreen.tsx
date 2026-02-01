@@ -677,7 +677,7 @@ export default function BreathingScreen() {
             {/* Duration Row */}
             <View style={styles.optionRow}>
               <View style={styles.optionLabelContainer}>
-                <Feather name="clock" size={16} color={ACCENT_GOLD} />
+                <Feather name="clock" size={16} color={selectedTechnique.color} />
                 <ThemedText type="caption" style={{ color: theme.textSecondary, marginLeft: 6 }}>Duration</ThemedText>
               </View>
               <View style={styles.optionPillsRow}>
@@ -691,8 +691,8 @@ export default function BreathingScreen() {
                     style={[
                       styles.optionPill,
                       {
-                        backgroundColor: selectedDuration === option.value ? ACCENT_GOLD : 'transparent',
-                        borderColor: selectedDuration === option.value ? ACCENT_GOLD : theme.border,
+                        backgroundColor: selectedDuration === option.value ? selectedTechnique.color : 'transparent',
+                        borderColor: selectedDuration === option.value ? selectedTechnique.color : theme.border,
                       },
                     ]}
                     testID={`duration-${option.value}`}
@@ -708,7 +708,7 @@ export default function BreathingScreen() {
             {/* Audio Row */}
             <View style={styles.optionRow}>
               <View style={styles.optionLabelContainer}>
-                <Feather name="volume-2" size={16} color={ACCENT_GOLD} />
+                <Feather name="volume-2" size={16} color={selectedTechnique.color} />
                 <ThemedText type="caption" style={{ color: theme.textSecondary, marginLeft: 6 }}>Audio</ThemedText>
               </View>
               <View style={styles.optionPillsRow}>
@@ -721,8 +721,8 @@ export default function BreathingScreen() {
                   style={[
                     styles.optionPill,
                     { 
-                      backgroundColor: (!musicEnabled && !voiceEnabled) ? ACCENT_GOLD : 'transparent',
-                      borderColor: (!musicEnabled && !voiceEnabled) ? ACCENT_GOLD : theme.border,
+                      backgroundColor: (!musicEnabled && !voiceEnabled) ? selectedTechnique.color : 'transparent',
+                      borderColor: (!musicEnabled && !voiceEnabled) ? selectedTechnique.color : theme.border,
                     },
                   ]}
                 >
@@ -748,8 +748,8 @@ export default function BreathingScreen() {
                   style={[
                     styles.optionPill,
                     { 
-                      backgroundColor: musicEnabled ? ACCENT_GOLD : 'transparent',
-                      borderColor: musicEnabled ? ACCENT_GOLD : theme.border,
+                      backgroundColor: musicEnabled ? selectedTechnique.color : 'transparent',
+                      borderColor: musicEnabled ? selectedTechnique.color : theme.border,
                     },
                   ]}
                 >
@@ -783,8 +783,8 @@ export default function BreathingScreen() {
                   style={[
                     styles.optionPill,
                     { 
-                      backgroundColor: voiceEnabled ? ACCENT_GOLD : 'transparent',
-                      borderColor: voiceEnabled ? ACCENT_GOLD : theme.border,
+                      backgroundColor: voiceEnabled ? selectedTechnique.color : 'transparent',
+                      borderColor: voiceEnabled ? selectedTechnique.color : theme.border,
                     },
                   ]}
                 >

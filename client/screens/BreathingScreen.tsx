@@ -585,17 +585,19 @@ export default function BreathingScreen() {
           },
         ]}
       >
-        {/* Welcome Section at Top */}
-        <Animated.View entering={FadeIn.duration(600)} style={styles.welcomeWrapper}>
-          <WelcomeSection
-            userName={user?.name}
-            lastPlayedAffirmation={currentAffirmation}
-            suggestedAffirmation={suggestedAffirmation as any}
-            onQuickPlay={handleQuickPlay}
-            onSettingsPress={() => navigation.navigate("Main", { screen: "SettingsTab" })}
-            isPlaying={isAudioPlaying}
-          />
-        </Animated.View>
+        {/* Welcome Section at Top - hidden during breathing session */}
+        {!isPlaying ? (
+          <Animated.View entering={FadeIn.duration(600)} style={styles.welcomeWrapper}>
+            <WelcomeSection
+              userName={user?.name}
+              lastPlayedAffirmation={currentAffirmation}
+              suggestedAffirmation={suggestedAffirmation as any}
+              onQuickPlay={handleQuickPlay}
+              onSettingsPress={() => navigation.navigate("Main", { screen: "SettingsTab" })}
+              isPlaying={isAudioPlaying}
+            />
+          </Animated.View>
+        ) : null}
 
         {/* Technique Selector Card - Compact */}
         {!isPlaying ? (

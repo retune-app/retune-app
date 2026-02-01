@@ -859,7 +859,7 @@ export default function ProfileScreen() {
                 {isClearingAffirmations ? (
                   <ActivityIndicator color="#FFFFFF" size="small" />
                 ) : (
-                  <Text style={styles.confirmLogoutText}>Clear Affirmations</Text>
+                  <Text style={styles.confirmLogoutText}>Clear All</Text>
                 )}
               </Pressable>
             </View>

@@ -475,7 +475,7 @@ export default function BreathingScreen() {
           styles.fixedContent,
           {
             paddingTop: insets.top + Spacing.md,
-            paddingBottom: insets.bottom + Spacing.md,
+            paddingBottom: insets.bottom + 90,
           },
         ]}
       >
@@ -587,66 +587,16 @@ export default function BreathingScreen() {
           </Animated.View>
         ) : null}
 
-        {/* Duration & Audio Row */}
+        {/* Bottom Options Panel */}
         {!isPlaying ? (
-          <Animated.View entering={FadeIn.delay(400).duration(600)} style={styles.bottomControls}>
-            {/* Duration Section */}
-            <View style={styles.durationSection}>
-              <View style={styles.durationHeaderRow}>
-                <ThemedText type="small" style={[styles.durationLabel, { color: theme.textSecondary }]}>
-                  Duration
-                </ThemedText>
-                {/* Audio Toggle inline */}
-                <View style={styles.inlineAudioToggle}>
-                  <Pressable
-                    onPress={async () => {
-                      setAudioSource('none');
-                      await stopBackgroundMusic();
-                      await stopAffirmationLoop();
-                      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
-                    }}
-                    style={[
-                      styles.inlineAudioOption,
-                      audioSource === 'none' && { backgroundColor: `${ACCENT_GOLD}25` },
-                    ]}
-                  >
-                    <Feather name="volume-x" size={16} color={audioSource === 'none' ? ACCENT_GOLD : theme.textSecondary} />
-                  </Pressable>
-                  <Pressable
-                    onPress={async () => {
-                      setAudioSource('music');
-                      await stopAffirmationLoop();
-                      if (selectedMusic !== 'none') {
-                        await startBackgroundMusic();
-                      }
-                      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
-                    }}
-                    style={[
-                      styles.inlineAudioOption,
-                      audioSource === 'music' && { backgroundColor: `${ACCENT_GOLD}25` },
-                    ]}
-                  >
-                    <Feather name="music" size={16} color={audioSource === 'music' ? ACCENT_GOLD : theme.textSecondary} />
-                  </Pressable>
-                  <Pressable
-                    onPress={async () => {
-                      setAudioSource('affirmation');
-                      await stopBackgroundMusic();
-                      if (backgroundAffirmation) {
-                        await startAffirmationLoop();
-                      }
-                      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
-                    }}
-                    style={[
-                      styles.inlineAudioOption,
-                      audioSource === 'affirmation' && { backgroundColor: `${ACCENT_GOLD}25` },
-                    ]}
-                  >
-                    <Feather name="mic" size={16} color={audioSource === 'affirmation' ? ACCENT_GOLD : theme.textSecondary} />
-                  </Pressable>
-                </View>
+          <Animated.View entering={FadeIn.delay(400).duration(600)} style={styles.bottomPanel}>
+            {/* Duration Row */}
+            <View style={styles.optionRow}>
+              <View style={styles.optionLabelContainer}>
+                <Feather name="clock" size={16} color={ACCENT_GOLD} />
+                <ThemedText type="caption" style={{ color: theme.textSecondary, marginLeft: 6 }}>Duration</ThemedText>
               </View>
-              <View style={styles.durationRow}>
+              <View style={styles.optionPillsRow}>
                 {DURATION_OPTIONS.map((option) => (
                   <Pressable
                     key={option.value}
@@ -655,24 +605,84 @@ export default function BreathingScreen() {
                       try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
                     }}
                     style={[
-                      styles.durationPill,
+                      styles.optionPill,
                       {
-                        backgroundColor: selectedDuration === option.value ? ACCENT_GOLD : theme.backgroundSecondary,
+                        backgroundColor: selectedDuration === option.value ? ACCENT_GOLD : 'transparent',
                         borderColor: selectedDuration === option.value ? ACCENT_GOLD : theme.border,
                       },
                     ]}
                     testID={`duration-${option.value}`}
                   >
-                    <Text
-                      style={[
-                        styles.durationPillText,
-                        { color: selectedDuration === option.value ? "#FFFFFF" : theme.text },
-                      ]}
-                    >
+                    <Text style={[styles.optionPillText, { color: selectedDuration === option.value ? "#FFFFFF" : theme.text }]}>
                       {option.label}
                     </Text>
                   </Pressable>
                 ))}
+              </View>
+            </View>
+
+            {/* Audio Row */}
+            <View style={styles.optionRow}>
+              <View style={styles.optionLabelContainer}>
+                <Feather name="volume-2" size={16} color={ACCENT_GOLD} />
+                <ThemedText type="caption" style={{ color: theme.textSecondary, marginLeft: 6 }}>Audio</ThemedText>
+              </View>
+              <View style={styles.optionPillsRow}>
+                <Pressable
+                  onPress={async () => {
+                    setAudioSource('none');
+                    await stopBackgroundMusic();
+                    await stopAffirmationLoop();
+                    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+                  }}
+                  style={[
+                    styles.optionPill,
+                    { 
+                      backgroundColor: audioSource === 'none' ? ACCENT_GOLD : 'transparent',
+                      borderColor: audioSource === 'none' ? ACCENT_GOLD : theme.border,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.optionPillText, { color: audioSource === 'none' ? "#FFFFFF" : theme.text }]}>Off</Text>
+                </Pressable>
+                <Pressable
+                  onPress={async () => {
+                    setAudioSource('music');
+                    await stopAffirmationLoop();
+                    if (selectedMusic !== 'none') {
+                      await startBackgroundMusic();
+                    }
+                    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+                  }}
+                  style={[
+                    styles.optionPill,
+                    { 
+                      backgroundColor: audioSource === 'music' ? ACCENT_GOLD : 'transparent',
+                      borderColor: audioSource === 'music' ? ACCENT_GOLD : theme.border,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.optionPillText, { color: audioSource === 'music' ? "#FFFFFF" : theme.text }]}>Music</Text>
+                </Pressable>
+                <Pressable
+                  onPress={async () => {
+                    setAudioSource('affirmation');
+                    await stopBackgroundMusic();
+                    if (backgroundAffirmation) {
+                      await startAffirmationLoop();
+                    }
+                    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+                  }}
+                  style={[
+                    styles.optionPill,
+                    { 
+                      backgroundColor: audioSource === 'affirmation' ? ACCENT_GOLD : 'transparent',
+                      borderColor: audioSource === 'affirmation' ? ACCENT_GOLD : theme.border,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.optionPillText, { color: audioSource === 'affirmation' ? "#FFFFFF" : theme.text }]}>Voice</Text>
+                </Pressable>
               </View>
             </View>
           </Animated.View>
@@ -913,48 +923,35 @@ const styles = StyleSheet.create({
     marginLeft: Spacing.md,
   },
 
-  // Bottom Controls
-  bottomControls: {
-    marginBottom: Spacing.md,
+  // Bottom Options Panel
+  bottomPanel: {
+    gap: Spacing.md,
   },
-  durationSection: {
-    marginBottom: Spacing.xs,
-  },
-  durationHeaderRow: {
+  optionRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: Spacing.sm,
+    gap: Spacing.md,
   },
-  durationLabel: {
-    textTransform: "uppercase",
-    letterSpacing: 1,
-  },
-  inlineAudioToggle: {
+  optionLabelContainer: {
     flexDirection: "row",
-    gap: 4,
-  },
-  inlineAudioOption: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
     alignItems: "center",
-    justifyContent: "center",
+    width: 90,
   },
-  durationRow: {
+  optionPillsRow: {
+    flex: 1,
     flexDirection: "row",
-    gap: Spacing.sm,
+    gap: Spacing.xs,
   },
-  durationPill: {
+  optionPill: {
     flex: 1,
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.full,
     borderWidth: 1,
     alignItems: "center",
   },
-  durationPillText: {
+  optionPillText: {
     fontWeight: "600",
-    fontSize: 14,
+    fontSize: 13,
   },
 
 

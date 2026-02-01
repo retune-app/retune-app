@@ -875,7 +875,7 @@ export default function ProfileScreen() {
                 </View>
                 <Pressable
                   onPress={() => setShowSupportModal(false)}
-                  style={[styles.supportSubmitButton, { backgroundColor: theme.primary }]}
+                  style={[styles.supportSuccessButton, { backgroundColor: theme.primary }]}
                   testID="button-close-support-success"
                 >
                   <Text style={styles.confirmLogoutText}>Done</Text>
@@ -1244,6 +1244,13 @@ const styles = StyleSheet.create({
   },
   supportSubmitButton: {
     flex: 1,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  supportSuccessButton: {
+    width: "100%",
     paddingVertical: Spacing.md,
     borderRadius: BorderRadius.lg,
     alignItems: "center",

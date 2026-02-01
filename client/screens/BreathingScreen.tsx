@@ -34,7 +34,6 @@ import { ThemedView } from "@/components/ThemedView";
 import BreathingCircle from "@/components/BreathingCircle";
 import { WelcomeSection } from "@/components/WelcomeSection";
 import { FocusTimer } from "@/components/FocusTimer";
-import { FloatingSettingsButton } from "@/components/FloatingSettingsButton";
 import { useTheme } from "@/hooks/useTheme";
 import { useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/query-client";
@@ -831,8 +830,6 @@ export default function BreathingScreen() {
         continueAudio={musicEnabled || voiceEnabled}
       />
 
-      {/* Floating Settings Button - Top Right */}
-      {!isPlaying ? <FloatingSettingsButton topOffset={insets.top + Spacing.sm} hideOnMiniPlayer={false} /> : null}
     </ThemedView>
   );
 }

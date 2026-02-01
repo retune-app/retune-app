@@ -6,6 +6,20 @@ import WebSocket from "ws";
 import fs from "fs";
 import path from "path";
 
+/**
+ * Add natural pauses between sentences for more meditative audio pacing.
+ * Inserts SSML-style break tags after sentence-ending punctuation.
+ * This is applied internally before TTS - the original text remains unchanged for display.
+ * @param text - The original text
+ * @param pauseSeconds - Pause duration in seconds (default 0.6)
+ * @returns Text with SSML break tags inserted after sentences
+ */
+function addSentencePauses(text: string, pauseSeconds: number = 0.6): string {
+  // Insert break tags after sentence-ending punctuation (. ! ?) followed by space or end
+  // This regex matches: period/exclamation/question mark, optionally followed by quotes, then space or end
+  return text.replace(/([.!?]["']?)\s+/g, `$1 <break time="${pauseSeconds}s"/> `);
+}
+
 let connectionSettings: any;
 
 async function getCredentials() {
@@ -107,6 +121,10 @@ export async function textToSpeech(
 ): Promise<{ audio: ArrayBuffer; duration: number; wordTimings: WordTiming[] }> {
   const apiKey = await getCredentials();
 
+  // Add natural pauses between sentences for more meditative pacing
+  // This is applied internally - the original text remains unchanged for display
+  const textWithPauses = addSentencePauses(text, 0.6);
+
   // Use the with-timestamps endpoint for word timing data
   const response = await fetch(
     `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/with-timestamps`,
@@ -117,7 +135,7 @@ export async function textToSpeech(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        text,
+        text: textWithPauses,
         model_id: "eleven_multilingual_v2",
         voice_settings: {
           stability: 0.5,

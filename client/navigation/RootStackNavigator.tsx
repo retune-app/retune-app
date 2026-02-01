@@ -155,7 +155,7 @@ export default function RootStackNavigator() {
           component={SoundLibraryScreen}
           options={{
             headerTitle: "Sound Library",
-            headerBackTitle: "Settings",
+            headerBackTitle: "Back",
             animation: "slide_from_right",
           }}
         />

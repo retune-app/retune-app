@@ -89,15 +89,12 @@ export default function BreathingScreen() {
     queryKey: ["/api/affirmations"],
   });
 
-  // Get a random affirmation or the first one for background
-  const backgroundAffirmation = affirmations.length > 0 
-    ? affirmations[Math.floor(Math.random() * Math.min(affirmations.length, 5))]
-    : null;
-
-  // Get suggested affirmation - prioritize breathing affirmation, then time-based
-  const suggestedAffirmation = React.useMemo(() => {
+  // Get background affirmation for breathing - prioritize user's selected breathing affirmation
+  const backgroundAffirmation = React.useMemo(() => {
+    // First priority: user's explicitly selected breathing affirmation
     if (breathingAffirmation) return breathingAffirmation;
     
+    // Fallback: time-based suggestion
     if (affirmations.length === 0) return null;
     const hour = new Date().getHours();
     let targetCategory = "Confidence";
@@ -109,6 +106,9 @@ export default function BreathingScreen() {
     const categoryMatch = affirmations.find(a => a.category === targetCategory);
     return categoryMatch || affirmations[0];
   }, [affirmations, breathingAffirmation]);
+
+  // Alias for compatibility
+  const suggestedAffirmation = backgroundAffirmation;
 
   // Quick play handler for WelcomeSection
   const handleQuickPlay = async () => {

@@ -67,13 +67,14 @@ export function LibraryTip({ visible, onDismiss }: LibraryTipProps) {
           </Animated.View>
           <View style={styles.divider} />
           <Animated.View style={[styles.iconContainer, swipeIconStyle]}>
+            <Feather name="wind" size={18} color={'#2E7D6E'} style={styles.actionIcon} />
             <Feather name="edit-2" size={18} color={theme.primary} style={styles.actionIcon} />
             <Feather name="chevrons-right" size={16} color={theme.primary} />
           </Animated.View>
         </View>
         <View style={styles.textContainer}>
           <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: 'center' }}>
-            Swipe left to <ThemedText type="small" style={{ color: theme.error || '#E74C3C', fontWeight: '600' }}>delete</ThemedText>, right to <ThemedText type="small" style={{ color: theme.primary, fontWeight: '600' }}>rename</ThemedText>
+            Swipe left to <ThemedText type="small" style={{ color: theme.error || '#E74C3C', fontWeight: '600' }}>delete</ThemedText>, right for <ThemedText type="small" style={{ color: '#2E7D6E', fontWeight: '600' }}>breathing</ThemedText> or <ThemedText type="small" style={{ color: theme.primary, fontWeight: '600' }}>rename</ThemedText>
           </ThemedText>
         </View>
         <Pressable onPress={onDismiss} style={styles.dismissButton} hitSlop={10}>

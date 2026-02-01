@@ -854,7 +854,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: Spacing.lg,
     marginTop: Spacing.md,
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.xl * 2,
   },
   primaryPlayButton: {
     width: 80,

@@ -18,6 +18,7 @@ interface SwipeableAffirmationCardProps {
   onLongPress?: () => void;
   onRename?: (affirmation: Affirmation) => void;
   onSetForBreathing?: (affirmation: Affirmation) => void;
+  onAfterDelete?: (deletedAffirmation: Affirmation) => void;
   isActive?: boolean;
   isBreathingAffirmation?: boolean;
   testID?: string;
@@ -31,6 +32,7 @@ export function SwipeableAffirmationCard({
   onLongPress,
   onRename,
   onSetForBreathing,
+  onAfterDelete,
   isActive,
   isBreathingAffirmation,
   testID,
@@ -47,6 +49,7 @@ export function SwipeableAffirmationCard({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/affirmations"] });
       if (hapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (onAfterDelete) onAfterDelete(affirmation);
     },
     onError: () => {
       if (hapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);

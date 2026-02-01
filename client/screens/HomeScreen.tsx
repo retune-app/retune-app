@@ -227,6 +227,18 @@ export default function HomeScreen() {
     setBreathingAffirmation(affirmation);
   }, [setBreathingAffirmation]);
 
+  const handleAfterDelete = useCallback((deletedAffirmation: Affirmation) => {
+    // If the deleted affirmation was the breathing affirmation, fall back to the next available
+    if (breathingAffirmation?.id === deletedAffirmation.id) {
+      const remaining = affirmations.filter(a => a.id !== deletedAffirmation.id);
+      if (remaining.length > 0) {
+        setBreathingAffirmation(remaining[0]);
+      } else {
+        setBreathingAffirmation(null);
+      }
+    }
+  }, [breathingAffirmation, affirmations, setBreathingAffirmation]);
+
   const renderItem = ({ item, index }: { item: Affirmation; index: number }) => {
     const isCurrentlyPlaying = currentAffirmation?.id === item.id && isPlaying;
     const isBreathingSelected = breathingAffirmation?.id === item.id;
@@ -238,6 +250,7 @@ export default function HomeScreen() {
           onPlayPress={() => handlePlayPress(item)}
           onRename={handleRenamePress}
           onSetForBreathing={handleSetForBreathing}
+          onAfterDelete={handleAfterDelete}
           isActive={isCurrentlyPlaying}
           isBreathingAffirmation={isBreathingSelected}
           testID={`card-affirmation-${item.id}`}

@@ -65,6 +65,8 @@ export default function PlayerScreen() {
     setAutoReplay,
     setPlaybackSpeed,
     stop,
+    breathingAffirmation,
+    setBreathingAffirmation,
   } = useAudio();
   const [rsvpEnabled, setRsvpEnabled] = useState(true);
   const [rsvpFontSize, setRsvpFontSize] = useState<RSVPFontSize>("M");
@@ -112,6 +114,17 @@ export default function PlayerScreen() {
       await apiRequest("DELETE", `/api/affirmations/${affirmationId}`);
     },
     onSuccess: () => {
+      // If deleted affirmation was the breathing affirmation, fall back to next available
+      if (breathingAffirmation?.id === affirmationId) {
+        const allAffirmations = queryClient.getQueryData<Affirmation[]>(["/api/affirmations"]) || [];
+        const remaining = allAffirmations.filter(a => a.id !== affirmationId);
+        if (remaining.length > 0) {
+          setBreathingAffirmation(remaining[0]);
+        } else {
+          setBreathingAffirmation(null);
+        }
+      }
+      
       queryClient.invalidateQueries({ queryKey: ["/api/affirmations"] });
       if (hapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       navigation.goBack();

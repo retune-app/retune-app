@@ -647,11 +647,6 @@ export default function ProfileScreen() {
         </ThemedText>
         <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
           <SettingItem
-            icon="info"
-            label="About Rewired"
-            value="Version 1.0.0"
-          />
-          <SettingItem
             icon="heart"
             label="Benefits for Wellbeing"
             onPress={() => navigation.navigate("Benefits" as never)}
@@ -666,6 +661,11 @@ export default function ProfileScreen() {
             label="Help & Support"
             value="Get assistance"
             onPress={handleOpenSupportModal}
+          />
+          <SettingItem
+            icon="info"
+            label="About Rewired"
+            value="Version 1.0.0"
           />
         </View>
       </View>

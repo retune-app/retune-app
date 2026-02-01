@@ -618,8 +618,10 @@ export default function BreathingScreen() {
               </ThemedText>
               <View style={[styles.audioSourceToggle, { backgroundColor: theme.backgroundSecondary }]}>
                 <Pressable
-                  onPress={() => {
+                  onPress={async () => {
                     setAudioSource('none');
+                    await stopBackgroundMusic();
+                    await stopAffirmationLoop();
                     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
                   }}
                   style={[
@@ -634,8 +636,12 @@ export default function BreathingScreen() {
                   </Text>
                 </Pressable>
                 <Pressable
-                  onPress={() => {
+                  onPress={async () => {
                     setAudioSource('music');
+                    await stopAffirmationLoop();
+                    if (selectedMusic !== 'none') {
+                      await startBackgroundMusic();
+                    }
                     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
                   }}
                   style={[
@@ -650,8 +656,12 @@ export default function BreathingScreen() {
                   </Text>
                 </Pressable>
                 <Pressable
-                  onPress={() => {
+                  onPress={async () => {
                     setAudioSource('affirmation');
+                    await stopBackgroundMusic();
+                    if (backgroundAffirmation) {
+                      await startAffirmationLoop();
+                    }
                     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
                   }}
                   style={[

@@ -40,8 +40,8 @@ interface CustomCategory {
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-type AffirmTabRouteParams = {
-  highlightAffirmationId?: number;
+type HomeScreenRouteParams = {
+  Home: { highlightAffirmationId?: number } | undefined;
 };
 
 export default function HomeScreen() {
@@ -51,7 +51,7 @@ export default function HomeScreen() {
   const { theme, isDark } = useTheme();
   const { user } = useAuth();
   const navigation = useNavigation<NavigationProp>();
-  const route = useRoute<RouteProp<{ AffirmTab: AffirmTabRouteParams }, 'AffirmTab'>>();
+  const route = useRoute<RouteProp<HomeScreenRouteParams, 'Home'>>();
   const { playAffirmation, currentAffirmation, isPlaying, togglePlayPause, breathingAffirmation, setBreathingAffirmation } = useAudio();
   
   const flatListRef = useRef<FlatList<Affirmation>>(null);
@@ -91,8 +91,11 @@ export default function HomeScreen() {
 
   // Handle navigation param to highlight and scroll to affirmation
   useEffect(() => {
+    console.log('HomeScreen route.params:', JSON.stringify(route.params));
     const highlightId = route.params?.highlightAffirmationId;
+    console.log('highlightId:', highlightId, 'affirmations.length:', affirmations.length);
     if (highlightId && affirmations.length > 0) {
+      console.log('Setting highlight for affirmation ID:', highlightId);
       // Reset filters so the affirmation is visible
       setSelectedCategory("All");
       setSearchQuery("");
@@ -101,15 +104,18 @@ export default function HomeScreen() {
       
       // Find the index of the affirmation in the unfiltered list (since we reset to "All")
       const index = affirmations.findIndex(a => a.id === highlightId);
+      console.log('Found index:', index);
       if (index !== -1 && flatListRef.current) {
         // Delay to ensure filters are applied and FlatList is re-rendered
         setTimeout(() => {
+          console.log('Scrolling to index:', index);
           flatListRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.3 });
         }, 500);
       }
       
-      // Clear highlight after 3 seconds
+      // Clear highlight after 3.5 seconds
       setTimeout(() => {
+        console.log('Clearing highlight');
         setHighlightedAffirmationId(null);
       }, 3500);
       

@@ -4,7 +4,7 @@ import HomeScreen from "@/screens/HomeScreen";
 import { useScreenOptions } from "@/hooks/useScreenOptions";
 
 export type HomeStackParamList = {
-  Home: undefined;
+  Home: { highlightAffirmationId?: number } | undefined;
 };
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();

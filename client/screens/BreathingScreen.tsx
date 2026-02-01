@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
@@ -170,14 +170,16 @@ export default function BreathingScreen() {
     ScreenOrientation.unlockAsync();
   }, [showLandscapeMode]);
 
-  // Load progress indicator setting
-  useEffect(() => {
-    AsyncStorage.getItem(PROGRESS_INDICATOR_KEY).then((value) => {
-      if (value !== null) {
-        setProgressIndicatorEnabled(value === "true");
-      }
-    });
-  }, []);
+  // Load progress indicator setting - refresh on screen focus
+  useFocusEffect(
+    useCallback(() => {
+      AsyncStorage.getItem(PROGRESS_INDICATOR_KEY).then((value) => {
+        if (value !== null) {
+          setProgressIndicatorEnabled(value === "true");
+        }
+      });
+    }, [])
+  );
 
   // Cleanup on unmount
   useEffect(() => {

@@ -4,7 +4,7 @@
     "slug": "subconscious-rewire",
     "version": "1.0.0",
     "orientation": "default",
-    "icon": "./assets/images/icon.jpg",
+    "icon": "./assets/images/rewired-logo.png",
     "scheme": "subconsciousrewire",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -18,8 +18,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#4A90E2",
-        "foregroundImage": "./assets/images/icon.jpg"
+        "backgroundColor": "#0F1C3F",
+        "foregroundImage": "./assets/images/rewired-logo.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -28,16 +28,16 @@
     },
     "web": {
       "output": "single",
-      "favicon": "./assets/images/icon.jpg"
+      "favicon": "./assets/images/rewired-logo.png"
     },
     "plugins": [
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.jpg",
+          "image": "./assets/images/rewired-logo.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#F8FAFB",
+          "backgroundColor": "#E8EDF2",
           "dark": {
             "backgroundColor": "#1A1A2E"
           }

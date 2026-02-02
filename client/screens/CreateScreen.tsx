@@ -3,7 +3,6 @@ import {
   View,
   StyleSheet,
   TextInput,
-  ScrollView,
   Alert,
   Pressable,
   Platform,
@@ -20,6 +19,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
+import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
 import { CategoryChip } from "@/components/CategoryChip";
@@ -251,13 +251,15 @@ export default function CreateScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView
+      <KeyboardAwareScrollViewCompat
         style={styles.scrollView}
         contentContainerStyle={[
           styles.content,
           { paddingTop: headerHeight + Spacing.lg, paddingBottom: insets.bottom + Spacing["4xl"] },
         ]}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        extraKeyboardSpace={120}
       >
         <View style={styles.modeToggle}>
           <Button
@@ -554,7 +556,7 @@ export default function CreateScreen() {
             Create Affirmation
           </Button>
         ) : null}
-      </ScrollView>
+      </KeyboardAwareScrollViewCompat>
     </ThemedView>
   );
 }

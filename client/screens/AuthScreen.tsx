@@ -195,7 +195,20 @@ export function AuthScreen() {
                   resizeMode="contain"
                 />
               </View>
-              <Text style={styles.brandName}>Retune</Text>
+              
+              {/* Liquid Glass Brand Container */}
+              <BlurView
+                intensity={30}
+                tint="dark"
+                style={styles.brandGlassContainer}
+              >
+                <View style={styles.brandGlassInner}>
+                  <Text style={styles.brandName}>RETUNE</Text>
+                  <View style={styles.brandAccent} />
+                </View>
+              </BlurView>
+              
+              <Text style={styles.brandSubtitle}>Your Mind. Reimagined.</Text>
             </View>
           </View>
 
@@ -344,15 +357,47 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 40,
   },
+  brandGlassContainer: {
+    borderRadius: BorderRadius.xl,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(201,162,39,0.25)",
+    marginTop: Spacing.lg,
+  },
+  brandGlassInner: {
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xxl,
+    backgroundColor: "rgba(15,28,63,0.4)",
+    alignItems: "center",
+  },
   brandName: {
-    fontFamily: "Poppins_600SemiBold",
-    fontSize: 40,
-    color: authColors.gold,
-    marginBottom: Spacing.xs,
+    fontFamily: "SpaceGrotesk_700Bold",
+    fontSize: 44,
+    color: authColors.white,
+    letterSpacing: 8,
+    textShadowColor: "rgba(201,162,39,0.4)",
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 20,
+  },
+  brandAccent: {
+    width: 60,
+    height: 3,
+    backgroundColor: authColors.gold,
+    borderRadius: 2,
+    marginTop: Spacing.sm,
+    shadowColor: authColors.gold,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 8,
+  },
+  brandSubtitle: {
+    fontFamily: "SpaceGrotesk_400Regular",
+    fontSize: 14,
+    color: "rgba(255,255,255,0.6)",
+    textAlign: "center",
     letterSpacing: 2,
-    textShadowColor: "rgba(0,0,0,0.5)",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 8,
+    marginTop: Spacing.lg,
+    textTransform: "uppercase",
   },
   tagline: {
     fontFamily: "Nunito_400Regular",
@@ -363,11 +408,11 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   topTagline: {
-    fontFamily: "Nunito_600SemiBold",
-    fontSize: 16,
+    fontFamily: "SpaceGrotesk_500Medium",
+    fontSize: 13,
     color: authColors.goldLight,
     textAlign: "center",
-    letterSpacing: 3,
+    letterSpacing: 4,
     textTransform: "uppercase",
     marginBottom: Spacing.md,
     textShadowColor: "rgba(0,0,0,0.5)",
@@ -385,19 +430,21 @@ const styles = StyleSheet.create({
     backgroundColor: authColors.cardBackground,
   },
   welcomeTitle: {
-    fontFamily: "Nunito_700Bold",
-    fontSize: 22,
+    fontFamily: "SpaceGrotesk_600SemiBold",
+    fontSize: 24,
     color: authColors.textPrimary,
     marginBottom: Spacing.xs,
     textAlign: "center",
+    letterSpacing: 1,
   },
   welcomeSubtitle: {
-    fontFamily: "Nunito_400Regular",
-    fontSize: 13,
+    fontFamily: "SpaceGrotesk_400Regular",
+    fontSize: 14,
     color: authColors.textSecondary,
     marginBottom: Spacing.md,
     textAlign: "center",
-    lineHeight: 18,
+    lineHeight: 20,
+    letterSpacing: 0.5,
   },
   errorContainer: {
     flexDirection: "row",

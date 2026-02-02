@@ -207,7 +207,7 @@ export function AuthScreen() {
             <View style={styles.cardContent}>
               <Text style={styles.welcomeTitle}>Welcome</Text>
               <Text style={styles.welcomeSubtitle}>
-                Sign in to begin your journey of self-discovery
+                Sign in to tune into your true self
               </Text>
 
               {error.length > 0 ? (

@@ -33,7 +33,7 @@ const audioUpload = multer({
 });
 
 // Generate affirmation script using OpenAI
-async function generateScript(goal: string, categories?: string[], length?: string): Promise<string> {
+async function generateScript(goal: string, categories?: string[], length?: string, pillar?: string): Promise<string> {
   const lengthConfig = {
     short: { sentences: 2, tokens: 80, description: "exactly 2 sentences" },
     medium: { sentences: 5, tokens: 200, description: "exactly 5 sentences" },
@@ -57,17 +57,33 @@ async function generateScript(goal: string, categories?: string[], length?: stri
     Gratitude: "appreciative, thankful, and abundant language about blessings and appreciation",
   };
   
+  // Pillar-specific themes and approaches
+  const pillarThemes: Record<string, string> = {
+    Mind: "Focus on mental clarity, cognitive strength, emotional intelligence, and psychological resilience. Use language that emphasizes sharp thinking, mental fortitude, and inner calm.",
+    Body: "Focus on physical vitality, wellness, self-care, and bodily acceptance. Use language that emphasizes health, energy, rest, and loving your physical self.",
+    Spirit: "Focus on inner peace, gratitude, joy, and future vision. Use language that emphasizes spiritual connection, thankfulness, happiness, and aspirational dreaming.",
+    Connection: "Focus on meaningful relationships and self-compassion. Use language that emphasizes love, empathy, understanding, and kindness toward self and others.",
+    Achievement: "Focus on success, ambition, wealth, and personal growth. Use language that emphasizes accomplishment, abundance, skill mastery, and determined action.",
+  };
+
   const config = lengthConfig[length as keyof typeof lengthConfig] || lengthConfig.medium;
-  console.log(`Generating script with length: ${length}, categories: ${categories?.join(", ")}, using config:`, config);
+  console.log(`Generating script with length: ${length}, pillar: ${pillar}, categories: ${categories?.join(", ")}, using config:`, config);
   
-  // Build combined tone instruction from multiple categories
+  // Build combined tone instruction from pillar and subcategories
   let toneInstruction = "Use positive, empowering, and uplifting language.";
+  
+  // Add pillar-level theme first
+  if (pillar && pillarThemes[pillar]) {
+    toneInstruction = pillarThemes[pillar];
+  }
+  
+  // Add subcategory nuances
   if (categories && categories.length > 0) {
     const tones = categories
       .map(cat => categoryTones[cat])
       .filter(Boolean);
     if (tones.length > 0) {
-      toneInstruction = `Blend these themes cohesively: ${tones.join("; ")}. Create unified affirmations that weave these elements together naturally.`;
+      toneInstruction += ` Additionally, weave in these specific elements: ${tones.join("; ")}.`;
     }
   }
   
@@ -75,10 +91,11 @@ async function generateScript(goal: string, categories?: string[], length?: stri
 
 TONE AND STYLE: ${toneInstruction}`;
 
+  const pillarContext = pillar ? ` Life pillar: ${pillar}.` : "";
   const categoryContext = categories && categories.length > 0 
     ? ` Focus areas: ${categories.join(", ")}.` 
     : "";
-  const userPrompt = `${config.sentences} affirmations for: ${goal}.${categoryContext} Only ${config.sentences} sentences total.`;
+  const userPrompt = `${config.sentences} affirmations for: ${goal}.${pillarContext}${categoryContext} Only ${config.sentences} sentences total.`;
 
   const response = await openai.chat.completions.create({
     model: "gpt-4o",
@@ -368,7 +385,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Generate script using AI (requires auth)
   app.post("/api/affirmations/generate-script", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { goal, categories, category, length } = req.body;
+      const { goal, pillar, categories, category, length } = req.body;
 
       if (!goal) {
         return res.status(400).json({ error: "Goal is required" });
@@ -376,7 +393,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Support both old single category and new multi-category format
       const categoryList = categories || (category ? [category] : []);
-      const script = await generateScript(goal, categoryList, length);
+      const script = await generateScript(goal, categoryList, length, pillar);
       res.json({ script });
     } catch (error) {
       console.error("Error generating script:", error);
@@ -387,25 +404,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create affirmation with voice synthesis (requires auth)
   app.post("/api/affirmations/create-with-voice", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { title, script, categories, category, isManual } = req.body;
+      const { title, script, pillar, categories, category, isManual } = req.body;
 
       if (!script) {
         return res.status(400).json({ error: "Script is required" });
       }
 
       // Support both old single category and new multi-category format
-      let categoryName: string;
+      let categoryName: string | null = null;
       if (categories && Array.isArray(categories) && categories.length > 0) {
         categoryName = categories.join(",");
       } else if (category) {
         categoryName = category;
-      } else {
-        console.log("No category provided, auto-categorizing...");
-        categoryName = await autoCategorizе(script);
-        console.log("Auto-categorized as:", categoryName);
       }
 
-      console.log("Saving affirmation with categories:", categoryName);
+      console.log("Saving affirmation with pillar:", pillar, "categories:", categoryName);
 
       // Get user's voice preferences and voice sample
       const [userWithPrefs] = await db
@@ -467,7 +480,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userId: req.userId!,
           title: title || "My Affirmation",
           script,
-          categoryName: categoryName || null, // Store category name directly
+          pillar: pillar || null,
+          categoryName: categoryName || null,
           audioUrl: `/uploads/audio/${audioFilename}`,
           duration: audioResult.duration,
           wordTimings: JSON.stringify(audioResult.wordTimings),

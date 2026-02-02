@@ -11,13 +11,14 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Animation } from "@/constants/theme";
 
-// Use consistent gold for selected state regardless of theme
-const CATEGORY_GOLD = "#C9A227";
+// Default gold color for selected state
+const DEFAULT_COLOR = "#C9A227";
 
 interface CategoryChipProps {
   label: string;
   isSelected?: boolean;
   onPress?: () => void;
+  color?: string;
   testID?: string;
 }
 
@@ -27,10 +28,12 @@ export function CategoryChip({
   label,
   isSelected = false,
   onPress,
+  color,
   testID,
 }: CategoryChipProps) {
   const { theme } = useTheme();
   const scale = useSharedValue(1);
+  const activeColor = color || DEFAULT_COLOR;
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -64,8 +67,8 @@ export function CategoryChip({
       style={[
         styles.chip,
         {
-          backgroundColor: isSelected ? CATEGORY_GOLD : theme.backgroundSecondary,
-          borderColor: isSelected ? CATEGORY_GOLD : theme.border,
+          backgroundColor: isSelected ? activeColor : theme.backgroundSecondary,
+          borderColor: isSelected ? activeColor : theme.border,
         },
         animatedStyle,
       ]}

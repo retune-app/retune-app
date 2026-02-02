@@ -5,44 +5,31 @@ import {
   TextInput,
   ScrollView,
   Alert,
-  ActivityIndicator,
-  Modal,
   Pressable,
-  Dimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import PagerView, { PagerViewRef } from "@/components/PagerViewCompat";
+import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
+import PagerView from "react-native-pager-view";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
 import { CategoryChip } from "@/components/CategoryChip";
-import { IconButton } from "@/components/IconButton";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { apiRequest } from "@/lib/query-client";
 import { useAudio } from "@/contexts/AudioContext";
+import { PILLARS, PILLAR_LIST, type PillarName } from "@shared/pillars";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
-interface CustomCategory {
-  id: number;
-  userId: string;
-  name: string;
-  createdAt: string;
-}
-
-const CATEGORIES = [
-  "Career", "Health", "Confidence", "Wealth", "Relationships", "Sleep",
-  "Vision", "Emotion", "Happiness", "Skills", "Habits", "Motivation", "Gratitude"
-];
-const MAX_CATEGORIES = 5;
+const MAX_SUBCATEGORIES = 5;
 const LENGTHS = ["Short", "Medium", "Long"] as const;
 type LengthOption = typeof LENGTHS[number];
 
@@ -51,73 +38,52 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 export default function CreateScreen() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const navigation = useNavigation<NavigationProp>();
   const queryClient = useQueryClient();
   const { breathingAffirmation, setBreathingAffirmation } = useAudio();
 
   const [mode, setMode] = useState<"ai" | "manual">("ai");
+  const [selectedPillar, setSelectedPillar] = useState<PillarName | null>(null);
+  const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>([]);
   const [goal, setGoal] = useState("");
   const [scriptHistory, setScriptHistory] = useState<string[]>([]);
   const [currentScriptIndex, setCurrentScriptIndex] = useState(0);
   const [manualScript, setManualScript] = useState("");
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedLength, setSelectedLength] = useState<LengthOption>("Medium");
-  const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState("");
-  const pagerRef = useRef<PagerViewRef>(null);
+  const pagerRef = useRef<PagerView>(null);
 
-  const handleCategoryToggle = (category: string) => {
-    setSelectedCategories(prev => {
-      if (prev.includes(category)) {
-        return prev.filter(c => c !== category);
+  const handlePillarSelect = (pillar: PillarName) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (selectedPillar === pillar) {
+      setSelectedPillar(null);
+      setSelectedSubcategories([]);
+    } else {
+      setSelectedPillar(pillar);
+      setSelectedSubcategories([]);
+    }
+  };
+
+  const handleSubcategoryToggle = (subcategory: string) => {
+    setSelectedSubcategories(prev => {
+      if (prev.includes(subcategory)) {
+        return prev.filter(c => c !== subcategory);
       }
-      if (prev.length >= MAX_CATEGORIES) {
-        Alert.alert("Limit Reached", `You can select up to ${MAX_CATEGORIES} categories.`);
+      if (prev.length >= MAX_SUBCATEGORIES) {
+        Alert.alert("Limit Reached", `You can select up to ${MAX_SUBCATEGORIES} tags.`);
         return prev;
       }
-      return [...prev, category];
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      return [...prev, subcategory];
     });
   };
 
-  const { data: customCategories = [] } = useQuery<CustomCategory[]>({
-    queryKey: ["/api/custom-categories"],
-  });
-
-  const addCategoryMutation = useMutation({
-    mutationFn: async (name: string) => {
-      const res = await apiRequest("POST", "/api/custom-categories", { name });
-      return res.json();
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/custom-categories"] });
-      setNewCategoryName("");
-      setShowAddCategoryModal(false);
-      if (selectedCategories.length < MAX_CATEGORIES) {
-        setSelectedCategories(prev => [...prev, data.name]);
-      }
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    },
-    onError: (error: any) => {
-      Alert.alert("Error", error.message || "Failed to add category");
-    },
-  });
-
-  const handleAddCategory = () => {
-    if (!newCategoryName.trim()) {
-      Alert.alert("Enter Name", "Please enter a category name.");
-      return;
-    }
-    addCategoryMutation.mutate(newCategoryName.trim());
-  };
-
-  const allCategories = [...CATEGORIES, ...customCategories.map(c => c.name)];
-
   const generateMutation = useMutation({
-    mutationFn: async ({ goalText, categories, length }: { goalText: string; categories: string[]; length: string }) => {
+    mutationFn: async ({ goalText, pillar, subcategories, length }: { goalText: string; pillar: string; subcategories: string[]; length: string }) => {
       const res = await apiRequest("POST", "/api/affirmations/generate-script", {
         goal: goalText,
-        categories,
+        pillar,
+        categories: subcategories,
         length,
       });
       return res.json();
@@ -146,7 +112,8 @@ export default function CreateScreen() {
       const res = await apiRequest("POST", "/api/affirmations/create-with-voice", {
         title: goal.substring(0, 50) || "My Affirmation",
         script: currentScript,
-        categories: selectedCategories,
+        pillar: selectedPillar,
+        categories: selectedSubcategories,
         isManual: mode === "manual",
       });
       return res.json();
@@ -155,7 +122,6 @@ export default function CreateScreen() {
       queryClient.invalidateQueries({ queryKey: ["/api/affirmations"] });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       
-      // Auto-select first affirmation for breathing if none selected yet
       if (!breathingAffirmation) {
         setBreathingAffirmation(data);
       }
@@ -168,13 +134,18 @@ export default function CreateScreen() {
   });
 
   const handleGenerate = () => {
+    if (!selectedPillar) {
+      Alert.alert("Select a Pillar", "Please choose a pillar for your affirmation.");
+      return;
+    }
     if (!goal.trim()) {
       Alert.alert("Enter a Goal", "Please describe what you want to achieve.");
       return;
     }
     generateMutation.mutate({
       goalText: goal,
-      categories: selectedCategories,
+      pillar: selectedPillar,
+      subcategories: selectedSubcategories,
       length: selectedLength.toLowerCase(),
     });
   };
@@ -186,18 +157,25 @@ export default function CreateScreen() {
     }
     generateMutation.mutate({
       goalText: goal,
-      categories: selectedCategories,
+      pillar: selectedPillar || "",
+      subcategories: selectedSubcategories,
       length: selectedLength.toLowerCase(),
     });
   };
 
   const handleCreate = () => {
+    if (!selectedPillar) {
+      Alert.alert("Select a Pillar", "Please choose a pillar for your affirmation.");
+      return;
+    }
     if (!currentScript.trim()) {
       Alert.alert("Generate Script First", "Please generate or write a script first.");
       return;
     }
     createMutation.mutate();
   };
+
+  const selectedPillarData = selectedPillar ? PILLARS[selectedPillar] : null;
 
   return (
     <ThemedView style={styles.container}>
@@ -231,13 +209,96 @@ export default function CreateScreen() {
         </View>
 
         <ThemedText type="h3" style={styles.sectionTitle}>
+          Choose Your Pillar
+        </ThemedText>
+        <ThemedText type="caption" style={[styles.sectionSubtitle, { color: theme.textSecondary }]}>
+          Select the area of life you want to focus on
+        </ThemedText>
+
+        <View style={styles.pillarsGrid}>
+          {PILLAR_LIST.map((pillarName) => {
+            const pillar = PILLARS[pillarName];
+            const isSelected = selectedPillar === pillarName;
+            return (
+              <Pressable
+                key={pillarName}
+                onPress={() => handlePillarSelect(pillarName)}
+                style={[
+                  styles.pillarCard,
+                  {
+                    backgroundColor: isSelected ? pillar.color : (isDark ? theme.cardBackground : theme.backgroundSecondary),
+                    borderColor: isSelected ? pillar.color : theme.border,
+                    borderWidth: isSelected ? 2 : 1,
+                  },
+                ]}
+                testID={`pillar-${pillarName.toLowerCase()}`}
+              >
+                <View style={[
+                  styles.pillarIconContainer,
+                  { backgroundColor: isSelected ? 'rgba(255,255,255,0.2)' : `${pillar.color}20` }
+                ]}>
+                  <Feather 
+                    name={pillar.icon as any} 
+                    size={24} 
+                    color={isSelected ? '#fff' : pillar.color} 
+                  />
+                </View>
+                <ThemedText 
+                  type="h4" 
+                  style={[styles.pillarName, { color: isSelected ? '#fff' : theme.text }]}
+                >
+                  {pillarName}
+                </ThemedText>
+                <ThemedText 
+                  type="caption" 
+                  style={[styles.pillarDescription, { color: isSelected ? 'rgba(255,255,255,0.8)' : theme.textSecondary }]}
+                  numberOfLines={2}
+                >
+                  {pillar.description}
+                </ThemedText>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        {selectedPillarData ? (
+          <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(150)}>
+            <View style={styles.subcategoryHeader}>
+              <View style={styles.subcategoryTitleRow}>
+                <View style={[styles.pillarAccent, { backgroundColor: selectedPillarData.color }]} />
+                <ThemedText type="h4">Tags</ThemedText>
+              </View>
+              <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                {selectedSubcategories.length}/{MAX_SUBCATEGORIES} selected (optional)
+              </ThemedText>
+            </View>
+            <View style={styles.subcategoriesGrid}>
+              {selectedPillarData.subcategories.map((subcat) => (
+                <CategoryChip
+                  key={subcat}
+                  label={subcat}
+                  isSelected={selectedSubcategories.includes(subcat)}
+                  onPress={() => handleSubcategoryToggle(subcat)}
+                  color={selectedPillarData.color}
+                  testID={`chip-${subcat.toLowerCase().replace(/\s+/g, '-')}`}
+                />
+              ))}
+            </View>
+          </Animated.View>
+        ) : null}
+
+        <ThemedText type="h3" style={styles.sectionTitle}>
           {mode === "ai" ? "What do you want to achieve?" : "Write your affirmation"}
         </ThemedText>
 
         <View
           style={[
             styles.inputContainer,
-            { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder },
+            { 
+              backgroundColor: theme.inputBackground, 
+              borderColor: selectedPillarData ? selectedPillarData.color : theme.inputBorder,
+              borderWidth: selectedPillarData ? 2 : 1,
+            },
           ]}
         >
           <TextInput
@@ -257,33 +318,6 @@ export default function CreateScreen() {
           <ThemedText type="caption" style={[styles.charCount, { color: theme.textSecondary }]}>
             {(mode === "ai" ? goal : manualScript).length} characters
           </ThemedText>
-        </View>
-
-        <View style={styles.categoryHeader}>
-          <ThemedText type="h4">Categories</ThemedText>
-          <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-            {selectedCategories.length}/{MAX_CATEGORIES} selected
-          </ThemedText>
-        </View>
-        <View style={styles.categoriesGrid}>
-          {allCategories.map((cat) => (
-            <CategoryChip
-              key={cat}
-              label={cat}
-              isSelected={selectedCategories.includes(cat)}
-              onPress={() => handleCategoryToggle(cat)}
-              testID={`chip-${cat.toLowerCase()}`}
-            />
-          ))}
-          {customCategories.length < 5 ? (
-            <Pressable
-              style={[styles.addCategoryButton, { borderColor: theme.primary }]}
-              onPress={() => setShowAddCategoryModal(true)}
-              testID="button-add-category"
-            >
-              <Feather name="plus" size={18} color={theme.primary} />
-            </Pressable>
-          ) : null}
         </View>
 
         {mode === "ai" ? (
@@ -308,30 +342,31 @@ export default function CreateScreen() {
           </>
         ) : null}
 
-        {mode === "ai" && (
+        {mode === "ai" ? (
           <Button
             variant="gradient"
             onPress={handleGenerate}
             loading={generateMutation.isPending}
-            style={styles.generateButton}
+            disabled={!selectedPillar}
+            style={[styles.generateButton, !selectedPillar && { opacity: 0.5 }]}
             testID="button-generate"
           >
             Generate Script
           </Button>
-        )}
+        ) : null}
 
         {scriptHistory.length > 0 && mode === "ai" ? (
           <Card style={styles.scriptCard}>
             <View style={styles.scriptHeader}>
               <ThemedText type="h4">Generated Script</ThemedText>
               {scriptHistory.length < 3 ? (
-                <IconButton
-                  icon="refresh-cw"
-                  size={18}
-                  onPress={handleRegenerate}
-                  loading={generateMutation.isPending}
-                  testID="button-regenerate"
-                />
+                <Pressable onPress={handleRegenerate} disabled={generateMutation.isPending}>
+                  <Feather 
+                    name="refresh-cw" 
+                    size={18} 
+                    color={generateMutation.isPending ? theme.textSecondary : theme.primary} 
+                  />
+                </Pressable>
               ) : null}
             </View>
             <PagerView
@@ -369,8 +404,8 @@ export default function CreateScreen() {
                       styles.paginationDot,
                       {
                         backgroundColor: index === currentScriptIndex 
-                          ? theme.primary 
-                          : `${theme.primary}40`,
+                          ? (selectedPillarData?.color || theme.primary)
+                          : `${selectedPillarData?.color || theme.primary}40`,
                       },
                     ]}
                   />
@@ -390,63 +425,14 @@ export default function CreateScreen() {
             variant="gradient"
             onPress={handleCreate}
             loading={createMutation.isPending}
-            style={styles.createButton}
+            disabled={!selectedPillar}
+            style={[styles.createButton, !selectedPillar && { opacity: 0.5 }]}
             testID="button-create"
           >
             Create Affirmation
           </Button>
         ) : null}
       </ScrollView>
-
-      <Modal
-        visible={showAddCategoryModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowAddCategoryModal(false)}
-      >
-        <Pressable style={styles.modalOverlay} onPress={() => setShowAddCategoryModal(false)}>
-          <Pressable style={[styles.modalContent, { backgroundColor: theme.cardBackground }]} onPress={(e) => e.stopPropagation()}>
-            <ThemedText type="title" style={styles.modalTitle}>
-              Add Category
-            </ThemedText>
-            <ThemedText type="caption" style={[styles.modalSubtitle, { color: theme.textSecondary }]}>
-              {5 - customCategories.length} of 5 custom categories remaining
-            </ThemedText>
-            <TextInput
-              style={[styles.modalInput, { backgroundColor: theme.inputBackground, borderColor: theme.primary, color: theme.text }]}
-              placeholder="Enter category name..."
-              placeholderTextColor={theme.placeholder}
-              value={newCategoryName}
-              onChangeText={setNewCategoryName}
-              maxLength={30}
-              autoFocus
-              testID="input-new-category"
-            />
-            <View style={styles.modalButtons}>
-              <Button
-                variant="ghost"
-                onPress={() => {
-                  setNewCategoryName("");
-                  setShowAddCategoryModal(false);
-                }}
-                style={styles.modalButton}
-                testID="button-cancel-category"
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                onPress={handleAddCategory}
-                loading={addCategoryMutation.isPending}
-                style={styles.modalButton}
-                testID="button-save-category"
-              >
-                Add
-              </Button>
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
     </ThemedView>
   );
 }
@@ -470,16 +456,62 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sectionTitle: {
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
   },
-  categoryHeader: {
+  sectionSubtitle: {
+    marginBottom: Spacing.lg,
+  },
+  pillarsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: Spacing.md,
+    marginBottom: Spacing["2xl"],
+  },
+  pillarCard: {
+    width: "47%",
+    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    minHeight: 120,
+    ...Shadows.small,
+  },
+  pillarIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: Spacing.sm,
+  },
+  pillarName: {
+    marginBottom: 4,
+  },
+  pillarDescription: {
+    fontSize: 11,
+    lineHeight: 14,
+  },
+  subcategoryHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: Spacing.md,
   },
+  subcategoryTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  pillarAccent: {
+    width: 4,
+    height: 20,
+    borderRadius: 2,
+  },
+  subcategoriesGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: Spacing.sm,
+    marginBottom: Spacing["2xl"],
+  },
   inputContainer: {
-    borderWidth: 1,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
     marginBottom: Spacing["2xl"],
@@ -494,12 +526,6 @@ const styles = StyleSheet.create({
   charCount: {
     textAlign: "right",
     marginTop: Spacing.sm,
-  },
-  categoriesGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: Spacing.sm,
-    marginBottom: Spacing["2xl"],
   },
   lengthSelector: {
     flexDirection: "row",
@@ -554,50 +580,5 @@ const styles = StyleSheet.create({
   },
   createButton: {
     marginTop: Spacing.lg,
-  },
-  addCategoryButton: {
-    width: 40,
-    height: 36,
-    borderRadius: BorderRadius.full,
-    borderWidth: 2,
-    borderStyle: "dashed",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(15, 28, 63, 0.8)",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: Spacing.lg,
-  },
-  modalContent: {
-    width: "100%",
-    maxWidth: 340,
-    borderRadius: BorderRadius.xl,
-    padding: Spacing.xl,
-    ...Shadows.medium,
-  },
-  modalTitle: {
-    textAlign: "center",
-    marginBottom: Spacing.xs,
-  },
-  modalSubtitle: {
-    textAlign: "center",
-    marginBottom: Spacing.lg,
-  },
-  modalInput: {
-    borderWidth: 2,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.md,
-    fontSize: 16,
-    marginBottom: Spacing.lg,
-  },
-  modalButtons: {
-    flexDirection: "row",
-    gap: Spacing.md,
-  },
-  modalButton: {
-    flex: 1,
   },
 });

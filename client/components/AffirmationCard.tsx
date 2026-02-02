@@ -18,10 +18,12 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Animation, Shadows } from "@/constants/theme";
 import { getVoiceDisplayName } from "@shared/voiceMapping";
+import { getPillarColor } from "@shared/pillars";
 
 interface AffirmationCardProps {
   id: number;
   title: string;
+  pillar?: string | null;
   category?: string;
   duration?: number;
   isFavorite?: boolean;
@@ -43,6 +45,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 export function AffirmationCard({
   id,
   title,
+  pillar,
   category,
   duration,
   isFavorite = false,
@@ -59,6 +62,7 @@ export function AffirmationCard({
   hapticEnabled = true,
 }: AffirmationCardProps) {
   const { theme, isDark } = useTheme();
+  const pillarColor = getPillarColor(pillar);
   const scale = useSharedValue(1);
   const breathProgress = useSharedValue(0);
   const glowOpacity = useSharedValue(0);
@@ -179,8 +183,10 @@ export function AffirmationCard({
       testID={testID}
     >
       <View style={styles.cardWrapper}>
-        {isBreathingAffirmation ? (
-          <View style={[styles.breathingAccent, { backgroundColor: theme.gold }]} />
+        {pillar ? (
+          <View style={[styles.pillarAccent, { backgroundColor: pillarColor }]} />
+        ) : isBreathingAffirmation ? (
+          <View style={[styles.pillarAccent, { backgroundColor: theme.gold }]} />
         ) : null}
         <View style={[
           styles.card,
@@ -191,7 +197,7 @@ export function AffirmationCard({
             borderWidth: isDark ? 0 : 1,
           },
           isActive && { backgroundColor: theme.backgroundSecondary, borderColor: theme.primary, borderWidth: 2 },
-          isBreathingAffirmation && { borderLeftWidth: 0, borderTopLeftRadius: 0, borderBottomLeftRadius: 0 },
+          (pillar || isBreathingAffirmation) && { borderLeftWidth: 0, borderTopLeftRadius: 0, borderBottomLeftRadius: 0 },
         ]}>
         <View style={[styles.cardHeader, { borderBottomColor: isDark ? 'rgba(255,255,255,0.08)' : theme.border }]}>
           <View style={styles.ownershipBadge}>
@@ -296,7 +302,7 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     overflow: "hidden",
   },
-  breathingAccent: {
+  pillarAccent: {
     width: 4,
     borderTopLeftRadius: BorderRadius.lg,
     borderBottomLeftRadius: BorderRadius.lg,

@@ -33,7 +33,7 @@ const audioUpload = multer({
 });
 
 // Generate affirmation script using OpenAI
-async function generateScript(goal: string, category?: string, length?: string): Promise<string> {
+async function generateScript(goal: string, categories?: string[], length?: string): Promise<string> {
   const lengthConfig = {
     short: { sentences: 2, tokens: 80, description: "exactly 2 sentences" },
     medium: { sentences: 5, tokens: 200, description: "exactly 5 sentences" },
@@ -42,27 +42,43 @@ async function generateScript(goal: string, category?: string, length?: string):
   
   // Category-specific tone and style instructions
   const categoryTones: Record<string, string> = {
-    Confidence: "Use bold, assertive, and powerful language. Write as someone who is unstoppable and radiates self-assurance. Use strong declarative statements like 'I am powerful', 'I command respect', 'I own my greatness'.",
-    Career: "Use professional, ambitious, and driven language. Write as someone who is a high achiever destined for success. Focus on leadership, excellence, and professional growth.",
-    Health: "Use nurturing, calming, and wellness-focused language. Write as someone who deeply cares for their body and mind. Focus on vitality, energy, healing, and holistic well-being.",
-    Wealth: "Use abundant, prosperous, and magnetic language. Write as someone who naturally attracts wealth and opportunities. Focus on financial freedom, abundance mindset, and prosperity consciousness.",
-    Relationships: "Use warm, soft, loving, and gentle language. Write as someone who is deeply connected and emotionally open. Focus on love, connection, harmony, and meaningful bonds.",
-    Sleep: "Use peaceful, soothing, dreamy, and tranquil language. Write as someone drifting into deep rest. Focus on relaxation, surrender, serenity, and restorative sleep.",
+    Confidence: "bold, assertive, and powerful language with self-assurance",
+    Career: "professional, ambitious, and driven language focused on leadership and success",
+    Health: "nurturing, calming, and wellness-focused language about vitality and healing",
+    Wealth: "abundant, prosperous, and magnetic language about financial freedom",
+    Relationships: "warm, soft, loving, and gentle language about connection and harmony",
+    Sleep: "peaceful, soothing, dreamy, and tranquil language about rest and relaxation",
+    Vision: "inspiring, aspirational, and visionary language about future possibilities and dreams",
+    Emotion: "emotionally intelligent, balanced, and self-aware language about emotional mastery",
+    Happiness: "joyful, optimistic, and uplifting language about inner peace and contentment",
+    Skills: "confident, growth-oriented, and capable language about learning and mastery",
+    Habits: "disciplined, consistent, and empowering language about positive routines",
+    Motivation: "energizing, driven, and action-oriented language about determination and persistence",
+    Gratitude: "appreciative, thankful, and abundant language about blessings and appreciation",
   };
   
   const config = lengthConfig[length as keyof typeof lengthConfig] || lengthConfig.medium;
-  console.log(`Generating script with length: ${length}, category: ${category}, using config:`, config);
+  console.log(`Generating script with length: ${length}, categories: ${categories?.join(", ")}, using config:`, config);
   
-  // Get category-specific tone or use neutral tone
-  const toneInstruction = category && categoryTones[category] 
-    ? categoryTones[category] 
-    : "Use positive, empowering, and uplifting language.";
+  // Build combined tone instruction from multiple categories
+  let toneInstruction = "Use positive, empowering, and uplifting language.";
+  if (categories && categories.length > 0) {
+    const tones = categories
+      .map(cat => categoryTones[cat])
+      .filter(Boolean);
+    if (tones.length > 0) {
+      toneInstruction = `Blend these themes cohesively: ${tones.join("; ")}. Create unified affirmations that weave these elements together naturally.`;
+    }
+  }
   
   const systemPrompt = `Write ${config.sentences} affirmation sentences. First person, present tense. No titles, no instructions, no numbering. Just ${config.sentences} sentences.
 
 TONE AND STYLE: ${toneInstruction}`;
 
-  const userPrompt = `${config.sentences} affirmations for: ${goal}. Only ${config.sentences} sentences total.`;
+  const categoryContext = categories && categories.length > 0 
+    ? ` Focus areas: ${categories.join(", ")}.` 
+    : "";
+  const userPrompt = `${config.sentences} affirmations for: ${goal}.${categoryContext} Only ${config.sentences} sentences total.`;
 
   const response = await openai.chat.completions.create({
     model: "gpt-4o",
@@ -352,13 +368,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Generate script using AI (requires auth)
   app.post("/api/affirmations/generate-script", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { goal, category, length } = req.body;
+      const { goal, categories, category, length } = req.body;
 
       if (!goal) {
         return res.status(400).json({ error: "Goal is required" });
       }
 
-      const script = await generateScript(goal, category, length);
+      // Support both old single category and new multi-category format
+      const categoryList = categories || (category ? [category] : []);
+      const script = await generateScript(goal, categoryList, length);
       res.json({ script });
     } catch (error) {
       console.error("Error generating script:", error);
@@ -369,22 +387,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create affirmation with voice synthesis (requires auth)
   app.post("/api/affirmations/create-with-voice", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { title, script, category, isManual } = req.body;
+      const { title, script, categories, category, isManual } = req.body;
 
       if (!script) {
         return res.status(400).json({ error: "Script is required" });
       }
 
-      // Auto-categorize if no category provided
-      let categoryName = category;
-      if (!categoryName) {
+      // Support both old single category and new multi-category format
+      let categoryName: string;
+      if (categories && Array.isArray(categories) && categories.length > 0) {
+        categoryName = categories.join(",");
+      } else if (category) {
+        categoryName = category;
+      } else {
         console.log("No category provided, auto-categorizing...");
         categoryName = await autoCategorizе(script);
         console.log("Auto-categorized as:", categoryName);
       }
 
-      // Simply use the category name directly - no complex lookups needed
-      console.log("Saving affirmation with category:", categoryName);
+      console.log("Saving affirmation with categories:", categoryName);
 
       // Get user's voice preferences and voice sample
       const [userWithPrefs] = await db

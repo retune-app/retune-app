@@ -38,7 +38,11 @@ interface CustomCategory {
   createdAt: string;
 }
 
-const CATEGORIES = ["Career", "Health", "Confidence", "Wealth", "Relationships", "Sleep"];
+const CATEGORIES = [
+  "Career", "Health", "Confidence", "Wealth", "Relationships", "Sleep",
+  "Vision", "Emotion", "Happiness", "Skills", "Habits", "Motivation", "Gratitude"
+];
+const MAX_CATEGORIES = 5;
 const LENGTHS = ["Short", "Medium", "Long"] as const;
 type LengthOption = typeof LENGTHS[number];
 
@@ -57,11 +61,24 @@ export default function CreateScreen() {
   const [scriptHistory, setScriptHistory] = useState<string[]>([]);
   const [currentScriptIndex, setCurrentScriptIndex] = useState(0);
   const [manualScript, setManualScript] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedLength, setSelectedLength] = useState<LengthOption>("Medium");
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const pagerRef = useRef<PagerViewRef>(null);
+
+  const handleCategoryToggle = (category: string) => {
+    setSelectedCategories(prev => {
+      if (prev.includes(category)) {
+        return prev.filter(c => c !== category);
+      }
+      if (prev.length >= MAX_CATEGORIES) {
+        Alert.alert("Limit Reached", `You can select up to ${MAX_CATEGORIES} categories.`);
+        return prev;
+      }
+      return [...prev, category];
+    });
+  };
 
   const { data: customCategories = [] } = useQuery<CustomCategory[]>({
     queryKey: ["/api/custom-categories"],
@@ -76,7 +93,9 @@ export default function CreateScreen() {
       queryClient.invalidateQueries({ queryKey: ["/api/custom-categories"] });
       setNewCategoryName("");
       setShowAddCategoryModal(false);
-      setSelectedCategory(data.name);
+      if (selectedCategories.length < MAX_CATEGORIES) {
+        setSelectedCategories(prev => [...prev, data.name]);
+      }
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     },
     onError: (error: any) => {
@@ -95,10 +114,10 @@ export default function CreateScreen() {
   const allCategories = [...CATEGORIES, ...customCategories.map(c => c.name)];
 
   const generateMutation = useMutation({
-    mutationFn: async ({ goalText, category, length }: { goalText: string; category: string; length: string }) => {
+    mutationFn: async ({ goalText, categories, length }: { goalText: string; categories: string[]; length: string }) => {
       const res = await apiRequest("POST", "/api/affirmations/generate-script", {
         goal: goalText,
-        category,
+        categories,
         length,
       });
       return res.json();
@@ -127,7 +146,7 @@ export default function CreateScreen() {
       const res = await apiRequest("POST", "/api/affirmations/create-with-voice", {
         title: goal.substring(0, 50) || "My Affirmation",
         script: currentScript,
-        category: selectedCategory,
+        categories: selectedCategories,
         isManual: mode === "manual",
       });
       return res.json();
@@ -155,7 +174,7 @@ export default function CreateScreen() {
     }
     generateMutation.mutate({
       goalText: goal,
-      category: selectedCategory,
+      categories: selectedCategories,
       length: selectedLength.toLowerCase(),
     });
   };
@@ -167,7 +186,7 @@ export default function CreateScreen() {
     }
     generateMutation.mutate({
       goalText: goal,
-      category: selectedCategory,
+      categories: selectedCategories,
       length: selectedLength.toLowerCase(),
     });
   };
@@ -240,16 +259,19 @@ export default function CreateScreen() {
           </ThemedText>
         </View>
 
-        <ThemedText type="h4" style={styles.sectionTitle}>
-          Category
-        </ThemedText>
+        <View style={styles.categoryHeader}>
+          <ThemedText type="h4">Categories</ThemedText>
+          <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+            {selectedCategories.length}/{MAX_CATEGORIES} selected
+          </ThemedText>
+        </View>
         <View style={styles.categoriesGrid}>
           {allCategories.map((cat) => (
             <CategoryChip
               key={cat}
               label={cat}
-              isSelected={selectedCategory === cat}
-              onPress={() => setSelectedCategory(cat === selectedCategory ? "" : cat)}
+              isSelected={selectedCategories.includes(cat)}
+              onPress={() => handleCategoryToggle(cat)}
               testID={`chip-${cat.toLowerCase()}`}
             />
           ))}
@@ -448,6 +470,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sectionTitle: {
+    marginBottom: Spacing.md,
+  },
+  categoryHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: Spacing.md,
   },
   inputContainer: {

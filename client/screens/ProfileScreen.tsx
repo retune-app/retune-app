@@ -734,7 +734,7 @@ export default function ProfileScreen() {
           />
           <SettingItem
             icon="info"
-            label="About InnerTune"
+            label="About Within"
             value="Version 1.0.0"
             showArrow={false}
           />

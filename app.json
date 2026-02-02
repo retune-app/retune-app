@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "InnerTune",
+    "name": "Within",
     "slug": "subconscious-rewire",
     "version": "1.0.0",
     "orientation": "default",
@@ -62,7 +62,7 @@
       [
         "expo-av",
         {
-          "microphonePermission": "Allow InnerTune to access your microphone to record personalized affirmations."
+          "microphonePermission": "Allow Within to access your microphone to record personalized affirmations."
         }
       ]
     ],

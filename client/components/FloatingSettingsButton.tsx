@@ -26,9 +26,10 @@ interface FloatingSettingsButtonProps {
   bottomOffset?: number;
   topOffset?: number;
   hideOnMiniPlayer?: boolean;
+  origin?: 'BreatheTab' | 'AffirmTab';
 }
 
-export function FloatingSettingsButton({ bottomOffset, topOffset, hideOnMiniPlayer = true }: FloatingSettingsButtonProps) {
+export function FloatingSettingsButton({ bottomOffset, topOffset, hideOnMiniPlayer = true, origin = 'AffirmTab' }: FloatingSettingsButtonProps) {
   const { theme, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
@@ -51,7 +52,13 @@ export function FloatingSettingsButton({ bottomOffset, topOffset, hideOnMiniPlay
     scale.value = withSpring(0.9, { damping: 15 }, () => {
       scale.value = withSpring(1, { damping: 15 });
     });
-    navigation.navigate("Main", { screen: "SettingsTab" } as any);
+    navigation.navigate("Main", { 
+      screen: "SettingsTab", 
+      params: { 
+        screen: "Settings", 
+        params: { origin } 
+      } 
+    } as any);
   };
 
   const positionStyle = topOffset !== undefined 

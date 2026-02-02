@@ -183,6 +183,11 @@ export function AuthScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          {/* Tagline at top */}
+          <Text style={styles.topTagline}>
+            Breathe, Believe, Become
+          </Text>
+
           {/* Logo and Brand */}
           <View style={styles.logoContainer}>
             <View style={styles.logoWrapper}>
@@ -193,9 +198,6 @@ export function AuthScreen() {
               />
             </View>
             <Text style={styles.brandName}>InnerTune</Text>
-            <Text style={styles.tagline}>
-              Breathe, Believe, Become
-            </Text>
           </View>
 
           {/* Frosted Glass Card */}
@@ -347,6 +349,15 @@ const styles = StyleSheet.create({
     textAlign: "center",
     maxWidth: 280,
     lineHeight: 22,
+  },
+  topTagline: {
+    fontFamily: "Nunito_600SemiBold",
+    fontSize: 18,
+    color: authColors.textPrimary,
+    textAlign: "center",
+    letterSpacing: 2,
+    textTransform: "uppercase",
+    marginBottom: Spacing.lg,
   },
   glassCard: {
     borderRadius: BorderRadius.xl,

@@ -197,7 +197,7 @@ export function AuthScreen() {
                   resizeMode="contain"
                 />
               </View>
-              <Text style={styles.brandName}>InnerTune</Text>
+              <Text style={styles.brandName}>Within</Text>
             </View>
           </View>
 

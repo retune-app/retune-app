@@ -71,8 +71,14 @@ export function FloatingSettingsButton({ bottomOffset, topOffset, hideOnMiniPlay
     positionStyle,
     {
       backgroundColor: Platform.OS === "ios" ? "transparent" : theme.backgroundSecondary,
+      borderWidth: 1.5,
+      borderColor: isDark ? "rgba(201,162,39,0.4)" : "rgba(201,162,39,0.3)",
+      shadowColor: "#C9A227",
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.25,
+      shadowRadius: 8,
+      elevation: 6,
     },
-    Platform.OS !== "ios" && Shadows.small,
   ];
 
   return (
@@ -83,14 +89,14 @@ export function FloatingSettingsButton({ bottomOffset, topOffset, hideOnMiniPlay
     >
       {Platform.OS === "ios" ? (
         <BlurView
-          intensity={80}
-          tint={isDark ? "dark" : "light"}
+          intensity={60}
+          tint="dark"
           style={styles.blurContent}
         >
-          <Feather name="settings" size={20} color={theme.text} />
+          <Feather name="settings" size={22} color="#C9A227" />
         </BlurView>
       ) : (
-        <Feather name="settings" size={20} color={theme.text} />
+        <Feather name="settings" size={22} color="#C9A227" />
       )}
     </AnimatedPressable>
   );
@@ -99,9 +105,9 @@ export function FloatingSettingsButton({ bottomOffset, topOffset, hideOnMiniPlay
 const styles = StyleSheet.create({
   button: {
     position: "absolute",
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
     zIndex: 100,
@@ -112,7 +118,7 @@ const styles = StyleSheet.create({
     height: "100%",
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 22,
+    borderRadius: 24,
     overflow: "hidden",
   },
 });

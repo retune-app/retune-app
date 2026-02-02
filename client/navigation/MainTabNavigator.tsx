@@ -33,12 +33,12 @@ function CreateTabButton({ onPress }: { onPress?: (e?: any) => void }) {
   return (
     <Pressable onPress={handlePress} style={styles.createButtonContainer}>
       <LinearGradient
-        colors={theme.gradient.primary as [string, string]}
+        colors={["#C9A227", "#E5C95C"] as [string, string]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={[styles.createButton, Shadows.medium]}
+        style={[styles.createButton, styles.createButtonShadow]}
       >
-        <Feather name="plus" size={28} color="#FFFFFF" />
+        <Feather name="plus" size={28} color="#0F1C3F" />
       </LinearGradient>
     </Pressable>
   );
@@ -78,8 +78,10 @@ export default function MainTabNavigator() {
           ) : null,
         headerShown: false,
         tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: "500",
+          fontSize: 11,
+          fontWeight: "600",
+          letterSpacing: 0.5,
+          fontFamily: "Nunito_600SemiBold",
         },
       }}
     >
@@ -133,15 +135,24 @@ export default function MainTabNavigator() {
 const styles = StyleSheet.create({
   createButtonContainer: {
     position: "relative",
-    top: -20,
+    top: -22,
     alignItems: "center",
     justifyContent: "center",
   },
   createButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",
+    borderWidth: 3,
+    borderColor: "rgba(255,255,255,0.3)",
+  },
+  createButtonShadow: {
+    shadowColor: "#C9A227",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 10,
   },
 });

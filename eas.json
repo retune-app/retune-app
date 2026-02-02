@@ -1,0 +1,22 @@
+{
+  "cli": {
+    "version": ">= 5.0.0"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal"
+    },
+    "production": {
+      "env": {
+        "EXPO_PUBLIC_DOMAIN": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

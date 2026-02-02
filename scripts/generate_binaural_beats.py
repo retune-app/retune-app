@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate binaural beats audio files for Rewired app.
+Generate binaural beats audio files for InnerTune app.
 Creates loopable ambient background tracks with healing frequencies.
 """
 

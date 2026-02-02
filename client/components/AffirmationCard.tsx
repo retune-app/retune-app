@@ -225,10 +225,22 @@ export function AffirmationCard({
             </ThemedText>
             <View style={styles.meta}>
               {category ? (
-                <View style={[styles.categoryBadge, { backgroundColor: theme.backgroundSecondary, borderColor: theme.gold, borderWidth: 1 }]}>
-                  <ThemedText type="caption" style={{ color: theme.gold }}>
-                    {category}
-                  </ThemedText>
+                <View style={styles.categoriesContainer}>
+                  {category.split(",").slice(0, 3).map((cat, index) => (
+                    <View 
+                      key={cat.trim()} 
+                      style={[styles.categoryBadge, { backgroundColor: theme.backgroundSecondary, borderColor: theme.gold, borderWidth: 1 }]}
+                    >
+                      <ThemedText type="caption" style={{ color: theme.gold, fontSize: 10 }}>
+                        {cat.trim()}
+                      </ThemedText>
+                    </View>
+                  ))}
+                  {category.split(",").length > 3 ? (
+                    <ThemedText type="caption" style={{ color: theme.textSecondary, fontSize: 10 }}>
+                      +{category.split(",").length - 3}
+                    </ThemedText>
+                  ) : null}
                 </View>
               ) : null}
               {isBreathingAffirmation ? (
@@ -335,10 +347,17 @@ const styles = StyleSheet.create({
   meta: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.sm,
+    flexWrap: "wrap",
+    gap: Spacing.xs,
+  },
+  categoriesContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 4,
   },
   categoryBadge: {
-    paddingHorizontal: Spacing.sm,
+    paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: BorderRadius.xs,
   },

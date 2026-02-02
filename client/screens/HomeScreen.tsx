@@ -304,7 +304,7 @@ export default function HomeScreen() {
   const renderEmpty = () => (
     <EmptyState
       title="No Affirmations Yet"
-      description="Create your first personalized affirmation to start rewiring your subconscious mind."
+      description="The first step to becoming is believing. Let's begin."
       actionLabel="Create Affirmation"
       onAction={handleCreatePress}
     />

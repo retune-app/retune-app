@@ -84,7 +84,8 @@ export const affirmations = pgTable("affirmations", {
   script: text("script").notNull(),
   categoryId: integer("category_id").references(() => categories.id),
   customCategoryId: integer("custom_category_id").references(() => customCategories.id, { onDelete: "set null" }),
-  categoryName: text("category_name"), // Simple text field for category - simpler than foreign keys
+  pillar: text("pillar"), // Main pillar category: Mind, Body, Spirit, Connection, Achievement
+  categoryName: text("category_name"), // Comma-separated subcategory tags within the pillar
   audioUrl: text("audio_url"),
   duration: integer("duration"),
   wordTimings: text("word_timings"), // JSON string of WordTiming[] for RSVP sync

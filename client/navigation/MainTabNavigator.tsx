@@ -112,9 +112,9 @@ export default function MainTabNavigator() {
         name="AffirmTab"
         component={HomeStackNavigator}
         options={{
-          title: "Affirm",
+          title: "Believe",
           tabBarIcon: ({ color, size }) => (
-            <Feather name="headphones" size={size} color={color} />
+            <Feather name="heart" size={size} color={color} />
           ),
         }}
       />

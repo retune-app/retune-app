@@ -30,8 +30,8 @@ Preferred communication style: Simple, everyday language.
 - **Voice Selection System**: Users can choose from various AI voices or clone their own voice, with preferences stored and manageable through a dedicated UI.
 
 ### Navigation Structure
-- **2-Tab Navigation**: Breathe (left), Affirm (right) with middle Create (+) button
-- **Settings Access**: Floating settings button (gear icon) on Breathe and Affirm screens, positioned bottom-right above tab bar
+- **2-Tab Navigation**: Breathe (left), Believe (right) with middle Create (+) button - aligns with "Breathe, Believe, Become" tagline
+- **Settings Access**: Floating settings button (gear icon) on Breathe and Believe screens, positioned bottom-right above tab bar (48x48px with gold border)
 - **Affirmation Selection**: Swipe left on affirmation cards to "Set for Breathing" - persisted in AsyncStorage with key `@breathing/selectedAffirmation`
 - **Breathing Priority**: Selected breathing affirmation takes precedence over time-based suggestions
 - **Breathing Technique Persistence**: Selected technique auto-saves to AsyncStorage with key `@breathing/defaultTechnique`. Long-press on technique card to set as default.
@@ -41,6 +41,7 @@ Preferred communication style: Simple, everyday language.
 - **Color Hierarchy**: Gold (#C9A227) for breathing metrics, Purple (#9C27B0) for affirmation metrics.
 - **Typography**: Nunito font family.
 - **Components**: Includes `GoldShimmer`, `BreathingPulse`, `GradientCard`, `WelcomeSection`, `AmbientSoundMixer`, `ProgressVisualization`, `FloatingSettingsButton`, `SwipeableAffirmationCard`, and `MiniPlayer` for enhanced user experience.
+- **Create Button**: Gold gradient (60x60px) with navy icon, white translucent border, and enhanced gold glow effect.
 - **Mini Player**: Compact pill-shaped design with blur effect, waveform indicator when playing, positioned 94px + insets.bottom from screen bottom.
 - **Haptic Feedback**: Integrated for key interactions and milestones.
 - **Screen Transitions**: Default fade for iOS, fade_from_bottom for Android, slide_from_bottom for modals.

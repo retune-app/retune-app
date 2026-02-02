@@ -183,22 +183,26 @@ export function AuthScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Tagline at top */}
-          <Text style={styles.topTagline}>
-            Breathe, Believe, Become
-          </Text>
+          {/* Top Section - Tagline and Logo */}
+          <View style={styles.topSection}>
+            <Text style={styles.topTagline}>
+              Breathe, Believe, Become
+            </Text>
 
-          {/* Logo and Brand */}
-          <View style={styles.logoContainer}>
-            <View style={styles.logoWrapper}>
-              <Image
-                source={require("../../assets/images/rewired-logo.png")}
-                style={styles.logoImage}
-                resizeMode="contain"
-              />
+            <View style={styles.logoContainer}>
+              <View style={styles.logoWrapper}>
+                <Image
+                  source={require("../../assets/images/rewired-logo.png")}
+                  style={styles.logoImage}
+                  resizeMode="contain"
+                />
+              </View>
+              <Text style={styles.brandName}>InnerTune</Text>
             </View>
-            <Text style={styles.brandName}>InnerTune</Text>
           </View>
+
+          {/* Spacer to push login to bottom */}
+          <View style={styles.spacer} />
 
           {/* Frosted Glass Card */}
           <BlurView
@@ -310,11 +314,16 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: Spacing.xl,
-    justifyContent: "center",
+  },
+  topSection: {
+    alignItems: "center",
+  },
+  spacer: {
+    flex: 1,
+    minHeight: Spacing.xl,
   },
   logoContainer: {
     alignItems: "center",
-    marginBottom: Spacing.xl,
   },
   logoWrapper: {
     width: 100,
@@ -357,7 +366,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     letterSpacing: 2,
     textTransform: "uppercase",
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   glassCard: {
     borderRadius: BorderRadius.xl,

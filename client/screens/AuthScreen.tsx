@@ -168,7 +168,7 @@ export function AuthScreen() {
   return (
     <View style={styles.container}>
       <ImageBackground
-        source={require("../../assets/images/library-background-light.png")}
+        source={require("../../assets/images/library-background.png")}
         style={styles.backgroundImage}
         resizeMode="cover"
       >

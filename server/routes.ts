@@ -2049,6 +2049,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // TEMPORARY: Admin endpoint to generate audio for sample affirmations
+  app.post("/api/admin/generate-sample-audio", async (req: Request, res: Response) => {
+    try {
+      const { adminKey } = req.body;
+      
+      // Simple admin key protection
+      if (adminKey !== "generate-sample-audio-2024") {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      // Get all sample affirmations that need audio
+      const sampleAffirmations = await db
+        .select()
+        .from(affirmations)
+        .where(eq(affirmations.userId, "apple-review-test-account"));
+      
+      const results: { id: number; title: string; status: string; error?: string }[] = [];
+      const audioDir = path.join(process.cwd(), "uploads", "audio");
+      if (!fs.existsSync(audioDir)) {
+        fs.mkdirSync(audioDir, { recursive: true });
+      }
+      
+      for (const affirmation of sampleAffirmations) {
+        try {
+          // Skip if already has audio
+          if (affirmation.audioUrl) {
+            results.push({ id: affirmation.id, title: affirmation.title, status: "skipped - already has audio" });
+            continue;
+          }
+          
+          // Use the assigned AI voice or default to Sarah
+          const voiceId = affirmation.aiVoiceId || "EXAVITQu4vr4xnSDxMaL";
+          
+          console.log(`Generating audio for: ${affirmation.title} with voice ${voiceId}`);
+          
+          // Generate audio
+          const audioResult = await generateAudio(affirmation.script, voiceId);
+          
+          // Save audio file
+          const audioFileName = `affirmation-${affirmation.id}-${Date.now()}.mp3`;
+          const audioPath = path.join(audioDir, audioFileName);
+          fs.writeFileSync(audioPath, Buffer.from(audioResult.audio));
+          
+          const audioUrl = `/uploads/audio/${audioFileName}`;
+          
+          // Update affirmation
+          await db
+            .update(affirmations)
+            .set({
+              audioUrl,
+              duration: audioResult.duration,
+              wordTimings: JSON.stringify(audioResult.wordTimings),
+              updatedAt: new Date(),
+            })
+            .where(eq(affirmations.id, affirmation.id));
+          
+          results.push({ id: affirmation.id, title: affirmation.title, status: "success" });
+          
+          // Small delay to avoid rate limits
+          await new Promise(resolve => setTimeout(resolve, 500));
+        } catch (err: any) {
+          console.error(`Failed to generate audio for ${affirmation.title}:`, err);
+          results.push({ id: affirmation.id, title: affirmation.title, status: "error", error: err.message });
+        }
+      }
+      
+      res.json({ total: sampleAffirmations.length, results });
+    } catch (error: any) {
+      console.error("Error generating sample audio:", error);
+      res.status(500).json({ error: "Failed to generate sample audio" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

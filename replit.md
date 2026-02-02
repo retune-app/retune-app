@@ -21,6 +21,7 @@ Preferred communication style: Simple, everyday language.
 - **Personalized Affirmations**: Users input goals, AI generates scripts, and voice cloning plays them in the user's voice. Uses a hierarchical pillar-based organization system:
   - **5 Life Pillars**: Mind (#3B82F6), Body (#10B981), Spirit (#8B5CF6), Connection (#F97316), Achievement (#C9A227) - users must select one pillar when creating affirmations
   - **Subcategory Tags**: Optional fine-tuning with up to 5 subcategory tags per affirmation (e.g., Mind → Confidence, Focus, Resilience, Emotion)
+  - **Custom Tags**: Users can add up to 3 custom tags per pillar via "+" button in create flow. Stored in AsyncStorage with key `@create/customTags`. Custom tags can be deleted with X button.
   - **Visual Identification**: Affirmation cards display a 4px left accent bar in the pillar's color
   - **Library Filtering**: HomeScreen filters affirmations by pillar with color-coded chips
   - Database stores: `pillar` field (single text) + `categoryName` (comma-separated subcategories for backward compatibility)

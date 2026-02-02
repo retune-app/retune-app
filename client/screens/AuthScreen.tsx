@@ -194,8 +194,8 @@ export function AuthScreen() {
               
               {/* Liquid Glass Brand Container */}
               <BlurView
-                intensity={30}
-                tint="dark"
+                intensity={80}
+                tint="light"
                 style={styles.brandGlassContainer}
               >
                 <View style={styles.brandGlassInner}>
@@ -356,15 +356,21 @@ const styles = StyleSheet.create({
   brandGlassContainer: {
     borderRadius: BorderRadius.xl,
     overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "rgba(201,162,39,0.25)",
+    borderWidth: 1.5,
+    borderColor: "rgba(255,255,255,0.3)",
     marginTop: Spacing.lg,
+    shadowColor: "#C9A227",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
   },
   brandGlassInner: {
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.lg,
     paddingHorizontal: Spacing.xxl,
-    backgroundColor: "rgba(15,28,63,0.4)",
+    backgroundColor: "rgba(255,255,255,0.1)",
     alignItems: "center",
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.2)",
   },
   brandName: {
     fontFamily: "SpaceGrotesk_700Bold",

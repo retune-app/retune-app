@@ -376,47 +376,47 @@ export default function CreateScreen() {
                   </Pressable>
                 </View>
               ))}
-              {(customTags[selectedPillar] || []).length < MAX_CUSTOM_TAGS_PER_PILLAR ? (
-                isAddingTag ? (
-                  <View style={[styles.addTagInputContainer, { borderColor: selectedPillarData.color }]}>
-                    <TextInput
-                      ref={newTagInputRef}
-                      style={[styles.addTagInput, { color: theme.text }]}
-                      placeholder="Tag name..."
-                      placeholderTextColor={theme.placeholder}
-                      value={newTagName}
-                      onChangeText={setNewTagName}
-                      maxLength={20}
-                      onSubmitEditing={handleAddCustomTag}
-                      returnKeyType="done"
-                      testID="input-new-tag"
-                    />
-                    <Pressable 
-                      onPress={handleAddCustomTag}
-                      style={[styles.tagActionButton, { backgroundColor: selectedPillarData.color }]}
-                      testID="button-confirm-tag"
-                    >
-                      <Feather name="check" size={14} color="#fff" />
-                    </Pressable>
-                    <Pressable 
-                      onPress={handleCancelAddingTag}
-                      style={[styles.tagActionButton, { backgroundColor: theme.textSecondary }]}
-                      testID="button-cancel-tag"
-                    >
-                      <Feather name="x" size={14} color="#fff" />
-                    </Pressable>
-                  </View>
-                ) : (
-                  <Pressable
-                    onPress={handleStartAddingTag}
-                    style={[styles.addTagButton, { borderColor: selectedPillarData.color }]}
-                    testID="button-add-custom-tag"
-                  >
-                    <Feather name="plus" size={16} color={selectedPillarData.color} />
-                  </Pressable>
-                )
+              {(customTags[selectedPillar] || []).length < MAX_CUSTOM_TAGS_PER_PILLAR && !isAddingTag ? (
+                <Pressable
+                  onPress={handleStartAddingTag}
+                  style={[styles.addTagButton, { borderColor: selectedPillarData.color }]}
+                  testID="button-add-custom-tag"
+                >
+                  <Feather name="plus" size={16} color={selectedPillarData.color} />
+                </Pressable>
               ) : null}
             </View>
+            {isAddingTag ? (
+              <View style={[styles.addTagInputContainer, { borderColor: selectedPillarData.color, backgroundColor: theme.inputBackground }]}>
+                <TextInput
+                  ref={newTagInputRef}
+                  style={[styles.addTagInput, { color: theme.text }]}
+                  placeholder="Enter custom tag name..."
+                  placeholderTextColor={theme.placeholder}
+                  value={newTagName}
+                  onChangeText={setNewTagName}
+                  maxLength={20}
+                  onSubmitEditing={handleAddCustomTag}
+                  returnKeyType="done"
+                  autoFocus
+                  testID="input-new-tag"
+                />
+                <Pressable 
+                  onPress={handleAddCustomTag}
+                  style={[styles.tagActionButton, { backgroundColor: selectedPillarData.color }]}
+                  testID="button-confirm-tag"
+                >
+                  <Feather name="check" size={16} color="#fff" />
+                </Pressable>
+                <Pressable 
+                  onPress={handleCancelAddingTag}
+                  style={[styles.tagActionButton, { backgroundColor: theme.textSecondary }]}
+                  testID="button-cancel-tag"
+                >
+                  <Feather name="x" size={16} color="#fff" />
+                </Pressable>
+              </View>
+            ) : null}
             <ThemedText type="caption" style={[styles.customTagHint, { color: theme.textSecondary }]}>
               {(customTags[selectedPillar] || []).length}/{MAX_CUSTOM_TAGS_PER_PILLAR} custom tags
             </ThemedText>
@@ -731,22 +731,24 @@ const styles = StyleSheet.create({
   addTagInputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    borderWidth: 1.5,
-    borderRadius: BorderRadius.full,
+    borderWidth: 2,
+    borderRadius: BorderRadius.lg,
     paddingLeft: Spacing.md,
-    paddingRight: Spacing.xs,
-    height: 36,
-    gap: Spacing.xs,
+    paddingRight: Spacing.sm,
+    height: 48,
+    gap: Spacing.sm,
+    marginTop: Spacing.sm,
   },
   addTagInput: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 16,
     height: "100%",
+    paddingVertical: Spacing.sm,
   },
   tagActionButton: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
   },

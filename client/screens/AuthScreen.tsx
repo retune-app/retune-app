@@ -208,7 +208,7 @@ export function AuthScreen() {
               styles.scrollContent,
               {
                 paddingTop: insets.top + Spacing.xxl,
-                paddingBottom: insets.bottom + Spacing.xxl + 100,
+                paddingBottom: insets.bottom + Spacing.xxl + 160,
               }
             ]}
             keyboardShouldPersistTaps="handled"

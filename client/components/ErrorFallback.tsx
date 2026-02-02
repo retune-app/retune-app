@@ -64,7 +64,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
         <Text style={styles.title}>Something went wrong</Text>
 
         <Text style={styles.message}>
-          Rewired encountered an issue. Please restart the app to continue your mindfulness journey.
+          InnerTune encountered an issue. Please restart the app to continue your mindfulness journey.
         </Text>
 
         <Pressable
@@ -77,7 +77,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
             },
           ]}
         >
-          <Text style={styles.buttonText}>Restart Rewired</Text>
+          <Text style={styles.buttonText}>Restart InnerTune</Text>
         </Pressable>
       </View>
 

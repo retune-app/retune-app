@@ -192,7 +192,7 @@ export function AuthScreen() {
                 resizeMode="contain"
               />
             </View>
-            <Text style={styles.brandName}>Rewired</Text>
+            <Text style={styles.brandName}>InnerTune</Text>
             <Text style={styles.tagline}>
               Transform your mind through the power of affirmations
             </Text>

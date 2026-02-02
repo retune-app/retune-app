@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   StyleSheet,
@@ -16,6 +16,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -30,8 +31,12 @@ import { PILLARS, PILLAR_LIST, type PillarName } from "@shared/pillars";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
 const MAX_SUBCATEGORIES = 5;
+const MAX_CUSTOM_TAGS_PER_PILLAR = 3;
+const CUSTOM_TAGS_STORAGE_KEY = "@create/customTags";
 const LENGTHS = ["Short", "Medium", "Long"] as const;
 type LengthOption = typeof LENGTHS[number];
+
+type CustomTagsMap = Record<string, string[]>;
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -54,6 +59,69 @@ export default function CreateScreen() {
   const [manualScript, setManualScript] = useState("");
   const [selectedLength, setSelectedLength] = useState<LengthOption>("Medium");
   const pagerRef = useRef<any>(null);
+  
+  const [customTags, setCustomTags] = useState<CustomTagsMap>({});
+  const [isAddingTag, setIsAddingTag] = useState(false);
+  const [newTagName, setNewTagName] = useState("");
+  const newTagInputRef = useRef<TextInput>(null);
+
+  useEffect(() => {
+    AsyncStorage.getItem(CUSTOM_TAGS_STORAGE_KEY).then((value) => {
+      if (value) {
+        try {
+          setCustomTags(JSON.parse(value));
+        } catch (e) {}
+      }
+    });
+  }, []);
+
+  const saveCustomTags = async (tags: CustomTagsMap) => {
+    setCustomTags(tags);
+    await AsyncStorage.setItem(CUSTOM_TAGS_STORAGE_KEY, JSON.stringify(tags));
+  };
+
+  const handleAddCustomTag = () => {
+    if (!selectedPillar || !newTagName.trim()) return;
+    
+    const trimmedName = newTagName.trim();
+    const pillarTags = customTags[selectedPillar] || [];
+    const predefinedTags = PILLARS[selectedPillar].subcategories;
+    
+    if (pillarTags.length >= MAX_CUSTOM_TAGS_PER_PILLAR) {
+      Alert.alert("Limit Reached", `You can only add ${MAX_CUSTOM_TAGS_PER_PILLAR} custom tags per pillar.`);
+      return;
+    }
+    
+    if (pillarTags.includes(trimmedName) || predefinedTags.includes(trimmedName)) {
+      Alert.alert("Duplicate Tag", "This tag already exists.");
+      return;
+    }
+    
+    const newTags = { ...customTags, [selectedPillar]: [...pillarTags, trimmedName] };
+    saveCustomTags(newTags);
+    setNewTagName("");
+    setIsAddingTag(false);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
+
+  const handleDeleteCustomTag = (pillar: PillarName, tag: string) => {
+    const pillarTags = customTags[pillar] || [];
+    const newPillarTags = pillarTags.filter(t => t !== tag);
+    const newTags = { ...customTags, [pillar]: newPillarTags };
+    saveCustomTags(newTags);
+    setSelectedSubcategories(prev => prev.filter(s => s !== tag));
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
+
+  const handleStartAddingTag = () => {
+    setIsAddingTag(true);
+    setTimeout(() => newTagInputRef.current?.focus(), 100);
+  };
+
+  const handleCancelAddingTag = () => {
+    setIsAddingTag(false);
+    setNewTagName("");
+  };
 
   const handlePillarSelect = (pillar: PillarName) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -265,7 +333,7 @@ export default function CreateScreen() {
           })}
         </View>
 
-        {selectedPillarData ? (
+        {selectedPillarData && selectedPillar ? (
           <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(150)}>
             <View style={styles.subcategoryHeader}>
               <View style={styles.subcategoryTitleRow}>
@@ -287,7 +355,69 @@ export default function CreateScreen() {
                   testID={`chip-${subcat.toLowerCase().replace(/\s+/g, '-')}`}
                 />
               ))}
+              {(customTags[selectedPillar] || []).map((tag) => (
+                <View key={tag} style={styles.customTagWrapper}>
+                  <CategoryChip
+                    label={tag}
+                    isSelected={selectedSubcategories.includes(tag)}
+                    onPress={() => handleSubcategoryToggle(tag)}
+                    color={selectedPillarData.color}
+                    testID={`chip-custom-${tag.toLowerCase().replace(/\s+/g, '-')}`}
+                  />
+                  <Pressable
+                    onPress={() => handleDeleteCustomTag(selectedPillar, tag)}
+                    style={[styles.deleteTagButton, { backgroundColor: theme.error }]}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    testID={`delete-tag-${tag.toLowerCase().replace(/\s+/g, '-')}`}
+                  >
+                    <Feather name="x" size={10} color="#fff" />
+                  </Pressable>
+                </View>
+              ))}
+              {(customTags[selectedPillar] || []).length < MAX_CUSTOM_TAGS_PER_PILLAR ? (
+                isAddingTag ? (
+                  <View style={[styles.addTagInputContainer, { borderColor: selectedPillarData.color }]}>
+                    <TextInput
+                      ref={newTagInputRef}
+                      style={[styles.addTagInput, { color: theme.text }]}
+                      placeholder="Tag name..."
+                      placeholderTextColor={theme.placeholder}
+                      value={newTagName}
+                      onChangeText={setNewTagName}
+                      maxLength={20}
+                      onSubmitEditing={handleAddCustomTag}
+                      returnKeyType="done"
+                      testID="input-new-tag"
+                    />
+                    <Pressable 
+                      onPress={handleAddCustomTag}
+                      style={[styles.tagActionButton, { backgroundColor: selectedPillarData.color }]}
+                      testID="button-confirm-tag"
+                    >
+                      <Feather name="check" size={14} color="#fff" />
+                    </Pressable>
+                    <Pressable 
+                      onPress={handleCancelAddingTag}
+                      style={[styles.tagActionButton, { backgroundColor: theme.textSecondary }]}
+                      testID="button-cancel-tag"
+                    >
+                      <Feather name="x" size={14} color="#fff" />
+                    </Pressable>
+                  </View>
+                ) : (
+                  <Pressable
+                    onPress={handleStartAddingTag}
+                    style={[styles.addTagButton, { borderColor: selectedPillarData.color }]}
+                    testID="button-add-custom-tag"
+                  >
+                    <Feather name="plus" size={16} color={selectedPillarData.color} />
+                  </Pressable>
+                )
+              ) : null}
             </View>
+            <ThemedText type="caption" style={[styles.customTagHint, { color: theme.textSecondary }]}>
+              {(customTags[selectedPillar] || []).length}/{MAX_CUSTOM_TAGS_PER_PILLAR} custom tags
+            </ThemedText>
           </Animated.View>
         ) : null}
 
@@ -572,5 +702,54 @@ const styles = StyleSheet.create({
   },
   createButton: {
     marginTop: Spacing.lg,
+  },
+  customTagWrapper: {
+    position: "relative",
+  },
+  deleteTagButton: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 1,
+  },
+  addTagButton: {
+    height: 36,
+    width: 36,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1.5,
+    borderStyle: "dashed",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  addTagInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1.5,
+    borderRadius: BorderRadius.full,
+    paddingLeft: Spacing.md,
+    paddingRight: Spacing.xs,
+    height: 36,
+    gap: Spacing.xs,
+  },
+  addTagInput: {
+    flex: 1,
+    fontSize: 14,
+    height: "100%",
+  },
+  tagActionButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  customTagHint: {
+    marginTop: Spacing.sm,
+    marginBottom: Spacing["2xl"],
   },
 });

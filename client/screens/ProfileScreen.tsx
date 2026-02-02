@@ -57,12 +57,6 @@ import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 // Use consistent gold for accent buttons regardless of theme
 const ACCENT_GOLD = "#C9A227";
 
-interface CustomCategory {
-  id: number;
-  userId: string;
-  name: string;
-  createdAt: string;
-}
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -139,10 +133,6 @@ export default function ProfileScreen() {
     queryKey: ["/api/user/stats"],
   });
 
-  const { data: customCategories = [] } = useQuery<CustomCategory[]>({
-    queryKey: ["/api/custom-categories"],
-  });
-
   // Voice preferences query
   const { data: voicePreferences, isLoading: isLoadingVoicePrefs } = useQuery<VoicePreferences>({
     queryKey: ["/api/voice-preferences"],
@@ -151,16 +141,6 @@ export default function ProfileScreen() {
   // Available voices query
   const { data: voiceOptions } = useQuery<VoiceOptions>({
     queryKey: ["/api/voices"],
-  });
-
-  const deleteCategoryMutation = useMutation({
-    mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/custom-categories/${id}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/custom-categories"] });
-      try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
-    },
   });
 
   const updateNameMutation = useMutation({
@@ -196,10 +176,6 @@ export default function ProfileScreen() {
   const handleCancelEditName = () => {
     setIsEditingName(false);
     setEditedName("");
-  };
-
-  const handleDeleteCategory = (category: CustomCategory) => {
-    deleteCategoryMutation.mutate(category.id);
   };
 
   useEffect(() => {
@@ -574,48 +550,6 @@ export default function ProfileScreen() {
           DAILY REMINDERS
         </ThemedText>
         <ReminderSettings />
-      </View>
-
-      <View style={styles.section}>
-        <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-          CUSTOM CATEGORIES
-        </ThemedText>
-        <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
-          {customCategories.length > 0 ? (
-            customCategories.map((category, index) => (
-              <View
-                key={category.id}
-                style={[
-                  styles.customCategoryItem,
-                  index < customCategories.length - 1 && { borderBottomWidth: 1, borderBottomColor: theme.border },
-                ]}
-              >
-                <View style={[styles.settingIcon, { backgroundColor: theme.backgroundSecondary }]}>
-                  <Feather name="tag" size={20} color={theme.primary} />
-                </View>
-                <View style={styles.settingContent}>
-                  <ThemedText type="body">{category.name}</ThemedText>
-                </View>
-                <Pressable
-                  onPress={() => handleDeleteCategory(category)}
-                  style={styles.deleteButton}
-                  testID={`button-delete-category-${category.id}`}
-                >
-                  <Feather name="x" size={18} color={theme.error} />
-                </Pressable>
-              </View>
-            ))
-          ) : (
-            <View style={styles.emptyCategories}>
-              <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "center" }}>
-                No custom categories yet.{"\n"}Add them when creating affirmations.
-              </ThemedText>
-            </View>
-          )}
-        </View>
-        <ThemedText type="caption" style={[styles.categoryCount, { color: theme.textSecondary }]}>
-          {customCategories.length} of 5 custom categories used
-        </ThemedText>
       </View>
 
       <View style={styles.section}>
@@ -1265,21 +1199,8 @@ const styles = StyleSheet.create({
   settingContent: {
     flex: 1,
   },
-  customCategoryItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.lg,
-  },
   deleteButton: {
     padding: Spacing.sm,
-  },
-  emptyCategories: {
-    padding: Spacing.xl,
-  },
-  categoryCount: {
-    textAlign: "center",
-    marginTop: Spacing.sm,
   },
   logoutText: {
     fontFamily: "Nunito_600SemiBold",

@@ -34,6 +34,7 @@ Preferred communication style: Simple, everyday language.
 - **Settings Access**: Floating settings button (gear icon) on Breathe and Affirm screens, positioned bottom-right above tab bar
 - **Affirmation Selection**: Swipe left on affirmation cards to "Set for Breathing" - persisted in AsyncStorage with key `@breathing/selectedAffirmation`
 - **Breathing Priority**: Selected breathing affirmation takes precedence over time-based suggestions
+- **Breathing Technique Persistence**: Selected technique auto-saves to AsyncStorage with key `@breathing/defaultTechnique`. Long-press on technique card to set as default.
 
 ### UI/UX Design
 - **Theme**: "Serene Empowerment" with a color palette of Primary Gold (#C9A227) and Navy backgrounds (#0F1C3F, #1A2D4F, #243656).

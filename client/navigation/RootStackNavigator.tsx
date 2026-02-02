@@ -49,7 +49,7 @@ export default function RootStackNavigator() {
   const screenOptions = useScreenOptions();
   const { theme } = useTheme();
   const { isAuthenticated, isLoading } = useAuth();
-  const [currentRoute, setCurrentRoute] = useState<string>('Main');
+  const [currentRoute, setCurrentRoute] = useState<string>('BreatheTab');
 
   const fadeScreenOptions: NativeStackNavigationOptions = {
     ...screenOptions,
@@ -65,12 +65,17 @@ export default function RootStackNavigator() {
     if (state) {
       const route = state.routes[state.index];
       // Check if we're in Main (tabs) and get the active tab name
-      if (route?.name === 'Main' && route.state) {
-        const tabState = route.state as NavigationState;
-        const activeTab = tabState.routes[tabState.index]?.name;
-        setCurrentRoute(activeTab ?? 'Main');
+      if (route?.name === 'Main') {
+        if (route.state) {
+          const tabState = route.state as NavigationState;
+          const activeTab = tabState.routes[tabState.index]?.name;
+          setCurrentRoute(activeTab ?? 'BreatheTab');
+        } else {
+          // Tab state not initialized yet, default to BreatheTab (initial route)
+          setCurrentRoute('BreatheTab');
+        }
       } else {
-        setCurrentRoute(route?.name ?? 'Main');
+        setCurrentRoute(route?.name ?? 'BreatheTab');
       }
     }
   }, []);

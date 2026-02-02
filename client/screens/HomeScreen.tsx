@@ -28,16 +28,10 @@ import { useAudio } from "@/contexts/AudioContext";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { apiRequest } from "@/lib/query-client";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
-import type { Affirmation, Category } from "@shared/schema";
+import type { Affirmation } from "@shared/schema";
+import { PILLAR_LIST, getPillarColor } from "@shared/pillars";
 
-const DEFAULT_CATEGORIES = ["All", "Career", "Health", "Confidence", "Wealth", "Relationships", "Sleep"];
-
-interface CustomCategory {
-  id: number;
-  userId: string;
-  name: string;
-  createdAt: string;
-}
+const PILLAR_FILTERS = ["All", ...PILLAR_LIST];
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -59,7 +53,7 @@ export default function HomeScreen() {
   const [highlightedAffirmationId, setHighlightedAffirmationId] = useState<number | null>(null);
 
   const queryClient = useQueryClient();
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedPillar, setSelectedPillar] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [renameModalVisible, setRenameModalVisible] = useState(false);
@@ -103,7 +97,7 @@ export default function HomeScreen() {
   useEffect(() => {
     if (highlightAffirmationId && affirmations.length > 0) {
       // Reset filters so the affirmation is visible
-      setSelectedCategory("All");
+      setSelectedPillar("All");
       setSearchQuery("");
       
       setHighlightedAffirmationId(highlightAffirmationId);
@@ -129,7 +123,7 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       if (highlightAffirmationId && affirmations.length > 0 && !highlightedAffirmationId) {
-        setSelectedCategory("All");
+        setSelectedPillar("All");
         setSearchQuery("");
         setHighlightedAffirmationId(highlightAffirmationId);
         
@@ -172,15 +166,6 @@ export default function HomeScreen() {
     }
   };
 
-  const { data: categoriesData = [] } = useQuery<Category[]>({
-    queryKey: ["/api/categories"],
-  });
-
-  const { data: customCategories = [] } = useQuery<CustomCategory[]>({
-    queryKey: ["/api/custom-categories"],
-  });
-
-  const allCategories = [...DEFAULT_CATEGORIES, ...customCategories.map(c => c.name)];
 
   const renameMutation = useMutation({
     mutationFn: async ({ id, title }: { id: number; title: string }) => {
@@ -205,11 +190,11 @@ export default function HomeScreen() {
     setRefreshing(false);
   }, [refetch]);
 
-  // Simple filtering by categoryName field
+  // Filter by pillar and search
   const filteredAffirmations = affirmations.filter((item) => {
     const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === "All" || item.categoryName === selectedCategory;
-    return matchesSearch && matchesCategory;
+    const matchesPillar = selectedPillar === "All" || item.pillar === selectedPillar;
+    return matchesSearch && matchesPillar;
   });
 
   const handleAffirmationPress = (id: number) => {
@@ -296,17 +281,21 @@ export default function HomeScreen() {
         <FlatList
           horizontal
           showsHorizontalScrollIndicator={false}
-          data={allCategories}
+          data={PILLAR_FILTERS}
           keyExtractor={(item) => item}
           contentContainerStyle={styles.categoriesContainer}
-          renderItem={({ item }) => (
-            <CategoryChip
-              label={item}
-              isSelected={selectedCategory === item}
-              onPress={() => setSelectedCategory(item)}
-              testID={`chip-category-${item.toLowerCase()}`}
-            />
-          )}
+          renderItem={({ item }) => {
+            const pillarColor = item !== "All" ? getPillarColor(item) : undefined;
+            return (
+              <CategoryChip
+                label={item}
+                isSelected={selectedPillar === item}
+                onPress={() => setSelectedPillar(item)}
+                color={pillarColor}
+                testID={`chip-pillar-${item.toLowerCase()}`}
+              />
+            );
+          }}
         />
       </View>
     </View>

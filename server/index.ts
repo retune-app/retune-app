@@ -209,6 +209,28 @@ function configureExpoAndLanding(app: express.Application) {
 
   log("Serving static Expo files with dynamic manifest routing");
 
+  // Serve Privacy Policy page
+  app.get("/privacy-policy", (_req: Request, res: Response) => {
+    const privacyPath = path.resolve(process.cwd(), "server", "templates", "privacy-policy.html");
+    if (fs.existsSync(privacyPath)) {
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      res.sendFile(privacyPath);
+    } else {
+      res.status(404).send("Privacy Policy not found");
+    }
+  });
+
+  // Serve Terms of Service page
+  app.get("/terms-of-service", (_req: Request, res: Response) => {
+    const termsPath = path.resolve(process.cwd(), "server", "templates", "terms-of-service.html");
+    if (fs.existsSync(termsPath)) {
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      res.sendFile(termsPath);
+    } else {
+      res.status(404).send("Terms of Service not found");
+    }
+  });
+
   app.use((req: Request, res: Response, next: NextFunction) => {
     if (req.path.startsWith("/api")) {
       return next();

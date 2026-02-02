@@ -208,7 +208,7 @@ export function AuthScreen() {
                 </View>
               </BlurView>
               
-              <Text style={styles.brandSubtitle}>Your Mind. Reimagined.</Text>
+              <Text style={styles.brandSubtitle}>Breathe, Believe, Become</Text>
             </View>
           </View>
 

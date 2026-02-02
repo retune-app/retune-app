@@ -421,7 +421,7 @@ const styles = StyleSheet.create({
   },
   spacer: {
     flex: 1,
-    minHeight: 180,
+    minHeight: 280,
   },
   logoContainer: {
     alignItems: "center",

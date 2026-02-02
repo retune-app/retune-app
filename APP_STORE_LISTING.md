@@ -12,6 +12,26 @@ Secondary: Lifestyle
 
 ---
 
+## App Icon
+
+**Your Logo:** `assets/images/rewired-logo.png`
+
+This is your beautiful spiral ball logo with navy blue swirls and a warm golden center - representing transformation and inner light.
+
+### App Store Icon Requirements
+- **Size:** 1024 x 1024 pixels (required for App Store Connect)
+- **Format:** PNG
+- **No transparency:** iOS requires a solid background (your logo has a light background, which is perfect)
+- **No rounded corners:** Apple automatically applies the rounded corner mask
+
+### Preparing Your Icon
+Your current logo may need to be resized to exactly 1024x1024. You can do this with:
+- **Figma:** Import → resize canvas to 1024x1024 → export as PNG
+- **Canva:** Create 1024x1024 canvas → upload logo → download
+- **macOS Preview:** Open image → Tools → Adjust Size → 1024x1024
+
+---
+
 ## Description
 
 **Rewire your mind with the power of your own voice.**

@@ -375,23 +375,23 @@ const styles = StyleSheet.create({
     borderColor: authColors.glassBorder,
   },
   cardContent: {
-    padding: Spacing.xl,
+    padding: Spacing.lg,
     backgroundColor: "rgba(255,255,255,0.2)",
   },
   welcomeTitle: {
     fontFamily: "Nunito_700Bold",
-    fontSize: 24,
+    fontSize: 22,
     color: authColors.textPrimary,
     marginBottom: Spacing.xs,
     textAlign: "center",
   },
   welcomeSubtitle: {
     fontFamily: "Nunito_400Regular",
-    fontSize: 14,
+    fontSize: 13,
     color: authColors.textSecondary,
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
     textAlign: "center",
-    lineHeight: 20,
+    lineHeight: 18,
   },
   errorContainer: {
     flexDirection: "row",
@@ -413,10 +413,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: Spacing.md + 2,
+    paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.lg,
     borderRadius: BorderRadius.lg,
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   appleButton: {
     backgroundColor: authColors.apple,
@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
   divider: {
     flexDirection: "row",
     alignItems: "center",
-    marginVertical: Spacing.lg,
+    marginVertical: Spacing.sm,
   },
   dividerLine: {
     flex: 1,
@@ -472,7 +472,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: Spacing.xl,
+    marginTop: Spacing.md,
   },
   securityText: {
     fontFamily: "Nunito_400Regular",

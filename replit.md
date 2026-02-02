@@ -18,7 +18,7 @@ Preferred communication style: Simple, everyday language.
 - **Audio**: `expo-av` for recording and playback.
 
 ### Key Features
-- **Personalized Affirmations**: Users input goals, AI generates scripts, and voice cloning plays them in the user's voice.
+- **Personalized Affirmations**: Users input goals, AI generates scripts, and voice cloning plays them in the user's voice. Supports multi-category selection (up to 5 categories) from 13 available categories: Confidence, Career, Health, Wealth, Relationships, Sleep, Vision, Emotion, Happiness, Skills, Habits, Motivation, Gratitude. Categories are stored as comma-separated strings for backward compatibility.
 - **Audio Pipeline**: Involves user voice sample recording, ElevenLabs voice cloning, AI script generation, text-to-speech synthesis, and audio streaming.
 - **Global Audio Player**: A single-instance audio player for consistent playback control across the app.
 - **RSVP Mode**: Rapid Serial Visual Presentation of affirmation text, synchronized with audio playback, using word timing data from ElevenLabs.

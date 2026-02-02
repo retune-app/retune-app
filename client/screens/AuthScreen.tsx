@@ -10,6 +10,7 @@ import {
   Platform,
   ImageBackground,
   Dimensions,
+  TextInput,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
@@ -44,11 +45,14 @@ const authColors = {
 
 export function AuthScreen() {
   const insets = useSafeAreaInsets();
-  const { oauthLogin } = useAuth();
+  const { oauthLogin, login } = useAuth();
 
   const [isLoading, setIsLoading] = useState(false);
-  const [loadingProvider, setLoadingProvider] = useState<"google" | "apple" | null>(null);
+  const [loadingProvider, setLoadingProvider] = useState<"google" | "apple" | "email" | null>(null);
   const [error, setError] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showEmailLogin, setShowEmailLogin] = useState(false);
 
   const isIOS = Platform.OS === "ios";
   const isAndroid = Platform.OS === "android";
@@ -157,6 +161,30 @@ export function AuthScreen() {
         console.error("Apple auth error:", err);
         setError("Unable to complete sign-in. Please try again.");
       }
+    } finally {
+      setIsLoading(false);
+      setLoadingProvider(null);
+    }
+  };
+
+  const handleEmailLogin = async () => {
+    if (!email.trim() || !password.trim()) {
+      setError("Please enter both email and password");
+      return;
+    }
+    
+    setError("");
+    setIsLoading(true);
+    setLoadingProvider("email");
+
+    try {
+      const result = await login(email.trim(), password);
+      if (!result.success) {
+        setError(result.error || "Invalid email or password");
+      }
+    } catch (err) {
+      console.error("Email login error:", err);
+      setError("Failed to sign in. Please try again.");
     } finally {
       setIsLoading(false);
       setLoadingProvider(null);
@@ -278,6 +306,66 @@ export function AuthScreen() {
                     </>
                   )}
                 </Pressable>
+              ) : null}
+
+              {/* Email/Password Login Toggle */}
+              <Pressable
+                style={styles.emailToggle}
+                onPress={() => setShowEmailLogin(!showEmailLogin)}
+              >
+                <Text style={styles.emailToggleText}>
+                  {showEmailLogin ? "Hide email login" : "Sign in with email"}
+                </Text>
+                <Feather 
+                  name={showEmailLogin ? "chevron-up" : "chevron-down"} 
+                  size={16} 
+                  color={authColors.textSecondary} 
+                />
+              </Pressable>
+
+              {/* Email/Password Form */}
+              {showEmailLogin ? (
+                <View style={styles.emailForm}>
+                  <TextInput
+                    style={styles.emailInput}
+                    placeholder="Email"
+                    placeholderTextColor={authColors.textMuted}
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    testID="input-email"
+                  />
+                  <TextInput
+                    style={styles.emailInput}
+                    placeholder="Password"
+                    placeholderTextColor={authColors.textMuted}
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry
+                    testID="input-password"
+                  />
+                  <Pressable
+                    style={[
+                      styles.authButton,
+                      styles.emailLoginButton,
+                      isLoading && styles.disabledButton,
+                    ]}
+                    onPress={handleEmailLogin}
+                    disabled={isLoading}
+                    testID="button-email-signin"
+                  >
+                    {loadingProvider === "email" ? (
+                      <ActivityIndicator color={authColors.textPrimary} />
+                    ) : (
+                      <>
+                        <Feather name="log-in" size={20} color={authColors.white} />
+                        <Text style={styles.emailLoginButtonText}>Sign In</Text>
+                      </>
+                    )}
+                  </Pressable>
+                </View>
               ) : null}
 
               <View style={styles.divider}>
@@ -486,6 +574,43 @@ const styles = StyleSheet.create({
     backgroundColor: authColors.white,
     borderWidth: 1,
     borderColor: "rgba(0,0,0,0.08)",
+  },
+  emailToggle: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.md,
+    gap: Spacing.xs,
+  },
+  emailToggleText: {
+    fontFamily: "Nunito_500Medium",
+    fontSize: 14,
+    color: authColors.textSecondary,
+  },
+  emailForm: {
+    marginBottom: Spacing.md,
+  },
+  emailInput: {
+    backgroundColor: "rgba(255,255,255,0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.2)",
+    borderRadius: BorderRadius.md,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.sm,
+    fontFamily: "Nunito_400Regular",
+    fontSize: 16,
+    color: authColors.textPrimary,
+  },
+  emailLoginButton: {
+    backgroundColor: authColors.gold,
+    marginTop: Spacing.xs,
+  },
+  emailLoginButtonText: {
+    fontFamily: "Nunito_600SemiBold",
+    fontSize: 16,
+    color: authColors.white,
+    marginLeft: Spacing.sm,
   },
   appleButtonText: {
     fontFamily: "Nunito_600SemiBold",

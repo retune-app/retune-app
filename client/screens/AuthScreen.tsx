@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   View,
   StyleSheet,
@@ -11,6 +11,7 @@ import {
   ImageBackground,
   Dimensions,
   TextInput,
+  KeyboardAvoidingView,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
@@ -198,17 +199,21 @@ export function AuthScreen() {
         style={styles.backgroundImage}
         resizeMode="cover"
       >
-        <ScrollView
-          contentContainerStyle={[
-            styles.scrollContent,
-            {
-              paddingTop: insets.top + Spacing.xxl,
-              paddingBottom: insets.bottom + Spacing.xxl,
-            }
-          ]}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
+        <KeyboardAvoidingView 
+          style={{ flex: 1 }} 
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
+          <ScrollView
+            contentContainerStyle={[
+              styles.scrollContent,
+              {
+                paddingTop: insets.top + Spacing.xxl,
+                paddingBottom: insets.bottom + Spacing.xxl + 100,
+              }
+            ]}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
           {/* Top Section - Logo */}
           <View style={styles.topSection}>
             <View style={styles.logoContainer}>
@@ -390,7 +395,8 @@ export function AuthScreen() {
               Your data is encrypted and securely stored
             </Text>
           </View>
-        </ScrollView>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </ImageBackground>
     </View>
   );

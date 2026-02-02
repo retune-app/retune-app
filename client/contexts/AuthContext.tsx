@@ -188,7 +188,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify(params),
       });
 
-      const data = await response.json();
+      // Check content type before parsing
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        console.error("OAuth response not JSON:", contentType);
+        return { success: false, error: "Server error. Please try again." };
+      }
+
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.error("Failed to parse OAuth response:", parseError);
+        return { success: false, error: "Server error. Please try again." };
+      }
 
       if (response.ok) {
         console.log("OAuth login response:", JSON.stringify(data));

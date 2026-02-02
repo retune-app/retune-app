@@ -150,14 +150,14 @@ export function AuthScreen() {
       });
 
       if (!result.success) {
-        setError(result.error || "Failed to sign in with Apple");
+        setError(result.error || "Unable to sign in. Please try again.");
       }
     } catch (err: any) {
       if (err.code === "ERR_REQUEST_CANCELED") {
         // User cancelled, not an error
       } else {
         console.error("Apple auth error:", err);
-        setError("Failed to complete Apple sign-in");
+        setError("Unable to complete sign-in. Please try again.");
       }
     } finally {
       setIsLoading(false);

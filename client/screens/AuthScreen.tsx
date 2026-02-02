@@ -24,24 +24,22 @@ WebBrowser.maybeCompleteAuthSession();
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
-// Calming color palette matching the meditation background
+// Dark theme color palette for contrast against dark meditation background
 const authColors = {
-  // Soft ethereal tones from the meditation image
-  softBlue: "#B8C5D4",
-  paleGold: "#E8D5A8",
-  warmGold: "#D4B76A",
-  deepGold: "#C9A227",
-  // Text colors
-  textPrimary: "#3A4A5C",
-  textSecondary: "#6B7B8C",
-  textLight: "rgba(255,255,255,0.9)",
+  // Brand colors
+  gold: "#C9A227",
+  goldLight: "#E5C95C",
+  // Text colors - light for dark background
+  textPrimary: "#FFFFFF",
+  textSecondary: "rgba(255,255,255,0.75)",
+  textMuted: "rgba(255,255,255,0.5)",
   // UI colors
   white: "#FFFFFF",
-  whiteTranslucent: "rgba(255,255,255,0.85)",
-  glassBorder: "rgba(255,255,255,0.5)",
-  error: "#D4574A",
+  cardBackground: "rgba(15,28,63,0.85)",
+  glassBorder: "rgba(201,162,39,0.3)",
+  error: "#FF6B5B",
   google: "#4285F4",
-  apple: "#1A1A1A",
+  apple: "#FFFFFF",
 };
 
 export function AuthScreen() {
@@ -206,8 +204,8 @@ export function AuthScreen() {
 
           {/* Frosted Glass Card */}
           <BlurView
-            intensity={60}
-            tint="light"
+            intensity={40}
+            tint="dark"
             style={styles.glassCard}
           >
             <View style={styles.cardContent}>
@@ -236,10 +234,10 @@ export function AuthScreen() {
                   testID="button-apple-signin"
                 >
                   {loadingProvider === "apple" ? (
-                    <ActivityIndicator color={authColors.white} />
+                    <ActivityIndicator color="#0F1C3F" />
                   ) : (
                     <>
-                      <Feather name="smartphone" size={20} color={authColors.white} />
+                      <Feather name="smartphone" size={20} color="#0F1C3F" />
                       <Text style={styles.appleButtonText}>
                         Continue with Apple
                       </Text>
@@ -290,7 +288,7 @@ export function AuthScreen() {
 
           {/* Security Note */}
           <View style={styles.securityNote}>
-            <Feather name="shield" size={14} color={authColors.textSecondary} />
+            <Feather name="shield" size={14} color={authColors.gold} />
             <Text style={styles.securityText}>
               Your data is encrypted and securely stored
             </Text>
@@ -329,15 +327,17 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: "rgba(255,255,255,0.3)",
+    backgroundColor: "rgba(15,28,63,0.6)",
+    borderWidth: 2,
+    borderColor: "rgba(201,162,39,0.4)",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: Spacing.md,
-    shadowColor: "#000",
+    shadowColor: "#C9A227",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 4,
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 8,
   },
   logoImage: {
     width: 80,
@@ -346,10 +346,13 @@ const styles = StyleSheet.create({
   },
   brandName: {
     fontFamily: "Poppins_600SemiBold",
-    fontSize: 38,
-    color: authColors.textPrimary,
+    fontSize: 40,
+    color: authColors.gold,
     marginBottom: Spacing.xs,
-    letterSpacing: 1,
+    letterSpacing: 2,
+    textShadowColor: "rgba(0,0,0,0.5)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 8,
   },
   tagline: {
     fontFamily: "Nunito_400Regular",
@@ -361,12 +364,15 @@ const styles = StyleSheet.create({
   },
   topTagline: {
     fontFamily: "Nunito_600SemiBold",
-    fontSize: 18,
-    color: authColors.textPrimary,
+    fontSize: 16,
+    color: authColors.goldLight,
     textAlign: "center",
-    letterSpacing: 2,
+    letterSpacing: 3,
     textTransform: "uppercase",
     marginBottom: Spacing.md,
+    textShadowColor: "rgba(0,0,0,0.5)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
   glassCard: {
     borderRadius: BorderRadius.xl,
@@ -376,7 +382,7 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     padding: Spacing.lg,
-    backgroundColor: "rgba(255,255,255,0.2)",
+    backgroundColor: authColors.cardBackground,
   },
   welcomeTitle: {
     fontFamily: "Nunito_700Bold",
@@ -397,7 +403,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(212,87,74,0.1)",
+    backgroundColor: "rgba(255,107,91,0.2)",
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.md,
     borderRadius: BorderRadius.md,
@@ -419,7 +425,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xs,
   },
   appleButton: {
-    backgroundColor: authColors.apple,
+    backgroundColor: authColors.gold,
   },
   googleButton: {
     backgroundColor: authColors.white,
@@ -429,13 +435,13 @@ const styles = StyleSheet.create({
   appleButtonText: {
     fontFamily: "Nunito_600SemiBold",
     fontSize: 16,
-    color: authColors.white,
+    color: "#0F1C3F",
     marginLeft: Spacing.sm,
   },
   googleButtonText: {
     fontFamily: "Nunito_600SemiBold",
     fontSize: 16,
-    color: authColors.textPrimary,
+    color: "#333333",
     marginLeft: Spacing.sm,
   },
   disabledButton: {
@@ -449,7 +455,7 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: "rgba(107,123,140,0.2)",
+    backgroundColor: "rgba(255,255,255,0.15)",
   },
   dividerText: {
     fontFamily: "Nunito_400Regular",
@@ -465,7 +471,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   termsLink: {
-    color: authColors.deepGold,
+    color: authColors.gold,
     fontFamily: "Nunito_600SemiBold",
   },
   securityNote: {

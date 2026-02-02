@@ -64,7 +64,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
         <Text style={styles.title}>Something went wrong</Text>
 
         <Text style={styles.message}>
-          Within encountered an issue. Please restart the app to continue your mindfulness journey.
+          Retune encountered an issue. Please restart the app to continue your mindfulness journey.
         </Text>
 
         <Pressable
@@ -77,7 +77,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
             },
           ]}
         >
-          <Text style={styles.buttonText}>Restart Within</Text>
+          <Text style={styles.buttonText}>Restart Retune</Text>
         </Pressable>
       </View>
 

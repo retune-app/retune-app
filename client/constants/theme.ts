@@ -1,6 +1,6 @@
 import { Platform } from "react-native";
 
-// Within Design System
+// Retune Design System
 // Gold/Navy aesthetic with mental growth theme
 
 // Primary brand colors - Gold, White, Navy palette (NO PURPLE)

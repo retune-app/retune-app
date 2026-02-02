@@ -70,7 +70,7 @@ export default function BenefitsScreen() {
       iconBgColor: "#6366F120",
       title: "Your Voice, Your Power",
       subtitle: "personalized voice cloning",
-      description: "When you hear affirmations in your own voice, your brain processes them differently. Research shows we're more receptive to messages that sound like our inner voice. Within uses advanced AI to clone your voice, so every affirmation feels like it's coming from within—making positive self-talk feel natural and believable.",
+      description: "When you hear affirmations in your own voice, your brain processes them differently. Research shows we're more receptive to messages that sound like our inner voice. Retune uses advanced AI to clone your voice, so every affirmation feels like it's coming from within—making positive self-talk feel natural and believable.",
     },
     {
       icon: "cpu",
@@ -100,7 +100,7 @@ export default function BenefitsScreen() {
       iconBgColor: "#3B82F620",
       title: "Guided Breathing",
       subtitle: "activate your calm",
-      description: "Controlled breathing activates your parasympathetic nervous system, reducing stress and anxiety. Within offers guided techniques like Box Breathing, 4-7-8, and Coherent Breathing—each designed to calm your mind and prepare you for deeper reflection.",
+      description: "Controlled breathing activates your parasympathetic nervous system, reducing stress and anxiety. Retune offers guided techniques like Box Breathing, 4-7-8, and Coherent Breathing—each designed to calm your mind and prepare you for deeper reflection.",
     },
     {
       icon: "repeat",
@@ -116,7 +116,7 @@ export default function BenefitsScreen() {
       iconBgColor: "#F59E0B20",
       title: "Visual Design for Wellbeing",
       subtitle: "calming aesthetics",
-      description: "Every visual element in Within is crafted to support your mental wellbeing:",
+      description: "Every visual element in Retune is crafted to support your mental wellbeing:",
       bullets: [
         "Soothing navy and gold palette reduces visual stress",
         "Gentle animations create a sense of calm flow",
@@ -158,7 +158,7 @@ export default function BenefitsScreen() {
           <View style={[styles.heroIcon, { backgroundColor: theme.primary + "30" }]}>
             <Feather name="heart" size={40} color={theme.primary} />
           </View>
-          <ThemedText type="h4" style={styles.heroTitle}>Why Within Works</ThemedText>
+          <ThemedText type="h4" style={styles.heroTitle}>Why Retune Works</ThemedText>
           <ThemedText type="small" style={[styles.heroSubtitle, { color: theme.textSecondary }]}>
             Combining proven techniques from psychology, meditation, and neuroscience to help reshape your thinking patterns
           </ThemedText>
@@ -175,7 +175,7 @@ export default function BenefitsScreen() {
             Your Journey to a Better You
           </ThemedText>
           <ThemedText type="small" style={[styles.footerText, { color: theme.textSecondary }]}>
-            With consistent practice, you'll notice shifts in your thinking patterns, improved emotional resilience, and a stronger sense of self. Within is your companion on this transformative journey.
+            With consistent practice, you'll notice shifts in your thinking patterns, improved emotional resilience, and a stronger sense of self. Retune is your companion on this transformative journey.
           </ThemedText>
         </View>
       </ScrollView>

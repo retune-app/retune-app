@@ -1,7 +1,7 @@
-# Rewired
+# InnerTune
 
 ## Overview
-Rewired is a mobile application (React Native/Expo) designed to help users reprogram their subconscious mind through personalized audio affirmations. Users define their goals, and an AI generates affirmation scripts. The app then utilizes voice cloning technology to play these affirmations back in the user's own voice. The project aims to blend therapeutic tranquility with motivational energy, offering a "Serene Empowerment" aesthetic. The business vision is to provide an accessible and personalized tool for mental well-being and personal growth.
+InnerTune is a mobile application (React Native/Expo) designed to help users reprogram their subconscious mind through personalized audio affirmations. Users define their goals, and an AI generates affirmation scripts. The app then utilizes voice cloning technology to play these affirmations back in the user's own voice. The project aims to blend therapeutic tranquility with motivational energy, offering a "Serene Empowerment" aesthetic. The business vision is to provide an accessible and personalized tool for mental well-being and personal growth.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.

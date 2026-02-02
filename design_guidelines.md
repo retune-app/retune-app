@@ -1,4 +1,4 @@
-# Design Guidelines: Rewired
+# Design Guidelines: InnerTune
 
 ## 1. Brand Identity
 
@@ -6,7 +6,7 @@
 
 **Aesthetic Direction**: **Serene Empowerment** - A calming yet purposeful aesthetic that blends therapeutic tranquility with motivational energy. Think meditation app meets personal coaching.
 
-**Brand Name**: "Rewired" (capital R, capital W)
+**Brand Name**: "InnerTune" (capital I, capital T)
 
 **Memorable Element**: The voice wave visualization during recording and playback - a dynamic, flowing waveform that represents the user's unique voice signature, reinforcing the personal nature of subconscious reprogramming.
 
@@ -128,7 +128,7 @@
 ## 7. Assets
 
 **App Identity**:
-- `icon.jpg` - Rewired logo (head with leaf motif) - Device home screen
+- `icon.jpg` - InnerTune logo (head with leaf motif) - Device home screen
 - `splash-icon.jpg` - Same logo on gradient background - Launch screen
 
 **Onboarding/Empty States**:

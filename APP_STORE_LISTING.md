@@ -1,7 +1,7 @@
-# Rewired - App Store Listing
+# InnerTune - App Store Listing
 
 ## App Name
-**Rewired**
+**InnerTune**
 
 ## Subtitle (30 characters max)
 Transform Your Mind Daily
@@ -36,10 +36,10 @@ Your current logo may need to be resized to exactly 1024x1024. You can do this w
 
 **Rewire your mind with the power of your own voice.**
 
-Rewired is a revolutionary personal growth app that combines AI-generated affirmations with voice cloning technology. Hear positive affirmations spoken in YOUR voice — the most persuasive voice your subconscious knows.
+InnerTune is a revolutionary personal growth app that combines AI-generated affirmations with voice cloning technology. Hear positive affirmations spoken in YOUR voice — the most persuasive voice your subconscious knows.
 
 ### Why Your Own Voice?
-Research shows we respond more powerfully to our own voice. Rewired clones your voice from a short sample, then generates personalized affirmations tailored to your goals — all played back as if you're speaking directly to yourself.
+Research shows we respond more powerfully to our own voice. InnerTune clones your voice from a short sample, then generates personalized affirmations tailored to your goals — all played back as if you're speaking directly to yourself.
 
 ### Features
 
@@ -77,7 +77,7 @@ Transform negative self-talk into empowering beliefs. Start your journey of self
 affirmations,meditation,breathing,mindfulness,voice,self-help,anxiety,sleep,wellness,mental health
 
 ## Promotional Text (170 characters max)
-Hear affirmations in YOUR voice. Rewired uses AI and voice cloning to create personalized meditation experiences that speak directly to your subconscious mind.
+Hear affirmations in YOUR voice. InnerTune uses AI and voice cloning to create personalized meditation experiences that speak directly to your subconscious mind.
 
 ## What's New (for updates)
 - Enhanced breathing exercises with progress indicators

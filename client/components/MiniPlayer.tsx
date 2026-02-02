@@ -24,7 +24,8 @@ export function MiniPlayer({ currentRoute }: MiniPlayerProps) {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
 
-  if (!currentAffirmation || currentRoute === 'Player' || currentRoute === 'BreatheTab' || currentRoute === 'Settings' || currentRoute === 'SettingsTab') {
+  const hideOnRoutes = ['Player', 'BreatheTab', 'Settings', 'SettingsTab', 'VoiceSettings', 'VoiceRecording', 'NotificationSettings'];
+  if (!currentAffirmation || hideOnRoutes.includes(currentRoute || '')) {
     return null;
   }
 

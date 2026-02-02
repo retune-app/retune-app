@@ -213,8 +213,8 @@ export function AuthScreen() {
 
           {/* Frosted Glass Card */}
           <BlurView
-            intensity={40}
-            tint="dark"
+            intensity={80}
+            tint="light"
             style={styles.glassCard}
           >
             <View style={styles.cardContent}>
@@ -424,12 +424,18 @@ const styles = StyleSheet.create({
   glassCard: {
     borderRadius: BorderRadius.xl,
     overflow: "hidden",
-    borderWidth: 1,
-    borderColor: authColors.glassBorder,
+    borderWidth: 1.5,
+    borderColor: "rgba(255,255,255,0.3)",
+    shadowColor: "#C9A227",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
   },
   cardContent: {
-    padding: Spacing.lg,
-    backgroundColor: authColors.cardBackground,
+    padding: Spacing.xl,
+    backgroundColor: "rgba(255,255,255,0.1)",
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.2)",
   },
   welcomeTitle: {
     fontFamily: "SpaceGrotesk_600SemiBold",

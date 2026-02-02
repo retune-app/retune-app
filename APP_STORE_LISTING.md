@@ -83,27 +83,64 @@ https://[your-domain]
 
 ---
 
-## Screenshot Suggestions
+## Screenshot Requirements
 
-### iPhone Screenshots (6.7" and 6.5" required)
+### Required Device Sizes
 
-1. **Welcome/Auth Screen** - Show the beautiful meditation background with "Transform your mind through the power of affirmations"
+| Device | Resolution | Required? |
+|--------|-----------|-----------|
+| iPhone 15 Pro Max (6.7") | 1290 x 2796 | Yes |
+| iPhone 15 Plus (6.5") | 1242 x 2688 | Yes |
+| iPhone 8 Plus (5.5") | 1242 x 2208 | Optional |
+| iPad Pro 12.9" (6th gen) | 2048 x 2732 | If supporting iPad |
 
-2. **Breathing Exercise** - Active breathing circle with technique selection visible
+### Recommended Screenshots (in order)
 
-3. **Affirmation Library** - Show multiple affirmation cards in the library
+1. **Hero/Welcome Screen**
+   - Show the auth screen with meditation background
+   - Highlight: "Transform your mind through the power of affirmations"
 
-4. **Audio Player** - Show an affirmation playing with RSVP text display
+2. **Breathing Exercise in Action**
+   - Capture during active breathing animation (circle expanding/contracting)
+   - Show technique selection at bottom
+   - Highlight: "Guided breathing for calm & focus"
 
-5. **Progress/Stats** - Show streaks, listening time, and achievements
+3. **Affirmation Library**
+   - Show 3-4 affirmation cards with different categories
+   - Highlight: "Your personal affirmation library"
 
-6. **Voice Setup** - Show the voice cloning feature ("Hear affirmations in YOUR voice")
+4. **Voice Cloning Feature**
+   - Show the voice setup or selection screen
+   - Highlight: "Hear affirmations in YOUR voice"
 
-### Tips for Great Screenshots
-- Use clean, uncluttered screens
-- Show the app in dark mode (more dramatic)
-- Consider adding simple text overlays highlighting key features
-- Capture during "golden hour" states (active breathing animation, playing audio)
+5. **Audio Player**
+   - Show affirmation playing with waveform or RSVP text
+   - Highlight: "Meditative listening experience"
+
+6. **Progress & Streaks**
+   - Show stats dashboard with streak count
+   - Highlight: "Track your mindfulness journey"
+
+### Screenshot Best Practices
+
+**Do:**
+- Use dark mode (more dramatic, shows the gold accents beautifully)
+- Capture during animations (breathing circle expanding)
+- Add minimal text overlays (headline + 1-line benefit)
+- Use consistent fonts for overlays (match app style)
+- Show real content, not placeholder text
+
+**Don't:**
+- Include status bar with personal info (use clean status bar)
+- Show error states or loading screens
+- Overcrowd with too much text
+- Use blurry or low-resolution images
+
+### Tools for Creating App Store Screenshots
+- **Figma**: Free, great for adding text overlays and device frames
+- **App Mockup (appmockup.io)**: Easy device frame generator
+- **Screenshots Pro**: Mac app for App Store screenshots
+- **Canva**: Simple option for quick mockups
 
 ---
 

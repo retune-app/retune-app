@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Retune - App Review Guide</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0F1C3F;
+      color: #FFFFFF;
+      padding: 40px;
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: linear-gradient(180deg, #1A2D4F 0%, #0F1C3F 100%);
+      border-radius: 24px;
+      padding: 48px;
+      border: 1px solid rgba(201, 162, 39, 0.3);
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+      padding-bottom: 32px;
+      border-bottom: 2px solid rgba(201, 162, 39, 0.3);
+    }
+    
+    .logo {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #C9A227 0%, #E8C547 50%, #C9A227 100%);
+      border-radius: 20px;
+      margin: 0 auto 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      font-weight: 700;
+      color: #0F1C3F;
+    }
+    
+    h1 {
+      font-size: 36px;
+      font-weight: 700;
+      color: #C9A227;
+      margin-bottom: 8px;
+    }
+    
+    .subtitle {
+      font-size: 18px;
+      color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .demo-box {
+      background: rgba(201, 162, 39, 0.15);
+      border: 2px solid #C9A227;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 32px;
+      text-align: center;
+    }
+    
+    .demo-box h2 {
+      color: #C9A227;
+      font-size: 20px;
+      margin-bottom: 16px;
+    }
+    
+    .credentials {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 12px;
+      padding: 16px;
+      font-family: monospace;
+      font-size: 16px;
+    }
+    
+    .credentials p {
+      margin: 8px 0;
+    }
+    
+    .credentials strong {
+      color: #C9A227;
+    }
+    
+    h2 {
+      font-size: 24px;
+      font-weight: 600;
+      color: #C9A227;
+      margin: 32px 0 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(201, 162, 39, 0.2);
+    }
+    
+    h3 {
+      font-size: 18px;
+      font-weight: 600;
+      color: #FFFFFF;
+      margin: 24px 0 12px;
+    }
+    
+    p {
+      margin-bottom: 12px;
+      color: rgba(255, 255, 255, 0.9);
+    }
+    
+    .tagline {
+      font-style: italic;
+      color: #C9A227;
+    }
+    
+    .nav-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+    }
+    
+    .nav-table th,
+    .nav-table td {
+      padding: 12px 16px;
+      text-align: left;
+      border: 1px solid rgba(201, 162, 39, 0.2);
+    }
+    
+    .nav-table th {
+      background: rgba(201, 162, 39, 0.2);
+      color: #C9A227;
+      font-weight: 600;
+    }
+    
+    .nav-table td {
+      background: rgba(0, 0, 0, 0.2);
+    }
+    
+    ol, ul {
+      margin: 12px 0 12px 24px;
+    }
+    
+    li {
+      margin: 8px 0;
+      color: rgba(255, 255, 255, 0.9);
+    }
+    
+    li strong {
+      color: #FFFFFF;
+    }
+    
+    .feature-card {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 16px 0;
+      border-left: 4px solid #C9A227;
+    }
+    
+    .feature-card h4 {
+      color: #C9A227;
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+    
+    .pill {
+      display: inline-block;
+      background: rgba(201, 162, 39, 0.2);
+      color: #C9A227;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 14px;
+      margin: 4px 4px 4px 0;
+    }
+    
+    .demo-content {
+      background: rgba(78, 205, 196, 0.1);
+      border: 1px solid rgba(78, 205, 196, 0.3);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 16px 0;
+    }
+    
+    .demo-content h4 {
+      color: #4ECDC4;
+      margin-bottom: 12px;
+    }
+    
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      padding-top: 24px;
+      border-top: 1px solid rgba(201, 162, 39, 0.2);
+      color: rgba(255, 255, 255, 0.5);
+    }
+    
+    .footer a {
+      color: #C9A227;
+      text-decoration: none;
+    }
+
+    @media print {
+      body {
+        background: white;
+        color: #1a1a1a;
+        padding: 20px;
+      }
+      
+      .container {
+        background: white;
+        border: none;
+        padding: 0;
+      }
+      
+      h1, h2, .demo-box h2, .feature-card h4 {
+        color: #8B7020;
+      }
+      
+      .demo-box {
+        background: #f5f0e0;
+        border-color: #8B7020;
+      }
+      
+      .credentials {
+        background: #f0f0f0;
+      }
+      
+      .nav-table th {
+        background: #f5f0e0;
+        color: #8B7020;
+      }
+      
+      .nav-table td {
+        background: #fafafa;
+      }
+      
+      .feature-card {
+        background: #fafafa;
+        border-left-color: #8B7020;
+      }
+      
+      .pill {
+        background: #f5f0e0;
+        color: #8B7020;
+      }
+      
+      .demo-content {
+        background: #e8f5f3;
+        border-color: #3aa99c;
+      }
+      
+      .demo-content h4 {
+        color: #3aa99c;
+      }
+      
+      p, li {
+        color: #333;
+      }
+      
+      .subtitle, .footer {
+        color: #666;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">R</div>
+      <h1>Retune</h1>
+      <p class="subtitle">App Review Guide</p>
+    </div>
+
+    <div class="demo-box">
+      <h2>Demo Account Login</h2>
+      <div class="credentials">
+        <p><strong>Email:</strong> appreview@retuneappdev.com</p>
+        <p><strong>Password:</strong> AppleReview2024!</p>
+      </div>
+    </div>
+
+    <h2>App Overview</h2>
+    <p>Retune helps users reprogram their subconscious mind through personalized audio affirmations and guided breathing exercises.</p>
+    <p class="tagline">"Breathe, Believe, Become"</p>
+
+    <h2>Navigation</h2>
+    <p>The app has two main tabs at the bottom:</p>
+    
+    <table class="nav-table">
+      <tr>
+        <th>Tab</th>
+        <th>Icon</th>
+        <th>Purpose</th>
+      </tr>
+      <tr>
+        <td><strong>Breathe</strong></td>
+        <td>Wind icon (left)</td>
+        <td>Guided breathing exercises</td>
+      </tr>
+      <tr>
+        <td><strong>Believe</strong></td>
+        <td>Heart icon (right)</td>
+        <td>Affirmation library</td>
+      </tr>
+      <tr>
+        <td><strong>+ Button</strong></td>
+        <td>Gold circle (center)</td>
+        <td>Create new affirmation</td>
+      </tr>
+    </table>
+
+    <h2>Breathe Tab</h2>
+    <div class="feature-card">
+      <h4>How to Use Breathing Exercises</h4>
+      <ol>
+        <li><strong>Select a technique</strong> - Tap the card at the top to choose:
+          <br><span class="pill">Box Breathing</span> <span class="pill">4-7-8 Technique</span> <span class="pill">Coherent Breathing</span>
+        </li>
+        <li><strong>Set duration</strong> - Choose 1, 3, 5, or 10 minutes</li>
+        <li><strong>Optional audio</strong> - Select Off, Rain, or Voice</li>
+        <li><strong>Start</strong> - Tap the play button to begin</li>
+        <li><strong>Follow the guide</strong> - The circle expands and contracts with countdown timer</li>
+      </ol>
+    </div>
+    
+    <h3>Controls During Session</h3>
+    <ul>
+      <li><strong>Stop</strong> - End session early</li>
+      <li><strong>Pause</strong> - Temporarily pause the exercise</li>
+      <li><strong>Expand</strong> - Full-screen immersive mode</li>
+    </ul>
+
+    <h2>Believe Tab (Affirmation Library)</h2>
+    <div class="feature-card">
+      <h4>How to Use the Library</h4>
+      <ol>
+        <li><strong>Browse affirmations</strong> - Scroll through the card list</li>
+        <li><strong>Filter by category</strong> - Tap chips at top:
+          <br><span class="pill">All</span> <span class="pill">Favorites</span> <span class="pill">Mind</span> <span class="pill">Body</span> <span class="pill">Spirit</span> <span class="pill">Connection</span> <span class="pill">Achievement</span> <span class="pill">Home</span>
+        </li>
+        <li><strong>Play an affirmation</strong> - Tap the gold play button on any card</li>
+        <li><strong>Favorite an affirmation</strong> - Tap the heart icon on the card header</li>
+        <li><strong>Search</strong> - Use the search bar to find specific affirmations</li>
+      </ol>
+    </div>
+
+    <h2>Affirmation Cards</h2>
+    <p>Each card displays:</p>
+    <ul>
+      <li><strong>Voice name</strong> - AI voice used (e.g., "Rachel", "Charlie")</li>
+      <li><strong>Title</strong> - Affirmation name</li>
+      <li><strong>Tags</strong> - Category labels (e.g., Career, Confidence)</li>
+      <li><strong>Duration</strong> - Audio length</li>
+      <li><strong>Play button</strong> - Gold circle to play audio</li>
+    </ul>
+
+    <h2>Creating an Affirmation (+ Button)</h2>
+    <div class="feature-card">
+      <h4>Step-by-Step Creation</h4>
+      <ol>
+        <li><strong>Choose mode</strong> - Auto (AI-generated) or Manual</li>
+        <li><strong>Select focus area</strong> - Mind, Body, Spirit, Connection, Achievement, or Home</li>
+        <li><strong>Add tags</strong> - Optional subcategories for organization</li>
+        <li><strong>Describe your goal</strong> - Enter what you want to achieve</li>
+        <li><strong>Select length</strong> - Short, Medium, or Long</li>
+        <li><strong>Generate Script</strong> - AI creates personalized affirmation text</li>
+        <li><strong>Create Affirmation</strong> - Generates audio and saves to library</li>
+      </ol>
+    </div>
+
+    <h2>Settings (Gear Icon)</h2>
+    <p>Access via the gear icon on Breathe or Believe screens:</p>
+    <ul>
+      <li><strong>Preferred Name</strong> - Personalize app greetings</li>
+      <li><strong>Analytics</strong> - View listening stats and streaks</li>
+      <li><strong>Voice Settings</strong> - Choose preferred AI voice</li>
+      <li><strong>Sound Library</strong> - Browse ambient sounds</li>
+    </ul>
+
+    <h2>Pre-loaded Demo Content</h2>
+    <div class="demo-content">
+      <h4>This Demo Account Includes:</h4>
+      <ul>
+        <li>22 sample affirmations (variety of male and female AI voices)</li>
+        <li>6 favorited affirmations</li>
+        <li>7-day breathing streak</li>
+        <li>Full week of analytics data</li>
+        <li>Multiple breathing sessions logged</li>
+      </ul>
+    </div>
+
+    <div class="footer">
+      <p>Questions? Contact <a href="mailto:support@retuneapp.com">support@retuneapp.com</a></p>
+      <p style="margin-top: 8px;">Retune - Transform Your Mind Daily</p>
+    </div>
+  </div>
+</body>
+</html>

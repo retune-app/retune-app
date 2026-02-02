@@ -18,7 +18,12 @@ Preferred communication style: Simple, everyday language.
 - **Audio**: `expo-av` for recording and playback.
 
 ### Key Features
-- **Personalized Affirmations**: Users input goals, AI generates scripts, and voice cloning plays them in the user's voice. Supports multi-category selection (up to 5 categories) from 13 available categories: Confidence, Career, Health, Wealth, Relationships, Sleep, Vision, Emotion, Happiness, Skills, Habits, Motivation, Gratitude. Categories are stored as comma-separated strings for backward compatibility.
+- **Personalized Affirmations**: Users input goals, AI generates scripts, and voice cloning plays them in the user's voice. Uses a hierarchical pillar-based organization system:
+  - **5 Life Pillars**: Mind (#3B82F6), Body (#10B981), Spirit (#8B5CF6), Connection (#F97316), Achievement (#C9A227) - users must select one pillar when creating affirmations
+  - **Subcategory Tags**: Optional fine-tuning with up to 5 subcategory tags per affirmation (e.g., Mind → Confidence, Focus, Resilience, Emotion)
+  - **Visual Identification**: Affirmation cards display a 4px left accent bar in the pillar's color
+  - **Library Filtering**: HomeScreen filters affirmations by pillar with color-coded chips
+  - Database stores: `pillar` field (single text) + `categoryName` (comma-separated subcategories for backward compatibility)
 - **Audio Pipeline**: Involves user voice sample recording, ElevenLabs voice cloning, AI script generation, text-to-speech synthesis, and audio streaming.
 - **Global Audio Player**: A single-instance audio player for consistent playback control across the app.
 - **RSVP Mode**: Rapid Serial Visual Presentation of affirmation text, synchronized with audio playback, using word timing data from ElevenLabs.

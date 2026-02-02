@@ -6,6 +6,7 @@ import {
   ScrollView,
   Alert,
   Pressable,
+  Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
@@ -15,7 +16,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
-import PagerView from "react-native-pager-view";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -35,6 +35,8 @@ type LengthOption = typeof LENGTHS[number];
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
+import ScriptPager from './ScriptPager';
+
 export default function CreateScreen() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
@@ -51,7 +53,7 @@ export default function CreateScreen() {
   const [currentScriptIndex, setCurrentScriptIndex] = useState(0);
   const [manualScript, setManualScript] = useState("");
   const [selectedLength, setSelectedLength] = useState<LengthOption>("Medium");
-  const pagerRef = useRef<PagerView>(null);
+  const pagerRef = useRef<any>(null);
 
   const handlePillarSelect = (pillar: PillarName) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -93,9 +95,11 @@ export default function CreateScreen() {
         const newHistory = [...prev, data.script].slice(-3);
         const newIndex = newHistory.length - 1;
         setCurrentScriptIndex(newIndex);
-        setTimeout(() => {
-          pagerRef.current?.setPage(newIndex);
-        }, 100);
+        if (Platform.OS !== 'web') {
+          setTimeout(() => {
+            pagerRef.current?.setPage(newIndex);
+          }, 100);
+        }
         return newHistory;
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -369,33 +373,21 @@ export default function CreateScreen() {
                 </Pressable>
               ) : null}
             </View>
-            <PagerView
-              ref={pagerRef}
-              style={styles.pagerView}
-              initialPage={0}
-              onPageSelected={(e) => setCurrentScriptIndex(e.nativeEvent.position)}
-            >
-              {scriptHistory.map((script, index) => (
-                <View key={index} style={styles.scriptPage}>
-                  <ScrollView 
-                    style={styles.scriptScrollView}
-                    showsVerticalScrollIndicator={false}
-                    nestedScrollEnabled
-                  >
-                    <ThemedText type="body" style={styles.scriptText}>
-                      {script}
-                    </ThemedText>
-                  </ScrollView>
-                </View>
-              ))}
-            </PagerView>
+            <ScriptPager
+              pagerRef={pagerRef}
+              scripts={scriptHistory}
+              currentIndex={currentScriptIndex}
+              onPageSelected={setCurrentScriptIndex}
+            />
             <View style={styles.paginationContainer}>
               {scriptHistory.map((_, index) => (
                 <Pressable
                   key={index}
                   onPress={() => {
                     setCurrentScriptIndex(index);
-                    pagerRef.current?.setPage(index);
+                    if (Platform.OS !== 'web') {
+                      pagerRef.current?.setPage(index);
+                    }
                   }}
                   style={styles.dotTouchArea}
                 >

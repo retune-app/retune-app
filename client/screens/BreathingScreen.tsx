@@ -69,7 +69,7 @@ export default function BreathingScreen() {
   const navigation = useNavigation<any>();
   const { theme, isDark } = useTheme();
   const { user } = useAuth();
-  const { currentAffirmation, isPlaying: isAudioPlaying, playAffirmation, togglePlayPause, breathingAffirmation, requestHighlightAffirmation } = useAudio();
+  const { currentAffirmation, isPlaying: isAudioPlaying, playAffirmation, togglePlayPause, breathingAffirmation, requestHighlightAffirmation, stop: stopAffirmationAudio } = useAudio();
   const { selectedMusic, setSelectedMusic, startBackgroundMusic, stopBackgroundMusic, isPlaying: isMusicPlaying } = useBackgroundMusic();
   const queryClient = useQueryClient();
 
@@ -277,6 +277,9 @@ export default function BreathingScreen() {
   }, [isPlaying, selectedDuration]);
 
   const handleStart = async () => {
+    // Stop any currently playing affirmation audio first
+    await stopAffirmationAudio();
+    
     setIsPlaying(true);
     setElapsedTime(0);
     setCyclesCompleted(0);

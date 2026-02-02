@@ -8,6 +8,7 @@ import {
   Dimensions,
   Modal,
   StatusBar,
+  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
@@ -32,6 +33,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getApiUrl } from "@/lib/query-client";
 
 const PROGRESS_INDICATOR_KEY = "@settings/progressIndicator";
+const DEFAULT_BREATHING_TECHNIQUE_KEY = "@breathing/defaultTechnique";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -192,6 +194,24 @@ export default function BreathingScreen() {
         affirmationSoundRef.current.unloadAsync();
       }
     };
+  }, []);
+
+  // Load saved default breathing technique on mount
+  useEffect(() => {
+    const loadDefaultTechnique = async () => {
+      try {
+        const savedTechniqueId = await AsyncStorage.getItem(DEFAULT_BREATHING_TECHNIQUE_KEY);
+        if (savedTechniqueId) {
+          const technique = BREATHING_TECHNIQUES.find(t => t.id === savedTechniqueId);
+          if (technique) {
+            setSelectedTechnique(technique);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading default technique:', error);
+      }
+    };
+    loadDefaultTechnique();
   }, []);
 
   // Affirmation audio playback functions
@@ -363,12 +383,43 @@ export default function BreathingScreen() {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const selectTechnique = (technique: BreathingTechnique) => {
+  const selectTechnique = async (technique: BreathingTechnique) => {
     if (!isPlaying) {
       setSelectedTechnique(technique);
       setShowTechniqueSelector(false);
       try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+      
+      // Save as the last selected technique
+      try {
+        await AsyncStorage.setItem(DEFAULT_BREATHING_TECHNIQUE_KEY, technique.id);
+      } catch (error) {
+        console.error('Error saving technique:', error);
+      }
     }
+  };
+
+  const handleLongPressTechnique = (technique: BreathingTechnique) => {
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
+    Alert.alert(
+      "Set as Default",
+      `Always start with "${technique.name}" when you open the app?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Set as Default", 
+          onPress: async () => {
+            try {
+              await AsyncStorage.setItem(DEFAULT_BREATHING_TECHNIQUE_KEY, technique.id);
+              setSelectedTechnique(technique);
+              setShowTechniqueSelector(false);
+              try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
+            } catch (error) {
+              console.error('Error setting default technique:', error);
+            }
+          }
+        },
+      ]
+    );
   };
 
   const enterFullscreen = () => {
@@ -1001,6 +1052,8 @@ export default function BreathingScreen() {
               <Pressable
                 key={technique.id}
                 onPress={() => selectTechnique(technique)}
+                onLongPress={() => handleLongPressTechnique(technique)}
+                delayLongPress={500}
                 style={[
                   styles.techniqueOption,
                   {

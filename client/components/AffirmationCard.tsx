@@ -34,6 +34,7 @@ interface AffirmationCardProps {
   onPress?: () => void;
   onPlayPress?: () => void;
   onLongPress?: () => void;
+  onFavoriteToggle?: () => void;
   isActive?: boolean;
   isBreathingAffirmation?: boolean;
   testID?: string;
@@ -56,6 +57,7 @@ export function AffirmationCard({
   onPress,
   onPlayPress,
   onLongPress,
+  onFavoriteToggle,
   isActive = false,
   isBreathingAffirmation = false,
   testID,
@@ -214,9 +216,22 @@ export function AffirmationCard({
                 </ThemedText>
               </View>
             ) : null}
-            {isFavorite ? (
-              <Feather name="heart" size={14} color={theme.accent} style={styles.favoriteIcon} />
-            ) : null}
+            <Pressable 
+              onPress={(e) => {
+                e.stopPropagation?.();
+                if (hapticEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                onFavoriteToggle?.();
+              }}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              style={styles.favoriteButton}
+            >
+              <Feather 
+                name={isFavorite ? "heart" : "heart"} 
+                size={14} 
+                color={isFavorite ? "#E91E63" : theme.textSecondary} 
+                style={isFavorite ? { opacity: 1 } : { opacity: 0.5 }}
+              />
+            </Pressable>
             {formatCreatedDate(createdAt) ? (
               <ThemedText style={[styles.dateText, { color: theme.textSecondary }]}>
                 {formatCreatedDate(createdAt)}
@@ -381,6 +396,10 @@ const styles = StyleSheet.create({
   },
   favoriteIcon: {
     marginRight: Spacing.xs,
+  },
+  favoriteButton: {
+    marginRight: Spacing.xs,
+    padding: 2,
   },
   lengthBadge: {
     paddingHorizontal: 5,

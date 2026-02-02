@@ -57,6 +57,24 @@ export function SwipeableAffirmationCard({
     },
   });
 
+  const favoriteMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("PATCH", `/api/affirmations/${affirmation.id}/favorite`, {
+        isFavorite: !affirmation.isFavorite,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/affirmations"] });
+    },
+    onError: () => {
+      if (hapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    },
+  });
+
+  const handleFavoriteToggle = () => {
+    favoriteMutation.mutate();
+  };
+
   const handleDelete = () => {
     if (hapticEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     Alert.alert(
@@ -176,6 +194,7 @@ export function SwipeableAffirmationCard({
         onPress={onPress}
         onPlayPress={onPlayPress}
         onLongPress={onLongPress}
+        onFavoriteToggle={handleFavoriteToggle}
         isActive={isActive}
         isBreathingAffirmation={isBreathingAffirmation}
         testID={testID}

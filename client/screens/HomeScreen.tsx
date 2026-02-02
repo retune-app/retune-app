@@ -31,7 +31,7 @@ import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import type { Affirmation } from "@shared/schema";
 import { PILLAR_LIST, getPillarColor } from "@shared/pillars";
 
-const PILLAR_FILTERS = ["All", ...PILLAR_LIST];
+const PILLAR_FILTERS = ["All", "Favorites", ...PILLAR_LIST];
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -190,11 +190,12 @@ export default function HomeScreen() {
     setRefreshing(false);
   }, [refetch]);
 
-  // Filter by pillar and search
+  // Filter by pillar, favorites, and search
   const filteredAffirmations = affirmations.filter((item) => {
     const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesPillar = selectedPillar === "All" || item.pillar === selectedPillar;
-    return matchesSearch && matchesPillar;
+    const matchesFavorites = selectedPillar === "Favorites" ? item.isFavorite : true;
+    const matchesPillar = selectedPillar === "All" || selectedPillar === "Favorites" || item.pillar === selectedPillar;
+    return matchesSearch && matchesFavorites && matchesPillar;
   });
 
   const handleAffirmationPress = (id: number) => {
@@ -285,14 +286,18 @@ export default function HomeScreen() {
           keyExtractor={(item) => item}
           contentContainerStyle={styles.categoriesContainer}
           renderItem={({ item }) => {
-            const pillarColor = item !== "All" ? getPillarColor(item) : undefined;
+            const isFavorites = item === "Favorites";
+            const pillarColor = item !== "All" && !isFavorites ? getPillarColor(item) : undefined;
+            const favoriteColor = "#E91E63";
             return (
               <CategoryChip
-                label={item}
+                label={isFavorites ? "" : item}
                 isSelected={selectedPillar === item}
                 onPress={() => setSelectedPillar(item)}
-                color={pillarColor}
+                color={isFavorites ? favoriteColor : pillarColor}
                 testID={`chip-pillar-${item.toLowerCase()}`}
+                icon={isFavorites ? "heart" : undefined}
+                iconOnly={isFavorites}
               />
             );
           }}

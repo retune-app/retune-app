@@ -1,11 +1,12 @@
 import React from "react";
-import { Pressable, StyleSheet } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
 } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
+import { Feather } from "@expo/vector-icons";
 
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
@@ -20,6 +21,8 @@ interface CategoryChipProps {
   onPress?: () => void;
   color?: string;
   testID?: string;
+  icon?: string;
+  iconOnly?: boolean;
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -30,6 +33,8 @@ export function CategoryChip({
   onPress,
   color,
   testID,
+  icon,
+  iconOnly = false,
 }: CategoryChipProps) {
   const { theme } = useTheme();
   const scale = useSharedValue(1);
@@ -58,6 +63,8 @@ export function CategoryChip({
     onPress?.();
   };
 
+  const iconColor = isSelected ? theme.buttonText : theme.text;
+
   return (
     <AnimatedPressable
       onPress={handlePress}
@@ -70,18 +77,31 @@ export function CategoryChip({
           backgroundColor: isSelected ? activeColor : theme.backgroundSecondary,
           borderColor: isSelected ? activeColor : theme.border,
         },
+        iconOnly && styles.iconOnlyChip,
         animatedStyle,
       ]}
     >
-      <ThemedText
-        type="small"
-        style={{
-          color: isSelected ? theme.buttonText : theme.text,
-          fontWeight: isSelected ? "600" : "400",
-        }}
-      >
-        {label}
-      </ThemedText>
+      <View style={styles.chipContent}>
+        {icon ? (
+          <Feather 
+            name={icon as any} 
+            size={iconOnly ? 18 : 14} 
+            color={iconColor} 
+            style={!iconOnly && styles.iconWithLabel}
+          />
+        ) : null}
+        {!iconOnly ? (
+          <ThemedText
+            type="small"
+            style={{
+              color: isSelected ? theme.buttonText : theme.text,
+              fontWeight: isSelected ? "600" : "400",
+            }}
+          >
+            {label}
+          </ThemedText>
+        ) : null}
+      </View>
     </AnimatedPressable>
   );
 }
@@ -92,5 +112,15 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.full,
     borderWidth: 1,
+  },
+  iconOnlyChip: {
+    paddingHorizontal: Spacing.md,
+  },
+  chipContent: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  iconWithLabel: {
+    marginRight: Spacing.xs,
   },
 });

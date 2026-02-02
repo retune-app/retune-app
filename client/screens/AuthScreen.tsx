@@ -181,12 +181,8 @@ export function AuthScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Top Section - Tagline and Logo */}
+          {/* Top Section - Logo */}
           <View style={styles.topSection}>
-            <Text style={styles.topTagline}>
-              Breathe, Believe, Become
-            </Text>
-
             <View style={styles.logoContainer}>
               <View style={styles.logoWrapper}>
                 <Image
@@ -391,11 +387,11 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
   },
   brandSubtitle: {
-    fontFamily: "SpaceGrotesk_400Regular",
+    fontFamily: "SpaceGrotesk_500Medium",
     fontSize: 14,
-    color: "rgba(255,255,255,0.6)",
+    color: "#C9A227",
     textAlign: "center",
-    letterSpacing: 2,
+    letterSpacing: 3,
     marginTop: Spacing.lg,
     textTransform: "uppercase",
   },

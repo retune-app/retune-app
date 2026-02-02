@@ -1,10 +1,9 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import {
   View,
   StyleSheet,
   Text,
   ActivityIndicator,
-  ScrollView,
   Pressable,
   Image,
   Platform,
@@ -203,16 +202,14 @@ export function AuthScreen() {
           style={{ flex: 1 }} 
           behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
-          <ScrollView
-            contentContainerStyle={[
+          <View
+            style={[
               styles.scrollContent,
               {
-                paddingTop: insets.top + Spacing.xxl,
-                paddingBottom: insets.bottom + Spacing.xxl + 160,
+                paddingTop: insets.top + Spacing.lg,
+                paddingBottom: insets.bottom + Spacing.lg,
               }
             ]}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
           >
           {/* Top Section - Logo */}
           <View style={styles.topSection}>
@@ -395,7 +392,7 @@ export function AuthScreen() {
               Your data is encrypted and securely stored
             </Text>
           </View>
-          </ScrollView>
+          </View>
         </KeyboardAvoidingView>
       </ImageBackground>
     </View>
@@ -421,7 +418,7 @@ const styles = StyleSheet.create({
   },
   spacer: {
     flex: 1,
-    minHeight: 280,
+    minHeight: 100,
   },
   logoContainer: {
     alignItems: "center",
@@ -526,7 +523,8 @@ const styles = StyleSheet.create({
     shadowRadius: 20,
   },
   cardContent: {
-    padding: Spacing.xl,
+    padding: Spacing.md,
+    paddingHorizontal: Spacing.lg,
     backgroundColor: "rgba(255,255,255,0.1)",
     borderTopWidth: 1,
     borderTopColor: "rgba(255,255,255,0.2)",

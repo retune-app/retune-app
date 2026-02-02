@@ -1,4 +1,4 @@
-export type PillarName = "Mind" | "Body" | "Spirit" | "Connection" | "Achievement";
+export type PillarName = "Mind" | "Body" | "Spirit" | "Connection" | "Achievement" | "Home";
 
 export interface Pillar {
   name: PillarName;
@@ -44,15 +44,23 @@ export const PILLARS: Record<PillarName, Pillar> = {
   },
   Achievement: {
     name: "Achievement",
-    color: "#C9A227",
+    color: "#CD7F32",
     lightColor: "#FEF3C7",
     icon: "target",
     description: "Career success, wealth, and personal growth",
     subcategories: ["Career", "Wealth", "Skills", "Habits", "Motivation"],
   },
+  Home: {
+    name: "Home",
+    color: "#E07A5F",
+    lightColor: "#FDE8E4",
+    icon: "home",
+    description: "Family harmony, living space, and domestic peace",
+    subcategories: ["Family", "Organization", "Environment"],
+  },
 };
 
-export const PILLAR_LIST: PillarName[] = ["Mind", "Body", "Spirit", "Connection", "Achievement"];
+export const PILLAR_LIST: PillarName[] = ["Mind", "Body", "Spirit", "Connection", "Achievement", "Home"];
 
 export const ALL_SUBCATEGORIES = Object.values(PILLARS).flatMap((p) => p.subcategories);
 

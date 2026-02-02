@@ -283,7 +283,7 @@ export default function CreateScreen() {
         </View>
 
         <ThemedText type="h3" style={styles.sectionTitle}>
-          Choose Your Pillar
+          Focus
         </ThemedText>
         <ThemedText type="caption" style={[styles.sectionSubtitle, { color: theme.textSecondary }]}>
           Select the area of life you want to focus on

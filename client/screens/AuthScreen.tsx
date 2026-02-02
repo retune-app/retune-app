@@ -194,7 +194,7 @@ export function AuthScreen() {
             </View>
             <Text style={styles.brandName}>InnerTune</Text>
             <Text style={styles.tagline}>
-              Transform your mind through the power of affirmations
+              Breathe, Believe, Become
             </Text>
           </View>
 

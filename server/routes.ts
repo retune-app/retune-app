@@ -702,6 +702,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Upload voice sample and clone voice (requires auth)
+  // Max 2 voice clones per user lifetime
+  const MAX_VOICE_CLONES = 2;
+  
   app.post(
     "/api/voice-samples",
     requireAuth,
@@ -713,12 +716,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).json({ error: "No audio file provided" });
         }
 
-        // Create voice sample record (associated with user)
+        // Check user's voice clone limit
+        const [user] = await db
+          .select({ voiceClonesUsed: users.voiceClonesUsed, hasConsentedToVoiceCloning: users.hasConsentedToVoiceCloning })
+          .from(users)
+          .where(eq(users.id, req.userId!))
+          .limit(1);
+
+        if (!user) {
+          // Clean up uploaded file
+          fs.unlink(file.path, () => {});
+          return res.status(404).json({ error: "User not found" });
+        }
+
+        // Verify consent before cloning
+        if (!user.hasConsentedToVoiceCloning) {
+          fs.unlink(file.path, () => {});
+          return res.status(403).json({ error: "Voice cloning consent required. Please accept the voice cloning terms first." });
+        }
+
+        // Check usage limit
+        const clonesUsed = user.voiceClonesUsed || 0;
+        if (clonesUsed >= MAX_VOICE_CLONES) {
+          // Clean up uploaded file immediately
+          fs.unlink(file.path, () => {});
+          return res.status(429).json({ 
+            error: `Voice clone limit reached. Maximum ${MAX_VOICE_CLONES} voice clones allowed.`,
+            limit: MAX_VOICE_CLONES,
+            used: clonesUsed
+          });
+        }
+
+        // Create voice sample record (associated with user) - no audioUrl stored for privacy
         const [sample] = await db
           .insert(voiceSamples)
           .values({
             userId: req.userId!,
-            audioUrl: `/uploads/${file.filename}`,
+            audioUrl: "processing", // Don't store actual path for privacy
             status: "processing",
           })
           .returning();
@@ -727,27 +761,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           const voiceId = await cloneVoice(file.path, "My Affirmation Voice");
 
-          // Update sample with voice ID
+          // PRIVACY: Delete the voice sample file immediately after successful cloning
+          fs.unlink(file.path, (err) => {
+            if (err) console.error("Failed to delete voice sample file:", err);
+            else console.log("Voice sample file deleted for privacy:", file.filename);
+          });
+
+          // Update sample with voice ID (audioUrl cleared for privacy)
           const [updatedSample] = await db
             .update(voiceSamples)
-            .set({ voiceId, status: "ready" })
+            .set({ voiceId, status: "ready", audioUrl: null })
             .where(eq(voiceSamples.id, sample.id))
             .returning();
 
-          // Also update the user's voiceId, hasVoiceSample flag, and auto-switch to personal voice
+          // Update user: voiceId, hasVoiceSample, auto-switch to personal voice, and increment clones used
           await db
             .update(users)
-            .set({ voiceId, hasVoiceSample: true, preferredVoiceType: "personal" })
+            .set({ 
+              voiceId, 
+              hasVoiceSample: true, 
+              preferredVoiceType: "personal",
+              voiceClonesUsed: (clonesUsed + 1)
+            })
             .where(eq(users.id, req.userId!));
 
-          res.json(updatedSample);
+          res.json({
+            ...updatedSample,
+            clonesRemaining: MAX_VOICE_CLONES - (clonesUsed + 1)
+          });
         } catch (cloneError) {
           console.error("Voice cloning error:", cloneError);
+
+          // PRIVACY: Delete file even on failure
+          fs.unlink(file.path, () => {});
 
           // Update status to failed
           await db
             .update(voiceSamples)
-            .set({ status: "failed" })
+            .set({ status: "failed", audioUrl: null })
             .where(eq(voiceSamples.id, sample.id));
 
           res.status(500).json({ error: "Voice cloning failed. Please ensure your recording is at least 30 seconds." });

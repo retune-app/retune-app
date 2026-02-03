@@ -94,7 +94,7 @@ Hear affirmations in YOUR voice. Retune uses AI and voice cloning to create pers
 
 ## App Information
 
-**Age Rating:** 4+
+**Age Rating:** 17+
 **Price:** Free (with optional premium features)
 **Languages:** English
 

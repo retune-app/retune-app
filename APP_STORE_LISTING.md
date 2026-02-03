@@ -172,6 +172,27 @@ https://[your-domain]
 
 ## App Review Notes
 
+### Demo Account for Apple Review
+
+**Email:** appreview@retuneappdev.com
+**Password:** RetuneReview2024!
+
+**This account has:**
+- 23 pre-loaded affirmations across all 5 Life Pillars (Mind, Body, Spirit, Connection, Achievement)
+- Fresh usage limits: 0/2 voice clones used, 0/10 AI affirmations used this month
+- Voice consent not yet given (allows testing the full consent flow)
+- No voice clone set up (allows testing the complete voice recording experience)
+
+**Testing Suggestions:**
+1. **Browse Affirmations:** Go to the Believe tab to see sample affirmations organized by pillar color
+2. **Voice Recording Flow:** Tap "Record My Voice" in Voice Settings to test the consent modal and recording flow
+3. **Create Affirmation:** Use the + button to create a new AI affirmation and test the generation feature
+4. **Breathing Exercises:** Try the breathing exercises in the Breathe tab with different techniques
+5. **Privacy Controls:** Test "Delete My Data" in Settings → Security & Privacy (type "delete" to confirm - do not complete with demo account)
+6. **View Usage Limits:** Settings → scroll to "USAGE LIMITS" section to see remaining quotas
+
+---
+
 ### Permissions Used
 
 | Permission | Purpose | User Consent |

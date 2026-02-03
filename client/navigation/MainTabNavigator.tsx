@@ -31,7 +31,7 @@ function CreateTabButton({ onPress }: { onPress?: (e?: any) => void }) {
   };
 
   return (
-    <Pressable onPress={handlePress} style={styles.createButtonContainer}>
+    <Pressable onPress={handlePress} style={styles.createButtonContainer} testID="button-create-affirmation">
       <LinearGradient
         colors={["#C9A227", "#E5C95C"] as [string, string]}
         start={{ x: 0, y: 0 }}

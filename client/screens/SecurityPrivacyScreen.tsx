@@ -1,16 +1,24 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   StyleSheet,
   ScrollView,
   Pressable,
+  Alert,
+  Modal,
+  TextInput,
+  Platform,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ThemedText } from "@/components/ThemedText";
+import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
+import { useAuth, getAuthToken } from "@/contexts/AuthContext";
+import { getApiUrl } from "@/lib/query-client";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
 interface SecuritySectionProps {
@@ -53,6 +61,52 @@ export default function SecurityPrivacyScreen() {
   const { theme, isDark } = useTheme();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
+  const { logout } = useAuth();
+  const queryClient = useQueryClient();
+  
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+  
+  const deleteDataMutation = useMutation({
+    mutationFn: async () => {
+      const apiUrl = getApiUrl();
+      const authToken = getAuthToken();
+      
+      const headers: Record<string, string> = {};
+      if (authToken) {
+        headers["X-Auth-Token"] = authToken;
+      }
+
+      const response = await fetch(`${apiUrl}/api/user/data`, {
+        method: "DELETE",
+        headers,
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to delete data");
+      }
+      return response.json();
+    },
+    onSuccess: async () => {
+      setShowDeleteModal(false);
+      queryClient.clear();
+      await logout();
+      if (Platform.OS === "web") {
+        Alert.alert("Data Deleted", "All your data has been permanently deleted.");
+      }
+    },
+    onError: (error: any) => {
+      Alert.alert("Error", error.message || "Failed to delete your data. Please try again.");
+    },
+  });
+  
+  const handleDeleteData = () => {
+    if (confirmText.toLowerCase() === "delete") {
+      deleteDataMutation.mutate();
+    }
+  };
 
   const sections: SecuritySectionProps[] = [
     {
@@ -183,7 +237,114 @@ export default function SecurityPrivacyScreen() {
             </View>
           </View>
         </View>
+
+        {/* Delete My Data Section */}
+        <View style={[styles.deleteSection, { backgroundColor: "#EF444410", borderColor: "#EF444430" }]}>
+          <View style={styles.deleteSectionHeader}>
+            <View style={[styles.deleteIcon, { backgroundColor: "#EF444420" }]}>
+              <Feather name="alert-triangle" size={24} color="#EF4444" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <ThemedText type="body" style={[styles.deleteSectionTitle, { color: "#EF4444" }]}>
+                Delete All My Data
+              </ThemedText>
+              <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                Permanently remove your account and all associated data
+              </ThemedText>
+            </View>
+          </View>
+          <ThemedText type="small" style={[styles.deleteWarning, { color: theme.textSecondary }]}>
+            This will permanently delete your account, affirmations, voice recordings, listening history, and all other personal data. This action cannot be undone.
+          </ThemedText>
+          <Button
+            variant="ghost"
+            onPress={() => setShowDeleteModal(true)}
+            style={[styles.deleteButton, { borderColor: "#EF4444" }]}
+            testID="button-delete-data"
+          >
+            <ThemedText style={{ color: "#EF4444", fontWeight: "600" }}>
+              Delete My Data
+            </ThemedText>
+          </Button>
+        </View>
       </ScrollView>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        visible={showDeleteModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowDeleteModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: theme.cardBackground }]}>
+            <View style={[styles.modalIcon, { backgroundColor: "#EF444420" }]}>
+              <Feather name="alert-triangle" size={32} color="#EF4444" />
+            </View>
+            
+            <ThemedText type="h4" style={styles.modalTitle}>
+              Delete All Your Data?
+            </ThemedText>
+            
+            <ThemedText type="body" style={[styles.modalDescription, { color: theme.textSecondary }]}>
+              This will permanently delete:
+            </ThemedText>
+            
+            <View style={styles.modalList}>
+              <ThemedText type="small" style={{ color: theme.textSecondary }}>• Your account and profile</ThemedText>
+              <ThemedText type="small" style={{ color: theme.textSecondary }}>• All affirmations and audio files</ThemedText>
+              <ThemedText type="small" style={{ color: theme.textSecondary }}>• Voice clone and recordings</ThemedText>
+              <ThemedText type="small" style={{ color: theme.textSecondary }}>• Listening history and statistics</ThemedText>
+            </View>
+            
+            <ThemedText type="small" style={[styles.confirmLabel, { color: theme.textSecondary }]}>
+              Type "delete" to confirm:
+            </ThemedText>
+            
+            <TextInput
+              style={[styles.confirmInput, { 
+                backgroundColor: theme.backgroundSecondary, 
+                color: theme.text,
+                borderColor: confirmText.toLowerCase() === "delete" ? "#10B981" : theme.border
+              }]}
+              value={confirmText}
+              onChangeText={setConfirmText}
+              placeholder="delete"
+              placeholderTextColor={theme.textSecondary}
+              autoCapitalize="none"
+              testID="input-confirm-delete"
+            />
+            
+            <View style={styles.modalButtons}>
+              <Button
+                variant="secondary"
+                onPress={() => {
+                  setShowDeleteModal(false);
+                  setConfirmText("");
+                }}
+                style={styles.modalButton}
+                testID="button-cancel-delete"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="ghost"
+                onPress={handleDeleteData}
+                loading={deleteDataMutation.isPending}
+                disabled={confirmText.toLowerCase() !== "delete"}
+                style={[styles.modalButton, styles.deleteConfirmButton, { 
+                  backgroundColor: confirmText.toLowerCase() === "delete" ? "#EF4444" : "#EF444450",
+                }]}
+                testID="button-confirm-delete"
+              >
+                <ThemedText style={{ color: "#FFFFFF", fontWeight: "600" }}>
+                  Delete Forever
+                </ThemedText>
+              </Button>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -300,5 +461,96 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginTop: 1,
+  },
+  // Delete section styles
+  deleteSection: {
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    marginTop: Spacing.xl,
+    borderWidth: 1,
+  },
+  deleteSectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.md,
+    marginBottom: Spacing.md,
+  },
+  deleteIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  deleteSectionTitle: {
+    fontFamily: "Nunito_700Bold",
+  },
+  deleteWarning: {
+    lineHeight: 20,
+    marginBottom: Spacing.lg,
+  },
+  deleteButton: {
+    borderWidth: 1,
+    borderRadius: BorderRadius.md,
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: Spacing.lg,
+  },
+  modalContent: {
+    width: "100%",
+    maxWidth: 400,
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.xl,
+    alignItems: "center",
+  },
+  modalIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: Spacing.lg,
+  },
+  modalTitle: {
+    textAlign: "center",
+    marginBottom: Spacing.md,
+  },
+  modalDescription: {
+    textAlign: "center",
+    marginBottom: Spacing.sm,
+  },
+  modalList: {
+    alignSelf: "flex-start",
+    marginBottom: Spacing.lg,
+    gap: Spacing.xs,
+  },
+  confirmLabel: {
+    alignSelf: "flex-start",
+    marginBottom: Spacing.xs,
+  },
+  confirmInput: {
+    width: "100%",
+    height: 48,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    paddingHorizontal: Spacing.md,
+    marginBottom: Spacing.lg,
+    fontSize: 16,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    gap: Spacing.md,
+    width: "100%",
+  },
+  modalButton: {
+    flex: 1,
+  },
+  deleteConfirmButton: {
+    borderWidth: 0,
   },
 });

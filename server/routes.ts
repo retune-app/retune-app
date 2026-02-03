@@ -2282,6 +2282,119 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Set voice cloning consent (required before recording)
+  app.post("/api/user/voice-consent", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { consent } = req.body;
+      
+      if (typeof consent !== "boolean") {
+        return res.status(400).json({ error: "Consent must be a boolean value" });
+      }
+
+      await db
+        .update(users)
+        .set({ hasConsentedToVoiceCloning: consent })
+        .where(eq(users.id, req.userId!));
+
+      res.json({ success: true, hasConsentedToVoiceCloning: consent });
+    } catch (error) {
+      console.error("Error updating voice consent:", error);
+      res.status(500).json({ error: "Failed to update consent" });
+    }
+  });
+
+  // Get user's usage limits and consent status
+  app.get("/api/user/limits", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const limits = await checkAndResetMonthlyLimits(req.userId!);
+      
+      const [user] = await db
+        .select({
+          voiceClonesUsed: users.voiceClonesUsed,
+          hasConsentedToVoiceCloning: users.hasConsentedToVoiceCloning,
+        })
+        .from(users)
+        .where(eq(users.id, req.userId!))
+        .limit(1);
+
+      res.json({
+        voiceClones: {
+          used: user?.voiceClonesUsed || 0,
+          limit: MAX_VOICE_CLONES_LIFETIME,
+          remaining: Math.max(0, MAX_VOICE_CLONES_LIFETIME - (user?.voiceClonesUsed || 0))
+        },
+        aiAffirmations: {
+          used: limits.affirmationsThisMonth,
+          limit: MAX_AI_AFFIRMATIONS_PER_MONTH,
+          remaining: limits.affirmationsRemaining
+        },
+        hasConsentedToVoiceCloning: user?.hasConsentedToVoiceCloning || false
+      });
+    } catch (error) {
+      console.error("Error fetching user limits:", error);
+      res.status(500).json({ error: "Failed to fetch limits" });
+    }
+  });
+
+  // Delete all user data (GDPR compliance)
+  app.delete("/api/user/data", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const userId = req.userId!;
+      
+      // Get user's affirmations to delete their audio files
+      const userAffirmations = await db
+        .select({ audioUrl: affirmations.audioUrl })
+        .from(affirmations)
+        .where(eq(affirmations.userId, userId));
+
+      // Delete audio files from filesystem
+      for (const aff of userAffirmations) {
+        if (aff.audioUrl) {
+          const filePath = path.join(uploadDir, aff.audioUrl.replace("/uploads/", ""));
+          fs.unlink(filePath, (err) => {
+            if (err && err.code !== "ENOENT") {
+              console.error("Failed to delete audio file:", err);
+            }
+          });
+        }
+      }
+
+      // Get user's voice samples to delete their files (in case any exist)
+      const userVoiceSamples = await db
+        .select({ audioUrl: voiceSamples.audioUrl })
+        .from(voiceSamples)
+        .where(eq(voiceSamples.userId, userId));
+
+      for (const sample of userVoiceSamples) {
+        if (sample.audioUrl && sample.audioUrl !== "processing") {
+          const filePath = path.join(uploadDir, sample.audioUrl.replace("/uploads/", ""));
+          fs.unlink(filePath, () => {});
+        }
+      }
+
+      // Delete user data in order (respecting foreign key constraints)
+      // Most tables cascade delete from users, but let's be explicit
+      await db.delete(listeningSessions).where(eq(listeningSessions.userId, userId));
+      await db.delete(breathingSessions).where(eq(breathingSessions.userId, userId));
+      await db.delete(notificationSettings).where(eq(notificationSettings.userId, userId));
+      await db.delete(affirmations).where(eq(affirmations.userId, userId));
+      await db.delete(voiceSamples).where(eq(voiceSamples.userId, userId));
+      await db.delete(customCategories).where(eq(customCategories.userId, userId));
+      await db.delete(collections).where(eq(collections.userId, userId));
+      
+      // Finally, delete the user
+      await db.delete(users).where(eq(users.id, userId));
+
+      res.json({ 
+        success: true, 
+        message: "All your data has been permanently deleted." 
+      });
+    } catch (error) {
+      console.error("Error deleting user data:", error);
+      res.status(500).json({ error: "Failed to delete user data. Please contact support." });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

@@ -127,9 +127,48 @@ export default function VoiceSetupScreen() {
     };
   }, []);
 
+  // Mutation to save voice consent to database
+  const consentMutation = useMutation({
+    mutationFn: async () => {
+      const apiUrl = getApiUrl();
+      const authToken = getAuthToken();
+      
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (authToken) {
+        headers["X-Auth-Token"] = authToken;
+      }
+
+      const response = await fetch(`${apiUrl}/api/user/voice-consent`, {
+        method: "POST",
+        headers,
+        credentials: "include",
+        body: JSON.stringify({ consent: true }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save consent");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user/limits"] });
+    },
+  });
+
   const handlePrivacyAcknowledge = async () => {
-    setShowPrivacyNotice(false);
-    await requestPermissions();
+    try {
+      // Save consent to database before proceeding
+      await consentMutation.mutateAsync();
+      setShowPrivacyNotice(false);
+      await requestPermissions();
+    } catch (error) {
+      console.error("Failed to save consent:", error);
+      // Still proceed even if consent save fails (will be checked again on server)
+      setShowPrivacyNotice(false);
+      await requestPermissions();
+    }
   };
 
   const requestPermissions = async () => {
@@ -291,14 +330,14 @@ export default function VoiceSetupScreen() {
           <View style={[styles.privacyCard, { backgroundColor: theme.backgroundSecondary }]}>
             <View style={styles.privacyItem}>
               <View style={[styles.privacyBullet, { backgroundColor: theme.primary }]}>
-                <Feather name="lock" size={16} color="#FFFFFF" />
+                <Feather name="trash-2" size={16} color="#FFFFFF" />
               </View>
               <View style={styles.privacyItemText}>
                 <ThemedText type="body" style={styles.privacyItemTitle}>
-                  Securely Stored
+                  Immediately Deleted
                 </ThemedText>
                 <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                  Your voice recording is encrypted and stored securely
+                  Your voice recording is deleted from our servers immediately after creating your voice clone
                 </ThemedText>
               </View>
             </View>
@@ -312,7 +351,7 @@ export default function VoiceSetupScreen() {
                   Only You Have Access
                 </ThemedText>
                 <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                  No one else can access or listen to your voice sample
+                  Your voice clone is private and only used for your affirmations
                 </ThemedText>
               </View>
             </View>
@@ -333,14 +372,14 @@ export default function VoiceSetupScreen() {
 
             <View style={styles.privacyItem}>
               <View style={[styles.privacyBullet, { backgroundColor: theme.primary }]}>
-                <Feather name="trash-2" size={16} color="#FFFFFF" />
+                <Feather name="shield" size={16} color="#FFFFFF" />
               </View>
               <View style={styles.privacyItemText}>
                 <ThemedText type="body" style={styles.privacyItemTitle}>
-                  Delete Anytime
+                  Delete All Data Anytime
                 </ThemedText>
                 <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                  You can delete your voice data at any time from your profile
+                  You can permanently delete all your data from Settings at any time
                 </ThemedText>
               </View>
             </View>
@@ -350,10 +389,11 @@ export default function VoiceSetupScreen() {
             <Button
               variant="gradient"
               onPress={handlePrivacyAcknowledge}
+              loading={consentMutation.isPending}
               style={styles.continueButton}
               testID="button-privacy-continue"
             >
-              I Understand, Continue
+              I Consent to Voice Cloning
             </Button>
 
             <Button

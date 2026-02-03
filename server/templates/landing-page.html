@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Retune - Breathe, Believe, Become</title>
+  <title>RETUNE - Breathe, Believe, Become</title>
   <meta name="description" content="Reprogram your mind with personalized affirmations in your own voice. AI-powered voice cloning meets mindfulness.">
   <meta name="keywords" content="affirmations, meditation, mindfulness, voice cloning, breathing, self-improvement, wellness, mental health">
-  <meta property="og:title" content="Retune - Breathe, Believe, Become">
+  <meta property="og:title" content="RETUNE - Breathe, Believe, Become">
   <meta property="og:description" content="Reprogram your mind with personalized affirmations in your own voice.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://retuned.app">
@@ -90,11 +90,28 @@
       border-radius: 10px;
     }
 
-    .logo span {
+    .logo-text {
       font-family: 'Space Grotesk', sans-serif;
       font-size: 24px;
       font-weight: 700;
       color: var(--white);
+      letter-spacing: 2px;
+      display: inline-flex;
+    }
+
+    .logo-text .underlined {
+      position: relative;
+    }
+
+    .logo-text .underlined::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--primary-gold);
+      border-radius: 2px;
     }
 
     .nav-cta {
@@ -562,10 +579,8 @@
       border-radius: 8px;
     }
 
-    .footer-logo span {
-      font-family: 'Space Grotesk', sans-serif;
+    .footer-logo .logo-text {
       font-size: 20px;
-      font-weight: 600;
     }
 
     .footer-links {
@@ -734,8 +749,8 @@
   <nav>
     <div class="container">
       <a href="#" class="logo">
-        <img src="/landing-assets/logo.png" alt="Retune">
-        <span>Retune</span>
+        <img src="/landing-assets/logo.png" alt="RETUNE">
+        <span class="logo-text">RE<span class="underlined">TU</span>NE</span>
       </a>
       <a href="#download" class="nav-cta">
         Download App
@@ -749,7 +764,7 @@
         <span class="hero-tagline">Breathe, Believe, Become</span>
         <h1>Reprogram Your Mind with <span>Your Own Voice</span></h1>
         <p class="hero-description">
-          Unlock the power of personalized affirmations. Retune uses AI voice cloning to speak directly to your subconscious in the voice you trust most — yours.
+          Unlock the power of personalized affirmations. RETUNE uses AI voice cloning to speak directly to your subconscious in the voice you trust most — yours.
         </p>
         <div class="hero-buttons">
           <a href="#download" class="btn-primary">
@@ -777,7 +792,7 @@
   <section class="how-it-works" id="how-it-works">
     <div class="container">
       <div class="section-header">
-        <h2>How Retune Works</h2>
+        <h2>How RETUNE Works</h2>
         <p>Transform your mindset in three simple steps</p>
       </div>
       <div class="steps-grid">
@@ -898,7 +913,7 @@
   <section class="cta" id="download">
     <div class="container">
       <div class="cta-content">
-        <h2>Ready to <span>Retune</span> Your Mind?</h2>
+        <h2>Ready to <span>RETUNE</span> Your Mind?</h2>
         <p>Join thousands transforming their mindset with personalized affirmations in their own voice.</p>
         <a href="https://apps.apple.com/app/retune" target="_blank">
           <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store" class="app-store-badge">
@@ -911,8 +926,8 @@
     <div class="container">
       <div class="footer-content">
         <div class="footer-logo">
-          <img src="/landing-assets/logo.png" alt="Retune">
-          <span>Retune</span>
+          <img src="/landing-assets/logo.png" alt="RETUNE">
+          <span class="logo-text">RE<span class="underlined">TU</span>NE</span>
         </div>
         <div class="footer-links">
           <a href="/support">Support</a>
@@ -920,7 +935,7 @@
           <a href="/support#terms">Terms of Service</a>
         </div>
         <div class="footer-copyright">
-          &copy; 2024 Retune. All rights reserved.
+          &copy; 2024 RETUNE. All rights reserved.
         </div>
       </div>
     </div>

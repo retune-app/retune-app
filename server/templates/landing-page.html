@@ -90,26 +90,11 @@
       border-radius: 10px;
     }
 
-    .logo-text {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-    }
-
-    .logo-name {
+    .logo span {
       font-family: 'Space Grotesk', sans-serif;
-      font-size: 26px;
+      font-size: 24px;
       font-weight: 700;
       color: var(--white);
-      letter-spacing: 2px;
-    }
-
-    .logo-accent {
-      width: 100%;
-      height: 2px;
-      background: linear-gradient(90deg, var(--primary-gold), transparent);
-      border-radius: 2px;
-      margin-top: 2px;
     }
 
     .nav-cta {
@@ -251,18 +236,32 @@
 
     .phone-frame {
       position: relative;
-      border-radius: 44px;
-      border: 8px solid #1a1a1a;
+      background: #000;
+      border-radius: 50px;
+      padding: 12px;
       box-shadow: 
         0 40px 80px rgba(0, 0, 0, 0.4),
-        0 0 0 1px rgba(255, 255, 255, 0.1);
+        inset 0 0 0 2px rgba(255, 255, 255, 0.1),
+        0 0 0 1px rgba(0, 0, 0, 0.5);
       transition: transform 0.5s ease;
-      overflow: hidden;
-      line-height: 0;
+    }
+
+    .phone-frame::before {
+      content: '';
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80px;
+      height: 28px;
+      background: #000;
+      border-radius: 20px;
+      z-index: 10;
     }
 
     .phone-mockup {
       width: 260px;
+      border-radius: 38px;
       display: block;
     }
 
@@ -563,26 +562,10 @@
       border-radius: 8px;
     }
 
-    .footer-logo-text {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-    }
-
-    .footer-logo-name {
+    .footer-logo span {
       font-family: 'Space Grotesk', sans-serif;
       font-size: 20px;
-      font-weight: 700;
-      color: var(--white);
-      letter-spacing: 1px;
-    }
-
-    .footer-logo-accent {
-      width: 100%;
-      height: 2px;
-      background: linear-gradient(90deg, var(--primary-gold), transparent);
-      border-radius: 2px;
-      margin-top: 2px;
+      font-weight: 600;
     }
 
     .footer-links {
@@ -668,12 +651,19 @@
       }
 
       .phone-frame {
-        border-width: 6px;
-        border-radius: 36px;
+        padding: 8px;
+        border-radius: 40px;
+      }
+
+      .phone-frame::before {
+        width: 60px;
+        height: 22px;
+        top: 6px;
       }
 
       .phone-mockup {
         width: 180px;
+        border-radius: 32px;
       }
 
       .focus-grid {
@@ -714,12 +704,19 @@
       }
 
       .phone-frame {
-        border-width: 5px;
-        border-radius: 28px;
+        padding: 6px;
+        border-radius: 32px;
+      }
+
+      .phone-frame::before {
+        width: 50px;
+        height: 18px;
+        top: 5px;
       }
 
       .phone-mockup {
         width: 140px;
+        border-radius: 26px;
       }
 
       .phone-frame:first-child {
@@ -738,10 +735,7 @@
     <div class="container">
       <a href="#" class="logo">
         <img src="/landing-assets/logo.png" alt="Retune">
-        <div class="logo-text">
-          <span class="logo-name">Retune</span>
-          <div class="logo-accent"></div>
-        </div>
+        <span>Retune</span>
       </a>
       <a href="#download" class="nav-cta">
         Download App
@@ -771,7 +765,7 @@
       </div>
       <div class="hero-phones">
         <div class="phone-frame">
-          <img src="/landing-assets/breathing-active.jpg" alt="Retune Breathing" class="phone-mockup">
+          <img src="/landing-assets/breathing-start.jpg" alt="Retune Breathing" class="phone-mockup">
         </div>
         <div class="phone-frame">
           <img src="/landing-assets/library.jpg" alt="Retune Library" class="phone-mockup">
@@ -918,10 +912,7 @@
       <div class="footer-content">
         <div class="footer-logo">
           <img src="/landing-assets/logo.png" alt="Retune">
-          <div class="footer-logo-text">
-            <span class="footer-logo-name">Retune</span>
-            <div class="footer-logo-accent"></div>
-          </div>
+          <span>Retune</span>
         </div>
         <div class="footer-links">
           <a href="/support">Support</a>

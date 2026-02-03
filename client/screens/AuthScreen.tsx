@@ -467,10 +467,10 @@ const styles = StyleSheet.create({
     borderTopColor: "rgba(255,255,255,0.2)",
   },
   brandName: {
-    fontFamily: "SpaceGrotesk_700Bold",
+    fontFamily: "Montserrat_600SemiBold",
     fontSize: 44,
     color: authColors.white,
-    letterSpacing: 8,
+    letterSpacing: 6,
     textShadowColor: "rgba(201,162,39,0.4)",
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 20,

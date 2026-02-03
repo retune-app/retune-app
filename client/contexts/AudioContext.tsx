@@ -107,7 +107,6 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       // Invalidate stats cache to refresh analytics
       queryClient.invalidateQueries({ queryKey: ["/api/user/stats"] });
       queryClient.invalidateQueries({ queryKey: ["/api/affirmations"] });
-      console.log("Recorded listen for affirmation:", affirmationId);
     } catch (error) {
       console.error("Error recording listen:", error);
       hasRecordedListenRef.current = false; // Allow retry on error
@@ -183,7 +182,6 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const audioUri = `${getApiUrl()}${affirmation.audioUrl}`;
-      console.log('Loading audio from:', audioUri);
 
       const { sound } = await Audio.Sound.createAsync(
         { uri: audioUri },
@@ -231,22 +229,18 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   }, [currentAffirmation?.id, autoReplay, playbackSpeed, unloadCurrentSound, recordListen]);
 
   const togglePlayPause = useCallback(async () => {
-    console.log('togglePlayPause called, soundRef exists:', !!soundRef.current);
     if (!soundRef.current) {
-      console.log('No sound ref, returning early');
       return;
     }
 
     // Prevent overlapping operations from rapid button presses
     if (isOperationInProgress.current) {
-      console.log('Operation in progress, skipping');
       return;
     }
 
     isOperationInProgress.current = true;
     try {
       const status = await soundRef.current.getStatusAsync();
-      console.log('Sound status:', status.isLoaded ? 'loaded' : 'not loaded', status.isLoaded && 'isPlaying' in status ? (status.isPlaying ? 'playing' : 'paused') : '');
       if (status.isLoaded) {
         if (status.isPlaying) {
           await soundRef.current.pauseAsync();
@@ -254,7 +248,6 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           // Pause background music too
           await stopBackgroundMusic();
-          console.log('Paused');
         } else {
           // Check if audio has finished (position at or near end)
           const isAtEnd = status.durationMillis && 
@@ -264,14 +257,12 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
             // Seek to beginning before playing
             await soundRef.current.setPositionAsync(0);
             setPosition(0);
-            console.log('Restarting from beginning');
           }
           
           await soundRef.current.playAsync();
           setIsPlaying(true);
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           // Background music is NOT auto-resumed - user controls it manually
-          console.log('Resumed');
         }
       }
     } catch (error) {

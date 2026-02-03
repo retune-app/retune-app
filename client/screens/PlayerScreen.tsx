@@ -323,7 +323,6 @@ export default function PlayerScreen() {
 
   // Control orientation - keep unlocked in fullscreen so user can tilt to exit
   useEffect(() => {
-    console.log('Orientation effect - isInFullscreenMode:', isInFullscreenMode);
     if (isInFullscreenMode) {
       // Keep orientation unlocked so user can tilt back to portrait to exit
       ScreenOrientation.unlockAsync();
@@ -337,7 +336,6 @@ export default function PlayerScreen() {
   // Unlock orientation when Focus Mode is on and playing (to allow entering fullscreen)
   useEffect(() => {
     if (rsvpEnabled && isCurrentlyPlaying && !isInFullscreenMode) {
-      console.log('Unlocking orientation to allow fullscreen entry');
       ScreenOrientation.unlockAsync();
     }
   }, [rsvpEnabled, isCurrentlyPlaying, isInFullscreenMode]);
@@ -383,22 +381,16 @@ export default function PlayerScreen() {
     
     // Exit fullscreen when rotating back to portrait
     if (justRotatedToPortrait && isInFullscreenMode) {
-      console.log('Exiting fullscreen mode - rotated to portrait');
       setIsInFullscreenMode(false);
       return;
     }
     
     // Enter fullscreen if user just rotated TO landscape while playing
     if (justRotatedToLandscape && rsvpEnabled && isCurrentlyPlaying && !isInFullscreenMode) {
-      console.log('Entering fullscreen mode - rotated to landscape while playing');
       setIsInFullscreenMode(true);
     }
   }, [isLandscape, rsvpEnabled, isCurrentlyPlaying, isInFullscreenMode, showFocusModeTip, dismissFocusModeTip]);
 
-  // Debug: track fullscreen state changes
-  useEffect(() => {
-    console.log('Fullscreen state:', { isInFullscreenMode, rsvpEnabled, isLandscape, isCurrentlyPlaying });
-  }, [isInFullscreenMode, rsvpEnabled, isLandscape, isCurrentlyPlaying]);
 
   // Show fullscreen when in fullscreen mode (stays up even when paused)
   const showFullscreenFocus = isInFullscreenMode && rsvpEnabled;
@@ -437,7 +429,6 @@ export default function PlayerScreen() {
       });
       
       if (hasCorruptedData) {
-        console.log('Detected corrupted word timings, using fallback');
         return generateFallbackTimings();
       }
       
@@ -560,7 +551,6 @@ export default function PlayerScreen() {
           <Pressable 
             style={styles.fullscreenTapArea}
             onPress={() => {
-              console.log('Fullscreen tap - toggling playback');
               togglePlayPause();
             }}
           >

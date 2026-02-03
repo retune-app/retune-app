@@ -237,7 +237,6 @@ export default function ProfileScreen() {
     setIsResetting(true);
     try {
       const url = new URL("/api/user/reset", getApiUrl()).toString();
-      console.log("Resetting data at:", url);
       
       const authToken = getAuthToken();
       const headers: Record<string, string> = {
@@ -252,8 +251,6 @@ export default function ProfileScreen() {
         credentials: "include",
         headers,
       });
-      
-      console.log("Reset response status:", response.status);
       
       if (response.ok) {
         try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
@@ -315,7 +312,6 @@ export default function ProfileScreen() {
     setIsDeleting(true);
     try {
       const url = new URL("/api/user/account/delete", getApiUrl()).toString();
-      console.log("Deleting account at:", url);
       
       const authToken = getAuthToken();
       const headers: Record<string, string> = {
@@ -330,8 +326,6 @@ export default function ProfileScreen() {
         credentials: "include",
         headers,
       });
-      
-      console.log("Delete response status:", response.status);
       
       if (response.ok) {
         try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}

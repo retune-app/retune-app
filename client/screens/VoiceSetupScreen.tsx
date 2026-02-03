@@ -70,9 +70,6 @@ export default function VoiceSetupScreen() {
         } as any);
       }
 
-      console.log("Uploading to:", `${apiUrl}/api/voice-samples`);
-      console.log("Auth token:", authToken ? "present" : "missing");
-
       // Use AbortController for 3 minute timeout (voice cloning takes time)
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 180000);

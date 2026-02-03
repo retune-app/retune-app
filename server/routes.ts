@@ -21,6 +21,56 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
+// Usage limit constants
+const MAX_AI_AFFIRMATIONS_PER_MONTH = 10;
+const MAX_VOICE_CLONES_LIFETIME = 2;
+
+// Helper to check and reset monthly limits
+async function checkAndResetMonthlyLimits(userId: string): Promise<{
+  affirmationsThisMonth: number;
+  affirmationsRemaining: number;
+  needsReset: boolean;
+}> {
+  const [user] = await db
+    .select({
+      affirmationsThisMonth: users.affirmationsThisMonth,
+      monthlyResetDate: users.monthlyResetDate,
+    })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  if (!user) {
+    return { affirmationsThisMonth: 0, affirmationsRemaining: MAX_AI_AFFIRMATIONS_PER_MONTH, needsReset: false };
+  }
+
+  const now = new Date();
+  const resetDate = user.monthlyResetDate ? new Date(user.monthlyResetDate) : now;
+  
+  // Check if we need to reset (if current month is different from reset month)
+  const needsReset = now.getMonth() !== resetDate.getMonth() || now.getFullYear() !== resetDate.getFullYear();
+  
+  if (needsReset) {
+    // Reset the counter and update the reset date
+    await db
+      .update(users)
+      .set({
+        affirmationsThisMonth: 0,
+        monthlyResetDate: now,
+      })
+      .where(eq(users.id, userId));
+    
+    return { affirmationsThisMonth: 0, affirmationsRemaining: MAX_AI_AFFIRMATIONS_PER_MONTH, needsReset: true };
+  }
+
+  const current = user.affirmationsThisMonth || 0;
+  return {
+    affirmationsThisMonth: current,
+    affirmationsRemaining: Math.max(0, MAX_AI_AFFIRMATIONS_PER_MONTH - current),
+    needsReset: false
+  };
+}
+
 const audioUpload = multer({
   storage: multer.diskStorage({
     destination: uploadDir,
@@ -382,7 +432,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Generate script using AI (requires auth)
+  // Generate script using AI (requires auth) - Limited to MAX_AI_AFFIRMATIONS_PER_MONTH per month
   app.post("/api/affirmations/generate-script", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { goal, pillar, categories, category, length } = req.body;
@@ -391,10 +441,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Goal is required" });
       }
 
+      // Check monthly usage limit for AI-generated affirmations
+      const limits = await checkAndResetMonthlyLimits(req.userId!);
+      
+      if (limits.affirmationsRemaining <= 0) {
+        return res.status(429).json({
+          error: `Monthly AI affirmation limit reached. Maximum ${MAX_AI_AFFIRMATIONS_PER_MONTH} AI-generated affirmations per month.`,
+          limit: MAX_AI_AFFIRMATIONS_PER_MONTH,
+          used: limits.affirmationsThisMonth,
+          remaining: 0,
+          message: "You can still create manual affirmations or wait until next month."
+        });
+      }
+
       // Support both old single category and new multi-category format
       const categoryList = categories || (category ? [category] : []);
       const script = await generateScript(goal, categoryList, length, pillar);
-      res.json({ script });
+      
+      // Increment usage counter after successful generation
+      await db
+        .update(users)
+        .set({
+          affirmationsThisMonth: (limits.affirmationsThisMonth + 1)
+        })
+        .where(eq(users.id, req.userId!));
+
+      res.json({ 
+        script,
+        usage: {
+          used: limits.affirmationsThisMonth + 1,
+          remaining: limits.affirmationsRemaining - 1,
+          limit: MAX_AI_AFFIRMATIONS_PER_MONTH
+        }
+      });
     } catch (error) {
       console.error("Error generating script:", error);
       res.status(500).json({ error: "Failed to generate script" });

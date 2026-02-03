@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { View, StyleSheet, Image, Alert, Platform, ScrollView } from "react-native";
+import { View, StyleSheet, Alert, Platform, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -12,7 +12,8 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Button } from "@/components/Button";
 import { RecordButton } from "@/components/RecordButton";
-import { WaveformVisualizer } from "@/components/WaveformVisualizer";
+import { CircularVoiceVisualizer } from "@/components/CircularVoiceVisualizer";
+import { ProgressRing } from "@/components/ProgressRing";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { getApiUrl } from "@/lib/query-client";
@@ -439,50 +440,56 @@ export default function VoiceSetupScreen() {
         style={styles.scrollView}
         contentContainerStyle={[
           styles.content,
-          { paddingTop: insets.top + Spacing["2xl"] + 40, paddingBottom: insets.bottom + Spacing["2xl"] },
+          { paddingTop: insets.top + Spacing.xl + 40, paddingBottom: insets.bottom + Spacing["2xl"] },
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {!isRecording && !hasRecording ? (
-          <Image
-            source={require("../../assets/images/voice-setup-hero.png")}
-            style={styles.heroImage}
-            resizeMode="contain"
+        <View style={styles.visualizerSection}>
+          <CircularVoiceVisualizer
+            isActive={isRecording}
+            size={180}
           />
-        ) : null}
+        </View>
 
         <ThemedText type="h1" style={styles.title}>
-          {isRecording ? "Read This Aloud" : "Record Your Voice"}
+          {hasRecording 
+            ? "Recording Complete" 
+            : isRecording 
+            ? "Recording..." 
+            : "Record Your Voice"}
         </ThemedText>
 
         {!isRecording && !hasRecording ? (
           <ThemedText type="body" style={[styles.description, { color: theme.textSecondary }]}>
-            Record a 20-60 second sample of your voice. Longer recordings create better voice quality! When you start recording, we'll show you some text to read aloud.
+            Record 20-60 seconds of your voice reading the text below. Longer recordings create better voice quality.
           </ThemedText>
         ) : null}
 
-        {isRecording ? (
-          <View style={[styles.promptCard, { backgroundColor: theme.backgroundSecondary }]}>
-            <ThemedText type="caption" style={[styles.promptLabel, { color: theme.primary }]}>
-              READ NATURALLY AT YOUR OWN PACE
-            </ThemedText>
-            <ThemedText type="body" style={styles.promptText}>
-              {READING_PROMPTS}
-            </ThemedText>
-          </View>
+        {hasRecording ? (
+          <ThemedText type="body" style={[styles.description, { color: theme.textSecondary }]}>
+            {isValidDuration 
+              ? "Great job! Your voice sample is ready to create your personal voice clone."
+              : `Recording too short (${recordingDuration}s). Need at least 20 seconds.`}
+          </ThemedText>
         ) : null}
 
         <View style={styles.recordingSection}>
-          <WaveformVisualizer
-            isActive={isRecording}
-            barCount={32}
-            style={styles.waveform}
-            color={theme.primary}
-          />
-
-          <ThemedText type="h2" style={[styles.timer, { color: isRecording ? theme.primary : theme.text }]}>
-            {formatDuration(recordingDuration)}
-          </ThemedText>
+          <View style={styles.timerContainer}>
+            <ProgressRing
+              progress={Math.min(recordingDuration / 60, 1)}
+              size={160}
+              strokeWidth={6}
+            >
+              <View style={styles.timerInner}>
+                <ThemedText type="h1" style={[styles.timer, { color: isRecording ? theme.primary : theme.text }]}>
+                  {formatDuration(recordingDuration)}
+                </ThemedText>
+                <ThemedText type="caption" style={[styles.timerLabel, { color: theme.textSecondary }]}>
+                  {recordingDuration < 20 ? `${20 - recordingDuration}s to go` : "Ready"}
+                </ThemedText>
+              </View>
+            </ProgressRing>
+          </View>
 
           <ThemedText
             type="caption"
@@ -490,24 +497,48 @@ export default function VoiceSetupScreen() {
           >
             {isRecording
               ? recordingDuration < 20
-                ? `Keep reading... ${20 - recordingDuration}s minimum`
+                ? "Keep reading naturally..."
                 : recordingDuration < 40
-                ? "Good! Keep going for better quality..."
-                : "Excellent! You can stop anytime now"
+                ? "Great! Keep going for better quality"
+                : "Excellent! You can stop anytime"
               : hasRecording
-              ? isValidDuration
-                ? "Recording complete! You can re-record or continue."
-                : `Recording too short (${recordingDuration}s). Need at least 20 seconds.`
-              : "Tap the microphone to start recording"}
+              ? ""
+              : "Tap the microphone to start"}
           </ThemedText>
 
           <RecordButton
             isRecording={isRecording}
             onPress={handleRecordPress}
-            size={80}
+            size={72}
             testID="button-record"
           />
         </View>
+
+        {isRecording ? (
+          <View style={[styles.promptCard, { backgroundColor: theme.backgroundSecondary }]}>
+            <View style={styles.promptHeader}>
+              <Feather name="book-open" size={16} color={theme.primary} />
+              <ThemedText type="caption" style={[styles.promptLabel, { color: theme.primary }]}>
+                READ THIS ALOUD
+              </ThemedText>
+            </View>
+            <ThemedText type="body" style={styles.promptText}>
+              {READING_PROMPTS}
+            </ThemedText>
+          </View>
+        ) : !hasRecording ? (
+          <View style={[styles.promptCard, { backgroundColor: theme.backgroundSecondary }]}>
+            <View style={styles.promptHeader}>
+              <Feather name="info" size={16} color={theme.primary} />
+              <ThemedText type="caption" style={[styles.promptLabel, { color: theme.primary }]}>
+                READING PREVIEW
+              </ThemedText>
+            </View>
+            <ThemedText type="body" style={[styles.promptText, { color: theme.textSecondary }]}>
+              {READING_PROMPTS.substring(0, 200)}...
+            </ThemedText>
+          </View>
+        ) : null}
 
         <View style={styles.buttonsContainer}>
           {hasRecording && isValidDuration ? (
@@ -580,18 +611,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: Spacing["2xl"],
   },
-  heroImage: {
-    width: 180,
-    height: 130,
-    marginBottom: Spacing.xl,
+  visualizerSection: {
+    marginBottom: Spacing.lg,
+    alignItems: "center",
   },
   title: {
     textAlign: "center",
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
   },
   description: {
     textAlign: "center",
-    marginBottom: Spacing["2xl"],
+    marginBottom: Spacing.lg,
     maxWidth: 320,
     lineHeight: 24,
   },
@@ -599,34 +629,46 @@ const styles = StyleSheet.create({
     width: "100%",
     padding: Spacing.lg,
     borderRadius: BorderRadius.lg,
-    marginBottom: Spacing.xl,
+    marginTop: Spacing.lg,
+  },
+  promptHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+    justifyContent: "center",
   },
   promptLabel: {
-    marginBottom: Spacing.md,
     letterSpacing: 1,
     fontWeight: "600",
-    textAlign: "center",
   },
   promptText: {
-    lineHeight: 28,
-    fontSize: 17,
+    lineHeight: 26,
+    fontSize: 16,
   },
   recordingSection: {
     width: "100%",
     alignItems: "center",
+    marginVertical: Spacing.md,
   },
-  waveform: {
-    width: "100%",
-    height: 60,
+  timerContainer: {
     marginBottom: Spacing.md,
   },
+  timerInner: {
+    alignItems: "center",
+  },
   timer: {
-    marginBottom: Spacing.xs,
+    fontSize: 36,
+    fontWeight: "700",
+  },
+  timerLabel: {
+    marginTop: Spacing.xs,
+    fontSize: 12,
   },
   hint: {
     textAlign: "center",
-    marginBottom: Spacing.xl,
-    height: 40,
+    marginBottom: Spacing.lg,
+    height: 24,
   },
   buttonsContainer: {
     width: "100%",

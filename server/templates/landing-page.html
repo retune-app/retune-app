@@ -319,8 +319,8 @@
 
     .steps-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 40px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 30px;
     }
 
     .step-card {
@@ -368,6 +368,34 @@
     .step-card p {
       color: var(--white-muted);
       font-size: 16px;
+    }
+
+    .rsvp-gallery {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .rsvp-portraits {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .rsvp-portrait {
+      width: 85px !important;
+      border-radius: 16px !important;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    .rsvp-landscape {
+      width: 100% !important;
+      max-width: 200px;
+      margin: 0 auto;
+      border-radius: 12px !important;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      border: 2px solid var(--gold-glow);
     }
 
     .focus-areas {
@@ -629,6 +657,21 @@
       }
 
       .steps-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+      }
+
+      .rsvp-portrait {
+        width: 70px !important;
+      }
+
+      .rsvp-landscape {
+        max-width: 160px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .steps-grid {
         grid-template-columns: 1fr;
         max-width: 400px;
         margin: 0 auto;
@@ -789,7 +832,7 @@
     <div class="container">
       <div class="section-header">
         <h2>How RETUNE Works</h2>
-        <p>Transform your mindset in three simple steps</p>
+        <p>Transform your mindset in four simple steps</p>
       </div>
       <div class="steps-grid">
         <div class="step-card">
@@ -806,9 +849,21 @@
         </div>
         <div class="step-card">
           <div class="step-number">3</div>
-          <img src="/landing-assets/breathing-active.jpg" alt="Listen and Transform">
-          <h3>Listen & Transform</h3>
+          <img src="/landing-assets/breathing-active.jpg" alt="Breathe and Listen">
+          <h3>Breathe & Listen</h3>
           <p>Hear affirmations in your own cloned voice while practicing guided breathing</p>
+        </div>
+        <div class="step-card">
+          <div class="step-number">4</div>
+          <div class="rsvp-gallery">
+            <div class="rsvp-portraits">
+              <img src="/landing-assets/rsvp-settings.jpg" alt="RSVP Settings" class="rsvp-portrait">
+              <img src="/landing-assets/rsvp-focus.jpg" alt="RSVP Focus Mode" class="rsvp-portrait">
+            </div>
+            <img src="/landing-assets/rsvp-landscape.png" alt="RSVP Visualization" class="rsvp-landscape">
+          </div>
+          <h3>Listen & Absorb</h3>
+          <p>Focus deeply with RSVP mode — words appear one at a time, synced perfectly with your voice</p>
         </div>
       </div>
     </div>

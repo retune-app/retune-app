@@ -234,37 +234,28 @@
       z-index: 1;
     }
 
-    .phone-frame {
-      position: relative;
-      border-radius: 44px;
-      border: 8px solid #1a1a1a;
-      box-shadow: 
-        0 40px 80px rgba(0, 0, 0, 0.4),
-        0 0 0 1px rgba(255, 255, 255, 0.1);
-      transition: transform 0.5s ease;
-      overflow: hidden;
-      line-height: 0;
-    }
-
     .phone-mockup {
-      width: 260px;
+      width: 280px;
+      border-radius: 40px;
+      box-shadow: 0 40px 80px rgba(0, 0, 0, 0.4);
+      transition: transform 0.5s ease;
       display: block;
     }
 
-    .phone-frame:first-child {
+    .phone-mockup:first-child {
       transform: rotate(-5deg) translateX(30px);
     }
 
-    .phone-frame:last-child {
+    .phone-mockup:last-child {
       transform: rotate(5deg) translateX(-30px);
       margin-left: -60px;
     }
 
-    .hero-phones:hover .phone-frame:first-child {
+    .hero-phones:hover .phone-mockup:first-child {
       transform: rotate(-8deg) translateX(20px) translateY(-10px);
     }
 
-    .hero-phones:hover .phone-frame:last-child {
+    .hero-phones:hover .phone-mockup:last-child {
       transform: rotate(8deg) translateX(-20px) translateY(-10px);
     }
 
@@ -636,13 +627,9 @@
         font-size: 18px;
       }
 
-      .phone-frame {
-        border-width: 6px;
-        border-radius: 36px;
-      }
-
       .phone-mockup {
-        width: 180px;
+        width: 200px;
+        border-radius: 32px;
       }
 
       .focus-grid {
@@ -682,20 +669,16 @@
         justify-content: center;
       }
 
-      .phone-frame {
-        border-width: 5px;
+      .phone-mockup {
+        width: 160px;
         border-radius: 28px;
       }
 
-      .phone-mockup {
-        width: 140px;
-      }
-
-      .phone-frame:first-child {
+      .phone-mockup:first-child {
         transform: rotate(-3deg) translateX(20px);
       }
 
-      .phone-frame:last-child {
+      .phone-mockup:last-child {
         transform: rotate(3deg) translateX(-20px);
         margin-left: -40px;
       }
@@ -736,12 +719,8 @@
         </div>
       </div>
       <div class="hero-phones">
-        <div class="phone-frame">
-          <img src="/landing-assets/breathing-start.jpg" alt="Retune Breathing" class="phone-mockup">
-        </div>
-        <div class="phone-frame">
-          <img src="/landing-assets/library.jpg" alt="Retune Library" class="phone-mockup">
-        </div>
+        <img src="/landing-assets/breathing-start.jpg" alt="Retune Breathing" class="phone-mockup">
+        <img src="/landing-assets/library.jpg" alt="Retune Library" class="phone-mockup">
       </div>
     </div>
   </section>

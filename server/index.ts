@@ -231,6 +231,17 @@ function configureExpoAndLanding(app: express.Application) {
     }
   });
 
+  // Serve Support page
+  app.get("/support", (_req: Request, res: Response) => {
+    const supportPath = path.resolve(process.cwd(), "server", "templates", "support.html");
+    if (fs.existsSync(supportPath)) {
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      res.sendFile(supportPath);
+    } else {
+      res.status(404).send("Support page not found");
+    }
+  });
+
   app.use((req: Request, res: Response, next: NextFunction) => {
     if (req.path.startsWith("/api")) {
       return next();

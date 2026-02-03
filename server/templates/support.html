@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retune - Support</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: linear-gradient(180deg, #0F1C3F 0%, #1A2D4F 50%, #243656 100%);
+            min-height: 100vh;
+            color: #fff;
+            padding: 40px 20px;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            font-size: 2rem;
+            color: #C9A227;
+            margin-bottom: 8px;
+        }
+        
+        .tagline {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1rem;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(201, 162, 39, 0.2);
+        }
+        
+        .card h2 {
+            color: #C9A227;
+            font-size: 1.25rem;
+            margin-bottom: 16px;
+        }
+        
+        .card p {
+            color: rgba(255, 255, 255, 0.85);
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+        
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: rgba(201, 162, 39, 0.1);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            text-decoration: none;
+            color: #fff;
+            transition: background 0.2s;
+        }
+        
+        .contact-item:hover {
+            background: rgba(201, 162, 39, 0.2);
+        }
+        
+        .contact-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #C9A227;
+        }
+        
+        .faq-item {
+            margin-bottom: 20px;
+        }
+        
+        .faq-item h3 {
+            color: #fff;
+            font-size: 1rem;
+            margin-bottom: 8px;
+        }
+        
+        .faq-item p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.95rem;
+            margin-bottom: 0;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Retune Support</h1>
+            <p class="tagline">Breathe, Believe, Become</p>
+        </div>
+        
+        <div class="card">
+            <h2>Contact Us</h2>
+            <p>We're here to help you on your journey to personal growth. Reach out with any questions or feedback.</p>
+            
+            <a href="mailto:support@retuneapp.com" class="contact-item">
+                <span class="contact-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                        <polyline points="22,6 12,13 2,6"></polyline>
+                    </svg>
+                </span>
+                <span>support@retuneapp.com</span>
+            </a>
+        </div>
+        
+        <div class="card">
+            <h2>Frequently Asked Questions</h2>
+            
+            <div class="faq-item">
+                <h3>How do I record my voice sample?</h3>
+                <p>Tap the microphone icon on the home screen and read the provided script clearly. This creates your personalized voice clone for affirmations.</p>
+            </div>
+            
+            <div class="faq-item">
+                <h3>How do I create a new affirmation?</h3>
+                <p>Tap the gold "+" button at the bottom of the screen. Enter your goal, select a life pillar, and our AI will generate personalized affirmations for you.</p>
+            </div>
+            
+            <div class="faq-item">
+                <h3>What are the breathing techniques?</h3>
+                <p>We offer Box Breathing (4-4-4-4), 4-7-8 Relaxation, and Coherent Breathing. Each technique is designed to help you relax and focus.</p>
+            </div>
+            
+            <div class="faq-item">
+                <h3>How do I mark affirmations as favorites?</h3>
+                <p>Tap the heart icon on any affirmation card to add it to your favorites. Use the filter button to view only your favorites.</p>
+            </div>
+            
+            <div class="faq-item">
+                <h3>What is RSVP mode?</h3>
+                <p>Rapid Serial Visual Presentation displays affirmation words one at a time in sync with audio, creating a deep focus experience.</p>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Privacy & Data</h2>
+            <p>Your privacy is important to us. Voice samples and affirmations are stored securely and never shared with third parties. You can delete your data at any time from the Settings menu.</p>
+        </div>
+        
+        <div class="footer">
+            <p>&copy; 2024 Retune. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -20,6 +20,11 @@ export const users = pgTable("users", {
   preferredAiGender: text("preferred_ai_gender").default("female"), // 'male' or 'female'
   preferredMaleVoiceId: text("preferred_male_voice_id").default("ErXwobaYiN019PkySvjV"), // Default: Antoni
   preferredFemaleVoiceId: text("preferred_female_voice_id").default("21m00Tcm4TlvDq8ikWAM"), // Default: Rachel
+  // Usage limits for App Store compliance
+  voiceClonesUsed: integer("voice_clones_used").default(0), // Max 2 lifetime clones
+  affirmationsThisMonth: integer("affirmations_this_month").default(0), // Max 10 AI-generated per month
+  monthlyResetDate: timestamp("monthly_reset_date").default(sql`CURRENT_TIMESTAMP`), // When to reset monthly limits
+  hasConsentedToVoiceCloning: boolean("has_consented_to_voice_cloning").default(false), // GDPR/privacy consent
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 

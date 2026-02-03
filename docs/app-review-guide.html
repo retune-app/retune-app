@@ -499,16 +499,38 @@
         </ul>
       </div>
 
+      <h2>Testing Instructions for App Review</h2>
+      <div class="feature-card">
+        <h4>Recommended Testing Flow</h4>
+        <ol>
+          <li><strong>Login</strong> - Use demo credentials above</li>
+          <li><strong>Browse Library</strong> - Go to "Believe" tab, play any affirmation</li>
+          <li><strong>Test Breathing</strong> - Go to "Breathe" tab, start a 1-minute session</li>
+          <li><strong>Create Affirmation</strong> - Tap "+" button, select a pillar, describe a goal, generate script, create audio</li>
+          <li><strong>Test Voice Setup</strong> - Go to Settings → Voice Settings → "Clone Your Voice"
+            <ul>
+              <li>Consent modal will appear (required before recording)</li>
+              <li>Record 30-60 seconds of voice sample</li>
+              <li>Voice is cloned using ElevenLabs API</li>
+            </ul>
+          </li>
+          <li><strong>Check Usage Limits</strong> - Settings → scroll to "USAGE LIMITS" section</li>
+          <li><strong>Test Delete Data</strong> - Settings → Security & Privacy → "Delete All My Data" (type "delete" to confirm)</li>
+        </ol>
+      </div>
+
       <h2>Pre-loaded Demo Content</h2>
       <div class="demo-content">
         <h4>This Demo Account Includes:</h4>
         <ul>
-          <li>22 sample affirmations (variety of male and female AI voices)</li>
-          <li>6 favorited affirmations</li>
-          <li>7-day breathing streak</li>
-          <li>Full week of analytics data</li>
-          <li>Multiple breathing sessions logged</li>
+          <li><strong>23 sample affirmations</strong> across all pillars (Mind, Body, Spirit, Connection, Achievement, Home)</li>
+          <li>Variety of AI voices (male and female)</li>
+          <li><strong>Fresh usage limits:</strong> 0/2 voice clones used, 0/10 AI affirmations used this month</li>
+          <li>Voice consent not yet given (reviewer can test the consent flow)</li>
         </ul>
+        <p style="margin-top: 16px; color: rgba(255,255,255,0.7); font-size: 14px;">
+          <em>Note: The demo account is set up to allow testing of all security features including voice consent, usage limits, and data deletion.</em>
+        </p>
       </div>
 
       <div class="footer">

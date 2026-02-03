@@ -244,11 +244,19 @@
         inset 0 0 0 2px rgba(255, 255, 255, 0.1),
         0 0 0 1px rgba(0, 0, 0, 0.5);
       transition: transform 0.5s ease;
+      overflow: hidden;
+    }
+
+    .phone-screen {
+      width: 260px;
+      height: 560px;
+      border-radius: 38px;
+      overflow: hidden;
     }
 
     .phone-mockup {
-      width: 260px;
-      border-radius: 38px;
+      width: 100%;
+      margin-top: -60px;
       display: block;
     }
 
@@ -642,9 +650,14 @@
         border-radius: 40px;
       }
 
-      .phone-mockup {
-        width: 180px;
+      .phone-screen {
+        width: 200px;
+        height: 430px;
         border-radius: 32px;
+      }
+
+      .phone-mockup {
+        margin-top: -50px;
       }
 
       .focus-grid {
@@ -689,9 +702,14 @@
         border-radius: 32px;
       }
 
-      .phone-mockup {
-        width: 140px;
+      .phone-screen {
+        width: 150px;
+        height: 320px;
         border-radius: 26px;
+      }
+
+      .phone-mockup {
+        margin-top: -40px;
       }
 
       .phone-frame:first-child {
@@ -740,10 +758,14 @@
       </div>
       <div class="hero-phones">
         <div class="phone-frame">
-          <img src="/landing-assets/breathing-start.jpg" alt="Retune Breathing" class="phone-mockup">
+          <div class="phone-screen">
+            <img src="/landing-assets/breathing-start.jpg" alt="Retune Breathing" class="phone-mockup">
+          </div>
         </div>
         <div class="phone-frame">
-          <img src="/landing-assets/library.jpg" alt="Retune Library" class="phone-mockup">
+          <div class="phone-screen">
+            <img src="/landing-assets/library.jpg" alt="Retune Library" class="phone-mockup">
+          </div>
         </div>
       </div>
     </div>

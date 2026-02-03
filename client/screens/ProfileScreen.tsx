@@ -133,6 +133,16 @@ export default function ProfileScreen() {
     queryKey: ["/api/user/stats"],
   });
 
+  // Usage limits query
+  interface UsageLimits {
+    voiceClones: { used: number; limit: number; remaining: number };
+    aiAffirmations: { used: number; limit: number; remaining: number };
+    hasConsentedToVoiceCloning: boolean;
+  }
+  const { data: usageLimits } = useQuery<UsageLimits>({
+    queryKey: ["/api/user/limits"],
+  });
+
   // Voice preferences query
   const { data: voicePreferences, isLoading: isLoadingVoicePrefs } = useQuery<VoicePreferences>({
     queryKey: ["/api/voice-preferences"],
@@ -638,6 +648,59 @@ export default function ProfileScreen() {
           />
         </View>
       </View>
+
+      {/* Usage Limits Section */}
+      {usageLimits ? (
+        <View style={styles.section}>
+          <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+            USAGE LIMITS
+          </ThemedText>
+          <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
+            <View style={styles.usageLimitItem}>
+              <View style={[styles.usageLimitIcon, { backgroundColor: "#6366F120" }]}>
+                <Feather name="mic" size={20} color="#6366F1" />
+              </View>
+              <View style={styles.usageLimitContent}>
+                <ThemedText type="body">Voice Clones</ThemedText>
+                <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                  {usageLimits.voiceClones.used} of {usageLimits.voiceClones.limit} used (lifetime)
+                </ThemedText>
+              </View>
+              <View style={[styles.usageLimitBadge, { 
+                backgroundColor: usageLimits.voiceClones.remaining > 0 ? "#10B98120" : "#EF444420" 
+              }]}>
+                <ThemedText type="small" style={{ 
+                  color: usageLimits.voiceClones.remaining > 0 ? "#10B981" : "#EF4444",
+                  fontWeight: "600"
+                }}>
+                  {usageLimits.voiceClones.remaining} left
+                </ThemedText>
+              </View>
+            </View>
+            <View style={styles.usageLimitItem}>
+              <View style={[styles.usageLimitIcon, { backgroundColor: "#C9A22720" }]}>
+                <Feather name="zap" size={20} color="#C9A227" />
+              </View>
+              <View style={styles.usageLimitContent}>
+                <ThemedText type="body">AI Affirmations</ThemedText>
+                <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                  {usageLimits.aiAffirmations.used} of {usageLimits.aiAffirmations.limit} used this month
+                </ThemedText>
+              </View>
+              <View style={[styles.usageLimitBadge, { 
+                backgroundColor: usageLimits.aiAffirmations.remaining > 0 ? "#10B98120" : "#EF444420" 
+              }]}>
+                <ThemedText type="small" style={{ 
+                  color: usageLimits.aiAffirmations.remaining > 0 ? "#10B981" : "#EF4444",
+                  fontWeight: "600"
+                }}>
+                  {usageLimits.aiAffirmations.remaining} left
+                </ThemedText>
+              </View>
+            </View>
+          </View>
+        </View>
+      ) : null}
 
       <View style={styles.section}>
         <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
@@ -1192,6 +1255,28 @@ const styles = StyleSheet.create({
   },
   settingContent: {
     flex: 1,
+  },
+  usageLimitItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+  },
+  usageLimitIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: Spacing.md,
+  },
+  usageLimitContent: {
+    flex: 1,
+  },
+  usageLimitBadge: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.sm,
   },
   deleteButton: {
     padding: Spacing.sm,

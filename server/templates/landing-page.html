@@ -234,27 +234,51 @@
       z-index: 1;
     }
 
-    .phone-mockup {
-      width: 280px;
-      border-radius: 40px;
-      box-shadow: 0 40px 80px rgba(0, 0, 0, 0.4);
+    .phone-frame {
+      position: relative;
+      background: #000;
+      border-radius: 50px;
+      padding: 12px;
+      box-shadow: 
+        0 40px 80px rgba(0, 0, 0, 0.4),
+        inset 0 0 0 2px rgba(255, 255, 255, 0.1),
+        0 0 0 1px rgba(0, 0, 0, 0.5);
       transition: transform 0.5s ease;
     }
 
-    .phone-mockup:first-child {
+    .phone-frame::before {
+      content: '';
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80px;
+      height: 28px;
+      background: #000;
+      border-radius: 20px;
+      z-index: 10;
+    }
+
+    .phone-mockup {
+      width: 260px;
+      border-radius: 38px;
+      display: block;
+    }
+
+    .phone-frame:first-child {
       transform: rotate(-5deg) translateX(30px);
     }
 
-    .phone-mockup:last-child {
+    .phone-frame:last-child {
       transform: rotate(5deg) translateX(-30px);
       margin-left: -60px;
     }
 
-    .hero-phones:hover .phone-mockup:first-child {
+    .hero-phones:hover .phone-frame:first-child {
       transform: rotate(-8deg) translateX(20px) translateY(-10px);
     }
 
-    .hero-phones:hover .phone-mockup:last-child {
+    .hero-phones:hover .phone-frame:last-child {
       transform: rotate(8deg) translateX(-20px) translateY(-10px);
     }
 
@@ -626,8 +650,20 @@
         font-size: 18px;
       }
 
+      .phone-frame {
+        padding: 8px;
+        border-radius: 40px;
+      }
+
+      .phone-frame::before {
+        width: 60px;
+        height: 22px;
+        top: 6px;
+      }
+
       .phone-mockup {
-        width: 200px;
+        width: 180px;
+        border-radius: 32px;
       }
 
       .focus-grid {
@@ -667,15 +703,27 @@
         justify-content: center;
       }
 
-      .phone-mockup {
-        width: 160px;
+      .phone-frame {
+        padding: 6px;
+        border-radius: 32px;
       }
 
-      .phone-mockup:first-child {
+      .phone-frame::before {
+        width: 50px;
+        height: 18px;
+        top: 5px;
+      }
+
+      .phone-mockup {
+        width: 140px;
+        border-radius: 26px;
+      }
+
+      .phone-frame:first-child {
         transform: rotate(-3deg) translateX(20px);
       }
 
-      .phone-mockup:last-child {
+      .phone-frame:last-child {
         transform: rotate(3deg) translateX(-20px);
         margin-left: -40px;
       }
@@ -716,8 +764,12 @@
         </div>
       </div>
       <div class="hero-phones">
-        <img src="/landing-assets/breathing-start.jpg" alt="Retune Breathing" class="phone-mockup">
-        <img src="/landing-assets/library.jpg" alt="Retune Library" class="phone-mockup">
+        <div class="phone-frame">
+          <img src="/landing-assets/breathing-start.jpg" alt="Retune Breathing" class="phone-mockup">
+        </div>
+        <div class="phone-frame">
+          <img src="/landing-assets/library.jpg" alt="Retune Library" class="phone-mockup">
+        </div>
       </div>
     </div>
   </section>

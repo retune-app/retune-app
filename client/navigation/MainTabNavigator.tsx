@@ -65,8 +65,9 @@ export default function MainTabNavigator() {
           }),
           borderTopWidth: 0,
           elevation: 0,
-          height: Platform.select({ ios: 88, android: 70 }),
-          paddingBottom: Platform.select({ ios: 28, android: 12 }),
+          height: Platform.select({ ios: 100, android: 80 }),
+          paddingBottom: Platform.select({ ios: 30, android: 14 }),
+          paddingTop: Platform.select({ ios: 8, android: 6 }),
         },
         tabBarBackground: () =>
           Platform.OS === "ios" ? (
@@ -78,10 +79,14 @@ export default function MainTabNavigator() {
           ) : null,
         headerShown: false,
         tabBarLabelStyle: {
-          fontSize: 11,
+          fontSize: 12,
           fontWeight: "600",
           letterSpacing: 1,
           fontFamily: "Montserrat_600SemiBold",
+          marginTop: 4,
+        },
+        tabBarIconStyle: {
+          marginBottom: 2,
         },
       }}
     >
@@ -135,7 +140,7 @@ export default function MainTabNavigator() {
 const styles = StyleSheet.create({
   createButtonContainer: {
     position: "relative",
-    top: -22,
+    top: -18,
     alignItems: "center",
     justifyContent: "center",
   },

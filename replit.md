@@ -35,6 +35,24 @@ Preferred communication style: Simple, everyday language.
 - **Notification Settings**: Customizable daily reminder settings for affirmations.
 - **Voice Selection System**: Users can choose from various AI voices or clone their own voice, with preferences stored and manageable through a dedicated UI.
 
+### Security & Privacy (App Store Ready)
+- **Voice Consent**: Users must explicitly consent before any voice recording. Consent is stored in database (`hasConsentedToVoiceCloning` field).
+- **Voice File Deletion**: Voice recording files are automatically deleted from the server immediately after successful cloning (PII protection).
+- **Usage Limits**: 
+  - Max 2 voice clones per user (lifetime)
+  - Max 10 AI-generated affirmations per month (auto-resets monthly)
+  - Limits displayed in Settings under "USAGE LIMITS" section
+- **Rate Limiting**: AI endpoints protected with rate limiting (5 generations/min, 10 TTS/min, 3 voice clones/hour)
+- **Delete My Data**: GDPR-compliant data deletion in Security & Privacy settings. Users type "delete" to confirm, then all their data is permanently removed including:
+  - User account and profile
+  - All affirmations and audio files
+  - Voice clone data (deleted from ElevenLabs via API)
+  - Listening history and statistics
+- **API Endpoints**:
+  - `GET /api/user/limits` - Returns current usage and remaining limits
+  - `POST /api/user/voice-consent` - Records user consent for voice cloning
+  - `DELETE /api/user/data` - Permanently deletes all user data
+
 ### Navigation Structure
 - **2-Tab Navigation**: Breathe (left), Believe (right) with middle Create (+) button - aligns with "Breathe, Believe, Become" tagline
 - **Settings Access**: Floating settings button (gear icon) on Breathe and Believe screens, positioned bottom-right above tab bar (48x48px with gold border)

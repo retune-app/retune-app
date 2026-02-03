@@ -6,6 +6,7 @@ import Animated, {
   withRepeat,
   withTiming,
   withSpring,
+  withSequence,
   Easing,
 } from "react-native-reanimated";
 import { Feather } from "@expo/vector-icons";
@@ -32,6 +33,8 @@ export function RecordButton({
   const scale = useSharedValue(1);
   const pulseScale = useSharedValue(1);
   const pulseOpacity = useSharedValue(0.4);
+  const readyGlowScale = useSharedValue(1);
+  const readyGlowOpacity = useSharedValue(0);
 
   useEffect(() => {
     if (isRecording) {
@@ -45,9 +48,26 @@ export function RecordButton({
         -1,
         true
       );
+      readyGlowOpacity.value = withTiming(0, { duration: 200 });
     } else {
       pulseScale.value = withTiming(1);
       pulseOpacity.value = withTiming(0.4);
+      readyGlowOpacity.value = withRepeat(
+        withSequence(
+          withTiming(0.6, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+          withTiming(0.2, { duration: 1500, easing: Easing.inOut(Easing.ease) })
+        ),
+        -1,
+        false
+      );
+      readyGlowScale.value = withRepeat(
+        withSequence(
+          withTiming(1.15, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+          withTiming(1, { duration: 1500, easing: Easing.inOut(Easing.ease) })
+        ),
+        -1,
+        false
+      );
     }
   }, [isRecording]);
 
@@ -58,6 +78,11 @@ export function RecordButton({
   const pulseAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: pulseScale.value }],
     opacity: pulseOpacity.value,
+  }));
+
+  const readyGlowAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: readyGlowScale.value }],
+    opacity: readyGlowOpacity.value,
   }));
 
   const handlePressIn = () => {
@@ -79,6 +104,20 @@ export function RecordButton({
 
   return (
     <View style={[styles.container, { width: size + 40, height: size + 40 }]}>
+      {!isRecording ? (
+        <Animated.View
+          style={[
+            styles.readyGlow,
+            {
+              width: size + 30,
+              height: size + 30,
+              borderRadius: (size + 30) / 2,
+              borderColor: theme.primary,
+            },
+            readyGlowAnimatedStyle,
+          ]}
+        />
+      ) : null}
       {isRecording ? (
         <Animated.View
           style={[
@@ -130,6 +169,10 @@ const styles = StyleSheet.create({
   container: {
     alignItems: "center",
     justifyContent: "center",
+  },
+  readyGlow: {
+    position: "absolute",
+    borderWidth: 2,
   },
   pulse: {
     position: "absolute",

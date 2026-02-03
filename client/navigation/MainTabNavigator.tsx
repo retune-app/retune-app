@@ -81,8 +81,8 @@ export default function MainTabNavigator() {
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: "600",
-          letterSpacing: 1,
-          fontFamily: "Montserrat_600SemiBold",
+          letterSpacing: 0.5,
+          fontFamily: "Poppins_600SemiBold",
           marginTop: 4,
         },
         tabBarIconStyle: {

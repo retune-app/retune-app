@@ -90,11 +90,29 @@
       border-radius: 10px;
     }
 
-    .logo span {
+    .logo-text {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .logo-name {
       font-family: 'Space Grotesk', sans-serif;
-      font-size: 24px;
+      font-size: 28px;
       font-weight: 700;
       color: var(--white);
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      text-shadow: 0 0 20px rgba(201, 162, 39, 0.4);
+    }
+
+    .logo-accent {
+      width: 40px;
+      height: 2px;
+      background: var(--primary-gold);
+      border-radius: 2px;
+      margin-top: 4px;
+      box-shadow: 0 0 8px var(--primary-gold);
     }
 
     .nav-cta {
@@ -548,10 +566,29 @@
       border-radius: 8px;
     }
 
-    .footer-logo span {
+    .footer-logo-text {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .footer-logo-name {
       font-family: 'Space Grotesk', sans-serif;
       font-size: 20px;
-      font-weight: 600;
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      text-shadow: 0 0 16px rgba(201, 162, 39, 0.3);
+    }
+
+    .footer-logo-accent {
+      width: 30px;
+      height: 2px;
+      background: var(--primary-gold);
+      border-radius: 2px;
+      margin-top: 3px;
+      box-shadow: 0 0 6px var(--primary-gold);
     }
 
     .footer-links {
@@ -707,7 +744,10 @@
     <div class="container">
       <a href="#" class="logo">
         <img src="/landing-assets/logo.png" alt="Retune">
-        <span>Retune</span>
+        <div class="logo-text">
+          <span class="logo-name">Retune</span>
+          <div class="logo-accent"></div>
+        </div>
       </a>
       <a href="#download" class="nav-cta">
         Download App
@@ -884,7 +924,10 @@
       <div class="footer-content">
         <div class="footer-logo">
           <img src="/landing-assets/logo.png" alt="Retune">
-          <span>Retune</span>
+          <div class="footer-logo-text">
+            <span class="footer-logo-name">Retune</span>
+            <div class="footer-logo-accent"></div>
+          </div>
         </div>
         <div class="footer-links">
           <a href="/support">Support</a>

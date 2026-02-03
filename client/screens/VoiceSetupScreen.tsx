@@ -656,14 +656,18 @@ const styles = StyleSheet.create({
   },
   timerInner: {
     alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.sm,
   },
   timer: {
-    fontSize: 36,
+    fontSize: 32,
     fontWeight: "700",
+    lineHeight: 38,
   },
   timerLabel: {
-    marginTop: Spacing.xs,
-    fontSize: 12,
+    marginTop: 2,
+    fontSize: 13,
+    lineHeight: 16,
   },
   hint: {
     textAlign: "center",

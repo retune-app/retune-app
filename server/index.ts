@@ -270,10 +270,12 @@ function configureExpoAndLanding(app: express.Application) {
 
   const assetsPath = path.resolve(process.cwd(), "assets");
   const staticBuildPath = path.resolve(process.cwd(), "static-build");
+  const landingAssetsPath = path.resolve(process.cwd(), "server", "templates", "landing-assets");
   
   log(`Static paths: assets=${assetsPath}`);
   
   app.use("/assets", express.static(assetsPath));
+  app.use("/landing-assets", express.static(landingAssetsPath));
   // Note: /uploads is handled by API routes in routes.ts with security validations
   app.use(express.static(staticBuildPath));
 

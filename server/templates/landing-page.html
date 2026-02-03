@@ -1,465 +1,898 @@
-<!doctype html>
-<html>
-  <head>
-    <title>APP_NAME_PLACEHOLDER</title>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <style>
-      * {
-        box-sizing: border-box;
-      }
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        margin: 0;
-        padding: 32px 20px;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Retune - Breathe, Believe, Become</title>
+  <meta name="description" content="Reprogram your mind with personalized affirmations in your own voice. AI-powered voice cloning meets mindfulness.">
+  <meta name="keywords" content="affirmations, meditation, mindfulness, voice cloning, breathing, self-improvement, wellness, mental health">
+  <meta property="og:title" content="Retune - Breathe, Believe, Become">
+  <meta property="og:description" content="Reprogram your mind with personalized affirmations in your own voice.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://retuned.app">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary-gold: #C9A227;
+      --gold-light: #D4B545;
+      --gold-glow: rgba(201, 162, 39, 0.3);
+      --navy-dark: #0F1C3F;
+      --navy-mid: #1A2D4F;
+      --navy-light: #243656;
+      --white: #FFFFFF;
+      --white-muted: rgba(255, 255, 255, 0.7);
+      --mind-blue: #3B82F6;
+      --body-green: #10B981;
+      --spirit-purple: #8B5CF6;
+      --connection-orange: #F97316;
+      --achievement-gold: #C9A227;
+      --home-pink: #EC4899;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background-color: var(--navy-dark);
+      color: var(--white);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    h1, h2, h3, h4 {
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      padding: 20px 0;
+      background: rgba(15, 28, 63, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    nav .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+
+    .logo img {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+    }
+
+    .logo span {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--white);
+    }
+
+    .nav-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      background: var(--primary-gold);
+      color: var(--navy-dark);
+      text-decoration: none;
+      border-radius: 30px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .nav-cta:hover {
+      background: var(--gold-light);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px var(--gold-glow);
+    }
+
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 120px 0 80px;
+      background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy-mid) 50%, var(--navy-dark) 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 80%;
+      height: 150%;
+      background: radial-gradient(ellipse, var(--gold-glow) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero .container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+    }
+
+    .hero-content {
+      z-index: 1;
+    }
+
+    .hero-tagline {
+      display: inline-block;
+      padding: 8px 16px;
+      background: rgba(201, 162, 39, 0.15);
+      border: 1px solid var(--gold-glow);
+      border-radius: 30px;
+      font-size: 14px;
+      color: var(--primary-gold);
+      margin-bottom: 24px;
+      font-weight: 600;
+    }
+
+    .hero h1 {
+      font-size: 56px;
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 24px;
+    }
+
+    .hero h1 span {
+      background: linear-gradient(135deg, var(--primary-gold) 0%, var(--gold-light) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-description {
+      font-size: 20px;
+      color: var(--white-muted);
+      margin-bottom: 40px;
+      max-width: 500px;
+    }
+
+    .hero-buttons {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 32px;
+      background: var(--primary-gold);
+      color: var(--navy-dark);
+      text-decoration: none;
+      border-radius: 30px;
+      font-weight: 700;
+      font-size: 16px;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+      background: var(--gold-light);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 40px var(--gold-glow);
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 32px;
+      background: transparent;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      color: var(--white);
+      text-decoration: none;
+      border-radius: 30px;
+      font-weight: 600;
+      font-size: 16px;
+      transition: all 0.3s ease;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--white);
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .hero-phones {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      z-index: 1;
+    }
+
+    .phone-mockup {
+      width: 280px;
+      border-radius: 40px;
+      box-shadow: 0 40px 80px rgba(0, 0, 0, 0.4);
+      transition: transform 0.5s ease;
+    }
+
+    .phone-mockup:first-child {
+      transform: rotate(-5deg) translateX(30px);
+    }
+
+    .phone-mockup:last-child {
+      transform: rotate(5deg) translateX(-30px);
+      margin-left: -60px;
+    }
+
+    .hero-phones:hover .phone-mockup:first-child {
+      transform: rotate(-8deg) translateX(20px) translateY(-10px);
+    }
+
+    .hero-phones:hover .phone-mockup:last-child {
+      transform: rotate(8deg) translateX(-20px) translateY(-10px);
+    }
+
+    .how-it-works {
+      padding: 120px 0;
+      background: var(--navy-mid);
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 80px;
+    }
+
+    .section-header h2 {
+      font-size: 42px;
+      margin-bottom: 16px;
+    }
+
+    .section-header p {
+      font-size: 18px;
+      color: var(--white-muted);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 40px;
+    }
+
+    .step-card {
+      text-align: center;
+      padding: 40px 30px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      transition: all 0.3s ease;
+    }
+
+    .step-card:hover {
+      transform: translateY(-10px);
+      background: rgba(255, 255, 255, 0.05);
+      border-color: var(--gold-glow);
+    }
+
+    .step-number {
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--primary-gold);
+      color: var(--navy-dark);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      border-radius: 50%;
+      margin: 0 auto 24px;
+    }
+
+    .step-card img {
+      width: 180px;
+      border-radius: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .step-card h3 {
+      font-size: 22px;
+      margin-bottom: 12px;
+    }
+
+    .step-card p {
+      color: var(--white-muted);
+      font-size: 16px;
+    }
+
+    .focus-areas {
+      padding: 120px 0;
+      background: var(--navy-dark);
+    }
+
+    .focus-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .focus-card {
+      padding: 32px;
+      background: var(--navy-mid);
+      border-radius: 20px;
+      border-left: 4px solid;
+      transition: all 0.3s ease;
+    }
+
+    .focus-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .focus-card.mind { border-left-color: var(--mind-blue); }
+    .focus-card.body { border-left-color: var(--body-green); }
+    .focus-card.spirit { border-left-color: var(--spirit-purple); }
+    .focus-card.connection { border-left-color: var(--connection-orange); }
+    .focus-card.achievement { border-left-color: var(--achievement-gold); }
+    .focus-card.home { border-left-color: var(--home-pink); }
+
+    .focus-icon {
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      font-size: 24px;
+      margin-bottom: 16px;
+    }
+
+    .focus-card.mind .focus-icon { background: rgba(59, 130, 246, 0.2); }
+    .focus-card.body .focus-icon { background: rgba(16, 185, 129, 0.2); }
+    .focus-card.spirit .focus-icon { background: rgba(139, 92, 246, 0.2); }
+    .focus-card.connection .focus-icon { background: rgba(249, 115, 22, 0.2); }
+    .focus-card.achievement .focus-icon { background: rgba(201, 162, 39, 0.2); }
+    .focus-card.home .focus-icon { background: rgba(236, 72, 153, 0.2); }
+
+    .focus-card h3 {
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+
+    .focus-card p {
+      color: var(--white-muted);
+      font-size: 14px;
+    }
+
+    .features {
+      padding: 120px 0;
+      background: linear-gradient(180deg, var(--navy-mid) 0%, var(--navy-dark) 100%);
+    }
+
+    .features-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: center;
+    }
+
+    .features-text h2 {
+      font-size: 42px;
+      margin-bottom: 24px;
+    }
+
+    .features-text h2 span {
+      color: var(--primary-gold);
+    }
+
+    .features-list {
+      list-style: none;
+      margin-top: 40px;
+    }
+
+    .features-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .feature-check {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--primary-gold);
+      color: var(--navy-dark);
+      border-radius: 50%;
+      flex-shrink: 0;
+      font-weight: 700;
+    }
+
+    .features-list h4 {
+      font-size: 18px;
+      margin-bottom: 4px;
+    }
+
+    .features-list p {
+      color: var(--white-muted);
+      font-size: 14px;
+    }
+
+    .features-phones {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+    }
+
+    .features-phones img {
+      width: 220px;
+      border-radius: 30px;
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .cta {
+      padding: 120px 0;
+      background: var(--navy-dark);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, var(--gold-glow) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .cta-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .cta h2 {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .cta h2 span {
+      color: var(--primary-gold);
+    }
+
+    .cta p {
+      font-size: 20px;
+      color: var(--white-muted);
+      margin-bottom: 40px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .app-store-badge {
+      height: 54px;
+      transition: transform 0.3s ease;
+    }
+
+    .app-store-badge:hover {
+      transform: scale(1.05);
+    }
+
+    footer {
+      padding: 60px 0;
+      background: var(--navy-mid);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .footer-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 24px;
+    }
+
+    .footer-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .footer-logo img {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+    }
+
+    .footer-logo span {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 32px;
+    }
+
+    .footer-links a {
+      color: var(--white-muted);
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.3s ease;
+    }
+
+    .footer-links a:hover {
+      color: var(--primary-gold);
+    }
+
+    .footer-copyright {
+      color: var(--white-muted);
+      font-size: 14px;
+    }
+
+    @media (max-width: 1024px) {
+      .hero .container {
+        grid-template-columns: 1fr;
         text-align: center;
-        background: #fff;
-        color: #222;
-        line-height: 1.5;
-        min-height: 100vh;
       }
-      .wrapper {
-        max-width: 480px;
+
+      .hero-content {
+        order: 1;
+      }
+
+      .hero-phones {
+        order: 0;
+        margin-bottom: 40px;
+      }
+
+      .hero h1 {
+        font-size: 42px;
+      }
+
+      .hero-description {
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .hero-buttons {
+        justify-content: center;
+      }
+
+      .steps-grid {
+        grid-template-columns: 1fr;
+        max-width: 400px;
         margin: 0 auto;
       }
-      h1 {
-        font-size: 26px;
-        font-weight: 600;
-        margin: 0;
-        color: #111;
-      }
-      .subtitle {
-        font-size: 15px;
-        color: #666;
-        margin-top: 8px;
-        margin-bottom: 32px;
-      }
-      .loading {
-        display: none;
-        margin: 60px 0;
-      }
-      .spinner {
-        border: 2px solid #ddd;
-        border-top-color: #333;
-        border-radius: 50%;
-        width: 32px;
-        height: 32px;
-        animation: spin 0.8s linear infinite;
-        margin: 20px auto;
-      }
-      @keyframes spin {
-        to {
-          transform: rotate(360deg);
-        }
-      }
-      .loading-text {
-        font-size: 16px;
-        color: #444;
-      }
-      .content {
-        display: block;
+
+      .focus-grid {
+        grid-template-columns: repeat(2, 1fr);
       }
 
-      .steps-container {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-      }
-
-      .step {
-        padding: 24px;
-        border: 1px solid #ddd;
-        border-radius: 12px;
+      .features-content {
+        grid-template-columns: 1fr;
         text-align: center;
-        background: #fafafa;
       }
-      .step-header {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-        margin-bottom: 12px;
+
+      .features-phones {
+        order: -1;
       }
-      .step-number {
-        width: 28px;
-        height: 28px;
-        border: 1px solid #999;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 600;
-        font-size: 14px;
-        flex-shrink: 0;
-        color: #555;
+
+      .features-list {
+        text-align: left;
       }
-      .step-title {
+    }
+
+    @media (max-width: 768px) {
+      .hero h1 {
+        font-size: 36px;
+      }
+
+      .hero-description {
         font-size: 18px;
-        font-weight: 600;
-        margin: 0;
-        color: #222;
-      }
-      .step-description {
-        font-size: 14px;
-        margin-bottom: 16px;
-        color: #666;
       }
 
-      .store-buttons {
-        display: flex;
+      .phone-mockup {
+        width: 200px;
+      }
+
+      .focus-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .features-phones img {
+        width: 160px;
+      }
+
+      .section-header h2,
+      .features-text h2,
+      .cta h2 {
+        font-size: 32px;
+      }
+
+      .footer-content {
         flex-direction: column;
-        gap: 6px;
-        justify-content: center;
+        text-align: center;
+      }
+
+      .footer-links {
         flex-wrap: wrap;
-      }
-      .store-button {
-        display: inline-flex;
-        align-items: center;
         justify-content: center;
-        gap: 8px;
-        padding: 12px 20px;
-        font-size: 14px;
-        font-weight: 500;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        text-decoration: none;
-        color: #333;
-        background: #fff;
-        transition: all 0.15s;
       }
-      .store-button:hover {
-        background: #f5f5f5;
-        border-color: #999;
-      }
-      .store-link {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        padding: 8px 0;
-        font-size: 13px;
-        font-weight: 400;
-        text-decoration: underline;
-        text-underline-offset: 2px;
-        color: #666;
-        background: none;
-        border: none;
-        transition: color 0.15s;
-      }
-      .store-link:hover {
-        color: #333;
-      }
-      .store-link .store-icon {
-        width: 14px;
-        height: 14px;
-      }
-      .store-icon {
-        width: 18px;
-        height: 18px;
-      }
+    }
 
-      .qr-section {
-        background: #333;
-        color: #fff;
-        border-color: #333;
-      }
-      .qr-section .step-number {
-        border-color: rgba(255, 255, 255, 0.5);
-        color: #fff;
-      }
-      .qr-section .step-title {
-        color: #fff;
-      }
-      .qr-section .step-description {
-        color: rgba(255, 255, 255, 0.7);
-      }
-      .qr-code {
-        width: 180px;
-        height: 180px;
-        margin: 0 auto 16px;
-        background: #fff;
-        border-radius: 8px;
-        padding: 12px;
-      }
-      .qr-code canvas {
+    @media (max-width: 480px) {
+      .hero-buttons {
+        flex-direction: column;
         width: 100%;
-        height: 100%;
-      }
-      .open-button {
-        display: inline-block;
-        padding: 12px 24px;
-        font-size: 14px;
-        font-weight: 500;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        border-radius: 8px;
-        text-decoration: none;
-        color: #333;
-        background: #fff;
-        transition: opacity 0.15s;
-      }
-      .open-button:hover {
-        opacity: 0.9;
       }
 
-      /* Desktop styles */
-      @media (min-width: 768px) {
-        body {
-          padding: 48px 32px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .wrapper {
-          max-width: 720px;
-        }
-        h1 {
-          font-size: 32px;
-          margin-bottom: 10px;
-        }
-        .subtitle {
-          font-size: 16px;
-          margin-bottom: 40px;
-        }
-        .steps-container {
-          flex-direction: row;
-          gap: 20px;
-          align-items: stretch;
-        }
-        .step {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          padding: 28px;
-        }
-        .step-description {
-          flex-grow: 1;
-        }
-        .store-buttons {
-          flex-direction: column;
-          gap: 10px;
-        }
-        .qr-code {
-          width: 200px;
-          height: 200px;
-        }
+      .btn-primary,
+      .btn-secondary {
+        width: 100%;
+        justify-content: center;
       }
 
-      /* Large desktop */
-      @media (min-width: 1024px) {
-        .wrapper {
-          max-width: 800px;
-        }
-        h1 {
-          font-size: 36px;
-        }
-        .steps-container {
-          gap: 28px;
-        }
-        .step {
-          padding: 32px;
-        }
+      .phone-mockup {
+        width: 160px;
       }
 
-      /* Dark mode */
-      @media (prefers-color-scheme: dark) {
-        body {
-          background: #0d0d0d;
-          color: #e0e0e0;
-        }
-        h1 {
-          color: #f5f5f5;
-        }
-        .subtitle {
-          color: #999;
-        }
-        .spinner {
-          border-color: #444;
-          border-top-color: #ccc;
-        }
-        .loading-text {
-          color: #aaa;
-        }
-        .step {
-          border-color: #333;
-          background: #1a1a1a;
-        }
-        .step-number {
-          border-color: #666;
-          color: #bbb;
-        }
-        .step-title {
-          color: #f0f0f0;
-        }
-        .step-description {
-          color: #888;
-        }
-        .store-button {
-          border-color: #444;
-          color: #e0e0e0;
-          background: #222;
-        }
-        .store-button:hover {
-          background: #2a2a2a;
-          border-color: #666;
-        }
-        .store-link {
-          color: #888;
-        }
-        .store-link:hover {
-          color: #ccc;
-        }
-        .qr-section {
-          background: #111;
-          border-color: #333;
-        }
-        .qr-section .step-number {
-          border-color: rgba(255, 255, 255, 0.4);
-        }
-        .qr-section .step-description {
-          color: rgba(255, 255, 255, 0.6);
-        }
-        .open-button {
-          background: #f0f0f0;
-          color: #111;
-        }
-        .open-button:hover {
-          background: #e0e0e0;
-        }
+      .phone-mockup:first-child {
+        transform: rotate(-3deg) translateX(20px);
       }
-    </style>
-  </head>
-  <body>
-    <div class="wrapper">
-      <div class="loading" id="loading">
-        <div class="spinner"></div>
-        <div class="loading-text">Opening in Expo Go...</div>
+
+      .phone-mockup:last-child {
+        transform: rotate(3deg) translateX(-20px);
+        margin-left: -40px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="container">
+      <a href="#" class="logo">
+        <img src="/landing-assets/logo.png" alt="Retune">
+        <span>Retune</span>
+      </a>
+      <a href="#download" class="nav-cta">
+        Download App
+      </a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="container">
+      <div class="hero-content">
+        <span class="hero-tagline">Breathe, Believe, Become</span>
+        <h1>Reprogram Your Mind with <span>Your Own Voice</span></h1>
+        <p class="hero-description">
+          Unlock the power of personalized affirmations. Retune uses AI voice cloning to speak directly to your subconscious in the voice you trust most — yours.
+        </p>
+        <div class="hero-buttons">
+          <a href="#download" class="btn-primary">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+            </svg>
+            Download for iOS
+          </a>
+          <a href="#features" class="btn-secondary">
+            Learn More
+          </a>
+        </div>
       </div>
+      <div class="hero-phones">
+        <img src="/landing-assets/breathing-start.jpg" alt="Retune Breathing" class="phone-mockup">
+        <img src="/landing-assets/library.jpg" alt="Retune Library" class="phone-mockup">
+      </div>
+    </div>
+  </section>
 
-      <div class="content" id="content">
-        <h1>APP_NAME_PLACEHOLDER</h1>
-        <p class="subtitle">Preview this app on your phone</p>
-
-        <div class="steps-container">
-          <div class="step">
-            <div class="step-header">
-              <div class="step-number">1</div>
-              <h2 class="step-title">Download Expo Go</h2>
-            </div>
-            <p class="step-description">
-              Expo Go is a free app to test mobile apps
-            </p>
-            <div class="store-buttons" id="store-buttons">
-              <a
-                id="app-store-btn"
-                href="https://apps.apple.com/app/id982107779"
-                class="store-button"
-                target="_blank"
-              >
-                <svg class="store-icon" viewBox="0 0 24 24" fill="currentColor">
-                  <path
-                    d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"
-                  />
-                </svg>
-                App Store
-              </a>
-              <a
-                id="play-store-btn"
-                href="https://play.google.com/store/apps/details?id=host.exp.exponent"
-                class="store-button"
-                target="_blank"
-              >
-                <svg class="store-icon" viewBox="0 0 24 24" fill="currentColor">
-                  <path
-                    d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.6 3,21.09 3,20.5M16.81,15.12L6.05,21.34L14.54,12.85L16.81,15.12M20.16,10.81C20.5,11.08 20.75,11.5 20.75,12C20.75,12.5 20.53,12.9 20.18,13.18L17.89,14.5L15.39,12L17.89,9.5L20.16,10.81M6.05,2.66L16.81,8.88L14.54,11.15L6.05,2.66Z"
-                  />
-                </svg>
-                Google Play
-              </a>
-            </div>
-          </div>
-
-          <div class="step qr-section">
-            <div class="step-header">
-              <div class="step-number">2</div>
-              <h2 class="step-title">Scan QR Code</h2>
-            </div>
-            <p class="step-description">Use your phone's camera or Expo Go</p>
-            <div class="qr-code" id="qr-code"></div>
-            <a href="exps://EXPS_URL_PLACEHOLDER" class="open-button"
-              >Open in Expo Go</a
-            >
-          </div>
+  <section class="how-it-works" id="how-it-works">
+    <div class="container">
+      <div class="section-header">
+        <h2>How Retune Works</h2>
+        <p>Transform your mindset in three simple steps</p>
+      </div>
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-number">1</div>
+          <img src="/landing-assets/create-focus.jpg" alt="Choose Focus Area">
+          <h3>Choose Your Focus</h3>
+          <p>Select from 6 life areas: Mind, Body, Spirit, Connection, Achievement, or Home</p>
+        </div>
+        <div class="step-card">
+          <div class="step-number">2</div>
+          <img src="/landing-assets/create-script.jpg" alt="AI Generates Script">
+          <h3>AI Creates Your Script</h3>
+          <p>Our AI crafts personalized affirmations tailored to your specific goals</p>
+        </div>
+        <div class="step-card">
+          <div class="step-number">3</div>
+          <img src="/landing-assets/breathing-active.jpg" alt="Listen and Transform">
+          <h3>Listen & Transform</h3>
+          <p>Hear affirmations in your own cloned voice while practicing guided breathing</p>
         </div>
       </div>
     </div>
+  </section>
 
-    <script src="https://unpkg.com/qr-code-styling@1.6.0/lib/qr-code-styling.js"></script>
-    <script>
-      (function () {
-        const ua = navigator.userAgent;
-        const loadingEl = document.getElementById("loading");
-        const contentEl = document.getElementById("content");
+  <section class="focus-areas" id="focus">
+    <div class="container">
+      <div class="section-header">
+        <h2>6 Life Focus Areas</h2>
+        <p>Target every dimension of your personal growth journey</p>
+      </div>
+      <div class="focus-grid">
+        <div class="focus-card mind">
+          <div class="focus-icon">&#9889;</div>
+          <h3>Mind</h3>
+          <p>Mental clarity, focus, and emotional resilience</p>
+        </div>
+        <div class="focus-card body">
+          <div class="focus-icon">&#10084;</div>
+          <h3>Body</h3>
+          <p>Physical health, rest, and self-acceptance</p>
+        </div>
+        <div class="focus-card spirit">
+          <div class="focus-icon">&#9728;</div>
+          <h3>Spirit</h3>
+          <p>Inner peace, gratitude, and vision for the future</p>
+        </div>
+        <div class="focus-card connection">
+          <div class="focus-icon">&#128101;</div>
+          <h3>Connection</h3>
+          <p>Relationships and self-compassion</p>
+        </div>
+        <div class="focus-card achievement">
+          <div class="focus-icon">&#127942;</div>
+          <h3>Achievement</h3>
+          <p>Career success, wealth, and personal growth</p>
+        </div>
+        <div class="focus-card home">
+          <div class="focus-icon">&#127968;</div>
+          <h3>Home</h3>
+          <p>Family harmony, living space, and domestic peace</p>
+        </div>
+      </div>
+    </div>
+  </section>
 
-        const isAndroid = /Android/i.test(ua);
-        const isIOS =
-          /iPhone|iPad|iPod/i.test(ua) ||
-          (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  <section class="features" id="features">
+    <div class="container">
+      <div class="features-content">
+        <div class="features-text">
+          <h2>Everything You Need to <span>Transform</span></h2>
+          <ul class="features-list">
+            <li>
+              <span class="feature-check">&#10003;</span>
+              <div>
+                <h4>AI Voice Cloning</h4>
+                <p>Hear affirmations in your own voice for maximum subconscious impact</p>
+              </div>
+            </li>
+            <li>
+              <span class="feature-check">&#10003;</span>
+              <div>
+                <h4>Guided Breathing Exercises</h4>
+                <p>Box breathing, 4-7-8, and coherent breathing with visual guidance</p>
+              </div>
+            </li>
+            <li>
+              <span class="feature-check">&#10003;</span>
+              <div>
+                <h4>RSVP Deep Focus Mode</h4>
+                <p>Rapid serial visual presentation for accelerated affirmation absorption</p>
+              </div>
+            </li>
+            <li>
+              <span class="feature-check">&#10003;</span>
+              <div>
+                <h4>Progress Analytics</h4>
+                <p>Track your listening streaks, sessions, and category breakdown</p>
+              </div>
+            </li>
+            <li>
+              <span class="feature-check">&#10003;</span>
+              <div>
+                <h4>Ambient Soundscapes</h4>
+                <p>Nature sounds and binaural beats for deeper relaxation</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div class="features-phones">
+          <img src="/landing-assets/settings.jpg" alt="Retune Settings">
+          <img src="/landing-assets/analytics.png" alt="Retune Analytics">
+        </div>
+      </div>
+    </div>
+  </section>
 
-        const deepLink = "exps://EXPS_URL_PLACEHOLDER";
+  <section class="cta" id="download">
+    <div class="container">
+      <div class="cta-content">
+        <h2>Ready to <span>Retune</span> Your Mind?</h2>
+        <p>Join thousands transforming their mindset with personalized affirmations in their own voice.</p>
+        <a href="https://apps.apple.com/app/retune" target="_blank">
+          <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store" class="app-store-badge">
+        </a>
+      </div>
+    </div>
+  </section>
 
-        // Adjust store buttons based on platform
-        const appStoreBtn = document.getElementById("app-store-btn");
-        const playStoreBtn = document.getElementById("play-store-btn");
-        const storeButtonsContainer = document.getElementById("store-buttons");
+  <footer>
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-logo">
+          <img src="/landing-assets/logo.png" alt="Retune">
+          <span>Retune</span>
+        </div>
+        <div class="footer-links">
+          <a href="/support">Support</a>
+          <a href="/support#privacy">Privacy Policy</a>
+          <a href="/support#terms">Terms of Service</a>
+        </div>
+        <div class="footer-copyright">
+          &copy; 2024 Retune. All rights reserved.
+        </div>
+      </div>
+    </div>
+  </footer>
 
-        if (isIOS) {
-          playStoreBtn.className = "store-link";
-          storeButtonsContainer.appendChild(playStoreBtn);
-        } else if (isAndroid) {
-          appStoreBtn.className = "store-link";
-          storeButtonsContainer.insertBefore(playStoreBtn, appStoreBtn);
+  <script>
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
+      });
+    });
 
-        const qrCode = new QRCodeStyling({
-          width: 400,
-          height: 400,
-          data: deepLink,
-          image: "assets/images/rewired-logo.png",
-          dotsOptions: {
-            color: "#333333",
-            type: "rounded",
-          },
-          backgroundOptions: {
-            color: "#ffffff",
-          },
-          imageOptions: {
-            crossOrigin: "anonymous",
-            margin: 6,
-            imageSize: 0.35,
-          },
-          cornersSquareOptions: {
-            type: "extra-rounded",
-          },
-          cornersDotOptions: {
-            type: "dot",
-          },
-          qrOptions: {
-            errorCorrectionLevel: "H",
-          },
-        });
-
-        qrCode.append(document.getElementById("qr-code"));
-
-        if (isAndroid || isIOS) {
-          loadingEl.style.display = "block";
-          contentEl.style.display = "none";
-          window.location.href = deepLink;
-          setTimeout(function () {
-            loadingEl.style.display = "none";
-            contentEl.style.display = "block";
-          }, 500);
-        }
-      })();
-    </script>
-  </body>
+    window.addEventListener('scroll', () => {
+      const nav = document.querySelector('nav');
+      if (window.scrollY > 50) {
+        nav.style.background = 'rgba(15, 28, 63, 0.98)';
+      } else {
+        nav.style.background = 'rgba(15, 28, 63, 0.95)';
+      }
+    });
+  </script>
+</body>
 </html>

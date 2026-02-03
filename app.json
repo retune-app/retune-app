@@ -15,8 +15,7 @@
       "usesAppleSignIn": true,
       "infoPlist": {
         "NSMicrophoneUsageDescription": "This app needs access to your microphone to record your voice for personalized affirmations.",
-        "UIBackgroundModes": ["audio"],
-        "NSUserTrackingUsageDescription": "This app does not track you. This permission is requested for analytics purposes only."
+        "UIBackgroundModes": ["audio"]
       },
       "privacyManifests": {
         "NSPrivacyAccessedAPITypes": [

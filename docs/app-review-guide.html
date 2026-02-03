@@ -437,7 +437,67 @@
         <li><strong>Analytics</strong> - View listening stats and streaks</li>
         <li><strong>Voice Settings</strong> - Choose preferred AI voice</li>
         <li><strong>Sound Library</strong> - Browse ambient sounds</li>
+        <li><strong>Usage Limits</strong> - View remaining voice clones and AI affirmations</li>
+        <li><strong>Security & Privacy</strong> - Data protection info and delete account option</li>
       </ul>
+
+      <h2>Security & Privacy Features</h2>
+      <div class="feature-card">
+        <h4>Voice Consent (Required Before Recording)</h4>
+        <p>Before any voice recording, users must explicitly consent via a modal dialog that explains:</p>
+        <ul>
+          <li>Voice will be processed by ElevenLabs for cloning</li>
+          <li>Voice files are deleted from server immediately after cloning</li>
+          <li>Users can delete their voice clone at any time</li>
+        </ul>
+        <p><strong>Consent is stored in the database and required before the record button becomes active.</strong></p>
+      </div>
+
+      <div class="feature-card">
+        <h4>Voice Data Protection</h4>
+        <ul>
+          <li><strong>Immediate File Deletion</strong> - Voice recording files are automatically deleted from our server immediately after successful cloning (PII protection)</li>
+          <li><strong>Third-Party Processing</strong> - ElevenLabs handles voice cloning; their privacy policy applies</li>
+          <li><strong>Voice Clone Deletion</strong> - Users can delete their voice clone via Settings, which removes it from both our database and ElevenLabs</li>
+        </ul>
+      </div>
+
+      <div class="feature-card">
+        <h4>Usage Limits (Visible in Settings)</h4>
+        <p>Users can view their usage in Settings under "USAGE LIMITS":</p>
+        <ul>
+          <li><strong>Voice Clones:</strong> Maximum 2 per user (lifetime)</li>
+          <li><strong>AI Affirmations:</strong> Maximum 10 per month (auto-resets monthly)</li>
+        </ul>
+        <p><em>Note: Listening to existing affirmations is unlimited and free.</em></p>
+      </div>
+
+      <div class="feature-card">
+        <h4>Delete My Data (GDPR Compliance)</h4>
+        <p>Located in Settings → Security & Privacy → "Delete All My Data"</p>
+        <ol>
+          <li>User taps "Delete My Data" button</li>
+          <li>Confirmation modal appears listing all data to be deleted</li>
+          <li>User must type "delete" to confirm</li>
+          <li>All user data is permanently removed including:
+            <ul>
+              <li>Account and profile</li>
+              <li>All affirmations and audio files</li>
+              <li>Voice clone (deleted from ElevenLabs via API)</li>
+              <li>Listening history and statistics</li>
+            </ul>
+          </li>
+        </ol>
+      </div>
+
+      <div class="feature-card">
+        <h4>Rate Limiting (Abuse Prevention)</h4>
+        <ul>
+          <li>AI generation endpoints: 5 requests per minute</li>
+          <li>Text-to-speech: 10 requests per minute</li>
+          <li>Voice cloning: 3 attempts per hour</li>
+        </ul>
+      </div>
 
       <h2>Pre-loaded Demo Content</h2>
       <div class="demo-content">

@@ -69,6 +69,12 @@ Research shows we respond more powerfully to our own voice. Retune clones your v
 - Dark and light modes
 - Gentle haptic feedback
 
+**Your Privacy Matters**
+- Voice recordings deleted immediately after processing
+- Full control to delete all your data anytime
+- Transparent about what data we collect and why
+- No selling or sharing of personal information
+
 Transform negative self-talk into empowering beliefs. Start your journey of self-discovery today.
 
 ---
@@ -166,9 +172,53 @@ https://[your-domain]
 
 ## App Review Notes
 
-This app uses:
-- **Microphone**: For voice sample recording (voice cloning feature)
-- **Apple Sign In**: For user authentication
-- **Background Audio**: For meditation sessions
+### Permissions Used
 
-Voice samples are processed securely through ElevenLabs API and are only used to create the user's personal affirmation audio.
+| Permission | Purpose | User Consent |
+|------------|---------|--------------|
+| **Microphone** | Voice sample recording for voice cloning | Explicit consent modal required before first recording |
+| **Apple Sign In** | User authentication | Standard iOS flow |
+| **Background Audio** | Meditation and affirmation playback | System default |
+
+### Privacy & Security Features
+
+**Voice Data Handling:**
+- Voice samples are processed securely through ElevenLabs API
+- **Voice files are automatically deleted from our server immediately after successful cloning** (PII protection)
+- Users must provide explicit consent via in-app modal before any voice recording
+- Consent explains: data processing, third-party involvement, and deletion rights
+
+**User Data Control (GDPR Compliance):**
+- Users can delete ALL their data via Settings → Security & Privacy → "Delete My Data"
+- Deletion is permanent and includes: account, affirmations, voice clones, audio files, and history
+- Voice clones are also deleted from ElevenLabs via their API
+- Requires typing "delete" to confirm (prevents accidental deletion)
+
+**Usage Limits (Prevents Abuse):**
+- Maximum 2 voice clones per user (lifetime)
+- Maximum 10 AI-generated affirmations per month (auto-resets)
+- Limits are visible to users in Settings under "USAGE LIMITS"
+- Listening to existing affirmations is unlimited
+
+**Rate Limiting (Abuse Prevention):**
+- AI generation: 5 requests per minute
+- Text-to-speech: 10 requests per minute  
+- Voice cloning: 3 attempts per hour
+
+### Testing the Security Features
+
+To verify security features with the demo account:
+
+1. **View Usage Limits:** Settings → scroll to "USAGE LIMITS" section
+2. **View Privacy Info:** Settings → Security & Privacy
+3. **Test Delete Flow:** Settings → Security & Privacy → scroll to "Delete All My Data" (do not complete with demo account)
+
+### Third-Party Services
+
+| Service | Purpose | Data Shared |
+|---------|---------|-------------|
+| **ElevenLabs** | Voice cloning & text-to-speech | Voice samples (deleted after processing), affirmation text |
+| **OpenAI** | AI affirmation script generation | User's goal text (no PII) |
+| **PostgreSQL (Replit)** | User data storage | Account info, affirmations, preferences |
+
+All third-party services are accessed via secure HTTPS connections.

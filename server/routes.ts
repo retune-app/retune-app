@@ -3,6 +3,7 @@ import { createServer, type Server } from "node:http";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import rateLimit from "express-rate-limit";
 import { db } from "./db";
 import { affirmations, voiceSamples, categories, users, collections, customCategories, notificationSettings, listeningSessions, breathingSessions, supportRequests } from "@shared/schema";
 import { eq, desc, asc, and, sql, sum } from "drizzle-orm";
@@ -15,6 +16,31 @@ import {
   type WordTiming,
 } from "./replit_integrations/elevenlabs/client";
 import { setupAuth, requireAuth, optionalAuth, AuthenticatedRequest } from "./auth";
+
+// Rate limiters to prevent API abuse
+const aiGenerationLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 5, // max 5 requests per minute for AI generation
+  message: { error: "Too many requests. Please wait a minute before generating more affirmations." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const voiceCloneLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 3, // max 3 voice clone attempts per hour
+  message: { error: "Too many voice cloning attempts. Please try again later." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const ttsLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 10, // max 10 TTS requests per minute
+  message: { error: "Too many audio generation requests. Please wait before creating more." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 const uploadDir = path.join(process.cwd(), "uploads");
 if (!fs.existsSync(uploadDir)) {
@@ -433,7 +459,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Generate script using AI (requires auth) - Limited to MAX_AI_AFFIRMATIONS_PER_MONTH per month
-  app.post("/api/affirmations/generate-script", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+  // Rate limited: max 5 requests per minute
+  app.post("/api/affirmations/generate-script", requireAuth, aiGenerationLimiter, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { goal, pillar, categories, category, length } = req.body;
 
@@ -481,7 +508,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create affirmation with voice synthesis (requires auth)
-  app.post("/api/affirmations/create-with-voice", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+  // Rate limited: max 10 TTS requests per minute
+  app.post("/api/affirmations/create-with-voice", requireAuth, ttsLimiter, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { title, script, pillar, categories, category, isManual } = req.body;
 
@@ -782,11 +810,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Upload voice sample and clone voice (requires auth)
   // Max 2 voice clones per user lifetime
+  // Rate limited: max 3 attempts per hour
   const MAX_VOICE_CLONES = 2;
   
   app.post(
     "/api/voice-samples",
     requireAuth,
+    voiceCloneLimiter,
     audioUpload.single("audio"),
     async (req: AuthenticatedRequest, res: Response) => {
       try {

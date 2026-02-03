@@ -17,7 +17,7 @@ import { ProgressRing } from "@/components/ProgressRing";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { getApiUrl } from "@/lib/query-client";
-import { getAuthToken } from "@/contexts/AuthContext";
+import { getAuthToken } from "@/lib/auth-token";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;

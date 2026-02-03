@@ -12,7 +12,7 @@ import * as Haptics from "expo-haptics";
 import { ThemedText } from "@/components/ThemedText";
 import { Card } from "@/components/Card";
 import { useTheme } from "@/hooks/useTheme";
-import { getAuthToken } from "@/contexts/AuthContext";
+import { getAuthToken } from "@/lib/auth-token";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { getApiUrl, apiRequest } from "@/lib/query-client";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";

@@ -17,7 +17,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ThemedText } from "@/components/ThemedText";
 import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
-import { useAuth, getAuthToken } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { getAuthToken } from "@/lib/auth-token";
 import { getApiUrl } from "@/lib/query-client";
 import { Spacing, BorderRadius } from "@/constants/theme";
 

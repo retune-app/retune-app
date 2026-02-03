@@ -7,7 +7,8 @@ import React, {
   ReactNode,
 } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getApiUrl } from "@/lib/query-client";
+import { getApiUrl, queryClient } from "@/lib/query-client";
+import { setGlobalAuthToken, getAuthToken } from "@/lib/auth-token";
 
 const AUTH_TOKEN_KEY = "@auth/token";
 
@@ -43,12 +44,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Export auth token for use in other parts of the app
-let globalAuthToken: string | null = null;
-export function getAuthToken(): string | null {
-  return globalAuthToken;
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [authToken, setAuthToken] = useState<string | null>(null);
@@ -60,7 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setToken = useCallback(async (token: string | null) => {
-    globalAuthToken = token;
+    setGlobalAuthToken(token);
     setAuthToken(token);
     if (token) {
       await AsyncStorage.setItem(AUTH_TOKEN_KEY, token);
@@ -73,7 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       // Get token from storage to ensure we have the latest
       const storedToken = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
-      const tokenToUse = storedToken || globalAuthToken;
+      const tokenToUse = storedToken || getAuthToken();
       
       const headers: Record<string, string> = {};
       if (tokenToUse) {
@@ -105,7 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const savedToken = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
         if (savedToken) {
-          globalAuthToken = savedToken;
+          setGlobalAuthToken(savedToken);
           setAuthToken(savedToken);
         }
       } catch (e) {
@@ -134,6 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (data.authToken) {
           await setToken(data.authToken);
         }
+        queryClient.invalidateQueries();
         return { success: true };
       } else {
         return { success: false, error: data.error || "Login failed" };
@@ -160,6 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (data.authToken) {
           await setToken(data.authToken);
         }
+        queryClient.invalidateQueries();
         // New users always need voice setup
         if (!data.user.hasVoiceSample) {
           setNeedsVoiceSetup(true);
@@ -203,6 +200,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (data.authToken) {
           await setToken(data.authToken);
         }
+        queryClient.invalidateQueries();
         // Check if new user needs voice setup
         if (!data.user.hasVoiceSample) {
           setNeedsVoiceSetup(true);
@@ -220,8 +218,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     try {
       const headers: Record<string, string> = {};
-      if (globalAuthToken) {
-        headers["X-Auth-Token"] = globalAuthToken;
+      const currentToken = getAuthToken();
+      if (currentToken) {
+        headers["X-Auth-Token"] = currentToken;
       }
       
       await fetch(new URL("/api/auth/logout", getApiUrl()).toString(), {

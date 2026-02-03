@@ -1,6 +1,6 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { Platform } from "react-native";
-import { getAuthToken } from "@/contexts/AuthContext";
+import { getAuthToken } from "@/lib/auth-token";
 
 /**
  * Gets the base URL for the Express API server (e.g., "http://localhost:5000")

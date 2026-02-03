@@ -65,6 +65,40 @@ function setupCors(app: express.Application) {
   });
 }
 
+function setupSecurityHeaders(app: express.Application) {
+  app.use((req, res, next) => {
+    // Prevent clickjacking
+    res.setHeader("X-Frame-Options", "SAMEORIGIN");
+    
+    // Prevent MIME type sniffing
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    
+    // XSS protection (legacy but still useful)
+    res.setHeader("X-XSS-Protection", "1; mode=block");
+    
+    // Control referrer information
+    res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+    
+    // Restrict browser features
+    res.setHeader("Permissions-Policy", "geolocation=(), microphone=(self), camera=()");
+    
+    // Content Security Policy - balanced for functionality
+    const csp = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com",
+      "img-src 'self' data: https: blob:",
+      "connect-src 'self' https:",
+      "media-src 'self' blob: data:",
+      "frame-ancestors 'self'",
+    ].join("; ");
+    res.setHeader("Content-Security-Policy", csp);
+    
+    next();
+  });
+}
+
 function setupBodyParsing(app: express.Application) {
   app.use(
     express.json({
@@ -304,6 +338,7 @@ function setupErrorHandler(app: express.Application) {
 }
 
 (async () => {
+  setupSecurityHeaders(app);
   setupCors(app);
   setupBodyParsing(app);
   setupRequestLogging(app);

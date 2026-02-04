@@ -109,7 +109,7 @@ export const affirmations = pgTable("affirmations", {
 export const voiceSamples = pgTable("voice_samples", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id"),
-  audioUrl: text("audio_url").notNull(),
+  audioUrl: text("audio_url"), // Nullable for privacy - file deleted after cloning
   duration: integer("duration"),
   voiceId: text("voice_id"),
   status: text("status").default("pending"),

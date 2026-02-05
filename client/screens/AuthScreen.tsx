@@ -204,7 +204,7 @@ export function AuthScreen() {
                 style={styles.brandGlassContainer}
               >
                 <View style={styles.brandGlassInner}>
-                  <Text style={styles.brandName}>RETUNE</Text>
+                  <Text style={styles.brandName}>RETUNED</Text>
                   <View style={styles.brandAccent} />
                 </View>
               </BlurView>

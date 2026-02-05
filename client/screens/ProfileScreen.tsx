@@ -726,7 +726,7 @@ export default function ProfileScreen() {
           />
           <SettingItem
             icon="info"
-            label="About Retune"
+            label="About Retuned"
             value="Version 1.0.0"
             showArrow={false}
           />

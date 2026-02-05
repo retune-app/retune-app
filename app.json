@@ -62,7 +62,7 @@
       [
         "expo-av",
         {
-          "microphonePermission": "Allow Retune to access your microphone to record personalized affirmations."
+          "microphonePermission": "Allow Retuned to access your microphone to record personalized affirmations."
         }
       ]
     ],

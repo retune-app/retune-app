@@ -1,4 +1,4 @@
-# Design Guidelines: Retune
+# Design Guidelines: Retuned
 
 ## 1. Brand Identity
 
@@ -6,7 +6,7 @@
 
 **Aesthetic Direction**: **Serene Empowerment** - A calming yet purposeful aesthetic that blends therapeutic tranquility with motivational energy. Think meditation app meets personal coaching.
 
-**Brand Name**: "Retune" (capital I, capital T)
+**Brand Name**: "Retuned"
 
 **Memorable Element**: The voice wave visualization during recording and playback - a dynamic, flowing waveform that represents the user's unique voice signature, reinforcing the personal nature of subconscious reprogramming.
 

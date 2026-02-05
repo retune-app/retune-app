@@ -6,11 +6,56 @@ import React, {
   useCallback,
   ReactNode,
 } from "react";
+import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from "expo-secure-store";
 import { getApiUrl, queryClient } from "@/lib/query-client";
 import { setGlobalAuthToken, getAuthToken } from "@/lib/auth-token";
 
-const AUTH_TOKEN_KEY = "@auth/token";
+const AUTH_TOKEN_KEY = "auth_token";
+
+// Use SecureStore on iOS/Android (more reliable for credentials), AsyncStorage on web
+async function saveToken(token: string): Promise<void> {
+  try {
+    if (Platform.OS === "web") {
+      await AsyncStorage.setItem(AUTH_TOKEN_KEY, token);
+    } else {
+      await SecureStore.setItemAsync(AUTH_TOKEN_KEY, token);
+    }
+    console.log("[Auth] Token saved successfully");
+  } catch (error) {
+    console.error("[Auth] Failed to save token:", error);
+  }
+}
+
+async function loadToken(): Promise<string | null> {
+  try {
+    let token: string | null = null;
+    if (Platform.OS === "web") {
+      token = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
+    } else {
+      token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
+    }
+    console.log("[Auth] Token loaded:", token ? "exists" : "null");
+    return token;
+  } catch (error) {
+    console.error("[Auth] Failed to load token:", error);
+    return null;
+  }
+}
+
+async function deleteToken(): Promise<void> {
+  try {
+    if (Platform.OS === "web") {
+      await AsyncStorage.removeItem(AUTH_TOKEN_KEY);
+    } else {
+      await SecureStore.deleteItemAsync(AUTH_TOKEN_KEY);
+    }
+    console.log("[Auth] Token deleted");
+  } catch (error) {
+    console.error("[Auth] Failed to delete token:", error);
+  }
+}
 
 interface User {
   id: number;
@@ -54,20 +99,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setNeedsVoiceSetup(false);
   }, []);
 
-  const setToken = useCallback(async (token: string | null) => {
+  const setTokenValue = useCallback(async (token: string | null) => {
     setGlobalAuthToken(token);
     setAuthToken(token);
     if (token) {
-      await AsyncStorage.setItem(AUTH_TOKEN_KEY, token);
+      await saveToken(token);
     } else {
-      await AsyncStorage.removeItem(AUTH_TOKEN_KEY);
+      await deleteToken();
     }
   }, []);
 
   const refreshUser = useCallback(async () => {
     try {
       // Get token from storage to ensure we have the latest
-      const storedToken = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
+      const storedToken = await loadToken();
       const tokenToUse = storedToken || getAuthToken();
       
       const headers: Record<string, string> = {};
@@ -95,16 +140,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const checkAuth = async () => {
       setIsLoading(true);
+      console.log("[Auth] Checking authentication on app start...");
       
-      // Load saved auth token
-      try {
-        const savedToken = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
-        if (savedToken) {
-          setGlobalAuthToken(savedToken);
-          setAuthToken(savedToken);
-        }
-      } catch (e) {
-        console.error("Failed to load auth token:", e);
+      // Load saved auth token from SecureStore (iOS/Android) or AsyncStorage (web)
+      const savedToken = await loadToken();
+      if (savedToken) {
+        console.log("[Auth] Found saved token, setting up auth...");
+        setGlobalAuthToken(savedToken);
+        setAuthToken(savedToken);
+      } else {
+        console.log("[Auth] No saved token found");
       }
       
       await refreshUser();
@@ -127,7 +172,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (response.ok) {
         setUser(data.user);
         if (data.authToken) {
-          await setToken(data.authToken);
+          await setTokenValue(data.authToken);
         }
         queryClient.invalidateQueries();
         return { success: true };
@@ -154,7 +199,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (response.ok) {
         setUser(data.user);
         if (data.authToken) {
-          await setToken(data.authToken);
+          await setTokenValue(data.authToken);
         }
         queryClient.invalidateQueries();
         // New users always need voice setup
@@ -198,7 +243,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (response.ok) {
         setUser(data.user);
         if (data.authToken) {
-          await setToken(data.authToken);
+          await setTokenValue(data.authToken);
         }
         queryClient.invalidateQueries();
         // Check if new user needs voice setup
@@ -229,11 +274,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         headers,
       });
       setUser(null);
-      await setToken(null);
+      await setTokenValue(null);
     } catch (error) {
       console.error("Logout error:", error);
       setUser(null);
-      await setToken(null);
+      await setTokenValue(null);
     }
   };
 

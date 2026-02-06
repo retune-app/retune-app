@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { FlatList, View, StyleSheet, RefreshControl, TextInput, Modal, Pressable, Alert, ImageBackground, Platform } from "react-native";
-import Animated, { FadeInUp } from "react-native-reanimated";
+import Animated, { FadeInUp, FadeIn } from "react-native-reanimated";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BlurView } from "expo-blur";
 
@@ -62,6 +62,8 @@ export default function HomeScreen() {
   const [hapticEnabled, setHapticEnabled] = useState(true);
   const [showSwipeTip, setShowSwipeTip] = useState(false);
   const [backgroundWallpaperEnabled, setBackgroundWallpaperEnabled] = useState(false);
+  const [isFirstPlay, setIsFirstPlay] = useState(false);
+  const [firstPlayTriggered, setFirstPlayTriggered] = useState(false);
 
   useEffect(() => {
     AsyncStorage.getItem("@settings/hapticEnabled").then((value) => {
@@ -72,6 +74,11 @@ export default function HomeScreen() {
     AsyncStorage.getItem("@tips/librarySwipe").then((value) => {
       if (value === null) {
         setShowSwipeTip(true);
+      }
+    });
+    AsyncStorage.getItem("@play/firstPlay").then((value) => {
+      if (value !== "done") {
+        setIsFirstPlay(true);
       }
     });
   }, []);
@@ -206,6 +213,12 @@ export default function HomeScreen() {
     if (currentAffirmation?.id === affirmation.id) {
       await togglePlayPause();
     } else {
+      if (isFirstPlay && !firstPlayTriggered) {
+        setFirstPlayTriggered(true);
+        setIsFirstPlay(false);
+        AsyncStorage.setItem("@play/firstPlay", "done").catch(() => {});
+        try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
+      }
       await playAffirmation(affirmation);
     }
   };

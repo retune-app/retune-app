@@ -792,7 +792,7 @@ export default function BreathingScreen() {
           >
             <Pressable 
               onPress={() => setHapticsEnabled(!hapticsEnabled)} 
-              style={[styles.secondaryControlButton, { backgroundColor: hapticsEnabled ? `${ACCENT_GOLD}20` : theme.backgroundSecondary, borderColor: hapticsEnabled ? ACCENT_GOLD : theme.border }, Shadows.small]}
+              style={[styles.secondaryControlButton, { backgroundColor: hapticsEnabled ? `${ACCENT_GOLD}15` : 'transparent', borderColor: hapticsEnabled ? ACCENT_GOLD : `${ACCENT_GOLD}50` }]}
             >
               <Feather name="smartphone" size={18} color={hapticsEnabled ? ACCENT_GOLD : theme.textSecondary} />
               <ThemedText type="caption" style={{ marginTop: 2, fontSize: 9, color: hapticsEnabled ? ACCENT_GOLD : theme.textSecondary }}>Haptics</ThemedText>
@@ -830,10 +830,10 @@ export default function BreathingScreen() {
             </Pressable>
             <Pressable 
               onPress={enterFullscreen} 
-              style={[styles.secondaryControlButton, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border }, Shadows.small]}
+              style={[styles.secondaryControlButton, { backgroundColor: 'transparent', borderColor: `${theme.textSecondary}40` }]}
             >
-              <Feather name="maximize-2" size={18} color={theme.text} />
-              <ThemedText type="caption" style={{ marginTop: 2, fontSize: 9 }}>Expand</ThemedText>
+              <Feather name="maximize-2" size={18} color={theme.textSecondary} />
+              <ThemedText type="caption" style={{ marginTop: 2, fontSize: 9, color: theme.textSecondary }}>Expand</ThemedText>
             </Pressable>
           </Animated.View>
         ) : null}

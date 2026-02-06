@@ -33,12 +33,12 @@ export function MiniPlayer({ currentRoute }: MiniPlayerProps) {
   const progress = duration > 0 ? position / duration : 0;
 
   const handlePress = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
     navigation.navigate('Player', { affirmationId: currentAffirmation.id });
   };
 
   const handlePlayPause = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
     await togglePlayPause();
   };
 
@@ -83,7 +83,7 @@ export function MiniPlayer({ currentRoute }: MiniPlayerProps) {
 
               <Pressable
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
                   navigation.navigate("Main", { screen: "SettingsTab" } as any);
                 }}
                 style={[styles.settingsButton, { backgroundColor: `${MINI_PLAYER_GOLD}20` }]}

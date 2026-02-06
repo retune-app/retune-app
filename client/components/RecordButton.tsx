@@ -94,11 +94,13 @@ export function RecordButton({
   };
 
   const handlePress = () => {
-    Haptics.impactAsync(
-      isRecording
-        ? Haptics.ImpactFeedbackStyle.Heavy
-        : Haptics.ImpactFeedbackStyle.Medium
-    );
+    try {
+      Haptics.impactAsync(
+        isRecording
+          ? Haptics.ImpactFeedbackStyle.Heavy
+          : Haptics.ImpactFeedbackStyle.Medium
+      );
+    } catch (e) {}
     onPress();
   };
 

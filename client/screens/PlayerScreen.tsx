@@ -126,11 +126,11 @@ export default function PlayerScreen() {
       }
       
       queryClient.invalidateQueries({ queryKey: ["/api/affirmations"] });
-      if (hapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (hapticEnabled) try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
       navigation.goBack();
     },
     onError: () => {
-      if (hapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      if (hapticEnabled) try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error); } catch (e) {}
       setErrorMessage("We couldn't delete this affirmation. Please try again.");
       setShowErrorModal(true);
     },
@@ -143,12 +143,12 @@ export default function PlayerScreen() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/affirmations"] });
       queryClient.invalidateQueries({ queryKey: ["/api/affirmations", affirmationId] });
-      if (hapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (hapticEnabled) try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
       setHasSaved(true);
       setShowSaveSuccessModal(true);
     },
     onError: () => {
-      if (hapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      if (hapticEnabled) try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error); } catch (e) {}
       setErrorMessage("We couldn't save this affirmation. Please try again.");
       setShowErrorModal(true);
     },
@@ -168,7 +168,7 @@ export default function PlayerScreen() {
       queryClient.invalidateQueries({ queryKey: ["/api/affirmations"] });
       queryClient.invalidateQueries({ queryKey: ["/api/affirmations", affirmationId] });
       setIsRegeneratingVoice(false);
-      if (hapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (hapticEnabled) try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
       // Auto-play the new audio
       if (updatedAffirmation) {
         await playAffirmation(updatedAffirmation);
@@ -176,7 +176,7 @@ export default function PlayerScreen() {
     },
     onError: () => {
       setIsRegeneratingVoice(false);
-      if (hapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      if (hapticEnabled) try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error); } catch (e) {}
       setErrorMessage("We couldn't regenerate the audio. Please try again.");
       setShowErrorModal(true);
     },

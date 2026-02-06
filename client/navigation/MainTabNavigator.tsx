@@ -26,7 +26,7 @@ function CreateTabButton({ onPress }: { onPress?: (e?: any) => void }) {
   const { theme } = useTheme();
 
   const handlePress = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
     onPress?.();
   };
 

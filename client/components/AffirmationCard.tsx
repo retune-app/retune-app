@@ -136,14 +136,14 @@ export function AffirmationCard({
 
   const handlePress = () => {
     if (hapticEnabled) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
     }
     onPress?.();
   };
 
   const handlePlayPress = () => {
     if (hapticEnabled) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
     }
     onPlayPress?.();
   };
@@ -219,7 +219,7 @@ export function AffirmationCard({
             <Pressable 
               onPress={(e) => {
                 e.stopPropagation?.();
-                if (hapticEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                if (hapticEnabled) try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
                 onFavoriteToggle?.();
               }}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}

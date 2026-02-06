@@ -68,7 +68,7 @@ export function GradientCard({
   const handlePressIn = () => {
     if (onPress) {
       scale.value = withSpring(Animation.pressScale, springConfig);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
     }
   };
 

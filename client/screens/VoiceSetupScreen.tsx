@@ -109,7 +109,7 @@ export default function VoiceSetupScreen() {
       queryClient.invalidateQueries({ queryKey: ["/api/user/profile"] });
       queryClient.invalidateQueries({ queryKey: ["/api/voice-samples/status"] });
       queryClient.invalidateQueries({ queryKey: ["/api/voice-preferences"] });
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
       navigation.goBack();
     },
     onError: (error: any) => {
@@ -212,7 +212,7 @@ export default function VoiceSetupScreen() {
         setRecordingDuration((prev) => prev + 1);
       }, 1000);
 
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
     } catch (error) {
       console.error("Failed to start recording:", error);
       Alert.alert("Recording Error", "Could not start recording. Please try again.");
@@ -235,7 +235,7 @@ export default function VoiceSetupScreen() {
       setRecordingUri(uri);
       setHasRecording(true);
 
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
 
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: false,

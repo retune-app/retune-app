@@ -134,7 +134,7 @@ export default function ReminderSettings() {
   };
 
   const handleToggle = async (slot: TimeSlot) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
     
     // Request permission if not granted, but don't block saving settings
     if (!hasPermission) {

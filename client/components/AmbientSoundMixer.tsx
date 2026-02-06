@@ -57,7 +57,7 @@ export function AmbientSoundMixer({ compact = false }: AmbientSoundMixerProps) {
   }));
 
   const handleSelectMusic = async (type: BackgroundMusicType) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
     await setSelectedMusic(type);
     if (compact) {
       setShowModal(false);
@@ -75,7 +75,7 @@ export function AmbientSoundMixer({ compact = false }: AmbientSoundMixerProps) {
       <>
         <Pressable
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
             setShowModal(true);
           }}
           style={({ pressed }) => [

@@ -294,9 +294,19 @@ export async function cloneVoice(
   });
 
   if (!response.ok) {
-    const error = await response.text();
-    console.error("Voice cloning error:", error);
-    throw new Error(`Voice cloning failed: ${response.statusText}`);
+    const errorText = await response.text();
+    console.error("Voice cloning error:", response.status, errorText);
+    let parsedDetail = "";
+    try {
+      const errorJson = JSON.parse(errorText);
+      parsedDetail = errorJson?.detail?.message || errorJson?.detail || errorJson?.error || "";
+    } catch (_) {
+      parsedDetail = errorText;
+    }
+    const err = new Error(parsedDetail || `Voice cloning failed: ${response.statusText}`);
+    (err as any).statusCode = response.status;
+    (err as any).elevenLabsDetail = parsedDetail;
+    throw err;
   }
 
   const result = await response.json();

@@ -898,7 +898,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             ...updatedSample,
             clonesRemaining: MAX_VOICE_CLONES - (clonesUsed + 1)
           });
-        } catch (cloneError) {
+        } catch (cloneError: any) {
           console.error("Voice cloning error:", cloneError);
 
           // PRIVACY: Delete file even on failure
@@ -910,7 +910,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .set({ status: "failed", audioUrl: null })
             .where(eq(voiceSamples.id, sample.id));
 
-          res.status(500).json({ error: "Voice cloning failed. Please ensure your recording is at least 30 seconds." });
+          const elevenLabsDetail = cloneError?.elevenLabsDetail || cloneError?.message || "";
+          const statusCode = cloneError?.statusCode || 500;
+          let userMessage = "Voice cloning failed. Please try again.";
+
+          if (statusCode === 401 || statusCode === 403) {
+            userMessage = "Voice cloning service is temporarily unavailable. Please try again later.";
+          } else if (statusCode === 429) {
+            userMessage = "Voice cloning service is busy. Please wait a few minutes and try again.";
+          } else if (elevenLabsDetail.toLowerCase().includes("too short") || elevenLabsDetail.toLowerCase().includes("duration")) {
+            userMessage = "Your recording was too short. Please record at least 20 seconds of clear speech.";
+          } else if (elevenLabsDetail.toLowerCase().includes("audio") || elevenLabsDetail.toLowerCase().includes("format")) {
+            userMessage = "There was a problem with the audio format. Please try recording again.";
+          } else if (elevenLabsDetail) {
+            userMessage = `Voice cloning failed: ${elevenLabsDetail}`;
+          }
+
+          res.status(statusCode === 429 ? 429 : 500).json({ error: userMessage });
         }
       } catch (error) {
         console.error("Error uploading voice sample:", error);

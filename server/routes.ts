@@ -1621,22 +1621,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json({ message: "User already has affirmations", created: 0 });
       }
 
-      // Sample affirmation scripts
+      // 6 sample affirmations: one per pillar, varied lengths (2 short, 2 medium, 2 long)
+      // Each gently steers users toward mental wellness and meditation
       const sampleAffirmations = [
         {
-          title: "Morning Confidence",
-          script: "I am confident, capable, and ready to embrace today. Every challenge is an opportunity for growth. I trust myself and my abilities. I am worthy of success and happiness.",
-          categoryId: 3, // Confidence
+          title: "Calm Mind",
+          pillar: "Mind",
+          categoryName: "Focus,Resilience",
+          script: "My mind is still and clear. In this moment of quiet, I find my center. I breathe deeply and let every thought settle like water becoming glass. I choose calm over chaos.",
         },
         {
-          title: "Abundance Mindset",
-          script: "I attract abundance in all areas of my life. Money flows to me easily and effortlessly. I am open to receiving prosperity. My financial future is bright and secure.",
-          categoryId: 4, // Wealth
+          title: "Body at Rest",
+          pillar: "Body",
+          categoryName: "Health,Sleep",
+          script: "I honor my body by giving it rest. With every slow breath, tension melts from my shoulders, my jaw, my hands. I feel my heartbeat steady and strong. My body knows how to heal when I create space for stillness. Tonight, I will sleep deeply and wake restored.",
         },
         {
-          title: "Inner Peace",
-          script: "I am calm, centered, and at peace. I release all stress and tension. My mind is clear and my heart is open. I choose peace in every moment of my day.",
-          categoryId: 2, // Health
+          title: "Grateful Spirit",
+          pillar: "Spirit",
+          categoryName: "Gratitude,Happiness",
+          script: "I am grateful for this quiet moment. Gratitude fills me like warm sunlight. I appreciate the small blessings that surround me today. In stillness, I discover that everything I need is already within me.",
+        },
+        {
+          title: "Present with Others",
+          pillar: "Connection",
+          categoryName: "Relationships,Self-Compassion",
+          script: "I am fully present when I am with the people I love. I listen with patience and speak with kindness. By nurturing my own inner peace through meditation, I bring a calmer, more compassionate version of myself to every conversation. I attract meaningful connections because I first connect deeply with myself. The love I cultivate in stillness radiates outward and touches everyone around me.",
+        },
+        {
+          title: "Focused Achievement",
+          pillar: "Achievement",
+          categoryName: "Career,Motivation",
+          script: "I accomplish my goals with steady focus. Each morning I take a moment to breathe, set my intention, and move forward with clarity. Success flows naturally when my mind is calm.",
+        },
+        {
+          title: "Peaceful Home",
+          pillar: "Home",
+          categoryName: "Family,Environment",
+          script: "My home is a sanctuary of peace and warmth. I create calm in my living space by first cultivating calm within myself. When I pause to breathe and center my thoughts, that serenity flows into every room. My family feels safe and loved because I choose presence over distraction. I tend to my home with the same gentle attention I give to my meditation practice. Order, beauty, and tranquility are not things I chase. They are things I create, one mindful moment at a time. My home reflects the peace I carry inside.",
         },
       ];
 
@@ -1685,7 +1707,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               userId: req.userId!,
               title: sample.title,
               script: sample.script,
-              categoryId: sample.categoryId,
+              pillar: sample.pillar,
+              categoryName: sample.categoryName,
               audioUrl: `/uploads/audio/${audioFilename}`,
               duration: audioResult.duration,
               wordTimings: JSON.stringify(audioResult.wordTimings),

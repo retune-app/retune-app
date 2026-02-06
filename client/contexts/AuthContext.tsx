@@ -89,6 +89,30 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function seedSampleAffirmations(token: string | null) {
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers["X-Auth-Token"] = token;
+  }
+  fetch(new URL("/api/affirmations/samples", getApiUrl()).toString(), {
+    method: "POST",
+    credentials: "include",
+    headers,
+  })
+    .then((res) => {
+      if (res.ok) return res.json();
+    })
+    .then((data) => {
+      if (data?.created > 0) {
+        console.log(`[Auth] Seeded ${data.created} sample affirmations for new user`);
+        queryClient.invalidateQueries({ queryKey: ["/api/affirmations"] });
+      }
+    })
+    .catch((err) => {
+      console.log("[Auth] Sample affirmation seeding skipped:", err?.message);
+    });
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [authToken, setAuthToken] = useState<string | null>(null);
@@ -175,6 +199,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await setTokenValue(data.authToken);
         }
         queryClient.invalidateQueries();
+        seedSampleAffirmations(data.authToken || getAuthToken());
         return { success: true };
       } else {
         return { success: false, error: data.error || "Login failed" };
@@ -202,7 +227,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await setTokenValue(data.authToken);
         }
         queryClient.invalidateQueries();
-        // New users always need voice setup
+        seedSampleAffirmations(data.authToken || getAuthToken());
         if (!data.user.hasVoiceSample) {
           setNeedsVoiceSetup(true);
         }
@@ -246,7 +271,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await setTokenValue(data.authToken);
         }
         queryClient.invalidateQueries();
-        // Check if new user needs voice setup
+        seedSampleAffirmations(data.authToken || getAuthToken());
         if (!data.user.hasVoiceSample) {
           setNeedsVoiceSetup(true);
         }

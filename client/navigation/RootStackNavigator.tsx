@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect, useRef } from "react";
 import { View, StyleSheet, ActivityIndicator, Platform } from "react-native";
 import { createNativeStackNavigator, NativeStackNavigationProp, NativeStackNavigationOptions } from "@react-navigation/native-stack";
 import { NavigationState, useNavigation } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import MainTabNavigator from "@/navigation/MainTabNavigator";
 import VoiceSetupScreen from "@/screens/VoiceSetupScreen";
 import VoiceSettingsScreen from "@/screens/VoiceSettingsScreen";
@@ -9,11 +10,14 @@ import SoundLibraryScreen from "@/screens/SoundLibraryScreen";
 import CreateScreen from "@/screens/CreateScreen";
 import PlayerScreen from "@/screens/PlayerScreen";
 import AnalyticsScreen from "@/screens/AnalyticsScreen";
+import OnboardingScreen from "@/screens/OnboardingScreen";
 import { AuthScreen } from "@/screens/AuthScreen";
 import { MiniPlayer } from "@/components/MiniPlayer";
 import { useScreenOptions } from "@/hooks/useScreenOptions";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/hooks/useTheme";
+
+const ONBOARDING_KEY = "@onboarding/completed";
 
 export type RootStackParamList = {
   Auth: undefined;
@@ -50,6 +54,24 @@ export default function RootStackNavigator() {
   const { theme } = useTheme();
   const { isAuthenticated, isLoading } = useAuth();
   const [currentRoute, setCurrentRoute] = useState<string>('BreatheTab');
+  const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      AsyncStorage.getItem(ONBOARDING_KEY).then((value) => {
+        setShowOnboarding(value !== "true");
+      }).catch(() => {
+        setShowOnboarding(false);
+      });
+    }
+  }, [isAuthenticated]);
+
+  const handleOnboardingComplete = useCallback(async () => {
+    try {
+      await AsyncStorage.setItem(ONBOARDING_KEY, "true");
+    } catch {}
+    setShowOnboarding(false);
+  }, []);
 
   const fadeScreenOptions: NativeStackNavigationOptions = {
     ...screenOptions,
@@ -94,6 +116,18 @@ export default function RootStackNavigator() {
         <Stack.Screen name="Auth" component={AuthScreen} />
       </Stack.Navigator>
     );
+  }
+
+  if (showOnboarding === null) {
+    return (
+      <View style={[styles.loadingContainer, { backgroundColor: theme.backgroundRoot }]}>
+        <ActivityIndicator size="large" color={theme.primary} />
+      </View>
+    );
+  }
+
+  if (showOnboarding) {
+    return <OnboardingScreen onComplete={handleOnboardingComplete} />;
   }
 
   return (

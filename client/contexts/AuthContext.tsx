@@ -228,9 +228,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         queryClient.invalidateQueries();
         seedSampleAffirmations(data.authToken || getAuthToken());
-        if (!data.user.hasVoiceSample) {
-          setNeedsVoiceSetup(true);
-        }
         return { success: true };
       } else {
         return { success: false, error: data.error || "Signup failed" };
@@ -272,9 +269,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         queryClient.invalidateQueries();
         seedSampleAffirmations(data.authToken || getAuthToken());
-        if (!data.user.hasVoiceSample) {
-          setNeedsVoiceSetup(true);
-        }
         return { success: true };
       } else {
         return { success: false, error: data.error || "OAuth login failed" };

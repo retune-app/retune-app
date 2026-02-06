@@ -238,11 +238,68 @@ export default function HomeScreen() {
 
   const FIXED_HEADER_HEIGHT = 110;
 
+  const [showVoiceNudge, setShowVoiceNudge] = useState(false);
+  const [voiceNudgeDismissed, setVoiceNudgeDismissed] = useState(false);
+
+  useEffect(() => {
+    if (user && !user.hasVoiceSample && !voiceNudgeDismissed) {
+      AsyncStorage.getItem("@nudge/voiceCloneDismissed").then((value) => {
+        if (value !== "true") {
+          setShowVoiceNudge(true);
+        }
+      });
+    }
+  }, [user, voiceNudgeDismissed]);
+
+  const dismissVoiceNudge = useCallback(() => {
+    setShowVoiceNudge(false);
+    setVoiceNudgeDismissed(true);
+    AsyncStorage.setItem("@nudge/voiceCloneDismissed", "true").catch(() => {});
+  }, []);
+
+  const handleVoiceNudgeAction = useCallback(() => {
+    navigation.navigate("VoiceSetup");
+  }, [navigation]);
+
   const renderHeader = () => (
     <View style={styles.headerContent}>
-      {filteredAffirmations.length > 0 && (
+      {showVoiceNudge ? (
+        <Animated.View entering={FadeInUp.delay(300).duration(500)}>
+          <Pressable
+            onPress={handleVoiceNudgeAction}
+            style={[styles.voiceNudgeCard, { backgroundColor: isDark ? '#1A2D4F' : '#FFFFFF', borderColor: isDark ? 'rgba(229,201,92,0.3)' : 'rgba(201,162,39,0.2)' }]}
+            testID="card-voice-nudge"
+          >
+            <View style={styles.voiceNudgeIcon}>
+              <LinearGradient
+                colors={['#E5C95C', '#C9A227']}
+                style={styles.voiceNudgeIconGradient}
+              >
+                <Feather name="mic" size={20} color="#0F1C3F" />
+              </LinearGradient>
+            </View>
+            <View style={styles.voiceNudgeContent}>
+              <ThemedText type="h4" style={{ color: theme.text }}>
+                Hear these in your voice
+              </ThemedText>
+              <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                Clone your voice in 60 seconds. It's like magic.
+              </ThemedText>
+            </View>
+            <Pressable
+              onPress={dismissVoiceNudge}
+              hitSlop={12}
+              style={styles.voiceNudgeDismiss}
+              testID="button-dismiss-voice-nudge"
+            >
+              <Feather name="x" size={16} color={theme.textSecondary} />
+            </Pressable>
+          </Pressable>
+        </Animated.View>
+      ) : null}
+      {filteredAffirmations.length > 0 ? (
         <LibraryTip visible={showSwipeTip} onDismiss={dismissSwipeTip} />
-      )}
+      ) : null}
     </View>
   );
 
@@ -611,4 +668,31 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   saveButton: {},
+  voiceNudgeCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    marginBottom: Spacing.md,
+    gap: Spacing.md,
+  },
+  voiceNudgeIcon: {
+    flexShrink: 0,
+  },
+  voiceNudgeIconGradient: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  voiceNudgeContent: {
+    flex: 1,
+    gap: 2,
+  },
+  voiceNudgeDismiss: {
+    padding: Spacing.xs,
+    flexShrink: 0,
+  },
 });

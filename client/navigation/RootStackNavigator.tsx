@@ -200,7 +200,6 @@ export default function RootStackNavigator() {
         />
       </Stack.Navigator>
       <MiniPlayer currentRoute={currentRoute} />
-      <VoiceSetupNavigator />
     </View>
   );
 }

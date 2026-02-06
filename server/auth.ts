@@ -61,16 +61,19 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 export function setupAuth(app: Express) {
   const sessionSecret = process.env.SESSION_SECRET || "rewired-session-secret-change-in-production";
   
+  const isProduction = process.env.NODE_ENV === "production" || !!process.env.REPLIT_DEPLOYMENT;
+  
   app.use(
     session({
       secret: sessionSecret,
       resave: false,
       saveUninitialized: false,
+      proxy: isProduction,
       cookie: {
-        secure: true, // Required for sameSite: "none" and HTTPS
+        secure: isProduction,
         httpOnly: true,
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-        sameSite: "none", // Allow cross-origin requests from mobile app
+        sameSite: isProduction ? "none" as const : "lax" as const,
       },
     })
   );
@@ -322,14 +325,23 @@ export function setupAuth(app: Express) {
   // Get current user
   app.get("/api/auth/me", async (req: Request, res: Response) => {
     try {
-      if (!req.session.userId) {
+      let userId = req.session.userId;
+      
+      if (!userId) {
+        const headerToken = req.header("X-Auth-Token");
+        if (headerToken) {
+          userId = await verifyAuthToken(headerToken) ?? undefined;
+        }
+      }
+      
+      if (!userId) {
         return res.status(401).json({ error: "Not authenticated" });
       }
 
       const [user] = await db
         .select()
         .from(users)
-        .where(eq(users.id, req.session.userId));
+        .where(eq(users.id, userId));
 
       if (!user) {
         req.session.destroy(() => {});

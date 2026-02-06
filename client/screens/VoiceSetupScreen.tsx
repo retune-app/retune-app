@@ -409,7 +409,14 @@ export default function VoiceSetupScreen() {
         if (!response.ok) {
           const errorText = await response.text();
           console.error("Upload response error:", errorText);
-          throw new Error(errorText || "Upload failed");
+          let cleanMessage = "Upload failed. Please try again.";
+          try {
+            const errorJson = JSON.parse(errorText);
+            cleanMessage = errorJson?.error || cleanMessage;
+          } catch (_) {
+            cleanMessage = errorText || cleanMessage;
+          }
+          throw new Error(cleanMessage);
         }
         return response.json();
       } catch (error: any) {

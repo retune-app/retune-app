@@ -311,7 +311,17 @@ export default function HomeScreen() {
         </Animated.View>
       ) : null}
       {filteredAffirmations.length > 0 ? (
-        <LibraryTip visible={showSwipeTip} onDismiss={dismissSwipeTip} />
+        <>
+          {isFirstPlay ? (
+            <Animated.View entering={FadeIn.delay(600).duration(400)} style={styles.tapToListenTip}>
+              <Feather name="play-circle" size={16} color={theme.primary} />
+              <ThemedText type="small" style={{ color: theme.textSecondary, marginLeft: Spacing.sm }}>
+                Tap the play button to hear your first affirmation
+              </ThemedText>
+            </Animated.View>
+          ) : null}
+          <LibraryTip visible={showSwipeTip} onDismiss={dismissSwipeTip} />
+        </>
       ) : null}
     </View>
   );
@@ -707,5 +717,13 @@ const styles = StyleSheet.create({
   voiceNudgeDismiss: {
     padding: Spacing.xs,
     flexShrink: 0,
+  },
+  tapToListenTip: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    marginBottom: Spacing.sm,
+    borderRadius: BorderRadius.md,
   },
 });

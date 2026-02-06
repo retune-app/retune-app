@@ -1204,12 +1204,12 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   secondaryControlButton: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 1,
+    borderWidth: 1.5,
   },
   statsRow: {
     flexDirection: "row",
@@ -1277,14 +1277,15 @@ const styles = StyleSheet.create({
   },
   optionPill: {
     flex: 1,
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.sm + 2,
     borderRadius: BorderRadius.full,
-    borderWidth: 1,
+    borderWidth: 1.5,
     alignItems: "center",
   },
   optionPillText: {
     fontWeight: "600",
     fontSize: 13,
+    letterSpacing: 0.3,
   },
 
 

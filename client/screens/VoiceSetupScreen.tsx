@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { View, StyleSheet, Alert, Platform, ScrollView } from "react-native";
+import { View, StyleSheet, Alert, Platform, ScrollView, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -7,18 +7,33 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Audio } from "expo-av";
 import * as Haptics from "expo-haptics";
 import { Feather } from "@expo/vector-icons";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  useAnimatedProps,
+  withRepeat,
+  withTiming,
+  withSpring,
+  withSequence,
+  withDelay,
+  Easing,
+  FadeIn,
+  FadeInUp,
+} from "react-native-reanimated";
+import Svg, { Circle, Defs, LinearGradient as SvgLinearGradient, Stop } from "react-native-svg";
+import { LinearGradient } from "expo-linear-gradient";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Button } from "@/components/Button";
-import { RecordButton } from "@/components/RecordButton";
-import { CircularVoiceVisualizer } from "@/components/CircularVoiceVisualizer";
-import { ProgressRing } from "@/components/ProgressRing";
 import { useTheme } from "@/hooks/useTheme";
-import { Spacing, BorderRadius } from "@/constants/theme";
+import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { getApiUrl } from "@/lib/query-client";
 import { getAuthToken } from "@/lib/auth-token";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
+
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -35,6 +50,307 @@ I am surrounded by love and support. My relationships are meaningful and bring j
 My creativity flows freely, and I express myself authentically. I embrace who I am becoming.
 
 Success is not just a destination but a way of living. I celebrate small victories and keep moving forward.`;
+
+const MILESTONES = [
+  { seconds: 20, label: "Min", icon: "check" as const },
+  { seconds: 40, label: "Good", icon: "thumbs-up" as const },
+  { seconds: 60, label: "Best", icon: "star" as const },
+];
+
+function UnifiedRecordButton({
+  isRecording,
+  hasRecording,
+  duration,
+  onPress,
+  theme,
+}: {
+  isRecording: boolean;
+  hasRecording: boolean;
+  duration: number;
+  onPress: () => void;
+  theme: any;
+}) {
+  const SIZE = 200;
+  const STROKE_WIDTH = 6;
+  const radius = (SIZE - STROKE_WIDTH) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const center = SIZE / 2;
+  const buttonSize = 80;
+
+  const scale = useSharedValue(1);
+  const pulseScale = useSharedValue(1);
+  const pulseOpacity = useSharedValue(0);
+  const glowOpacity = useSharedValue(0);
+  const progressValue = useSharedValue(0);
+
+  useEffect(() => {
+    progressValue.value = withTiming(Math.min(duration / 60, 1), {
+      duration: 300,
+      easing: Easing.out(Easing.ease),
+    });
+  }, [duration]);
+
+  useEffect(() => {
+    if (isRecording) {
+      pulseScale.value = withRepeat(
+        withSequence(
+          withTiming(1.15, { duration: 1200, easing: Easing.inOut(Easing.ease) }),
+          withTiming(1, { duration: 1200, easing: Easing.inOut(Easing.ease) })
+        ),
+        -1,
+        false
+      );
+      pulseOpacity.value = withRepeat(
+        withSequence(
+          withTiming(0.4, { duration: 1200, easing: Easing.inOut(Easing.ease) }),
+          withTiming(0.1, { duration: 1200, easing: Easing.inOut(Easing.ease) })
+        ),
+        -1,
+        false
+      );
+      glowOpacity.value = withTiming(1, { duration: 400 });
+    } else {
+      pulseScale.value = withTiming(1, { duration: 300 });
+      pulseOpacity.value = withTiming(0, { duration: 300 });
+      glowOpacity.value = withTiming(0, { duration: 300 });
+    }
+  }, [isRecording]);
+
+  const progressProps = useAnimatedProps(() => ({
+    strokeDashoffset: circumference * (1 - progressValue.value),
+  }));
+
+  const pulseStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulseScale.value }],
+    opacity: pulseOpacity.value,
+  }));
+
+  const glowStyle = useAnimatedStyle(() => ({
+    opacity: glowOpacity.value,
+  }));
+
+  const buttonAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.92);
+  };
+  const handlePressOut = () => {
+    scale.value = withSpring(1);
+  };
+  const handlePress = () => {
+    try { Haptics.impactAsync(isRecording ? Haptics.ImpactFeedbackStyle.Heavy : Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
+    onPress();
+  };
+
+  return (
+    <View style={ubStyles.wrapper}>
+      <Animated.View style={[ubStyles.pulseRing, {
+        width: SIZE + 30,
+        height: SIZE + 30,
+        borderRadius: (SIZE + 30) / 2,
+        backgroundColor: theme.primary,
+      }, pulseStyle]} />
+
+      <Animated.View style={[ubStyles.glowRing, {
+        width: SIZE + 16,
+        height: SIZE + 16,
+        borderRadius: (SIZE + 16) / 2,
+        borderColor: theme.primary,
+      }, glowStyle]} />
+
+      <Svg width={SIZE} height={SIZE} style={ubStyles.svg}>
+        <Defs>
+          <SvgLinearGradient id="recordProgressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <Stop offset="0%" stopColor={theme.primary} />
+            <Stop offset="100%" stopColor={theme.goldLight || theme.primary} />
+          </SvgLinearGradient>
+        </Defs>
+        <Circle
+          cx={center}
+          cy={center}
+          r={radius}
+          stroke={theme.backgroundSecondary}
+          strokeWidth={STROKE_WIDTH}
+          fill="none"
+          opacity={0.5}
+        />
+        <AnimatedCircle
+          cx={center}
+          cy={center}
+          r={radius}
+          stroke="url(#recordProgressGradient)"
+          strokeWidth={STROKE_WIDTH}
+          strokeLinecap="round"
+          fill="none"
+          strokeDasharray={circumference}
+          animatedProps={progressProps}
+          rotation={-90}
+          origin={`${center}, ${center}`}
+        />
+      </Svg>
+
+      <View style={ubStyles.centerContent}>
+        <Animated.View style={buttonAnimStyle}>
+          <Pressable
+            onPress={handlePress}
+            onPressIn={handlePressIn}
+            onPressOut={handlePressOut}
+            testID="button-record"
+          >
+            <LinearGradient
+              colors={
+                isRecording
+                  ? [theme.accent || theme.primary, theme.primary]
+                  : hasRecording
+                  ? ["#50C9B0", "#3DAF9A"]
+                  : (theme.gradient?.primary as [string, string]) || [theme.primary, theme.primary]
+              }
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={[ubStyles.button, Shadows.large, {
+                width: buttonSize,
+                height: buttonSize,
+                borderRadius: buttonSize / 2,
+              }]}
+            >
+              <Feather
+                name={hasRecording ? "refresh-cw" : isRecording ? "square" : "mic"}
+                size={buttonSize * 0.38}
+                color="#FFFFFF"
+              />
+            </LinearGradient>
+          </Pressable>
+        </Animated.View>
+      </View>
+    </View>
+  );
+}
+
+const ubStyles = StyleSheet.create({
+  wrapper: {
+    width: 240,
+    height: 240,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  pulseRing: {
+    position: "absolute",
+  },
+  glowRing: {
+    position: "absolute",
+    borderWidth: 2,
+  },
+  svg: {
+    position: "absolute",
+  },
+  centerContent: {
+    position: "absolute",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  button: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+});
+
+function MilestoneBar({
+  duration,
+  isRecording,
+  hasRecording,
+  theme,
+}: {
+  duration: number;
+  isRecording: boolean;
+  hasRecording: boolean;
+  theme: any;
+}) {
+  if (!isRecording && !hasRecording) return null;
+
+  return (
+    <Animated.View entering={FadeInUp.duration(300)} style={msStyles.container}>
+      <View style={[msStyles.trackBackground, { backgroundColor: theme.backgroundSecondary }]}>
+        <Animated.View
+          style={[
+            msStyles.trackFill,
+            {
+              backgroundColor: theme.primary,
+              width: `${Math.min((duration / 60) * 100, 100)}%`,
+            },
+          ]}
+        />
+      </View>
+      <View style={msStyles.milestonesRow}>
+        {MILESTONES.map((m) => {
+          const reached = duration >= m.seconds;
+          return (
+            <View key={m.seconds} style={msStyles.milestone}>
+              <View style={[
+                msStyles.milestoneIcon,
+                {
+                  backgroundColor: reached ? theme.primary : theme.backgroundSecondary,
+                  borderColor: reached ? theme.primary : theme.border,
+                },
+              ]}>
+                <Feather
+                  name={reached ? m.icon : "circle"}
+                  size={10}
+                  color={reached ? "#FFFFFF" : theme.textSecondary}
+                />
+              </View>
+              <ThemedText type="caption" style={[
+                msStyles.milestoneLabel,
+                { color: reached ? theme.primary : theme.textSecondary },
+              ]}>
+                {m.seconds}s {m.label}
+              </ThemedText>
+            </View>
+          );
+        })}
+      </View>
+    </Animated.View>
+  );
+}
+
+const msStyles = StyleSheet.create({
+  container: {
+    width: "100%",
+    marginTop: Spacing.lg,
+    paddingHorizontal: Spacing.sm,
+  },
+  trackBackground: {
+    height: 6,
+    borderRadius: 3,
+    overflow: "hidden",
+  },
+  trackFill: {
+    height: "100%",
+    borderRadius: 3,
+  },
+  milestonesRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: Spacing.sm,
+  },
+  milestone: {
+    alignItems: "center",
+    gap: 4,
+  },
+  milestoneIcon: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1.5,
+  },
+  milestoneLabel: {
+    fontSize: 11,
+    fontWeight: "600",
+  },
+});
 
 export default function VoiceSetupScreen() {
   const insets = useSafeAreaInsets();
@@ -71,7 +387,6 @@ export default function VoiceSetupScreen() {
         } as any);
       }
 
-      // Use AbortController for 3 minute timeout (voice cloning takes time)
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 180000);
 
@@ -128,7 +443,6 @@ export default function VoiceSetupScreen() {
     };
   }, []);
 
-  // Mutation to save voice consent to database
   const consentMutation = useMutation({
     mutationFn: async () => {
       const apiUrl = getApiUrl();
@@ -160,13 +474,11 @@ export default function VoiceSetupScreen() {
 
   const handlePrivacyAcknowledge = async () => {
     try {
-      // Save consent to database before proceeding
       await consentMutation.mutateAsync();
       setShowPrivacyNotice(false);
       await requestPermissions();
     } catch (error) {
       console.error("Failed to save consent:", error);
-      // Still proceed even if consent save fails (will be checked again on server)
       setShowPrivacyNotice(false);
       await requestPermissions();
     }
@@ -246,6 +558,10 @@ export default function VoiceSetupScreen() {
   };
 
   const handleRecordPress = () => {
+    if (hasRecording) {
+      handleReRecord();
+      return;
+    }
     if (isRecording) {
       stopRecording();
     } else {
@@ -303,6 +619,16 @@ export default function VoiceSetupScreen() {
   };
 
   const isValidDuration = recordingDuration >= 20;
+
+  const handleClose = () => {
+    navigation.goBack();
+  };
+
+  const handleReRecord = () => {
+    setHasRecording(false);
+    setRecordingUri(null);
+    setRecordingDuration(0);
+  };
 
   if (showPrivacyNotice) {
     return (
@@ -412,137 +738,106 @@ export default function VoiceSetupScreen() {
     );
   }
 
-  const handleClose = () => {
-    navigation.goBack();
+  const getStatusText = () => {
+    if (hasRecording && isValidDuration) return "Voice Sample Ready";
+    if (hasRecording && !isValidDuration) return "Too Short";
+    if (isRecording) return "Listening...";
+    return "Record Your Voice";
   };
 
-  const handleReRecord = () => {
-    setHasRecording(false);
-    setRecordingUri(null);
-    setRecordingDuration(0);
+  const getSubText = () => {
+    if (hasRecording && isValidDuration) return "Your voice sample is ready to create your personal voice clone.";
+    if (hasRecording && !isValidDuration) return `Only ${recordingDuration}s recorded. You need at least 20 seconds for a good voice clone.`;
+    if (isRecording) {
+      if (recordingDuration < 20) return "Keep reading naturally...";
+      if (recordingDuration < 40) return "Looking good! Keep going for better quality.";
+      return "Excellent quality! You can stop whenever you're ready.";
+    }
+    return "Read the passage below out loud for 20-60 seconds. Longer recordings produce better voice quality.";
   };
 
   return (
     <ThemedView style={styles.container}>
-      {/* Close button */}
-      <View style={[styles.closeButtonContainer, { top: insets.top + Spacing.md }]}>
-        <Button
-          variant="ghost"
+      <View style={[styles.headerRow, { top: insets.top + Spacing.sm }]}>
+        <Pressable
           onPress={handleClose}
-          style={styles.closeButton}
+          style={styles.headerButton}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           testID="button-close"
         >
-          <Feather name="x" size={24} color={theme.text} />
-        </Button>
+          <Feather name="x" size={22} color={theme.text} />
+        </Pressable>
+        <ThemedText type="caption" style={[styles.headerTitle, { color: theme.textSecondary }]}>
+          VOICE CLONING
+        </ThemedText>
+        <View style={styles.headerButton} />
       </View>
 
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={[
-          styles.content,
-          { paddingTop: insets.top + Spacing.xl + 40, paddingBottom: insets.bottom + Spacing["2xl"] },
+          styles.recordContent,
+          { paddingTop: insets.top + 60, paddingBottom: insets.bottom + Spacing["2xl"] },
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.visualizerSection}>
-          <CircularVoiceVisualizer
-            isActive={isRecording}
-            size={180}
+        <View style={styles.heroSection}>
+          <UnifiedRecordButton
+            isRecording={isRecording}
+            hasRecording={hasRecording}
+            duration={recordingDuration}
+            onPress={handleRecordPress}
+            theme={theme}
           />
+
+          <View style={styles.timerDisplay}>
+            <ThemedText type="h1" style={[styles.timer, {
+              color: isRecording ? theme.primary : hasRecording && isValidDuration ? theme.success : theme.text,
+            }]}>
+              {formatDuration(recordingDuration)}
+            </ThemedText>
+          </View>
         </View>
 
-        <ThemedText type="h1" style={styles.title}>
-          {hasRecording 
-            ? "Recording Complete" 
-            : isRecording 
-            ? "Recording..." 
-            : "Record Your Voice"}
+        <ThemedText type="h2" style={[styles.statusTitle, { textAlign: "center" }]}>
+          {getStatusText()}
+        </ThemedText>
+        <ThemedText type="body" style={[styles.statusSub, { color: theme.textSecondary }]}>
+          {getSubText()}
         </ThemedText>
 
-        {!isRecording && !hasRecording ? (
-          <ThemedText type="body" style={[styles.description, { color: theme.textSecondary }]}>
-            Record 20-60 seconds of your voice reading the text below. Longer recordings create better voice quality.
-          </ThemedText>
-        ) : null}
+        <MilestoneBar
+          duration={recordingDuration}
+          isRecording={isRecording}
+          hasRecording={hasRecording}
+          theme={theme}
+        />
 
-        {hasRecording ? (
-          <ThemedText type="body" style={[styles.description, { color: theme.textSecondary }]}>
-            {isValidDuration 
-              ? "Great job! Your voice sample is ready to create your personal voice clone."
-              : `Recording too short (${recordingDuration}s). Need at least 20 seconds.`}
-          </ThemedText>
-        ) : null}
-
-        <View style={styles.recordingSection}>
-          <View style={styles.timerContainer}>
-            <ProgressRing
-              progress={Math.min(recordingDuration / 60, 1)}
-              size={160}
-              strokeWidth={6}
-            >
-              <View style={styles.timerInner}>
-                <ThemedText type="h1" style={[styles.timer, { color: isRecording ? theme.primary : theme.text }]}>
-                  {formatDuration(recordingDuration)}
-                </ThemedText>
-                <ThemedText type="caption" style={[styles.timerLabel, { color: theme.textSecondary }]}>
-                  {recordingDuration < 20 ? `${20 - recordingDuration}s to go` : "Ready"}
-                </ThemedText>
-              </View>
-            </ProgressRing>
-          </View>
-
-          <ThemedText
-            type="caption"
-            style={[styles.hint, { color: theme.textSecondary }]}
+        {!hasRecording ? (
+          <Animated.View
+            entering={FadeIn.duration(200)}
+            style={[styles.promptCard, { backgroundColor: theme.backgroundSecondary }]}
           >
-            {isRecording
-              ? recordingDuration < 20
-                ? "Keep reading naturally..."
-                : recordingDuration < 40
-                ? "Great! Keep going for better quality"
-                : "Excellent! You can stop anytime"
-              : hasRecording
-              ? ""
-              : "Tap the microphone to start"}
-          </ThemedText>
-
-          <RecordButton
-            isRecording={isRecording}
-            onPress={handleRecordPress}
-            size={72}
-            testID="button-record"
-          />
-        </View>
-
-        {isRecording ? (
-          <View style={[styles.promptCard, { backgroundColor: theme.backgroundSecondary }]}>
             <View style={styles.promptHeader}>
-              <Feather name="book-open" size={16} color={theme.primary} />
+              <Feather name={isRecording ? "book-open" : "eye"} size={14} color={theme.primary} />
               <ThemedText type="caption" style={[styles.promptLabel, { color: theme.primary }]}>
-                READ THIS ALOUD
+                {isRecording ? "READ THIS ALOUD" : "READING PREVIEW"}
               </ThemedText>
             </View>
-            <ThemedText type="body" style={styles.promptText}>
-              {READING_PROMPTS}
+            <ThemedText type="body" style={[styles.promptText, {
+              color: isRecording ? theme.text : theme.textSecondary,
+            }]}>
+              {isRecording ? READING_PROMPTS : `${READING_PROMPTS.substring(0, 200)}...`}
             </ThemedText>
-          </View>
-        ) : !hasRecording ? (
-          <View style={[styles.promptCard, { backgroundColor: theme.backgroundSecondary }]}>
-            <View style={styles.promptHeader}>
-              <Feather name="info" size={16} color={theme.primary} />
-              <ThemedText type="caption" style={[styles.promptLabel, { color: theme.primary }]}>
-                READING PREVIEW
-              </ThemedText>
-            </View>
-            <ThemedText type="body" style={[styles.promptText, { color: theme.textSecondary }]}>
-              {READING_PROMPTS.substring(0, 200)}...
-            </ThemedText>
-          </View>
+            {!isRecording ? (
+              <View style={[styles.promptOverlay, { backgroundColor: theme.backgroundSecondary }]} />
+            ) : null}
+          </Animated.View>
         ) : null}
 
         <View style={styles.buttonsContainer}>
           {hasRecording && isValidDuration ? (
-            <>
+            <Animated.View entering={FadeInUp.duration(300)} style={styles.buttonWrapper}>
               <Button
                 variant="gradient"
                 onPress={handleContinue}
@@ -550,7 +845,7 @@ export default function VoiceSetupScreen() {
                 style={styles.continueButton}
                 testID="button-continue"
               >
-                Save Voice
+                Clone My Voice
               </Button>
               <Button
                 variant="secondary"
@@ -561,18 +856,20 @@ export default function VoiceSetupScreen() {
               >
                 Re-record
               </Button>
-            </>
+            </Animated.View>
           ) : null}
 
           {hasRecording && !isValidDuration ? (
-            <Button
-              variant="secondary"
-              onPress={handleReRecord}
-              style={styles.continueButton}
-              testID="button-rerecord-short"
-            >
-              Try Again
-            </Button>
+            <Animated.View entering={FadeInUp.duration(300)} style={styles.buttonWrapper}>
+              <Button
+                variant="secondary"
+                onPress={handleReRecord}
+                style={styles.continueButton}
+                testID="button-rerecord-short"
+              >
+                Try Again
+              </Button>
+            </Animated.View>
           ) : null}
 
           <Button
@@ -595,14 +892,26 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  closeButtonContainer: {
+  headerRow: {
     position: "absolute",
-    right: Spacing.md,
+    left: 0,
+    right: 0,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: Spacing.md,
     zIndex: 10,
   },
-  closeButton: {
-    padding: Spacing.sm,
-    minWidth: 44,
+  headerButton: {
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerTitle: {
+    letterSpacing: 2,
+    fontWeight: "700",
+    fontSize: 12,
   },
   scrollView: {
     flex: 1,
@@ -611,72 +920,70 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: Spacing["2xl"],
   },
-  visualizerSection: {
-    marginBottom: Spacing.lg,
+  recordContent: {
+    alignItems: "center",
+    paddingHorizontal: Spacing.xl,
+  },
+  heroSection: {
+    alignItems: "center",
+    marginBottom: Spacing.md,
+  },
+  timerDisplay: {
+    marginTop: Spacing.sm,
     alignItems: "center",
   },
-  title: {
-    textAlign: "center",
-    marginBottom: Spacing.sm,
+  timer: {
+    fontSize: 36,
+    fontWeight: "700",
+    fontVariant: ["tabular-nums"],
+    lineHeight: 42,
   },
-  description: {
+  statusTitle: {
+    marginBottom: Spacing.xs,
+  },
+  statusSub: {
     textAlign: "center",
-    marginBottom: Spacing.lg,
-    maxWidth: 320,
-    lineHeight: 24,
+    maxWidth: 300,
+    lineHeight: 22,
+    marginBottom: Spacing.sm,
   },
   promptCard: {
     width: "100%",
     padding: Spacing.lg,
     borderRadius: BorderRadius.lg,
     marginTop: Spacing.lg,
+    overflow: "hidden",
   },
   promptHeader: {
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.sm,
     marginBottom: Spacing.md,
-    justifyContent: "center",
   },
   promptLabel: {
-    letterSpacing: 1,
-    fontWeight: "600",
+    letterSpacing: 1.5,
+    fontWeight: "700",
+    fontSize: 11,
   },
   promptText: {
     lineHeight: 26,
     fontSize: 16,
   },
-  recordingSection: {
-    width: "100%",
-    alignItems: "center",
-    marginVertical: Spacing.md,
-  },
-  timerContainer: {
-    marginBottom: Spacing.md,
-  },
-  timerInner: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: Spacing.sm,
-  },
-  timer: {
-    fontSize: 32,
-    fontWeight: "700",
-    lineHeight: 38,
-  },
-  timerLabel: {
-    marginTop: 2,
-    fontSize: 13,
-    lineHeight: 16,
-  },
-  hint: {
-    textAlign: "center",
-    marginBottom: Spacing.lg,
-    height: 24,
+  promptOverlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 60,
+    opacity: 0.85,
   },
   buttonsContainer: {
     width: "100%",
     marginTop: Spacing.xl,
+    gap: Spacing.md,
+  },
+  buttonWrapper: {
+    width: "100%",
     gap: Spacing.md,
   },
   continueButton: {
@@ -684,6 +991,10 @@ const styles = StyleSheet.create({
   },
   skipButton: {
     width: "100%",
+  },
+  title: {
+    textAlign: "center",
+    marginBottom: Spacing.sm,
   },
   privacyContent: {
     justifyContent: "center",

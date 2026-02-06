@@ -28,8 +28,8 @@ const aiGenerationLimiter = rateLimit({
 
 const voiceCloneLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 3, // max 3 voice clone attempts per hour
-  message: { error: "Too many voice cloning attempts. Please try again later." },
+  max: 6, // max 6 voice clone attempts per hour (more forgiving for retries after errors)
+  message: { error: "Too many voice cloning attempts. Please wait about an hour and try again." },
   standardHeaders: true,
   legacyHeaders: false,
 });

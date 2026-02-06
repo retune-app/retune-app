@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { View, Pressable, StyleSheet } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Feather } from "@expo/vector-icons";
@@ -6,12 +6,15 @@ import { BlurView } from "expo-blur";
 import { Platform } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import BreathingStackNavigator from "@/navigation/BreathingStackNavigator";
 import HomeStackNavigator from "@/navigation/HomeStackNavigator";
 import ProfileStackNavigator from "@/navigation/ProfileStackNavigator";
 import { useTheme } from "@/hooks/useTheme";
 import { Shadows } from "@/constants/theme";
+
+const FIRST_TAB_VISIT_KEY = "@navigation/firstTabVisit";
 
 export type MainTabParamList = {
   BreatheTab: undefined;
@@ -50,10 +53,28 @@ function EmptyComponent() {
 
 export default function MainTabNavigator() {
   const { theme, isDark } = useTheme();
+  const [initialRoute, setInitialRoute] = useState<"BreatheTab" | "AffirmTab">("BreatheTab");
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    AsyncStorage.getItem(FIRST_TAB_VISIT_KEY).then((value) => {
+      if (value !== "done") {
+        setInitialRoute("AffirmTab");
+        AsyncStorage.setItem(FIRST_TAB_VISIT_KEY, "done").catch(() => {});
+      }
+      setReady(true);
+    }).catch(() => {
+      setReady(true);
+    });
+  }, []);
+
+  if (!ready) {
+    return null;
+  }
 
   return (
     <Tab.Navigator
-      initialRouteName="BreatheTab"
+      initialRouteName={initialRoute}
       screenOptions={{
         tabBarActiveTintColor: theme.tabIconSelected,
         tabBarInactiveTintColor: theme.tabIconDefault,

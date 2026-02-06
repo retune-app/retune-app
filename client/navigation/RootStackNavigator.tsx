@@ -53,7 +53,7 @@ export default function RootStackNavigator() {
   const screenOptions = useScreenOptions();
   const { theme } = useTheme();
   const { isAuthenticated, isLoading } = useAuth();
-  const [currentRoute, setCurrentRoute] = useState<string>('BreatheTab');
+  const [currentRoute, setCurrentRoute] = useState<string>('AffirmTab');
   const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null);
 
   useEffect(() => {

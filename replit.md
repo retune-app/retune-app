@@ -53,6 +53,14 @@ Preferred communication style: Simple, everyday language.
   - `POST /api/user/voice-consent` - Records user consent for voice cloning
   - `DELETE /api/user/data` - Permanently deletes all user data
 
+### First-Time User Experience (FTUE)
+- **Onboarding Slides**: 3-screen animated onboarding (Breathe, Believe, Become) shown only on first login. Tracked via AsyncStorage `@onboarding/completed`. Features pulsing icons, dot indicators, skip/next/get-started buttons.
+- **Default Landing Tab**: First-time users land on Believe tab (AffirmTab) to see content immediately. Tracked via AsyncStorage `@navigation/firstTabVisit`. Returning users land on BreatheTab.
+- **Voice Setup Deferred**: Voice cloning prompt is NOT auto-triggered after signup. Instead, a gold-accented nudge card ("Hear these in your voice") appears on the Believe tab header. Dismissible via AsyncStorage `@nudge/voiceCloneDismissed`.
+- **First-Play Celebration**: First-ever play triggers a haptic success notification. Tracked via AsyncStorage `@play/firstPlay`.
+- **Tap-to-Listen Hint**: "Tap the play button to hear your first affirmation" shown for new users who haven't played yet.
+- **Swipe Tooltip**: LibraryTip component shows swipe gestures (delete left, breathing/rename right) with animated icons. Tracked via AsyncStorage `@tips/librarySwipe`.
+
 ### Navigation Structure
 - **2-Tab Navigation**: Breathe (left), Believe (right) with middle Create (+) button - aligns with "Breathe, Believe, Become" tagline
 - **Settings Access**: Floating settings button (gear icon) on Breathe and Believe screens, positioned bottom-right above tab bar (48x48px with gold border)

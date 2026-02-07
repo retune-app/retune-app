@@ -1,7 +1,10 @@
 import { db } from "./db";
 import { users, voiceSamples } from "@shared/schema";
 import { eq, and, isNotNull, sql } from "drizzle-orm";
-import { deleteVoice } from "./replit_integrations/elevenlabs/client";
+import { deleteVoice, listVoices } from "./replit_integrations/elevenlabs/client";
+
+const VOICE_SLOT_WARNING_THRESHOLD = 0.83;
+const ELEVENLABS_PLAN_VOICE_LIMIT = 30;
 
 export async function findInactiveVoices(inactiveDays: number = 60) {
   const cutoffDate = new Date();
@@ -72,7 +75,7 @@ export async function runVoiceRotation(inactiveDays: number = 60) {
 }
 
 export async function getVoiceSlotStats() {
-  const [activeVoices] = await db
+  const [activeVoicesDb] = await db
     .select({ count: sql<number>`count(*)` })
     .from(users)
     .where(isNotNull(users.voiceId));
@@ -94,9 +97,56 @@ export async function getVoiceSlotStats() {
       )
     );
 
+  let elevenLabsSlots = { used: 0, total: 0, warning: false, warningMessage: "" };
+  try {
+    const allVoices = await listVoices();
+    const clonedVoices = allVoices.filter((v: any) => v.category === "cloned");
+    const used = clonedVoices.length;
+
+    const total = ELEVENLABS_PLAN_VOICE_LIMIT;
+
+    const usageRatio = used / total;
+    const warning = usageRatio >= VOICE_SLOT_WARNING_THRESHOLD;
+    const warningMessage = warning
+      ? `WARNING: ElevenLabs voice slots at ${used}/${total} (${Math.round(usageRatio * 100)}%). Consider upgrading your plan or running voice rotation.`
+      : "";
+
+    if (warning) {
+      console.warn(`[Voice Slots] ${warningMessage}`);
+    }
+
+    elevenLabsSlots = { used, total, warning, warningMessage };
+  } catch (error: any) {
+    console.error("[Voice Slots] Failed to fetch ElevenLabs voice data:", error?.message);
+    elevenLabsSlots = { used: 0, total: 0, warning: false, warningMessage: "Failed to fetch live ElevenLabs data" };
+  }
+
   return {
-    activeVoiceSlots: Number(activeVoices?.count || 0),
-    totalUsers: Number(totalUsers?.count || 0),
-    recentlyActiveVoices: Number(recentlyActive?.count || 0),
+    database: {
+      activeVoiceSlots: Number(activeVoicesDb?.count || 0),
+      totalUsers: Number(totalUsers?.count || 0),
+      recentlyActiveVoices: Number(recentlyActive?.count || 0),
+    },
+    elevenLabs: elevenLabsSlots,
   };
+}
+
+export async function checkVoiceSlotWarning(): Promise<string | null> {
+  try {
+    const allVoices = await listVoices();
+    const clonedVoices = allVoices.filter((v: any) => v.category === "cloned");
+    const used = clonedVoices.length;
+    const total = ELEVENLABS_PLAN_VOICE_LIMIT;
+    const usageRatio = used / total;
+
+    if (usageRatio >= VOICE_SLOT_WARNING_THRESHOLD) {
+      const msg = `[Voice Slots WARNING] ${used}/${total} slots used (${Math.round(usageRatio * 100)}%). Running auto-cleanup...`;
+      console.warn(msg);
+      return msg;
+    }
+    return null;
+  } catch (error: any) {
+    console.error("[Voice Slots] Warning check failed:", error?.message);
+    return null;
+  }
 }

@@ -17,7 +17,7 @@ import {
   deleteVoice,
   type WordTiming,
 } from "./replit_integrations/elevenlabs/client";
-import { findInactiveVoices, runVoiceRotation, getVoiceSlotStats } from "./voice-rotation";
+import { findInactiveVoices, runVoiceRotation, getVoiceSlotStats, checkVoiceSlotWarning } from "./voice-rotation";
 import { setupAuth, requireAuth, optionalAuth, AuthenticatedRequest } from "./auth";
 import {
   postIssueComment,
@@ -1056,7 +1056,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const statusCode = cloneError?.statusCode || 500;
           let userMessage = "Voice cloning failed. Please try again.";
 
-          if (statusCode === 401 || statusCode === 403) {
+          if (elevenLabsDetail.toLowerCase().includes("maximum") || elevenLabsDetail.toLowerCase().includes("custom voices") || elevenLabsDetail.toLowerCase().includes("voice limit")) {
+            console.error("[Voice Slots] ElevenLabs voice slot limit reached! Attempting auto-cleanup...");
+            userMessage = "Voice cloning is temporarily unavailable. Please try again in a few minutes.";
+          } else if (statusCode === 401 || statusCode === 403) {
             userMessage = "Voice cloning service is temporarily unavailable. Please try again later.";
           } else if (statusCode === 429) {
             userMessage = "Voice cloning service is busy. Please wait a few minutes and try again.";
@@ -1064,8 +1067,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             userMessage = "Your recording was too short. Please record at least 20 seconds of clear speech.";
           } else if (elevenLabsDetail.toLowerCase().includes("audio") || elevenLabsDetail.toLowerCase().includes("format")) {
             userMessage = "There was a problem with the audio format. Please try recording again.";
-          } else if (elevenLabsDetail) {
-            userMessage = `Voice cloning failed: ${elevenLabsDetail}`;
+          } else {
+            userMessage = "Voice cloning failed. Please try again later.";
           }
 
           res.status(statusCode === 429 ? 429 : 500).json({ error: userMessage });
@@ -2802,6 +2805,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`[Voice Rotation] Rotated ${results.rotated} inactive voices`);
       } else {
         console.log("[Voice Rotation] No inactive voices to rotate");
+      }
+
+      const warning = await checkVoiceSlotWarning();
+      if (warning) {
+        console.warn(warning);
       }
     } catch (error) {
       console.error("[Voice Rotation] Scheduled cleanup failed:", error);

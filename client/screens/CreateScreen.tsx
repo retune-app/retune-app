@@ -58,6 +58,48 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 import ScriptPager from './ScriptPager';
 
+const PILLAR_EXAMPLES: Record<string, string> = {
+  Mind: "e.g., Stay calm and focused under pressure, think clearly in stressful situations...",
+  Body: "e.g., Feel energized and strong throughout the day, embrace a healthy lifestyle...",
+  Spirit: "e.g., Feel deeply grateful for life's blessings, connect with inner peace...",
+  Connection: "e.g., Build deeper, more meaningful relationships, communicate with empathy...",
+  Achievement: "e.g., Reach my career goals with confidence, attract financial abundance...",
+  Home: "e.g., Create a peaceful and harmonious home, strengthen family bonds...",
+};
+
+const TAG_EXAMPLES: Record<string, string> = {
+  Confidence: "e.g., Speak up boldly in meetings, trust my decisions completely...",
+  Focus: "e.g., Stay deeply focused for hours, eliminate distractions effortlessly...",
+  Resilience: "e.g., Bounce back from setbacks stronger, handle challenges with grace...",
+  Emotion: "e.g., Stay emotionally balanced, process feelings with clarity and calm...",
+  Health: "e.g., Feel vibrant and full of energy, make healthy choices naturally...",
+  Sleep: "e.g., Fall asleep effortlessly, wake up feeling refreshed and renewed...",
+  "Body Image": "e.g., Love and appreciate my body exactly as it is, feel comfortable in my skin...",
+  Gratitude: "e.g., Notice and appreciate the good in every day, feel abundant and thankful...",
+  Happiness: "e.g., Choose joy in every moment, radiate positivity and warmth...",
+  Vision: "e.g., See my future clearly, take inspired action toward my dreams...",
+  Relationships: "e.g., Attract loving, supportive people, nurture deep connections...",
+  "Self-Compassion": "e.g., Speak kindly to myself, forgive my mistakes and grow from them...",
+  Career: "e.g., Excel in my professional role, attract new opportunities effortlessly...",
+  Wealth: "e.g., Attract financial abundance, manage money wisely and confidently...",
+  Skills: "e.g., Learn new skills quickly, master my craft with dedication...",
+  Habits: "e.g., Build powerful daily routines, replace old habits with empowering ones...",
+  Motivation: "e.g., Wake up driven and inspired, pursue my goals with relentless energy...",
+  Family: "e.g., Be a loving and patient family member, create joyful family moments...",
+  Organization: "e.g., Keep my space clean and organized, bring order to every area of life...",
+  Environment: "e.g., Create a calming and inspiring living space, feel at peace in my home...",
+};
+
+function getDynamicPlaceholder(pillar: PillarName | null, tags: string[]): string {
+  if (tags.length > 0 && TAG_EXAMPLES[tags[0]]) {
+    return TAG_EXAMPLES[tags[0]];
+  }
+  if (pillar && PILLAR_EXAMPLES[pillar]) {
+    return PILLAR_EXAMPLES[pillar];
+  }
+  return "e.g., Build confidence in public speaking, achieve financial independence...";
+}
+
 export default function CreateScreen() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
@@ -668,7 +710,7 @@ export default function CreateScreen() {
                   style={[styles.goalInput, { color: theme.text }]}
                   placeholder={
                     mode === "ai"
-                      ? "e.g., Build confidence in public speaking, achieve financial independence..."
+                      ? getDynamicPlaceholder(selectedPillar, selectedSubcategories)
                       : "Write or paste your affirmation script here..."
                   }
                   placeholderTextColor={theme.placeholder}

@@ -1067,9 +1067,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(403).json({ error: "Voice cloning consent required. Please accept the voice cloning terms first." });
         }
 
-        // Check usage limit
+        // Check usage limit (admins have unlimited clones)
         const clonesUsed = user.voiceClonesUsed || 0;
-        if (clonesUsed >= MAX_VOICE_CLONES) {
+        const isAdmin = ADMIN_USER_IDS.has(req.userId!);
+        if (!isAdmin && clonesUsed >= MAX_VOICE_CLONES) {
           // Clean up uploaded file immediately
           fs.unlink(file.path, () => {});
           return res.status(429).json({ 

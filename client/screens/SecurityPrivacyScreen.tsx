@@ -125,8 +125,8 @@ export default function SecurityPrivacyScreen() {
       iconBgColor: "#6366F120",
       title: "Voice Data Security",
       subtitle: "voice samples, cloned voice IDs",
-      highlight: "ElevenLabs cloud",
-      description: "When users upload voice samples for cloning, ElevenLabs stores and processes them to create the cloned voice",
+      highlight: "ElevenLabs cloud (voice cloning)",
+      description: "Voice samples for cloning are processed by ElevenLabs. Stock AI voices are powered by Hume AI",
     },
     {
       icon: "database",
@@ -152,8 +152,8 @@ export default function SecurityPrivacyScreen() {
       iconBgColor: "#EF444420",
       title: "Your Control",
       subtitle: "deletion rights",
-      highlight: "Applies to both your database and ElevenLabs",
-      description: "Your database (which you control) and ElevenLabs (cloned voices can be deleted via their API)",
+      highlight: "Applies to your database and voice providers",
+      description: "Your database (which you control) and ElevenLabs (cloned voices can be deleted via their API). Stock AI voice data is not stored",
     },
   ];
 
@@ -233,7 +233,7 @@ export default function SecurityPrivacyScreen() {
                 <Feather name="check" size={14} color="#10B981" />
               </View>
               <ThemedText type="small" style={{ color: theme.textSecondary, flex: 1 }}>
-                Voice data can be removed from ElevenLabs
+                Cloned voice data can be removed from ElevenLabs
               </ThemedText>
             </View>
           </View>

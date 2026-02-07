@@ -32,6 +32,8 @@ const FONT_SIZES: Record<RSVPFontSize, number> = {
   XL: 64,
 };
 
+const MONO_CHAR_WIDTH_RATIO = 0.6;
+
 function getORPIndex(word: string): number {
   const len = word.length;
   if (len <= 1) return 0;
@@ -61,16 +63,16 @@ function renderWordWithORP(
   const orpChar = word[orpIndex] || "";
   const after = word.slice(orpIndex + 1);
 
-  const charWidth = fontSize * 0.6;
-  const beforeWidth = before.length * charWidth;
-  const orpHalfWidth = charWidth / 2;
-  const offsetX = -(beforeWidth + orpHalfWidth - (word.length * charWidth) / 2);
+  const charWidth = fontSize * MONO_CHAR_WIDTH_RATIO;
+  const wordHalfWidth = (word.length * charWidth) / 2;
+  const orpCenter = (orpIndex + 0.5) * charWidth;
+  const offsetX = wordHalfWidth - orpCenter;
 
   return (
     <View style={{ transform: [{ translateX: offsetX }] }}>
-      <Text style={[styles.word, { fontSize }]}>
+      <Text style={[styles.wordMono, { fontSize }]}>
         <Text style={{ color: textColor }}>{before}</Text>
-        <Text style={{ color: accentColor, fontWeight: '900' }}>{orpChar}</Text>
+        <Text style={{ color: accentColor, fontWeight: '700' }}>{orpChar}</Text>
         <Text style={{ color: textColor }}>{after}</Text>
       </Text>
     </View>
@@ -87,7 +89,6 @@ export function RSVPDisplay({
 }: RSVPDisplayProps) {
   const { theme } = useTheme();
   
-  // Use light colors for dark background in fullscreen mode
   const textColor = forceDarkMode ? "#F8FAFB" : theme.text;
   const accentColor = forceDarkMode ? "#E5C95C" : theme.accent;
 
@@ -179,6 +180,11 @@ const styles = StyleSheet.create({
     fontFamily: "Nunito_700Bold",
     textAlign: "center",
     letterSpacing: 1,
+  },
+  wordMono: {
+    fontFamily: "SpaceMono_700Bold",
+    textAlign: "center",
+    letterSpacing: 0,
   },
   placeholder: {
     fontSize: 16,

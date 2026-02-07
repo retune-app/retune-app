@@ -100,11 +100,20 @@ export function RSVPDisplay({
 
     for (let i = wordTimings.length - 1; i >= 0; i--) {
       if (currentPositionMs >= wordTimings[i].startMs) {
+        if (currentPositionMs <= wordTimings[i].endMs + 200) {
+          return wordTimings[i];
+        }
+        if (i < wordTimings.length - 1) {
+          const gapToNext = wordTimings[i + 1].startMs - wordTimings[i].endMs;
+          if (gapToNext > 500) {
+            return null;
+          }
+        }
         return wordTimings[i];
       }
     }
 
-    return wordTimings[0];
+    return null;
   }, [wordTimings, currentPositionMs]);
 
 

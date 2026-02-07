@@ -1,8 +1,3 @@
-import { spawn } from "child_process";
-import { writeFile, unlink, readFile } from "fs/promises";
-import { randomUUID } from "crypto";
-import { tmpdir } from "os";
-import { join } from "path";
 
 const SENTENCE_PAUSE_SECONDS = 1.5;
 
@@ -54,158 +49,10 @@ function sanitizeWordTimings(wordTimings: WordTiming[]): WordTiming[] {
   return sanitized;
 }
 
-function findSentenceEndIndices(words: WordTiming[]): number[] {
-  const indices: number[] = [];
-  for (let i = 0; i < words.length; i++) {
-    const word = words[i].word;
-    if (/[.!?]["']?$/.test(word)) {
-      indices.push(i);
-    }
-  }
-  return indices;
-}
-
-function adjustWordTimingsForPauses(
-  wordTimings: WordTiming[],
-  sentenceEndIndices: number[],
-  pauseMs: number
-): WordTiming[] {
-  if (sentenceEndIndices.length === 0) return wordTimings;
-
-  const adjusted: WordTiming[] = [];
-  let cumulativePause = 0;
-  let nextPauseIndex = 0;
-
-  for (let i = 0; i < wordTimings.length; i++) {
-    const word = wordTimings[i];
-
-    adjusted.push({
-      word: word.word,
-      startMs: word.startMs + cumulativePause,
-      endMs: word.endMs + cumulativePause,
-    });
-
-    if (
-      nextPauseIndex < sentenceEndIndices.length &&
-      i === sentenceEndIndices[nextPauseIndex] &&
-      i < wordTimings.length - 1
-    ) {
-      cumulativePause += pauseMs;
-      nextPauseIndex++;
-    }
-  }
-
-  return adjusted;
-}
-
-async function insertSilenceIntoAudio(
-  audioBuffer: Buffer,
-  wordTimings: WordTiming[],
-  sentenceEndIndices: number[],
-  pauseSeconds: number
-): Promise<Buffer> {
-  if (sentenceEndIndices.length === 0 || sentenceEndIndices.every(i => i >= wordTimings.length - 1)) {
-    return audioBuffer;
-  }
-
-  const splitPositions: number[] = [];
-  for (const idx of sentenceEndIndices) {
-    if (idx < wordTimings.length - 1) {
-      splitPositions.push(wordTimings[idx].endMs / 1000);
-    }
-  }
-
-  if (splitPositions.length === 0) {
-    return audioBuffer;
-  }
-
-  const inputPath = join(tmpdir(), `input-${randomUUID()}.mp3`);
-  const outputPath = join(tmpdir(), `output-${randomUUID()}.mp3`);
-
-  try {
-    await writeFile(inputPath, audioBuffer);
-
-    const allPositions = [0, ...splitPositions];
-    const filterParts: string[] = [];
-    const concatInputs: string[] = [];
-    const fadeDuration = 0.08;
-    let segIdx = 0;
-
-    for (let i = 0; i < allPositions.length; i++) {
-      const start = allPositions[i];
-      const end = i + 1 < allPositions.length ? allPositions[i + 1] : undefined;
-      const isFirst = i === 0;
-      const isLast = end === undefined;
-
-      let chain: string;
-      if (isLast) {
-        chain = `[0]atrim=start=${start},asetpts=PTS-STARTPTS`;
-        if (!isFirst) chain += `,afade=t=in:st=0:d=${fadeDuration}`;
-      } else {
-        const segDuration = end - start;
-        const fadeOutStart = Math.max(0, segDuration - fadeDuration);
-        chain = `[0]atrim=start=${start}:end=${end},asetpts=PTS-STARTPTS`;
-        if (!isFirst) chain += `,afade=t=in:st=0:d=${fadeDuration}`;
-        chain += `,afade=t=out:st=${fadeOutStart}:d=${fadeDuration}`;
-      }
-
-      filterParts.push(`${chain}[s${segIdx}]`);
-      concatInputs.push(`[s${segIdx}]`);
-      segIdx++;
-
-      if (!isLast) {
-        filterParts.push(
-          `anullsrc=r=44100:cl=mono,atrim=0:${pauseSeconds},asetpts=PTS-STARTPTS[p${i}]`
-        );
-        concatInputs.push(`[p${i}]`);
-      }
-    }
-
-    const totalStreams = concatInputs.length;
-    filterParts.push(
-      `${concatInputs.join("")}concat=n=${totalStreams}:v=0:a=1[out]`
-    );
-
-    const filterComplex = filterParts.join(";");
-
-    await new Promise<void>((resolve, reject) => {
-      const ffmpeg = spawn("ffmpeg", [
-        "-i", inputPath,
-        "-filter_complex", filterComplex,
-        "-map", "[out]",
-        "-acodec", "libmp3lame",
-        "-q:a", "2",
-        "-y",
-        outputPath,
-      ]);
-      let stderrData = "";
-      ffmpeg.stderr.on("data", (d) => { stderrData += d.toString(); });
-      ffmpeg.on("close", (code) => {
-        if (code === 0) resolve();
-        else {
-          console.error("ffmpeg filter stderr:", stderrData);
-          reject(new Error(`ffmpeg filter exited with code ${code}`));
-        }
-      });
-      ffmpeg.on("error", reject);
-    });
-
-    const result = await readFile(outputPath);
-
-    await Promise.all([
-      unlink(inputPath).catch(() => {}),
-      unlink(outputPath).catch(() => {}),
-    ]);
-
-    return result;
-  } catch (error) {
-    console.error("Error inserting silence into audio:", error);
-    await Promise.all([
-      unlink(inputPath).catch(() => {}),
-      unlink(outputPath).catch(() => {}),
-    ]);
-    return audioBuffer;
-  }
+function splitIntoSentences(text: string): string[] {
+  const parts = text.match(/[^.!?]+[.!?]["']?\s*/g);
+  if (!parts || parts.length === 0) return [text];
+  return parts.map(s => s.trim()).filter(s => s.length > 0);
 }
 
 export async function humeTextToSpeech(
@@ -217,6 +64,15 @@ export async function humeTextToSpeech(
     throw new Error("HUME_API_KEY environment variable is not set");
   }
 
+  const sentences = splitIntoSentences(text);
+  const utterances = sentences.map((sentence, i) => ({
+    text: sentence,
+    voice: { name: voiceName, provider: "HUME_AI" },
+    trailing_silence: i < sentences.length - 1 ? SENTENCE_PAUSE_SECONDS : 0.35,
+  }));
+
+  console.log(`Hume TTS: Sending ${utterances.length} utterances with ${SENTENCE_PAUSE_SECONDS}s trailing silence`);
+
   const response = await fetch("https://api.hume.ai/v0/tts", {
     method: "POST",
     headers: {
@@ -225,13 +81,10 @@ export async function humeTextToSpeech(
     },
     body: JSON.stringify({
       version: "2",
-      utterances: [
-        {
-          text,
-          voice: { name: voiceName, provider: "HUME_AI" },
-        },
-      ],
+      utterances,
       include_timestamp_types: ["word"],
+      split_utterances: false,
+      strip_headers: true,
     }),
   });
 
@@ -248,7 +101,7 @@ export async function humeTextToSpeech(
     throw new Error("Hume TTS returned no audio data");
   }
 
-  const rawAudioBuffer = Buffer.from(generation.audio, "base64");
+  const audioBuffer = Buffer.from(generation.audio, "base64");
 
   let wordTimings: WordTiming[] = [];
   const snippets = generation.snippets;
@@ -273,26 +126,7 @@ export async function humeTextToSpeech(
 
   wordTimings = sanitizeWordTimings(wordTimings);
 
-  const sentenceEndIndices = findSentenceEndIndices(wordTimings);
-  console.log(`Hume TTS: Found ${sentenceEndIndices.length} sentence endings in ${wordTimings.length} words`);
-
-  let finalAudioBuffer: Buffer = rawAudioBuffer;
-  if (sentenceEndIndices.length > 0 && SENTENCE_PAUSE_SECONDS > 0) {
-    finalAudioBuffer = await insertSilenceIntoAudio(
-      rawAudioBuffer,
-      wordTimings,
-      sentenceEndIndices,
-      SENTENCE_PAUSE_SECONDS
-    );
-
-    wordTimings = adjustWordTimingsForPauses(
-      wordTimings,
-      sentenceEndIndices,
-      SENTENCE_PAUSE_SECONDS * 1000
-    );
-
-    console.log(`Hume TTS: Inserted ${sentenceEndIndices.length} pauses of ${SENTENCE_PAUSE_SECONDS}s each`);
-  }
+  console.log(`Hume TTS: Got ${wordTimings.length} word timings from ${utterances.length} utterances (native pauses, no ffmpeg)`);
 
   let estimatedDuration: number;
   if (
@@ -311,7 +145,7 @@ export async function humeTextToSpeech(
     estimatedDuration = Math.max(1, Math.ceil((wordCount / 150) * 60));
   }
 
-  const audioArrayBuffer = new Uint8Array(finalAudioBuffer).buffer as ArrayBuffer;
+  const audioArrayBuffer = new Uint8Array(audioBuffer).buffer as ArrayBuffer;
 
   return {
     audio: audioArrayBuffer,

@@ -108,123 +108,81 @@ async function insertSilenceIntoAudio(
     return audioBuffer;
   }
 
+  const splitPositions: number[] = [];
+  for (const idx of sentenceEndIndices) {
+    if (idx < wordTimings.length - 1) {
+      splitPositions.push(wordTimings[idx].endMs / 1000);
+    }
+  }
+
+  if (splitPositions.length === 0) {
+    return audioBuffer;
+  }
+
   const inputPath = join(tmpdir(), `input-${randomUUID()}.mp3`);
   const outputPath = join(tmpdir(), `output-${randomUUID()}.mp3`);
-  const silencePath = join(tmpdir(), `silence-${randomUUID()}.mp3`);
-  const concatListPath = join(tmpdir(), `concat-${randomUUID()}.txt`);
 
   try {
     await writeFile(inputPath, audioBuffer);
 
-    await new Promise<void>((resolve, reject) => {
-      const ffmpeg = spawn("ffmpeg", [
-        "-f", "lavfi",
-        "-i", `anullsrc=r=44100:cl=mono`,
-        "-t", pauseSeconds.toString(),
-        "-q:a", "9",
-        "-acodec", "libmp3lame",
-        "-y",
-        silencePath,
-      ]);
-      ffmpeg.stderr.on("data", () => {});
-      ffmpeg.on("close", (code) => {
-        if (code === 0) resolve();
-        else reject(new Error(`ffmpeg silence generation exited with code ${code}`));
-      });
-      ffmpeg.on("error", reject);
-    });
+    const allPositions = [0, ...splitPositions];
+    const filterParts: string[] = [];
+    const concatInputs: string[] = [];
+    let segIdx = 0;
 
-    const splitPositions: number[] = [];
-    for (const idx of sentenceEndIndices) {
-      if (idx < wordTimings.length - 1) {
-        splitPositions.push(wordTimings[idx].endMs / 1000);
+    for (let i = 0; i < allPositions.length; i++) {
+      const start = allPositions[i];
+      const end = i + 1 < allPositions.length ? allPositions[i + 1] : undefined;
+      const trimFilter = end !== undefined
+        ? `[0]atrim=start=${start}:end=${end},asetpts=PTS-STARTPTS[s${segIdx}]`
+        : `[0]atrim=start=${start},asetpts=PTS-STARTPTS[s${segIdx}]`;
+      filterParts.push(trimFilter);
+      concatInputs.push(`[s${segIdx}]`);
+      segIdx++;
+
+      if (end !== undefined) {
+        filterParts.push(
+          `anullsrc=r=44100:cl=mono,atrim=0:${pauseSeconds},asetpts=PTS-STARTPTS[p${i}]`
+        );
+        concatInputs.push(`[p${i}]`);
       }
     }
 
-    if (splitPositions.length === 0) {
-      return audioBuffer;
-    }
+    const totalStreams = concatInputs.length;
+    filterParts.push(
+      `${concatInputs.join("")}concat=n=${totalStreams}:v=0:a=1[out]`
+    );
 
-    const segments: string[] = [];
-    let lastPos = 0;
+    const filterComplex = filterParts.join(";");
 
-    for (let i = 0; i < splitPositions.length; i++) {
-      const segmentPath = join(tmpdir(), `segment-${randomUUID()}-${i}.mp3`);
-      const startTime = lastPos;
-      const endTime = splitPositions[i];
-
-      await new Promise<void>((resolve, reject) => {
-        const ffmpeg = spawn("ffmpeg", [
-          "-i", inputPath,
-          "-ss", startTime.toString(),
-          "-to", endTime.toString(),
-          "-acodec", "libmp3lame",
-          "-q:a", "2",
-          "-y",
-          segmentPath,
-        ]);
-        ffmpeg.stderr.on("data", () => {});
-        ffmpeg.on("close", (code) => {
-          if (code === 0) resolve();
-          else reject(new Error(`ffmpeg segment extraction exited with code ${code}`));
-        });
-        ffmpeg.on("error", reject);
-      });
-
-      segments.push(segmentPath);
-      lastPos = endTime;
-    }
-
-    const finalSegmentPath = join(tmpdir(), `segment-${randomUUID()}-final.mp3`);
     await new Promise<void>((resolve, reject) => {
       const ffmpeg = spawn("ffmpeg", [
         "-i", inputPath,
-        "-ss", lastPos.toString(),
-        "-acodec", "libmp3lame",
-        "-q:a", "2",
-        "-y",
-        finalSegmentPath,
-      ]);
-      ffmpeg.stderr.on("data", () => {});
-      ffmpeg.on("close", (code) => {
-        if (code === 0) resolve();
-        else reject(new Error(`ffmpeg final segment extraction exited with code ${code}`));
-      });
-      ffmpeg.on("error", reject);
-    });
-    segments.push(finalSegmentPath);
-
-    let concatContent = "";
-    for (let i = 0; i < segments.length; i++) {
-      concatContent += `file '${segments[i]}'\n`;
-      if (i < segments.length - 1) {
-        concatContent += `file '${silencePath}'\n`;
-      }
-    }
-    await writeFile(concatListPath, concatContent);
-
-    await new Promise<void>((resolve, reject) => {
-      const ffmpeg = spawn("ffmpeg", [
-        "-f", "concat",
-        "-safe", "0",
-        "-i", concatListPath,
+        "-filter_complex", filterComplex,
+        "-map", "[out]",
         "-acodec", "libmp3lame",
         "-q:a", "2",
         "-y",
         outputPath,
       ]);
-      ffmpeg.stderr.on("data", () => {});
+      let stderrData = "";
+      ffmpeg.stderr.on("data", (d) => { stderrData += d.toString(); });
       ffmpeg.on("close", (code) => {
         if (code === 0) resolve();
-        else reject(new Error(`ffmpeg concat exited with code ${code}`));
+        else {
+          console.error("ffmpeg filter stderr:", stderrData);
+          reject(new Error(`ffmpeg filter exited with code ${code}`));
+        }
       });
       ffmpeg.on("error", reject);
     });
 
     const result = await readFile(outputPath);
 
-    const filesToClean = [inputPath, outputPath, silencePath, concatListPath, ...segments];
-    await Promise.all(filesToClean.map(f => unlink(f).catch(() => {})));
+    await Promise.all([
+      unlink(inputPath).catch(() => {}),
+      unlink(outputPath).catch(() => {}),
+    ]);
 
     return result;
   } catch (error) {
@@ -232,8 +190,6 @@ async function insertSilenceIntoAudio(
     await Promise.all([
       unlink(inputPath).catch(() => {}),
       unlink(outputPath).catch(() => {}),
-      unlink(silencePath).catch(() => {}),
-      unlink(concatListPath).catch(() => {}),
     ]);
     return audioBuffer;
   }

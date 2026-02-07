@@ -1064,7 +1064,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   timerDisplay: {
-    marginTop: Spacing.sm,
+    marginTop: Spacing.xl,
     alignItems: "center",
   },
   timer: {

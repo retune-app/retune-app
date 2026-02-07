@@ -284,8 +284,17 @@ export default function CreateScreen() {
         );
       }, 150);
     },
-    onError: () => {
-      Alert.alert("Error", "Failed to generate script. Please try again.");
+    onError: (error: any) => {
+      let message = "Failed to generate script. Please try again.";
+      try {
+        const errorStr = error?.message || "";
+        const jsonMatch = errorStr.match(/\{.*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          if (parsed.error) message = parsed.error;
+        }
+      } catch {}
+      Alert.alert("Limit Reached", message);
     },
   });
 

@@ -11,6 +11,7 @@ import {
   Modal,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useHeaderHeight } from "@react-navigation/elements";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -101,6 +102,7 @@ function getDynamicPlaceholder(pillar: PillarName | null, tags: string[]): strin
 
 export default function CreateScreen() {
   const insets = useSafeAreaInsets();
+  const headerHeight = useHeaderHeight();
   const { theme, isDark } = useTheme();
   const navigation = useNavigation<NavigationProp>();
   const queryClient = useQueryClient();
@@ -171,12 +173,12 @@ export default function CreateScreen() {
       stepRef.current?.measureLayout(
         scrollViewRef.current as any,
         (_x, y) => {
-          scrollViewRef.current?.scrollTo({ y: y - Spacing.lg, animated: true });
+          scrollViewRef.current?.scrollTo({ y: y - headerHeight - Spacing.lg, animated: true });
         },
         () => {}
       );
     }, 250);
-  }, []);
+  }, [headerHeight]);
 
   const handleAddCustomTag = () => {
     if (!selectedPillar || !newTagName.trim()) return;
@@ -344,7 +346,7 @@ export default function CreateScreen() {
         scriptCardRef.current?.measureLayout(
           scrollViewRef.current as any,
           (_x, y) => {
-            scrollViewRef.current?.scrollTo({ y: y - Spacing.md, animated: true });
+            scrollViewRef.current?.scrollTo({ y: y - headerHeight - Spacing.md, animated: true });
           },
           () => {}
         );
@@ -562,12 +564,13 @@ export default function CreateScreen() {
 
   return (
     <ThemedView style={styles.container}>
+      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: headerHeight, backgroundColor: theme.backgroundRoot, zIndex: 0 }} />
       <KeyboardAwareScrollViewCompat
         ref={scrollViewRef}
         style={styles.scrollView}
         contentContainerStyle={[
           styles.content,
-          { paddingTop: Spacing.lg, paddingBottom: insets.bottom + Spacing["4xl"] },
+          { paddingTop: headerHeight + Spacing.lg, paddingBottom: insets.bottom + Spacing["4xl"] },
         ]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"

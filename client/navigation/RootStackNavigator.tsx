@@ -159,13 +159,9 @@ export default function RootStackNavigator() {
             headerTitle: "Create Affirmation",
             headerTintColor: '#FFFFFF',
             headerTitleStyle: { fontSize: 17, fontWeight: '700' },
-            headerTransparent: false,
             headerShadowVisible: false,
-            headerStyle: { backgroundColor: theme.backgroundRoot },
             headerBackground: () => (
-              <View style={{ flex: 1, backgroundColor: theme.backgroundRoot }}>
-                <View style={{ flex: 1, backgroundColor: theme.goldLight, borderBottomLeftRadius: 18, borderBottomRightRadius: 18 }} />
-              </View>
+              <View style={{ flex: 1, backgroundColor: theme.goldLight, borderBottomLeftRadius: 18, borderBottomRightRadius: 18 }} />
             ),
             presentation: "modal",
             animation: "slide_from_bottom",
@@ -177,13 +173,9 @@ export default function RootStackNavigator() {
           options={{
             headerTitle: "",
             headerTintColor: '#FFFFFF',
-            headerTransparent: false,
             headerShadowVisible: false,
-            headerStyle: { backgroundColor: theme.backgroundRoot },
             headerBackground: () => (
-              <View style={{ flex: 1, backgroundColor: theme.backgroundRoot }}>
-                <View style={{ flex: 1, backgroundColor: theme.goldLight, borderBottomLeftRadius: 18, borderBottomRightRadius: 18 }} />
-              </View>
+              <View style={{ flex: 1, backgroundColor: theme.goldLight, borderBottomLeftRadius: 18, borderBottomRightRadius: 18 }} />
             ),
             animation: "fade",
             animationDuration: 250,

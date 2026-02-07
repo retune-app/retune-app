@@ -175,6 +175,7 @@ export default function RootStackNavigator() {
           options={{
             headerTitle: "",
             headerTintColor: '#FFFFFF',
+            headerBackVisible: false,
             headerShadowVisible: false,
             headerBackground: () => (
               <View style={{ flex: 1, backgroundColor: theme.goldLight, borderBottomLeftRadius: 18, borderBottomRightRadius: 18, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 6 }} />

@@ -222,6 +222,7 @@ export default function PlayerScreen() {
   }, [hapticEnabled]);
 
   useLayoutEffect(() => {
+    const isSaved = !isNew || hasSaved;
     navigation.setOptions({
       headerTitle: () => (
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%', paddingHorizontal: 4 }}>
@@ -248,12 +249,16 @@ export default function PlayerScreen() {
               <Feather name="arrow-left" size={22} color="#FFFFFF" />
             </Pressable>
           )}
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <View style={{ width: 3, height: 16, borderRadius: 2, backgroundColor: '#FFFFFF', marginRight: 8 }} />
-            <Text style={{ color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: 2, fontWeight: '700', fontSize: 13 }}>
-              My Affirmation
-            </Text>
-          </View>
+          {isSaved ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{ width: 3, height: 16, borderRadius: 2, backgroundColor: '#FFFFFF', marginRight: 8 }} />
+              <Text style={{ color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: 2, fontWeight: '700', fontSize: 13 }}>
+                My Affirmation
+              </Text>
+            </View>
+          ) : (
+            <View />
+          )}
           <Pressable
             onPress={handleDelete}
             testID="button-delete-affirmation"

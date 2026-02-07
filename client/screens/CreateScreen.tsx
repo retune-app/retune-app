@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Animated, {
@@ -106,6 +106,12 @@ export default function CreateScreen() {
   const navigation = useNavigation<NavigationProp>();
   const queryClient = useQueryClient();
   const { breathingAffirmation, setBreathingAffirmation } = useAudio();
+
+  const { data: userLimits } = useQuery<{
+    aiAffirmations: { used: number; limit: number; remaining: number };
+  }>({
+    queryKey: ["/api/user/limits"],
+  });
 
   const [mode, setMode] = useState<"ai" | "manual">("ai");
   const [selectedPillar, setSelectedPillar] = useState<PillarName | null>(null);
@@ -279,6 +285,7 @@ export default function CreateScreen() {
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Keyboard.dismiss();
+      queryClient.invalidateQueries({ queryKey: ["/api/user/limits"] });
 
       scriptScale.value = 0.92;
       scriptOpacity.value = 0;
@@ -370,6 +377,10 @@ export default function CreateScreen() {
   });
 
   const handleGenerate = () => {
+    if (userLimits?.aiAffirmations?.remaining === 0) {
+      Alert.alert("Monthly Limit Reached", "You've used all your AI-generated affirmations for this month.");
+      return;
+    }
     if (!selectedPillar) {
       Alert.alert("Select a Pillar", "Please choose a pillar for your affirmation.");
       return;

@@ -18,7 +18,7 @@ Preferred communication style: Simple, everyday language.
 - **Audio**: `expo-av` for recording and playback.
 
 ### Key Features
-- **Personalized Affirmations**: Users input goals, AI generates scripts, and voice cloning plays them in the user's voice. Uses a hierarchical pillar-based organization system:
+- **Personalized Affirmations**: Users input goals, AI generates scripts using Subconscious Language Patterns, and voice cloning plays them in the user's voice. AI optimization includes: present tense framing, positive-only language, sensory-rich imagery, identity-level statements, progressive believability, embedded commands, rhythmic flow, and emotional anchoring. Uses a hierarchical pillar-based organization system:
   - **5 Life Pillars**: Mind (#3B82F6), Body (#10B981), Spirit (#8B5CF6), Connection (#F97316), Achievement (#C9A227) - users must select one pillar when creating affirmations
   - **Subcategory Tags**: Optional fine-tuning with up to 5 subcategory tags per affirmation (e.g., Mind → Confidence, Focus, Resilience, Emotion)
   - **Custom Tags**: Users can add up to 3 custom tags per pillar via "+" button in create flow. Stored in AsyncStorage with key `@create/customTags`. Custom tags can be deleted with X button.

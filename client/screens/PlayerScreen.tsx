@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useLayoutEffect, useMemo, useRef } from "react";
 import { View, StyleSheet, Pressable, Alert, ScrollView, Modal } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { HeaderButton } from "@react-navigation/elements";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -232,32 +231,35 @@ export default function PlayerScreen() {
       ),
       headerLeft: () => (
         isNew && !hasSaved ? (
-          <HeaderButton
+          <Pressable
             onPress={handleSave}
             testID="button-save-affirmation"
+            hitSlop={8}
           >
             <Feather 
               name="save" 
               size={22} 
               color={autoSaveMutation.isPending ? theme.textSecondary : "#4CAF50"} 
             />
-          </HeaderButton>
+          </Pressable>
         ) : (
-          <HeaderButton
+          <Pressable
             onPress={() => navigation.goBack()}
             testID="button-back"
+            hitSlop={8}
           >
             <Feather name="arrow-left" size={22} color={theme.text} />
-          </HeaderButton>
+          </Pressable>
         )
       ),
       headerRight: () => (
-        <HeaderButton
+        <Pressable
           onPress={handleDelete}
           testID="button-delete-affirmation"
+          hitSlop={8}
         >
           <Feather name="trash-2" size={22} color="#E53935" />
-        </HeaderButton>
+        </Pressable>
       ),
     });
   }, [navigation, handleSave, handleDelete, autoSaveMutation.isPending, theme, isNew, hasSaved]);

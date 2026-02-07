@@ -1,6 +1,37 @@
 # RETUNED Changelog
 
-## February 7, 2026
+## Version 1.3 (Build 2) — February 7, 2026
+
+### Agent Coordination System
+- Built a real-time coordination system for multi-agent collaboration via GitHub repo (`retune-app/retune-app`).
+- Coordination data stored in `.retuned/coordination/` folder as JSON files with automatic Git commits for full audit trail.
+- **Status tracking**: Agents update their current work, status (idle/in_progress/completed), estimated completion time, and blockers.
+- **Priority management**: Team lead sets daily priorities in `priorities.json`; agents check and acknowledge them.
+- **Blocker flagging**: Agents can flag blockers immediately so the team can unblock them.
+- New API endpoints (all require authentication):
+  - `POST /api/github/coordination/:owner/:repo/init` — Initialize coordination folder
+  - `GET /api/github/coordination/:owner/:repo/status` — Get current agent status
+  - `POST /api/github/coordination/:owner/:repo/status` — Update agent status
+  - `POST /api/github/coordination/:owner/:repo/blocker` — Flag a blocker
+  - `GET /api/github/coordination/:owner/:repo/priorities` — Get daily priorities
+  - `POST /api/github/coordination/:owner/:repo/acknowledge` — Acknowledge priorities
+- Helper functions in `server/github.ts`: `getFileContent`, `createOrUpdateFile` for reading/writing GitHub repo files via API.
+
+### GitHub Issue Management (v1.2 carry-forward)
+- 6 API endpoints for managing GitHub issues: list repos, get assigned issues, post comments, set status labels, move project board cards, and combined status updates.
+- Auto-created color-coded labels: in-progress (yellow), blocked (red), completed (green).
+- Status comments include emoji prefixes for visual scanning.
+- Project board updates via GitHub Projects V2 GraphQL API.
+
+### Code Cleanup (v1.3)
+- Removed 13 debug `console.log` statements from `server/routes.ts` (generation logging) and `client/contexts/AuthContext.tsx` (auth debugging).
+- Retained security-related logs (path traversal blocking, secure file deletion, privacy compliance).
+- Deleted 24MB of conversation screenshots from `attached_assets/`.
+- Removed leftover test files.
+
+---
+
+## Version 1.2 (Build 1) — February 7, 2026
 
 ### First-Time User Experience (FTUE)
 - Added 3-screen animated onboarding flow (Breathe, Believe, Become) shown only on first login, with pulsing icons, dot indicators, and skip/next/get-started buttons. Tracked via AsyncStorage `@onboarding/completed`.
@@ -80,4 +111,6 @@
 - `client/lib/auth-token.ts` - Token-based auth support
 - `server/routes.ts` - Voice cloning errors, rate limiting, sample affirmations, console.log cleanup
 - `server/elevenlabs.ts` - Parsed error details from ElevenLabs API
+- `server/github.ts` - GitHub integration service module
 - `replit.md` - Updated documentation for all new features
+- `CHANGELOG.md` - Comprehensive change documentation

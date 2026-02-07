@@ -88,14 +88,22 @@ Preferred communication style: Simple, everyday language.
 ### GitHub Integration
 - **Connection**: Replit GitHub connector (connection:conn_github_01KGV1YDWVJT54AGKHQNTSN7AB)
 - **Library**: `@octokit/rest` for GitHub API interactions
-- **Service module**: `server/github.ts` — authentication via Replit connector, functions for issue comments, label management, and project board updates
-- **API Endpoints**:
+- **Service module**: `server/github.ts` — authentication via Replit connector, functions for issue comments, label management, project board updates, and coordination file management
+- **Issue Management Endpoints**:
   - `GET /api/github/repos` — List authenticated user's repositories
   - `GET /api/github/issues/:owner/:repo` — Get assigned issues for a repo
   - `POST /api/github/issues/:owner/:repo/:issueNumber/comment` — Post a comment on an issue
   - `POST /api/github/issues/:owner/:repo/:issueNumber/label` — Set status label (in-progress, blocked, completed)
   - `POST /api/github/project/:owner/:projectNumber/move` — Move a card on a GitHub Project board
   - `POST /api/github/issues/:owner/:repo/:issueNumber/status` — Combined: set label + post comment + optionally move project card
+- **Agent Coordination Endpoints** (stored in `.retuned/coordination/` in GitHub repo):
+  - `POST /api/github/coordination/:owner/:repo/init` — Initialize coordination folder with status.json, priorities.json, acknowledgments.json
+  - `GET /api/github/coordination/:owner/:repo/status` — Get current agent status (work, blockers, estimates)
+  - `POST /api/github/coordination/:owner/:repo/status` — Update agent status (idle/in_progress/completed)
+  - `POST /api/github/coordination/:owner/:repo/blocker` — Flag a blocker for team visibility
+  - `GET /api/github/coordination/:owner/:repo/priorities` — Get daily priorities set by team lead
+  - `POST /api/github/coordination/:owner/:repo/acknowledge` — Acknowledge receipt of priorities
+- **Coordination Files**: All coordination data auto-commits to GitHub for audit trail. Helper functions `getFileContent()` and `createOrUpdateFile()` handle GitHub Content API interactions.
 
 ### Database
 - **PostgreSQL**: The primary database, managed with Drizzle ORM.

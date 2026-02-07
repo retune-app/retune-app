@@ -9,6 +9,7 @@ import {
   Modal,
   StatusBar,
   Alert,
+  useWindowDimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
@@ -55,7 +56,6 @@ import {
 } from "@shared/breathingTechniques";
 
 const ACCENT_GOLD = "#C9A227";
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 interface Affirmation {
   id: number;
@@ -69,6 +69,7 @@ export default function BreathingScreen() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
   const navigation = useNavigation<any>();
+  const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = useWindowDimensions();
   const { theme, isDark } = useTheme();
   const { user } = useAuth();
   const { currentAffirmation, isPlaying: isAudioPlaying, playAffirmation, togglePlayPause, breathingAffirmation, requestHighlightAffirmation, stop: stopAffirmationAudio } = useAudio();

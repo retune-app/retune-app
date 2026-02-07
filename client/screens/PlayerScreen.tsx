@@ -250,7 +250,7 @@ export default function PlayerScreen() {
             testID="button-back"
             hitSlop={8}
           >
-            <Feather name="arrow-left" size={22} color={theme.text} />
+            <Feather name="arrow-left" size={22} color="#0F1C3F" />
           </Pressable>
         )
       ),

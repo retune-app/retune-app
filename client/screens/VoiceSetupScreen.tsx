@@ -82,6 +82,8 @@ function UnifiedRecordButton({
   const pulseOpacity = useSharedValue(0);
   const glowOpacity = useSharedValue(0);
   const progressValue = useSharedValue(0);
+  const idlePulseScale = useSharedValue(1);
+  const idlePulseOpacity = useSharedValue(0);
 
   useEffect(() => {
     progressValue.value = withTiming(Math.min(duration / 60, 1), {
@@ -89,6 +91,31 @@ function UnifiedRecordButton({
       easing: Easing.out(Easing.ease),
     });
   }, [duration]);
+
+  useEffect(() => {
+    const isIdle = !isRecording && !hasRecording;
+    if (isIdle) {
+      idlePulseScale.value = withRepeat(
+        withSequence(
+          withTiming(1.08, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+          withTiming(1, { duration: 1500, easing: Easing.inOut(Easing.ease) })
+        ),
+        -1,
+        false
+      );
+      idlePulseOpacity.value = withRepeat(
+        withSequence(
+          withTiming(0.3, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+          withTiming(0.08, { duration: 1500, easing: Easing.inOut(Easing.ease) })
+        ),
+        -1,
+        false
+      );
+    } else {
+      idlePulseScale.value = withTiming(1, { duration: 200 });
+      idlePulseOpacity.value = withTiming(0, { duration: 200 });
+    }
+  }, [isRecording, hasRecording]);
 
   useEffect(() => {
     if (isRecording) {
@@ -125,6 +152,11 @@ function UnifiedRecordButton({
     opacity: pulseOpacity.value,
   }));
 
+  const idlePulseStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: idlePulseScale.value }],
+    opacity: idlePulseOpacity.value,
+  }));
+
   const glowStyle = useAnimatedStyle(() => ({
     opacity: glowOpacity.value,
   }));
@@ -144,8 +176,19 @@ function UnifiedRecordButton({
     onPress();
   };
 
+  const isIdle = !isRecording && !hasRecording;
+
   return (
     <View style={ubStyles.wrapper}>
+      {isIdle ? (
+        <Animated.View style={[ubStyles.pulseRing, {
+          width: SIZE + 30,
+          height: SIZE + 30,
+          borderRadius: (SIZE + 30) / 2,
+          backgroundColor: theme.primary,
+        }, idlePulseStyle]} />
+      ) : null}
+
       <Animated.View style={[ubStyles.pulseRing, {
         width: SIZE + 30,
         height: SIZE + 30,
@@ -224,6 +267,18 @@ function UnifiedRecordButton({
           </Pressable>
         </Animated.View>
       </View>
+
+      {isIdle ? (
+        <Animated.View
+          entering={FadeIn.duration(600).delay(300)}
+          style={ubStyles.tapHintContainer}
+        >
+          <Feather name="chevrons-up" size={14} color={theme.primary} style={{ marginBottom: 2 }} />
+          <ThemedText type="caption" style={[ubStyles.tapHintText, { color: theme.primary }]}>
+            Tap to Start Recording
+          </ThemedText>
+        </Animated.View>
+      ) : null}
     </View>
   );
 }
@@ -253,6 +308,16 @@ const ubStyles = StyleSheet.create({
   button: {
     alignItems: "center",
     justifyContent: "center",
+  },
+  tapHintContainer: {
+    position: "absolute",
+    bottom: -30,
+    alignItems: "center",
+  },
+  tapHintText: {
+    fontSize: 13,
+    fontWeight: "700",
+    letterSpacing: 0.5,
   },
 });
 

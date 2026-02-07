@@ -15,12 +15,17 @@ export interface WordTiming {
 export const HUME_VOICE_OPTIONS = {
   female: [
     { id: "KORA", name: "Kora", description: "Warm, professional narrator" },
-    { id: "STELLA", name: "Stella", description: "Clear, friendly, engaging" },
-    { id: "DACHER", name: "Dacher", description: "Knowledgeable, warm" },
+    { id: "FEMALE_MEDITATION_GUIDE", name: "Female Meditation Guide", description: "Peaceful, guiding, soothing" },
+    { id: "INSPIRING_WOMAN", name: "Inspiring Woman", description: "Motivating, uplifting" },
+    { id: "WARM_AMERICAN_FEMALE", name: "Warm American Female", description: "Friendly, approachable" },
+    { id: "SERENE_ASSISTANT", name: "Serene Assistant", description: "Clear, calm, reassuring" },
   ],
   male: [
     { id: "ITO", name: "Ito", description: "Calm, steady, trustworthy" },
-    { id: "AIDEN", name: "Aiden", description: "Energetic, confident" },
+    { id: "INSPIRING_MAN", name: "Inspiring Man", description: "Motivating, confident" },
+    { id: "DEEP_MALE", name: "Deep Male Conversational Voice", description: "Deep, grounded, resonant" },
+    { id: "COMFORTING_MALE", name: "Comforting Male Conversationalist", description: "Warm, reassuring" },
+    { id: "LEON", name: "Leon", description: "Steady, clear, composed" },
   ],
 };
 

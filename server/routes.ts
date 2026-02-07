@@ -354,10 +354,15 @@ const ELEVENLABS_TO_OPENAI_VOICE_MAP: Record<string, string> = {
 // Map Hume voice IDs to their voice names for TTS API calls
 const HUME_VOICE_ID_MAP: Record<string, string> = {
   "hume_kora": "Kora",
-  "hume_stella": "Stella",
-  "hume_dacher": "Dacher",
+  "hume_female_meditation_guide": "Female Meditation Guide",
+  "hume_inspiring_woman": "Inspiring Woman",
+  "hume_warm_american_female": "Warm American Female",
+  "hume_serene_assistant": "Serene Assistant",
   "hume_ito": "Ito",
-  "hume_aiden": "Aiden",
+  "hume_inspiring_man": "Inspiring Man",
+  "hume_deep_male": "Deep Male Conversational Voice",
+  "hume_comforting_male": "Comforting Male Conversationalist",
+  "hume_leon": "Leon",
 };
 
 function getHumeVoiceNameForId(voiceId?: string): string | null {
@@ -1181,16 +1186,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // AI Voice options - powered by Hume AI (Octave 2)
   const VOICE_OPTIONS = {
     female: [
       { id: "hume_kora", name: "Kora", description: "Warm, professional narrator", provider: "HUME_AI", humeName: "Kora" },
-      { id: "hume_stella", name: "Stella", description: "Clear, friendly, engaging", provider: "HUME_AI", humeName: "Stella" },
-      { id: "hume_dacher", name: "Dacher", description: "Knowledgeable, warm", provider: "HUME_AI", humeName: "Dacher" },
+      { id: "hume_female_meditation_guide", name: "Meditation Guide", description: "Peaceful, guiding, soothing", provider: "HUME_AI", humeName: "Female Meditation Guide" },
+      { id: "hume_inspiring_woman", name: "Inspiring Woman", description: "Motivating, uplifting", provider: "HUME_AI", humeName: "Inspiring Woman" },
+      { id: "hume_warm_american_female", name: "Warm American", description: "Friendly, approachable", provider: "HUME_AI", humeName: "Warm American Female" },
+      { id: "hume_serene_assistant", name: "Serene", description: "Clear, calm, reassuring", provider: "HUME_AI", humeName: "Serene Assistant" },
     ],
     male: [
       { id: "hume_ito", name: "Ito", description: "Calm, steady, trustworthy", provider: "HUME_AI", humeName: "Ito" },
-      { id: "hume_aiden", name: "Aiden", description: "Energetic, confident", provider: "HUME_AI", humeName: "Aiden" },
+      { id: "hume_inspiring_man", name: "Inspiring Man", description: "Motivating, confident", provider: "HUME_AI", humeName: "Inspiring Man" },
+      { id: "hume_deep_male", name: "Deep Voice", description: "Deep, grounded, resonant", provider: "HUME_AI", humeName: "Deep Male Conversational Voice" },
+      { id: "hume_comforting_male", name: "Comforting", description: "Warm, reassuring", provider: "HUME_AI", humeName: "Comforting Male Conversationalist" },
+      { id: "hume_leon", name: "Leon", description: "Steady, clear, composed", provider: "HUME_AI", humeName: "Leon" },
     ],
   };
 

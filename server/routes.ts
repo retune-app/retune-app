@@ -16,6 +16,14 @@ import {
   type WordTiming,
 } from "./replit_integrations/elevenlabs/client";
 import { setupAuth, requireAuth, optionalAuth, AuthenticatedRequest } from "./auth";
+import {
+  postIssueComment,
+  setIssueStatusLabel,
+  updateProjectCard,
+  getIssueNodeId,
+  getAssignedIssues,
+  listRepos,
+} from "./github";
 
 // Rate limiters to prevent API abuse
 const aiGenerationLimiter = rateLimit({
@@ -2437,6 +2445,112 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting user data:", error);
       res.status(500).json({ error: "Failed to delete user data. Please contact support." });
+    }
+  });
+
+  // ============ GitHub Integration Routes ============
+
+  app.get("/api/github/repos", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const repos = await listRepos();
+      res.json(repos);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to fetch repositories" });
+    }
+  });
+
+  app.get("/api/github/issues/:owner/:repo", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { owner, repo } = req.params;
+      const issues = await getAssignedIssues(owner, repo);
+      res.json(issues);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to fetch issues" });
+    }
+  });
+
+  app.post("/api/github/issues/:owner/:repo/:issueNumber/comment", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { owner, repo, issueNumber } = req.params;
+      const { body } = req.body;
+      if (!body) {
+        return res.status(400).json({ error: "Comment body is required" });
+      }
+      const comment = await postIssueComment(owner, repo, parseInt(issueNumber), body);
+      res.json({ success: true, commentId: comment.id, url: comment.html_url });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to post comment" });
+    }
+  });
+
+  app.post("/api/github/issues/:owner/:repo/:issueNumber/label", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { owner, repo, issueNumber } = req.params;
+      const { status } = req.body;
+      const validStatuses = ['in-progress', 'blocked', 'completed'];
+      if (!status || !validStatuses.includes(status)) {
+        return res.status(400).json({ error: `Status must be one of: ${validStatuses.join(', ')}` });
+      }
+      const result = await setIssueStatusLabel(owner, repo, parseInt(issueNumber), status);
+      res.json({ success: true, ...result });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to update label" });
+    }
+  });
+
+  app.post("/api/github/project/:owner/:projectNumber/move", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { owner, projectNumber } = req.params;
+      const { repo, issueNumber, status } = req.body;
+      if (!repo || !issueNumber || !status) {
+        return res.status(400).json({ error: "repo, issueNumber, and status are required" });
+      }
+      const nodeId = await getIssueNodeId(owner, repo, parseInt(issueNumber));
+      const result = await updateProjectCard(owner, parseInt(projectNumber), nodeId, status);
+      res.json({ success: true, ...result });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to update project card" });
+    }
+  });
+
+  app.post("/api/github/issues/:owner/:repo/:issueNumber/status", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { owner, repo, issueNumber } = req.params;
+      const { status, comment, projectNumber } = req.body;
+      const validStatuses = ['in-progress', 'blocked', 'completed'];
+      if (!status || !validStatuses.includes(status)) {
+        return res.status(400).json({ error: `Status must be one of: ${validStatuses.join(', ')}` });
+      }
+      const num = parseInt(issueNumber);
+      const results: any = { success: true };
+
+      const labelResult = await setIssueStatusLabel(owner, repo, num, status);
+      results.label = labelResult;
+
+      const statusMessages: Record<string, string> = {
+        'in-progress': '🔄 **Status: In Progress**',
+        'blocked': '🚫 **Status: Blocked**',
+        'completed': '✅ **Status: Completed**',
+      };
+      const commentBody = comment
+        ? `${statusMessages[status]}\n\n${comment}`
+        : statusMessages[status];
+      const commentResult = await postIssueComment(owner, repo, num, commentBody);
+      results.comment = { id: commentResult.id, url: commentResult.html_url };
+
+      if (projectNumber) {
+        try {
+          const nodeId = await getIssueNodeId(owner, repo, num);
+          const projectResult = await updateProjectCard(owner, parseInt(projectNumber), nodeId, status);
+          results.project = projectResult;
+        } catch (e: any) {
+          results.projectError = e.message;
+        }
+      }
+
+      res.json(results);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to update issue status" });
     }
   });
 

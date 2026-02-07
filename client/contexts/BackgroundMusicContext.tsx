@@ -60,8 +60,6 @@ export const getAudioFile = (type: Exclude<BackgroundMusicType, 'none'>) => AUDI
 
 const STORAGE_KEY = '@rewired_background_music';
 const VOLUME_STORAGE_KEY = '@rewired_background_music_volume';
-const MUSIC_SETTINGS_VERSION_KEY = '@rewired_background_music_version';
-const CURRENT_MUSIC_VERSION = '2'; // Increment to reset default to 'none'
 
 function applyVolumeCurve(linearVolume: number): number {
   return Math.pow(linearVolume, 3);
@@ -96,10 +94,9 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
 
   const loadSavedPreferences = async () => {
     try {
-      const [savedMusic, savedVolume, savedVersion] = await Promise.all([
+      const [savedMusic, savedVolume] = await Promise.all([
         AsyncStorage.getItem(STORAGE_KEY),
         AsyncStorage.getItem(VOLUME_STORAGE_KEY),
-        AsyncStorage.getItem(MUSIC_SETTINGS_VERSION_KEY),
       ]);
       
       if (savedMusic) {

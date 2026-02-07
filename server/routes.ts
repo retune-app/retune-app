@@ -151,7 +151,6 @@ async function generateScript(goal: string, categories?: string[], length?: stri
   };
 
   const config = lengthConfig[length as keyof typeof lengthConfig] || lengthConfig.medium;
-  console.log(`Generating script with length: ${length}, pillar: ${pillar}, categories: ${categories?.join(", ")}, using config:`, config);
   
   // Build combined tone instruction from pillar and subcategories
   let toneInstruction = "Use positive, empowering, and uplifting language.";
@@ -332,9 +331,7 @@ async function generateAudio(
 ): Promise<{ audio: ArrayBuffer; duration: number; wordTimings: WordTiming[] }> {
   try {
     // Try ElevenLabs first (for cloned voices or better quality)
-    console.log("Attempting ElevenLabs TTS with voiceId:", voiceId);
     const result = await elevenLabsTTS(script, voiceId);
-    console.log("ElevenLabs TTS succeeded with", result.wordTimings?.length || 0, "word timings");
     return result;
   } catch (error) {
     console.error("ElevenLabs TTS failed, falling back to OpenAI:", error);
@@ -554,8 +551,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         categoryName = category;
       }
 
-      console.log("Saving affirmation with pillar:", pillar, "categories:", categoryName);
-
       // Get user's voice preferences and voice sample
       const [userWithPrefs] = await db
         .select({
@@ -578,20 +573,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Use personal cloned voice
         voiceIdToUse = userWithPrefs.voiceId;
         usedPersonalVoice = true;
-        console.log("Using personal voice:", voiceIdToUse);
       } else {
         // Use AI voice based on gender preference
-        console.log("Voice preferences loaded:", {
-          preferredMaleVoiceId: userWithPrefs?.preferredMaleVoiceId,
-          preferredFemaleVoiceId: userWithPrefs?.preferredFemaleVoiceId,
-          preferredAiGender: userWithPrefs?.preferredAiGender
-        });
         if (usedGender === "male") {
           voiceIdToUse = userWithPrefs?.preferredMaleVoiceId || VOICE_OPTIONS.male[0].id;
         } else {
           voiceIdToUse = userWithPrefs?.preferredFemaleVoiceId || VOICE_OPTIONS.female[0].id;
         }
-        console.log("Using AI voice:", voiceIdToUse, "for gender:", usedGender);
       }
 
       // Generate audio with word timings
@@ -782,7 +770,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .where(eq(affirmations.id, parseInt(id)))
         .returning();
 
-      console.log(`Auto-saved affirmation ${id}: title="${generatedTitle}", categoryName=${updated.categoryName}`);
       res.json(updated);
     } catch (error) {
       console.error("Error auto-saving affirmation:", error);
@@ -828,8 +815,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         dateKey,
       });
       
-      console.log(`Recorded listening session for user ${req.userId}, affirmation ${id}, date ${dateKey}`);
-
       res.json(updated);
     } catch (error) {
       console.error("Error updating play count:", error);
@@ -1045,8 +1030,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid voice ID" });
       }
 
-      console.log(`Generating voice preview for ${validVoice.name} (${voiceId})`);
-
       // Generate TTS without timestamps (simpler, faster)
       const audioBuffer = await generateAudioSimple(PREVIEW_PHRASE, voiceId);
 
@@ -1082,8 +1065,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!user.voiceId || !user.hasVoiceSample) {
         return res.status(400).json({ error: "No personal voice recorded. Please record your voice first." });
       }
-
-      console.log(`Generating personal voice preview for user ${user.name} (voice: ${user.voiceId})`);
 
       // Generate TTS using user's cloned voice
       const audioBuffer = await generateAudioSimple(PREVIEW_PHRASE, user.voiceId);
@@ -1706,8 +1687,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         voiceIdToUse = userPrefs?.preferredFemaleVoiceId || VOICE_OPTIONS.female[0].id;
       }
-      console.log("Creating sample affirmations with voice:", voiceIdToUse, "gender:", gender);
-
       const createdAffirmations = [];
 
       // Ensure audio subdirectory exists

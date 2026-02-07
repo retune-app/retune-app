@@ -25,6 +25,7 @@ export const users = pgTable("users", {
   affirmationsThisMonth: integer("affirmations_this_month").default(0), // Max 10 AI-generated per month
   monthlyResetDate: timestamp("monthly_reset_date").default(sql`CURRENT_TIMESTAMP`), // When to reset monthly limits
   hasConsentedToVoiceCloning: boolean("has_consented_to_voice_cloning").default(false), // GDPR/privacy consent
+  voiceLastUsedAt: timestamp("voice_last_used_at"),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 

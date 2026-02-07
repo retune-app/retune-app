@@ -14,8 +14,10 @@ import {
   textToSpeech as elevenLabsTTS,
   getElevenLabsClient,
   generateSoundEffect,
+  deleteVoice,
   type WordTiming,
 } from "./replit_integrations/elevenlabs/client";
+import { findInactiveVoices, runVoiceRotation, getVoiceSlotStats } from "./voice-rotation";
 import { setupAuth, requireAuth, optionalAuth, AuthenticatedRequest } from "./auth";
 import {
   postIssueComment,
@@ -323,8 +325,91 @@ const directOpenAI = process.env.OPENAI_API_KEY
   ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   : null;
 
-// Simple audio generation for voice previews (no word timings needed)
-async function generateAudioSimple(text: string, voiceId: string): Promise<ArrayBuffer> {
+const ELEVENLABS_TO_OPENAI_VOICE_MAP: Record<string, string> = {
+  "hpp4J3VqNfWAUOO0d1Us": "nova",     // Bella
+  "EXAVITQu4vr4xnSDxMaL": "shimmer",  // Sarah
+  "FGY2WhTYpPnrIDTdsKH5": "alloy",    // Laura
+  "Xb7hH8MSUJpSbSDYk0k2": "nova",     // Alice
+  "XrExE9yKIg1WjnnlVkGX": "shimmer",  // Matilda
+  "cgSgspJ2msm6clMCkdW9": "alloy",    // Jessica
+  "pFZP5JQG7iQjIQuC4Bku": "nova",     // Lily
+  "onwK4e9ZLuTAKqWW03F9": "onyx",     // Daniel
+  "CwhRBWXzGAHq8TQ4Fs17": "echo",     // Roger
+  "IKne3meq5aSn9XLyUdCD": "fable",    // Charlie
+  "JBFqnCBsd6RMkjVDRZzb": "onyx",     // George
+  "TX3LPaxmHKxFdv7VOQHJ": "echo",     // Liam
+  "bIHbv24MWmeRgasZH58o": "fable",    // Will
+  "cjVigY5qzO86Huf0OWal": "onyx",     // Eric
+  "iP95p4xoKVk53GoZ742B": "echo",     // Chris
+  "nPczCjzI2devNBz1zQrb": "onyx",     // Brian
+  "pNInz6obpgDQGcFmaJgB": "echo",     // Adam
+  "pqHfZKP75CvOlQylNhV4": "onyx",     // Bill
+};
+
+function getOpenAIVoiceForElevenLabsId(elevenLabsId?: string): "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer" {
+  if (!elevenLabsId) return "nova";
+  const mapped = ELEVENLABS_TO_OPENAI_VOICE_MAP[elevenLabsId];
+  return (mapped as any) || "nova";
+}
+
+async function generateAudioOpenAI(
+  script: string,
+  voice: "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer" = "nova"
+): Promise<{ audio: ArrayBuffer; duration: number; wordTimings: WordTiming[] }> {
+  if (!directOpenAI) {
+    throw new Error("TTS_UNAVAILABLE: No OpenAI API key configured");
+  }
+
+  const response = await directOpenAI.audio.speech.create({
+    model: "tts-1",
+    voice,
+    input: script,
+  });
+
+  const audioBuffer = await response.arrayBuffer();
+  const words = script.split(/\s+/).filter(w => w.length > 0);
+  const wordCount = words.length;
+  const estimatedDuration = Math.ceil((wordCount / 150) * 60);
+
+  const avgWordDurationMs = (estimatedDuration * 1000) / wordCount;
+  const wordTimings: WordTiming[] = words.map((word, index) => ({
+    word,
+    startMs: Math.round(index * avgWordDurationMs),
+    endMs: Math.round((index + 1) * avgWordDurationMs),
+  }));
+
+  return {
+    audio: audioBuffer,
+    duration: estimatedDuration,
+    wordTimings,
+  };
+}
+
+async function generateAudioSimpleOpenAI(
+  text: string,
+  voice: "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer" = "nova"
+): Promise<ArrayBuffer> {
+  if (!directOpenAI) {
+    throw new Error("TTS_UNAVAILABLE: No OpenAI API key configured");
+  }
+  const response = await directOpenAI.audio.speech.create({
+    model: "tts-1",
+    voice,
+    input: text,
+  });
+  return await response.arrayBuffer();
+}
+
+async function generateAudioSimple(text: string, voiceId: string, isPersonalVoice: boolean = false): Promise<ArrayBuffer> {
+  if (!isPersonalVoice) {
+    try {
+      const openaiVoice = getOpenAIVoiceForElevenLabsId(voiceId);
+      return await generateAudioSimpleOpenAI(text, openaiVoice);
+    } catch (error: any) {
+      console.error("OpenAI simple TTS failed, trying ElevenLabs fallback:", error?.message || error);
+    }
+  }
+
   try {
     const client = await getElevenLabsClient();
     const audio = await client.textToSpeech.convert(voiceId, {
@@ -340,9 +425,10 @@ async function generateAudioSimple(text: string, voiceId: string): Promise<Array
   } catch (error: any) {
     console.error("ElevenLabs simple TTS failed, trying OpenAI fallback:", error?.message || error);
     if (directOpenAI) {
+      const openaiVoice = getOpenAIVoiceForElevenLabsId(voiceId);
       const response = await directOpenAI.audio.speech.create({
         model: "tts-1",
-        voice: "nova",
+        voice: openaiVoice,
         input: text,
       });
       return await response.arrayBuffer();
@@ -351,12 +437,20 @@ async function generateAudioSimple(text: string, voiceId: string): Promise<Array
   }
 }
 
-// Generate audio using ElevenLabs or fallback to OpenAI TTS
 async function generateAudio(
   script: string,
-  voiceId?: string
+  voiceId?: string,
+  isPersonalVoice: boolean = false
 ): Promise<{ audio: ArrayBuffer; duration: number; wordTimings: WordTiming[] }> {
-  // Try ElevenLabs first (for cloned voices or better quality)
+  if (!isPersonalVoice) {
+    try {
+      const openaiVoice = getOpenAIVoiceForElevenLabsId(voiceId);
+      return await generateAudioOpenAI(script, openaiVoice);
+    } catch (error: any) {
+      console.error("OpenAI TTS failed for stock voice, trying ElevenLabs fallback:", error?.message || error);
+    }
+  }
+
   try {
     const result = await elevenLabsTTS(script, voiceId);
     return result;
@@ -369,35 +463,13 @@ async function generateAudio(
       elevenLabsError?.message || elevenLabsError
     );
 
-    // Fallback to OpenAI TTS using direct API key
     if (!directOpenAI) {
       throw new Error("TTS_UNAVAILABLE: ElevenLabs quota exhausted and no OpenAI API key configured for fallback");
     }
 
     try {
-      const response = await directOpenAI.audio.speech.create({
-        model: "tts-1",
-        voice: "nova",
-        input: script,
-      });
-
-      const audioBuffer = await response.arrayBuffer();
-      const words = script.split(/\s+/).filter(w => w.length > 0);
-      const wordCount = words.length;
-      const estimatedDuration = Math.ceil((wordCount / 150) * 60);
-
-      const avgWordDurationMs = (estimatedDuration * 1000) / wordCount;
-      const wordTimings: WordTiming[] = words.map((word, index) => ({
-        word,
-        startMs: Math.round(index * avgWordDurationMs),
-        endMs: Math.round((index + 1) * avgWordDurationMs),
-      }));
-
-      return {
-        audio: audioBuffer,
-        duration: estimatedDuration,
-        wordTimings,
-      };
+      const openaiVoice = getOpenAIVoiceForElevenLabsId(voiceId);
+      return await generateAudioOpenAI(script, openaiVoice);
     } catch (openaiError: any) {
       console.error("OpenAI TTS fallback also failed:", openaiError?.message || openaiError);
       throw new Error("TTS_UNAVAILABLE: Both ElevenLabs and OpenAI TTS services are unavailable");
@@ -609,12 +681,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let usedPersonalVoice = false;
       let usedGender = userWithPrefs?.preferredAiGender || "female";
 
+      if (userWithPrefs?.preferredVoiceType === "personal" && (!userWithPrefs?.voiceId || !userWithPrefs?.hasVoiceSample)) {
+        return res.status(400).json({
+          error: "VOICE_ROTATED",
+          message: "Your personal voice has expired. Please re-record your voice sample to continue using your personal voice, or switch to an AI voice.",
+        });
+      }
+
       if (userWithPrefs?.preferredVoiceType === "personal" && userWithPrefs?.voiceId && userWithPrefs?.hasVoiceSample) {
-        // Use personal cloned voice
         voiceIdToUse = userWithPrefs.voiceId;
         usedPersonalVoice = true;
       } else {
-        // Use AI voice based on gender preference
         if (usedGender === "male") {
           voiceIdToUse = userWithPrefs?.preferredMaleVoiceId || VOICE_OPTIONS.male[0].id;
         } else {
@@ -622,11 +699,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Generate audio with word timings
       const audioResult = await generateAudio(
         script,
-        voiceIdToUse
+        voiceIdToUse,
+        usedPersonalVoice
       );
+
+      if (usedPersonalVoice) {
+        await db
+          .update(users)
+          .set({ voiceLastUsedAt: new Date() })
+          .where(eq(users.id, req.userId!));
+      }
 
       // Save audio file to the audio subdirectory
       const audioDir = path.join(uploadDir, "audio");
@@ -1110,10 +1194,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "No personal voice recorded. Please record your voice first." });
       }
 
-      // Generate TTS using user's cloned voice
-      const audioBuffer = await generateAudioSimple(PREVIEW_PHRASE, user.voiceId);
+      const audioBuffer = await generateAudioSimple(PREVIEW_PHRASE, user.voiceId, true);
 
-      // Return audio as base64
+      await db
+        .update(users)
+        .set({ voiceLastUsedAt: new Date() })
+        .where(eq(users.id, req.userId!));
+
       const base64Audio = Buffer.from(audioBuffer).toString("base64");
       res.json({ 
         audio: base64Audio,
@@ -1240,12 +1327,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         if (!user?.voiceId || !user?.hasVoiceSample) {
           return res.status(400).json({ 
-            error: "No personal voice available. Please record a voice sample first." 
+            error: "VOICE_ROTATED",
+            message: "Your personal voice has expired. Please re-record your voice sample to continue using your personal voice, or switch to an AI voice.",
           });
         }
         voiceIdToUse = user.voiceId;
       } else {
-        // Use AI voice based on gender - get user's preferred voice for that gender
         const gender = voiceGender || "female";
         const [userPrefs] = await db
           .select({
@@ -1262,8 +1349,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Generate new audio
-      const audioResult = await generateAudio(affirmation.script, voiceIdToUse);
+      const isPersonalVoice = voiceType === "personal";
+      const audioResult = await generateAudio(affirmation.script, voiceIdToUse, isPersonalVoice);
+
+      if (isPersonalVoice) {
+        await db
+          .update(users)
+          .set({ voiceLastUsedAt: new Date() })
+          .where(eq(users.id, req.userId!));
+      }
       
       // Save audio to file
       const audioDir = path.join(process.cwd(), "uploads", "audio");
@@ -2658,6 +2752,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: error.message || "Failed to acknowledge priorities" });
     }
   });
+
+  app.get("/api/admin/voice-slots", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    if (req.userId !== "77adcd55-7d43-48b2-ab2d-32375c4ea4d5") {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+    try {
+      const stats = await getVoiceSlotStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching voice slot stats:", error);
+      res.status(500).json({ error: "Failed to fetch voice slot stats" });
+    }
+  });
+
+  app.get("/api/admin/voice-rotation/preview", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    if (req.userId !== "77adcd55-7d43-48b2-ab2d-32375c4ea4d5") {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+    try {
+      const days = parseInt(req.query.days as string) || 60;
+      const inactive = await findInactiveVoices(days);
+      res.json({ inactiveDays: days, count: inactive.length, voices: inactive });
+    } catch (error) {
+      console.error("Error previewing voice rotation:", error);
+      res.status(500).json({ error: "Failed to preview voice rotation" });
+    }
+  });
+
+  app.post("/api/admin/voice-rotation/run", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    if (req.userId !== "77adcd55-7d43-48b2-ab2d-32375c4ea4d5") {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+    try {
+      const days = parseInt(req.body.days) || 60;
+      const results = await runVoiceRotation(days);
+      res.json(results);
+    } catch (error) {
+      console.error("Error running voice rotation:", error);
+      res.status(500).json({ error: "Failed to run voice rotation" });
+    }
+  });
+
+  setInterval(async () => {
+    try {
+      console.log("[Voice Rotation] Running scheduled voice cleanup...");
+      const results = await runVoiceRotation(60);
+      if (results.rotated > 0) {
+        console.log(`[Voice Rotation] Rotated ${results.rotated} inactive voices`);
+      } else {
+        console.log("[Voice Rotation] No inactive voices to rotate");
+      }
+    } catch (error) {
+      console.error("[Voice Rotation] Scheduled cleanup failed:", error);
+    }
+  }, 24 * 60 * 60 * 1000);
 
   const httpServer = createServer(app);
 

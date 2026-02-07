@@ -25,6 +25,9 @@ Preferred communication style: Simple, everyday language.
   - **Visual Identification**: Affirmation cards display a 4px left accent bar in the pillar's color
   - **Library Filtering**: HomeScreen filters affirmations by pillar with color-coded chips
   - Database stores: `pillar` field (single text) + `categoryName` (comma-separated subcategories for backward compatibility)
+- **Smart TTS Routing**: Stock AI voices route directly to OpenAI TTS (cheaper), personal cloned voices use ElevenLabs first with OpenAI fallback. Voice mapping in `ELEVENLABS_TO_OPENAI_VOICE_MAP` maps stock ElevenLabs voice IDs to OpenAI voice equivalents.
+- **Voice Rotation System**: Automatic cleanup of inactive cloned voices (60+ days unused) via `server/voice-rotation.ts`. Frees ElevenLabs voice slots. Users with rotated voices get `VOICE_ROTATED` error and must re-clone. Daily scheduled check via `setInterval`. Admin endpoints: `GET /api/admin/voice-slots`, `GET /api/admin/voice-rotation/preview`, `POST /api/admin/voice-rotation/run`.
+- **Voice Activity Tracking**: `voiceLastUsedAt` timestamp on users table tracks when personal cloned voice was last used for TTS.
 - **Audio Pipeline**: Involves user voice sample recording, ElevenLabs voice cloning, AI script generation, text-to-speech synthesis, and audio streaming.
 - **Global Audio Player**: A single-instance audio player for consistent playback control across the app.
 - **RSVP Mode**: Rapid Serial Visual Presentation of affirmation text, synchronized with audio playback, using word timing data from ElevenLabs.

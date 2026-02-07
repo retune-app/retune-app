@@ -111,9 +111,9 @@ const audioUpload = multer({
 // Generate affirmation script using OpenAI
 async function generateScript(goal: string, categories?: string[], length?: string, pillar?: string): Promise<string> {
   const lengthConfig = {
-    short: { sentences: 2, tokens: 80, description: "exactly 2 sentences" },
-    medium: { sentences: 5, tokens: 200, description: "exactly 5 sentences" },
-    long: { sentences: 10, tokens: 400, description: "exactly 10 sentences" },
+    short: { sentences: 2, tokens: 150, description: "exactly 2 sentences" },
+    medium: { sentences: 5, tokens: 350, description: "exactly 5 sentences" },
+    long: { sentences: 10, tokens: 600, description: "exactly 10 sentences" },
   };
   
   // Category-specific tone and style instructions
@@ -163,7 +163,27 @@ async function generateScript(goal: string, categories?: string[], length?: stri
     }
   }
   
-  const systemPrompt = `Write ${config.sentences} affirmation sentences. First person, present tense. No titles, no instructions, no numbering. Just ${config.sentences} sentences.
+  const systemPrompt = `You are an expert in subconscious reprogramming and neurolinguistic patterning. Write ${config.sentences} affirmation sentences that are psychologically optimized to bypass conscious resistance and embed deeply into the subconscious mind.
+
+SUBCONSCIOUS LANGUAGE RULES (apply ALL of these):
+
+1. PRESENT TENSE ONLY: Always "I am", "I have", "I feel" — never future tense. The subconscious cannot process "I will" or "someday". Everything must feel true NOW.
+
+2. POSITIVE FRAMING: Never use negatives (not, don't, won't, no longer, without, free from). The subconscious ignores negation and absorbs the negative concept. Say "I am calm" not "I am not anxious". Say "I welcome abundance" not "I am free from scarcity".
+
+3. SENSORY-RICH LANGUAGE: Include felt sensations — what the person feels in their body, sees in their mind, or hears internally. Examples: "I feel the steady warmth of confidence radiating through my chest", "I sense my own quiet power". This activates the subconscious through embodiment.
+
+4. IDENTITY-LEVEL STATEMENTS: Frame as identity ("I am someone who..."), not behavior ("I try to..."). Identity statements reshape self-concept at the deepest level. Mix "I am" with "I naturally...", "I effortlessly...", "It is in my nature to...".
+
+5. PROGRESSIVE BELIEVABILITY: Start with grounded, easily believable statements and gradually build to more aspirational ones. This prevents conscious rejection. First sentence should feel undeniably true, last sentence should feel like an exciting stretch.
+
+6. EMBEDDED COMMANDS: Weave in subtle permission-giving phrases: "I allow myself to...", "I give myself permission to...", "I am ready to...", "I am open to receiving...". These dissolve inner resistance.
+
+7. RHYTHM AND FLOW: Create a natural, almost poetic cadence. Use parallel structure and gentle repetition of key power words. The rhythm makes phrases easier for the subconscious to absorb during repetitive listening.
+
+8. EMOTIONAL ANCHORING: Each sentence should evoke a specific positive emotion (safety, pride, gratitude, excitement, peace, love). Name the emotion when possible: "I feel deeply proud of who I am becoming."
+
+FORMAT: No titles, no instructions, no numbering, no quotes. Just ${config.sentences} flowing sentences, each on its own line. Write as if speaking directly to the deepest part of someone's mind.
 
 TONE AND STYLE: ${toneInstruction}`;
 

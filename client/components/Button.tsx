@@ -127,11 +127,11 @@ export function Button({
           ]}
         >
           {loading ? (
-            <ActivityIndicator color={theme.buttonText} size="small" />
+            <ActivityIndicator color={theme.navy} size="small" />
           ) : (
             <ThemedText
               type={size === "small" ? "small" : "body"}
-              style={[styles.buttonText, { color: theme.buttonText }]}
+              style={[styles.buttonText, { color: theme.navy }]}
             >
               {children}
             </ThemedText>

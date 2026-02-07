@@ -225,8 +225,8 @@ export default function PlayerScreen() {
     navigation.setOptions({
       headerTitle: () => (
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <View style={{ width: 3, height: 14, borderRadius: 2, backgroundColor: theme.primary, marginRight: 8 }} />
-          <ThemedText type="caption" style={{ color: theme.primary, textTransform: 'uppercase', letterSpacing: 2, fontWeight: '600', fontSize: 11 }}>
+          <View style={{ width: 3, height: 14, borderRadius: 2, backgroundColor: theme.navy, marginRight: 8 }} />
+          <ThemedText type="caption" style={{ color: theme.navy, textTransform: 'uppercase', letterSpacing: 2, fontWeight: '700', fontSize: 11 }}>
             My Affirmation
           </ThemedText>
         </View>
@@ -236,21 +236,23 @@ export default function PlayerScreen() {
           <Pressable
             onPress={handleSave}
             testID="button-save-affirmation"
-            hitSlop={8}
+            hitSlop={12}
+            style={{ padding: 4 }}
           >
             <Feather 
               name="save" 
               size={22} 
-              color={autoSaveMutation.isPending ? theme.textSecondary : "#4CAF50"} 
+              color={autoSaveMutation.isPending ? theme.textSecondary : "#2E7D32"} 
             />
           </Pressable>
         ) : (
           <Pressable
             onPress={() => navigation.goBack()}
             testID="button-back"
-            hitSlop={8}
+            hitSlop={12}
+            style={{ padding: 4 }}
           >
-            <Feather name="arrow-left" size={22} color="#0F1C3F" />
+            <Feather name="arrow-left" size={22} color={theme.navy} />
           </Pressable>
         )
       ),
@@ -258,9 +260,10 @@ export default function PlayerScreen() {
         <Pressable
           onPress={handleDelete}
           testID="button-delete-affirmation"
-          hitSlop={8}
+          hitSlop={12}
+          style={{ padding: 4 }}
         >
-          <Feather name="trash-2" size={22} color="#E53935" />
+          <Feather name="trash-2" size={22} color={theme.navy} />
         </Pressable>
       ),
     });

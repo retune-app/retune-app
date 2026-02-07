@@ -552,7 +552,7 @@ export default function PlayerScreen() {
   
   // Add offset to compensate for audio position latency and UI rendering delay
   // Higher playback speeds need more forward offset since words change faster
-  const rsvpPositionOffset = 100 * playbackSpeed; // ms ahead to look
+  const rsvpPositionOffset = 30 * playbackSpeed;
   const rsvpPosition = displayPosition + rsvpPositionOffset;
 
   return (

@@ -24,6 +24,8 @@ export const HUME_VOICE_OPTIONS = {
   ],
 };
 
+const MIN_WORD_DISPLAY_MS = 150;
+
 function sanitizeWordTimings(wordTimings: WordTiming[]): WordTiming[] {
   if (wordTimings.length === 0) return wordTimings;
 
@@ -40,6 +42,13 @@ function sanitizeWordTimings(wordTimings: WordTiming[]): WordTiming[] {
     if (endMs <= startMs) {
       const nextStart = i + 1 < wordTimings.length ? wordTimings[i + 1].startMs : startMs + 200;
       endMs = Math.max(startMs + 50, Math.min(startMs + 200, nextStart));
+    }
+
+    const duration = endMs - startMs;
+    if (duration < MIN_WORD_DISPLAY_MS) {
+      const nextStart = i + 1 < wordTimings.length ? wordTimings[i + 1].startMs : Infinity;
+      const maxEnd = nextStart < Infinity ? nextStart : startMs + MIN_WORD_DISPLAY_MS;
+      endMs = Math.min(startMs + MIN_WORD_DISPLAY_MS, maxEnd);
     }
 
     sanitized.push({ word, startMs, endMs });

@@ -2754,7 +2754,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/admin/voice-slots", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
-    if (req.userId !== "77adcd55-7d43-48b2-ab2d-32375c4ea4d5") {
+    if (!ADMIN_USER_IDS.has(req.userId!)) {
       return res.status(403).json({ error: "Admin access required" });
     }
     try {
@@ -2767,7 +2767,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/admin/voice-rotation/preview", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
-    if (req.userId !== "77adcd55-7d43-48b2-ab2d-32375c4ea4d5") {
+    if (!ADMIN_USER_IDS.has(req.userId!)) {
       return res.status(403).json({ error: "Admin access required" });
     }
     try {
@@ -2781,7 +2781,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/admin/voice-rotation/run", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
-    if (req.userId !== "77adcd55-7d43-48b2-ab2d-32375c4ea4d5") {
+    if (!ADMIN_USER_IDS.has(req.userId!)) {
       return res.status(403).json({ error: "Admin access required" });
     }
     try {

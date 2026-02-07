@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useLayoutEffect, useMemo, useRef } from "react";
 import { View, Text, StyleSheet, Pressable, Alert, ScrollView, Modal } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useHeaderHeight } from "@react-navigation/elements";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -46,7 +45,6 @@ export default function PlayerScreen() {
   const route = useRoute<PlayerRouteProp>();
   const navigation = useNavigation<PlayerNavigationProp>();
   const insets = useSafeAreaInsets();
-  const headerHeight = useHeaderHeight();
   const { theme } = useTheme();
   const queryClient = useQueryClient();
 
@@ -607,7 +605,7 @@ export default function PlayerScreen() {
         style={styles.scrollView}
         contentContainerStyle={[
           styles.content,
-          { paddingTop: headerHeight + Spacing.lg, paddingBottom: insets.bottom + Spacing["2xl"] },
+          { paddingTop: Spacing.lg, paddingBottom: insets.bottom + Spacing["2xl"] },
         ]}
         showsVerticalScrollIndicator={false}
       >

@@ -159,6 +159,10 @@ export default function RootStackNavigator() {
             headerTitle: "Create Affirmation",
             headerTransparent: false,
             headerStyle: { backgroundColor: theme.backgroundRoot },
+            headerShadowVisible: false,
+            headerBackground: () => (
+              <View style={{ flex: 1, backgroundColor: theme.backgroundRoot, borderBottomWidth: 1, borderBottomColor: theme.primary }} />
+            ),
             presentation: "modal",
             animation: "slide_from_bottom",
           }}

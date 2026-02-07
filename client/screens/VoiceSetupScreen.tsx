@@ -924,13 +924,15 @@ export default function VoiceSetupScreen() {
             theme={theme}
           />
 
-          <View style={styles.timerDisplay}>
-            <ThemedText type="h1" style={[styles.timer, {
-              color: isRecording ? theme.primary : hasRecording && isValidDuration ? theme.success : theme.text,
-            }]}>
-              {formatDuration(recordingDuration)}
-            </ThemedText>
-          </View>
+          {(isRecording || hasRecording) ? (
+            <View style={styles.timerDisplay}>
+              <ThemedText type="h1" style={[styles.timer, {
+                color: isRecording ? theme.primary : hasRecording && isValidDuration ? theme.success : theme.text,
+              }]}>
+                {formatDuration(recordingDuration)}
+              </ThemedText>
+            </View>
+          ) : null}
         </View>
 
         <ThemedText type="h2" style={[styles.statusTitle, { textAlign: "center" }]}>

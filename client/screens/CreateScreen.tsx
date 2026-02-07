@@ -391,19 +391,28 @@ export default function CreateScreen() {
       navigation.navigate("Player", { affirmationId: data.id, isNew: true });
     },
     onError: (error: any) => {
-      let isPersonalVoiceFailure = false;
+      let errorType = "";
       try {
         const errorStr = error?.message || "";
         const jsonMatch = errorStr.match(/\{.*\}/);
         if (jsonMatch) {
           const parsed = JSON.parse(jsonMatch[0]);
-          if (parsed.error === "PERSONAL_VOICE_FAILED") {
-            isPersonalVoiceFailure = true;
-          }
+          if (parsed.error) errorType = parsed.error;
         }
+        if (!errorType && errorStr.includes("QUOTA_EXCEEDED")) errorType = "QUOTA_EXCEEDED";
+        if (!errorType && errorStr.includes("PERSONAL_VOICE_FAILED")) errorType = "PERSONAL_VOICE_FAILED";
       } catch {}
 
-      if (isPersonalVoiceFailure) {
+      if (errorType === "QUOTA_EXCEEDED") {
+        Alert.alert(
+          "Credits Used Up",
+          "Your voice cloning credits have been used up for this period. Would you like to use an AI voice instead?",
+          [
+            { text: "Cancel", style: "cancel" },
+            { text: "Use AI Voice", onPress: () => createMutation.mutate({ forceAiVoice: true }) },
+          ]
+        );
+      } else if (errorType === "PERSONAL_VOICE_FAILED") {
         Alert.alert(
           "Personal Voice Failed",
           "Could not generate audio with your personal voice. Would you like to try again or use an AI voice instead?",

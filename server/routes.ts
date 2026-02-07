@@ -423,8 +423,13 @@ async function generateAudioSimple(text: string, voiceId: string, isPersonalVoic
     }
     return Buffer.concat(chunks).buffer;
   } catch (error: any) {
-    console.error(`ElevenLabs simple TTS failed for ${isPersonalVoice ? "PERSONAL" : "stock"} voice (${voiceId}):`, error?.message || error);
+    const errMsg = error?.message || String(error);
+    const isQuota = errMsg.includes("quota_exceeded") || errMsg.includes("Unauthorized");
+    console.error(`ElevenLabs simple TTS failed for ${isPersonalVoice ? "PERSONAL" : "stock"} voice (${voiceId})${isQuota ? " (quota exhausted)" : ""}:`, errMsg);
     if (isPersonalVoice) {
+      if (isQuota) {
+        throw new Error("QUOTA_EXCEEDED: Your voice cloning credits have been used up for this period. Please switch to an AI voice or wait for your credits to reset.");
+      }
       throw new Error("PERSONAL_VOICE_FAILED: Could not generate audio with your personal voice. Please try again or re-record your voice.");
     }
     if (directOpenAI) {
@@ -467,6 +472,9 @@ async function generateAudio(
     );
 
     if (isPersonalVoice) {
+      if (isQuotaExhausted) {
+        throw new Error("QUOTA_EXCEEDED: Your voice cloning credits have been used up for this period. Please switch to an AI voice or wait for your credits to reset.");
+      }
       throw new Error("PERSONAL_VOICE_FAILED: Could not generate audio with your personal voice. Please try again or re-record your voice.");
     }
 
@@ -1416,8 +1424,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .where(eq(affirmations.id, affirmationId));
 
       res.json(updated);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error regenerating voice:", error);
+      const errorMsg = error?.message || "";
+      if (errorMsg.includes("QUOTA_EXCEEDED")) {
+        return res.status(422).json({ 
+          error: "QUOTA_EXCEEDED",
+          message: "Your voice cloning credits have been used up for this period. Please switch to an AI voice or wait for your credits to reset."
+        });
+      }
+      if (errorMsg.includes("PERSONAL_VOICE_FAILED")) {
+        return res.status(422).json({ 
+          error: "PERSONAL_VOICE_FAILED",
+          message: "Could not generate audio with your personal voice. Please try again or switch to an AI voice."
+        });
+      }
       res.status(500).json({ error: "Failed to regenerate voice" });
     }
   });

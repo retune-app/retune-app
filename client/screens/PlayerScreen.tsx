@@ -174,10 +174,17 @@ export default function PlayerScreen() {
         await playAffirmation(updatedAffirmation);
       }
     },
-    onError: () => {
+    onError: (error: any) => {
       setIsRegeneratingVoice(false);
       if (hapticEnabled) try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error); } catch (e) {}
-      setErrorMessage("We couldn't regenerate the audio. Please try again.");
+      const errStr = error?.message || "";
+      if (errStr.includes("QUOTA_EXCEEDED") || errStr.includes("quota")) {
+        setErrorMessage("Your voice cloning credits have been used up. Please switch to an AI voice or wait for credits to reset.");
+      } else if (errStr.includes("PERSONAL_VOICE_FAILED")) {
+        setErrorMessage("Could not generate audio with your personal voice. Try again or switch to an AI voice.");
+      } else {
+        setErrorMessage("We couldn't regenerate the audio. Please try again.");
+      }
       setShowErrorModal(true);
     },
   });

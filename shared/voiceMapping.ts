@@ -7,8 +7,6 @@ export const AI_VOICES = {
     { id: "cgSgspJ2msm6clMCkdW9", name: "Jessica", description: "Playful, bright, warm" },
     { id: "hpp4J3VqNfWAUOO0d1Us", name: "Bella", description: "Professional, warm" },
     { id: "pFZP5JQG7iQjIQuC4Bku", name: "Lily", description: "Velvety, British actress" },
-    { id: "21m00Tcm4TlvDq8ikWAM", name: "Rachel", description: "Soft, warm tone (legacy)" },
-    { id: "XB0fDUnXU5powFXDhCwa", name: "Charlotte", description: "Warm, British (legacy)" },
   ],
   male: [
     { id: "CwhRBWXzGAHq8TQ4Fs17", name: "Roger", description: "Laid-back, casual, resonant" },
@@ -22,7 +20,6 @@ export const AI_VOICES = {
     { id: "onwK4e9ZLuTAKqWW03F9", name: "Daniel", description: "Steady, professional, British" },
     { id: "pNInz6obpgDQGcFmaJgB", name: "Adam", description: "Dominant, firm" },
     { id: "pqHfZKP75CvOlQylNhV4", name: "Bill", description: "Wise, mature, balanced" },
-    { id: "ErXwobaYiN019PkySvjV", name: "Antoni", description: "Warm, friendly (legacy)" },
   ],
 } as const;
 
@@ -34,8 +31,6 @@ export const VOICE_ID_TO_NAME: Record<string, string> = {
   "cgSgspJ2msm6clMCkdW9": "Jessica",
   "hpp4J3VqNfWAUOO0d1Us": "Bella",
   "pFZP5JQG7iQjIQuC4Bku": "Lily",
-  "21m00Tcm4TlvDq8ikWAM": "Rachel",
-  "XB0fDUnXU5powFXDhCwa": "Charlotte",
   "CwhRBWXzGAHq8TQ4Fs17": "Roger",
   "IKne3meq5aSn9XLyUdCD": "Charlie",
   "JBFqnCBsd6RMkjVDRZzb": "George",
@@ -47,7 +42,6 @@ export const VOICE_ID_TO_NAME: Record<string, string> = {
   "onwK4e9ZLuTAKqWW03F9": "Daniel",
   "pNInz6obpgDQGcFmaJgB": "Adam",
   "pqHfZKP75CvOlQylNhV4": "Bill",
-  "ErXwobaYiN019PkySvjV": "Antoni",
 };
 
 export function getVoiceDisplayName(
@@ -64,8 +58,8 @@ export function getVoiceDisplayName(
   }
   
   if (voiceGender === "male") {
-    return "Roger";
+    return "Daniel";
   }
   
-  return "Sarah";
+  return "Bella";
 }

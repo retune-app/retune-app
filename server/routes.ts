@@ -816,9 +816,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(newAffirmation);
     } catch (error: any) {
       console.error("Error creating affirmation:", error);
-      if (error?.message?.includes("PERSONAL_VOICE_FAILED")) {
+      const errorMsg = error?.message || "";
+      if (errorMsg.includes("QUOTA_EXCEEDED")) {
+        res.status(422).json({ 
+          error: "QUOTA_EXCEEDED",
+          message: "Your voice cloning credits have been used up for this period. Please switch to an AI voice or wait for your credits to reset."
+        });
+      } else if (errorMsg.includes("PERSONAL_VOICE_FAILED")) {
         res.status(422).json({ error: "PERSONAL_VOICE_FAILED", message: "Could not generate audio with your personal voice. You can try again or switch to an AI voice." });
-      } else if (error?.message?.includes("TTS_UNAVAILABLE")) {
+      } else if (errorMsg.includes("TTS_UNAVAILABLE")) {
         res.status(503).json({ error: "Voice services are temporarily unavailable. Please try again later." });
       } else {
         res.status(500).json({ error: "Failed to create affirmation. Please try again." });

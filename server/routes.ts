@@ -19,27 +19,30 @@ import { setupAuth, requireAuth, optionalAuth, AuthenticatedRequest } from "./au
 
 // Rate limiters to prevent API abuse
 const aiGenerationLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 5, // max 5 requests per minute for AI generation
+  windowMs: 60 * 1000,
+  max: 5,
   message: { error: "Too many requests. Please wait a minute before generating more affirmations." },
   standardHeaders: true,
   legacyHeaders: false,
+  validate: false,
 });
 
 const voiceCloneLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 6, // max 6 voice clone attempts per hour (more forgiving for retries after errors)
+  windowMs: 60 * 60 * 1000,
+  max: 6,
   message: { error: "Too many voice cloning attempts. Please wait about an hour and try again." },
   standardHeaders: true,
   legacyHeaders: false,
+  validate: false,
 });
 
 const ttsLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 10, // max 10 TTS requests per minute
+  windowMs: 60 * 1000,
+  max: 10,
   message: { error: "Too many audio generation requests. Please wait before creating more." },
   standardHeaders: true,
   legacyHeaders: false,
+  validate: false,
 });
 
 const uploadDir = path.join(process.cwd(), "uploads");

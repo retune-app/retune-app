@@ -17,6 +17,7 @@ import {
   deleteVoice,
   type WordTiming,
 } from "./replit_integrations/elevenlabs/client";
+import { humeTextToSpeech, humeSimpleTTS, HUME_VOICE_OPTIONS, type WordTiming as HumeWordTiming } from "./hume-client";
 import { findInactiveVoices, runVoiceRotation, getVoiceSlotStats, checkVoiceSlotWarning } from "./voice-rotation";
 import { setupAuth, requireAuth, optionalAuth, AuthenticatedRequest } from "./auth";
 import {
@@ -350,6 +351,24 @@ const ELEVENLABS_TO_OPENAI_VOICE_MAP: Record<string, string> = {
   "pqHfZKP75CvOlQylNhV4": "onyx",     // Bill
 };
 
+// Map Hume voice IDs to their voice names for TTS API calls
+const HUME_VOICE_ID_MAP: Record<string, string> = {
+  "hume_kora": "Kora",
+  "hume_stella": "Stella",
+  "hume_dacher": "Dacher",
+  "hume_ito": "Ito",
+  "hume_aiden": "Aiden",
+};
+
+function getHumeVoiceNameForId(voiceId?: string): string | null {
+  if (!voiceId) return null;
+  return HUME_VOICE_ID_MAP[voiceId] || null;
+}
+
+function isHumeVoice(voiceId?: string): boolean {
+  return !!voiceId && voiceId.startsWith("hume_");
+}
+
 function getOpenAIVoiceForElevenLabsId(elevenLabsId?: string): "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer" {
   if (!elevenLabsId) return "nova";
   const mapped = ELEVENLABS_TO_OPENAI_VOICE_MAP[elevenLabsId];
@@ -405,47 +424,66 @@ async function generateAudioSimpleOpenAI(
 }
 
 async function generateAudioSimple(text: string, voiceId: string, isPersonalVoice: boolean = false): Promise<ArrayBuffer> {
-  if (!isPersonalVoice) {
+  // Personal voice: always use ElevenLabs
+  if (isPersonalVoice) {
     try {
-      const openaiVoice = getOpenAIVoiceForElevenLabsId(voiceId);
-      return await generateAudioSimpleOpenAI(text, openaiVoice);
+      const client = await getElevenLabsClient();
+      const audio = await client.textToSpeech.convert(voiceId, {
+        text,
+        model_id: "eleven_multilingual_v2",
+      });
+      const chunks: Buffer[] = [];
+      for await (const chunk of audio) {
+        chunks.push(Buffer.from(chunk));
+      }
+      return Buffer.concat(chunks).buffer;
     } catch (error: any) {
-      console.error("OpenAI simple TTS failed, trying ElevenLabs fallback:", error?.message || error);
-    }
-  }
-
-  try {
-    const client = await getElevenLabsClient();
-    const audio = await client.textToSpeech.convert(voiceId, {
-      text,
-      model_id: "eleven_multilingual_v2",
-    });
-    
-    const chunks: Buffer[] = [];
-    for await (const chunk of audio) {
-      chunks.push(Buffer.from(chunk));
-    }
-    return Buffer.concat(chunks).buffer;
-  } catch (error: any) {
-    const errMsg = error?.message || String(error);
-    const isQuota = errMsg.includes("quota_exceeded") || errMsg.includes("Unauthorized");
-    console.error(`ElevenLabs simple TTS failed for ${isPersonalVoice ? "PERSONAL" : "stock"} voice (${voiceId})${isQuota ? " (quota exhausted)" : ""}:`, errMsg);
-    if (isPersonalVoice) {
+      const errMsg = error?.message || String(error);
+      const isQuota = errMsg.includes("quota_exceeded") || errMsg.includes("Unauthorized");
       if (isQuota) {
         throw new Error("QUOTA_EXCEEDED: Your voice cloning credits have been used up for this period. Please switch to an AI voice or wait for your credits to reset.");
       }
       throw new Error("PERSONAL_VOICE_FAILED: Could not generate audio with your personal voice. Please try again or re-record your voice.");
     }
-    if (directOpenAI) {
-      const openaiVoice = getOpenAIVoiceForElevenLabsId(voiceId);
-      const response = await directOpenAI.audio.speech.create({
-        model: "tts-1",
-        voice: openaiVoice,
-        input: text,
-      });
-      return await response.arrayBuffer();
+  }
+
+  // Stock AI voice: use Hume AI (primary), OpenAI (fallback)
+  const humeName = getHumeVoiceNameForId(voiceId);
+  
+  if (humeName) {
+    try {
+      console.log(`Using Hume AI simple TTS for stock voice: ${humeName}`);
+      return await humeSimpleTTS(text, humeName);
+    } catch (humeError: any) {
+      console.error("Hume AI simple TTS failed, trying OpenAI fallback:", humeError?.message || humeError);
     }
-    throw error;
+  }
+
+  // Fallback to OpenAI
+  if (directOpenAI) {
+    try {
+      const openaiVoice = getOpenAIVoiceForElevenLabsId(voiceId);
+      return await generateAudioSimpleOpenAI(text, openaiVoice);
+    } catch (openaiError: any) {
+      console.error("OpenAI simple TTS fallback also failed:", openaiError?.message || openaiError);
+    }
+  }
+
+  // Last resort: ElevenLabs
+  try {
+    const client = await getElevenLabsClient();
+    const audio = await client.textToSpeech.convert(voiceId || "21m00Tcm4TlvDq8ikWAM", {
+      text,
+      model_id: "eleven_multilingual_v2",
+    });
+    const chunks: Buffer[] = [];
+    for await (const chunk of audio) {
+      chunks.push(Buffer.from(chunk));
+    }
+    return Buffer.concat(chunks).buffer;
+  } catch (elError: any) {
+    console.error("ElevenLabs simple TTS last resort also failed:", elError?.message || elError);
+    throw new Error("TTS_UNAVAILABLE: All TTS services are unavailable");
   }
 }
 
@@ -454,45 +492,56 @@ async function generateAudio(
   voiceId?: string,
   isPersonalVoice: boolean = false
 ): Promise<{ audio: ArrayBuffer; duration: number; wordTimings: WordTiming[] }> {
-  if (!isPersonalVoice) {
+  // Personal voice: always use ElevenLabs (voice clones live there)
+  if (isPersonalVoice) {
     try {
-      const openaiVoice = getOpenAIVoiceForElevenLabsId(voiceId);
-      return await generateAudioOpenAI(script, openaiVoice);
-    } catch (error: any) {
-      console.error("OpenAI TTS failed for stock voice, trying ElevenLabs fallback:", error?.message || error);
-    }
-  }
-
-  try {
-    const result = await elevenLabsTTS(script, voiceId);
-    return result;
-  } catch (elevenLabsError: any) {
-    const isQuotaExhausted = elevenLabsError?.message?.includes("quota_exceeded") ||
-      elevenLabsError?.message?.includes("Unauthorized") ||
-      String(elevenLabsError).includes("quota_exceeded");
-    console.error(
-      `ElevenLabs TTS failed for ${isPersonalVoice ? "PERSONAL" : "stock"} voice (${voiceId})${isQuotaExhausted ? " (quota exhausted)" : ""}:`,
-      elevenLabsError?.message || elevenLabsError
-    );
-
-    if (isPersonalVoice) {
+      const result = await elevenLabsTTS(script, voiceId);
+      return result;
+    } catch (elevenLabsError: any) {
+      const isQuotaExhausted = elevenLabsError?.message?.includes("quota_exceeded") ||
+        elevenLabsError?.message?.includes("Unauthorized") ||
+        String(elevenLabsError).includes("quota_exceeded");
+      console.error(
+        `ElevenLabs TTS failed for PERSONAL voice (${voiceId})${isQuotaExhausted ? " (quota exhausted)" : ""}:`,
+        elevenLabsError?.message || elevenLabsError
+      );
       if (isQuotaExhausted) {
         throw new Error("QUOTA_EXCEEDED: Your voice cloning credits have been used up for this period. Please switch to an AI voice or wait for your credits to reset.");
       }
       throw new Error("PERSONAL_VOICE_FAILED: Could not generate audio with your personal voice. Please try again or re-record your voice.");
     }
+  }
 
-    if (!directOpenAI) {
-      throw new Error("TTS_UNAVAILABLE: ElevenLabs quota exhausted and no OpenAI API key configured for fallback");
+  // Stock AI voice: use Hume AI (primary), OpenAI (fallback)
+  const humeName = getHumeVoiceNameForId(voiceId);
+  
+  if (humeName) {
+    try {
+      console.log(`Using Hume AI TTS for stock voice: ${humeName}`);
+      const result = await humeTextToSpeech(script, humeName);
+      return result;
+    } catch (humeError: any) {
+      console.error("Hume AI TTS failed, trying OpenAI fallback:", humeError?.message || humeError);
     }
+  }
 
+  // Fallback to OpenAI for stock voices
+  if (directOpenAI) {
     try {
       const openaiVoice = getOpenAIVoiceForElevenLabsId(voiceId);
       return await generateAudioOpenAI(script, openaiVoice);
     } catch (openaiError: any) {
       console.error("OpenAI TTS fallback also failed:", openaiError?.message || openaiError);
-      throw new Error("TTS_UNAVAILABLE: Both ElevenLabs and OpenAI TTS services are unavailable");
     }
+  }
+
+  // Last resort: try ElevenLabs for stock voice
+  try {
+    const result = await elevenLabsTTS(script, voiceId);
+    return result;
+  } catch (elError: any) {
+    console.error("ElevenLabs TTS last resort also failed:", elError?.message || elError);
+    throw new Error("TTS_UNAVAILABLE: All TTS services (Hume AI, OpenAI, ElevenLabs) are unavailable");
   }
 }
 
@@ -1132,29 +1181,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // AI Voice options - expanded selection from ElevenLabs
+  // AI Voice options - powered by Hume AI (Octave 2)
   const VOICE_OPTIONS = {
     female: [
-      { id: "hpp4J3VqNfWAUOO0d1Us", name: "Bella", description: "Professional, warm" },
-      { id: "EXAVITQu4vr4xnSDxMaL", name: "Sarah", description: "Mature, reassuring, confident" },
-      { id: "FGY2WhTYpPnrIDTdsKH5", name: "Laura", description: "Enthusiastic, quirky" },
-      { id: "Xb7hH8MSUJpSbSDYk0k2", name: "Alice", description: "Clear, engaging, British" },
-      { id: "XrExE9yKIg1WjnnlVkGX", name: "Matilda", description: "Knowledgeable, professional" },
-      { id: "cgSgspJ2msm6clMCkdW9", name: "Jessica", description: "Playful, bright, warm" },
-      { id: "pFZP5JQG7iQjIQuC4Bku", name: "Lily", description: "Velvety, British actress" },
+      { id: "hume_kora", name: "Kora", description: "Warm, professional narrator", provider: "HUME_AI", humeName: "Kora" },
+      { id: "hume_stella", name: "Stella", description: "Clear, friendly, engaging", provider: "HUME_AI", humeName: "Stella" },
+      { id: "hume_dacher", name: "Dacher", description: "Knowledgeable, warm", provider: "HUME_AI", humeName: "Dacher" },
     ],
     male: [
-      { id: "onwK4e9ZLuTAKqWW03F9", name: "Daniel", description: "Steady, professional, British" },
-      { id: "CwhRBWXzGAHq8TQ4Fs17", name: "Roger", description: "Laid-back, casual, resonant" },
-      { id: "IKne3meq5aSn9XLyUdCD", name: "Charlie", description: "Deep, confident, Australian" },
-      { id: "JBFqnCBsd6RMkjVDRZzb", name: "George", description: "Warm, captivating storyteller, British" },
-      { id: "TX3LPaxmHKxFdv7VOQHJ", name: "Liam", description: "Energetic, social media creator" },
-      { id: "bIHbv24MWmeRgasZH58o", name: "Will", description: "Relaxed, optimistic" },
-      { id: "cjVigY5qzO86Huf0OWal", name: "Eric", description: "Smooth, trustworthy" },
-      { id: "iP95p4xoKVk53GoZ742B", name: "Chris", description: "Charming, down-to-earth" },
-      { id: "nPczCjzI2devNBz1zQrb", name: "Brian", description: "Deep, resonant, comforting" },
-      { id: "pNInz6obpgDQGcFmaJgB", name: "Adam", description: "Dominant, firm" },
-      { id: "pqHfZKP75CvOlQylNhV4", name: "Bill", description: "Wise, mature, balanced" },
+      { id: "hume_ito", name: "Ito", description: "Calm, steady, trustworthy", provider: "HUME_AI", humeName: "Ito" },
+      { id: "hume_aiden", name: "Aiden", description: "Energetic, confident", provider: "HUME_AI", humeName: "Aiden" },
     ],
   };
 

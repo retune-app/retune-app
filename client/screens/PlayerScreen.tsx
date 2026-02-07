@@ -224,47 +224,45 @@ export default function PlayerScreen() {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => (
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <View style={{ width: 3, height: 16, borderRadius: 2, backgroundColor: '#FFFFFF', marginRight: 8 }} />
-          <Text style={{ color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: 2, fontWeight: '700', fontSize: 13 }}>
-            My Affirmation
-          </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%', paddingHorizontal: 4 }}>
+          {isNew && !hasSaved ? (
+            <Pressable
+              onPress={handleSave}
+              testID="button-save-affirmation"
+              hitSlop={12}
+              style={{ padding: 6 }}
+            >
+              <Feather 
+                name="save" 
+                size={22} 
+                color={autoSaveMutation.isPending ? 'rgba(255,255,255,0.5)' : '#FFFFFF'} 
+              />
+            </Pressable>
+          ) : (
+            <Pressable
+              onPress={() => navigation.goBack()}
+              testID="button-back"
+              hitSlop={12}
+              style={{ padding: 6 }}
+            >
+              <Feather name="arrow-left" size={22} color="#FFFFFF" />
+            </Pressable>
+          )}
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View style={{ width: 3, height: 16, borderRadius: 2, backgroundColor: '#FFFFFF', marginRight: 8 }} />
+            <Text style={{ color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: 2, fontWeight: '700', fontSize: 13 }}>
+              My Affirmation
+            </Text>
+          </View>
+          <Pressable
+            onPress={handleDelete}
+            testID="button-delete-affirmation"
+            hitSlop={12}
+            style={{ padding: 6 }}
+          >
+            <Feather name="trash-2" size={22} color="#FFFFFF" />
+          </Pressable>
         </View>
-      ),
-      headerLeft: () => (
-        isNew && !hasSaved ? (
-          <Pressable
-            onPress={handleSave}
-            testID="button-save-affirmation"
-            hitSlop={12}
-            style={{ padding: 4 }}
-          >
-            <Feather 
-              name="save" 
-              size={22} 
-              color={autoSaveMutation.isPending ? 'rgba(255,255,255,0.5)' : '#FFFFFF'} 
-            />
-          </Pressable>
-        ) : (
-          <Pressable
-            onPress={() => navigation.goBack()}
-            testID="button-back"
-            hitSlop={12}
-            style={{ padding: 4 }}
-          >
-            <Feather name="arrow-left" size={22} color="#FFFFFF" />
-          </Pressable>
-        )
-      ),
-      headerRight: () => (
-        <Pressable
-          onPress={handleDelete}
-          testID="button-delete-affirmation"
-          hitSlop={12}
-          style={{ padding: 4 }}
-        >
-          <Feather name="trash-2" size={22} color="#FFFFFF" />
-        </Pressable>
       ),
     });
   }, [navigation, handleSave, handleDelete, autoSaveMutation.isPending, theme, isNew, hasSaved]);

@@ -161,8 +161,10 @@ export default function RootStackNavigator() {
             headerTitleStyle: { fontSize: 17, fontWeight: '700' },
             headerShadowVisible: false,
             headerBackground: () => (
-              <View style={{ flex: 1, backgroundColor: theme.goldLight, borderBottomLeftRadius: 18, borderBottomRightRadius: 18 }} />
+              <View style={{ flex: 1, backgroundColor: theme.goldLight, borderBottomLeftRadius: 18, borderBottomRightRadius: 18, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 6 }} />
             ),
+            headerLeft: () => null,
+            headerRight: () => null,
             presentation: "modal",
             animation: "slide_from_bottom",
           }}
@@ -175,8 +177,10 @@ export default function RootStackNavigator() {
             headerTintColor: '#FFFFFF',
             headerShadowVisible: false,
             headerBackground: () => (
-              <View style={{ flex: 1, backgroundColor: theme.goldLight, borderBottomLeftRadius: 18, borderBottomRightRadius: 18 }} />
+              <View style={{ flex: 1, backgroundColor: theme.goldLight, borderBottomLeftRadius: 18, borderBottomRightRadius: 18, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 6 }} />
             ),
+            headerLeft: () => null,
+            headerRight: () => null,
             animation: "fade",
             animationDuration: 250,
           }}

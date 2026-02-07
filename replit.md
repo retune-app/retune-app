@@ -40,7 +40,7 @@ Preferred communication style: Simple, everyday language.
 - **Voice File Deletion**: Voice recording files are automatically deleted from the server immediately after successful cloning (PII protection).
 - **Usage Limits**: 
   - Max 2 voice clones per user (lifetime)
-  - Max 10 AI-generated affirmations per month (auto-resets monthly)
+  - Max 20 AI-generated affirmations per month (auto-resets monthly)
   - Limits displayed in Settings under "USAGE LIMITS" section
 - **Rate Limiting**: AI endpoints protected with rate limiting (5 generations/min, 10 TTS/min, 3 voice clones/hour)
 - **Delete My Data**: GDPR-compliant data deletion in Security & Privacy settings. Users type "delete" to confirm, then all their data is permanently removed including:

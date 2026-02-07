@@ -136,40 +136,36 @@ export default function BreathingScreen() {
   const totalCycles = getCyclesForDuration(selectedTechnique, selectedDuration);
   const progressPercent = selectedDuration > 0 ? Math.round((elapsedTime / selectedDuration) * 100) : 0;
 
-  // Handle orientation changes - only auto-enter landscape mode when actively breathing
-  useEffect(() => {
-    const checkOrientation = async () => {
-      const orientation = await ScreenOrientation.getOrientationAsync();
-      const isLandscapeOrientation = 
-        orientation === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
-        orientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT;
-      setIsLandscape(isLandscapeOrientation);
-    };
-
-    checkOrientation();
-
-    const subscription = ScreenOrientation.addOrientationChangeListener((event) => {
-      const newOrientation = event.orientationInfo.orientation;
-      const isLandscapeOrientation = 
-        newOrientation === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
-        newOrientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT;
-      
-      setIsLandscape(isLandscapeOrientation);
-      
-      if (isLandscapeOrientation && !showLandscapeMode && isPlaying) {
-        setShowLandscapeMode(true);
+  useFocusEffect(
+    useCallback(() => {
+      if (!showLandscapeMode) {
+        ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
       }
-    });
+      return () => {
+        ScreenOrientation.unlockAsync();
+      };
+    }, [showLandscapeMode])
+  );
 
-    return () => {
-      ScreenOrientation.removeOrientationChangeListener(subscription);
-    };
-  }, [showLandscapeMode, isPlaying]);
-
-  // Allow free rotation - don't lock orientation in landscape mode
   useEffect(() => {
-    // Unlock orientation to allow natural device rotation
-    ScreenOrientation.unlockAsync();
+    if (showLandscapeMode) {
+      ScreenOrientation.unlockAsync();
+
+      const subscription = ScreenOrientation.addOrientationChangeListener((event) => {
+        const newOrientation = event.orientationInfo.orientation;
+        const isLandscapeOrientation =
+          newOrientation === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
+          newOrientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT;
+        setIsLandscape(isLandscapeOrientation);
+      });
+
+      return () => {
+        ScreenOrientation.removeOrientationChangeListener(subscription);
+      };
+    } else {
+      setIsLandscape(false);
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+    }
   }, [showLandscapeMode]);
 
   // Load progress indicator setting - refresh on screen focus

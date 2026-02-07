@@ -51,7 +51,7 @@ function VoiceSetupNavigator() {
 
 export default function RootStackNavigator() {
   const screenOptions = useScreenOptions();
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const { isAuthenticated, isLoading } = useAuth();
   const [currentRoute, setCurrentRoute] = useState<string>('AffirmTab');
   const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null);
@@ -157,7 +157,7 @@ export default function RootStackNavigator() {
           component={CreateScreen}
           options={{
             headerTitle: "Create Affirmation",
-            headerTintColor: '#FFFFFF',
+            headerTintColor: isDark ? '#FFFFFF' : theme.navy,
             headerTitleStyle: { fontSize: 17, fontWeight: '700' },
             headerShadowVisible: false,
             headerBackground: () => (
@@ -174,7 +174,7 @@ export default function RootStackNavigator() {
           component={PlayerScreen}
           options={{
             headerTitle: "",
-            headerTintColor: '#FFFFFF',
+            headerTintColor: isDark ? '#FFFFFF' : theme.navy,
             headerBackVisible: false,
             headerShadowVisible: false,
             headerBackground: () => (

@@ -241,7 +241,7 @@ export function AffirmationCard({
         </View>
         <View style={styles.content}>
           <View style={styles.textContainer}>
-            <ThemedText type="h4" numberOfLines={2} style={styles.title}>
+            <ThemedText type="body" numberOfLines={2} style={styles.title}>
               {title}
             </ThemedText>
             <View style={styles.meta}>
@@ -364,6 +364,7 @@ const styles = StyleSheet.create({
   },
   title: {
     marginBottom: Spacing.xs,
+    fontWeight: '600',
   },
   meta: {
     flexDirection: "row",

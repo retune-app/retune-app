@@ -462,9 +462,13 @@ async function generateAudio(
       elevenLabsError?.message?.includes("Unauthorized") ||
       String(elevenLabsError).includes("quota_exceeded");
     console.error(
-      `ElevenLabs TTS failed${isQuotaExhausted ? " (quota exhausted)" : ""}, falling back to OpenAI:`,
+      `ElevenLabs TTS failed for ${isPersonalVoice ? "PERSONAL" : "stock"} voice (${voiceId})${isQuotaExhausted ? " (quota exhausted)" : ""}:`,
       elevenLabsError?.message || elevenLabsError
     );
+
+    if (isPersonalVoice) {
+      throw new Error("PERSONAL_VOICE_FAILED: Could not generate audio with your personal voice. Please try again or re-record your voice.");
+    }
 
     if (!directOpenAI) {
       throw new Error("TTS_UNAVAILABLE: ElevenLabs quota exhausted and no OpenAI API key configured for fallback");

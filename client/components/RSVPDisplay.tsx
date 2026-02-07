@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   wordMono: {
-    fontFamily: "SpaceMono_700Bold",
+    fontFamily: "IBMPlexMono_700Bold",
     textAlign: "center",
     letterSpacing: 0,
   },

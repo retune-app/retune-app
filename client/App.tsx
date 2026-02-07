@@ -33,9 +33,9 @@ import {
   Montserrat_700Bold,
 } from "@expo-google-fonts/montserrat";
 import {
-  SpaceMono_400Regular,
-  SpaceMono_700Bold,
-} from "@expo-google-fonts/space-mono";
+  IBMPlexMono_400Regular,
+  IBMPlexMono_700Bold,
+} from "@expo-google-fonts/ibm-plex-mono";
 
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/query-client";
@@ -84,8 +84,8 @@ function AppWithProviders() {
     Montserrat_500Medium,
     Montserrat_600SemiBold,
     Montserrat_700Bold,
-    SpaceMono_400Regular,
-    SpaceMono_700Bold,
+    IBMPlexMono_400Regular,
+    IBMPlexMono_700Bold,
   });
 
   useEffect(() => {

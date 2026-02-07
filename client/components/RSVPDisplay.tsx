@@ -64,9 +64,7 @@ function renderWordWithORP(
   const charWidth = fontSize * 0.6;
   const beforeWidth = before.length * charWidth;
   const orpHalfWidth = charWidth / 2;
-  const baseOffset = -(beforeWidth + orpHalfWidth - (word.length * charWidth) / 2);
-  const leftAdjustment = -fontSize * 0.8;
-  const offsetX = baseOffset + leftAdjustment;
+  const offsetX = -(beforeWidth + orpHalfWidth - (word.length * charWidth) / 2);
 
   return (
     <View style={{ transform: [{ translateX: offsetX }] }}>

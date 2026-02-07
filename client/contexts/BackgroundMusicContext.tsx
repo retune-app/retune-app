@@ -63,6 +63,10 @@ const VOLUME_STORAGE_KEY = '@rewired_background_music_volume';
 const MUSIC_SETTINGS_VERSION_KEY = '@rewired_background_music_version';
 const CURRENT_MUSIC_VERSION = '2'; // Increment to reset default to 'none'
 
+function applyVolumeCurve(linearVolume: number): number {
+  return Math.pow(linearVolume, 3);
+}
+
 interface BackgroundMusicContextType {
   selectedMusic: BackgroundMusicType;
   setSelectedMusic: (type: BackgroundMusicType) => Promise<void>;
@@ -138,7 +142,7 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
     await AsyncStorage.setItem(VOLUME_STORAGE_KEY, newVolume.toString());
     
     if (soundRef.current) {
-      await soundRef.current.setVolumeAsync(newVolume);
+      await soundRef.current.setVolumeAsync(applyVolumeCurve(newVolume));
     }
   };
 
@@ -156,7 +160,7 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
         AUDIO_FILES[selectedMusic],
         {
           isLooping: true,
-          volume: volume,
+          volume: applyVolumeCurve(volume),
           shouldPlay: true,
         }
       );

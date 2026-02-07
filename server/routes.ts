@@ -23,6 +23,12 @@ import {
   getIssueNodeId,
   getAssignedIssues,
   listRepos,
+  initCoordination,
+  updateStatus,
+  addBlocker,
+  getStatus,
+  getPriorities,
+  acknowledgePriorities,
 } from "./github";
 
 // Rate limiters to prevent API abuse
@@ -2551,6 +2557,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(results);
     } catch (error: any) {
       res.status(500).json({ error: error.message || "Failed to update issue status" });
+    }
+  });
+
+  // ============ Coordination System Routes ============
+
+  app.post("/api/github/coordination/:owner/:repo/init", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { owner, repo } = req.params;
+      const results = await initCoordination(owner, repo);
+      res.json({ success: true, results });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to initialize coordination" });
+    }
+  });
+
+  app.get("/api/github/coordination/:owner/:repo/status", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { owner, repo } = req.params;
+      const status = await getStatus(owner, repo);
+      if (!status) {
+        return res.status(404).json({ error: "status.json not found. Run init first." });
+      }
+      res.json(status);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to get status" });
+    }
+  });
+
+  app.post("/api/github/coordination/:owner/:repo/status", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { owner, repo } = req.params;
+      const { current_work, status, estimated_completion } = req.body;
+      const validStatuses = ['idle', 'in_progress', 'completed'];
+      if (status && !validStatuses.includes(status)) {
+        return res.status(400).json({ error: `Status must be one of: ${validStatuses.join(', ')}` });
+      }
+      const result = await updateStatus(owner, repo, { current_work, status, estimated_completion });
+      res.json({ success: true, status: result });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to update status" });
+    }
+  });
+
+  app.post("/api/github/coordination/:owner/:repo/blocker", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { owner, repo } = req.params;
+      const { blocker } = req.body;
+      if (!blocker) {
+        return res.status(400).json({ error: "blocker text is required" });
+      }
+      const result = await addBlocker(owner, repo, blocker);
+      res.json({ success: true, status: result });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to add blocker" });
+    }
+  });
+
+  app.get("/api/github/coordination/:owner/:repo/priorities", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { owner, repo } = req.params;
+      const priorities = await getPriorities(owner, repo);
+      if (!priorities) {
+        return res.status(404).json({ error: "priorities.json not found. Run init first." });
+      }
+      res.json(priorities);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to get priorities" });
+    }
+  });
+
+  app.post("/api/github/coordination/:owner/:repo/acknowledge", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { owner, repo } = req.params;
+      const result = await acknowledgePriorities(owner, repo);
+      res.json({ success: true, ...result });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to acknowledge priorities" });
     }
   });
 

@@ -293,3 +293,168 @@ export async function listRepos() {
     url: r.html_url,
   }));
 }
+
+// ============ Coordination System ============
+
+const COORD_DIR = '.retuned/coordination';
+const STATUS_PATH = `${COORD_DIR}/status.json`;
+const PRIORITIES_PATH = `${COORD_DIR}/priorities.json`;
+const ACK_PATH = `${COORD_DIR}/acknowledgments.json`;
+
+interface StatusFile {
+  current_work: string;
+  status: 'idle' | 'in_progress' | 'completed';
+  started_at: string | null;
+  estimated_completion: string | null;
+  blockers: string[];
+}
+
+async function getFileContent(owner: string, repo: string, path: string): Promise<{ content: any; sha: string } | null> {
+  const octokit = await getGitHubClient();
+  try {
+    const { data } = await octokit.repos.getContent({ owner, repo, path });
+    if ('content' in data && typeof data.content === 'string') {
+      const decoded = Buffer.from(data.content, 'base64').toString('utf-8');
+      return { content: JSON.parse(decoded), sha: data.sha };
+    }
+    return null;
+  } catch (e: any) {
+    if (e.status === 404) return null;
+    throw e;
+  }
+}
+
+async function commitFile(owner: string, repo: string, path: string, content: any, message: string, sha?: string) {
+  const octokit = await getGitHubClient();
+  const encoded = Buffer.from(JSON.stringify(content, null, 2) + '\n').toString('base64');
+  const params: any = {
+    owner,
+    repo,
+    path,
+    message,
+    content: encoded,
+  };
+  if (sha) params.sha = sha;
+  const { data } = await octokit.repos.createOrUpdateFileContents(params);
+  return data;
+}
+
+export async function initCoordination(owner: string, repo: string) {
+  const results: string[] = [];
+
+  const statusFile = await getFileContent(owner, repo, STATUS_PATH);
+  if (!statusFile) {
+    const initialStatus: StatusFile = {
+      current_work: '',
+      status: 'idle',
+      started_at: null,
+      estimated_completion: null,
+      blockers: [],
+    };
+    await commitFile(owner, repo, STATUS_PATH, initialStatus, 'Initialize coordination: status.json');
+    results.push('Created status.json');
+  } else {
+    results.push('status.json already exists');
+  }
+
+  const prioritiesFile = await getFileContent(owner, repo, PRIORITIES_PATH);
+  if (!prioritiesFile) {
+    const initialPriorities = {
+      updated_at: null,
+      priorities: [],
+      notes: 'RETUNED team will populate this with daily priorities',
+    };
+    await commitFile(owner, repo, PRIORITIES_PATH, initialPriorities, 'Initialize coordination: priorities.json');
+    results.push('Created priorities.json');
+  } else {
+    results.push('priorities.json already exists');
+  }
+
+  return results;
+}
+
+export async function updateStatus(
+  owner: string,
+  repo: string,
+  update: Partial<StatusFile>
+) {
+  const existing = await getFileContent(owner, repo, STATUS_PATH);
+  const currentStatus: StatusFile = existing?.content || {
+    current_work: '',
+    status: 'idle',
+    started_at: null,
+    estimated_completion: null,
+    blockers: [],
+  };
+
+  const newStatus: StatusFile = { ...currentStatus, ...update };
+
+  if (update.status === 'in_progress' && !update.started_at) {
+    newStatus.started_at = new Date().toISOString();
+  }
+  if (update.status === 'completed') {
+    newStatus.blockers = [];
+  }
+  if (update.status === 'idle') {
+    newStatus.current_work = '';
+    newStatus.started_at = null;
+    newStatus.estimated_completion = null;
+    newStatus.blockers = [];
+  }
+
+  const statusLabel = update.status || currentStatus.status;
+  const commitMsg = `Update status: ${statusLabel}${update.current_work ? ` - ${update.current_work}` : ''}`;
+
+  await commitFile(owner, repo, STATUS_PATH, newStatus, commitMsg, existing?.sha);
+  return newStatus;
+}
+
+export async function addBlocker(owner: string, repo: string, blocker: string) {
+  const existing = await getFileContent(owner, repo, STATUS_PATH);
+  if (!existing) throw new Error('status.json not found. Run init first.');
+
+  const status: StatusFile = existing.content;
+  status.blockers.push(blocker);
+  status.status = 'in_progress';
+
+  await commitFile(owner, repo, STATUS_PATH, status, `Add blocker: ${blocker}`, existing.sha);
+  return status;
+}
+
+export async function getStatus(owner: string, repo: string) {
+  const result = await getFileContent(owner, repo, STATUS_PATH);
+  return result?.content || null;
+}
+
+export async function getPriorities(owner: string, repo: string) {
+  const result = await getFileContent(owner, repo, PRIORITIES_PATH);
+  return result?.content || null;
+}
+
+export async function acknowledgePriorities(owner: string, repo: string) {
+  const priorities = await getFileContent(owner, repo, PRIORITIES_PATH);
+  if (!priorities) throw new Error('priorities.json not found');
+
+  const existing = await getFileContent(owner, repo, ACK_PATH);
+  const acks = existing?.content || { acknowledgments: [] };
+
+  acks.acknowledgments.push({
+    acknowledged_at: new Date().toISOString(),
+    priorities_snapshot: priorities.content,
+  });
+
+  if (acks.acknowledgments.length > 20) {
+    acks.acknowledgments = acks.acknowledgments.slice(-20);
+  }
+
+  await commitFile(
+    owner,
+    repo,
+    ACK_PATH,
+    acks,
+    `Acknowledge priorities - ${new Date().toISOString()}`,
+    existing?.sha
+  );
+
+  return { acknowledged_at: new Date().toISOString(), priorities: priorities.content };
+}

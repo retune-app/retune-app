@@ -135,7 +135,7 @@ export default function BreathingScreen() {
   const totalCycles = getCyclesForDuration(selectedTechnique, selectedDuration);
   const progressPercent = selectedDuration > 0 ? Math.round((elapsedTime / selectedDuration) * 100) : 0;
 
-  // Handle orientation changes - auto-enter landscape mode when device is tilted
+  // Handle orientation changes - only auto-enter landscape mode when actively breathing
   useEffect(() => {
     const checkOrientation = async () => {
       const orientation = await ScreenOrientation.getOrientationAsync();
@@ -155,8 +155,7 @@ export default function BreathingScreen() {
       
       setIsLandscape(isLandscapeOrientation);
       
-      // Auto-enter landscape fullscreen mode when device is tilted to landscape
-      if (isLandscapeOrientation && !showLandscapeMode) {
+      if (isLandscapeOrientation && !showLandscapeMode && isPlaying) {
         setShowLandscapeMode(true);
       }
     });
@@ -164,7 +163,7 @@ export default function BreathingScreen() {
     return () => {
       ScreenOrientation.removeOrientationChangeListener(subscription);
     };
-  }, [showLandscapeMode]);
+  }, [showLandscapeMode, isPlaying]);
 
   // Allow free rotation - don't lock orientation in landscape mode
   useEffect(() => {
@@ -175,12 +174,15 @@ export default function BreathingScreen() {
   // Load progress indicator setting - refresh on screen focus
   useFocusEffect(
     useCallback(() => {
+      if (!isPlaying) {
+        setShowLandscapeMode(false);
+      }
       AsyncStorage.getItem(PROGRESS_INDICATOR_KEY).then((value) => {
         if (value !== null) {
           setProgressIndicatorEnabled(value === "true");
         }
       });
-    }, [])
+    }, [isPlaying])
   );
 
   // Cleanup on unmount

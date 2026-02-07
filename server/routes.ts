@@ -32,6 +32,10 @@ import {
   getStatus,
   getPriorities,
   acknowledgePriorities,
+  initDocStructure,
+  pushDocument,
+  pushInboxMessage,
+  getInboxMessages,
 } from "./github";
 
 // Rate limiters to prevent API abuse
@@ -2795,6 +2799,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true, ...result });
     } catch (error: any) {
       res.status(500).json({ error: error.message || "Failed to acknowledge priorities" });
+    }
+  });
+
+  // ============ Document Sharing System ============
+
+  app.post("/api/github/docs/:owner/:repo/init", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { owner, repo } = req.params;
+      const results = await initDocStructure(owner, repo);
+      res.json({ success: true, results });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to initialize doc structure" });
+    }
+  });
+
+  app.post("/api/github/docs/:owner/:repo/push", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { owner, repo } = req.params;
+      const { category, filename, content, commitMessage } = req.body;
+      if (!category || !filename || !content) {
+        return res.status(400).json({ error: "category, filename, and content are required" });
+      }
+      const result = await pushDocument(owner, repo, category, filename, content, commitMessage);
+      res.json({ success: true, ...result });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to push document" });
+    }
+  });
+
+  app.post("/api/github/inbox/:owner/:repo/:direction", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { owner, repo, direction } = req.params;
+      if (direction !== 'to-agent' && direction !== 'to-team') {
+        return res.status(400).json({ error: "direction must be 'to-agent' or 'to-team'" });
+      }
+      const { filename, content } = req.body;
+      if (!filename || !content) {
+        return res.status(400).json({ error: "filename and content are required" });
+      }
+      const result = await pushInboxMessage(owner, repo, direction, filename, content);
+      res.json({ success: true, ...result });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to push inbox message" });
+    }
+  });
+
+  app.get("/api/github/inbox/:owner/:repo/:direction", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { owner, repo, direction } = req.params;
+      if (direction !== 'to-agent' && direction !== 'to-team') {
+        return res.status(400).json({ error: "direction must be 'to-agent' or 'to-team'" });
+      }
+      const messages = await getInboxMessages(owner, repo, direction);
+      res.json({ messages });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to get inbox messages" });
     }
   });
 

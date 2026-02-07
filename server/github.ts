@@ -458,3 +458,125 @@ export async function acknowledgePriorities(owner: string, repo: string) {
 
   return { acknowledged_at: new Date().toISOString(), priorities: priorities.content };
 }
+
+// ============ Document Sharing System ============
+
+const DOCS_DIR = '.retuned/docs';
+const INBOX_DIR = '.retuned/inbox';
+
+async function getRawFileContent(owner: string, repo: string, path: string): Promise<{ content: string; sha: string } | null> {
+  const octokit = await getGitHubClient();
+  try {
+    const { data } = await octokit.repos.getContent({ owner, repo, path });
+    if ('content' in data && typeof data.content === 'string') {
+      const decoded = Buffer.from(data.content, 'base64').toString('utf-8');
+      return { content: decoded, sha: data.sha };
+    }
+    return null;
+  } catch (e: any) {
+    if (e.status === 404) return null;
+    throw e;
+  }
+}
+
+async function commitRawFile(owner: string, repo: string, path: string, content: string, message: string, sha?: string) {
+  const octokit = await getGitHubClient();
+  const encoded = Buffer.from(content).toString('base64');
+  const params: any = { owner, repo, path, message, content: encoded };
+  if (sha) params.sha = sha;
+  const { data } = await octokit.repos.createOrUpdateFileContents(params);
+  return data;
+}
+
+export async function pushDocument(
+  owner: string,
+  repo: string,
+  category: 'proposals' | 'decisions' | 'changelogs',
+  filename: string,
+  content: string,
+  commitMessage?: string
+) {
+  const path = `${DOCS_DIR}/${category}/${filename}`;
+  const existing = await getRawFileContent(owner, repo, path);
+  const message = commitMessage || `Add ${category} doc: ${filename}`;
+  await commitRawFile(owner, repo, path, content, message, existing?.sha);
+  return { path, url: `https://github.com/${owner}/${repo}/blob/main/${path}` };
+}
+
+export async function pushInboxMessage(
+  owner: string,
+  repo: string,
+  direction: 'to-agent' | 'to-team',
+  filename: string,
+  content: string
+) {
+  const path = `${INBOX_DIR}/${direction}/${filename}`;
+  const existing = await getRawFileContent(owner, repo, path);
+  const message = direction === 'to-team'
+    ? `Agent update: ${filename}`
+    : `Team message: ${filename}`;
+  await commitRawFile(owner, repo, path, content, message, existing?.sha);
+  return { path, url: `https://github.com/${owner}/${repo}/blob/main/${path}` };
+}
+
+export async function getInboxMessages(owner: string, repo: string, direction: 'to-agent' | 'to-team') {
+  const octokit = await getGitHubClient();
+  const path = `${INBOX_DIR}/${direction}`;
+  try {
+    const { data } = await octokit.repos.getContent({ owner, repo, path });
+    if (Array.isArray(data)) {
+      const messages = [];
+      for (const file of data) {
+        if (file.type === 'file' && file.name.endsWith('.md')) {
+          const content = await getRawFileContent(owner, repo, file.path);
+          messages.push({ name: file.name, path: file.path, content: content?.content || '' });
+        }
+      }
+      return messages;
+    }
+    return [];
+  } catch (e: any) {
+    if (e.status === 404) return [];
+    throw e;
+  }
+}
+
+export async function initDocStructure(owner: string, repo: string) {
+  const results: string[] = [];
+
+  const folders: { path: string; readme: string }[] = [
+    {
+      path: `${DOCS_DIR}/proposals`,
+      readme: `# Proposals\n\nTechnical evaluations and proposals for team review.\n\nFiles here are pending discussion — move to \`decisions/\` once approved or rejected.\n`,
+    },
+    {
+      path: `${DOCS_DIR}/decisions`,
+      readme: `# Decisions\n\nFinalized technical decisions with outcomes.\n\nEach file should note whether the proposal was approved or rejected and why.\n`,
+    },
+    {
+      path: `${DOCS_DIR}/changelogs`,
+      readme: `# Changelogs\n\nSummaries of significant changes made to the codebase.\n\nDropped here after major features or refactors for team awareness.\n`,
+    },
+    {
+      path: `${INBOX_DIR}/to-agent`,
+      readme: `# To Agent\n\nDrop markdown files here with instructions, feedback, or questions for the Replit agent.\n\nThe agent will pick these up at the start of each session.\n`,
+    },
+    {
+      path: `${INBOX_DIR}/to-team`,
+      readme: `# To Team\n\nUpdates, summaries, and questions from the Replit agent to the team.\n\nCheck here for agent progress reports and decisions that need input.\n`,
+    },
+  ];
+
+  for (const folder of folders) {
+    const readmePath = `${folder.path}/README.md`;
+    const existing = await getRawFileContent(owner, repo, readmePath);
+    if (!existing) {
+      await commitRawFile(owner, repo, readmePath, folder.readme, `Initialize ${folder.path}`);
+      results.push(`Created ${readmePath}`);
+    } else {
+      results.push(`${readmePath} already exists`);
+    }
+  }
+
+  return results;
+}

@@ -8,6 +8,7 @@ import {
   Platform,
   ScrollView,
   Keyboard,
+  Modal,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
@@ -130,6 +131,8 @@ export default function CreateScreen() {
 
   const [currentStep, setCurrentStep] = useState(1);
   const [showCreateButton, setShowCreateButton] = useState(false);
+  const [showPillarHelp, setShowPillarHelp] = useState(false);
+  const [showCreatingOverlay, setShowCreatingOverlay] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const step2Ref = useRef<View | null>(null);
   const step3Ref = useRef<View | null>(null);
@@ -142,6 +145,7 @@ export default function CreateScreen() {
   const shimmerX = useSharedValue(-1);
   const createButtonOpacity = useSharedValue(0);
   const createButtonTranslateY = useSharedValue(12);
+  const creatingPulse = useSharedValue(0);
 
   useEffect(() => {
     AsyncStorage.getItem(CUSTOM_TAGS_STORAGE_KEY).then((value) => {
@@ -376,6 +380,23 @@ export default function CreateScreen() {
     },
   });
 
+  useEffect(() => {
+    if (createMutation.isPending) {
+      setShowCreatingOverlay(true);
+      creatingPulse.value = 0;
+      creatingPulse.value = withRepeat(
+        withSequence(
+          withTiming(1, { duration: 800, easing: Easing.inOut(Easing.ease) }),
+          withTiming(0.3, { duration: 800, easing: Easing.inOut(Easing.ease) })
+        ),
+        -1,
+        true
+      );
+    } else {
+      setShowCreatingOverlay(false);
+    }
+  }, [createMutation.isPending]);
+
   const handleGenerate = () => {
     if (userLimits?.aiAffirmations?.remaining === 0) {
       Alert.alert("Monthly Limit Reached", "You've used all your AI-generated affirmations for this month.");
@@ -454,6 +475,11 @@ export default function CreateScreen() {
     transform: [{ translateY: createButtonTranslateY.value }],
   }));
 
+  const creatingPulseStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(creatingPulse.value, [0, 1], [0.3, 1]),
+    transform: [{ scale: interpolate(creatingPulse.value, [0, 1], [0.8, 1.2]) }],
+  }));
+
   const renderStepSummary = (
     stepNumber: number,
     label: string,
@@ -522,14 +548,55 @@ export default function CreateScreen() {
           </Button>
         </View>
 
+        {mode === "ai" && userLimits?.aiAffirmations ? (
+          <View style={[styles.limitsRow, { backgroundColor: theme.cardBackground }]}>
+            <Feather
+              name={userLimits.aiAffirmations.remaining === 0 ? "alert-circle" : "zap"}
+              size={14}
+              color={
+                userLimits.aiAffirmations.remaining === 0
+                  ? theme.error
+                  : userLimits.aiAffirmations.remaining <= 5
+                    ? theme.warning
+                    : theme.textSecondary
+              }
+            />
+            <ThemedText
+              type="caption"
+              style={{
+                color:
+                  userLimits.aiAffirmations.remaining === 0
+                    ? theme.error
+                    : userLimits.aiAffirmations.remaining <= 5
+                      ? theme.warning
+                      : theme.textSecondary,
+                marginLeft: Spacing.xs,
+              }}
+            >
+              {userLimits.aiAffirmations.remaining === 0
+                ? "Limit reached"
+                : `${userLimits.aiAffirmations.remaining} of ${userLimits.aiAffirmations.limit} remaining this month`}
+            </ThemedText>
+          </View>
+        ) : null}
+
         {currentStep === 1 ? (
           <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(150)}>
             <View style={styles.stepHeader}>
               <View style={[styles.stepAccent, { backgroundColor: accentColor }]} />
-              <View>
-                <ThemedText type="h3" style={styles.stepTitle}>
-                  Focus
-                </ThemedText>
+              <View style={styles.stepHeaderContent}>
+                <View style={styles.stepTitleRow}>
+                  <ThemedText type="h3" style={styles.stepTitle}>
+                    Focus
+                  </ThemedText>
+                  <Pressable
+                    onPress={() => setShowPillarHelp(true)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    testID="button-pillar-help"
+                  >
+                    <Feather name="help-circle" size={18} color={theme.textSecondary} />
+                  </Pressable>
+                </View>
                 <ThemedText type="caption" style={{ color: theme.textSecondary }}>
                   Select the area of life you want to focus on
                 </ThemedText>
@@ -887,6 +954,87 @@ export default function CreateScreen() {
           ) : null}
         </View>
       </KeyboardAwareScrollViewCompat>
+
+      <Modal
+        visible={showPillarHelp}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowPillarHelp(false)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setShowPillarHelp(false)}
+        >
+          <Pressable
+            style={[styles.modalCard, { backgroundColor: theme.cardBackground }]}
+            onPress={() => {}}
+          >
+            <View style={styles.modalHeader}>
+              <ThemedText type="h3">Life Pillars</ThemedText>
+              <Pressable
+                onPress={() => setShowPillarHelp(false)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                testID="button-close-pillar-help"
+              >
+                <Feather name="x" size={22} color={theme.textSecondary} />
+              </Pressable>
+            </View>
+            <ThemedText type="body" style={{ color: theme.textSecondary, marginBottom: Spacing.lg }}>
+              Pillars represent the key areas of your life. Choose one to focus your affirmation on.
+            </ThemedText>
+            <ScrollView style={styles.pillarHelpList} showsVerticalScrollIndicator={false}>
+              {PILLAR_LIST.map((pillarName) => {
+                const pillar = PILLARS[pillarName];
+                return (
+                  <View key={pillarName} style={styles.pillarHelpRow}>
+                    <View style={[styles.pillarHelpIcon, { backgroundColor: `${pillar.color}20` }]}>
+                      <Feather name={pillar.icon as any} size={18} color={pillar.color} />
+                    </View>
+                    <View style={styles.pillarHelpText}>
+                      <View style={styles.pillarHelpNameRow}>
+                        <ThemedText type="body" style={{ fontWeight: "600" }}>{pillarName}</ThemedText>
+                        <View style={[styles.pillarHelpDot, { backgroundColor: pillar.color }]} />
+                      </View>
+                      <ThemedText type="caption" style={{ color: theme.textSecondary }} numberOfLines={2}>
+                        {pillar.description}
+                      </ThemedText>
+                    </View>
+                  </View>
+                );
+              })}
+            </ScrollView>
+            <Button
+              variant="primary"
+              onPress={() => setShowPillarHelp(false)}
+              style={{ marginTop: Spacing.lg }}
+              testID="button-got-it"
+            >
+              Got it
+            </Button>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {showCreatingOverlay ? (
+        <Modal
+          visible={showCreatingOverlay}
+          transparent
+          animationType="fade"
+          onRequestClose={() => {}}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={[styles.creatingOverlayCard, { backgroundColor: theme.cardBackground }]}>
+              <Animated.View style={[styles.creatingPulseDot, { backgroundColor: theme.primary }, creatingPulseStyle]} />
+              <ThemedText type="h3" style={{ marginTop: Spacing.lg, textAlign: "center" }}>
+                Creating your affirmation...
+              </ThemedText>
+              <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: Spacing.sm, textAlign: "center" }}>
+                This may take a moment
+              </ThemedText>
+            </View>
+          </View>
+        </Modal>
+      ) : null}
     </ThemedView>
   );
 }
@@ -1158,5 +1306,85 @@ const styles = StyleSheet.create({
   customTagHint: {
     marginTop: Spacing.sm,
     marginBottom: Spacing.sm,
+  },
+  limitsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.sm,
+    marginBottom: Spacing.md,
+    opacity: 0.85,
+  },
+  stepHeaderContent: {
+    flex: 1,
+  },
+  stepTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: Spacing.lg,
+  },
+  modalCard: {
+    width: "100%",
+    maxWidth: 400,
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.xl,
+    maxHeight: "80%",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: Spacing.md,
+  },
+  pillarHelpList: {
+    maxHeight: 320,
+  },
+  pillarHelpRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: Spacing.sm,
+    gap: Spacing.md,
+  },
+  pillarHelpIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  pillarHelpText: {
+    flex: 1,
+  },
+  pillarHelpNameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+    marginBottom: 2,
+  },
+  pillarHelpDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  creatingOverlayCard: {
+    width: "80%",
+    maxWidth: 300,
+    borderRadius: BorderRadius.xl,
+    padding: Spacing["2xl"],
+    alignItems: "center",
+  },
+  creatingPulseDot: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
   },
 });

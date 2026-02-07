@@ -26,6 +26,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Button } from "@/components/Button";
+import { GoldShimmer } from "@/components/GoldShimmer";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { getApiUrl } from "@/lib/query-client";
@@ -429,6 +430,7 @@ export default function VoiceSetupScreen() {
   const [hasRecording, setHasRecording] = useState(false);
   const [recordingUri, setRecordingUri] = useState<string | null>(null);
   const [permissionGranted, setPermissionGranted] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const recordingRef = useRef<Audio.Recording | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -499,7 +501,7 @@ export default function VoiceSetupScreen() {
         queryClient.invalidateQueries({ queryKey: ["/api/voice-preferences"] }),
       ]);
       try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
-      navigation.goBack();
+      setShowSuccess(true);
     },
     onError: (error: any) => {
       const message = error?.message || "Could not upload your voice sample. Please try again.";
@@ -847,6 +849,64 @@ export default function VoiceSetupScreen() {
         <View style={styles.headerButton} />
       </View>
 
+      {showSuccess ? (
+        <Animated.View
+          entering={FadeIn.duration(400)}
+          style={[
+            styles.successContainer,
+            { paddingTop: insets.top + 60, paddingBottom: insets.bottom + Spacing["2xl"] },
+          ]}
+        >
+          <Animated.View
+            entering={FadeInUp.duration(500).delay(100).springify().damping(12)}
+            style={styles.successContent}
+          >
+            <GoldShimmer
+              style={styles.successCheckContainer}
+              shimmerWidth={120}
+              duration={2500}
+            >
+              <LinearGradient
+                colors={[theme.primary, theme.goldLight || "#E5C95C"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.successCheckCircle}
+              >
+                <Feather name="check" size={56} color="#FFFFFF" />
+              </LinearGradient>
+            </GoldShimmer>
+
+            <Animated.View
+              entering={FadeInUp.duration(400).delay(300)}
+              style={styles.successTextContainer}
+            >
+              <ThemedText type="h1" style={styles.successTitle}>
+                Voice Cloned!
+              </ThemedText>
+              <ThemedText
+                type="body"
+                style={[styles.successSubtitle, { color: theme.textSecondary }]}
+              >
+                Your affirmations will now play in your own voice
+              </ThemedText>
+            </Animated.View>
+
+            <Animated.View
+              entering={FadeInUp.duration(400).delay(500)}
+              style={styles.successButtonContainer}
+            >
+              <Button
+                variant="gradient"
+                onPress={() => navigation.goBack()}
+                style={styles.continueButton}
+                testID="button-success-continue"
+              >
+                Continue
+              </Button>
+            </Animated.View>
+          </Animated.View>
+        </Animated.View>
+      ) : (
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={[
@@ -958,6 +1018,7 @@ export default function VoiceSetupScreen() {
           </Button>
         </View>
       </ScrollView>
+      )}
     </ThemedView>
   );
 }
@@ -1114,5 +1175,49 @@ const styles = StyleSheet.create({
   },
   privacyItemTitle: {
     fontWeight: "600",
+  },
+  successContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: Spacing.xl,
+  },
+  successContent: {
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing["2xl"],
+  },
+  successCheckContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    overflow: "hidden",
+  },
+  successCheckCircle: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  successTextContainer: {
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  successTitle: {
+    textAlign: "center",
+    fontSize: 28,
+    fontWeight: "700",
+  },
+  successSubtitle: {
+    textAlign: "center",
+    maxWidth: 280,
+    lineHeight: 24,
+    fontSize: 16,
+  },
+  successButtonContainer: {
+    width: "100%",
+    paddingHorizontal: Spacing.lg,
+    marginTop: Spacing.lg,
   },
 });

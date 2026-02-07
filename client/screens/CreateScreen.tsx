@@ -15,7 +15,21 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
+import Animated, {
+  FadeIn,
+  FadeOut,
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSpring,
+  withRepeat,
+  withSequence,
+  withDelay,
+  Easing,
+  interpolate,
+  runOnJS,
+} from "react-native-reanimated";
+import { LinearGradient } from "expo-linear-gradient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { ThemedText } from "@/components/ThemedText";
@@ -67,9 +81,19 @@ export default function CreateScreen() {
   const newTagInputRef = useRef<TextInput>(null);
 
   const [currentStep, setCurrentStep] = useState(1);
+  const [showCreateButton, setShowCreateButton] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const step2Ref = useRef<View | null>(null);
   const step3Ref = useRef<View | null>(null);
+  const scriptCardRef = useRef<View | null>(null);
+  const prevScriptCountRef = useRef(0);
+
+  const scriptGlow = useSharedValue(0);
+  const scriptScale = useSharedValue(0.92);
+  const scriptOpacity = useSharedValue(0);
+  const shimmerX = useSharedValue(-1);
+  const createButtonOpacity = useSharedValue(0);
+  const createButtonTranslateY = useSharedValue(12);
 
   useEffect(() => {
     AsyncStorage.getItem(CUSTOM_TAGS_STORAGE_KEY).then((value) => {
@@ -199,6 +223,7 @@ export default function CreateScreen() {
       return res.json();
     },
     onSuccess: (data) => {
+      setShowCreateButton(false);
       setScriptHistory((prev) => {
         const newHistory = [...prev, data.script].slice(-3);
         const newIndex = newHistory.length - 1;
@@ -211,6 +236,53 @@ export default function CreateScreen() {
         return newHistory;
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+      scriptScale.value = 0.92;
+      scriptOpacity.value = 0;
+      scriptGlow.value = 0;
+      shimmerX.value = -1;
+      createButtonOpacity.value = 0;
+      createButtonTranslateY.value = 12;
+
+      scriptScale.value = withSpring(1, { damping: 12, stiffness: 100 });
+      scriptOpacity.value = withTiming(1, { duration: 400, easing: Easing.out(Easing.ease) });
+
+      scriptGlow.value = withDelay(300,
+        withRepeat(
+          withSequence(
+            withTiming(1, { duration: 1200, easing: Easing.inOut(Easing.ease) }),
+            withTiming(0.3, { duration: 1200, easing: Easing.inOut(Easing.ease) })
+          ),
+          3,
+          true
+        )
+      );
+
+      shimmerX.value = withDelay(200,
+        withRepeat(
+          withTiming(1, { duration: 1800, easing: Easing.inOut(Easing.ease) }),
+          2,
+          false
+        )
+      );
+
+      createButtonOpacity.value = withDelay(1200,
+        withTiming(1, { duration: 500, easing: Easing.out(Easing.ease) })
+      );
+      createButtonTranslateY.value = withDelay(1200,
+        withSpring(0, { damping: 14, stiffness: 90 })
+      );
+      setTimeout(() => setShowCreateButton(true), 1200);
+
+      setTimeout(() => {
+        scriptCardRef.current?.measureLayout(
+          scrollViewRef.current as any,
+          (_x, y) => {
+            scrollViewRef.current?.scrollTo({ y: y - headerHeight - Spacing.md, animated: true });
+          },
+          () => {}
+        );
+      }, 150);
     },
     onError: () => {
       Alert.alert("Error", "Failed to generate script. Please try again.");
@@ -289,6 +361,35 @@ export default function CreateScreen() {
 
   const selectedPillarData = selectedPillar ? PILLARS[selectedPillar] : null;
   const accentColor = selectedPillarData?.color || theme.primary;
+
+  const scriptCardAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scriptScale.value }],
+    opacity: scriptOpacity.value,
+  }));
+
+  const scriptGlowStyle = useAnimatedStyle(() => ({
+    shadowColor: "#E5C95C",
+    shadowOffset: { width: 0, height: 0 },
+    shadowRadius: interpolate(scriptGlow.value, [0, 1], [0, 16]),
+    shadowOpacity: interpolate(scriptGlow.value, [0, 1], [0, 0.7]),
+    elevation: interpolate(scriptGlow.value, [0, 1], [0, 10]),
+  }));
+
+  const shimmerStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: interpolate(shimmerX.value, [-1, 1], [-200, 400]) },
+    ],
+    opacity: interpolate(
+      shimmerX.value,
+      [-1, -0.5, 0, 0.5, 1],
+      [0, 0.5, 0.7, 0.5, 0]
+    ),
+  }));
+
+  const createButtonAnimStyle = useAnimatedStyle(() => ({
+    opacity: createButtonOpacity.value,
+    transform: [{ translateY: createButtonTranslateY.value }],
+  }));
 
   const renderStepSummary = (
     stepNumber: number,
@@ -607,60 +708,107 @@ export default function CreateScreen() {
               ) : null}
 
               {scriptHistory.length > 0 && mode === "ai" ? (
-                <Card style={styles.scriptCard}>
-                  <View style={styles.scriptHeader}>
-                    <ThemedText type="h4">Generated Script</ThemedText>
-                    {scriptHistory.length < 3 ? (
-                      <Pressable onPress={handleRegenerate} disabled={generateMutation.isPending}>
-                        <Feather 
-                          name="refresh-cw" 
-                          size={18} 
-                          color={generateMutation.isPending ? theme.textSecondary : theme.primary} 
+                <View ref={scriptCardRef} collapsable={false}>
+                  <Animated.View style={[scriptGlowStyle, { borderRadius: BorderRadius.lg }]}>
+                    <Animated.View style={scriptCardAnimStyle}>
+                      <Card style={styles.scriptCard}>
+                        <Animated.View style={[styles.shimmerOverlay, shimmerStyle]} pointerEvents="none">
+                          <LinearGradient
+                            colors={[
+                              "transparent",
+                              "rgba(229, 201, 92, 0.15)",
+                              "rgba(255, 215, 0, 0.3)",
+                              "rgba(229, 201, 92, 0.15)",
+                              "transparent",
+                            ]}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 0 }}
+                            style={styles.shimmerGradient}
+                          />
+                        </Animated.View>
+                        <View style={styles.scriptHeader}>
+                          <View style={styles.scriptTitleRow}>
+                            <Feather name="file-text" size={16} color={accentColor} />
+                            <ThemedText type="h4">Your Script</ThemedText>
+                          </View>
+                          {scriptHistory.length < 3 ? (
+                            <Pressable onPress={handleRegenerate} disabled={generateMutation.isPending} style={styles.regenerateButton}>
+                              <Feather 
+                                name="refresh-cw" 
+                                size={16} 
+                                color={generateMutation.isPending ? theme.textSecondary : theme.primary} 
+                              />
+                              <ThemedText type="caption" style={{ color: generateMutation.isPending ? theme.textSecondary : theme.primary, marginLeft: 4 }}>
+                                Try another
+                              </ThemedText>
+                            </Pressable>
+                          ) : null}
+                        </View>
+                        <ScriptPager
+                          pagerRef={pagerRef}
+                          scripts={scriptHistory}
+                          currentIndex={currentScriptIndex}
+                          onPageSelected={setCurrentScriptIndex}
+                          scriptLength={selectedLength.toLowerCase()}
                         />
-                      </Pressable>
-                    ) : null}
-                  </View>
-                  <ScriptPager
-                    pagerRef={pagerRef}
-                    scripts={scriptHistory}
-                    currentIndex={currentScriptIndex}
-                    onPageSelected={setCurrentScriptIndex}
-                    scriptLength={selectedLength.toLowerCase()}
-                  />
-                  <View style={styles.paginationContainer}>
-                    {scriptHistory.map((_, index) => (
-                      <Pressable
-                        key={index}
-                        onPress={() => {
-                          setCurrentScriptIndex(index);
-                          if (Platform.OS !== 'web') {
-                            pagerRef.current?.setPage(index);
-                          }
-                        }}
-                        style={styles.dotTouchArea}
+                        <View style={styles.paginationContainer}>
+                          {scriptHistory.map((_, index) => (
+                            <Pressable
+                              key={index}
+                              onPress={() => {
+                                setCurrentScriptIndex(index);
+                                if (Platform.OS !== 'web') {
+                                  pagerRef.current?.setPage(index);
+                                }
+                              }}
+                              style={styles.dotTouchArea}
+                            >
+                              <View
+                                style={[
+                                  styles.paginationDot,
+                                  {
+                                    backgroundColor: index === currentScriptIndex 
+                                      ? (selectedPillarData?.color || theme.primary)
+                                      : `${selectedPillarData?.color || theme.primary}40`,
+                                  },
+                                ]}
+                              />
+                            </Pressable>
+                          ))}
+                        </View>
+                        <ThemedText type="caption" style={[styles.swipeHint, { color: theme.textSecondary }]}>
+                          {scriptHistory.length < 3 
+                            ? `${scriptHistory.length}/3 scripts generated` 
+                            : "Swipe to compare scripts"}
+                        </ThemedText>
+                      </Card>
+                    </Animated.View>
+                  </Animated.View>
+
+                  {showCreateButton ? (
+                    <Animated.View style={createButtonAnimStyle}>
+                      <View style={styles.reviewPrompt}>
+                        <Feather name="check-circle" size={14} color={accentColor} />
+                        <ThemedText type="caption" style={{ color: theme.textSecondary, marginLeft: Spacing.xs }}>
+                          Read through your script, then bring it to life
+                        </ThemedText>
+                      </View>
+                      <Button
+                        variant="gradient"
+                        onPress={handleCreate}
+                        loading={createMutation.isPending}
+                        disabled={!selectedPillar}
+                        style={[styles.createButton, !selectedPillar ? { opacity: 0.5 } : undefined]}
+                        testID="button-create"
                       >
-                        <View
-                          style={[
-                            styles.paginationDot,
-                            {
-                              backgroundColor: index === currentScriptIndex 
-                                ? (selectedPillarData?.color || theme.primary)
-                                : `${selectedPillarData?.color || theme.primary}40`,
-                            },
-                          ]}
-                        />
-                      </Pressable>
-                    ))}
-                  </View>
-                  <ThemedText type="caption" style={[styles.swipeHint, { color: theme.textSecondary }]}>
-                    {scriptHistory.length < 3 
-                      ? `${scriptHistory.length}/3 scripts generated` 
-                      : "Swipe to compare scripts"}
-                  </ThemedText>
-                </Card>
+                        Create Affirmation
+                      </Button>
+                    </Animated.View>
+                  ) : null}
+                </View>
               ) : null}
 
-              {(scriptHistory.length > 0 || (mode === "manual" && manualScript.trim())) ? (
+              {mode === "manual" && manualScript.trim() ? (
                 <Button
                   variant="gradient"
                   onPress={handleCreate}
@@ -822,13 +970,42 @@ const styles = StyleSheet.create({
     marginBottom: Spacing["2xl"],
   },
   scriptCard: {
-    marginBottom: Spacing["2xl"],
+    marginBottom: Spacing.md,
+    position: "relative",
+    overflow: "hidden",
   },
   scriptHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: Spacing.md,
+  },
+  scriptTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  regenerateButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  shimmerOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 1,
+    pointerEvents: "none",
+  },
+  shimmerGradient: {
+    height: "100%",
+    width: 120,
+  },
+  reviewPrompt: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.sm,
   },
   scriptText: {
     lineHeight: 26,

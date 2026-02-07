@@ -22,7 +22,6 @@ async function saveToken(token: string): Promise<void> {
     } else {
       await SecureStore.setItemAsync(AUTH_TOKEN_KEY, token);
     }
-    console.log("[Auth] Token saved successfully");
   } catch (error) {
     console.error("[Auth] Failed to save token:", error);
   }
@@ -36,7 +35,6 @@ async function loadToken(): Promise<string | null> {
     } else {
       token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
     }
-    console.log("[Auth] Token loaded:", token ? "exists" : "null");
     return token;
   } catch (error) {
     console.error("[Auth] Failed to load token:", error);
@@ -51,9 +49,7 @@ async function deleteToken(): Promise<void> {
     } else {
       await SecureStore.deleteItemAsync(AUTH_TOKEN_KEY);
     }
-    console.log("[Auth] Token deleted");
   } catch (error) {
-    console.error("[Auth] Failed to delete token:", error);
   }
 }
 
@@ -104,13 +100,10 @@ function seedSampleAffirmations(token: string | null) {
     })
     .then((data) => {
       if (data?.created > 0) {
-        console.log(`[Auth] Seeded ${data.created} sample affirmations for new user`);
         queryClient.invalidateQueries({ queryKey: ["/api/affirmations"] });
       }
     })
-    .catch((err) => {
-      console.log("[Auth] Sample affirmation seeding skipped:", err?.message);
-    });
+    .catch(() => {});
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -164,16 +157,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const checkAuth = async () => {
       setIsLoading(true);
-      console.log("[Auth] Checking authentication on app start...");
-      
-      // Load saved auth token from SecureStore (iOS/Android) or AsyncStorage (web)
       const savedToken = await loadToken();
       if (savedToken) {
-        console.log("[Auth] Found saved token, setting up auth...");
         setGlobalAuthToken(savedToken);
         setAuthToken(savedToken);
-      } else {
-        console.log("[Auth] No saved token found");
       }
       
       await refreshUser();

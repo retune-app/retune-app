@@ -2177,13 +2177,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const audioDir = path.join(process.cwd(), "assets", "audio");
-      console.log(`Regenerating: ${filename} with prompt: ${prompt}`);
-      
       const audioBuffer = await generateSoundEffect(prompt, 22, 0.3);
       const filePath = path.join(audioDir, filename);
       fs.writeFileSync(filePath, Buffer.from(audioBuffer));
-      
-      console.log(`Successfully regenerated: ${filename}`);
       res.json({ success: true, filename, bytes: audioBuffer.byteLength });
     } catch (error: any) {
       console.error("Error regenerating sound:", error);
@@ -2213,14 +2209,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       for (const config of soundConfigs) {
         try {
-          console.log(`Generating: ${config.filename}`);
           const audioBuffer = await generateSoundEffect(config.prompt, 22, 0.3);
           
           const filePath = path.join(audioDir, config.filename);
           fs.writeFileSync(filePath, Buffer.from(audioBuffer));
           
           results.push({ filename: config.filename, success: true });
-          console.log(`Successfully generated: ${config.filename}`);
         } catch (error: any) {
           console.error(`Failed to generate ${config.filename}:`, error.message);
           results.push({ filename: config.filename, success: false, error: error.message });
@@ -2299,8 +2293,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Use the assigned AI voice or default to Sarah
           const voiceId = affirmation.aiVoiceId || "EXAVITQu4vr4xnSDxMaL";
-          
-          console.log(`Generating audio for: ${affirmation.title} with voice ${voiceId}`);
           
           // Generate audio
           const audioResult = await generateAudio(affirmation.script, voiceId);

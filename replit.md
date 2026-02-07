@@ -85,6 +85,18 @@ Preferred communication style: Simple, everyday language.
 - **OpenAI API**: Used for generating affirmation scripts.
 - **ElevenLabs API**: Used for voice cloning (Instant Voice Cloning) and text-to-speech synthesis.
 
+### GitHub Integration
+- **Connection**: Replit GitHub connector (connection:conn_github_01KGV1YDWVJT54AGKHQNTSN7AB)
+- **Library**: `@octokit/rest` for GitHub API interactions
+- **Service module**: `server/github.ts` — authentication via Replit connector, functions for issue comments, label management, and project board updates
+- **API Endpoints**:
+  - `GET /api/github/repos` — List authenticated user's repositories
+  - `GET /api/github/issues/:owner/:repo` — Get assigned issues for a repo
+  - `POST /api/github/issues/:owner/:repo/:issueNumber/comment` — Post a comment on an issue
+  - `POST /api/github/issues/:owner/:repo/:issueNumber/label` — Set status label (in-progress, blocked, completed)
+  - `POST /api/github/project/:owner/:projectNumber/move` — Move a card on a GitHub Project board
+  - `POST /api/github/issues/:owner/:repo/:issueNumber/status` — Combined: set label + post comment + optionally move project card
+
 ### Database
 - **PostgreSQL**: The primary database, managed with Drizzle ORM.
 

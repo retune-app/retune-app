@@ -46,6 +46,20 @@
 - Increased monthly AI affirmation generation limit to 20 per month for regular users.
 - Admin account now has unlimited generations and voice clones.
 
+### GitHub Integration
+- Added GitHub integration via Replit connector for project management automation.
+- Created `server/github.ts` service module with functions for issue comments, label management, and project board card updates.
+- New API endpoints:
+  - `GET /api/github/repos` — list repositories
+  - `GET /api/github/issues/:owner/:repo` — get assigned issues
+  - `POST .../comment` — post status comments on issues
+  - `POST .../label` — set status labels (in-progress, blocked, completed) with auto-creation and color coding
+  - `POST .../status` — combined endpoint: sets label + posts comment + optionally moves project board card
+  - `POST /api/github/project/:owner/:projectNumber/move` — move project board cards via GraphQL API
+- Labels auto-created with colors: in-progress (yellow), blocked (red), completed (green).
+- Status comments include emoji prefixes for visual scanning.
+- Project board updates use GitHub Projects V2 GraphQL API, supporting both user and org projects.
+
 ### Code Cleanup & Maintenance
 - Removed ~15 unnecessary `console.log` statements from server routes.
 - Deleted unused imports (`runOnJS`, `Dimensions`) from client code.

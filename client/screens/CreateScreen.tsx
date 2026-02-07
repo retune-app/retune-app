@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   View,
   StyleSheet,
@@ -6,6 +6,7 @@ import {
   Alert,
   Pressable,
   Platform,
+  ScrollView,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
@@ -65,6 +66,11 @@ export default function CreateScreen() {
   const [newTagName, setNewTagName] = useState("");
   const newTagInputRef = useRef<TextInput>(null);
 
+  const [currentStep, setCurrentStep] = useState(1);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const step2Ref = useRef<View | null>(null);
+  const step3Ref = useRef<View | null>(null);
+
   useEffect(() => {
     AsyncStorage.getItem(CUSTOM_TAGS_STORAGE_KEY).then((value) => {
       if (value) {
@@ -79,6 +85,18 @@ export default function CreateScreen() {
     setCustomTags(tags);
     await AsyncStorage.setItem(CUSTOM_TAGS_STORAGE_KEY, JSON.stringify(tags));
   };
+
+  const scrollToStep = useCallback((stepRef: React.RefObject<View | null>) => {
+    setTimeout(() => {
+      stepRef.current?.measureLayout(
+        scrollViewRef.current as any,
+        (_x, y) => {
+          scrollViewRef.current?.scrollTo({ y: y - headerHeight - Spacing.lg, animated: true });
+        },
+        () => {}
+      );
+    }, 250);
+  }, [headerHeight]);
 
   const handleAddCustomTag = () => {
     if (!selectedPillar || !newTagName.trim()) return;
@@ -128,9 +146,17 @@ export default function CreateScreen() {
     if (selectedPillar === pillar) {
       setSelectedPillar(null);
       setSelectedSubcategories([]);
+      setCurrentStep(1);
     } else {
       setSelectedPillar(pillar);
       setSelectedSubcategories([]);
+      if (mode === "manual") {
+        setCurrentStep(3);
+        scrollToStep(step3Ref);
+      } else {
+        setCurrentStep(2);
+        scrollToStep(step2Ref);
+      }
     }
   };
 
@@ -146,6 +172,20 @@ export default function CreateScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       return [...prev, subcategory];
     });
+  };
+
+  const handleContinueToStep3 = () => {
+    setCurrentStep(3);
+    scrollToStep(step3Ref);
+  };
+
+  const handleEditStep = (step: number) => {
+    setCurrentStep(step);
+    if (step === 1) {
+      scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+    } else if (step === 2) {
+      scrollToStep(step2Ref);
+    }
   };
 
   const generateMutation = useMutation({
@@ -248,10 +288,46 @@ export default function CreateScreen() {
   };
 
   const selectedPillarData = selectedPillar ? PILLARS[selectedPillar] : null;
+  const accentColor = selectedPillarData?.color || theme.primary;
+
+  const renderStepSummary = (
+    stepNumber: number,
+    label: string,
+    value: string,
+    dotColor?: string,
+  ) => (
+    <Pressable
+      onPress={() => handleEditStep(stepNumber)}
+      style={[
+        styles.summaryRow,
+        {
+          backgroundColor: theme.cardBackground,
+          borderBottomColor: `${accentColor}30`,
+          borderBottomWidth: 1,
+        },
+      ]}
+    >
+      <View style={styles.summaryLeft}>
+        {dotColor ? (
+          <View style={[styles.summaryDot, { backgroundColor: dotColor }]} />
+        ) : null}
+        <ThemedText type="small" style={{ color: theme.textSecondary }}>
+          {label}
+        </ThemedText>
+      </View>
+      <View style={styles.summaryRight}>
+        <ThemedText type="small" style={{ fontWeight: "600" }} numberOfLines={1}>
+          {value}
+        </ThemedText>
+        <Feather name="edit-2" size={14} color={theme.textSecondary} style={{ marginLeft: Spacing.sm }} />
+      </View>
+    </Pressable>
+  );
 
   return (
     <ThemedView style={styles.container}>
       <KeyboardAwareScrollViewCompat
+        ref={scrollViewRef}
         style={styles.scrollView}
         contentContainerStyle={[
           styles.content,
@@ -282,281 +358,323 @@ export default function CreateScreen() {
           </Button>
         </View>
 
-        <ThemedText type="h3" style={styles.sectionTitle}>
-          Focus
-        </ThemedText>
-        <ThemedText type="caption" style={[styles.sectionSubtitle, { color: theme.textSecondary }]}>
-          Select the area of life you want to focus on
-        </ThemedText>
-
-        <View style={styles.pillarsGrid}>
-          {PILLAR_LIST.map((pillarName) => {
-            const pillar = PILLARS[pillarName];
-            const isSelected = selectedPillar === pillarName;
-            return (
-              <Pressable
-                key={pillarName}
-                onPress={() => handlePillarSelect(pillarName)}
-                style={[
-                  styles.pillarCard,
-                  {
-                    backgroundColor: isSelected ? pillar.color : (isDark ? theme.cardBackground : theme.backgroundSecondary),
-                    borderColor: isSelected ? pillar.color : theme.border,
-                    borderWidth: isSelected ? 2 : 1,
-                  },
-                ]}
-                testID={`pillar-${pillarName.toLowerCase()}`}
-              >
-                <View style={[
-                  styles.pillarIconContainer,
-                  { backgroundColor: isSelected ? 'rgba(255,255,255,0.2)' : `${pillar.color}20` }
-                ]}>
-                  <Feather 
-                    name={pillar.icon as any} 
-                    size={24} 
-                    color={isSelected ? '#fff' : pillar.color} 
-                  />
-                </View>
-                <ThemedText 
-                  type="h4" 
-                  style={[styles.pillarName, { color: isSelected ? '#fff' : theme.text }]}
-                >
-                  {pillarName}
-                </ThemedText>
-                <ThemedText 
-                  type="caption" 
-                  style={[styles.pillarDescription, { color: isSelected ? 'rgba(255,255,255,0.8)' : theme.textSecondary }]}
-                  numberOfLines={2}
-                >
-                  {pillar.description}
-                </ThemedText>
-              </Pressable>
-            );
-          })}
-        </View>
-
-        {selectedPillarData && selectedPillar ? (
+        {currentStep === 1 ? (
           <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(150)}>
-            <View style={styles.subcategoryHeader}>
-              <View style={styles.subcategoryTitleRow}>
-                <View style={[styles.pillarAccent, { backgroundColor: selectedPillarData.color }]} />
-                <ThemedText type="h4">Tags</ThemedText>
+            <View style={styles.stepHeader}>
+              <View style={[styles.stepAccent, { backgroundColor: accentColor }]} />
+              <View>
+                <ThemedText type="h3" style={styles.stepTitle}>
+                  Focus
+                </ThemedText>
+                <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                  Select the area of life you want to focus on
+                </ThemedText>
               </View>
-              <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                {selectedSubcategories.length}/{MAX_SUBCATEGORIES} selected (optional)
-              </ThemedText>
             </View>
-            <View style={styles.subcategoriesGrid}>
-              {selectedPillarData.subcategories.map((subcat) => (
-                <CategoryChip
-                  key={subcat}
-                  label={subcat}
-                  isSelected={selectedSubcategories.includes(subcat)}
-                  onPress={() => handleSubcategoryToggle(subcat)}
-                  color={selectedPillarData.color}
-                  testID={`chip-${subcat.toLowerCase().replace(/\s+/g, '-')}`}
-                />
-              ))}
-              {(customTags[selectedPillar] || []).map((tag) => (
-                <View key={tag} style={styles.customTagWrapper}>
-                  <CategoryChip
-                    label={tag}
-                    isSelected={selectedSubcategories.includes(tag)}
-                    onPress={() => handleSubcategoryToggle(tag)}
-                    color={selectedPillarData.color}
-                    testID={`chip-custom-${tag.toLowerCase().replace(/\s+/g, '-')}`}
-                  />
+
+            <View style={styles.pillarsGrid}>
+              {PILLAR_LIST.map((pillarName) => {
+                const pillar = PILLARS[pillarName];
+                const isSelected = selectedPillar === pillarName;
+                return (
                   <Pressable
-                    onPress={() => handleDeleteCustomTag(selectedPillar, tag)}
-                    style={[styles.deleteTagButton, { backgroundColor: theme.error }]}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    testID={`delete-tag-${tag.toLowerCase().replace(/\s+/g, '-')}`}
+                    key={pillarName}
+                    onPress={() => handlePillarSelect(pillarName)}
+                    style={[
+                      styles.pillarCard,
+                      {
+                        backgroundColor: isSelected ? pillar.color : (isDark ? theme.cardBackground : theme.backgroundSecondary),
+                        borderColor: isSelected ? pillar.color : theme.border,
+                        borderWidth: isSelected ? 2 : 1,
+                      },
+                    ]}
+                    testID={`pillar-${pillarName.toLowerCase()}`}
                   >
-                    <Feather name="x" size={10} color="#fff" />
+                    <View style={[
+                      styles.pillarIconContainer,
+                      { backgroundColor: isSelected ? 'rgba(255,255,255,0.2)' : `${pillar.color}20` }
+                    ]}>
+                      <Feather 
+                        name={pillar.icon as any} 
+                        size={24} 
+                        color={isSelected ? '#fff' : pillar.color} 
+                      />
+                    </View>
+                    <ThemedText 
+                      type="h4" 
+                      style={[styles.pillarName, { color: isSelected ? '#fff' : theme.text }]}
+                    >
+                      {pillarName}
+                    </ThemedText>
+                    <ThemedText 
+                      type="caption" 
+                      style={[styles.pillarDescription, { color: isSelected ? 'rgba(255,255,255,0.8)' : theme.textSecondary }]}
+                      numberOfLines={2}
+                    >
+                      {pillar.description}
+                    </ThemedText>
                   </Pressable>
-                </View>
-              ))}
-              {(customTags[selectedPillar] || []).length < MAX_CUSTOM_TAGS_PER_PILLAR && !isAddingTag ? (
-                <Pressable
-                  onPress={handleStartAddingTag}
-                  style={[styles.addTagButton, { borderColor: selectedPillarData.color }]}
-                  testID="button-add-custom-tag"
-                >
-                  <Feather name="plus" size={16} color={selectedPillarData.color} />
-                </Pressable>
-              ) : null}
+                );
+              })}
             </View>
-            {isAddingTag ? (
-              <View style={[styles.addTagInputContainer, { borderColor: selectedPillarData.color, backgroundColor: theme.inputBackground }]}>
-                <TextInput
-                  ref={newTagInputRef}
-                  style={[styles.addTagInput, { color: theme.text }]}
-                  placeholder="Enter custom tag name..."
-                  placeholderTextColor={theme.placeholder}
-                  value={newTagName}
-                  onChangeText={setNewTagName}
-                  maxLength={20}
-                  onSubmitEditing={handleAddCustomTag}
-                  returnKeyType="done"
-                  autoFocus
-                  testID="input-new-tag"
-                />
-                <Pressable 
-                  onPress={handleAddCustomTag}
-                  style={[styles.tagActionButton, { backgroundColor: selectedPillarData.color }]}
-                  testID="button-confirm-tag"
-                >
-                  <Feather name="check" size={16} color="#fff" />
-                </Pressable>
-                <Pressable 
-                  onPress={handleCancelAddingTag}
-                  style={[styles.tagActionButton, { backgroundColor: theme.textSecondary }]}
-                  testID="button-cancel-tag"
-                >
-                  <Feather name="x" size={16} color="#fff" />
-                </Pressable>
-              </View>
-            ) : null}
-            <ThemedText type="caption" style={[styles.customTagHint, { color: theme.textSecondary }]}>
-              {(customTags[selectedPillar] || []).length}/{MAX_CUSTOM_TAGS_PER_PILLAR} custom tags
-            </ThemedText>
+          </Animated.View>
+        ) : selectedPillarData ? (
+          <Animated.View entering={FadeIn.duration(200)}>
+            {renderStepSummary(1, "Focus", selectedPillar!, selectedPillarData.color)}
           </Animated.View>
         ) : null}
 
-        <ThemedText type="h3" style={styles.sectionTitle}>
-          {mode === "ai" ? "What do you want to achieve?" : "Write your affirmation"}
-        </ThemedText>
-
-        <View
-          style={[
-            styles.inputContainer,
-            { 
-              backgroundColor: theme.inputBackground, 
-              borderColor: selectedPillarData ? selectedPillarData.color : theme.inputBorder,
-              borderWidth: selectedPillarData ? 2 : 1,
-            },
-          ]}
-        >
-          <TextInput
-            style={[styles.goalInput, { color: theme.text }]}
-            placeholder={
-              mode === "ai"
-                ? "e.g., Build confidence in public speaking, achieve financial independence..."
-                : "Write or paste your affirmation script here..."
-            }
-            placeholderTextColor={theme.placeholder}
-            value={mode === "ai" ? goal : manualScript}
-            onChangeText={mode === "ai" ? setGoal : setManualScript}
-            multiline
-            textAlignVertical="top"
-            testID="input-goal"
-          />
-          <ThemedText type="caption" style={[styles.charCount, { color: theme.textSecondary }]}>
-            {(mode === "ai" ? goal : manualScript).length} characters
-          </ThemedText>
+        <View ref={step2Ref} collapsable={false}>
+          {currentStep >= 2 && selectedPillarData && selectedPillar && mode === "ai" ? (
+            currentStep === 2 ? (
+              <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(150)}>
+                <View style={styles.stepHeader}>
+                  <View style={[styles.stepAccent, { backgroundColor: accentColor }]} />
+                  <View>
+                    <ThemedText type="h3" style={styles.stepTitle}>Tags</ThemedText>
+                    <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                      {selectedSubcategories.length}/{MAX_SUBCATEGORIES} selected (optional)
+                    </ThemedText>
+                  </View>
+                </View>
+                <View style={styles.subcategoriesGrid}>
+                  {selectedPillarData.subcategories.map((subcat) => (
+                    <CategoryChip
+                      key={subcat}
+                      label={subcat}
+                      isSelected={selectedSubcategories.includes(subcat)}
+                      onPress={() => handleSubcategoryToggle(subcat)}
+                      color={selectedPillarData.color}
+                      testID={`chip-${subcat.toLowerCase().replace(/\s+/g, '-')}`}
+                    />
+                  ))}
+                  {(customTags[selectedPillar] || []).map((tag) => (
+                    <View key={tag} style={styles.customTagWrapper}>
+                      <CategoryChip
+                        label={tag}
+                        isSelected={selectedSubcategories.includes(tag)}
+                        onPress={() => handleSubcategoryToggle(tag)}
+                        color={selectedPillarData.color}
+                        testID={`chip-custom-${tag.toLowerCase().replace(/\s+/g, '-')}`}
+                      />
+                      <Pressable
+                        onPress={() => handleDeleteCustomTag(selectedPillar, tag)}
+                        style={[styles.deleteTagButton, { backgroundColor: theme.error }]}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        testID={`delete-tag-${tag.toLowerCase().replace(/\s+/g, '-')}`}
+                      >
+                        <Feather name="x" size={10} color="#fff" />
+                      </Pressable>
+                    </View>
+                  ))}
+                  {(customTags[selectedPillar] || []).length < MAX_CUSTOM_TAGS_PER_PILLAR && !isAddingTag ? (
+                    <Pressable
+                      onPress={handleStartAddingTag}
+                      style={[styles.addTagButton, { borderColor: selectedPillarData.color }]}
+                      testID="button-add-custom-tag"
+                    >
+                      <Feather name="plus" size={16} color={selectedPillarData.color} />
+                    </Pressable>
+                  ) : null}
+                </View>
+                {isAddingTag ? (
+                  <View style={[styles.addTagInputContainer, { borderColor: selectedPillarData.color, backgroundColor: theme.inputBackground }]}>
+                    <TextInput
+                      ref={newTagInputRef}
+                      style={[styles.addTagInput, { color: theme.text }]}
+                      placeholder="Enter custom tag name..."
+                      placeholderTextColor={theme.placeholder}
+                      value={newTagName}
+                      onChangeText={setNewTagName}
+                      maxLength={20}
+                      onSubmitEditing={handleAddCustomTag}
+                      returnKeyType="done"
+                      autoFocus
+                      testID="input-new-tag"
+                    />
+                    <Pressable 
+                      onPress={handleAddCustomTag}
+                      style={[styles.tagActionButton, { backgroundColor: selectedPillarData.color }]}
+                      testID="button-confirm-tag"
+                    >
+                      <Feather name="check" size={16} color="#fff" />
+                    </Pressable>
+                    <Pressable 
+                      onPress={handleCancelAddingTag}
+                      style={[styles.tagActionButton, { backgroundColor: theme.textSecondary }]}
+                      testID="button-cancel-tag"
+                    >
+                      <Feather name="x" size={16} color="#fff" />
+                    </Pressable>
+                  </View>
+                ) : null}
+                <ThemedText type="caption" style={[styles.customTagHint, { color: theme.textSecondary }]}>
+                  {(customTags[selectedPillar] || []).length}/{MAX_CUSTOM_TAGS_PER_PILLAR} custom tags
+                </ThemedText>
+                <Button
+                  variant="primary"
+                  onPress={handleContinueToStep3}
+                  style={styles.continueButton}
+                  testID="button-continue-tags"
+                >
+                  Continue
+                </Button>
+              </Animated.View>
+            ) : (
+              <Animated.View entering={FadeIn.duration(200)}>
+                {renderStepSummary(
+                  2,
+                  "Tags",
+                  selectedSubcategories.length > 0 ? selectedSubcategories.join(", ") : "None selected",
+                )}
+              </Animated.View>
+            )
+          ) : null}
         </View>
 
-        {mode === "ai" ? (
-          <>
-            <ThemedText type="h4" style={styles.sectionTitle}>
-              Length
-            </ThemedText>
-            <View style={styles.lengthSelector}>
-              {LENGTHS.map((len) => (
-                <Button
-                  key={len}
-                  variant={selectedLength === len ? "primary" : "ghost"}
-                  size="small"
-                  onPress={() => setSelectedLength(len)}
-                  style={styles.lengthButton}
-                  testID={`button-length-${len.toLowerCase()}`}
-                >
-                  {len}
-                </Button>
-              ))}
-            </View>
-          </>
-        ) : null}
+        <View ref={step3Ref} collapsable={false}>
+          {currentStep >= 3 && selectedPillar ? (
+            <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(150)}>
+              <View style={styles.stepHeader}>
+                <View style={[styles.stepAccent, { backgroundColor: accentColor }]} />
+                <ThemedText type="h3" style={styles.stepTitle}>
+                  {mode === "ai" ? "What do you want to achieve?" : "Write your affirmation"}
+                </ThemedText>
+              </View>
 
-        {mode === "ai" ? (
-          <Button
-            variant="gradient"
-            onPress={handleGenerate}
-            loading={generateMutation.isPending}
-            disabled={!selectedPillar}
-            style={[styles.generateButton, !selectedPillar && { opacity: 0.5 }]}
-            testID="button-generate"
-          >
-            Generate Script
-          </Button>
-        ) : null}
+              <View
+                style={[
+                  styles.inputContainer,
+                  { 
+                    backgroundColor: theme.inputBackground, 
+                    borderColor: selectedPillarData ? selectedPillarData.color : theme.inputBorder,
+                    borderWidth: selectedPillarData ? 2 : 1,
+                  },
+                ]}
+              >
+                <TextInput
+                  style={[styles.goalInput, { color: theme.text }]}
+                  placeholder={
+                    mode === "ai"
+                      ? "e.g., Build confidence in public speaking, achieve financial independence..."
+                      : "Write or paste your affirmation script here..."
+                  }
+                  placeholderTextColor={theme.placeholder}
+                  value={mode === "ai" ? goal : manualScript}
+                  onChangeText={mode === "ai" ? setGoal : setManualScript}
+                  multiline
+                  textAlignVertical="top"
+                  testID="input-goal"
+                />
+                <ThemedText type="caption" style={[styles.charCount, { color: theme.textSecondary }]}>
+                  {(mode === "ai" ? goal : manualScript).length} characters
+                </ThemedText>
+              </View>
 
-        {scriptHistory.length > 0 && mode === "ai" ? (
-          <Card style={styles.scriptCard}>
-            <View style={styles.scriptHeader}>
-              <ThemedText type="h4">Generated Script</ThemedText>
-              {scriptHistory.length < 3 ? (
-                <Pressable onPress={handleRegenerate} disabled={generateMutation.isPending}>
-                  <Feather 
-                    name="refresh-cw" 
-                    size={18} 
-                    color={generateMutation.isPending ? theme.textSecondary : theme.primary} 
-                  />
-                </Pressable>
+              {mode === "ai" ? (
+                <>
+                  <ThemedText type="h4" style={styles.sectionTitle}>
+                    Length
+                  </ThemedText>
+                  <View style={styles.lengthSelector}>
+                    {LENGTHS.map((len) => (
+                      <Button
+                        key={len}
+                        variant={selectedLength === len ? "primary" : "ghost"}
+                        size="small"
+                        onPress={() => setSelectedLength(len)}
+                        style={styles.lengthButton}
+                        testID={`button-length-${len.toLowerCase()}`}
+                      >
+                        {len}
+                      </Button>
+                    ))}
+                  </View>
+                </>
               ) : null}
-            </View>
-            <ScriptPager
-              pagerRef={pagerRef}
-              scripts={scriptHistory}
-              currentIndex={currentScriptIndex}
-              onPageSelected={setCurrentScriptIndex}
-              scriptLength={selectedLength.toLowerCase()}
-            />
-            <View style={styles.paginationContainer}>
-              {scriptHistory.map((_, index) => (
-                <Pressable
-                  key={index}
-                  onPress={() => {
-                    setCurrentScriptIndex(index);
-                    if (Platform.OS !== 'web') {
-                      pagerRef.current?.setPage(index);
-                    }
-                  }}
-                  style={styles.dotTouchArea}
-                >
-                  <View
-                    style={[
-                      styles.paginationDot,
-                      {
-                        backgroundColor: index === currentScriptIndex 
-                          ? (selectedPillarData?.color || theme.primary)
-                          : `${selectedPillarData?.color || theme.primary}40`,
-                      },
-                    ]}
-                  />
-                </Pressable>
-              ))}
-            </View>
-            <ThemedText type="caption" style={[styles.swipeHint, { color: theme.textSecondary }]}>
-              {scriptHistory.length < 3 
-                ? `${scriptHistory.length}/3 scripts generated` 
-                : "Swipe to compare scripts"}
-            </ThemedText>
-          </Card>
-        ) : null}
 
-        {(scriptHistory.length > 0 || (mode === "manual" && manualScript.trim())) ? (
-          <Button
-            variant="gradient"
-            onPress={handleCreate}
-            loading={createMutation.isPending}
-            disabled={!selectedPillar}
-            style={[styles.createButton, !selectedPillar && { opacity: 0.5 }]}
-            testID="button-create"
-          >
-            Create Affirmation
-          </Button>
-        ) : null}
+              {mode === "ai" ? (
+                <Button
+                  variant="gradient"
+                  onPress={handleGenerate}
+                  loading={generateMutation.isPending}
+                  disabled={!selectedPillar}
+                  style={[styles.generateButton, !selectedPillar ? { opacity: 0.5 } : undefined]}
+                  testID="button-generate"
+                >
+                  Generate Script
+                </Button>
+              ) : null}
+
+              {scriptHistory.length > 0 && mode === "ai" ? (
+                <Card style={styles.scriptCard}>
+                  <View style={styles.scriptHeader}>
+                    <ThemedText type="h4">Generated Script</ThemedText>
+                    {scriptHistory.length < 3 ? (
+                      <Pressable onPress={handleRegenerate} disabled={generateMutation.isPending}>
+                        <Feather 
+                          name="refresh-cw" 
+                          size={18} 
+                          color={generateMutation.isPending ? theme.textSecondary : theme.primary} 
+                        />
+                      </Pressable>
+                    ) : null}
+                  </View>
+                  <ScriptPager
+                    pagerRef={pagerRef}
+                    scripts={scriptHistory}
+                    currentIndex={currentScriptIndex}
+                    onPageSelected={setCurrentScriptIndex}
+                    scriptLength={selectedLength.toLowerCase()}
+                  />
+                  <View style={styles.paginationContainer}>
+                    {scriptHistory.map((_, index) => (
+                      <Pressable
+                        key={index}
+                        onPress={() => {
+                          setCurrentScriptIndex(index);
+                          if (Platform.OS !== 'web') {
+                            pagerRef.current?.setPage(index);
+                          }
+                        }}
+                        style={styles.dotTouchArea}
+                      >
+                        <View
+                          style={[
+                            styles.paginationDot,
+                            {
+                              backgroundColor: index === currentScriptIndex 
+                                ? (selectedPillarData?.color || theme.primary)
+                                : `${selectedPillarData?.color || theme.primary}40`,
+                            },
+                          ]}
+                        />
+                      </Pressable>
+                    ))}
+                  </View>
+                  <ThemedText type="caption" style={[styles.swipeHint, { color: theme.textSecondary }]}>
+                    {scriptHistory.length < 3 
+                      ? `${scriptHistory.length}/3 scripts generated` 
+                      : "Swipe to compare scripts"}
+                  </ThemedText>
+                </Card>
+              ) : null}
+
+              {(scriptHistory.length > 0 || (mode === "manual" && manualScript.trim())) ? (
+                <Button
+                  variant="gradient"
+                  onPress={handleCreate}
+                  loading={createMutation.isPending}
+                  disabled={!selectedPillar}
+                  style={[styles.createButton, !selectedPillar ? { opacity: 0.5 } : undefined]}
+                  testID="button-create"
+                >
+                  Create Affirmation
+                </Button>
+              ) : null}
+            </Animated.View>
+          ) : null}
+        </View>
       </KeyboardAwareScrollViewCompat>
     </ThemedView>
   );
@@ -579,6 +697,22 @@ const styles = StyleSheet.create({
   },
   modeButton: {
     flex: 1,
+  },
+  stepHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: Spacing.md,
+    marginBottom: Spacing.lg,
+    marginTop: Spacing.lg,
+  },
+  stepAccent: {
+    width: 4,
+    borderRadius: 2,
+    alignSelf: "stretch",
+    minHeight: 20,
+  },
+  stepTitle: {
+    marginBottom: 2,
   },
   sectionTitle: {
     marginBottom: Spacing.sm,
@@ -614,6 +748,30 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 14,
   },
+  summaryRow: {
+    height: 48,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    marginBottom: Spacing.sm,
+  },
+  summaryLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  summaryRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+    justifyContent: "flex-end",
+  },
+  summaryDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
   subcategoryHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -634,7 +792,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: Spacing.sm,
-    marginBottom: Spacing["2xl"],
+    marginBottom: Spacing.sm,
   },
   inputContainer: {
     borderRadius: BorderRadius.lg,
@@ -706,6 +864,10 @@ const styles = StyleSheet.create({
   createButton: {
     marginTop: Spacing.lg,
   },
+  continueButton: {
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.lg,
+  },
   customTagWrapper: {
     position: "relative",
   },
@@ -755,6 +917,6 @@ const styles = StyleSheet.create({
   },
   customTagHint: {
     marginTop: Spacing.sm,
-    marginBottom: Spacing["2xl"],
+    marginBottom: Spacing.sm,
   },
 });

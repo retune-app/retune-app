@@ -166,7 +166,7 @@ export default function RootStackNavigator() {
           component={PlayerScreen}
           options={{
             headerTitle: "",
-            headerTransparent: true,
+            headerTransparent: false,
             animation: "fade",
             animationDuration: 250,
           }}

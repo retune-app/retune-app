@@ -7,6 +7,7 @@ import {
   Pressable,
   Platform,
   ScrollView,
+  Keyboard,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
@@ -236,6 +237,7 @@ export default function CreateScreen() {
         return newHistory;
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Keyboard.dismiss();
 
       scriptScale.value = 0.92;
       scriptOpacity.value = 0;

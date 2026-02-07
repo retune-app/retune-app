@@ -26,6 +26,8 @@ export const users = pgTable("users", {
   monthlyResetDate: timestamp("monthly_reset_date").default(sql`CURRENT_TIMESTAMP`), // When to reset monthly limits
   hasConsentedToVoiceCloning: boolean("has_consented_to_voice_cloning").default(false), // GDPR/privacy consent
   voiceLastUsedAt: timestamp("voice_last_used_at"),
+  role: text("role").default("user"), // 'user', 'admin', 'reviewer'
+  active: boolean("active").default(true),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 

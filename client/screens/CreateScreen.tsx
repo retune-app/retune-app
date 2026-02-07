@@ -132,6 +132,7 @@ export default function CreateScreen() {
   const [currentStep, setCurrentStep] = useState(1);
   const [showCreateButton, setShowCreateButton] = useState(false);
   const [showPillarHelp, setShowPillarHelp] = useState(false);
+  const [showPillarTip, setShowPillarTip] = useState(false);
   const [showCreatingOverlay, setShowCreatingOverlay] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const step2Ref = useRef<View | null>(null);
@@ -153,6 +154,11 @@ export default function CreateScreen() {
         try {
           setCustomTags(JSON.parse(value));
         } catch (e) {}
+      }
+    });
+    AsyncStorage.getItem("@tips/pillarSelection").then((value) => {
+      if (!value) {
+        setShowPillarTip(true);
       }
     });
   }, []);
@@ -217,7 +223,15 @@ export default function CreateScreen() {
     setNewTagName("");
   };
 
+  const dismissPillarTip = useCallback(() => {
+    setShowPillarTip(false);
+    AsyncStorage.setItem("@tips/pillarSelection", "true");
+  }, []);
+
   const handlePillarSelect = (pillar: PillarName) => {
+    if (showPillarTip) {
+      dismissPillarTip();
+    }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     if (selectedPillar === pillar) {
       setSelectedPillar(null);
@@ -355,13 +369,14 @@ export default function CreateScreen() {
   const currentScript = mode === "ai" ? scriptHistory[currentScriptIndex] || "" : manualScript;
 
   const createMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (options?: { forceAiVoice?: boolean }) => {
       const res = await apiRequest("POST", "/api/affirmations/create-with-voice", {
         title: goal.substring(0, 50) || "My Affirmation",
         script: currentScript,
         pillar: selectedPillar,
         categories: selectedSubcategories,
         isManual: mode === "manual",
+        ...(options?.forceAiVoice ? { forceAiVoice: true } : {}),
       });
       return res.json();
     },
@@ -375,8 +390,32 @@ export default function CreateScreen() {
       
       navigation.navigate("Player", { affirmationId: data.id, isNew: true });
     },
-    onError: () => {
-      Alert.alert("Error", "Failed to create affirmation. Please try again.");
+    onError: (error: any) => {
+      let isPersonalVoiceFailure = false;
+      try {
+        const errorStr = error?.message || "";
+        const jsonMatch = errorStr.match(/\{.*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          if (parsed.error === "PERSONAL_VOICE_FAILED") {
+            isPersonalVoiceFailure = true;
+          }
+        }
+      } catch {}
+
+      if (isPersonalVoiceFailure) {
+        Alert.alert(
+          "Personal Voice Failed",
+          "Could not generate audio with your personal voice. Would you like to try again or use an AI voice instead?",
+          [
+            { text: "Cancel", style: "cancel" },
+            { text: "Try Again", onPress: () => createMutation.mutate({}) },
+            { text: "Use AI Voice", onPress: () => createMutation.mutate({ forceAiVoice: true }) },
+          ]
+        );
+      } else {
+        Alert.alert("Error", "Failed to create affirmation. Please try again.");
+      }
     },
   });
 
@@ -440,7 +479,7 @@ export default function CreateScreen() {
       Alert.alert("Generate Script First", "Please generate or write a script first.");
       return;
     }
-    createMutation.mutate();
+    createMutation.mutate({});
   };
 
   const selectedPillarData = selectedPillar ? PILLARS[selectedPillar] : null;
@@ -602,6 +641,25 @@ export default function CreateScreen() {
                 </ThemedText>
               </View>
             </View>
+
+            {showPillarTip ? (
+              <Animated.View entering={FadeIn.duration(300)} style={[styles.pillarTipContainer, { backgroundColor: theme.cardBackground }]}>
+                <View style={[styles.pillarTipAccent, { backgroundColor: '#E5C95C' }]} />
+                <View style={styles.pillarTipContent}>
+                  <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                    Choose a pillar to focus your affirmation on a specific area of life
+                  </ThemedText>
+                </View>
+                <Pressable
+                  onPress={dismissPillarTip}
+                  style={styles.pillarTipDismiss}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  testID="button-dismiss-pillar-tip"
+                >
+                  <Feather name="x" size={14} color={theme.textSecondary} />
+                </Pressable>
+              </Animated.View>
+            ) : null}
 
             <View style={styles.pillarsGrid}>
               {PILLAR_LIST.map((pillarName) => {
@@ -1386,5 +1444,25 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
+  },
+  pillarTipContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Spacing.md,
+    borderRadius: BorderRadius.md,
+    overflow: "hidden",
+  },
+  pillarTipAccent: {
+    width: 4,
+    alignSelf: "stretch",
+  },
+  pillarTipContent: {
+    flex: 1,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+  },
+  pillarTipDismiss: {
+    padding: Spacing.sm,
+    marginRight: Spacing.xs,
   },
 });

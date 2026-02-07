@@ -656,7 +656,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Rate limited: max 10 TTS requests per minute
   app.post("/api/affirmations/create-with-voice", requireAuth, ttsLimiter, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { title, script, pillar, categories, category, isManual } = req.body;
+      const { title, script, pillar, categories, category, isManual, forceAiVoice } = req.body;
 
       if (!script) {
         return res.status(400).json({ error: "Script is required" });
@@ -688,14 +688,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let usedPersonalVoice = false;
       let usedGender = userWithPrefs?.preferredAiGender || "female";
 
-      if (userWithPrefs?.preferredVoiceType === "personal" && (!userWithPrefs?.voiceId || !userWithPrefs?.hasVoiceSample)) {
+      if (!forceAiVoice && userWithPrefs?.preferredVoiceType === "personal" && (!userWithPrefs?.voiceId || !userWithPrefs?.hasVoiceSample)) {
         return res.status(400).json({
           error: "VOICE_ROTATED",
           message: "Your personal voice has expired. Please re-record your voice sample to continue using your personal voice, or switch to an AI voice.",
         });
       }
 
-      if (userWithPrefs?.preferredVoiceType === "personal" && userWithPrefs?.voiceId && userWithPrefs?.hasVoiceSample) {
+      if (!forceAiVoice && userWithPrefs?.preferredVoiceType === "personal" && userWithPrefs?.voiceId && userWithPrefs?.hasVoiceSample) {
         voiceIdToUse = userWithPrefs.voiceId;
         usedPersonalVoice = true;
       } else {
@@ -750,7 +750,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(newAffirmation);
     } catch (error: any) {
       console.error("Error creating affirmation:", error);
-      if (error?.message?.includes("TTS_UNAVAILABLE")) {
+      if (error?.message?.includes("PERSONAL_VOICE_FAILED")) {
+        res.status(422).json({ error: "PERSONAL_VOICE_FAILED", message: "Could not generate audio with your personal voice. You can try again or switch to an AI voice." });
+      } else if (error?.message?.includes("TTS_UNAVAILABLE")) {
         res.status(503).json({ error: "Voice services are temporarily unavailable. Please try again later." });
       } else {
         res.status(500).json({ error: "Failed to create affirmation. Please try again." });

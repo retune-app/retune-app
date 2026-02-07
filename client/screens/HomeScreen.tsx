@@ -46,6 +46,8 @@ export default function HomeScreen() {
   const { theme, isDark } = useTheme();
   const { user } = useAuth();
   const navigation = useNavigation<NavigationProp>();
+
+  const { data: voiceStatus } = useQuery<{ hasPersonalVoice: boolean; hasClonedVoice: boolean }>({ queryKey: ["/api/voice-samples/status"] });
   const route = useRoute<RouteProp<HomeScreenRouteParams, 'Home'>>();
   const { playAffirmation, currentAffirmation, isPlaying, togglePlayPause, breathingAffirmation, setBreathingAffirmation, highlightAffirmationId, clearHighlightAffirmation } = useAudio();
   
@@ -359,6 +361,37 @@ export default function HomeScreen() {
             />
           </View>
         </View>
+        <Pressable
+          onPress={() => navigation.navigate("VoiceSettings")}
+          style={[
+            styles.voiceBadge,
+            {
+              backgroundColor: voiceStatus?.hasPersonalVoice
+                ? (isDark ? 'rgba(229, 201, 92, 0.15)' : 'rgba(201, 162, 39, 0.1)')
+                : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'),
+              borderColor: voiceStatus?.hasPersonalVoice
+                ? (isDark ? 'rgba(229, 201, 92, 0.3)' : 'rgba(201, 162, 39, 0.25)')
+                : (isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)'),
+            },
+          ]}
+          testID="badge-voice-status"
+        >
+          <Feather
+            name={voiceStatus?.hasPersonalVoice ? "mic" : "cpu"}
+            size={12}
+            color={voiceStatus?.hasPersonalVoice ? '#C9A227' : theme.textSecondary}
+          />
+          <ThemedText
+            style={[
+              styles.voiceBadgeText,
+              {
+                color: voiceStatus?.hasPersonalVoice ? '#C9A227' : theme.textSecondary,
+              },
+            ]}
+          >
+            {voiceStatus?.hasPersonalVoice ? "My Voice Active" : "AI Voice"}
+          </ThemedText>
+        </Pressable>
         <FlatList
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -717,6 +750,21 @@ const styles = StyleSheet.create({
   voiceNudgeDismiss: {
     padding: Spacing.xs,
     flexShrink: 0,
+  },
+  voiceBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    height: 28,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1,
+    gap: 6,
+    marginBottom: Spacing.sm,
+  },
+  voiceBadgeText: {
+    fontSize: 12,
+    fontWeight: "500",
   },
   tapToListenTip: {
     flexDirection: "row",

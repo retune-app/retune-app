@@ -353,16 +353,16 @@ const ELEVENLABS_TO_OPENAI_VOICE_MAP: Record<string, string> = {
 
 // Map Hume voice IDs to their voice names for TTS API calls
 const HUME_VOICE_ID_MAP: Record<string, string> = {
-  "hume_kora": "Kora",
-  "hume_female_meditation_guide": "Female Meditation Guide",
-  "hume_inspiring_woman": "Inspiring Woman",
-  "hume_warm_american_female": "Warm American Female",
-  "hume_serene_assistant": "Serene Assistant",
-  "hume_ito": "Ito",
-  "hume_inspiring_man": "Inspiring Man",
-  "hume_deep_male": "Deep Male Conversational Voice",
-  "hume_comforting_male": "Comforting Male Conversationalist",
-  "hume_leon": "Leon",
+  "hume_seraphina": "Serene Assistant",
+  "hume_lotus": "Female Meditation Guide",
+  "hume_amber": "Warm American Female",
+  "hume_nova": "Warm Female Assistant Voice",
+  "hume_willow": "Demure Conversationalist",
+  "hume_orion": "Inspiring Man",
+  "hume_atlas": "Deep Male Conversational Voice",
+  "hume_sage": "Soft Male Conversationalist",
+  "hume_summit": "Nature Documentary Narrator",
+  "hume_bodhi": "Wise Wizard",
 };
 
 function getHumeVoiceNameForId(voiceId?: string): string | null {
@@ -1188,43 +1188,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   const VOICE_OPTIONS = {
     female: [
-      { id: "hume_kora", name: "Kora", description: "Warm, professional narrator", provider: "HUME_AI", humeName: "Kora" },
-      { id: "hume_female_meditation_guide", name: "Meditation Guide", description: "Peaceful, guiding, soothing", provider: "HUME_AI", humeName: "Female Meditation Guide" },
-      { id: "hume_inspiring_woman", name: "Inspiring Woman", description: "Motivating, uplifting", provider: "HUME_AI", humeName: "Inspiring Woman" },
-      { id: "hume_warm_american_female", name: "Warm American", description: "Friendly, approachable", provider: "HUME_AI", humeName: "Warm American Female" },
-      { id: "hume_serene_assistant", name: "Serene", description: "Clear, calm, reassuring", provider: "HUME_AI", humeName: "Serene Assistant" },
+      { id: "hume_seraphina", name: "Seraphina", description: "Tranquil, radiant calm", provider: "HUME_AI", humeName: "Serene Assistant" },
+      { id: "hume_lotus", name: "Lotus", description: "Peaceful, guiding presence", provider: "HUME_AI", humeName: "Female Meditation Guide" },
+      { id: "hume_amber", name: "Amber", description: "Warm, grounding energy", provider: "HUME_AI", humeName: "Warm American Female" },
+      { id: "hume_nova", name: "Nova", description: "Gentle, luminous clarity", provider: "HUME_AI", humeName: "Warm Female Assistant Voice" },
+      { id: "hume_willow", name: "Willow", description: "Soft, graceful wisdom", provider: "HUME_AI", humeName: "Demure Conversationalist" },
     ],
     male: [
-      { id: "hume_ito", name: "Ito", description: "Calm, steady, trustworthy", provider: "HUME_AI", humeName: "Ito" },
-      { id: "hume_inspiring_man", name: "Inspiring Man", description: "Motivating, confident", provider: "HUME_AI", humeName: "Inspiring Man" },
-      { id: "hume_deep_male", name: "Deep Voice", description: "Deep, grounded, resonant", provider: "HUME_AI", humeName: "Deep Male Conversational Voice" },
-      { id: "hume_comforting_male", name: "Comforting", description: "Warm, reassuring", provider: "HUME_AI", humeName: "Comforting Male Conversationalist" },
-      { id: "hume_leon", name: "Leon", description: "Steady, clear, composed", provider: "HUME_AI", humeName: "Leon" },
+      { id: "hume_orion", name: "Orion", description: "Bold, uplifting strength", provider: "HUME_AI", humeName: "Inspiring Man" },
+      { id: "hume_atlas", name: "Atlas", description: "Deep, grounded resonance", provider: "HUME_AI", humeName: "Deep Male Conversational Voice" },
+      { id: "hume_sage", name: "Sage", description: "Calm, centering stillness", provider: "HUME_AI", humeName: "Soft Male Conversationalist" },
+      { id: "hume_summit", name: "Summit", description: "Steady, expansive clarity", provider: "HUME_AI", humeName: "Nature Documentary Narrator" },
+      { id: "hume_bodhi", name: "Bodhi", description: "Ancient, soulful wisdom", provider: "HUME_AI", humeName: "Wise Wizard" },
     ],
   };
 
   // Get available AI voices
   app.get("/api/voices", async (req: Request, res: Response) => {
     res.json(VOICE_OPTIONS);
-  });
-
-  app.get("/api/voice-preview-file/:name", (req: Request, res: Response) => {
-    const name = req.params.name;
-    const filePath = `/tmp/voice_previews/preview_${name}.mp3`;
-    const fs = require("fs");
-    if (fs.existsSync(filePath)) {
-      res.setHeader("Content-Type", "audio/mpeg");
-      fs.createReadStream(filePath).pipe(res);
-    } else {
-      res.status(404).json({ error: "Preview not found" });
-    }
-  });
-
-  app.get("/voice-audition", (_req: Request, res: Response) => {
-    const fs = require("fs");
-    const html = fs.readFileSync("/tmp/voice_preview_page.html", "utf8");
-    res.setHeader("Content-Type", "text/html");
-    res.send(html);
   });
 
   // Preview phrase for voice testing

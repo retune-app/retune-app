@@ -14,18 +14,18 @@ export interface WordTiming {
 
 export const HUME_VOICE_OPTIONS = {
   female: [
-    { id: "KORA", name: "Kora", description: "Warm, professional narrator" },
-    { id: "FEMALE_MEDITATION_GUIDE", name: "Female Meditation Guide", description: "Peaceful, guiding, soothing" },
-    { id: "INSPIRING_WOMAN", name: "Inspiring Woman", description: "Motivating, uplifting" },
-    { id: "WARM_AMERICAN_FEMALE", name: "Warm American Female", description: "Friendly, approachable" },
-    { id: "SERENE_ASSISTANT", name: "Serene Assistant", description: "Clear, calm, reassuring" },
+    { id: "SERAPHINA", name: "Seraphina", humeName: "Serene Assistant", description: "Tranquil, radiant calm" },
+    { id: "LOTUS", name: "Lotus", humeName: "Female Meditation Guide", description: "Peaceful, guiding presence" },
+    { id: "AMBER", name: "Amber", humeName: "Warm American Female", description: "Warm, grounding energy" },
+    { id: "NOVA", name: "Nova", humeName: "Warm Female Assistant Voice", description: "Gentle, luminous clarity" },
+    { id: "WILLOW", name: "Willow", humeName: "Demure Conversationalist", description: "Soft, graceful wisdom" },
   ],
   male: [
-    { id: "ITO", name: "Ito", description: "Calm, steady, trustworthy" },
-    { id: "INSPIRING_MAN", name: "Inspiring Man", description: "Motivating, confident" },
-    { id: "DEEP_MALE", name: "Deep Male Conversational Voice", description: "Deep, grounded, resonant" },
-    { id: "COMFORTING_MALE", name: "Comforting Male Conversationalist", description: "Warm, reassuring" },
-    { id: "LEON", name: "Leon", description: "Steady, clear, composed" },
+    { id: "ORION", name: "Orion", humeName: "Inspiring Man", description: "Bold, uplifting strength" },
+    { id: "ATLAS", name: "Atlas", humeName: "Deep Male Conversational Voice", description: "Deep, grounded resonance" },
+    { id: "SAGE", name: "Sage", humeName: "Soft Male Conversationalist", description: "Calm, centering stillness" },
+    { id: "SUMMIT", name: "Summit", humeName: "Nature Documentary Narrator", description: "Steady, expansive clarity" },
+    { id: "BODHI", name: "Bodhi", humeName: "Wise Wizard", description: "Ancient, soulful wisdom" },
   ],
 };
 

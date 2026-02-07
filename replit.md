@@ -1,7 +1,7 @@
 # Retuned
 
 ## Overview
-Retuned is a mobile application (React Native/Expo) designed to help users reprogram their subconscious mind through personalized audio affirmations. Users define their goals, and an AI generates affirmation scripts. The app then utilizes voice cloning technology to play these affirmations back in the user's own voice. The project aims to blend therapeutic tranquility with motivational energy, offering a "Serene Empowerment" aesthetic. The business vision is to provide an accessible and personalized tool for mental well-being and personal growth.
+Retuned is a mobile application (React Native/Expo) that enables users to reprogram their subconscious mind using personalized audio affirmations. It achieves this by generating AI-powered affirmation scripts based on user goals and delivering them in the user's own cloned voice. The app aims to offer a blend of therapeutic tranquility and motivational energy with a "Serene Empowerment" aesthetic, serving as an accessible tool for mental well-being and personal growth.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -9,141 +9,56 @@ Preferred communication style: Simple, everyday language.
 ## System Architecture
 
 ### Core Technologies
-- **Frontend**: React Native with Expo SDK 54, targeting iOS, Android, and web.
-- **Backend**: Express 5 (Node.js) server.
+- **Frontend**: React Native with Expo SDK 54 (iOS, Android, web).
+- **Backend**: Express 5 (Node.js).
 - **Database**: PostgreSQL with Drizzle ORM.
-- **State Management**: TanStack Query for server state and caching.
-- **Styling**: Custom theme system with light/dark mode and Nunito font family.
-- **Animations**: React Native Reanimated for fluid UI.
+- **State Management**: TanStack Query.
+- **Styling**: Custom theme with light/dark mode and Nunito font family.
+- **Animations**: React Native Reanimated.
 - **Audio**: `expo-av` for recording and playback.
 
 ### Key Features
-- **Personalized Affirmations**: Users input goals, AI generates scripts using Subconscious Language Patterns, and voice cloning plays them in the user's voice. AI optimization includes: present tense framing, positive-only language, sensory-rich imagery, identity-level statements, progressive believability, embedded commands, rhythmic flow, and emotional anchoring. Uses a hierarchical pillar-based organization system:
-  - **5 Life Pillars**: Mind (#3B82F6), Body (#10B981), Spirit (#8B5CF6), Connection (#F97316), Achievement (#C9A227) - users must select one pillar when creating affirmations
-  - **Subcategory Tags**: Optional fine-tuning with up to 5 subcategory tags per affirmation (e.g., Mind → Confidence, Focus, Resilience, Emotion)
-  - **Custom Tags**: Users can add up to 3 custom tags per pillar via "+" button in create flow. Stored in AsyncStorage with key `@create/customTags`. Custom tags can be deleted with X button.
-  - **Visual Identification**: Affirmation cards display a 4px left accent bar in the pillar's color
-  - **Library Filtering**: HomeScreen filters affirmations by pillar with color-coded chips
-  - Database stores: `pillar` field (single text) + `categoryName` (comma-separated subcategories for backward compatibility)
-- **Smart TTS Routing**: Stock AI voices route directly to OpenAI TTS (cheaper), personal cloned voices use ElevenLabs first with OpenAI fallback. Voice mapping in `ELEVENLABS_TO_OPENAI_VOICE_MAP` maps stock ElevenLabs voice IDs to OpenAI voice equivalents.
-- **Voice Rotation System**: Automatic cleanup of inactive cloned voices (60+ days unused) via `server/voice-rotation.ts`. Frees ElevenLabs voice slots. Users with rotated voices get `VOICE_ROTATED` error and must re-clone. Daily scheduled check via `setInterval`. Admin endpoints: `GET /api/admin/voice-slots`, `GET /api/admin/voice-rotation/preview`, `POST /api/admin/voice-rotation/run`.
-- **Voice Activity Tracking**: `voiceLastUsedAt` timestamp on users table tracks when personal cloned voice was last used for TTS.
-- **Audio Pipeline**: Involves user voice sample recording, ElevenLabs voice cloning, AI script generation, text-to-speech synthesis, and audio streaming.
-- **Global Audio Player**: A single-instance audio player for consistent playback control across the app.
-- **RSVP Mode**: Rapid Serial Visual Presentation of affirmation text, synchronized with audio playback, using word timing data from ElevenLabs.
-- **Breathing Mode**: A dedicated feature offering various breathing techniques (Box, 4-7-8, Coherent) with animated visuals, duration selection, and binaural beats integration.
-- **User Analytics**: Tracks listening sessions, streaks, and category breakdowns to provide insights into user progress. Includes meditation KPIs (breathing streaks, mindful minutes, technique breakdown, weekly breathing charts).
-- **Sound Library**: Dedicated screen for browsing ambient sounds categorized into Nature, Solfeggio, and Binaural categories with auto-play on selection.
-- **Authentication**: Session-based for web, token-based for mobile, secured with bcrypt and data isolation.
-- **Notification Settings**: Customizable daily reminder settings for affirmations.
-- **Voice Selection System**: Users can choose from various AI voices or clone their own voice, with preferences stored and manageable through a dedicated UI. Includes side-by-side voice comparison (My Voice vs AI Voice) in VoiceSettingsScreen.
-- **UX Guidance Features**:
-  - Generation limits display (X of 20 remaining) on Create screen with color-coded warnings (orange at 5, red at 0)
-  - Active voice status badge in Believe tab header ("My Voice Active" or "AI Voice") - tappable, navigates to VoiceSettings
-  - Retry/switch-to-AI-voice on personal voice TTS failure (backend `forceAiVoice` flag on `/api/affirmations/create-with-voice`)
-  - Voice clone success celebration screen with animated gold checkmark
-  - "Creating your affirmation..." loading overlay during TTS generation
-  - "What are pillars?" help modal in create flow explaining all pillars
-  - First-time contextual tooltip for pillar selection (AsyncStorage `@tips/pillarSelection`)
-  - Creating overlay with pulsing animation during affirmation creation
-
-### Security & Privacy (App Store Ready)
-- **Voice Consent**: Users must explicitly consent before any voice recording. Consent is stored in database (`hasConsentedToVoiceCloning` field).
-- **Voice File Deletion**: Voice recording files are automatically deleted from the server immediately after successful cloning (PII protection).
-- **Usage Limits**: 
-  - Max 2 voice clones per user (lifetime)
-  - Max 20 AI-generated affirmations per month (auto-resets monthly)
-  - Limits displayed in Settings under "USAGE LIMITS" section
-- **Rate Limiting**: AI endpoints protected with rate limiting (5 generations/min, 10 TTS/min, 3 voice clones/hour)
-- **Delete My Data**: GDPR-compliant data deletion in Security & Privacy settings. Users type "delete" to confirm, then all their data is permanently removed including:
-  - User account and profile
-  - All affirmations and audio files
-  - Voice clone data (deleted from ElevenLabs via API)
-  - Listening history and statistics
-- **API Endpoints**:
-  - `GET /api/user/limits` - Returns current usage and remaining limits
-  - `POST /api/user/voice-consent` - Records user consent for voice cloning
-  - `DELETE /api/user/data` - Permanently deletes all user data
-
-### First-Time User Experience (FTUE)
-- **Onboarding Slides**: 3-screen animated onboarding (Breathe, Believe, Become) shown only on first login. Tracked via AsyncStorage `@onboarding/completed`. Features pulsing icons, dot indicators, skip/next/get-started buttons.
-- **Default Landing Tab**: First-time users land on Believe tab (AffirmTab) to see content immediately. Tracked via AsyncStorage `@navigation/firstTabVisit`. Returning users land on BreatheTab.
-- **Voice Setup Deferred**: Voice cloning prompt is NOT auto-triggered after signup. Instead, a gold-accented nudge card ("Hear these in your voice") appears on the Believe tab header. Dismissible via AsyncStorage `@nudge/voiceCloneDismissed`.
-- **First-Play Celebration**: First-ever play triggers a haptic success notification. Tracked via AsyncStorage `@play/firstPlay`.
-- **Tap-to-Listen Hint**: "Tap the play button to hear your first affirmation" shown for new users who haven't played yet.
-- **Swipe Tooltip**: LibraryTip component shows swipe gestures (delete left, breathing/rename right) with animated icons. Tracked via AsyncStorage `@tips/librarySwipe`.
-
-### Navigation Structure
-- **2-Tab Navigation**: Breathe (left), Believe (right) with middle Create (+) button - aligns with "Breathe, Believe, Become" tagline
-- **Settings Access**: Floating settings button (gear icon) on Breathe and Believe screens, positioned bottom-right above tab bar (48x48px with gold border)
-- **Affirmation Selection**: Swipe left on affirmation cards to "Set for Breathing" - persisted in AsyncStorage with key `@breathing/selectedAffirmation`
-- **Breathing Priority**: Selected breathing affirmation takes precedence over time-based suggestions
-- **Breathing Technique Persistence**: Selected technique auto-saves to AsyncStorage with key `@breathing/defaultTechnique`. Long-press on technique card to set as default.
-
-### UI/UX Design
-- **Theme**: "Serene Empowerment" with a color palette of Primary Gold (#C9A227) and Navy backgrounds (#0F1C3F, #1A2D4F, #243656).
-- **Color Hierarchy**: Gold (#C9A227) for breathing metrics, Purple (#9C27B0) for affirmation metrics.
-- **Typography**: Nunito font family.
-- **Components**: Includes `GoldShimmer`, `BreathingPulse`, `GradientCard`, `WelcomeSection`, `AmbientSoundMixer`, `ProgressVisualization`, `FloatingSettingsButton`, `SwipeableAffirmationCard`, and `MiniPlayer` for enhanced user experience.
-- **Create Button**: Gold gradient (60x60px) with navy icon, white translucent border, and enhanced gold glow effect.
-- **Mini Player**: Compact pill-shaped design with blur effect, waveform indicator when playing, positioned 94px + insets.bottom from screen bottom.
-- **Haptic Feedback**: Integrated for key interactions and milestones.
-- **Screen Transitions**: Default fade for iOS, fade_from_bottom for Android, slide_from_bottom for modals.
-- **Background Wallpaper**: Optional meditation-themed background images (disabled by default). Stored in AsyncStorage with key `@settings/backgroundWallpaper`. When enabled, shows `library-background.png` (dark) or `library-background-light.png` (light). When disabled, uses solid colors: #0F1C3F (dark) or #F8FAFB (light).
+- **Personalized Affirmations**: AI generates scripts with Subconscious Language Patterns, optimized for present tense, positive language, sensory imagery, identity-level statements, progressive believability, embedded commands, rhythmic flow, and emotional anchoring. Affirmations are organized by 5 Life Pillars (Mind, Body, Spirit, Connection, Achievement), with optional subcategory and custom tags.
+- **Smart TTS Routing**: Hybrid system using Hume AI (Octave 2) for stock AI voices (with word-level timestamps for RSVP) and ElevenLabs for personal cloned voices. OpenAI serves as a fallback.
+- **Voice Rotation System**: Automatically cleans up inactive cloned voices (60+ days unused) to free ElevenLabs slots, with a re-cloning prompt for affected users.
+- **Audio Pipeline**: Covers user voice sample recording, ElevenLabs cloning, AI script generation, TTS (Hume AI/ElevenLabs), and audio streaming.
+- **Global Audio Player**: A single-instance player for consistent playback.
+- **RSVP Mode**: Rapid Serial Visual Presentation of affirmation text synchronized with audio.
+- **Breathing Mode**: Offers various breathing techniques (Box, 4-7-8, Coherent) with animated visuals, duration selection, and binaural beats.
+- **User Analytics**: Tracks listening sessions, streaks, and category breakdowns, including meditation KPIs.
+- **Sound Library**: Categorized ambient sounds (Nature, Solfeggio, Binaural) with auto-play.
+- **Authentication**: Session-based for web, token-based for mobile.
+- **Notification Settings**: Customizable daily reminder settings.
+- **Voice Selection System**: Allows users to choose AI voices or clone their own, with UI for management and comparison.
+- **Security & Privacy**: Explicit voice consent, immediate deletion of voice recording files post-cloning, usage limits (2 voice clones, 20 AI affirmations/month), rate limiting on AI endpoints, and GDPR-compliant "Delete My Data" functionality.
+- **First-Time User Experience (FTUE)**: Onboarding slides, default landing on Believe tab, deferred voice setup with a nudge, first-play celebration, and contextual hints/tooltips.
+- **Navigation**: 2-tab structure (Breathe, Believe) with a central Create (+) button. Floating settings button.
+- **UI/UX Design**: "Serene Empowerment" theme with Primary Gold and Navy colors, Nunito typography, and custom components for enhanced experience (e.g., `GoldShimmer`, `BreathingPulse`, `MiniPlayer`). Haptic feedback and custom screen transitions are integrated.
 
 ## External Dependencies
 
 ### AI Services
-- **OpenAI API**: Used for generating affirmation scripts.
-- **ElevenLabs API**: Used for voice cloning (Instant Voice Cloning) and text-to-speech synthesis.
+- **OpenAI API**: Affirmation script generation and TTS fallback.
+- **Hume AI API**: Primary TTS for stock AI voices, providing word-level timestamps.
+- **ElevenLabs API**: Voice cloning and TTS for personal cloned voices.
 
 ### GitHub Integration
-- **Connection**: Replit GitHub connector (connection:conn_github_01KGV1YDWVJT54AGKHQNTSN7AB)
-- **Library**: `@octokit/rest` for GitHub API interactions
-- **Service module**: `server/github.ts` — authentication via Replit connector, functions for issue comments, label management, project board updates, and coordination file management
-- **Issue Management Endpoints**:
-  - `GET /api/github/repos` — List authenticated user's repositories
-  - `GET /api/github/issues/:owner/:repo` — Get assigned issues for a repo
-  - `POST /api/github/issues/:owner/:repo/:issueNumber/comment` — Post a comment on an issue
-  - `POST /api/github/issues/:owner/:repo/:issueNumber/label` — Set status label (in-progress, blocked, completed)
-  - `POST /api/github/project/:owner/:projectNumber/move` — Move a card on a GitHub Project board
-  - `POST /api/github/issues/:owner/:repo/:issueNumber/status` — Combined: set label + post comment + optionally move project card
-- **Agent Coordination Endpoints** (stored in `.retuned/coordination/` in GitHub repo):
-  - `POST /api/github/coordination/:owner/:repo/init` — Initialize coordination folder with status.json, priorities.json, acknowledgments.json
-  - `GET /api/github/coordination/:owner/:repo/status` — Get current agent status (work, blockers, estimates)
-  - `POST /api/github/coordination/:owner/:repo/status` — Update agent status (idle/in_progress/completed)
-  - `POST /api/github/coordination/:owner/:repo/blocker` — Flag a blocker for team visibility
-  - `GET /api/github/coordination/:owner/:repo/priorities` — Get daily priorities set by team lead
-  - `POST /api/github/coordination/:owner/:repo/acknowledge` — Acknowledge receipt of priorities
-- **Coordination Files**: All coordination data auto-commits to GitHub for audit trail. Helper functions `getFileContent()` and `createOrUpdateFile()` handle GitHub Content API interactions.
-- **Document Sharing System** (stored in `.retuned/docs/` and `.retuned/inbox/` in GitHub repo `retune-app/retune-app`):
-  - Folder structure:
-    - `.retuned/docs/proposals/` — Technical evaluations & proposals for team review
-    - `.retuned/docs/decisions/` — Finalized decisions (approved/rejected)
-    - `.retuned/docs/changelogs/` — Summaries of significant changes
-    - `.retuned/inbox/to-agent/` — Team drops instructions/feedback for the agent
-    - `.retuned/inbox/to-team/` — Agent drops updates/questions for the team
-  - API Endpoints:
-    - `POST /api/github/docs/:owner/:repo/init` — Initialize full doc folder structure
-    - `POST /api/github/docs/:owner/:repo/push` — Push a document (body: category, filename, content)
-    - `POST /api/github/inbox/:owner/:repo/:direction` — Push inbox message (to-agent or to-team)
-    - `GET /api/github/inbox/:owner/:repo/:direction` — Read inbox messages
+- **Connection**: Replit GitHub connector.
+- **Library**: `@octokit/rest`.
+- **Service Module**: `server/github.ts` for issue comments, label management, project board updates, and coordination file management.
+- **Agent Coordination**: Manages agent status, blockers, priorities, and acknowledgments via files in `.retuned/coordination/` in the GitHub repository.
+- **Document Sharing**: System for proposals, decisions, changelogs (`.retuned/docs/`) and inbox messages for agent-team communication (`.retuned/inbox/`) stored in the `retune-app/retune-app` repository.
 
 ### Database
-- **PostgreSQL**: The primary database, managed with Drizzle ORM.
+- **PostgreSQL**: Primary database.
 
 ### Key npm Packages
-- `expo-av`: Audio recording and playback.
-- `expo-file-system`: File handling.
-- `drizzle-orm` + `pg`: Database ORM and driver.
-- `multer`: Multipart form data handling.
-- `elevenlabs`: Official ElevenLabs SDK.
-- `@tanstack/react-query`: Data fetching and caching.
-- `expo-linear-gradient`: Gradient backgrounds.
+- `expo-av`, `expo-file-system`, `drizzle-orm`, `pg`, `multer`, `elevenlabs`, `hume`, `@tanstack/react-query`, `expo-linear-gradient`.
 
 ### Environment Variables
 - `DATABASE_URL`
 - `AI_INTEGRATIONS_OPENAI_API_KEY`
 - `AI_INTEGRATIONS_OPENAI_BASE_URL`
+- `HUME_API_KEY`
 - `REPLIT_CONNECTORS_HOSTNAME`
 - `EXPO_PUBLIC_DOMAIN`

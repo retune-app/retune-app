@@ -51,8 +51,13 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 // Usage limit constants
-const MAX_AI_AFFIRMATIONS_PER_MONTH = 10;
+const MAX_AI_AFFIRMATIONS_PER_MONTH = 20;
 const MAX_VOICE_CLONES_LIFETIME = 2;
+
+// Admin accounts with no restrictions
+const ADMIN_USER_IDS = new Set([
+  "77adcd55-7d43-48b2-ab2d-32375c4ea4d5",
+]);
 
 // Helper to check and reset monthly limits
 async function checkAndResetMonthlyLimits(userId: string): Promise<{
@@ -491,10 +496,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Goal is required" });
       }
 
-      // Check monthly usage limit for AI-generated affirmations
+      // Check monthly usage limit for AI-generated affirmations (skip for admin accounts)
+      const isAdmin = ADMIN_USER_IDS.has(req.userId!);
       const limits = await checkAndResetMonthlyLimits(req.userId!);
       
-      if (limits.affirmationsRemaining <= 0) {
+      if (!isAdmin && limits.affirmationsRemaining <= 0) {
         return res.status(429).json({
           error: `Monthly AI affirmation limit reached. Maximum ${MAX_AI_AFFIRMATIONS_PER_MONTH} AI-generated affirmations per month.`,
           limit: MAX_AI_AFFIRMATIONS_PER_MONTH,
@@ -2379,16 +2385,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .where(eq(users.id, req.userId!))
         .limit(1);
 
+      const isAdmin = ADMIN_USER_IDS.has(req.userId!);
       res.json({
         voiceClones: {
           used: user?.voiceClonesUsed || 0,
-          limit: MAX_VOICE_CLONES_LIFETIME,
-          remaining: Math.max(0, MAX_VOICE_CLONES_LIFETIME - (user?.voiceClonesUsed || 0))
+          limit: isAdmin ? 999 : MAX_VOICE_CLONES_LIFETIME,
+          remaining: isAdmin ? 999 : Math.max(0, MAX_VOICE_CLONES_LIFETIME - (user?.voiceClonesUsed || 0))
         },
         aiAffirmations: {
           used: limits.affirmationsThisMonth,
-          limit: MAX_AI_AFFIRMATIONS_PER_MONTH,
-          remaining: limits.affirmationsRemaining
+          limit: isAdmin ? 999 : MAX_AI_AFFIRMATIONS_PER_MONTH,
+          remaining: isAdmin ? 999 : limits.affirmationsRemaining
         },
         hasConsentedToVoiceCloning: user?.hasConsentedToVoiceCloning || false
       });

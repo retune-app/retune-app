@@ -1,10 +1,14 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect } from "react";
 import { View, StyleSheet, Text } from "react-native";
 import Animated, {
   useAnimatedStyle,
   withTiming,
+  withRepeat,
+  withSequence,
+  useSharedValue,
   Easing,
 } from "react-native-reanimated";
+import { Feather } from "@expo/vector-icons";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
@@ -136,11 +140,81 @@ export function RSVPDisplay({
     };
   });
 
+  const pulseOpacity = useSharedValue(0.4);
+  const pulseScale = useSharedValue(0.95);
+  const dotOpacity1 = useSharedValue(0.3);
+  const dotOpacity2 = useSharedValue(0.3);
+  const dotOpacity3 = useSharedValue(0.3);
+
+  useEffect(() => {
+    if (!wordTimings || wordTimings.length === 0) {
+      pulseOpacity.value = withRepeat(
+        withSequence(
+          withTiming(1, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+          withTiming(0.4, { duration: 1500, easing: Easing.inOut(Easing.ease) })
+        ),
+        -1,
+        false
+      );
+      pulseScale.value = withRepeat(
+        withSequence(
+          withTiming(1.05, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+          withTiming(0.95, { duration: 1500, easing: Easing.inOut(Easing.ease) })
+        ),
+        -1,
+        false
+      );
+      dotOpacity1.value = withRepeat(
+        withSequence(
+          withTiming(1, { duration: 600, easing: Easing.inOut(Easing.ease) }),
+          withTiming(0.3, { duration: 600, easing: Easing.inOut(Easing.ease) })
+        ),
+        -1,
+        false
+      );
+      dotOpacity2.value = withRepeat(
+        withSequence(
+          withTiming(0.3, { duration: 200 }),
+          withTiming(1, { duration: 600, easing: Easing.inOut(Easing.ease) }),
+          withTiming(0.3, { duration: 600, easing: Easing.inOut(Easing.ease) })
+        ),
+        -1,
+        false
+      );
+      dotOpacity3.value = withRepeat(
+        withSequence(
+          withTiming(0.3, { duration: 400 }),
+          withTiming(1, { duration: 600, easing: Easing.inOut(Easing.ease) }),
+          withTiming(0.3, { duration: 600, easing: Easing.inOut(Easing.ease) })
+        ),
+        -1,
+        false
+      );
+    }
+  }, [wordTimings]);
+
+  const pulseAnimStyle = useAnimatedStyle(() => ({
+    opacity: pulseOpacity.value,
+    transform: [{ scale: pulseScale.value }],
+  }));
+  const dot1Style = useAnimatedStyle(() => ({ opacity: dotOpacity1.value }));
+  const dot2Style = useAnimatedStyle(() => ({ opacity: dotOpacity2.value }));
+  const dot3Style = useAnimatedStyle(() => ({ opacity: dotOpacity3.value }));
+
   if (!wordTimings || wordTimings.length === 0) {
     return (
-      <View style={[styles.container, { backgroundColor: theme.backgroundSecondary }]}>
-        <Text style={[styles.placeholder, { color: theme.textSecondary }]}>
-          No word timing data available
+      <View style={[styles.container, styles.emptyContainer]}>
+        <Animated.View style={[styles.emptyIconWrap, pulseAnimStyle]}>
+          <Feather name="type" size={40} color="#E5C95C" />
+        </Animated.View>
+        <Text style={styles.emptyTitle}>Preparing your words</Text>
+        <View style={styles.dotsRow}>
+          <Animated.View style={[styles.dot, dot1Style]} />
+          <Animated.View style={[styles.dot, dot2Style]} />
+          <Animated.View style={[styles.dot, dot3Style]} />
+        </View>
+        <Text style={styles.emptySubtitle}>
+          Your affirmation text will appear here, synced word-by-word with the audio
         </Text>
       </View>
     );
@@ -186,5 +260,46 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: "Nunito_400Regular",
     textAlign: "center",
+  },
+  emptyContainer: {
+    paddingVertical: Spacing.xl,
+    paddingHorizontal: Spacing.xl,
+    gap: 16,
+  },
+  emptyIconWrap: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(229, 201, 92, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(229, 201, 92, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontFamily: 'Nunito_700Bold',
+    color: 'rgba(255, 255, 255, 0.85)',
+    letterSpacing: 0.5,
+  },
+  dotsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#E5C95C',
+  },
+  emptySubtitle: {
+    fontSize: 13,
+    fontFamily: 'Nunito_400Regular',
+    color: 'rgba(255, 255, 255, 0.45)',
+    textAlign: 'center',
+    lineHeight: 19,
+    maxWidth: 260,
   },
 });

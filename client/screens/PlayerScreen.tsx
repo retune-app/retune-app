@@ -439,7 +439,20 @@ export default function PlayerScreen() {
         return generateFallbackTimings();
       }
       
-      return parsed;
+      let lastEnd = 0;
+      const fixed = parsed.map((item: any, idx: number) => {
+        let startMs = item.startMs;
+        let endMs = item.endMs;
+        if (startMs < lastEnd) startMs = lastEnd;
+        if (endMs <= startMs) {
+          const nextStart = idx + 1 < parsed.length ? parsed[idx + 1].startMs : startMs + 200;
+          endMs = Math.max(startMs + 50, Math.min(startMs + 200, nextStart));
+        }
+        lastEnd = endMs;
+        return { word: item.word, startMs, endMs };
+      });
+      
+      return fixed;
     } catch {
       return generateFallbackTimings();
     }

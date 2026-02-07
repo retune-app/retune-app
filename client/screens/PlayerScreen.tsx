@@ -928,12 +928,31 @@ export default function PlayerScreen() {
 
         {showScript && affirmation?.script ? (
           <View style={[styles.scriptPreview, { backgroundColor: theme.backgroundSecondary }]}>
-            <ThemedText type="caption" style={{ color: theme.textSecondary, marginBottom: Spacing.sm }}>
-              SCRIPT
-            </ThemedText>
-            <ThemedText type="body" style={{ lineHeight: 24 }}>
-              {affirmation.script}
-            </ThemedText>
+            <View style={styles.scriptHeaderRow}>
+              <View style={styles.scriptTitleRow}>
+                <Feather name="file-text" size={16} color={theme.primary} />
+                <ThemedText type="h4" style={{ marginLeft: Spacing.xs }}>
+                  Your Script
+                </ThemedText>
+              </View>
+            </View>
+            <View style={[styles.scriptDivider, { backgroundColor: theme.primary + '30' }]} />
+            {affirmation.script
+              .split(/(?<=\.)\s+/)
+              .filter((line: string) => line.trim().length > 0)
+              .map((line: string, index: number, arr: string[]) => (
+                <ThemedText
+                  key={index}
+                  type="body"
+                  style={{
+                    lineHeight: 26,
+                    fontSize: 16,
+                    marginBottom: index < arr.length - 1 ? Spacing.md : 0,
+                  }}
+                >
+                  {line.trim()}
+                </ThemedText>
+              ))}
           </View>
         ) : null}
       </ScrollView>
@@ -1136,6 +1155,21 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
     borderRadius: BorderRadius.lg,
     marginBottom: Spacing.lg,
+  },
+  scriptHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: Spacing.sm,
+  },
+  scriptTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  scriptDivider: {
+    height: 1,
+    width: "100%",
+    marginBottom: Spacing.md,
   },
   voiceSection: {
     width: "100%",

@@ -158,6 +158,7 @@ export default function RootStackNavigator() {
           options={{
             headerTitle: "Create Affirmation",
             headerTransparent: false,
+            headerStyle: { backgroundColor: theme.backgroundRoot },
             presentation: "modal",
             animation: "slide_from_bottom",
           }}
@@ -168,6 +169,7 @@ export default function RootStackNavigator() {
           options={{
             headerTitle: "",
             headerTransparent: false,
+            headerStyle: { backgroundColor: theme.backgroundRoot },
             animation: "fade",
             animationDuration: 250,
           }}

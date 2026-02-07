@@ -818,7 +818,7 @@ export default function VoiceSetupScreen() {
     if (hasRecording && isValidDuration) return "Voice Sample Ready";
     if (hasRecording && !isValidDuration) return "Too Short";
     if (isRecording) return "Listening...";
-    return "Record Your Voice";
+    return "";
   };
 
   const getSubText = () => {

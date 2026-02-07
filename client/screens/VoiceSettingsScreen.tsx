@@ -198,6 +198,19 @@ export default function VoiceSettingsScreen() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        if (errorData.error === "VOICE_EXPIRED" || response.status === 422) {
+          setIsPersonalPreviewLoading(false);
+          setIsPersonalPreviewPlaying(false);
+          Alert.alert(
+            "Voice Expired",
+            errorData.message || "Your voice clone may have expired. Please re-record your voice.",
+            [
+              { text: "Later", style: "cancel" },
+              { text: "Re-record", onPress: () => navigation.navigate("VoiceSetup") },
+            ]
+          );
+          return;
+        }
         throw new Error(errorData.error || "Failed to generate preview");
       }
 
@@ -228,7 +241,7 @@ export default function VoiceSettingsScreen() {
       console.error("Personal voice preview error:", error);
       setIsPersonalPreviewLoading(false);
       setIsPersonalPreviewPlaying(false);
-      Alert.alert("Preview Error", "Could not play your voice preview. Please try again.");
+      Alert.alert("Preview Error", "Could not play your voice preview. Please try again later.");
     }
   };
 

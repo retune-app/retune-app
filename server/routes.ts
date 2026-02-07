@@ -1206,7 +1206,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "No personal voice recorded. Please record your voice first." });
       }
 
-      const audioBuffer = await generateAudioSimple(PREVIEW_PHRASE, user.voiceId, true);
+      let audioBuffer: ArrayBuffer;
+      try {
+        audioBuffer = await generateAudioSimple(PREVIEW_PHRASE, user.voiceId, true);
+      } catch (ttsError: any) {
+        const msg = ttsError?.message || "";
+        if (msg.includes("PERSONAL_VOICE_FAILED") || msg.includes("voice_not_found") || msg.includes("404")) {
+          return res.status(422).json({ 
+            error: "VOICE_EXPIRED",
+            message: "Your voice clone may have expired. Please re-record your voice to continue using personal voice features."
+          });
+        }
+        throw ttsError;
+      }
 
       await db
         .update(users)
@@ -1220,7 +1232,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error generating personal voice preview:", error);
-      res.status(500).json({ error: "Failed to generate personal voice preview" });
+      res.status(500).json({ error: "Failed to generate personal voice preview. Please try again." });
     }
   });
 

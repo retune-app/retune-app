@@ -492,10 +492,12 @@ export default function VoiceSetupScreen() {
         throw error;
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/user/profile"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/voice-samples/status"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/voice-preferences"] });
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["/api/user/profile"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/voice-samples/status"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/voice-preferences"] }),
+      ]);
       try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
       navigation.goBack();
     },

@@ -423,7 +423,10 @@ async function generateAudioSimple(text: string, voiceId: string, isPersonalVoic
     }
     return Buffer.concat(chunks).buffer;
   } catch (error: any) {
-    console.error("ElevenLabs simple TTS failed, trying OpenAI fallback:", error?.message || error);
+    console.error(`ElevenLabs simple TTS failed for ${isPersonalVoice ? "PERSONAL" : "stock"} voice (${voiceId}):`, error?.message || error);
+    if (isPersonalVoice) {
+      throw new Error("PERSONAL_VOICE_FAILED: Could not generate audio with your personal voice. Please try again or re-record your voice.");
+    }
     if (directOpenAI) {
       const openaiVoice = getOpenAIVoiceForElevenLabsId(voiceId);
       const response = await directOpenAI.audio.speech.create({

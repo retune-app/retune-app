@@ -510,6 +510,7 @@ export default function CreateScreen() {
               scripts={scriptHistory}
               currentIndex={currentScriptIndex}
               onPageSelected={setCurrentScriptIndex}
+              scriptLength={selectedLength.toLowerCase()}
             />
             <View style={styles.paginationContainer}>
               {scriptHistory.map((_, index) => (

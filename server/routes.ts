@@ -1208,6 +1208,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(VOICE_OPTIONS);
   });
 
+  app.get("/api/voice-preview-file/:name", (req: Request, res: Response) => {
+    const name = req.params.name;
+    const filePath = `/tmp/voice_previews/preview_${name}.mp3`;
+    const fs = require("fs");
+    if (fs.existsSync(filePath)) {
+      res.setHeader("Content-Type", "audio/mpeg");
+      fs.createReadStream(filePath).pipe(res);
+    } else {
+      res.status(404).json({ error: "Preview not found" });
+    }
+  });
+
+  app.get("/voice-audition", (_req: Request, res: Response) => {
+    const fs = require("fs");
+    const html = fs.readFileSync("/tmp/voice_preview_page.html", "utf8");
+    res.setHeader("Content-Type", "text/html");
+    res.send(html);
+  });
+
   // Preview phrase for voice testing
   const PREVIEW_PHRASE = "I am strong, capable, and worthy of success.";
 

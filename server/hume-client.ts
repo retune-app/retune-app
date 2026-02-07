@@ -227,12 +227,9 @@ export async function humeTextToSpeech(
         {
           text,
           voice: { name: voiceName, provider: "HUME_AI" },
-          description:
-            "Speak in a calm, therapeutic, and empowering tone, as if gently guiding someone through a personal transformation",
         },
       ],
       include_timestamp_types: ["word"],
-      output_format: "mp3",
     }),
   });
 
@@ -244,22 +241,32 @@ export async function humeTextToSpeech(
 
   const result = await response.json();
 
-  const utterance = result.utterances?.[0];
-  if (!utterance || !utterance.audio) {
+  const generation = result.generations?.[0];
+  if (!generation || !generation.audio) {
     throw new Error("Hume TTS returned no audio data");
   }
 
-  const rawAudioBuffer = Buffer.from(utterance.audio, "base64");
+  const rawAudioBuffer = Buffer.from(generation.audio, "base64");
 
   let wordTimings: WordTiming[] = [];
-  if (utterance.word_timestamps && Array.isArray(utterance.word_timestamps)) {
-    wordTimings = utterance.word_timestamps
-      .filter((wt: any) => wt.word && typeof wt.start_time === "number" && typeof wt.end_time === "number")
-      .map((wt: any) => ({
-        word: wt.word,
-        startMs: Math.round(wt.start_time * 1000),
-        endMs: Math.round(wt.end_time * 1000),
-      }));
+  const snippets = generation.snippets;
+  if (snippets && Array.isArray(snippets)) {
+    for (const snippetGroup of snippets) {
+      const snippetList = Array.isArray(snippetGroup) ? snippetGroup : [snippetGroup];
+      for (const snippet of snippetList) {
+        if (snippet.timestamps && Array.isArray(snippet.timestamps)) {
+          for (const ts of snippet.timestamps) {
+            if (ts.type === "word" && ts.text && ts.time) {
+              wordTimings.push({
+                word: ts.text,
+                startMs: Math.round(ts.time.begin),
+                endMs: Math.round(ts.time.end),
+              });
+            }
+          }
+        }
+      }
+    }
   }
 
   const sentenceEndIndices = findSentenceEndIndices(wordTimings);
@@ -330,11 +337,8 @@ export async function humeSimpleTTS(
         {
           text,
           voice: { name: voiceName, provider: "HUME_AI" },
-          description:
-            "Speak in a calm, therapeutic, and empowering tone, as if gently guiding someone through a personal transformation",
         },
       ],
-      output_format: "mp3",
     }),
   });
 
@@ -346,12 +350,12 @@ export async function humeSimpleTTS(
 
   const result = await response.json();
 
-  const utterance = result.utterances?.[0];
-  if (!utterance || !utterance.audio) {
+  const generation = result.generations?.[0];
+  if (!generation || !generation.audio) {
     throw new Error("Hume TTS returned no audio data");
   }
 
-  const audioBuffer = Buffer.from(utterance.audio, "base64");
+  const audioBuffer = Buffer.from(generation.audio, "base64");
   return new Uint8Array(audioBuffer).buffer as ArrayBuffer;
 }
 

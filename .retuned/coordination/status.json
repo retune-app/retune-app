@@ -1,5 +1,7 @@
 {
-  "status": "completed",
-  "started_at": "2026-02-07T03:31:56.063Z",
-  "blockers": []
+  "status": "idle",
+  "started_at": null,
+  "blockers": [],
+  "current_work": "",
+  "estimated_completion": null
 }

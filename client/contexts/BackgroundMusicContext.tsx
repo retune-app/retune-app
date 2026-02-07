@@ -80,8 +80,8 @@ interface BackgroundMusicContextType {
 const BackgroundMusicContext = createContext<BackgroundMusicContextType | undefined>(undefined);
 
 export function BackgroundMusicProvider({ children }: { children: React.ReactNode }) {
-  const [selectedMusic, setSelectedMusicState] = useState<BackgroundMusicType>('none');
-  const [volume, setVolumeState] = useState(0.7);
+  const [selectedMusic, setSelectedMusicState] = useState<BackgroundMusicType>('forest');
+  const [volume, setVolumeState] = useState(0.5);
   const [isPlaying, setIsPlaying] = useState(false);
   const soundRef = useRef<Audio.Sound | null>(null);
 
@@ -102,20 +102,18 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
         AsyncStorage.getItem(MUSIC_SETTINGS_VERSION_KEY),
       ]);
       
-      // Check if we need to reset to new default (version changed)
-      if (savedVersion !== CURRENT_MUSIC_VERSION) {
-        // Reset to 'none' for new default behavior
-        await AsyncStorage.setItem(STORAGE_KEY, 'none');
-        await AsyncStorage.setItem(MUSIC_SETTINGS_VERSION_KEY, CURRENT_MUSIC_VERSION);
-        setSelectedMusicState('none');
-      } else if (savedMusic) {
-        // Load saved preference (including 'none' for no background music)
+      if (savedMusic) {
         setSelectedMusicState(savedMusic as BackgroundMusicType);
+      } else {
+        await AsyncStorage.setItem(STORAGE_KEY, 'forest');
+        setSelectedMusicState('forest');
       }
-      // If null and version matches, keep the default 'none' (no background music)
       
       if (savedVolume) {
         setVolumeState(parseFloat(savedVolume));
+      } else {
+        await AsyncStorage.setItem(VOLUME_STORAGE_KEY, '0.5');
+        setVolumeState(0.5);
       }
     } catch (error) {
       console.error('Error loading background music preferences:', error);

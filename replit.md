@@ -116,6 +116,18 @@ Preferred communication style: Simple, everyday language.
   - `GET /api/github/coordination/:owner/:repo/priorities` — Get daily priorities set by team lead
   - `POST /api/github/coordination/:owner/:repo/acknowledge` — Acknowledge receipt of priorities
 - **Coordination Files**: All coordination data auto-commits to GitHub for audit trail. Helper functions `getFileContent()` and `createOrUpdateFile()` handle GitHub Content API interactions.
+- **Document Sharing System** (stored in `.retuned/docs/` and `.retuned/inbox/` in GitHub repo `retune-app/retune-app`):
+  - Folder structure:
+    - `.retuned/docs/proposals/` — Technical evaluations & proposals for team review
+    - `.retuned/docs/decisions/` — Finalized decisions (approved/rejected)
+    - `.retuned/docs/changelogs/` — Summaries of significant changes
+    - `.retuned/inbox/to-agent/` — Team drops instructions/feedback for the agent
+    - `.retuned/inbox/to-team/` — Agent drops updates/questions for the team
+  - API Endpoints:
+    - `POST /api/github/docs/:owner/:repo/init` — Initialize full doc folder structure
+    - `POST /api/github/docs/:owner/:repo/push` — Push a document (body: category, filename, content)
+    - `POST /api/github/inbox/:owner/:repo/:direction` — Push inbox message (to-agent or to-team)
+    - `GET /api/github/inbox/:owner/:repo/:direction` — Read inbox messages
 
 ### Database
 - **PostgreSQL**: The primary database, managed with Drizzle ORM.

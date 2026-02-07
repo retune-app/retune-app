@@ -8,6 +8,7 @@ import { db } from "./db";
 import { affirmations, voiceSamples, categories, users, collections, customCategories, notificationSettings, listeningSessions, breathingSessions, supportRequests } from "@shared/schema";
 import { eq, desc, asc, and, sql, sum } from "drizzle-orm";
 import { openai } from "./replit_integrations/audio/client";
+import OpenAI from "openai";
 import {
   cloneVoice,
   textToSpeech as elevenLabsTTS,
@@ -317,6 +318,11 @@ Respond with ONLY the category name, nothing else.`,
   }
 }
 
+// Direct OpenAI client for TTS fallback (uses real OpenAI API, not Replit AI integration)
+const directOpenAI = process.env.OPENAI_API_KEY
+  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  : null;
+
 // Simple audio generation for voice previews (no word timings needed)
 async function generateAudioSimple(text: string, voiceId: string): Promise<ArrayBuffer> {
   try {
@@ -326,56 +332,76 @@ async function generateAudioSimple(text: string, voiceId: string): Promise<Array
       model_id: "eleven_multilingual_v2",
     });
     
-    // Collect chunks into a buffer
     const chunks: Buffer[] = [];
     for await (const chunk of audio) {
       chunks.push(Buffer.from(chunk));
     }
     return Buffer.concat(chunks).buffer;
-  } catch (error) {
-    console.error("Simple TTS failed:", error);
+  } catch (error: any) {
+    console.error("ElevenLabs simple TTS failed, trying OpenAI fallback:", error?.message || error);
+    if (directOpenAI) {
+      const response = await directOpenAI.audio.speech.create({
+        model: "tts-1",
+        voice: "nova",
+        input: text,
+      });
+      return await response.arrayBuffer();
+    }
     throw error;
   }
 }
 
-// Generate audio using ElevenLabs or fallback to OpenAI
+// Generate audio using ElevenLabs or fallback to OpenAI TTS
 async function generateAudio(
   script: string,
   voiceId?: string
 ): Promise<{ audio: ArrayBuffer; duration: number; wordTimings: WordTiming[] }> {
+  // Try ElevenLabs first (for cloned voices or better quality)
   try {
-    // Try ElevenLabs first (for cloned voices or better quality)
     const result = await elevenLabsTTS(script, voiceId);
     return result;
-  } catch (error) {
-    console.error("ElevenLabs TTS failed, falling back to OpenAI:", error);
-    
-    // Fallback to OpenAI TTS if ElevenLabs fails
-    // Note: OpenAI TTS doesn't provide word-level timestamps, so we generate approximate timings
-    const response = await openai.audio.speech.create({
-      model: "tts-1",
-      voice: "nova",
-      input: script,
-    });
+  } catch (elevenLabsError: any) {
+    const isQuotaExhausted = elevenLabsError?.message?.includes("quota_exceeded") ||
+      elevenLabsError?.message?.includes("Unauthorized") ||
+      String(elevenLabsError).includes("quota_exceeded");
+    console.error(
+      `ElevenLabs TTS failed${isQuotaExhausted ? " (quota exhausted)" : ""}, falling back to OpenAI:`,
+      elevenLabsError?.message || elevenLabsError
+    );
 
-    const audioBuffer = await response.arrayBuffer();
-    const words = script.split(/\s+/).filter(w => w.length > 0);
-    const wordCount = words.length;
-    const estimatedDuration = Math.ceil((wordCount / 150) * 60);
-    
-    // Generate approximate word timings based on word length (no real timing data from OpenAI)
-    const avgWordDurationMs = (estimatedDuration * 1000) / wordCount;
-    const wordTimings: WordTiming[] = words.map((word, index) => ({
-      word,
-      startMs: Math.round(index * avgWordDurationMs),
-      endMs: Math.round((index + 1) * avgWordDurationMs),
-    }));
+    // Fallback to OpenAI TTS using direct API key
+    if (!directOpenAI) {
+      throw new Error("TTS_UNAVAILABLE: ElevenLabs quota exhausted and no OpenAI API key configured for fallback");
+    }
 
-    return {
-      audio: audioBuffer,
-      duration: estimatedDuration,
-      wordTimings,
-    };
+    try {
+      const response = await directOpenAI.audio.speech.create({
+        model: "tts-1",
+        voice: "nova",
+        input: script,
+      });
+
+      const audioBuffer = await response.arrayBuffer();
+      const words = script.split(/\s+/).filter(w => w.length > 0);
+      const wordCount = words.length;
+      const estimatedDuration = Math.ceil((wordCount / 150) * 60);
+
+      const avgWordDurationMs = (estimatedDuration * 1000) / wordCount;
+      const wordTimings: WordTiming[] = words.map((word, index) => ({
+        word,
+        startMs: Math.round(index * avgWordDurationMs),
+        endMs: Math.round((index + 1) * avgWordDurationMs),
+      }));
+
+      return {
+        audio: audioBuffer,
+        duration: estimatedDuration,
+        wordTimings,
+      };
+    } catch (openaiError: any) {
+      console.error("OpenAI TTS fallback also failed:", openaiError?.message || openaiError);
+      throw new Error("TTS_UNAVAILABLE: Both ElevenLabs and OpenAI TTS services are unavailable");
+    }
   }
 }
 
@@ -631,9 +657,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .returning();
 
       res.json(newAffirmation);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating affirmation:", error);
-      res.status(500).json({ error: "Failed to create affirmation" });
+      if (error?.message?.includes("TTS_UNAVAILABLE")) {
+        res.status(503).json({ error: "Voice services are temporarily unavailable. Please try again later." });
+      } else {
+        res.status(500).json({ error: "Failed to create affirmation. Please try again." });
+      }
     }
   });
 

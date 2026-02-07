@@ -36,7 +36,16 @@ Preferred communication style: Simple, everyday language.
 - **Sound Library**: Dedicated screen for browsing ambient sounds categorized into Nature, Solfeggio, and Binaural categories with auto-play on selection.
 - **Authentication**: Session-based for web, token-based for mobile, secured with bcrypt and data isolation.
 - **Notification Settings**: Customizable daily reminder settings for affirmations.
-- **Voice Selection System**: Users can choose from various AI voices or clone their own voice, with preferences stored and manageable through a dedicated UI.
+- **Voice Selection System**: Users can choose from various AI voices or clone their own voice, with preferences stored and manageable through a dedicated UI. Includes side-by-side voice comparison (My Voice vs AI Voice) in VoiceSettingsScreen.
+- **UX Guidance Features**:
+  - Generation limits display (X of 20 remaining) on Create screen with color-coded warnings (orange at 5, red at 0)
+  - Active voice status badge in Believe tab header ("My Voice Active" or "AI Voice") - tappable, navigates to VoiceSettings
+  - Retry/switch-to-AI-voice on personal voice TTS failure (backend `forceAiVoice` flag on `/api/affirmations/create-with-voice`)
+  - Voice clone success celebration screen with animated gold checkmark
+  - "Creating your affirmation..." loading overlay during TTS generation
+  - "What are pillars?" help modal in create flow explaining all pillars
+  - First-time contextual tooltip for pillar selection (AsyncStorage `@tips/pillarSelection`)
+  - Creating overlay with pulsing animation during affirmation creation
 
 ### Security & Privacy (App Store Ready)
 - **Voice Consent**: Users must explicitly consent before any voice recording. Consent is stored in database (`hasConsentedToVoiceCloning` field).

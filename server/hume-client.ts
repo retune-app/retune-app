@@ -29,6 +29,31 @@ export const HUME_VOICE_OPTIONS = {
   ],
 };
 
+function sanitizeWordTimings(wordTimings: WordTiming[]): WordTiming[] {
+  if (wordTimings.length === 0) return wordTimings;
+
+  const sanitized: WordTiming[] = [];
+  let lastEndMs = 0;
+
+  for (let i = 0; i < wordTimings.length; i++) {
+    let { word, startMs, endMs } = wordTimings[i];
+
+    if (startMs < lastEndMs) {
+      startMs = lastEndMs;
+    }
+
+    if (endMs <= startMs) {
+      const nextStart = i + 1 < wordTimings.length ? wordTimings[i + 1].startMs : startMs + 200;
+      endMs = Math.max(startMs + 50, Math.min(startMs + 200, nextStart));
+    }
+
+    sanitized.push({ word, startMs, endMs });
+    lastEndMs = endMs;
+  }
+
+  return sanitized;
+}
+
 function findSentenceEndIndices(words: WordTiming[]): number[] {
   const indices: number[] = [];
   for (let i = 0; i < words.length; i++) {
@@ -133,7 +158,8 @@ async function insertSilenceIntoAudio(
           "-i", inputPath,
           "-ss", startTime.toString(),
           "-to", endTime.toString(),
-          "-c", "copy",
+          "-acodec", "libmp3lame",
+          "-q:a", "2",
           "-y",
           segmentPath,
         ]);
@@ -154,7 +180,8 @@ async function insertSilenceIntoAudio(
       const ffmpeg = spawn("ffmpeg", [
         "-i", inputPath,
         "-ss", lastPos.toString(),
-        "-c", "copy",
+        "-acodec", "libmp3lame",
+        "-q:a", "2",
         "-y",
         finalSegmentPath,
       ]);
@@ -181,7 +208,8 @@ async function insertSilenceIntoAudio(
         "-f", "concat",
         "-safe", "0",
         "-i", concatListPath,
-        "-c", "copy",
+        "-acodec", "libmp3lame",
+        "-q:a", "2",
         "-y",
         outputPath,
       ]);
@@ -273,6 +301,8 @@ export async function humeTextToSpeech(
       }
     }
   }
+
+  wordTimings = sanitizeWordTimings(wordTimings);
 
   const sentenceEndIndices = findSentenceEndIndices(wordTimings);
   console.log(`Hume TTS: Found ${sentenceEndIndices.length} sentence endings in ${wordTimings.length} words`);

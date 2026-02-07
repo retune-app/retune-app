@@ -157,6 +157,7 @@ export default function RootStackNavigator() {
           component={CreateScreen}
           options={{
             headerTitle: "Create Affirmation",
+            headerTransparent: false,
             presentation: "modal",
             animation: "slide_from_bottom",
           }}

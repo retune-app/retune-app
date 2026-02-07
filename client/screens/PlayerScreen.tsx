@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useLayoutEffect, useMemo, useRef } from "react";
-import { View, StyleSheet, Pressable, Alert, ScrollView, Modal } from "react-native";
+import { View, Text, StyleSheet, Pressable, Alert, ScrollView, Modal } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
@@ -225,10 +225,10 @@ export default function PlayerScreen() {
     navigation.setOptions({
       headerTitle: () => (
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <View style={{ width: 3, height: 14, borderRadius: 2, backgroundColor: theme.navy, marginRight: 8 }} />
-          <ThemedText type="caption" style={{ color: theme.navy, textTransform: 'uppercase', letterSpacing: 2, fontWeight: '700', fontSize: 11 }}>
+          <View style={{ width: 3, height: 16, borderRadius: 2, backgroundColor: '#FFFFFF', marginRight: 8 }} />
+          <Text style={{ color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: 2, fontWeight: '700', fontSize: 13 }}>
             My Affirmation
-          </ThemedText>
+          </Text>
         </View>
       ),
       headerLeft: () => (
@@ -242,7 +242,7 @@ export default function PlayerScreen() {
             <Feather 
               name="save" 
               size={22} 
-              color={autoSaveMutation.isPending ? theme.textSecondary : "#2E7D32"} 
+              color={autoSaveMutation.isPending ? 'rgba(255,255,255,0.5)' : '#FFFFFF'} 
             />
           </Pressable>
         ) : (
@@ -252,7 +252,7 @@ export default function PlayerScreen() {
             hitSlop={12}
             style={{ padding: 4 }}
           >
-            <Feather name="arrow-left" size={22} color={theme.navy} />
+            <Feather name="arrow-left" size={22} color="#FFFFFF" />
           </Pressable>
         )
       ),
@@ -263,7 +263,7 @@ export default function PlayerScreen() {
           hitSlop={12}
           style={{ padding: 4 }}
         >
-          <Feather name="trash-2" size={22} color={theme.navy} />
+          <Feather name="trash-2" size={22} color="#FFFFFF" />
         </Pressable>
       ),
     });

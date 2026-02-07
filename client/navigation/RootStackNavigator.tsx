@@ -157,10 +157,11 @@ export default function RootStackNavigator() {
           component={CreateScreen}
           options={{
             headerTitle: "Create Affirmation",
-            headerTintColor: theme.buttonText,
+            headerTintColor: '#FFFFFF',
+            headerTitleStyle: { fontSize: 17, fontWeight: '700' },
             headerShadowVisible: false,
             headerBackground: () => (
-              <View style={{ flex: 1, backgroundColor: theme.primary, borderBottomLeftRadius: 18, borderBottomRightRadius: 18 }} />
+              <View style={{ flex: 1, backgroundColor: theme.goldLight, borderBottomLeftRadius: 18, borderBottomRightRadius: 18 }} />
             ),
             presentation: "modal",
             animation: "slide_from_bottom",
@@ -171,10 +172,10 @@ export default function RootStackNavigator() {
           component={PlayerScreen}
           options={{
             headerTitle: "",
-            headerTintColor: theme.buttonText,
+            headerTintColor: '#FFFFFF',
             headerShadowVisible: false,
             headerBackground: () => (
-              <View style={{ flex: 1, backgroundColor: theme.primary, borderBottomLeftRadius: 18, borderBottomRightRadius: 18 }} />
+              <View style={{ flex: 1, backgroundColor: theme.goldLight, borderBottomLeftRadius: 18, borderBottomRightRadius: 18 }} />
             ),
             animation: "fade",
             animationDuration: 250,

@@ -128,19 +128,32 @@ async function insertSilenceIntoAudio(
     const allPositions = [0, ...splitPositions];
     const filterParts: string[] = [];
     const concatInputs: string[] = [];
+    const fadeDuration = 0.08;
     let segIdx = 0;
 
     for (let i = 0; i < allPositions.length; i++) {
       const start = allPositions[i];
       const end = i + 1 < allPositions.length ? allPositions[i + 1] : undefined;
-      const trimFilter = end !== undefined
-        ? `[0]atrim=start=${start}:end=${end},asetpts=PTS-STARTPTS[s${segIdx}]`
-        : `[0]atrim=start=${start},asetpts=PTS-STARTPTS[s${segIdx}]`;
-      filterParts.push(trimFilter);
+      const isFirst = i === 0;
+      const isLast = end === undefined;
+
+      let chain: string;
+      if (isLast) {
+        chain = `[0]atrim=start=${start},asetpts=PTS-STARTPTS`;
+        if (!isFirst) chain += `,afade=t=in:st=0:d=${fadeDuration}`;
+      } else {
+        const segDuration = end - start;
+        const fadeOutStart = Math.max(0, segDuration - fadeDuration);
+        chain = `[0]atrim=start=${start}:end=${end},asetpts=PTS-STARTPTS`;
+        if (!isFirst) chain += `,afade=t=in:st=0:d=${fadeDuration}`;
+        chain += `,afade=t=out:st=${fadeOutStart}:d=${fadeDuration}`;
+      }
+
+      filterParts.push(`${chain}[s${segIdx}]`);
       concatInputs.push(`[s${segIdx}]`);
       segIdx++;
 
-      if (end !== undefined) {
+      if (!isLast) {
         filterParts.push(
           `anullsrc=r=44100:cl=mono,atrim=0:${pauseSeconds},asetpts=PTS-STARTPTS[p${i}]`
         );

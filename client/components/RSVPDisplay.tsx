@@ -14,7 +14,7 @@ export interface WordTiming {
   endMs: number;
 }
 
-export type RSVPFontSize = "S" | "M" | "L" | "XL";
+export type RSVPFontSize = "S" | "M" | "L" | "XL" | "LANDSCAPE";
 
 interface RSVPDisplayProps {
   wordTimings: WordTiming[];
@@ -30,6 +30,7 @@ const FONT_SIZES: Record<RSVPFontSize, number> = {
   M: 32,
   L: 40,
   XL: 52,
+  LANDSCAPE: 72,
 };
 
 function getORPIndex(word: string): number {

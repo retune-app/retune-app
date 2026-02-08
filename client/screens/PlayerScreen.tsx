@@ -579,7 +579,7 @@ export default function PlayerScreen() {
                 wordTimings={wordTimings}
                 currentPositionMs={rsvpPosition}
                 isPlaying={isCurrentlyPlaying}
-                fontSize="XL"
+                fontSize="LANDSCAPE"
                 showHighlight={rsvpHighlight}
                 forceDarkMode={true}
               />

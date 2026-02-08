@@ -26,7 +26,7 @@ Preferred communication style: Simple, everyday language.
 - **RSVP Mode**: Rapid Serial Visual Presentation of affirmation text synchronized with audio.
 - **Breathing Mode**: Offers various breathing techniques (Box, 4-7-8, Coherent) with animated visuals, duration selection, and binaural beats.
 - **User Analytics**: Tracks listening sessions, streaks, and category breakdowns, including meditation KPIs.
-- **Sound Library**: 22-track ambient sound library across 7 categories (Rain, Ocean, Forest & Birds, Meditation, Solfeggio, Binaural, Noise). Nature tracks sourced from Internet Archive (CC0), synthetic tracks generated with ffmpeg. All tracks are 60-second seamless loops (meditation: 180 sec) with 2-second crossfade, totaling ~24MB. Category colors: Rain (#4FC3F7), Ocean (#29B6F6), Forest (#66BB6A), Meditation (#E040FB), Solfeggio (#C9A227), Binaural (#9C27B0), Noise (#78909C). Default sound: rain-soft.
+- **Sound Library**: 22-track ambient sound library across 7 categories (Rain, Ocean, Forest & Birds, Meditation, Solfeggio, Binaural, Noise). Nature tracks sourced from Internet Archive (CC0), synthetic tracks generated with ffmpeg. All tracks are 60-second seamless loops (meditation: 180 sec) with 2-second crossfade, totaling ~24MB. Category colors: Rain (#4FC3F7), Ocean (#29B6F6), Forest (#66BB6A), Meditation (#E040FB), Solfeggio (#C9A227), Binaural (#9C27B0), Noise (#78909C). Default sound: forest-night (Rainforest).
 - **Authentication**: Session-based for web, token-based for mobile.
 - **Notification Settings**: Customizable daily reminder settings.
 - **Voice Selection System**: Allows users to choose AI voices or clone their own, with UI for management and comparison.

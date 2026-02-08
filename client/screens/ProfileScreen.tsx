@@ -18,6 +18,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 const AUTO_REPLAY_KEY = "@settings/autoReplay";
 const BACKGROUND_WALLPAPER_KEY = "@settings/backgroundWallpaper";
 const PROGRESS_INDICATOR_KEY = "@settings/progressIndicator";
+const SHOW_TECHNIQUE_TIPS_KEY = "@settings/showTechniqueTips";
 
 // Voice preference types
 type VoiceType = "personal" | "ai";
@@ -114,6 +115,7 @@ export default function ProfileScreen() {
   const [autoReplayEnabled, setAutoReplayEnabled] = useState(true);
   const [backgroundWallpaperEnabled, setBackgroundWallpaperEnabled] = useState(false);
   const [progressIndicatorEnabled, setProgressIndicatorEnabled] = useState(true);
+  const [showTechniqueTipsEnabled, setShowTechniqueTipsEnabled] = useState(true);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
@@ -205,6 +207,11 @@ export default function ProfileScreen() {
         setProgressIndicatorEnabled(value === "true");
       }
     });
+    AsyncStorage.getItem(SHOW_TECHNIQUE_TIPS_KEY).then((value) => {
+      if (value !== null) {
+        setShowTechniqueTipsEnabled(value === "true");
+      }
+    });
   }, []);
 
   const handleVoiceSetup = () => {
@@ -242,6 +249,12 @@ export default function ProfileScreen() {
     const newValue = !progressIndicatorEnabled;
     setProgressIndicatorEnabled(newValue);
     await AsyncStorage.setItem(PROGRESS_INDICATOR_KEY, String(newValue));
+  };
+
+  const handleToggleShowTechniqueTips = async () => {
+    const newValue = !showTechniqueTipsEnabled;
+    setShowTechniqueTipsEnabled(newValue);
+    await AsyncStorage.setItem(SHOW_TECHNIQUE_TIPS_KEY, String(newValue));
   };
 
   const handleResetData = async () => {
@@ -644,6 +657,20 @@ export default function ProfileScreen() {
                 onValueChange={handleToggleProgressIndicator}
                 trackColor={{ false: theme.border, true: ACCENT_GOLD + "80" }}
                 thumbColor={progressIndicatorEnabled ? ACCENT_GOLD : theme.textSecondary}
+              />
+            }
+          />
+          <SettingItem
+            icon="info"
+            label="Technique Tips"
+            value={showTechniqueTipsEnabled ? "Show science tips when choosing" : "Off"}
+            showArrow={false}
+            rightElement={
+              <Switch
+                value={showTechniqueTipsEnabled}
+                onValueChange={handleToggleShowTechniqueTips}
+                trackColor={{ false: theme.border, true: ACCENT_GOLD + "80" }}
+                thumbColor={showTechniqueTipsEnabled ? ACCENT_GOLD : theme.textSecondary}
               />
             }
           />

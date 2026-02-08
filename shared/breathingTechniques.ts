@@ -12,6 +12,7 @@ export interface BreathingTechnique {
   }[];
   benefits: string;
   color: string;
+  scienceTip: string;
 }
 
 export const BREATHING_TECHNIQUES: BreathingTechnique[] = [
@@ -29,6 +30,7 @@ export const BREATHING_TECHNIQUES: BreathingTechnique[] = [
     ],
     benefits: "Focus & grounding",
     color: "#50C9B0",
+    scienceTip: "Equal rhythm activates your parasympathetic system — your body's built-in calm response",
   },
   {
     id: "478",
@@ -43,6 +45,7 @@ export const BREATHING_TECHNIQUES: BreathingTechnique[] = [
     ],
     benefits: "Sleep & relaxation",
     color: "#7B68EE",
+    scienceTip: "The extended exhale signals safety to your nervous system, slowing your heart rate naturally",
   },
   {
     id: "coherent",
@@ -56,6 +59,7 @@ export const BREATHING_TECHNIQUES: BreathingTechnique[] = [
     ],
     benefits: "Heart coherence",
     color: "#C9A227",
+    scienceTip: "5-5 rhythm synchronizes your heart and brain waves for optimal balance",
   },
   {
     id: "energizing",
@@ -69,6 +73,7 @@ export const BREATHING_TECHNIQUES: BreathingTechnique[] = [
     ],
     benefits: "Energy & alertness",
     color: "#E85D5D",
+    scienceTip: "Quick breathing floods your system with oxygen for a natural energy boost",
   },
 ];
 

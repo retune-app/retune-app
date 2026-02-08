@@ -2288,13 +2288,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ============ Reminders API ============
 
-  async function generateReminderMessage(activityType: string, time: string, userName: string): Promise<string> {
+  async function generateReminderMessage(activityType: string, time: string, userName: string, currentMessage?: string): Promise<string> {
     try {
       const hour = parseInt(time.split(":")[0], 10);
       let timeOfDay = "morning";
       if (hour >= 21) timeOfDay = "night";
       else if (hour >= 17) timeOfDay = "evening";
       else if (hour >= 12) timeOfDay = "afternoon";
+
+      const avoidClause = currentMessage
+        ? `\nIMPORTANT: Do NOT repeat or rephrase this previous message: "${currentMessage}". Write something completely different.`
+        : "";
 
       const response = await openai.chat.completions.create({
         model: "gpt-4o-mini",
@@ -2307,14 +2311,14 @@ Be warm and inviting, not pushy. Focus on the benefit of the activity.
 For 'breathe' type: Focus on calm, peace, grounding, stress relief, breathing.
 For 'believe' type: Focus on inner strength, positive mindset, self-belief, affirmations.
 Match the tone to the time of day (morning=fresh start, afternoon=reset/recharge, evening=wind down/reflect, night=peace/rest).
-Respond with ONLY the notification message text.`,
+Respond with ONLY the notification message text.${avoidClause}`,
           },
           {
             role: "user",
             content: `Generate a ${activityType === 'breathe' ? 'meditation/breathing' : 'affirmation listening'} reminder for ${timeOfDay} time.`,
           },
         ],
-        temperature: 0.8,
+        temperature: 1.0,
         max_tokens: 40,
       });
 
@@ -2515,7 +2519,7 @@ Respond with ONLY the notification message text.`,
 
       const [user] = await db.select({ name: users.name }).from(users).where(eq(users.id, userId)).limit(1);
       const userName = user?.name || "Friend";
-      const notificationMessage = await generateReminderMessage(existing.activityType, existing.time, userName);
+      const notificationMessage = await generateReminderMessage(existing.activityType, existing.time, userName, existing.notificationMessage ?? undefined);
 
       const [updated] = await db
         .update(reminders)

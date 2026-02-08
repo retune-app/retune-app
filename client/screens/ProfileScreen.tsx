@@ -46,7 +46,7 @@ interface VoicePreferences {
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { ThemedText } from "@/components/ThemedText";
 import { Card } from "@/components/Card";
-import ReminderSettings from "@/components/ReminderSettings";
+
 import { ProgressVisualization } from "@/components/ProgressVisualization";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
@@ -567,7 +567,15 @@ export default function ProfileScreen() {
         <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
           DAILY REMINDERS
         </ThemedText>
-        <ReminderSettings />
+        <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
+          <SettingItem
+            icon="bell"
+            label="Daily Reminders"
+            value="Personalized AI notifications"
+            onPress={() => (navigation as any).navigate("Reminders")}
+            testID="button-daily-reminders"
+          />
+        </View>
       </View>
 
       <View style={styles.section}>

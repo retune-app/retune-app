@@ -17,11 +17,14 @@ import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+
 import { ThemedText } from "@/components/ThemedText";
-import { GuidedMomentPlayer } from "@/components/GuidedMomentPlayer";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { apiRequest, getApiUrl } from "@/lib/query-client";
+import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
 const ACCENT_GOLD = "#C9A227";
 const GOLD_LIGHT = "#E5C95C";
@@ -68,6 +71,7 @@ interface MoodResponse {
 
 export function MoodCheckin({ onStartBreathing, onStartAffirmations, visible, onClose }: MoodCheckinProps) {
   const { theme } = useTheme();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState<MoodResponse | null>(null);
@@ -231,30 +235,23 @@ export function MoodCheckin({ onStartBreathing, onStartAffirmations, visible, on
                   </LinearGradient>
                 </Pressable>
 
-                {!showGuidedMoment ? (
-                  <Pressable
-                    onPress={() => {
-                      setShowGuidedMoment(true);
-                      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
-                    }}
-                    style={[styles.guidedMomentButton, { borderColor: `${ACCENT_GOLD}30` }]}
-                    testID="button-try-guided-moment"
-                  >
-                    <Feather name="headphones" size={16} color={ACCENT_GOLD} />
-                    <ThemedText type="caption" style={{ color: ACCENT_GOLD, marginLeft: 6, fontWeight: "600" }}>
-                      Or try a Guided Moment
-                    </ThemedText>
-                  </Pressable>
-                ) : null}
-
-                {showGuidedMoment && selectedMood ? (
-                  <GuidedMomentPlayer
-                    mood={selectedMood}
-                    timeOfDay={getTimeOfDay()}
-                    visible={showGuidedMoment}
-                    onClose={() => setShowGuidedMoment(false)}
-                  />
-                ) : null}
+                <Pressable
+                  onPress={() => {
+                    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+                    handleClose();
+                    navigation.navigate("GuidedMoment", {
+                      mood: selectedMood,
+                      timeOfDay: getTimeOfDay(),
+                    });
+                  }}
+                  style={[styles.guidedMomentButton, { borderColor: `${ACCENT_GOLD}30` }]}
+                  testID="button-try-guided-moment"
+                >
+                  <Feather name="headphones" size={16} color={ACCENT_GOLD} />
+                  <ThemedText type="caption" style={{ color: ACCENT_GOLD, marginLeft: 6, fontWeight: "600" }}>
+                    {"Or try a Guided Moment"}
+                  </ThemedText>
+                </Pressable>
 
                 <Pressable onPress={handleClose} style={styles.dismissButton}>
                   <ThemedText type="caption" style={{ color: theme.textSecondary }}>

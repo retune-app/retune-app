@@ -7,6 +7,7 @@ import MainTabNavigator from "@/navigation/MainTabNavigator";
 import VoiceSetupScreen from "@/screens/VoiceSetupScreen";
 import VoiceSettingsScreen from "@/screens/VoiceSettingsScreen";
 import SoundLibraryScreen from "@/screens/SoundLibraryScreen";
+import GuidedMomentScreen from "@/screens/GuidedMomentScreen";
 import CreateScreen from "@/screens/CreateScreen";
 import PlayerScreen from "@/screens/PlayerScreen";
 import AnalyticsScreen from "@/screens/AnalyticsScreen";
@@ -28,6 +29,7 @@ export type RootStackParamList = {
   Create: undefined;
   Player: { affirmationId: number; isNew?: boolean };
   Analytics: undefined;
+  GuidedMoment: { mood: string; timeOfDay: string };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -196,6 +198,15 @@ export default function RootStackNavigator() {
             headerTitle: "Sound Library",
             headerBackTitle: "Back",
             animation: "slide_from_right",
+          }}
+        />
+        <Stack.Screen
+          name="GuidedMoment"
+          component={GuidedMomentScreen}
+          options={{
+            headerShown: false,
+            presentation: "fullScreenModal",
+            animation: "fade",
           }}
         />
       </Stack.Navigator>

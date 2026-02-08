@@ -543,29 +543,6 @@ export default function BreathingScreen() {
                 />
               </View>
 
-              {/* Volume slider */}
-              {(musicEnabled || voiceEnabled) ? (
-                <View style={styles.sessionVolumeRow}>
-                  <Feather
-                    name={(musicEnabled ? volume : voiceVolume) > 0.05 ? "volume-1" : "volume-x"}
-                    size={16}
-                    color="rgba(255,255,255,0.5)"
-                  />
-                  <Slider
-                    style={styles.sessionVolumeSlider}
-                    minimumValue={0.05}
-                    maximumValue={1}
-                    value={musicEnabled ? volume : voiceVolume}
-                    onValueChange={handleSessionVolumeChange}
-                    minimumTrackTintColor={selectedTechnique.color}
-                    maximumTrackTintColor="rgba(255,255,255,0.15)"
-                    thumbTintColor={selectedTechnique.color}
-                    testID="slider-session-volume"
-                  />
-                  <Feather name="volume-2" size={16} color="rgba(255,255,255,0.5)" />
-                </View>
-              ) : null}
-
               {/* Bottom section - stats and controls */}
               <View style={styles.portraitBottomSection}>
                 <View style={styles.portraitStatsRow}>
@@ -601,6 +578,28 @@ export default function BreathingScreen() {
                     </LinearGradient>
                   </Pressable>
                 </View>
+
+                {(musicEnabled || voiceEnabled) ? (
+                  <View style={styles.sessionVolumeRow}>
+                    <Feather
+                      name={(musicEnabled ? volume : voiceVolume) > 0.05 ? "volume-1" : "volume-x"}
+                      size={14}
+                      color="rgba(255,255,255,0.3)"
+                    />
+                    <Slider
+                      style={styles.sessionVolumeSlider}
+                      minimumValue={0.05}
+                      maximumValue={1}
+                      value={musicEnabled ? volume : voiceVolume}
+                      onValueChange={handleSessionVolumeChange}
+                      minimumTrackTintColor="rgba(255,255,255,0.35)"
+                      maximumTrackTintColor="rgba(255,255,255,0.1)"
+                      thumbTintColor="rgba(255,255,255,0.5)"
+                      testID="slider-session-volume"
+                    />
+                    <Feather name="volume-2" size={14} color="rgba(255,255,255,0.3)" />
+                  </View>
+                ) : null}
               </View>
             </View>
           </View>

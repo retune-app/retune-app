@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { View, StyleSheet, Pressable, ImageBackground, ScrollView, Platform } from "react-native";
+import { View, StyleSheet, Pressable, ScrollView, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { Feather } from "@expo/vector-icons";
@@ -23,8 +23,6 @@ import { useTheme } from "@/hooks/useTheme";
 import { useBackgroundMusic, getSoundsByCategory, BackgroundMusicOption, BackgroundMusicType, getAudioFile } from "@/contexts/BackgroundMusicContext";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 
-const profileBackgroundDark = require("../../assets/images/library-background.png");
-const profileBackgroundLight = require("../../assets/images/library-background-light.png");
 
 const ACCENT_GOLD = "#C9A227";
 
@@ -468,7 +466,7 @@ const PREVIEW_DURATION = 5000;
 export default function SoundLibraryScreen() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
-  const { theme, isDark } = useTheme();
+  const { theme } = useTheme();
   const { selectedMusic, setSelectedMusic, volume, setVolume } = useBackgroundMusic();
   
   const { rain, ocean, forest, meditation, solfeggio, binaural, noise } = getSoundsByCategory();
@@ -554,11 +552,7 @@ export default function SoundLibraryScreen() {
   const currentSelection = [...rain, ...ocean, ...forest, ...meditation, ...solfeggio, ...binaural, ...noise].find(o => o.id === selectedMusic);
 
   return (
-    <ImageBackground
-      source={isDark ? profileBackgroundDark : profileBackgroundLight}
-      style={styles.backgroundImage}
-      resizeMode="cover"
-    >
+    <View style={styles.backgroundImage}>
       <ScrollView
         style={styles.container}
         contentContainerStyle={[
@@ -696,7 +690,7 @@ export default function SoundLibraryScreen() {
           index={7}
         />
       </ScrollView>
-    </ImageBackground>
+    </View>
   );
 }
 

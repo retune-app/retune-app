@@ -2300,6 +2300,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ? `\nIMPORTANT: Do NOT repeat or rephrase this previous message: "${currentMessage}". Write something completely different.`
         : "";
 
+      const techniqueGuidance = activityType === 'breathe'
+        ? `\nYou MUST recommend a specific breathing technique based on time of day:
+- Morning: "Energizing Breath" (quick 2-1 rhythm for energy and alertness)
+- Afternoon: "Box Breathing" (4-4-4-4 for focus and grounding) or "Coherent Breathing" (5-5 for balance)
+- Evening: "Coherent Breathing" (5-5 for heart coherence and winding down)
+- Night: "4-7-8 Relaxation" (deep relaxation for sleep)
+Include the technique name naturally in your message.`
+        : "";
+
       const response = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
@@ -2310,7 +2319,7 @@ Rules: MAX 15 words, one sentence, no quotation marks, no exclamation marks.
 Be warm and inviting, not pushy. Focus on the benefit of the activity.
 For 'breathe' type: Focus on calm, peace, grounding, stress relief, breathing.
 For 'believe' type: Focus on inner strength, positive mindset, self-belief, affirmations.
-Match the tone to the time of day (morning=fresh start, afternoon=reset/recharge, evening=wind down/reflect, night=peace/rest).
+Match the tone to the time of day (morning=fresh start, afternoon=reset/recharge, evening=wind down/reflect, night=peace/rest).${techniqueGuidance}
 Respond with ONLY the notification message text.${avoidClause}`,
           },
           {

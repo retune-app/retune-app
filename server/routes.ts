@@ -67,6 +67,28 @@ const ttsLimiter = rateLimit({
   validate: false,
 });
 
+const dailyGreetingLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  message: { error: "Too many greeting requests. Please wait a moment." },
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: false,
+  keyGenerator: (req: Request) => {
+    const authReq = req as AuthenticatedRequest;
+    return authReq.userId || req.ip || "unknown";
+  },
+});
+
+const dailyGreetingCache = new Map<string, string>();
+
+const dailyGreetingFallbacks: Record<string, string> = {
+  morning: "A new morning means a new chance to become who you are meant to be",
+  afternoon: "You are carrying today with quiet strength — keep moving forward",
+  evening: "Tonight you can rest knowing you gave today your honest effort",
+  night: "Let the stillness remind you how far you have already come",
+};
+
 const uploadDir = path.join(process.cwd(), "uploads");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -2969,6 +2991,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error running voice rotation:", error);
       res.status(500).json({ error: "Failed to run voice rotation" });
+    }
+  });
+
+  app.get("/api/daily-greeting", requireAuth, dailyGreetingLimiter, async (req: AuthenticatedRequest, res: Response) => {
+    const userId = req.userId!;
+    const timeOfDay = (req.query.timeOfDay as string) || "morning";
+    const validTimes = ["morning", "afternoon", "evening", "night"];
+    const normalizedTime = validTimes.includes(timeOfDay) ? timeOfDay : "morning";
+
+    const today = new Date().toISOString().slice(0, 10);
+    const cacheKey = `${userId}-${today}`;
+
+    const cached = dailyGreetingCache.get(cacheKey);
+    if (cached) {
+      return res.json({ message: cached, cached: true });
+    }
+
+    try {
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are part of the Serene Empowerment brand. Generate a single short empowering sub-message (15-25 words max) for a user greeting. The message should fit the ${normalizedTime} time of day. Never use quotation marks. Be warm but not overly cheery. Focus on inner strength, resilience, and gentle encouragement. Examples of the tone: Your mind is your greatest asset. Every breath is a step forward. You've been showing up for yourself — that's real strength. Respond with ONLY the message, nothing else.`,
+          },
+          {
+            role: "user",
+            content: `Generate an empowering ${normalizedTime} greeting sub-message.`,
+          },
+        ],
+        temperature: 0.7,
+        max_tokens: 50,
+      });
+
+      let message = response.choices[0]?.message?.content?.trim() || dailyGreetingFallbacks[normalizedTime];
+      message = message.replace(/["""'']/g, "");
+
+      dailyGreetingCache.set(cacheKey, message);
+      res.json({ message, cached: false });
+    } catch (error) {
+      console.error("Daily greeting generation failed:", error);
+      res.json({ message: dailyGreetingFallbacks[normalizedTime], cached: false });
     }
   });
 

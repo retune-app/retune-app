@@ -118,18 +118,33 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
   };
 
   const setSelectedMusic = async (type: BackgroundMusicType) => {
+    const wasPlaying = isPlaying;
     setSelectedMusicState(type);
     await AsyncStorage.setItem(STORAGE_KEY, type);
     
-    // Stop current music if playing (user is changing selection)
     if (soundRef.current) {
       await soundRef.current.stopAsync();
       await soundRef.current.unloadAsync();
       soundRef.current = null;
       setIsPlaying(false);
     }
-    // Sound selection is saved but won't auto-play
-    // Music only starts when startBackgroundMusic is called (e.g., when starting a breathing session)
+
+    if (wasPlaying && type !== 'none') {
+      try {
+        const { sound } = await Audio.Sound.createAsync(
+          AUDIO_FILES[type],
+          {
+            isLooping: true,
+            volume: applyVolumeCurve(volume),
+            shouldPlay: true,
+          }
+        );
+        soundRef.current = sound;
+        setIsPlaying(true);
+      } catch (error) {
+        console.error('Error switching background music:', error);
+      }
+    }
   };
 
   const setVolume = async (newVolume: number) => {

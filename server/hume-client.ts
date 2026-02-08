@@ -91,9 +91,9 @@ export async function humeTextToSpeech(
     body: JSON.stringify({
       version: "2",
       utterances,
+      format: { type: "wav" },
       include_timestamp_types: ["word"],
       split_utterances: false,
-      strip_headers: true,
     }),
   });
 
@@ -131,6 +131,11 @@ export async function humeTextToSpeech(
         }
       }
     }
+  }
+
+  if (wordTimings.length > 0) {
+    const first5 = wordTimings.slice(0, 5).map(w => `"${w.word}" ${w.startMs}-${w.endMs}ms`);
+    console.log(`Hume TTS raw timings (first 5): ${first5.join(', ')}`);
   }
 
   wordTimings = sanitizeWordTimings(wordTimings);

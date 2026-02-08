@@ -496,12 +496,12 @@ async function generateAudio(
   script: string,
   voiceId?: string,
   isPersonalVoice: boolean = false
-): Promise<{ audio: ArrayBuffer; duration: number; wordTimings: WordTiming[] }> {
+): Promise<{ audio: ArrayBuffer; duration: number; wordTimings: WordTiming[]; fileExtension: string }> {
   // Personal voice: always use ElevenLabs (voice clones live there)
   if (isPersonalVoice) {
     try {
       const result = await elevenLabsTTS(script, voiceId);
-      return result;
+      return { ...result, fileExtension: '.mp3' };
     } catch (elevenLabsError: any) {
       const isQuotaExhausted = elevenLabsError?.message?.includes("quota_exceeded") ||
         elevenLabsError?.message?.includes("Unauthorized") ||
@@ -524,7 +524,7 @@ async function generateAudio(
     try {
       console.log(`Using Hume AI TTS for stock voice: ${humeName}`);
       const result = await humeTextToSpeech(script, humeName);
-      return result;
+      return { ...result, fileExtension: '.wav' };
     } catch (humeError: any) {
       console.error("Hume AI TTS failed, trying OpenAI fallback:", humeError?.message || humeError);
     }
@@ -534,7 +534,8 @@ async function generateAudio(
   if (directOpenAI) {
     try {
       const openaiVoice = getOpenAIVoiceForElevenLabsId(voiceId);
-      return await generateAudioOpenAI(script, openaiVoice);
+      const result = await generateAudioOpenAI(script, openaiVoice);
+      return { ...result, fileExtension: '.mp3' };
     } catch (openaiError: any) {
       console.error("OpenAI TTS fallback also failed:", openaiError?.message || openaiError);
     }
@@ -543,7 +544,7 @@ async function generateAudio(
   // Last resort: try ElevenLabs for stock voice
   try {
     const result = await elevenLabsTTS(script, voiceId);
-    return result;
+    return { ...result, fileExtension: '.mp3' };
   } catch (elError: any) {
     console.error("ElevenLabs TTS last resort also failed:", elError?.message || elError);
     throw new Error("TTS_UNAVAILABLE: All TTS services (Hume AI, OpenAI, ElevenLabs) are unavailable");
@@ -790,7 +791,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!fs.existsSync(audioDir)) {
         fs.mkdirSync(audioDir, { recursive: true });
       }
-      const audioFilename = `affirmation-${Date.now()}.mp3`;
+      const audioExt = audioResult.fileExtension || '.mp3';
+      const audioFilename = `affirmation-${Date.now()}${audioExt}`;
       const audioPath = path.join(audioDir, audioFilename);
       fs.writeFileSync(audioPath, Buffer.from(audioResult.audio));
 
@@ -1453,7 +1455,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fs.mkdirSync(audioDir, { recursive: true });
       }
       
-      const audioFileName = `affirmation-${affirmationId}-${Date.now()}.mp3`;
+      const audioExt2 = audioResult.fileExtension || '.mp3';
+      const audioFileName = `affirmation-${affirmationId}-${Date.now()}${audioExt2}`;
       const audioPath = path.join(audioDir, audioFileName);
       fs.writeFileSync(audioPath, Buffer.from(audioResult.audio));
       
@@ -1940,7 +1943,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const audioResult = await generateAudio(sample.script, voiceIdToUse);
           
           // Save audio file to audio subdirectory
-          const audioFilename = `affirmation-${Date.now()}-${Math.random().toString(36).slice(2)}.mp3`;
+          const audioExt3 = audioResult.fileExtension || '.mp3';
+          const audioFilename = `affirmation-${Date.now()}-${Math.random().toString(36).slice(2)}${audioExt3}`;
           const audioPath = path.join(audioDir, audioFilename);
           fs.writeFileSync(audioPath, Buffer.from(audioResult.audio));
 
@@ -2523,7 +2527,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const audioResult = await generateAudio(affirmation.script, voiceId);
           
           // Save audio file
-          const audioFileName = `affirmation-${affirmation.id}-${Date.now()}.mp3`;
+          const audioExt4 = audioResult.fileExtension || '.mp3';
+          const audioFileName = `affirmation-${affirmation.id}-${Date.now()}${audioExt4}`;
           const audioPath = path.join(audioDir, audioFileName);
           fs.writeFileSync(audioPath, Buffer.from(audioResult.audio));
           

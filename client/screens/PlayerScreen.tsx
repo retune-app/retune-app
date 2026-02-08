@@ -558,10 +558,7 @@ export default function PlayerScreen() {
   const displayDuration = currentAffirmation?.id === affirmationId ? duration : 0;
   const progress = displayDuration > 0 ? displayPosition / displayDuration : 0;
   
-  // Add offset to compensate for audio position latency and UI rendering delay
-  // Higher playback speeds need more forward offset since words change faster
-  const rsvpPositionOffset = 30 * playbackSpeed;
-  const rsvpPosition = displayPosition + rsvpPositionOffset;
+  const rsvpPosition = displayPosition;
 
   return (
     <ThemedView style={styles.container}>

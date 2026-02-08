@@ -105,7 +105,7 @@ function applyVolumeCurve(linearVolume: number): number {
   return Math.pow(linearVolume, 3);
 }
 
-const DUCK_FACTOR = 0.25;
+const DUCK_FACTOR = 0.4;
 
 interface BackgroundMusicContextType {
   selectedMusic: BackgroundMusicType;

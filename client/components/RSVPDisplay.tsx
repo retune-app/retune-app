@@ -26,10 +26,10 @@ interface RSVPDisplayProps {
 }
 
 const FONT_SIZES: Record<RSVPFontSize, number> = {
-  S: 28,
-  M: 36,
-  L: 48,
-  XL: 64,
+  S: 24,
+  M: 32,
+  L: 40,
+  XL: 52,
 };
 
 function getORPIndex(word: string): number {

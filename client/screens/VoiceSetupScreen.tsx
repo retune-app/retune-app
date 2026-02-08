@@ -935,12 +935,16 @@ export default function VoiceSetupScreen() {
           ) : null}
         </View>
 
-        <ThemedText type="h2" style={[styles.statusTitle, { textAlign: "center" }]}>
-          {getStatusText()}
-        </ThemedText>
-        <ThemedText type="body" style={[styles.statusSub, { color: theme.textSecondary }]}>
-          {getSubText()}
-        </ThemedText>
+        {isRecording || hasRecording ? (
+          <>
+            <ThemedText type="h2" style={[styles.statusTitle, { textAlign: "center" }]}>
+              {getStatusText()}
+            </ThemedText>
+            <ThemedText type="body" style={[styles.statusSub, { color: theme.textSecondary }]}>
+              {getSubText()}
+            </ThemedText>
+          </>
+        ) : null}
 
         <MilestoneBar
           duration={recordingDuration}

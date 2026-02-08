@@ -445,8 +445,14 @@ async function generateAudioSimple(text: string, voiceId: string, isPersonalVoic
     } catch (error: any) {
       const errMsg = error?.message || String(error);
       const isQuota = errMsg.includes("quota_exceeded") || errMsg.includes("Unauthorized");
+      const isVoiceNotFound = errMsg.includes("voice_not_found") ||
+        errMsg.includes("Not Found") ||
+        String(error).includes("voice_not_found");
       if (isQuota) {
         throw new Error("QUOTA_EXCEEDED: Your voice cloning credits have been used up for this period. Please switch to an AI voice or wait for your credits to reset.");
+      }
+      if (isVoiceNotFound) {
+        throw new Error("VOICE_EXPIRED: Your voice clone has expired or is no longer available. Please re-record your voice sample.");
       }
       throw new Error("PERSONAL_VOICE_FAILED: Could not generate audio with your personal voice. Please try again or re-record your voice.");
     }
@@ -474,22 +480,7 @@ async function generateAudioSimple(text: string, voiceId: string, isPersonalVoic
     }
   }
 
-  // Last resort: ElevenLabs
-  try {
-    const client = await getElevenLabsClient();
-    const audio = await client.textToSpeech.convert(voiceId || "21m00Tcm4TlvDq8ikWAM", {
-      text,
-      model_id: "eleven_multilingual_v2",
-    });
-    const chunks: Buffer[] = [];
-    for await (const chunk of audio) {
-      chunks.push(Buffer.from(chunk));
-    }
-    return Buffer.concat(chunks).buffer;
-  } catch (elError: any) {
-    console.error("ElevenLabs simple TTS last resort also failed:", elError?.message || elError);
-    throw new Error("TTS_UNAVAILABLE: All TTS services are unavailable");
-  }
+  throw new Error("TTS_UNAVAILABLE: All TTS services are unavailable");
 }
 
 async function generateAudio(
@@ -506,12 +497,18 @@ async function generateAudio(
       const isQuotaExhausted = elevenLabsError?.message?.includes("quota_exceeded") ||
         elevenLabsError?.message?.includes("Unauthorized") ||
         String(elevenLabsError).includes("quota_exceeded");
+      const isVoiceNotFound = elevenLabsError?.message?.includes("voice_not_found") ||
+        elevenLabsError?.message?.includes("Not Found") ||
+        String(elevenLabsError).includes("voice_not_found");
       console.error(
-        `ElevenLabs TTS failed for PERSONAL voice (${voiceId})${isQuotaExhausted ? " (quota exhausted)" : ""}:`,
+        `ElevenLabs TTS failed for PERSONAL voice (${voiceId})${isQuotaExhausted ? " (quota exhausted)" : ""}${isVoiceNotFound ? " (voice not found)" : ""}:`,
         elevenLabsError?.message || elevenLabsError
       );
       if (isQuotaExhausted) {
         throw new Error("QUOTA_EXCEEDED: Your voice cloning credits have been used up for this period. Please switch to an AI voice or wait for your credits to reset.");
+      }
+      if (isVoiceNotFound) {
+        throw new Error("VOICE_EXPIRED: Your voice clone has expired or is no longer available. Please re-record your voice sample.");
       }
       throw new Error("PERSONAL_VOICE_FAILED: Could not generate audio with your personal voice. Please try again or re-record your voice.");
     }
@@ -540,14 +537,7 @@ async function generateAudio(
     }
   }
 
-  // Last resort: try ElevenLabs for stock voice
-  try {
-    const result = await elevenLabsTTS(script, voiceId);
-    return result;
-  } catch (elError: any) {
-    console.error("ElevenLabs TTS last resort also failed:", elError?.message || elError);
-    throw new Error("TTS_UNAVAILABLE: All TTS services (Hume AI, OpenAI, ElevenLabs) are unavailable");
-  }
+  throw new Error("TTS_UNAVAILABLE: All TTS services (Hume AI, OpenAI) are unavailable");
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -782,6 +772,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (genError: any) {
         if (usedPersonalVoice && genError?.message?.includes("QUOTA_EXCEEDED")) {
           console.log("Personal voice quota exceeded, falling back to AI voice");
+          const fallbackGender = usedGender || "female";
+          const fallbackVoiceId = fallbackGender === "male"
+            ? (userWithPrefs?.preferredMaleVoiceId || VOICE_OPTIONS.male[0].id)
+            : (userWithPrefs?.preferredFemaleVoiceId || VOICE_OPTIONS.female[0].id);
+          usedPersonalVoice = false;
+          voiceIdToUse = fallbackVoiceId;
+          audioResult = await generateAudio(script, fallbackVoiceId, false);
+        } else if (usedPersonalVoice && (genError?.message?.includes("PERSONAL_VOICE_FAILED") || genError?.message?.includes("VOICE_EXPIRED"))) {
+          console.log("Personal voice not found/expired, falling back to AI voice");
           const fallbackGender = usedGender || "female";
           const fallbackVoiceId = fallbackGender === "male"
             ? (userWithPrefs?.preferredMaleVoiceId || VOICE_OPTIONS.male[0].id)

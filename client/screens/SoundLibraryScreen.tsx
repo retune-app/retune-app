@@ -46,7 +46,7 @@ const CATEGORY_INFO = {
     color: "#66BB6A",
   },
   meditation: {
-    title: "Meditation (Coming Soon)",
+    title: "Meditation",
     subtitle: "Ambient music for inner peace",
     emoji: "heart",
     color: "#E040FB",

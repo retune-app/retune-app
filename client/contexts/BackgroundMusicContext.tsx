@@ -15,6 +15,9 @@ export type BackgroundMusicType =
   | 'forest-night'
   | 'meditation-forest-melody'
   | 'meditation-morning-mist'
+  | 'meditation-singing-bowls'
+  | 'meditation-gentle-chimes'
+  | 'meditation-deep-drone'
   | 'solfeggio-432hz'
   | 'solfeggio-528hz'
   | 'solfeggio-396hz'
@@ -47,6 +50,9 @@ export const BACKGROUND_MUSIC_OPTIONS: BackgroundMusicOption[] = [
   { id: 'forest-night', name: 'Rainforest', description: 'Deep rainforest ambience', category: 'forest', icon: 'moon' },
   { id: 'meditation-forest-melody', name: 'Forest Melody', description: 'Ambient meditation music', category: 'meditation', icon: 'heart' },
   { id: 'meditation-morning-mist', name: 'Morning Mist', description: 'Ethereal meditation pad', category: 'meditation', icon: 'sun' },
+  { id: 'meditation-singing-bowls', name: 'Singing Bowls', description: 'Tibetan bowl resonance', category: 'meditation', icon: 'target' },
+  { id: 'meditation-gentle-chimes', name: 'Gentle Chimes', description: 'Wind chimes with ambient pad', category: 'meditation', icon: 'bell' },
+  { id: 'meditation-deep-drone', name: 'Deep Drone', description: 'Warm ambient drone', category: 'meditation', icon: 'disc' },
   { id: 'solfeggio-432hz', name: '432Hz Healing', description: 'Universal harmony frequency', category: 'solfeggio', icon: 'heart' },
   { id: 'solfeggio-528hz', name: '528Hz Love', description: 'DNA repair frequency', category: 'solfeggio', icon: 'sun' },
   { id: 'solfeggio-396hz', name: '396Hz Liberation', description: 'Freedom from fear & guilt', category: 'solfeggio', icon: 'shield' },
@@ -83,6 +89,9 @@ const AUDIO_FILES: Record<Exclude<BackgroundMusicType, 'none'>, any> = {
   'forest-night': require('../../assets/audio/forest-night.mp3'),
   'meditation-forest-melody': require('../../assets/audio/meditation-forest-melody.mp3'),
   'meditation-morning-mist': require('../../assets/audio/meditation-morning-mist.mp3'),
+  'meditation-singing-bowls': require('../../assets/audio/meditation-singing-bowls.mp3'),
+  'meditation-gentle-chimes': require('../../assets/audio/meditation-gentle-chimes.mp3'),
+  'meditation-deep-drone': require('../../assets/audio/meditation-deep-drone.mp3'),
   'solfeggio-432hz': require('../../assets/audio/solfeggio-432hz.mp3'),
   'solfeggio-528hz': require('../../assets/audio/solfeggio-528hz.mp3'),
   'solfeggio-396hz': require('../../assets/audio/solfeggio-396hz.mp3'),

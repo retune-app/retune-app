@@ -1338,8 +1338,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     gap: Spacing.lg,
-    marginTop: -Spacing.md,
-    marginBottom: Spacing.lg,
+    marginTop: Spacing.xl,
+    marginBottom: Spacing.xl,
   },
   startButtonShadow: {
     borderRadius: 44,

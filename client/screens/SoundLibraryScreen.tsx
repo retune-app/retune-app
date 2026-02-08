@@ -4,8 +4,18 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
+import Animated, {
+  FadeIn,
+  FadeInDown,
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withTiming,
+  withSequence,
+  withDelay,
+} from "react-native-reanimated";
 import { Audio } from "expo-av";
+import { LinearGradient } from "expo-linear-gradient";
 
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
@@ -38,6 +48,234 @@ const CATEGORY_INFO = {
   },
 };
 
+function getCategoryColor(soundId: string): string {
+  if (["rain", "ocean", "forest", "wind"].includes(soundId)) return CATEGORY_INFO.nature.color;
+  if (["432hz", "528hz"].includes(soundId)) return CATEGORY_INFO.solfeggio.color;
+  return CATEGORY_INFO.binaural.color;
+}
+
+function RainAccent() {
+  const drop1Y = useSharedValue(0);
+  const drop2Y = useSharedValue(0);
+  const drop3Y = useSharedValue(0);
+  const drop1Opacity = useSharedValue(0.4);
+  const drop2Opacity = useSharedValue(0.3);
+  const drop3Opacity = useSharedValue(0.35);
+
+  useEffect(() => {
+    drop1Y.value = withRepeat(withTiming(8, { duration: 1200 }), -1, true);
+    drop1Opacity.value = withRepeat(withSequence(withTiming(0.5, { duration: 600 }), withTiming(0.15, { duration: 600 })), -1, true);
+    drop2Y.value = withDelay(400, withRepeat(withTiming(8, { duration: 1400 }), -1, true));
+    drop2Opacity.value = withDelay(400, withRepeat(withSequence(withTiming(0.45, { duration: 700 }), withTiming(0.1, { duration: 700 })), -1, true));
+    drop3Y.value = withDelay(800, withRepeat(withTiming(8, { duration: 1000 }), -1, true));
+    drop3Opacity.value = withDelay(800, withRepeat(withSequence(withTiming(0.5, { duration: 500 }), withTiming(0.15, { duration: 500 })), -1, true));
+  }, []);
+
+  const style1 = useAnimatedStyle(() => ({ transform: [{ translateY: drop1Y.value }], opacity: drop1Opacity.value }));
+  const style2 = useAnimatedStyle(() => ({ transform: [{ translateY: drop2Y.value }], opacity: drop2Opacity.value }));
+  const style3 = useAnimatedStyle(() => ({ transform: [{ translateY: drop3Y.value }], opacity: drop3Opacity.value }));
+
+  const dotStyle = { width: 3, height: 3, borderRadius: 1.5, backgroundColor: "#64B5F6", position: "absolute" as const };
+
+  return (
+    <>
+      <Animated.View style={[dotStyle, { top: 6, left: 10 }, style1]} />
+      <Animated.View style={[dotStyle, { top: 4, right: 12 }, style2]} />
+      <Animated.View style={[dotStyle, { top: 10, left: 22 }, style3]} />
+    </>
+  );
+}
+
+function OceanAccent() {
+  const wave1X = useSharedValue(0);
+  const wave2X = useSharedValue(0);
+
+  useEffect(() => {
+    wave1X.value = withRepeat(withTiming(3, { duration: 2000 }), -1, true);
+    wave2X.value = withDelay(500, withRepeat(withTiming(-3, { duration: 2200 }), -1, true));
+  }, []);
+
+  const style1 = useAnimatedStyle(() => ({ transform: [{ translateX: wave1X.value }], opacity: 0.35 }));
+  const style2 = useAnimatedStyle(() => ({ transform: [{ translateX: wave2X.value }], opacity: 0.25 }));
+
+  return (
+    <>
+      <Animated.View style={[{ position: "absolute", bottom: 4, left: 4, right: 4, height: 2, borderRadius: 1, backgroundColor: "#4FC3F7" }, style1]} />
+      <Animated.View style={[{ position: "absolute", bottom: 8, left: 6, right: 6, height: 1.5, borderRadius: 1, backgroundColor: "#29B6F6" }, style2]} />
+    </>
+  );
+}
+
+function ForestAccent() {
+  const glowScale = useSharedValue(1);
+  const glowOpacity = useSharedValue(0.2);
+
+  useEffect(() => {
+    glowScale.value = withRepeat(withTiming(1.15, { duration: 2000 }), -1, true);
+    glowOpacity.value = withRepeat(withSequence(withTiming(0.4, { duration: 1000 }), withTiming(0.15, { duration: 1000 })), -1, true);
+  }, []);
+
+  const style = useAnimatedStyle(() => ({
+    transform: [{ scale: glowScale.value }],
+    opacity: glowOpacity.value,
+  }));
+
+  return (
+    <Animated.View style={[{
+      position: "absolute", top: -3, left: -3, right: -3, bottom: -3,
+      borderRadius: 27, borderWidth: 2, borderColor: "#66BB6A",
+    }, style]} />
+  );
+}
+
+function WindAccent() {
+  const line1X = useSharedValue(-4);
+  const line2X = useSharedValue(-2);
+  const line3X = useSharedValue(-3);
+
+  useEffect(() => {
+    line1X.value = withRepeat(withTiming(4, { duration: 1500 }), -1, true);
+    line2X.value = withDelay(300, withRepeat(withTiming(3, { duration: 1800 }), -1, true));
+    line3X.value = withDelay(600, withRepeat(withTiming(4, { duration: 1300 }), -1, true));
+  }, []);
+
+  const style1 = useAnimatedStyle(() => ({ transform: [{ translateX: line1X.value }], opacity: 0.35 }));
+  const style2 = useAnimatedStyle(() => ({ transform: [{ translateX: line2X.value }], opacity: 0.25 }));
+  const style3 = useAnimatedStyle(() => ({ transform: [{ translateX: line3X.value }], opacity: 0.3 }));
+
+  const lineBase = { position: "absolute" as const, height: 1.5, borderRadius: 1, backgroundColor: "#90CAF9" };
+
+  return (
+    <>
+      <Animated.View style={[lineBase, { top: 12, left: 6, width: 14 }, style1]} />
+      <Animated.View style={[lineBase, { top: 20, left: 10, width: 12 }, style2]} />
+      <Animated.View style={[lineBase, { top: 28, left: 4, width: 16 }, style3]} />
+    </>
+  );
+}
+
+function SolfeggioAccent({ color }: { color: string }) {
+  const ring1Scale = useSharedValue(1);
+  const ring2Scale = useSharedValue(1);
+  const ring1Opacity = useSharedValue(0.3);
+  const ring2Opacity = useSharedValue(0.2);
+
+  useEffect(() => {
+    ring1Scale.value = withRepeat(withTiming(1.2, { duration: 1800 }), -1, true);
+    ring1Opacity.value = withRepeat(withSequence(withTiming(0.4, { duration: 900 }), withTiming(0.1, { duration: 900 })), -1, true);
+    ring2Scale.value = withDelay(400, withRepeat(withTiming(1.3, { duration: 2200 }), -1, true));
+    ring2Opacity.value = withDelay(400, withRepeat(withSequence(withTiming(0.3, { duration: 1100 }), withTiming(0.05, { duration: 1100 })), -1, true));
+  }, []);
+
+  const style1 = useAnimatedStyle(() => ({ transform: [{ scale: ring1Scale.value }], opacity: ring1Opacity.value }));
+  const style2 = useAnimatedStyle(() => ({ transform: [{ scale: ring2Scale.value }], opacity: ring2Opacity.value }));
+
+  const ringBase = {
+    position: "absolute" as const, borderRadius: 24, borderWidth: 1.5, borderColor: color,
+    justifyContent: "center" as const, alignItems: "center" as const,
+  };
+
+  return (
+    <>
+      <Animated.View style={[ringBase, { top: -2, left: -2, right: -2, bottom: -2 }, style1]} />
+      <Animated.View style={[ringBase, { top: -5, left: -5, right: -5, bottom: -5 }, style2]} />
+    </>
+  );
+}
+
+function BinauralAccent({ color }: { color: string }) {
+  const bar1H = useSharedValue(6);
+  const bar2H = useSharedValue(10);
+  const bar3H = useSharedValue(4);
+  const bar4H = useSharedValue(8);
+
+  useEffect(() => {
+    bar1H.value = withRepeat(withSequence(withTiming(12, { duration: 500 }), withTiming(4, { duration: 500 })), -1, true);
+    bar2H.value = withDelay(150, withRepeat(withSequence(withTiming(14, { duration: 600 }), withTiming(3, { duration: 600 })), -1, true));
+    bar3H.value = withDelay(300, withRepeat(withSequence(withTiming(10, { duration: 450 }), withTiming(5, { duration: 450 })), -1, true));
+    bar4H.value = withDelay(100, withRepeat(withSequence(withTiming(13, { duration: 550 }), withTiming(4, { duration: 550 })), -1, true));
+  }, []);
+
+  const s1 = useAnimatedStyle(() => ({ height: bar1H.value }));
+  const s2 = useAnimatedStyle(() => ({ height: bar2H.value }));
+  const s3 = useAnimatedStyle(() => ({ height: bar3H.value }));
+  const s4 = useAnimatedStyle(() => ({ height: bar4H.value }));
+
+  const barBase = { width: 2, borderRadius: 1, backgroundColor: color, opacity: 0.4 };
+
+  return (
+    <View style={{ position: "absolute", bottom: 6, left: 0, right: 0, flexDirection: "row", justifyContent: "center", alignItems: "flex-end", gap: 2 }}>
+      <Animated.View style={[barBase, s1]} />
+      <Animated.View style={[barBase, s2]} />
+      <Animated.View style={[barBase, s3]} />
+      <Animated.View style={[barBase, s4]} />
+    </View>
+  );
+}
+
+function AnimatedSoundAccent({ soundId }: { soundId: string }) {
+  switch (soundId) {
+    case "rain": return <RainAccent />;
+    case "ocean": return <OceanAccent />;
+    case "forest": return <ForestAccent />;
+    case "wind": return <WindAccent />;
+    case "432hz": return <SolfeggioAccent color={ACCENT_GOLD} />;
+    case "528hz": return <SolfeggioAccent color="#FF8F00" />;
+    case "theta": return <BinauralAccent color="#CE93D8" />;
+    case "alpha": return <BinauralAccent color="#FFB74D" />;
+    case "delta": return <BinauralAccent color="#90CAF9" />;
+    case "beta": return <BinauralAccent color="#FFD54F" />;
+    default: return null;
+  }
+}
+
+function SelectedLeftBar({ color }: { color: string }) {
+  const barOpacity = useSharedValue(0.6);
+
+  useEffect(() => {
+    barOpacity.value = withRepeat(
+      withSequence(withTiming(1, { duration: 1200 }), withTiming(0.5, { duration: 1200 })),
+      -1, true
+    );
+  }, []);
+
+  const style = useAnimatedStyle(() => ({ opacity: barOpacity.value }));
+
+  return (
+    <Animated.View style={[{
+      position: "absolute", left: 0, top: 0, bottom: 0, width: 3,
+      backgroundColor: color, borderTopLeftRadius: 3, borderBottomLeftRadius: 3,
+    }, style]} />
+  );
+}
+
+function CategoryDivider({ color }: { color: string }) {
+  const lineOpacity = useSharedValue(0.3);
+  const lineScaleX = useSharedValue(0.7);
+
+  useEffect(() => {
+    lineOpacity.value = withRepeat(
+      withSequence(withTiming(0.6, { duration: 2000 }), withTiming(0.2, { duration: 2000 })),
+      -1, true
+    );
+    lineScaleX.value = withRepeat(
+      withSequence(withTiming(1, { duration: 2000 }), withTiming(0.7, { duration: 2000 })),
+      -1, true
+    );
+  }, []);
+
+  const style = useAnimatedStyle(() => ({
+    opacity: lineOpacity.value,
+    transform: [{ scaleX: lineScaleX.value }],
+  }));
+
+  return (
+    <Animated.View style={[{
+      height: 1.5, borderRadius: 1, backgroundColor: color, marginTop: Spacing.xs,
+    }, style]} />
+  );
+}
+
 interface SoundItemProps {
   option: BackgroundMusicOption;
   isSelected: boolean;
@@ -48,28 +286,16 @@ interface SoundItemProps {
 
 function SoundItem({ option, isSelected, isPreviewing, onSelect, onPreview }: SoundItemProps) {
   const { theme } = useTheme();
+  const categoryColor = getCategoryColor(option.id);
 
-  return (
-    <Pressable
-      onPress={() => {
-        try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
-        onSelect();
-      }}
-      style={[
-        styles.soundItem,
-        { 
-          backgroundColor: isSelected 
-            ? `${ACCENT_GOLD}20` 
-            : theme.cardBackground,
-          borderColor: isSelected ? ACCENT_GOLD : theme.border,
-        },
-      ]}
-      testID={`button-sound-${option.id}`}
-    >
+  const itemContent = (
+    <>
+      {isSelected ? <SelectedLeftBar color={categoryColor} /> : null}
       <View style={[
         styles.soundIconContainer, 
         { backgroundColor: isSelected ? `${ACCENT_GOLD}30` : theme.backgroundSecondary }
       ]}>
+        <AnimatedSoundAccent soundId={option.id} />
         <Feather 
           name={option.icon as any} 
           size={22} 
@@ -115,6 +341,49 @@ function SoundItem({ option, isSelected, isPreviewing, onSelect, onPreview }: So
           <View style={[styles.radioButtonInner, { backgroundColor: ACCENT_GOLD }]} />
         ) : null}
       </View>
+    </>
+  );
+
+  if (isSelected) {
+    return (
+      <Pressable
+        onPress={() => {
+          try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+          onSelect();
+        }}
+        testID={`button-sound-${option.id}`}
+      >
+        <LinearGradient
+          colors={[`${categoryColor}18`, `${ACCENT_GOLD}10`, "transparent"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={[
+            styles.soundItem,
+            { borderColor: ACCENT_GOLD },
+          ]}
+        >
+          {itemContent}
+        </LinearGradient>
+      </Pressable>
+    );
+  }
+
+  return (
+    <Pressable
+      onPress={() => {
+        try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+        onSelect();
+      }}
+      style={[
+        styles.soundItem,
+        { 
+          backgroundColor: theme.cardBackground,
+          borderColor: theme.border,
+        },
+      ]}
+      testID={`button-sound-${option.id}`}
+    >
+      {itemContent}
     </Pressable>
   );
 }
@@ -140,18 +409,21 @@ function CategorySection({ category, options, selectedMusic, previewingId, onSel
       entering={FadeInDown.delay(index * 100).duration(400)}
       style={styles.categorySection}
     >
-      <View style={styles.categoryHeader}>
-        <View style={[styles.categoryIconContainer, { backgroundColor: `${info.color}20` }]}>
-          <Feather name={info.emoji as any} size={20} color={info.color} />
+      <View>
+        <View style={styles.categoryHeader}>
+          <View style={[styles.categoryIconContainer, { backgroundColor: `${info.color}20` }]}>
+            <Feather name={info.emoji as any} size={20} color={info.color} />
+          </View>
+          <View style={styles.categoryTitleContainer}>
+            <ThemedText type="h4" style={{ color: theme.text }}>
+              {info.title}
+            </ThemedText>
+            <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+              {info.subtitle}
+            </ThemedText>
+          </View>
         </View>
-        <View style={styles.categoryTitleContainer}>
-          <ThemedText type="h4" style={{ color: theme.text }}>
-            {info.title}
-          </ThemedText>
-          <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-            {info.subtitle}
-          </ThemedText>
-        </View>
+        <CategoryDivider color={info.color} />
       </View>
       <View style={[styles.soundsGrid, { backgroundColor: theme.cardBackground }, Shadows.small]}>
         {options.map((option) => (
@@ -169,7 +441,7 @@ function CategorySection({ category, options, selectedMusic, previewingId, onSel
   );
 }
 
-const PREVIEW_DURATION = 5000; // 5 seconds
+const PREVIEW_DURATION = 5000;
 
 export default function SoundLibraryScreen() {
   const insets = useSafeAreaInsets();
@@ -183,7 +455,6 @@ export default function SoundLibraryScreen() {
   const previewSoundRef = useRef<Audio.Sound | null>(null);
   const previewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (previewSoundRef.current) {
@@ -196,7 +467,6 @@ export default function SoundLibraryScreen() {
   }, []);
 
   const handlePreviewMusic = async (id: BackgroundMusicType) => {
-    // If already previewing this sound, stop it
     if (previewingId === id) {
       if (previewSoundRef.current) {
         await previewSoundRef.current.stopAsync();
@@ -211,7 +481,6 @@ export default function SoundLibraryScreen() {
       return;
     }
 
-    // Stop any existing preview
     if (previewSoundRef.current) {
       await previewSoundRef.current.stopAsync();
       await previewSoundRef.current.unloadAsync();
@@ -222,7 +491,6 @@ export default function SoundLibraryScreen() {
       previewTimerRef.current = null;
     }
 
-    // Start new preview
     try {
       const audioFile = getAudioFile(id as Exclude<BackgroundMusicType, 'none'>);
       const { sound } = await Audio.Sound.createAsync(
@@ -232,7 +500,6 @@ export default function SoundLibraryScreen() {
       previewSoundRef.current = sound;
       setPreviewingId(id);
 
-      // Auto-stop after 5 seconds
       previewTimerRef.current = setTimeout(async () => {
         if (previewSoundRef.current) {
           await previewSoundRef.current.stopAsync();
@@ -248,7 +515,6 @@ export default function SoundLibraryScreen() {
   };
 
   const handleSelectMusic = async (id: BackgroundMusicType) => {
-    // Stop any preview when selecting
     if (previewSoundRef.current) {
       await previewSoundRef.current.stopAsync();
       await previewSoundRef.current.unloadAsync();
@@ -282,7 +548,6 @@ export default function SoundLibraryScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Current Selection Card - Only show when a sound is selected */}
         {currentSelection ? (
         <Animated.View entering={FadeIn.duration(400)}>
           <View style={[styles.currentCard, { backgroundColor: theme.cardBackground }, Shadows.medium]}>
@@ -306,7 +571,6 @@ export default function SoundLibraryScreen() {
               </View>
             </View>
 
-            {/* Volume Control */}
             <View style={styles.volumeSection}>
               <View style={styles.volumeRow}>
                 <Feather name="volume-1" size={16} color={theme.textSecondary} />
@@ -344,7 +608,6 @@ export default function SoundLibraryScreen() {
         </Animated.View>
         ) : null}
 
-        {/* Category Sections */}
         <CategorySection
           category="nature"
           options={nature}
@@ -373,7 +636,6 @@ export default function SoundLibraryScreen() {
           index={2}
         />
         
-        {/* Headphones note for binaural beats */}
         <Animated.View 
           entering={FadeInDown.delay(300).duration(400)}
           style={[styles.headphonesNote, { backgroundColor: `${theme.primary}15` }]}
@@ -492,14 +754,16 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xl,
     borderBottomWidth: 1,
     borderWidth: 0,
+    overflow: "hidden",
   },
   soundIconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: "center",
     alignItems: "center",
     marginRight: Spacing.md,
+    overflow: "hidden",
   },
   soundContent: {
     flex: 1,

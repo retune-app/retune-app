@@ -936,7 +936,7 @@ export default function BreathingScreen() {
                     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
                   }}
                   style={[
-                    styles.optionPill,
+                    styles.optionPillFixed,
                     { 
                       backgroundColor: (!musicEnabled && !voiceEnabled) ? selectedTechnique.color : 'transparent',
                       borderColor: (!musicEnabled && !voiceEnabled) ? selectedTechnique.color : `${ACCENT_GOLD}50`,
@@ -998,7 +998,7 @@ export default function BreathingScreen() {
                     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
                   }}
                   style={[
-                    styles.optionPill,
+                    styles.optionPillFixed,
                     { 
                       backgroundColor: voiceEnabled ? selectedTechnique.color : 'transparent',
                       borderColor: voiceEnabled ? selectedTechnique.color : `${ACCENT_GOLD}50`,
@@ -1328,6 +1328,13 @@ const styles = StyleSheet.create({
   optionPill: {
     flex: 1,
     paddingVertical: Spacing.sm + 2,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1.5,
+    alignItems: "center",
+  },
+  optionPillFixed: {
+    paddingVertical: Spacing.sm + 2,
+    paddingHorizontal: Spacing.lg,
     borderRadius: BorderRadius.full,
     borderWidth: 1.5,
     alignItems: "center",

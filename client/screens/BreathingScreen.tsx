@@ -1338,7 +1338,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     gap: Spacing.lg,
-    marginTop: Spacing.xl * 2.5,
+    marginTop: Spacing.lg,
     marginBottom: Spacing.xl,
   },
   startButtonShadow: {

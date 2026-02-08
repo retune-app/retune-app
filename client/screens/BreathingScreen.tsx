@@ -77,7 +77,7 @@ export default function BreathingScreen() {
   const { theme, isDark } = useTheme();
   const { user } = useAuth();
   const { currentAffirmation, isPlaying: isAudioPlaying, playAffirmation, togglePlayPause, breathingAffirmation, requestHighlightAffirmation, stop: stopAffirmationAudio } = useAudio();
-  const { selectedMusic, setSelectedMusic, startBackgroundMusic, stopBackgroundMusic, isPlaying: isMusicPlaying, volume, setVolume } = useBackgroundMusic();
+  const { selectedMusic, setSelectedMusic, startBackgroundMusic, stopBackgroundMusic, isPlaying: isMusicPlaying, volume, setVolume, setDucked } = useBackgroundMusic();
   const queryClient = useQueryClient();
 
   const [selectedTechnique, setSelectedTechnique] = useState<BreathingTechnique>(BREATHING_TECHNIQUES[0]);
@@ -320,7 +320,6 @@ export default function BreathingScreen() {
   }, [isPlaying, selectedDuration]);
 
   const handleStart = async () => {
-    // Stop any currently playing affirmation audio first
     await stopAffirmationAudio();
     
     setIsPlaying(true);
@@ -328,10 +327,11 @@ export default function BreathingScreen() {
     setCyclesCompleted(0);
     try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
     
-    // Start audio based on selected sources (both can be enabled)
+    if (musicEnabled && voiceEnabled) {
+      await setDucked(true);
+    }
     if (musicEnabled) {
       if (selectedMusic === 'none') {
-        // No music selected, default to rain
         await setSelectedMusic('forest-night');
       } else {
         await startBackgroundMusic();
@@ -346,6 +346,7 @@ export default function BreathingScreen() {
     setIsPlaying(false);
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
     
+    await setDucked(false);
     if (isMusicPlaying) {
       await stopBackgroundMusic();
     }
@@ -358,6 +359,9 @@ export default function BreathingScreen() {
     setIsPlaying(true);
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
     
+    if (musicEnabled && voiceEnabled) {
+      await setDucked(true);
+    }
     if (musicEnabled) {
       if (selectedMusic === 'none') {
         await setSelectedMusic('forest-night');
@@ -380,6 +384,7 @@ export default function BreathingScreen() {
     setShowLandscapeMode(false);
     try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
     
+    await setDucked(false);
     if (isMusicPlaying) {
       await stopBackgroundMusic();
     }

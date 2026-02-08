@@ -105,12 +105,16 @@ function applyVolumeCurve(linearVolume: number): number {
   return Math.pow(linearVolume, 3);
 }
 
+const DUCK_FACTOR = 0.25;
+
 interface BackgroundMusicContextType {
   selectedMusic: BackgroundMusicType;
   setSelectedMusic: (type: BackgroundMusicType) => Promise<void>;
   volume: number;
   setVolume: (volume: number) => Promise<void>;
   isPlaying: boolean;
+  isDucked: boolean;
+  setDucked: (ducked: boolean) => Promise<void>;
   startBackgroundMusic: () => Promise<void>;
   stopBackgroundMusic: () => Promise<void>;
 }
@@ -121,7 +125,9 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
   const [selectedMusic, setSelectedMusicState] = useState<BackgroundMusicType>('forest-night');
   const [volume, setVolumeState] = useState(0.5);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isDucked, setIsDucked] = useState(false);
   const soundRef = useRef<Audio.Sound | null>(null);
+  const isDuckedRef = useRef(false);
 
   useEffect(() => {
     loadSavedPreferences();
@@ -192,9 +198,19 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
     await AsyncStorage.setItem(VOLUME_STORAGE_KEY, newVolume.toString());
     
     if (soundRef.current) {
-      await soundRef.current.setVolumeAsync(applyVolumeCurve(newVolume));
+      const effectiveVolume = isDuckedRef.current ? newVolume * DUCK_FACTOR : newVolume;
+      await soundRef.current.setVolumeAsync(applyVolumeCurve(effectiveVolume));
     }
   };
+
+  const setDucked = useCallback(async (ducked: boolean) => {
+    isDuckedRef.current = ducked;
+    setIsDucked(ducked);
+    if (soundRef.current) {
+      const effectiveVolume = ducked ? volume * DUCK_FACTOR : volume;
+      await soundRef.current.setVolumeAsync(applyVolumeCurve(effectiveVolume));
+    }
+  }, [volume]);
 
   const startBackgroundMusic = useCallback(async () => {
     if (selectedMusic === 'none') {
@@ -206,11 +222,12 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
         await soundRef.current.unloadAsync();
       }
 
+      const effectiveVolume = isDuckedRef.current ? volume * DUCK_FACTOR : volume;
       const { sound } = await Audio.Sound.createAsync(
         AUDIO_FILES[selectedMusic],
         {
           isLooping: true,
-          volume: applyVolumeCurve(volume),
+          volume: applyVolumeCurve(effectiveVolume),
           shouldPlay: true,
         }
       );
@@ -243,6 +260,8 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
         volume,
         setVolume,
         isPlaying,
+        isDucked,
+        setDucked,
         startBackgroundMusic,
         stopBackgroundMusic,
       }}

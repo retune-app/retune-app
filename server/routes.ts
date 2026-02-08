@@ -758,13 +758,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let usedPersonalVoice = false;
       let usedGender = userWithPrefs?.preferredAiGender || "female";
 
-      if (!forceAiVoice && userWithPrefs?.preferredVoiceType === "personal" && (!userWithPrefs?.voiceId || !userWithPrefs?.hasVoiceSample)) {
-        return res.status(400).json({
-          error: "VOICE_ROTATED",
-          message: "Your personal voice has expired. Please re-record your voice sample to continue using your personal voice, or switch to an AI voice.",
-        });
-      }
-
       if (!forceAiVoice && userWithPrefs?.preferredVoiceType === "personal" && userWithPrefs?.voiceId && userWithPrefs?.hasVoiceSample) {
         voiceIdToUse = userWithPrefs.voiceId;
         usedPersonalVoice = true;
@@ -1258,18 +1251,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid voice ID" });
       }
 
-      // Generate TTS without timestamps (simpler, faster)
+      console.log(`Generating voice preview for: ${voiceId} (${validVoice.name})`);
       const audioBuffer = await generateAudioSimple(PREVIEW_PHRASE, voiceId);
 
-      // Return audio as base64
       const base64Audio = Buffer.from(audioBuffer).toString("base64");
+      console.log(`Voice preview generated successfully for ${validVoice.name}, size: ${base64Audio.length} chars`);
       res.json({ 
         audio: base64Audio,
         voiceName: validVoice.name,
       });
-    } catch (error) {
-      console.error("Error generating voice preview:", error);
-      res.status(500).json({ error: "Failed to generate voice preview" });
+    } catch (error: any) {
+      console.error("Error generating voice preview:", error?.message || error);
+      res.status(500).json({ error: "Failed to generate voice preview. Please try again." });
     }
   });
 

@@ -627,6 +627,8 @@ export default function VoiceSetupScreen() {
 
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: false,
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: false,
       });
     } catch (error) {
       console.error("Failed to stop recording:", error);

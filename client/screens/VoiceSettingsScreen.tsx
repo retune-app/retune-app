@@ -140,7 +140,7 @@ export default function VoiceSettingsScreen() {
 
       const { sound } = await Audio.Sound.createAsync(
         { uri: audioUri },
-        { shouldPlay: true }
+        { shouldPlay: true, volume: 1.0 }
       );
       
       previewSoundRef.current = sound;
@@ -224,7 +224,7 @@ export default function VoiceSettingsScreen() {
 
       const { sound } = await Audio.Sound.createAsync(
         { uri: audioUri },
-        { shouldPlay: true }
+        { shouldPlay: true, volume: 1.0 }
       );
       
       previewSoundRef.current = sound;

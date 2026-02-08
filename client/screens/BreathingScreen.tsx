@@ -490,7 +490,7 @@ export default function BreathingScreen() {
             {/* Close button */}
             <Pressable
               onPress={exitFullscreen}
-              style={[styles.landscapeCloseButton, { top: insets.top + 16 }]}
+              style={[styles.landscapeCloseButton, { top: insets.top + 4 }]}
             >
               <BlurView intensity={40} tint="dark" style={styles.blurButton}>
                 <Feather name="x" size={24} color="#FFFFFF" />
@@ -627,7 +627,7 @@ export default function BreathingScreen() {
           {/* Close button */}
           <Pressable
             onPress={exitFullscreen}
-            style={[styles.landscapeCloseButton, { top: insets.top + 16 }]}
+            style={[styles.landscapeCloseButton, { top: insets.top + 4 }]}
           >
             <BlurView intensity={40} tint="dark" style={styles.blurButton}>
               <Feather name="x" size={24} color="#FFFFFF" />

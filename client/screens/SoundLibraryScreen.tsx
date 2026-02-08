@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { View, StyleSheet, Pressable, ImageBackground, ScrollView } from "react-native";
+import { View, StyleSheet, Pressable, ImageBackground, ScrollView, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { Feather } from "@expo/vector-icons";
@@ -16,6 +16,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { Audio } from "expo-av";
 import { LinearGradient } from "expo-linear-gradient";
+import Slider from "@react-native-community/slider";
 
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
@@ -325,54 +326,43 @@ function SoundItem({ option, isSelected, isPreviewing, onSelect, onPreview }: So
       {isSelected ? <SelectedLeftBar color={categoryColor} /> : null}
       <View style={[
         styles.soundIconContainer, 
-        { backgroundColor: isSelected ? `${ACCENT_GOLD}30` : theme.backgroundSecondary }
+        { backgroundColor: isPreviewing ? `${categoryColor}30` : isSelected ? `${ACCENT_GOLD}30` : theme.backgroundSecondary }
       ]}>
         <AnimatedSoundAccent soundId={option.id} />
         <Feather 
-          name={option.icon as any} 
+          name={isPreviewing ? "volume-2" : option.icon as any} 
           size={22} 
-          color={isSelected ? ACCENT_GOLD : theme.primary} 
+          color={isPreviewing ? categoryColor : isSelected ? ACCENT_GOLD : theme.primary} 
         />
       </View>
       <View style={styles.soundContent}>
         <ThemedText type="body" style={[
           styles.soundName, 
-          isSelected && { color: ACCENT_GOLD, fontWeight: "600" }
+          isSelected && { color: ACCENT_GOLD, fontWeight: "600" },
+          isPreviewing && !isSelected && { color: categoryColor },
         ]}>
           {option.name}
         </ThemedText>
-        <ThemedText type="small" style={{ color: theme.textSecondary }}>
-          {option.description}
+        <ThemedText type="small" style={{ color: isPreviewing ? categoryColor : theme.textSecondary }}>
+          {isPreviewing ? "Playing preview..." : option.description}
         </ThemedText>
       </View>
       <Pressable
         onPress={(e) => {
           e.stopPropagation();
-          try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
-          onPreview();
+          try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
+          onSelect();
         }}
-        style={[
-          styles.previewButton,
-          { backgroundColor: isPreviewing ? ACCENT_GOLD : theme.backgroundSecondary }
-        ]}
-        testID={`button-preview-${option.id}`}
-      >
-        <Feather 
-          name={isPreviewing ? "pause" : "play"} 
-          size={16} 
-          color={isPreviewing ? "#FFFFFF" : theme.primary} 
-        />
-      </Pressable>
-      <View
         style={[
           styles.radioButton,
           { borderColor: isSelected ? ACCENT_GOLD : theme.border },
         ]}
+        testID={`button-select-${option.id}`}
       >
         {isSelected ? (
           <View style={[styles.radioButtonInner, { backgroundColor: ACCENT_GOLD }]} />
         ) : null}
-      </View>
+      </Pressable>
     </>
   );
 
@@ -381,7 +371,7 @@ function SoundItem({ option, isSelected, isPreviewing, onSelect, onPreview }: So
       <Pressable
         onPress={() => {
           try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
-          onSelect();
+          onPreview();
         }}
         testID={`button-sound-${option.id}`}
       >
@@ -404,7 +394,7 @@ function SoundItem({ option, isSelected, isPreviewing, onSelect, onPreview }: So
     <Pressable
       onPress={() => {
         try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
-        onSelect();
+        onPreview();
       }}
       style={[
         styles.soundItem,
@@ -605,35 +595,26 @@ export default function SoundLibraryScreen() {
 
             <View style={styles.volumeSection}>
               <View style={styles.volumeRow}>
-                <Feather name="volume-1" size={16} color={theme.textSecondary} />
-                <View style={styles.volumeSliderContainer}>
-                  <View style={[styles.volumeTrack, { backgroundColor: theme.border }]}>
-                    <View 
-                      style={[
-                        styles.volumeFill, 
-                        { backgroundColor: ACCENT_GOLD, width: `${volume * 100}%` }
-                      ]} 
-                    />
-                  </View>
-                </View>
-                <Feather name="volume-2" size={16} color={theme.textSecondary} />
-              </View>
-              <View style={styles.volumeControls}>
-                <Pressable 
-                  onPress={() => setVolume(Math.max(0.1, volume - 0.1))}
-                  style={[styles.volumeButton, { backgroundColor: theme.backgroundSecondary }]}
-                >
-                  <Feather name="minus" size={14} color={theme.primary} />
+                <Pressable onPress={() => setVolume(Math.max(0.05, volume - 0.15))}>
+                  <Feather name={volume > 0.05 ? "volume-1" : "volume-x"} size={18} color={theme.textSecondary} />
                 </Pressable>
-                <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                <Slider
+                  style={styles.volumeSlider}
+                  minimumValue={0.05}
+                  maximumValue={1}
+                  value={volume}
+                  onValueChange={(val: number) => setVolume(Math.round(val * 100) / 100)}
+                  minimumTrackTintColor={ACCENT_GOLD}
+                  maximumTrackTintColor={theme.border}
+                  thumbTintColor={ACCENT_GOLD}
+                  testID="slider-volume"
+                />
+                <Pressable onPress={() => setVolume(Math.min(1, volume + 0.15))}>
+                  <Feather name="volume-2" size={18} color={theme.textSecondary} />
+                </Pressable>
+                <ThemedText type="small" style={{ color: theme.textSecondary, width: 36, textAlign: "center" }}>
                   {Math.round(volume * 100)}%
                 </ThemedText>
-                <Pressable 
-                  onPress={() => setVolume(Math.min(1, volume + 0.1))}
-                  style={[styles.volumeButton, { backgroundColor: theme.backgroundSecondary }]}
-                >
-                  <Feather name="plus" size={14} color={theme.primary} />
-                </Pressable>
               </View>
             </View>
           </View>
@@ -756,7 +737,6 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   volumeSection: {
-    gap: Spacing.sm,
     paddingTop: Spacing.sm,
     borderTopWidth: 1,
     borderTopColor: "rgba(255,255,255,0.1)",
@@ -764,34 +744,11 @@ const styles = StyleSheet.create({
   volumeRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.sm,
+    gap: Spacing.xs,
   },
-  volumeSliderContainer: {
+  volumeSlider: {
     flex: 1,
-    height: 6,
-  },
-  volumeTrack: {
-    flex: 1,
-    height: 6,
-    borderRadius: 3,
-    overflow: "hidden",
-  },
-  volumeFill: {
-    height: "100%",
-    borderRadius: 3,
-  },
-  volumeControls: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: Spacing.md,
-  },
-  volumeButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: "center",
-    alignItems: "center",
+    height: 40,
   },
   categorySection: {
     gap: Spacing.sm,
@@ -840,27 +797,19 @@ const styles = StyleSheet.create({
   soundName: {
     marginBottom: 2,
   },
-  previewButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: "center",
-    alignItems: "center",
-    marginLeft: Spacing.sm,
-  },
   radioButton: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     borderWidth: 2,
     justifyContent: "center",
     alignItems: "center",
     marginLeft: Spacing.sm,
   },
   radioButtonInner: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
   },
   headphonesNote: {
     flexDirection: "row",

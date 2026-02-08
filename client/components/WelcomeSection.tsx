@@ -152,12 +152,12 @@ export function WelcomeSection({
       >
         <View style={styles.greetingContent}>
           <View style={styles.greetingHeader}>
-            <Feather name={icon as any} size={20} color={theme.gold} />
-            <ThemedText type="h2" style={[styles.greeting, { color: theme.text }]}>
+            <Feather name={icon as any} size={16} color={theme.gold} />
+            <ThemedText type="body" style={[styles.greeting, { color: theme.text, fontSize: 16, fontWeight: "700" }]}>
               {greeting}, {displayName}
             </ThemedText>
           </View>
-          <ThemedText type="body" style={[styles.suggestion, { color: isDark ? theme.textSecondary : "#3A4A5E" }]}>
+          <ThemedText type="small" style={[styles.suggestion, { color: isDark ? theme.textSecondary : "#3A4A5E", fontSize: 13 }]}>
             {displaySuggestion}
           </ThemedText>
         </View>
@@ -192,8 +192,8 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(201, 162, 39, 0.12)",
     borderWidth: 1,
     borderColor: "rgba(201, 162, 39, 0.25)",
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
     marginHorizontal: -Spacing.lg,
     marginTop: 0,
     borderRadius: BorderRadius.md,
@@ -202,8 +202,8 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(201, 162, 39, 0.15)",
     borderWidth: 1,
     borderColor: "rgba(201, 162, 39, 0.3)",
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
     marginHorizontal: -Spacing.lg,
     marginTop: 0,
     borderRadius: BorderRadius.md,
@@ -221,8 +221,8 @@ const styles = StyleSheet.create({
   greetingHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.sm,
-    marginBottom: Spacing.xs,
+    gap: 6,
+    marginBottom: 2,
   },
   greeting: {
     letterSpacing: -0.5,

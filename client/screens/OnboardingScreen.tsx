@@ -61,7 +61,7 @@ const slides: SlideData[] = [
     key: "become",
     title: "Become",
     subtitle:
-      "Transform daily practice into lasting change. Your journey starts now.",
+      "Daily practice becomes lasting change. Your journey starts now.",
     icon: "sunrise",
   },
 ];

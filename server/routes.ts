@@ -567,7 +567,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Security is enforced through: filename pattern validation + path traversal prevention
   app.get("/uploads/audio/:filename", async (req: Request, res: Response) => {
     try {
-      const rawFilename = req.params.filename;
+      const rawFilename = req.params.filename as string;
       
       // SECURITY: Sanitize filename to prevent path traversal attacks (e.g., ../../etc/passwd)
       const filename = path.basename(rawFilename);
@@ -648,7 +648,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get single affirmation (must belong to user)
   app.get("/api/affirmations/:id", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const [affirmation] = await db
         .select()
         .from(affirmations)
@@ -829,7 +829,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Delete affirmation (requires auth, must belong to user)
   app.delete("/api/affirmations/:id", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       
       // Get the affirmation to delete the audio file (ensure it belongs to user)
       const [affirmation] = await db
@@ -881,7 +881,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update favorite status (requires auth, must belong to user)
   app.patch("/api/affirmations/:id/favorite", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const { isFavorite } = req.body;
 
       const [updated] = await db
@@ -907,7 +907,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Rename affirmation (requires auth, must belong to user)
   app.patch("/api/affirmations/:id/rename", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const { title } = req.body;
 
       if (!title || typeof title !== "string" || title.trim().length === 0) {
@@ -937,7 +937,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auto-save affirmation with AI-generated title and category (requires auth)
   app.post("/api/affirmations/:id/auto-save", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
 
       const [affirmation] = await db
         .select()
@@ -983,7 +983,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Increment play count and record listening session (requires auth)
   app.post("/api/affirmations/:id/play", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const { durationSeconds } = req.body || {};
 
       const [affirmation] = await db
@@ -1375,7 +1375,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Regenerate affirmation audio with different voice
   app.post("/api/affirmations/:id/regenerate-voice", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const affirmationId = parseInt(req.params.id, 10);
+      const affirmationId = parseInt(req.params.id as string, 10);
       const { voiceType, voiceGender } = req.body;
 
       if (!voiceType || !["personal", "ai"].includes(voiceType)) {
@@ -1568,7 +1568,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Delete a custom category (requires auth)
   app.delete("/api/custom-categories/:id", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const categoryId = parseInt(req.params.id);
+      const categoryId = parseInt(req.params.id as string);
       
       if (isNaN(categoryId)) {
         return res.status(400).json({ error: "Invalid category ID" });
@@ -2260,7 +2260,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Record a breathing session
   app.post("/api/breathing-sessions", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const userId = req.user?.id;
+      const userId = req.userId;
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
@@ -2294,7 +2294,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get today's breathing progress
   app.get("/api/breathing-sessions/today", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const userId = req.user?.id;
+      const userId = req.userId;
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
@@ -2331,7 +2331,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get breathing streak (consecutive days)
   app.get("/api/breathing-sessions/streak", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const userId = req.user?.id;
+      const userId = req.userId;
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
@@ -2387,7 +2387,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Regenerate a single ambient sound
   app.post("/api/admin/regenerate-sound/:filename", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { filename } = req.params;
+      const filename = req.params.filename as string;
       const { prompt } = req.body;
       
       if (!prompt) {
@@ -2460,7 +2460,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Email, subject, and message are required" });
       }
 
-      const userId = req.user?.id || null;
+      const userId = req.userId || null;
 
       const [request] = await db
         .insert(supportRequests)
@@ -2677,7 +2677,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/github/issues/:owner/:repo", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { owner, repo } = req.params;
+      const owner = req.params.owner as string;
+      const repo = req.params.repo as string;
       const issues = await getAssignedIssues(owner, repo);
       res.json(issues);
     } catch (error: any) {
@@ -2687,7 +2688,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/github/issues/:owner/:repo/:issueNumber/comment", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { owner, repo, issueNumber } = req.params;
+      const owner = req.params.owner as string;
+      const repo = req.params.repo as string;
+      const issueNumber = req.params.issueNumber as string;
       const { body } = req.body;
       if (!body) {
         return res.status(400).json({ error: "Comment body is required" });
@@ -2701,7 +2704,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/github/issues/:owner/:repo/:issueNumber/label", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { owner, repo, issueNumber } = req.params;
+      const owner = req.params.owner as string;
+      const repo = req.params.repo as string;
+      const issueNumber = req.params.issueNumber as string;
       const { status } = req.body;
       const validStatuses = ['in-progress', 'blocked', 'completed'];
       if (!status || !validStatuses.includes(status)) {
@@ -2716,7 +2721,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/github/project/:owner/:projectNumber/move", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { owner, projectNumber } = req.params;
+      const owner = req.params.owner as string;
+      const projectNumber = req.params.projectNumber as string;
       const { repo, issueNumber, status } = req.body;
       if (!repo || !issueNumber || !status) {
         return res.status(400).json({ error: "repo, issueNumber, and status are required" });
@@ -2731,7 +2737,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/github/issues/:owner/:repo/:issueNumber/status", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { owner, repo, issueNumber } = req.params;
+      const owner = req.params.owner as string;
+      const repo = req.params.repo as string;
+      const issueNumber = req.params.issueNumber as string;
       const { status, comment, projectNumber } = req.body;
       const validStatuses = ['in-progress', 'blocked', 'completed'];
       if (!status || !validStatuses.includes(status)) {
@@ -2774,7 +2782,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/github/coordination/:owner/:repo/init", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { owner, repo } = req.params;
+      const owner = req.params.owner as string;
+      const repo = req.params.repo as string;
       const results = await initCoordination(owner, repo);
       res.json({ success: true, results });
     } catch (error: any) {
@@ -2784,7 +2793,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/github/coordination/:owner/:repo/status", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { owner, repo } = req.params;
+      const owner = req.params.owner as string;
+      const repo = req.params.repo as string;
       const status = await getStatus(owner, repo);
       if (!status) {
         return res.status(404).json({ error: "status.json not found. Run init first." });
@@ -2797,7 +2807,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/github/coordination/:owner/:repo/status", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { owner, repo } = req.params;
+      const owner = req.params.owner as string;
+      const repo = req.params.repo as string;
       const { current_work, status, estimated_completion } = req.body;
       const validStatuses = ['idle', 'in_progress', 'completed'];
       if (status && !validStatuses.includes(status)) {
@@ -2812,7 +2823,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/github/coordination/:owner/:repo/blocker", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { owner, repo } = req.params;
+      const owner = req.params.owner as string;
+      const repo = req.params.repo as string;
       const { blocker } = req.body;
       if (!blocker) {
         return res.status(400).json({ error: "blocker text is required" });
@@ -2826,7 +2838,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/github/coordination/:owner/:repo/priorities", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { owner, repo } = req.params;
+      const owner = req.params.owner as string;
+      const repo = req.params.repo as string;
       const priorities = await getPriorities(owner, repo);
       if (!priorities) {
         return res.status(404).json({ error: "priorities.json not found. Run init first." });
@@ -2839,7 +2852,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/github/coordination/:owner/:repo/acknowledge", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { owner, repo } = req.params;
+      const owner = req.params.owner as string;
+      const repo = req.params.repo as string;
       const result = await acknowledgePriorities(owner, repo);
       res.json({ success: true, ...result });
     } catch (error: any) {
@@ -2851,7 +2865,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/github/docs/:owner/:repo/init", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { owner, repo } = req.params;
+      const owner = req.params.owner as string;
+      const repo = req.params.repo as string;
       const results = await initDocStructure(owner, repo);
       res.json({ success: true, results });
     } catch (error: any) {
@@ -2861,7 +2876,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/github/docs/:owner/:repo/push", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { owner, repo } = req.params;
+      const owner = req.params.owner as string;
+      const repo = req.params.repo as string;
       const { category, filename, content, commitMessage } = req.body;
       if (!category || !filename || !content) {
         return res.status(400).json({ error: "category, filename, and content are required" });
@@ -2875,7 +2891,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/github/inbox/:owner/:repo/:direction", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { owner, repo, direction } = req.params;
+      const owner = req.params.owner as string;
+      const repo = req.params.repo as string;
+      const direction = req.params.direction as string;
       if (direction !== 'to-agent' && direction !== 'to-team') {
         return res.status(400).json({ error: "direction must be 'to-agent' or 'to-team'" });
       }
@@ -2892,7 +2910,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/github/inbox/:owner/:repo/:direction", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { owner, repo, direction } = req.params;
+      const owner = req.params.owner as string;
+      const repo = req.params.repo as string;
+      const direction = req.params.direction as string;
       if (direction !== 'to-agent' && direction !== 'to-team') {
         return res.status(400).json({ error: "direction must be 'to-agent' or 'to-team'" });
       }

@@ -227,6 +227,10 @@ let credentialsCachedAt: number = 0;
 const CREDENTIALS_TTL_MS = 5 * 60 * 1000;
 
 async function getCredentials() {
+  if (process.env.ELEVENLABS_API_KEY) {
+    return process.env.ELEVENLABS_API_KEY;
+  }
+
   if (connectionSettings?.settings?.api_key && (Date.now() - credentialsCachedAt) < CREDENTIALS_TTL_MS) {
     return connectionSettings.settings.api_key;
   }

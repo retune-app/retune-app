@@ -2,6 +2,31 @@
 
 ## Version 1.3 (Build 3) — February 8, 2026
 
+### Technique Info Modal
+- Added a subtle info icon (circle with "i") positioned to the upper-right of the breathing circle.
+- Tapping the icon opens a polished modal showing the selected technique's full details: name, breathing pattern, description, science-backed explanation, and a list of specific benefits — each with its own icon.
+- Added `detailedBenefits` data to all 4 breathing techniques (Box, 4-7-8, Coherent, Energizing) with unique Feather icons per benefit.
+- Removed inline science tips from the technique selector menu — that info now lives in the dedicated modal for a cleaner picker experience.
+- Info icon only appears when a session is not active, uses technique color at subtle opacity.
+
+### Personalized AI Daily Greetings
+- Daily greeting endpoint now queries the user's real stats from the database: current streak, total breathing sessions, and favorite technique.
+- Stats are passed as context to the AI prompt so each greeting feels genuinely personal (e.g., referencing a user's streak or preferred practice).
+- AI prompt now enforces a strict 10-word maximum, single sentence, no exclamation marks — preventing long messages that push the breathing circle off-screen.
+- Reduced OpenAI max_tokens from 50 to 30 to enforce brevity.
+
+### Compact Welcome Banner
+- Reduced greeting title font from h2 heading to 16px bold body text.
+- Reduced sub-message font to 13px small text.
+- Reduced time-of-day icon from 20px to 16px.
+- Tightened banner padding (vertical and horizontal) and reduced internal spacing between title and sub-message.
+- Breathing circle — the main feature — is now fully visible without scrolling on all screen sizes.
+
+### Energizing Breath Technique
+- Added new quick 2-1 breathing pattern (2s inhale, 1s exhale) for energy and alertness.
+- Coral red color (#E85D5D), zap icon, with science tip and detailed benefits.
+- Integrated into analytics screen for session tracking.
+
 ### Sound Library UX Redesign
 - Replaced volume bar with native slider control for more precise volume adjustment.
 - Tap any sound row to preview it (5-second auto-play with auto-stop).

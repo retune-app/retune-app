@@ -36,7 +36,7 @@ import { getApiUrl } from "@/lib/query-client";
 
 const PROGRESS_INDICATOR_KEY = "@settings/progressIndicator";
 const DEFAULT_BREATHING_TECHNIQUE_KEY = "@breathing/defaultTechnique";
-const SHOW_TECHNIQUE_TIPS_KEY = "@settings/showTechniqueTips";
+
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -93,7 +93,7 @@ export default function BreathingScreen() {
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [showCompletionAnimation, setShowCompletionAnimation] = useState(false);
   const [progressIndicatorEnabled, setProgressIndicatorEnabled] = useState(true);
-  const [showTechniqueTips, setShowTechniqueTips] = useState(true);
+
   const [showTechniqueInfo, setShowTechniqueInfo] = useState(false);
 
   const [voiceVolume, setVoiceVolume] = useState(0.8);
@@ -187,11 +187,6 @@ export default function BreathingScreen() {
           setProgressIndicatorEnabled(value === "true");
         }
       });
-      AsyncStorage.getItem(SHOW_TECHNIQUE_TIPS_KEY).then((value) => {
-        if (value !== null) {
-          setShowTechniqueTips(value === "true");
-        }
-      });
     }, [isPlaying])
   );
 
@@ -226,13 +221,6 @@ export default function BreathingScreen() {
     loadDefaultTechnique();
   }, []);
 
-  useEffect(() => {
-    AsyncStorage.getItem(SHOW_TECHNIQUE_TIPS_KEY).then((value) => {
-      if (value !== null) {
-        setShowTechniqueTips(value === "true");
-      }
-    });
-  }, []);
 
   // Affirmation audio playback functions
   const startAffirmationLoop = useCallback(async () => {

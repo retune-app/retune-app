@@ -76,6 +76,7 @@ export default function MainTabNavigator() {
     <Tab.Navigator
       initialRouteName={initialRoute}
       screenOptions={{
+        animation: "fade",
         tabBarActiveTintColor: theme.tabIconSelected,
         tabBarInactiveTintColor: theme.tabIconDefault,
         tabBarStyle: {

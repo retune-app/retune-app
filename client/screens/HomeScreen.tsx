@@ -457,7 +457,6 @@ export default function HomeScreen() {
 
   const renderEmpty = () => (
     <EmptyState
-      image={isDark ? libraryBackgroundLight : libraryBackgroundDark}
       title="No Affirmations Yet"
       description="The first step to becoming is believing. Let's begin."
       actionLabel="Create Affirmation"

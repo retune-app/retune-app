@@ -29,6 +29,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useQuery } from "@tanstack/react-query";
 import { BlurView } from "expo-blur";
+import Slider from "@react-native-community/slider";
 import Svg, { Circle } from "react-native-svg";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getApiUrl } from "@/lib/query-client";
@@ -76,7 +77,7 @@ export default function BreathingScreen() {
   const { theme, isDark } = useTheme();
   const { user } = useAuth();
   const { currentAffirmation, isPlaying: isAudioPlaying, playAffirmation, togglePlayPause, breathingAffirmation, requestHighlightAffirmation, stop: stopAffirmationAudio } = useAudio();
-  const { selectedMusic, setSelectedMusic, startBackgroundMusic, stopBackgroundMusic, isPlaying: isMusicPlaying } = useBackgroundMusic();
+  const { selectedMusic, setSelectedMusic, startBackgroundMusic, stopBackgroundMusic, isPlaying: isMusicPlaying, volume, setVolume } = useBackgroundMusic();
   const queryClient = useQueryClient();
 
   const [selectedTechnique, setSelectedTechnique] = useState<BreathingTechnique>(BREATHING_TECHNIQUES[0]);
@@ -91,6 +92,8 @@ export default function BreathingScreen() {
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [showCompletionAnimation, setShowCompletionAnimation] = useState(false);
   const [progressIndicatorEnabled, setProgressIndicatorEnabled] = useState(true);
+
+  const [voiceVolume, setVoiceVolume] = useState(0.8);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const sessionCompletedNaturally = useRef(false);
@@ -231,7 +234,7 @@ export default function BreathingScreen() {
         { 
           shouldPlay: true, 
           isLooping: true,
-          volume: 1.0,
+          volume: voiceVolume,
         }
       );
       
@@ -274,6 +277,23 @@ export default function BreathingScreen() {
       } catch {}
     }
   }, []);
+
+  const handleSessionVolumeChange = useCallback(async (val: number) => {
+    const rounded = Math.round(val * 100) / 100;
+    if (musicEnabled) {
+      setVolume(rounded);
+    }
+    if (voiceEnabled && affirmationSoundRef.current) {
+      setVoiceVolume(rounded);
+      try {
+        await affirmationSoundRef.current.setVolumeAsync(rounded);
+      } catch {}
+    }
+    if (!musicEnabled && !voiceEnabled) {
+      setVolume(rounded);
+      setVoiceVolume(rounded);
+    }
+  }, [musicEnabled, voiceEnabled, setVolume]);
 
   useEffect(() => {
     if (isPlaying) {
@@ -522,6 +542,29 @@ export default function BreathingScreen() {
                   size={portraitCircleSize}
                 />
               </View>
+
+              {/* Volume slider */}
+              {(musicEnabled || voiceEnabled) ? (
+                <View style={styles.sessionVolumeRow}>
+                  <Feather
+                    name={(musicEnabled ? volume : voiceVolume) > 0.05 ? "volume-1" : "volume-x"}
+                    size={16}
+                    color="rgba(255,255,255,0.5)"
+                  />
+                  <Slider
+                    style={styles.sessionVolumeSlider}
+                    minimumValue={0.05}
+                    maximumValue={1}
+                    value={musicEnabled ? volume : voiceVolume}
+                    onValueChange={handleSessionVolumeChange}
+                    minimumTrackTintColor={selectedTechnique.color}
+                    maximumTrackTintColor="rgba(255,255,255,0.15)"
+                    thumbTintColor={selectedTechnique.color}
+                    testID="slider-session-volume"
+                  />
+                  <Feather name="volume-2" size={16} color="rgba(255,255,255,0.5)" />
+                </View>
+              ) : null}
 
               {/* Bottom section - stats and controls */}
               <View style={styles.portraitBottomSection}>
@@ -1549,6 +1592,17 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+  },
+  sessionVolumeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Spacing.xl,
+    gap: Spacing.xs,
+    marginTop: Spacing.sm,
+  },
+  sessionVolumeSlider: {
+    flex: 1,
+    height: 36,
   },
   portraitBottomSection: {
     alignItems: "center",

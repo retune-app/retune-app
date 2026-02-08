@@ -25,6 +25,7 @@ import { FloatingSettingsButton } from "@/components/FloatingSettingsButton";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAudio } from "@/contexts/AudioContext";
+import { useBackgroundMusic, BACKGROUND_MUSIC_OPTIONS } from "@/contexts/BackgroundMusicContext";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { apiRequest } from "@/lib/query-client";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
@@ -50,6 +51,7 @@ export default function HomeScreen() {
   const { data: voiceStatus } = useQuery<{ hasPersonalVoice: boolean; hasClonedVoice: boolean }>({ queryKey: ["/api/voice-samples/status"] });
   const route = useRoute<RouteProp<HomeScreenRouteParams, 'Home'>>();
   const { playAffirmation, currentAffirmation, isPlaying, togglePlayPause, breathingAffirmation, setBreathingAffirmation, highlightAffirmationId, clearHighlightAffirmation } = useAudio();
+  const { selectedMusic } = useBackgroundMusic();
   
   const flatListRef = useRef<FlatList<Affirmation>>(null);
   const [highlightedAffirmationId, setHighlightedAffirmationId] = useState<number | null>(null);
@@ -361,37 +363,70 @@ export default function HomeScreen() {
             />
           </View>
         </View>
-        <Pressable
-          onPress={() => navigation.navigate("VoiceSettings")}
-          style={[
-            styles.voiceBadge,
-            {
-              backgroundColor: voiceStatus?.hasPersonalVoice
-                ? (isDark ? 'rgba(229, 201, 92, 0.15)' : 'rgba(201, 162, 39, 0.1)')
-                : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'),
-              borderColor: voiceStatus?.hasPersonalVoice
-                ? (isDark ? 'rgba(229, 201, 92, 0.3)' : 'rgba(201, 162, 39, 0.25)')
-                : (isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)'),
-            },
-          ]}
-          testID="badge-voice-status"
-        >
-          <Feather
-            name={voiceStatus?.hasPersonalVoice ? "mic" : "cpu"}
-            size={12}
-            color={voiceStatus?.hasPersonalVoice ? '#C9A227' : theme.textSecondary}
-          />
-          <ThemedText
+        <View style={styles.badgeRow}>
+          <Pressable
+            onPress={() => navigation.navigate("VoiceSettings")}
             style={[
-              styles.voiceBadgeText,
+              styles.voiceBadge,
               {
-                color: voiceStatus?.hasPersonalVoice ? '#C9A227' : theme.textSecondary,
+                backgroundColor: voiceStatus?.hasPersonalVoice
+                  ? (isDark ? 'rgba(229, 201, 92, 0.15)' : 'rgba(201, 162, 39, 0.1)')
+                  : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'),
+                borderColor: voiceStatus?.hasPersonalVoice
+                  ? (isDark ? 'rgba(229, 201, 92, 0.3)' : 'rgba(201, 162, 39, 0.25)')
+                  : (isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)'),
               },
             ]}
+            testID="badge-voice-status"
           >
-            {voiceStatus?.hasPersonalVoice ? "My Voice Active" : "AI Voice"}
-          </ThemedText>
-        </Pressable>
+            <Feather
+              name={voiceStatus?.hasPersonalVoice ? "mic" : "cpu"}
+              size={12}
+              color={voiceStatus?.hasPersonalVoice ? '#C9A227' : theme.textSecondary}
+            />
+            <ThemedText
+              style={[
+                styles.voiceBadgeText,
+                {
+                  color: voiceStatus?.hasPersonalVoice ? '#C9A227' : theme.textSecondary,
+                },
+              ]}
+            >
+              {voiceStatus?.hasPersonalVoice ? "My Voice Active" : "AI Voice"}
+            </ThemedText>
+          </Pressable>
+          <Pressable
+            onPress={() => navigation.navigate("SoundLibrary")}
+            style={[
+              styles.voiceBadge,
+              {
+                backgroundColor: selectedMusic !== 'none'
+                  ? (isDark ? 'rgba(129, 178, 154, 0.15)' : 'rgba(129, 178, 154, 0.1)')
+                  : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'),
+                borderColor: selectedMusic !== 'none'
+                  ? (isDark ? 'rgba(129, 178, 154, 0.3)' : 'rgba(129, 178, 154, 0.25)')
+                  : (isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)'),
+              },
+            ]}
+            testID="badge-ambient-sound"
+          >
+            <Feather
+              name={selectedMusic !== 'none' ? (BACKGROUND_MUSIC_OPTIONS.find(o => o.id === selectedMusic)?.icon as any || 'volume-2') : 'volume-x'}
+              size={12}
+              color={selectedMusic !== 'none' ? (isDark ? '#81B29A' : '#5A8F7B') : theme.textSecondary}
+            />
+            <ThemedText
+              style={[
+                styles.voiceBadgeText,
+                {
+                  color: selectedMusic !== 'none' ? (isDark ? '#81B29A' : '#5A8F7B') : theme.textSecondary,
+                },
+              ]}
+            >
+              {selectedMusic !== 'none' ? (BACKGROUND_MUSIC_OPTIONS.find(o => o.id === selectedMusic)?.name || selectedMusic) : 'No Sound'}
+            </ThemedText>
+          </Pressable>
+        </View>
         <FlatList
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -751,16 +786,20 @@ const styles = StyleSheet.create({
     padding: Spacing.xs,
     flexShrink: 0,
   },
+  badgeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+    marginBottom: Spacing.sm,
+  },
   voiceBadge: {
     flexDirection: "row",
     alignItems: "center",
-    alignSelf: "flex-start",
     height: 28,
     paddingHorizontal: Spacing.md,
     borderRadius: BorderRadius.full,
     borderWidth: 1,
     gap: 6,
-    marginBottom: Spacing.sm,
   },
   voiceBadgeText: {
     fontSize: 12,

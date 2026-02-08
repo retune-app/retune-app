@@ -1119,6 +1119,7 @@ const styles = StyleSheet.create({
   },
   title: {
     textAlign: "center",
+    fontSize: 20,
     marginBottom: Spacing.xl,
   },
   progressContainer: {

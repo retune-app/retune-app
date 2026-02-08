@@ -49,6 +49,7 @@ export default function HomeScreen() {
   const navigation = useNavigation<NavigationProp>();
 
   const { data: voiceStatus } = useQuery<{ hasPersonalVoice: boolean; hasClonedVoice: boolean }>({ queryKey: ["/api/voice-samples/status"] });
+  const { data: voicePrefs } = useQuery<{ preferredVoiceType: string; hasPersonalVoice: boolean }>({ queryKey: ["/api/voice-preferences"] });
   const route = useRoute<RouteProp<HomeScreenRouteParams, 'Home'>>();
   const { playAffirmation, currentAffirmation, isPlaying, togglePlayPause, breathingAffirmation, setBreathingAffirmation, highlightAffirmationId, clearHighlightAffirmation } = useAudio();
   const { selectedMusic } = useBackgroundMusic();
@@ -369,10 +370,10 @@ export default function HomeScreen() {
             style={[
               styles.voiceBadge,
               {
-                backgroundColor: voiceStatus?.hasPersonalVoice
+                backgroundColor: (voicePrefs?.preferredVoiceType === 'personal' && voicePrefs?.hasPersonalVoice)
                   ? (isDark ? 'rgba(229, 201, 92, 0.15)' : 'rgba(201, 162, 39, 0.1)')
                   : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'),
-                borderColor: voiceStatus?.hasPersonalVoice
+                borderColor: (voicePrefs?.preferredVoiceType === 'personal' && voicePrefs?.hasPersonalVoice)
                   ? (isDark ? 'rgba(229, 201, 92, 0.3)' : 'rgba(201, 162, 39, 0.25)')
                   : (isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)'),
               },
@@ -380,19 +381,19 @@ export default function HomeScreen() {
             testID="badge-voice-status"
           >
             <Feather
-              name={voiceStatus?.hasPersonalVoice ? "mic" : "cpu"}
+              name={(voicePrefs?.preferredVoiceType === 'personal' && voicePrefs?.hasPersonalVoice) ? "mic" : "cpu"}
               size={12}
-              color={voiceStatus?.hasPersonalVoice ? '#C9A227' : theme.textSecondary}
+              color={(voicePrefs?.preferredVoiceType === 'personal' && voicePrefs?.hasPersonalVoice) ? '#C9A227' : theme.textSecondary}
             />
             <ThemedText
               style={[
                 styles.voiceBadgeText,
                 {
-                  color: voiceStatus?.hasPersonalVoice ? '#C9A227' : theme.textSecondary,
+                  color: (voicePrefs?.preferredVoiceType === 'personal' && voicePrefs?.hasPersonalVoice) ? '#C9A227' : theme.textSecondary,
                 },
               ]}
             >
-              {voiceStatus?.hasPersonalVoice ? "My Voice Active" : "AI Voice"}
+              {(voicePrefs?.preferredVoiceType === 'personal' && voicePrefs?.hasPersonalVoice) ? "My Voice Active" : "AI Voice"}
             </ThemedText>
           </Pressable>
           <Pressable

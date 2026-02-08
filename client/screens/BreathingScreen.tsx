@@ -220,9 +220,8 @@ export default function BreathingScreen() {
     if (!backgroundAffirmation?.audioUrl) return;
     
     try {
-      // Unload any existing sound
       if (affirmationSoundRef.current) {
-        await affirmationSoundRef.current.unloadAsync();
+        try { await affirmationSoundRef.current.unloadAsync(); } catch {}
         affirmationSoundRef.current = null;
       }
       
@@ -235,9 +234,18 @@ export default function BreathingScreen() {
           volume: 1.0,
         }
       );
+      
+      sound.setOnPlaybackStatusUpdate((status) => {
+        if ('error' in status && status.error) {
+          console.log('Affirmation playback issue, will retry:', status.error);
+          sound.unloadAsync().catch(() => {});
+          affirmationSoundRef.current = null;
+        }
+      });
+      
       affirmationSoundRef.current = sound;
     } catch (error) {
-      console.error('Error playing affirmation loop:', error);
+      console.log('Could not play affirmation loop, skipping:', error);
     }
   }, [backgroundAffirmation]);
 
@@ -246,9 +254,7 @@ export default function BreathingScreen() {
       try {
         await affirmationSoundRef.current.stopAsync();
         await affirmationSoundRef.current.unloadAsync();
-      } catch (error) {
-        console.error('Error stopping affirmation:', error);
-      }
+      } catch {}
       affirmationSoundRef.current = null;
     }
   }, []);
@@ -257,9 +263,7 @@ export default function BreathingScreen() {
     if (affirmationSoundRef.current) {
       try {
         await affirmationSoundRef.current.pauseAsync();
-      } catch (error) {
-        console.error('Error pausing affirmation:', error);
-      }
+      } catch {}
     }
   }, []);
 
@@ -267,9 +271,7 @@ export default function BreathingScreen() {
     if (affirmationSoundRef.current) {
       try {
         await affirmationSoundRef.current.playAsync();
-      } catch (error) {
-        console.error('Error resuming affirmation:', error);
-      }
+      } catch {}
     }
   }, []);
 

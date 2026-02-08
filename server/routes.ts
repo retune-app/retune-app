@@ -74,7 +74,7 @@ if (!fs.existsSync(uploadDir)) {
 
 // Usage limit constants
 const MAX_AI_AFFIRMATIONS_PER_MONTH = 20;
-const MAX_VOICE_CLONES_LIFETIME = 2;
+const MAX_VOICE_CLONES_LIFETIME = 5;
 
 // Admin accounts with no restrictions
 const ADMIN_USER_IDS = new Set([
@@ -1026,9 +1026,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Upload voice sample and clone voice (requires auth)
-  // Max 2 voice clones per user lifetime
+  // Max 5 voice clones per user lifetime (ElevenLabs Pro Plan)
   // Rate limited: max 3 attempts per hour
-  const MAX_VOICE_CLONES = 2;
+  const MAX_VOICE_CLONES = 5;
   
   app.post(
     "/api/voice-samples",

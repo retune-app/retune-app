@@ -286,6 +286,7 @@ export default function AnalyticsScreen() {
                       box: "Box Breathing",
                       "478": "4-7-8 Relaxing",
                       coherent: "Coherent Breathing",
+                      energizing: "Energizing Breath",
                     };
                     return labels[id] || id;
                   };
@@ -294,6 +295,7 @@ export default function AnalyticsScreen() {
                       box: "square",
                       "478": "moon",
                       coherent: "heart",
+                      energizing: "zap",
                     };
                     return icons[id] || "wind";
                   };

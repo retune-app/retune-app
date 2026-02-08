@@ -223,10 +223,15 @@ async function insertSilenceIntoAudio(
 }
 
 let connectionSettings: any;
+let credentialsCachedAt: number = 0;
+const CREDENTIALS_TTL_MS = 5 * 60 * 1000;
 
 async function getCredentials() {
+  if (connectionSettings?.settings?.api_key && (Date.now() - credentialsCachedAt) < CREDENTIALS_TTL_MS) {
+    return connectionSettings.settings.api_key;
+  }
+  connectionSettings = null;
   let hostname = process.env.REPLIT_CONNECTORS_HOSTNAME || "";
-  // Remove https:// prefix if already present to avoid double protocol
   if (hostname.startsWith("https://")) {
     hostname = hostname.replace("https://", "");
   }
@@ -253,6 +258,7 @@ async function getCredentials() {
   if (!connectionSettings || !connectionSettings.settings.api_key) {
     throw new Error("ElevenLabs not connected");
   }
+  credentialsCachedAt = Date.now();
   return connectionSettings.settings.api_key;
 }
 

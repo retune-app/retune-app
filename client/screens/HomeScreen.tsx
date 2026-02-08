@@ -6,6 +6,7 @@ import { BlurView } from "expo-blur";
 
 const libraryBackgroundDark = require("../../assets/images/library-background.png");
 const libraryBackgroundLight = require("../../assets/images/library-background-light.png");
+const emptyStateImage = require("../../assets/images/empty-state-affirmations.png");
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -457,6 +458,7 @@ export default function HomeScreen() {
 
   const renderEmpty = () => (
     <EmptyState
+      image={emptyStateImage}
       title="No Affirmations Yet"
       description="The first step to becoming is believing. Let's begin."
       actionLabel="Create Affirmation"

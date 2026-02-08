@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback, useLayoutEffect, useMemo, useRef } from "react";
-import { View, Text, StyleSheet, Pressable, Alert, ScrollView, Modal } from "react-native";
+import { View, StyleSheet, Pressable, Alert, ScrollView, Modal } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
+import { HeaderButton } from "@react-navigation/elements";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -222,52 +223,43 @@ export default function PlayerScreen() {
   }, [hapticEnabled]);
 
   useLayoutEffect(() => {
-    const isSaved = !isNew || hasSaved;
     navigation.setOptions({
       headerTitle: () => (
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%', paddingHorizontal: 4 }}>
-          {isNew && !hasSaved ? (
-            <Pressable
-              onPress={handleSave}
-              testID="button-save-affirmation"
-              hitSlop={12}
-              style={{ padding: 6 }}
-            >
-              <Feather 
-                name="save" 
-                size={22} 
-                color={autoSaveMutation.isPending ? 'rgba(255,255,255,0.5)' : '#FFFFFF'} 
-              />
-            </Pressable>
-          ) : (
-            <Pressable
-              onPress={() => navigation.goBack()}
-              testID="button-back"
-              hitSlop={12}
-              style={{ padding: 6 }}
-            >
-              <Feather name="arrow-left" size={22} color="#FFFFFF" />
-            </Pressable>
-          )}
-          {isSaved ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <View style={{ width: 3, height: 16, borderRadius: 2, backgroundColor: '#FFFFFF', marginRight: 8 }} />
-              <Text style={{ color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: 2, fontWeight: '700', fontSize: 13 }}>
-                My Affirmation
-              </Text>
-            </View>
-          ) : (
-            <View />
-          )}
-          <Pressable
-            onPress={handleDelete}
-            testID="button-delete-affirmation"
-            hitSlop={12}
-            style={{ padding: 6 }}
-          >
-            <Feather name="trash-2" size={22} color="#FFFFFF" />
-          </Pressable>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <View style={{ width: 3, height: 14, borderRadius: 2, backgroundColor: theme.primary, marginRight: 8 }} />
+          <ThemedText type="caption" style={{ color: theme.primary, textTransform: 'uppercase', letterSpacing: 2, fontWeight: '600', fontSize: 11 }}>
+            My Affirmation
+          </ThemedText>
         </View>
+      ),
+      headerLeft: () => (
+        isNew && !hasSaved ? (
+          <HeaderButton
+            onPress={handleSave}
+            testID="button-save-affirmation"
+          >
+            <Feather 
+              name="save" 
+              size={22} 
+              color={autoSaveMutation.isPending ? theme.textSecondary : "#4CAF50"} 
+            />
+          </HeaderButton>
+        ) : (
+          <HeaderButton
+            onPress={() => navigation.goBack()}
+            testID="button-back"
+          >
+            <Feather name="arrow-left" size={22} color={theme.text} />
+          </HeaderButton>
+        )
+      ),
+      headerRight: () => (
+        <HeaderButton
+          onPress={handleDelete}
+          testID="button-delete-affirmation"
+        >
+          <Feather name="trash-2" size={22} color="#E53935" />
+        </HeaderButton>
       ),
     });
   }, [navigation, handleSave, handleDelete, autoSaveMutation.isPending, theme, isNew, hasSaved]);
@@ -558,11 +550,13 @@ export default function PlayerScreen() {
   const displayDuration = currentAffirmation?.id === affirmationId ? duration : 0;
   const progress = displayDuration > 0 ? displayPosition / displayDuration : 0;
   
-  const rsvpPosition = displayPosition;
+  // Add offset to compensate for audio position latency and UI rendering delay
+  // Higher playback speeds need more forward offset since words change faster
+  const rsvpPositionOffset = 100 * playbackSpeed; // ms ahead to look
+  const rsvpPosition = displayPosition + rsvpPositionOffset;
 
   return (
     <ThemedView style={styles.container}>
-      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: headerHeight, backgroundColor: theme.backgroundRoot, zIndex: 0 }} />
       <StatusBar style={showFullscreenFocus ? "light" : "auto"} hidden={showFullscreenFocus} />
       
       {/* Fullscreen Landscape Focus Mode - tilt back to portrait to exit */}

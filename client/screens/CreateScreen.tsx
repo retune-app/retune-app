@@ -564,7 +564,6 @@ export default function CreateScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: headerHeight, backgroundColor: theme.backgroundRoot, zIndex: 0 }} />
       <KeyboardAwareScrollViewCompat
         ref={scrollViewRef}
         style={styles.scrollView}

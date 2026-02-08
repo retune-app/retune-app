@@ -78,7 +78,7 @@ interface BackgroundMusicContextType {
 const BackgroundMusicContext = createContext<BackgroundMusicContextType | undefined>(undefined);
 
 export function BackgroundMusicProvider({ children }: { children: React.ReactNode }) {
-  const [selectedMusic, setSelectedMusicState] = useState<BackgroundMusicType>('none');
+  const [selectedMusic, setSelectedMusicState] = useState<BackgroundMusicType>('forest');
   const [volume, setVolumeState] = useState(0.5);
   const [isPlaying, setIsPlaying] = useState(false);
   const soundRef = useRef<Audio.Sound | null>(null);
@@ -102,8 +102,8 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
       if (savedMusic) {
         setSelectedMusicState(savedMusic as BackgroundMusicType);
       } else {
-        await AsyncStorage.setItem(STORAGE_KEY, 'none');
-        setSelectedMusicState('none');
+        await AsyncStorage.setItem(STORAGE_KEY, 'forest');
+        setSelectedMusicState('forest');
       }
       
       if (savedVolume) {
@@ -121,29 +121,15 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
     setSelectedMusicState(type);
     await AsyncStorage.setItem(STORAGE_KEY, type);
     
+    // Stop current music if playing (user is changing selection)
     if (soundRef.current) {
       await soundRef.current.stopAsync();
       await soundRef.current.unloadAsync();
       soundRef.current = null;
       setIsPlaying(false);
     }
-    
-    if (type !== 'none') {
-      try {
-        const { sound } = await Audio.Sound.createAsync(
-          AUDIO_FILES[type],
-          {
-            isLooping: true,
-            volume: applyVolumeCurve(volume),
-            shouldPlay: true,
-          }
-        );
-        soundRef.current = sound;
-        setIsPlaying(true);
-      } catch (error) {
-        console.error('Error starting selected background music:', error);
-      }
-    }
+    // Sound selection is saved but won't auto-play
+    // Music only starts when startBackgroundMusic is called (e.g., when starting a breathing session)
   };
 
   const setVolume = async (newVolume: number) => {

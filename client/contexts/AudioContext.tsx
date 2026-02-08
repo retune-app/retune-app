@@ -57,8 +57,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const isOperationInProgress = useRef(false);
   const hasRecordedListenRef = useRef(false);
   
-  const { startBackgroundMusic, stopBackgroundMusic, selectedMusic, isPlaying: isBgMusicPlaying } = useBackgroundMusic();
-  const bgMusicWasPlayingRef = useRef(false);
+  const { startBackgroundMusic, stopBackgroundMusic, selectedMusic } = useBackgroundMusic();
 
   const requestHighlightAffirmation = useCallback((id: number) => {
     setHighlightAffirmationId(id);
@@ -219,6 +218,8 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       soundRef.current = sound;
       setCurrentAffirmation(affirmation);
       setIsPlaying(true);
+      
+      // Background music is NOT auto-started - user must manually enable it from player controls
     } catch (error) {
       console.error('Error loading audio:', error);
     } finally {
@@ -245,15 +246,15 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
           await soundRef.current.pauseAsync();
           setIsPlaying(false);
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          bgMusicWasPlayingRef.current = isBgMusicPlaying;
-          if (isBgMusicPlaying) {
-            await stopBackgroundMusic();
-          }
+          // Pause background music too
+          await stopBackgroundMusic();
         } else {
+          // Check if audio has finished (position at or near end)
           const isAtEnd = status.durationMillis && 
             status.positionMillis >= status.durationMillis - 100;
           
           if (isAtEnd) {
+            // Seek to beginning before playing
             await soundRef.current.setPositionAsync(0);
             setPosition(0);
           }
@@ -261,10 +262,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
           await soundRef.current.playAsync();
           setIsPlaying(true);
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          if (bgMusicWasPlayingRef.current && selectedMusic !== 'none') {
-            await startBackgroundMusic();
-            bgMusicWasPlayingRef.current = false;
-          }
+          // Background music is NOT auto-resumed - user controls it manually
         }
       }
     } catch (error) {
@@ -272,7 +270,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     } finally {
       isOperationInProgress.current = false;
     }
-  }, [stopBackgroundMusic, selectedMusic, startBackgroundMusic, isBgMusicPlaying]);
+  }, [stopBackgroundMusic]);
 
   const stop = useCallback(async () => {
     await unloadCurrentSound();

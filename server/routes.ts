@@ -496,12 +496,12 @@ async function generateAudio(
   script: string,
   voiceId?: string,
   isPersonalVoice: boolean = false
-): Promise<{ audio: ArrayBuffer; duration: number; wordTimings: WordTiming[]; fileExtension: string }> {
+): Promise<{ audio: ArrayBuffer; duration: number; wordTimings: WordTiming[] }> {
   // Personal voice: always use ElevenLabs (voice clones live there)
   if (isPersonalVoice) {
     try {
       const result = await elevenLabsTTS(script, voiceId);
-      return { ...result, fileExtension: '.mp3' };
+      return result;
     } catch (elevenLabsError: any) {
       const isQuotaExhausted = elevenLabsError?.message?.includes("quota_exceeded") ||
         elevenLabsError?.message?.includes("Unauthorized") ||
@@ -524,7 +524,7 @@ async function generateAudio(
     try {
       console.log(`Using Hume AI TTS for stock voice: ${humeName}`);
       const result = await humeTextToSpeech(script, humeName);
-      return { ...result, fileExtension: '.wav' };
+      return result;
     } catch (humeError: any) {
       console.error("Hume AI TTS failed, trying OpenAI fallback:", humeError?.message || humeError);
     }
@@ -534,8 +534,7 @@ async function generateAudio(
   if (directOpenAI) {
     try {
       const openaiVoice = getOpenAIVoiceForElevenLabsId(voiceId);
-      const result = await generateAudioOpenAI(script, openaiVoice);
-      return { ...result, fileExtension: '.mp3' };
+      return await generateAudioOpenAI(script, openaiVoice);
     } catch (openaiError: any) {
       console.error("OpenAI TTS fallback also failed:", openaiError?.message || openaiError);
     }
@@ -544,7 +543,7 @@ async function generateAudio(
   // Last resort: try ElevenLabs for stock voice
   try {
     const result = await elevenLabsTTS(script, voiceId);
-    return { ...result, fileExtension: '.mp3' };
+    return result;
   } catch (elError: any) {
     console.error("ElevenLabs TTS last resort also failed:", elError?.message || elError);
     throw new Error("TTS_UNAVAILABLE: All TTS services (Hume AI, OpenAI, ElevenLabs) are unavailable");
@@ -791,8 +790,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!fs.existsSync(audioDir)) {
         fs.mkdirSync(audioDir, { recursive: true });
       }
-      const audioExt = audioResult.fileExtension || '.mp3';
-      const audioFilename = `affirmation-${Date.now()}${audioExt}`;
+      const audioFilename = `affirmation-${Date.now()}.mp3`;
       const audioPath = path.join(audioDir, audioFilename);
       fs.writeFileSync(audioPath, Buffer.from(audioResult.audio));
 
@@ -818,15 +816,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(newAffirmation);
     } catch (error: any) {
       console.error("Error creating affirmation:", error);
-      const errorMsg = error?.message || "";
-      if (errorMsg.includes("QUOTA_EXCEEDED")) {
-        res.status(422).json({ 
-          error: "QUOTA_EXCEEDED",
-          message: "Your voice cloning credits have been used up for this period. Please switch to an AI voice or wait for your credits to reset."
-        });
-      } else if (errorMsg.includes("PERSONAL_VOICE_FAILED")) {
+      if (error?.message?.includes("PERSONAL_VOICE_FAILED")) {
         res.status(422).json({ error: "PERSONAL_VOICE_FAILED", message: "Could not generate audio with your personal voice. You can try again or switch to an AI voice." });
-      } else if (errorMsg.includes("TTS_UNAVAILABLE")) {
+      } else if (error?.message?.includes("TTS_UNAVAILABLE")) {
         res.status(503).json({ error: "Voice services are temporarily unavailable. Please try again later." });
       } else {
         res.status(500).json({ error: "Failed to create affirmation. Please try again." });
@@ -1069,10 +1061,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(403).json({ error: "Voice cloning consent required. Please accept the voice cloning terms first." });
         }
 
-        // Check usage limit (admins have unlimited clones)
+        // Check usage limit
         const clonesUsed = user.voiceClonesUsed || 0;
-        const isAdmin = ADMIN_USER_IDS.has(req.userId!);
-        if (!isAdmin && clonesUsed >= MAX_VOICE_CLONES) {
+        if (clonesUsed >= MAX_VOICE_CLONES) {
           // Clean up uploaded file immediately
           fs.unlink(file.path, () => {});
           return res.status(429).json({ 
@@ -1455,8 +1446,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fs.mkdirSync(audioDir, { recursive: true });
       }
       
-      const audioExt2 = audioResult.fileExtension || '.mp3';
-      const audioFileName = `affirmation-${affirmationId}-${Date.now()}${audioExt2}`;
+      const audioFileName = `affirmation-${affirmationId}-${Date.now()}.mp3`;
       const audioPath = path.join(audioDir, audioFileName);
       fs.writeFileSync(audioPath, Buffer.from(audioResult.audio));
       
@@ -1943,8 +1933,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const audioResult = await generateAudio(sample.script, voiceIdToUse);
           
           // Save audio file to audio subdirectory
-          const audioExt3 = audioResult.fileExtension || '.mp3';
-          const audioFilename = `affirmation-${Date.now()}-${Math.random().toString(36).slice(2)}${audioExt3}`;
+          const audioFilename = `affirmation-${Date.now()}-${Math.random().toString(36).slice(2)}.mp3`;
           const audioPath = path.join(audioDir, audioFilename);
           fs.writeFileSync(audioPath, Buffer.from(audioResult.audio));
 
@@ -2527,8 +2516,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const audioResult = await generateAudio(affirmation.script, voiceId);
           
           // Save audio file
-          const audioExt4 = audioResult.fileExtension || '.mp3';
-          const audioFileName = `affirmation-${affirmation.id}-${Date.now()}${audioExt4}`;
+          const audioFileName = `affirmation-${affirmation.id}-${Date.now()}.mp3`;
           const audioPath = path.join(audioDir, audioFileName);
           fs.writeFileSync(audioPath, Buffer.from(audioResult.audio));
           

@@ -251,7 +251,7 @@ export default function HomeScreen() {
     navigation.navigate("Main", { screen: "SettingsTab" } as any);
   };
 
-  const FIXED_HEADER_HEIGHT = 150;
+  const FIXED_HEADER_HEIGHT = 110;
 
   const [showVoiceNudge, setShowVoiceNudge] = useState(false);
   const [voiceNudgeDismissed, setVoiceNudgeDismissed] = useState(false);

@@ -818,7 +818,7 @@ export default function VoiceSetupScreen() {
     if (hasRecording && isValidDuration) return "Voice Sample Ready";
     if (hasRecording && !isValidDuration) return "Too Short";
     if (isRecording) return "Listening...";
-    return "";
+    return "Record Your Voice";
   };
 
   const getSubText = () => {
@@ -924,15 +924,13 @@ export default function VoiceSetupScreen() {
             theme={theme}
           />
 
-          {(isRecording || hasRecording) ? (
-            <View style={styles.timerDisplay}>
-              <ThemedText type="h1" style={[styles.timer, {
-                color: isRecording ? theme.primary : hasRecording && isValidDuration ? theme.success : theme.text,
-              }]}>
-                {formatDuration(recordingDuration)}
-              </ThemedText>
-            </View>
-          ) : null}
+          <View style={styles.timerDisplay}>
+            <ThemedText type="h1" style={[styles.timer, {
+              color: isRecording ? theme.primary : hasRecording && isValidDuration ? theme.success : theme.text,
+            }]}>
+              {formatDuration(recordingDuration)}
+            </ThemedText>
+          </View>
         </View>
 
         <ThemedText type="h2" style={[styles.statusTitle, { textAlign: "center" }]}>
@@ -1066,7 +1064,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   timerDisplay: {
-    marginTop: Spacing.xl,
+    marginTop: Spacing.sm,
     alignItems: "center",
   },
   timer: {

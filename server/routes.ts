@@ -3009,24 +3009,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
+      const [user] = await db.select({ name: users.name }).from(users).where(eq(users.id, userId));
+      const firstName = user?.name?.split(" ")[0] || "";
+
+      const [sessionStats] = await db
+        .select({ total: sql<number>`count(*)::int` })
+        .from(breathingSessions)
+        .where(eq(breathingSessions.userId, userId));
+      const totalSessions = sessionStats?.total || 0;
+
+      const [streakResult] = await db
+        .select({ dateKey: breathingSessions.dateKey })
+        .from(breathingSessions)
+        .where(eq(breathingSessions.userId, userId))
+        .orderBy(desc(breathingSessions.completedAt))
+        .limit(1);
+
+      let streak = 0;
+      if (streakResult) {
+        let checkDate = new Date();
+        checkDate.setHours(0, 0, 0, 0);
+        const todayKey = checkDate.toISOString().slice(0, 10);
+        const yesterdayDate = new Date(checkDate);
+        yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+        const yesterdayKey = yesterdayDate.toISOString().slice(0, 10);
+
+        if (streakResult.dateKey === todayKey || streakResult.dateKey === yesterdayKey) {
+          const allDates = await db
+            .select({ dateKey: breathingSessions.dateKey })
+            .from(breathingSessions)
+            .where(eq(breathingSessions.userId, userId))
+            .orderBy(desc(breathingSessions.dateKey));
+
+          const uniqueDates = [...new Set(allDates.map(d => d.dateKey))];
+          let current = streakResult.dateKey === todayKey ? new Date(todayKey) : new Date(yesterdayKey);
+          for (const d of uniqueDates) {
+            const expected = current.toISOString().slice(0, 10);
+            if (d === expected) {
+              streak++;
+              current.setDate(current.getDate() - 1);
+            } else {
+              break;
+            }
+          }
+        }
+      }
+
+      const [topTechnique] = await db
+        .select({
+          techniqueId: breathingSessions.techniqueId,
+          count: sql<number>`count(*)::int`,
+        })
+        .from(breathingSessions)
+        .where(eq(breathingSessions.userId, userId))
+        .groupBy(breathingSessions.techniqueId)
+        .orderBy(sql`count(*) desc`)
+        .limit(1);
+
+      let statsContext = "";
+      if (totalSessions > 0) {
+        const parts = [];
+        if (streak > 1) parts.push(`${streak}-day streak`);
+        parts.push(`${totalSessions} total sessions`);
+        if (topTechnique) parts.push(`favorite: ${topTechnique.techniqueId} breathing`);
+        statsContext = ` User stats: ${parts.join(", ")}.`;
+      }
+
       const response = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
           {
             role: "system",
-            content: `You are part of the Serene Empowerment brand. Generate a single short empowering sub-message (15-25 words max) for a user greeting. The message should fit the ${normalizedTime} time of day. Never use quotation marks. Be warm but not overly cheery. Focus on inner strength, resilience, and gentle encouragement. Examples of the tone: Your mind is your greatest asset. Every breath is a step forward. You've been showing up for yourself — that's real strength. Respond with ONLY the message, nothing else.`,
+            content: `You write ultra-short empowering messages for the Retuned app. Rules: MAX 10 words, one sentence only, no quotation marks, no exclamation marks, ${normalizedTime} tone. Be warm, not cheery. Focus on inner strength.${statsContext} Respond with ONLY the message.`,
           },
           {
             role: "user",
-            content: `Generate an empowering ${normalizedTime} greeting sub-message.`,
+            content: `Short ${normalizedTime} message.`,
           },
         ],
         temperature: 0.7,
-        max_tokens: 50,
+        max_tokens: 30,
       });
 
       let message = response.choices[0]?.message?.content?.trim() || dailyGreetingFallbacks[normalizedTime];
-      message = message.replace(/["""'']/g, "");
+      message = message.replace(/["""''!]/g, "");
 
       dailyGreetingCache.set(cacheKey, message);
       res.json({ message, cached: false });

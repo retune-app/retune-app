@@ -68,6 +68,7 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
     marginBottom: Spacing["2xl"],
+    borderRadius: 20,
   },
   title: {
     textAlign: "center",

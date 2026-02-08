@@ -2286,6 +2286,120 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ============ Mood Check-in API ============
+
+  app.post("/api/mood-checkin", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { mood, timeOfDay } = req.body;
+
+      if (!mood || !timeOfDay) {
+        return res.status(400).json({ error: "mood and timeOfDay are required" });
+      }
+
+      const validMoods = ["calm", "stressed", "tired", "energized", "anxious", "grateful"];
+      const validTimes = ["morning", "afternoon", "evening", "night"];
+
+      if (!validMoods.includes(mood)) {
+        return res.status(400).json({ error: "Invalid mood value" });
+      }
+      if (!validTimes.includes(timeOfDay)) {
+        return res.status(400).json({ error: "Invalid timeOfDay value" });
+      }
+
+      const userId = req.userId!;
+      const [user] = await db.select({ name: users.name }).from(users).where(eq(users.id, userId)).limit(1);
+      const userName = user?.name?.split(" ")[0] || "Friend";
+
+      const techniqueMap: Record<string, Record<string, { technique: string; techniqueId: string; activityType: string }>> = {
+        calm: {
+          morning: { technique: "Coherent Breathing", techniqueId: "coherent", activityType: "breathe" },
+          afternoon: { technique: "Coherent Breathing", techniqueId: "coherent", activityType: "breathe" },
+          evening: { technique: "listen to your affirmations", techniqueId: "", activityType: "believe" },
+          night: { technique: "4-7-8 Relaxation", techniqueId: "478", activityType: "breathe" },
+        },
+        stressed: {
+          morning: { technique: "Box Breathing", techniqueId: "box", activityType: "breathe" },
+          afternoon: { technique: "Box Breathing", techniqueId: "box", activityType: "breathe" },
+          evening: { technique: "4-7-8 Relaxation", techniqueId: "478", activityType: "breathe" },
+          night: { technique: "4-7-8 Relaxation", techniqueId: "478", activityType: "breathe" },
+        },
+        tired: {
+          morning: { technique: "Energizing Breath", techniqueId: "energizing", activityType: "breathe" },
+          afternoon: { technique: "Energizing Breath", techniqueId: "energizing", activityType: "breathe" },
+          evening: { technique: "Coherent Breathing", techniqueId: "coherent", activityType: "breathe" },
+          night: { technique: "4-7-8 Relaxation", techniqueId: "478", activityType: "breathe" },
+        },
+        energized: {
+          morning: { technique: "listen to your affirmations", techniqueId: "", activityType: "believe" },
+          afternoon: { technique: "listen to your affirmations", techniqueId: "", activityType: "believe" },
+          evening: { technique: "Coherent Breathing", techniqueId: "coherent", activityType: "breathe" },
+          night: { technique: "listen to your affirmations", techniqueId: "", activityType: "believe" },
+        },
+        anxious: {
+          morning: { technique: "4-7-8 Relaxation", techniqueId: "478", activityType: "breathe" },
+          afternoon: { technique: "Box Breathing", techniqueId: "box", activityType: "breathe" },
+          evening: { technique: "4-7-8 Relaxation", techniqueId: "478", activityType: "breathe" },
+          night: { technique: "4-7-8 Relaxation", techniqueId: "478", activityType: "breathe" },
+        },
+        grateful: {
+          morning: { technique: "listen to your affirmations", techniqueId: "", activityType: "believe" },
+          afternoon: { technique: "Coherent Breathing", techniqueId: "coherent", activityType: "breathe" },
+          evening: { technique: "listen to your affirmations", techniqueId: "", activityType: "believe" },
+          night: { technique: "Coherent Breathing", techniqueId: "coherent", activityType: "breathe" },
+        },
+      };
+
+      const recommendation = techniqueMap[mood]?.[timeOfDay] || { technique: "Box Breathing", techniqueId: "box", activityType: "breathe" };
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a warm, empathetic wellness companion for the Retuned mindfulness app. 
+The user just told you how they're feeling. Respond with:
+1. A brief empathetic acknowledgment (1 sentence, max 12 words)
+2. A recommendation message explaining why the suggested activity will help (1 sentence, max 15 words)
+
+Format your response as JSON: {"acknowledgment": "...", "recommendation": "..."}
+Do NOT use quotation marks, exclamation marks, or generic phrases.
+Be specific to their mood. Use their name "${userName}" naturally in the acknowledgment.
+The suggested activity is: ${recommendation.technique}.`,
+          },
+          {
+            role: "user",
+            content: `I'm feeling ${mood} and it's ${timeOfDay}.`,
+          },
+        ],
+        temperature: 0.9,
+        max_tokens: 80,
+        response_format: { type: "json_object" },
+      });
+
+      let acknowledgment = `${userName}, I hear you.`;
+      let recommendationText = `${recommendation.technique} can help you right now.`;
+
+      try {
+        const parsed = JSON.parse(response.choices[0]?.message?.content || "{}");
+        if (parsed.acknowledgment) acknowledgment = parsed.acknowledgment;
+        if (parsed.recommendation) recommendationText = parsed.recommendation;
+      } catch (e) {
+        // Use defaults above
+      }
+
+      res.json({
+        acknowledgment,
+        recommendation: recommendationText,
+        activityType: recommendation.activityType,
+        techniqueId: recommendation.techniqueId,
+        techniqueName: recommendation.technique,
+      });
+    } catch (error) {
+      console.error("Error in mood check-in:", error);
+      res.status(500).json({ error: "Failed to process mood check-in" });
+    }
+  });
+
   // ============ Reminders API ============
 
   async function generateReminderMessage(activityType: string, time: string, userName: string, currentMessage?: string): Promise<string> {

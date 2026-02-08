@@ -42,6 +42,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import BreathingCircle from "@/components/BreathingCircle";
 import { WelcomeSection } from "@/components/WelcomeSection";
+import { MoodCheckin } from "@/components/MoodCheckin";
 import { useTheme } from "@/hooks/useTheme";
 import { useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/query-client";
@@ -755,6 +756,24 @@ export default function BreathingScreen() {
               onQuickPlay={handleQuickPlay}
               onSettingsPress={() => navigation.navigate("Main", { screen: "SettingsTab" })}
               isPlaying={isAudioPlaying}
+            />
+          </Animated.View>
+        ) : null}
+
+        {/* Mood Check-in - hidden during breathing session */}
+        {!isPlaying ? (
+          <Animated.View entering={FadeIn.delay(50).duration(600)}>
+            <MoodCheckin
+              onStartBreathing={(techniqueId) => {
+                const technique = BREATHING_TECHNIQUES.find(t => t.id === techniqueId);
+                if (technique) {
+                  setSelectedTechnique(technique);
+                  AsyncStorage.setItem(DEFAULT_BREATHING_TECHNIQUE_KEY, technique.id).catch(() => {});
+                }
+              }}
+              onStartAffirmations={() => {
+                navigation.navigate("Main", { screen: "AffirmTab" });
+              }}
             />
           </Animated.View>
         ) : null}

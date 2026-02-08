@@ -80,6 +80,19 @@ const dailyGreetingLimiter = rateLimit({
   },
 });
 
+const guidedMomentLimiter = rateLimit({
+  windowMs: 24 * 60 * 60 * 1000,
+  max: 5,
+  message: { error: "You've reached today's limit for guided moments. Come back tomorrow for a fresh session." },
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: false,
+  keyGenerator: (req: Request) => {
+    const authReq = req as AuthenticatedRequest;
+    return `guided-${authReq.userId || req.ip || "unknown"}`;
+  },
+});
+
 const dailyGreetingCache = new Map<string, string>();
 
 const dailyGreetingFallbacks: Record<string, string> = {
@@ -2390,6 +2403,118 @@ The suggested activity is: ${recommendation.technique}.`,
     } catch (error) {
       console.error("Error in mood check-in:", error);
       res.status(500).json({ error: "Failed to process mood check-in" });
+    }
+  });
+
+  // ============ Guided Moments API ============
+
+  app.post("/api/guided-moments/generate", requireAuth, guidedMomentLimiter, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { mood, timeOfDay, usePersonalVoice, voiceId } = req.body;
+
+      if (!mood || !timeOfDay) {
+        return res.status(400).json({ error: "mood and timeOfDay are required" });
+      }
+
+      const validMoods = ["calm", "stressed", "tired", "energized", "anxious", "grateful"];
+      const validTimes = ["morning", "afternoon", "evening", "night"];
+
+      if (!validMoods.includes(mood)) {
+        return res.status(400).json({ error: "Invalid mood value" });
+      }
+      if (!validTimes.includes(timeOfDay)) {
+        return res.status(400).json({ error: "Invalid timeOfDay value" });
+      }
+
+      const userId = req.userId!;
+      const [user] = await db.select({ name: users.name }).from(users).where(eq(users.id, userId)).limit(1);
+      const userName = user?.name?.split(" ")[0] || "Friend";
+
+      console.log(`Generating guided moment for user ${userId} (${userName}), mood: ${mood}, time: ${timeOfDay}`);
+
+      const scriptResponse = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are an expert mindfulness meditation guide creating a personalized guided moment for someone named ${userName}. This is a brief mindfulness exercise (60-90 seconds when read aloud at a calm pace).
+
+STRUCTURE (follow this order):
+1. OPENING (1-2 sentences): Grounding cue — invite them to close their eyes, notice their breath, or feel their body in the present moment.
+2. BREATHING GUIDANCE (2-3 sentences): Lead a brief breathing cycle tailored to their mood. For stressed/anxious: slow exhales for vagus nerve activation. For tired: energizing breath with counts. For calm/grateful: simple awareness breath.
+3. VISUALIZATION (3-4 sentences): Paint a vivid, sensory-rich scene using present tense. Include at least 2 senses (sight + touch, or sound + warmth, etc.). Match the imagery to their mood — calming scenes for stress, expansive scenes for energy, warm scenes for gratitude.
+4. AFFIRMATION ANCHORING (2-3 sentences): Weave in identity-level affirmations using "I am" or "I choose" language. Use embedded commands naturally. Connect the affirmation to the visualization scene.
+5. CLOSING (1-2 sentences): Gently guide them back — "When you are ready, let your eyes open" or similar. End with a brief, empowering statement.
+
+RULES:
+- Total length: 120-180 words (60-90 seconds at meditation pace)
+- Use ${userName}'s name once, naturally (not at the very start)
+- Include natural pauses marked with "..." (2-3 throughout)
+- Write in second person ("you") for guidance, first person ("I am") for affirmations
+- Tone: warm, grounding, unhurried — like a trusted guide speaking softly
+- No exclamation marks, no questions, no medical claims
+- Reference accessible neuroscience concepts naturally (e.g., "your nervous system settles," "each breath sends a signal of safety")
+- Mood-specific emphasis: stressed→release/safety, anxious→grounding/presence, tired→vitality/awakening, calm→deepening/peace, energized→channeling/focus, grateful→expansion/abundance
+- This is a mindfulness exercise, not medical advice
+
+Return ONLY the script text, no formatting or labels.`,
+          },
+          {
+            role: "user",
+            content: `Create a guided moment for someone feeling ${mood} during the ${timeOfDay}.`,
+          },
+        ],
+        temperature: 0.85,
+        max_tokens: 300,
+      });
+
+      const script = scriptResponse.choices[0]?.message?.content?.trim();
+      if (!script) {
+        return res.status(500).json({ error: "Failed to generate meditation script" });
+      }
+
+      console.log(`Generated script (${script.split(/\s+/).length} words): ${script.substring(0, 80)}...`);
+
+      let audioBuffer: ArrayBuffer;
+      let wordTimings: WordTiming[] = [];
+      let duration = 0;
+
+      try {
+        if (usePersonalVoice && voiceId) {
+          const result = await generateAudio(script, voiceId, true);
+          audioBuffer = result.audio;
+          wordTimings = result.wordTimings;
+          duration = result.duration;
+        } else {
+          const result = await generateAudio(script, "hume_kora");
+          audioBuffer = result.audio;
+          wordTimings = result.wordTimings;
+          duration = result.duration;
+        }
+      } catch (ttsError: any) {
+        console.error("Guided moment TTS failed:", ttsError?.message || ttsError);
+        return res.status(500).json({ 
+          error: "Could not generate audio for your guided moment. Please try again.",
+          code: ttsError?.message?.includes("QUOTA_EXCEEDED") ? "QUOTA_EXCEEDED" : 
+                ttsError?.message?.includes("VOICE_EXPIRED") ? "VOICE_EXPIRED" : "TTS_FAILED"
+        });
+      }
+
+      const audioBase64 = Buffer.from(audioBuffer).toString("base64");
+
+      console.log(`Guided moment generated: ${duration}s audio, ${audioBase64.length} base64 chars`);
+
+      res.json({
+        script,
+        audioBase64,
+        duration,
+        wordTimings,
+        mood,
+        disclaimer: "This is a mindfulness exercise for relaxation purposes. It is not a substitute for professional mental health care.",
+      });
+    } catch (error: any) {
+      console.error("Error generating guided moment:", error);
+      res.status(500).json({ error: "Failed to generate guided moment. Please try again." });
     }
   });
 

@@ -5,6 +5,7 @@ import {
   Pressable,
   Modal,
   ActivityIndicator,
+  ScrollView,
 } from "react-native";
 import Animated, {
   FadeIn,
@@ -17,6 +18,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 
 import { ThemedText } from "@/components/ThemedText";
+import { GuidedMomentPlayer } from "@/components/GuidedMomentPlayer";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { apiRequest, getApiUrl } from "@/lib/query-client";
@@ -69,6 +71,7 @@ export function MoodCheckin({ onStartBreathing, onStartAffirmations, visible, on
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState<MoodResponse | null>(null);
+  const [showGuidedMoment, setShowGuidedMoment] = useState(false);
 
   const handleMoodSelect = useCallback(async (mood: MoodOption) => {
     try {
@@ -117,6 +120,7 @@ export function MoodCheckin({ onStartBreathing, onStartAffirmations, visible, on
     setTimeout(() => {
       setSelectedMood(null);
       setResponse(null);
+      setShowGuidedMoment(false);
     }, 300);
   }, [onClose]);
 
@@ -134,6 +138,12 @@ export function MoodCheckin({ onStartBreathing, onStartAffirmations, visible, on
             onPress={(e) => e.stopPropagation()}
           >
             <View style={styles.modalHandle} />
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              bounces={false}
+              keyboardShouldPersistTaps="handled"
+              style={styles.modalScroll}
+            >
 
             {!selectedMood ? (
               <Animated.View entering={FadeIn.duration(200)}>
@@ -221,6 +231,31 @@ export function MoodCheckin({ onStartBreathing, onStartAffirmations, visible, on
                   </LinearGradient>
                 </Pressable>
 
+                {!showGuidedMoment ? (
+                  <Pressable
+                    onPress={() => {
+                      setShowGuidedMoment(true);
+                      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+                    }}
+                    style={[styles.guidedMomentButton, { borderColor: `${ACCENT_GOLD}30` }]}
+                    testID="button-try-guided-moment"
+                  >
+                    <Feather name="headphones" size={16} color={ACCENT_GOLD} />
+                    <ThemedText type="caption" style={{ color: ACCENT_GOLD, marginLeft: 6, fontWeight: "600" }}>
+                      Or try a Guided Moment
+                    </ThemedText>
+                  </Pressable>
+                ) : null}
+
+                {showGuidedMoment && selectedMood ? (
+                  <GuidedMomentPlayer
+                    mood={selectedMood}
+                    timeOfDay={getTimeOfDay()}
+                    visible={showGuidedMoment}
+                    onClose={() => setShowGuidedMoment(false)}
+                  />
+                ) : null}
+
                 <Pressable onPress={handleClose} style={styles.dismissButton}>
                   <ThemedText type="caption" style={{ color: theme.textSecondary }}>
                     Maybe later
@@ -228,6 +263,7 @@ export function MoodCheckin({ onStartBreathing, onStartAffirmations, visible, on
                 </Pressable>
               </Animated.View>
             ) : null}
+            </ScrollView>
           </Pressable>
         </Pressable>
       </Modal>
@@ -247,6 +283,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingBottom: 40,
     paddingTop: Spacing.md,
+    maxHeight: "90%",
+  },
+  modalScroll: {
+    flexGrow: 0,
   },
   modalHandle: {
     width: 40,
@@ -347,6 +387,15 @@ const styles = StyleSheet.create({
     color: NAVY,
     fontWeight: "700",
     fontSize: 16,
+  },
+  guidedMomentButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 10,
+    marginTop: Spacing.sm,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
   },
   dismissButton: {
     alignItems: "center",

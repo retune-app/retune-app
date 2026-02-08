@@ -634,6 +634,120 @@
       font-size: 14px;
     }
 
+    .neuroscience {
+      padding: 100px 0;
+      background: linear-gradient(180deg, var(--navy-dark) 0%, var(--navy-mid) 50%, var(--navy-dark) 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .neuroscience::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(ellipse, rgba(201, 162, 39, 0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .neuroscience .section-header {
+      margin-bottom: 20px;
+    }
+
+    .neuroscience-lead {
+      text-align: center;
+      font-size: 20px;
+      color: var(--white-muted);
+      max-width: 600px;
+      margin: 0 auto 16px;
+      line-height: 1.7;
+    }
+
+    .neuroscience-lead strong {
+      color: var(--white);
+    }
+
+    .neuroscience-sub {
+      text-align: center;
+      font-size: 15px;
+      color: var(--white-muted);
+      max-width: 520px;
+      margin: 0 auto 60px;
+      opacity: 0.8;
+    }
+
+    .science-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 28px;
+      margin-bottom: 60px;
+    }
+
+    .science-card {
+      padding: 36px 28px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      text-align: center;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .science-card:hover {
+      transform: translateY(-8px);
+      background: rgba(255, 255, 255, 0.05);
+      border-color: var(--gold-glow);
+    }
+
+    .science-icon {
+      width: 64px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(201, 162, 39, 0.12);
+      border-radius: 16px;
+      margin: 0 auto 20px;
+    }
+
+    .science-card h3 {
+      font-size: 20px;
+      margin-bottom: 12px;
+      color: var(--white);
+    }
+
+    .science-card p {
+      color: var(--white-muted);
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    .neuroscience-conclusion {
+      text-align: center;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .neuroscience-conclusion p {
+      font-size: 17px;
+      color: var(--white-muted);
+      line-height: 1.7;
+      margin-bottom: 16px;
+    }
+
+    .neuroscience-tagline {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--primary-gold) 0%, var(--gold-light) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
     @media (max-width: 1024px) {
       .hero .container {
         grid-template-columns: 1fr;
@@ -665,6 +779,14 @@
       .steps-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: 20px;
+      }
+
+      .science-grid {
+        grid-template-columns: 1fr;
+        max-width: 480px;
+        margin-left: auto;
+        margin-right: auto;
+        margin-bottom: 60px;
       }
 
       .rsvp-portrait {
@@ -838,6 +960,56 @@
         <div class="phone-frame">
           <img src="/landing-assets/hero-dark.jpg" alt="Retuned Affirmation Library" class="phone-mockup">
         </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="neuroscience" id="science">
+    <div class="container">
+      <div class="section-header">
+        <h2>Why Your Own Voice?</h2>
+      </div>
+      <p class="neuroscience-lead">
+        Your brain is hardwired to trust your own voice more than anyone else's.
+      </p>
+      <p class="neuroscience-sub">
+        When you hear yourself say "I am capable," your subconscious receives it as <strong>truth</strong> — not external advice. This is neuroscience, not wishful thinking.
+      </p>
+      <div class="science-grid">
+        <div class="science-card">
+          <div class="science-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--primary-gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+            </svg>
+          </div>
+          <h3>Self-Referential Processing</h3>
+          <p>Your brain activates different neural pathways when hearing your own voice vs. a stranger's — engaging the self-identity center, not just auditory processing.</p>
+        </div>
+        <div class="science-card">
+          <div class="science-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--primary-gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+            </svg>
+          </div>
+          <h3>Stronger Belief Formation</h3>
+          <p>Affirmations in your own voice create significantly deeper neural connections than external voices — your brain treats them as identity confirmation, not advice.</p>
+        </div>
+        <div class="science-card">
+          <div class="science-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--primary-gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+              <line x1="9" y1="9" x2="9.01" y2="9"/>
+              <line x1="15" y1="9" x2="15.01" y2="9"/>
+            </svg>
+          </div>
+          <h3>Reduced Cognitive Resistance</h3>
+          <p>Your mind doesn't question or filter messages from yourself. Celebrity-voiced apps face a natural barrier — your brain treats them as external advice to evaluate.</p>
+        </div>
+      </div>
+      <div class="neuroscience-conclusion">
+        <p>RETUNED combines AI voice cloning with personalized affirmations to rewire your inner dialogue at the neurological level.</p>
+        <span class="neuroscience-tagline">This isn't self-help. This is neuroscience.</span>
       </div>
     </div>
   </section>

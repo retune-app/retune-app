@@ -772,11 +772,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const audioResult = await generateAudio(
-        script,
-        voiceIdToUse,
-        usedPersonalVoice
-      );
+      let audioResult;
+      try {
+        audioResult = await generateAudio(
+          script,
+          voiceIdToUse,
+          usedPersonalVoice
+        );
+      } catch (genError: any) {
+        if (usedPersonalVoice && genError?.message?.includes("QUOTA_EXCEEDED")) {
+          console.log("Personal voice quota exceeded, falling back to AI voice");
+          const fallbackGender = usedGender || "female";
+          const fallbackVoiceId = fallbackGender === "male"
+            ? (userWithPrefs?.preferredMaleVoiceId || VOICE_OPTIONS.male[0].id)
+            : (userWithPrefs?.preferredFemaleVoiceId || VOICE_OPTIONS.female[0].id);
+          usedPersonalVoice = false;
+          voiceIdToUse = fallbackVoiceId;
+          audioResult = await generateAudio(script, fallbackVoiceId, false);
+        } else {
+          throw genError;
+        }
+      }
 
       if (usedPersonalVoice) {
         await db
@@ -816,7 +832,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(newAffirmation);
     } catch (error: any) {
       console.error("Error creating affirmation:", error);
-      if (error?.message?.includes("PERSONAL_VOICE_FAILED")) {
+      if (error?.message?.includes("QUOTA_EXCEEDED")) {
+        res.status(429).json({ error: "QUOTA_EXCEEDED", message: "Your voice credits have been used up for this period. The affirmation will be created with an AI voice instead." });
+      } else if (error?.message?.includes("PERSONAL_VOICE_FAILED")) {
         res.status(422).json({ error: "PERSONAL_VOICE_FAILED", message: "Could not generate audio with your personal voice. You can try again or switch to an AI voice." });
       } else if (error?.message?.includes("TTS_UNAVAILABLE")) {
         res.status(503).json({ error: "Voice services are temporarily unavailable. Please try again later." });

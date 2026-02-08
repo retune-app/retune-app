@@ -1092,7 +1092,7 @@ const styles = StyleSheet.create({
     width: "100%",
     padding: Spacing.lg,
     borderRadius: BorderRadius.lg,
-    marginTop: Spacing.lg,
+    marginTop: Spacing["3xl"],
     overflow: "hidden",
   },
   promptHeader: {

@@ -57,6 +57,19 @@ export const BREATHING_TECHNIQUES: BreathingTechnique[] = [
     benefits: "Heart coherence",
     color: "#C9A227",
   },
+  {
+    id: "energizing",
+    name: "Energizing Breath",
+    description: "Quick 2-1 rhythm to boost energy and alertness",
+    pattern: "2-1 seconds",
+    icon: "zap",
+    phases: [
+      { phase: "inhale", duration: 2 },
+      { phase: "exhale", duration: 1 },
+    ],
+    benefits: "Energy & alertness",
+    color: "#E85D5D",
+  },
 ];
 
 export const PHASE_LABELS: Record<BreathPhase, string> = {

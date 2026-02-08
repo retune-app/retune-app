@@ -94,6 +94,7 @@ export default function BreathingScreen() {
   const [showCompletionAnimation, setShowCompletionAnimation] = useState(false);
   const [progressIndicatorEnabled, setProgressIndicatorEnabled] = useState(true);
   const [showTechniqueTips, setShowTechniqueTips] = useState(true);
+  const [showTechniqueInfo, setShowTechniqueInfo] = useState(false);
 
   const [voiceVolume, setVoiceVolume] = useState(0.8);
 
@@ -847,6 +848,26 @@ export default function BreathingScreen() {
             />
           </View>
 
+          {!isPlaying ? (
+            <Pressable
+              testID="button-technique-info"
+              onPress={() => {
+                try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+                setShowTechniqueInfo(true);
+              }}
+              style={[
+                styles.techniqueInfoButton,
+                {
+                  backgroundColor: `${selectedTechnique.color}14`,
+                  borderWidth: 1,
+                  borderColor: `${selectedTechnique.color}26`,
+                },
+              ]}
+            >
+              <Feather name="info" size={18} color={`${selectedTechnique.color}66`} />
+            </Pressable>
+          ) : null}
+
         </Animated.View>
 
         {/* Control Buttons - Horizontal below circle */}
@@ -1144,20 +1165,79 @@ export default function BreathingScreen() {
                   <ThemedText type="small" style={{ color: technique.color, marginTop: 4 }}>
                     {technique.benefits}
                   </ThemedText>
-                  {showTechniqueTips ? (
-                    <View style={{ flexDirection: "row", alignItems: "flex-start", marginTop: 6, gap: 4 }}>
-                      <Feather name="info" size={12} color={theme.textSecondary} style={{ marginTop: 1 }} />
-                      <ThemedText type="small" style={{ color: theme.textSecondary, flex: 1, fontStyle: "italic", lineHeight: 16 }}>
-                        {technique.scienceTip}
-                      </ThemedText>
-                    </View>
-                  ) : null}
                 </View>
                 {selectedTechnique.id === technique.id ? (
                   <Feather name="check-circle" size={24} color={technique.color} />
                 ) : null}
               </Pressable>
             ))}
+          </View>
+        </Pressable>
+      </Modal>
+
+      {/* Technique Info Modal */}
+      <Modal
+        visible={showTechniqueInfo}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowTechniqueInfo(false)}
+      >
+        <Pressable
+          style={[styles.modalOverlay, { justifyContent: "center", alignItems: "center" }]}
+          onPress={() => setShowTechniqueInfo(false)}
+        >
+          <View
+            style={[
+              styles.techniqueInfoModalContent,
+              { backgroundColor: theme.backgroundRoot },
+            ]}
+            onStartShouldSetResponder={() => true}
+          >
+            <View style={styles.modalHandle} />
+
+            <View style={[styles.techniqueInfoIconCircle, { backgroundColor: `${selectedTechnique.color}20` }]}>
+              <Feather name={selectedTechnique.icon as any} size={32} color={selectedTechnique.color} />
+            </View>
+
+            <ThemedText type="h3" style={{ textAlign: "center", marginTop: Spacing.md }}>
+              {selectedTechnique.name}
+            </ThemedText>
+            <ThemedText type="caption" style={{ color: selectedTechnique.color, textAlign: "center", marginTop: Spacing.xs }}>
+              {selectedTechnique.pattern}
+            </ThemedText>
+
+            <ThemedText type="body" style={{ color: theme.textSecondary, textAlign: "center", marginTop: Spacing.md }}>
+              {selectedTechnique.description}
+            </ThemedText>
+
+            <View style={[styles.techniqueInfoScienceTip, { backgroundColor: `${selectedTechnique.color}10`, borderColor: `${selectedTechnique.color}20` }]}>
+              <Feather name="info" size={14} color={selectedTechnique.color} style={{ marginTop: 2 }} />
+              <ThemedText type="small" style={{ color: theme.textSecondary, flex: 1, fontStyle: "italic", lineHeight: 18 }}>
+                {selectedTechnique.scienceTip}
+              </ThemedText>
+            </View>
+
+            <View style={styles.techniqueInfoBenefitsList}>
+              {selectedTechnique.detailedBenefits.map((benefit, index) => (
+                <View key={index} style={styles.techniqueInfoBenefitRow}>
+                  <View style={[styles.techniqueInfoBenefitIcon, { backgroundColor: `${selectedTechnique.color}15` }]}>
+                    <Feather name={benefit.icon as any} size={16} color={selectedTechnique.color} />
+                  </View>
+                  <ThemedText type="body" style={{ flex: 1 }}>
+                    {benefit.text}
+                  </ThemedText>
+                </View>
+              ))}
+            </View>
+
+            <Pressable
+              onPress={() => setShowTechniqueInfo(false)}
+              style={[styles.techniqueInfoDismissButton, { backgroundColor: `${selectedTechnique.color}15` }]}
+            >
+              <ThemedText type="body" style={{ color: selectedTechnique.color, fontWeight: "600" }}>
+                Got it
+              </ThemedText>
+            </Pressable>
           </View>
         </Pressable>
       </Modal>
@@ -1655,5 +1735,66 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: Spacing.md,
+  },
+
+  techniqueInfoButton: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  techniqueInfoModalContent: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: Spacing.xxl,
+    paddingBottom: 48,
+    maxWidth: "85%",
+    alignSelf: "center",
+    width: "100%",
+    borderRadius: 20,
+    marginBottom: Spacing.xl,
+  },
+  techniqueInfoIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: "center",
+    justifyContent: "center",
+    alignSelf: "center",
+  },
+  techniqueInfoScienceTip: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: Spacing.sm,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.sm,
+    borderWidth: 1,
+    marginTop: Spacing.lg,
+  },
+  techniqueInfoBenefitsList: {
+    marginTop: Spacing.lg,
+    gap: Spacing.md,
+  },
+  techniqueInfoBenefitRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.md,
+  },
+  techniqueInfoBenefitIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  techniqueInfoDismissButton: {
+    marginTop: Spacing.xl,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.full,
+    alignItems: "center",
   },
 });

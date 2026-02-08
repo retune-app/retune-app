@@ -173,6 +173,17 @@ export const notificationSettings = pgTable("notification_settings", {
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 
+// Reminders for breathe/believe activities
+export const reminders = pgTable("reminders", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  activityType: text("activity_type").notNull(),
+  time: text("time").notNull(),
+  enabled: boolean("enabled").default(true),
+  notificationMessage: text("notification_message"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
 // Collections for organizing affirmations
 export const collections = pgTable("collections", {
   id: serial("id").primaryKey(),
@@ -198,6 +209,7 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   collections: many(collections),
   customCategories: many(customCategories),
   notificationSettings: one(notificationSettings),
+  reminders: many(reminders),
   listeningSessions: many(listeningSessions),
 }));
 
@@ -212,6 +224,10 @@ export const breathingSessionsRelations = relations(breathingSessions, ({ one })
 
 export const notificationSettingsRelations = relations(notificationSettings, ({ one }) => ({
   user: one(users, { fields: [notificationSettings.userId], references: [users.id] }),
+}));
+
+export const remindersRelations = relations(reminders, ({ one }) => ({
+  user: one(users, { fields: [reminders.userId], references: [users.id] }),
 }));
 
 export const customCategoriesRelations = relations(customCategories, ({ one }) => ({
@@ -301,6 +317,11 @@ export const insertSupportRequestSchema = createInsertSchema(supportRequests).om
   status: true,
 });
 
+export const insertReminderSchema = createInsertSchema(reminders).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type Conversation = typeof conversations.$inferSelect;
 export type InsertConversation = z.infer<typeof insertConversationSchema>;
@@ -324,3 +345,5 @@ export type BreathingSession = typeof breathingSessions.$inferSelect;
 export type InsertBreathingSession = z.infer<typeof insertBreathingSessionSchema>;
 export type SupportRequest = typeof supportRequests.$inferSelect;
 export type InsertSupportRequest = z.infer<typeof insertSupportRequestSchema>;
+export type Reminder = typeof reminders.$inferSelect;
+export type InsertReminder = z.infer<typeof insertReminderSchema>;

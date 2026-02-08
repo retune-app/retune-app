@@ -12,6 +12,7 @@ import Animated, {
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import { useQuery } from "@tanstack/react-query";
 
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
@@ -110,6 +111,22 @@ export function WelcomeSection({
   const { greeting, suggestion, icon } = useMemo(() => getTimeGreeting(), []);
   const suggestedCategory = useMemo(() => getSuggestedCategory(), []);
 
+  const timeOfDay = useMemo(() => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) return "morning";
+    if (hour >= 12 && hour < 17) return "afternoon";
+    if (hour >= 17 && hour < 21) return "evening";
+    return "night";
+  }, []);
+
+  const { data: aiGreeting } = useQuery<{ message: string; cached: boolean }>({
+    queryKey: [`/api/daily-greeting?timeOfDay=${timeOfDay}`],
+    staleTime: 1000 * 60 * 60,
+    retry: false,
+  });
+
+  const displaySuggestion = aiGreeting?.message || suggestion;
+
   const displayName = userName?.split(" ")[0] || "there";
   const hasQuickAction = lastPlayedAffirmation || suggestedAffirmation;
 
@@ -141,7 +158,7 @@ export function WelcomeSection({
             </ThemedText>
           </View>
           <ThemedText type="body" style={[styles.suggestion, { color: isDark ? theme.textSecondary : "#3A4A5E" }]}>
-            {suggestion}
+            {displaySuggestion}
           </ThemedText>
         </View>
         {onSettingsPress ? (

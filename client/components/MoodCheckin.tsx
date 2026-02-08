@@ -75,7 +75,7 @@ export function MoodCheckin({ onStartBreathing, onStartAffirmations, visible, on
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState<MoodResponse | null>(null);
-  const [showGuidedMoment, setShowGuidedMoment] = useState(false);
+
 
   const handleMoodSelect = useCallback(async (mood: MoodOption) => {
     try {
@@ -124,7 +124,6 @@ export function MoodCheckin({ onStartBreathing, onStartAffirmations, visible, on
     setTimeout(() => {
       setSelectedMood(null);
       setResponse(null);
-      setShowGuidedMoment(false);
     }, 300);
   }, [onClose]);
 

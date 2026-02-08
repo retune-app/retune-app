@@ -52,6 +52,8 @@ function getTimeOfDay(): string {
 interface MoodCheckinProps {
   onStartBreathing?: (techniqueId: string) => void;
   onStartAffirmations?: () => void;
+  visible: boolean;
+  onClose: () => void;
 }
 
 interface MoodResponse {
@@ -62,9 +64,8 @@ interface MoodResponse {
   techniqueName: string;
 }
 
-export function MoodCheckin({ onStartBreathing, onStartAffirmations }: MoodCheckinProps) {
+export function MoodCheckin({ onStartBreathing, onStartAffirmations, visible, onClose }: MoodCheckinProps) {
   const { theme } = useTheme();
-  const [showModal, setShowModal] = useState(false);
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState<MoodResponse | null>(null);
@@ -112,47 +113,17 @@ export function MoodCheckin({ onStartBreathing, onStartAffirmations }: MoodCheck
   }, [response, onStartBreathing, onStartAffirmations]);
 
   const handleClose = useCallback(() => {
-    setShowModal(false);
+    onClose();
     setTimeout(() => {
       setSelectedMood(null);
       setResponse(null);
     }, 300);
-  }, []);
-
-  const handleOpen = useCallback(() => {
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch (e) {}
-    setShowModal(true);
-  }, []);
+  }, [onClose]);
 
   return (
     <>
-      <Pressable
-        onPress={handleOpen}
-        style={[
-          styles.triggerButton,
-          { backgroundColor: theme.cardBackground, borderColor: theme.border },
-          Shadows.small,
-        ]}
-        testID="button-mood-checkin"
-      >
-        <View style={[styles.triggerIconWrap, { backgroundColor: `${ACCENT_GOLD}15` }]}>
-          <Feather name="compass" size={20} color={ACCENT_GOLD} />
-        </View>
-        <View style={styles.triggerTextWrap}>
-          <ThemedText type="body" style={{ fontWeight: "600", fontSize: 14 }}>
-            How are you feeling?
-          </ThemedText>
-          <ThemedText type="caption" style={{ color: theme.textSecondary, fontSize: 12 }}>
-            Get a personalized recommendation
-          </ThemedText>
-        </View>
-        <Feather name="chevron-right" size={18} color={theme.textSecondary} />
-      </Pressable>
-
       <Modal
-        visible={showModal}
+        visible={visible}
         animationType="fade"
         transparent
         onRequestClose={handleClose}
@@ -265,27 +236,6 @@ export function MoodCheckin({ onStartBreathing, onStartAffirmations }: MoodCheck
 }
 
 const styles = StyleSheet.create({
-  triggerButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm + 2,
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1,
-    marginHorizontal: Spacing.md,
-    marginBottom: Spacing.md,
-  },
-  triggerIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: Spacing.sm,
-  },
-  triggerTextWrap: {
-    flex: 1,
-  },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(15, 28, 63, 0.7)",

@@ -26,6 +26,7 @@ interface WelcomeSectionProps {
   onQuickPlay?: () => void;
   onSuggestionPress?: () => void;
   onSettingsPress?: () => void;
+  onMoodPress?: () => void;
   isPlaying?: boolean;
 }
 
@@ -80,6 +81,7 @@ export function WelcomeSection({
   onQuickPlay,
   onSuggestionPress,
   onSettingsPress,
+  onMoodPress,
   isPlaying = false,
 }: WelcomeSectionProps) {
   const { theme, isDark, setThemeMode } = useTheme();
@@ -161,18 +163,33 @@ export function WelcomeSection({
             {displaySuggestion}
           </ThemedText>
         </View>
-        {onSettingsPress ? (
-          <Pressable
-            onPress={(e) => {
-              e.stopPropagation();
-              handleSettingsPress();
-            }}
-            style={[styles.settingsButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
-            testID="button-welcome-settings"
-          >
-            <Feather name="settings" size={22} color={theme.gold} />
-          </Pressable>
-        ) : null}
+        <View style={styles.headerActions}>
+          {onMoodPress ? (
+            <Pressable
+              onPress={(e) => {
+                e.stopPropagation();
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                onMoodPress();
+              }}
+              style={[styles.headerActionButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
+              testID="button-mood-checkin"
+            >
+              <Feather name="compass" size={20} color={theme.gold} />
+            </Pressable>
+          ) : null}
+          {onSettingsPress ? (
+            <Pressable
+              onPress={(e) => {
+                e.stopPropagation();
+                handleSettingsPress();
+              }}
+              style={[styles.headerActionButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
+              testID="button-welcome-settings"
+            >
+              <Feather name="settings" size={20} color={theme.gold} />
+            </Pressable>
+          ) : null}
+        </View>
       </Pressable>
     </View>
   );
@@ -180,13 +197,13 @@ export function WelcomeSection({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.xs,
   },
   greetingRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: Spacing.md,
+    marginBottom: 0,
   },
   greetingRowLight: {
     backgroundColor: "rgba(201, 162, 39, 0.12)",
@@ -211,10 +228,15 @@ const styles = StyleSheet.create({
   greetingContent: {
     flex: 1,
   },
-  settingsButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  headerActionButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: "center",
     alignItems: "center",
   },

@@ -96,6 +96,7 @@ export default function BreathingScreen() {
   const [progressIndicatorEnabled, setProgressIndicatorEnabled] = useState(true);
 
   const [showTechniqueInfo, setShowTechniqueInfo] = useState(false);
+  const [showMoodCheckin, setShowMoodCheckin] = useState(false);
 
   const [voiceVolume, setVoiceVolume] = useState(0.8);
 
@@ -755,25 +756,8 @@ export default function BreathingScreen() {
               suggestedAffirmation={suggestedAffirmation as any}
               onQuickPlay={handleQuickPlay}
               onSettingsPress={() => navigation.navigate("Main", { screen: "SettingsTab" })}
+              onMoodPress={() => setShowMoodCheckin(true)}
               isPlaying={isAudioPlaying}
-            />
-          </Animated.View>
-        ) : null}
-
-        {/* Mood Check-in - hidden during breathing session */}
-        {!isPlaying ? (
-          <Animated.View entering={FadeIn.delay(50).duration(600)}>
-            <MoodCheckin
-              onStartBreathing={(techniqueId) => {
-                const technique = BREATHING_TECHNIQUES.find(t => t.id === techniqueId);
-                if (technique) {
-                  setSelectedTechnique(technique);
-                  AsyncStorage.setItem(DEFAULT_BREATHING_TECHNIQUE_KEY, technique.id).catch(() => {});
-                }
-              }}
-              onStartAffirmations={() => {
-                navigation.navigate("Main", { screen: "AffirmTab" });
-              }}
             />
           </Animated.View>
         ) : null}
@@ -1271,6 +1255,21 @@ export default function BreathingScreen() {
           </Animated.View>
         </View>
       </Modal>
+
+      <MoodCheckin
+        visible={showMoodCheckin}
+        onClose={() => setShowMoodCheckin(false)}
+        onStartBreathing={(techniqueId) => {
+          const technique = BREATHING_TECHNIQUES.find(t => t.id === techniqueId);
+          if (technique) {
+            setSelectedTechnique(technique);
+            AsyncStorage.setItem(DEFAULT_BREATHING_TECHNIQUE_KEY, technique.id).catch(() => {});
+          }
+        }}
+        onStartAffirmations={() => {
+          navigation.navigate("Main", { screen: "AffirmTab" });
+        }}
+      />
 
     </ThemedView>
   );

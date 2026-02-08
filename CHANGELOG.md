@@ -1,5 +1,37 @@
 # RETUNED Changelog
 
+## Version 1.3 (Build 3) — February 8, 2026
+
+### Sound Library UX Redesign
+- Replaced volume bar with native slider control for more precise volume adjustment.
+- Tap any sound row to preview it (5-second auto-play with auto-stop).
+- Enlarged radio button (28x28) is now the only selection method for choosing sounds.
+- Marked Meditation category as "Coming Soon" in the Sound Library.
+
+### Audio Ducking System
+- Background music automatically reduces to 40% of set volume when voice affirmation plays during breathing sessions.
+- Volume restores smoothly when voice stops or session ends.
+
+### Breathing Screen Improvements
+- Added volume slider to portrait breathing screen (positioned below play/stop buttons, subtle white styling, only visible when music/voice is enabled).
+- Moved X close button higher on screen (closer to top of safe area) for better accessibility.
+
+### RSVP Focus Mode
+- Adjusted all RSVP font sizes for better fit in portrait mode (S: 24, M: 32, L: 40, XL: 52).
+- Added larger landscape-only font size (72px) for immersive fullscreen focus mode.
+- Default font size for new users is Medium (M).
+
+### Player Screen
+- Reduced affirmation title font size for better visual balance.
+- Added extra top spacing to RSVP/visualizer area so content doesn't feel cramped near the header.
+
+### Code Cleanup
+- Removed conversation screenshots and unnecessary files from attached_assets/.
+- Removed debug console.log statements from client code.
+- Version bumped to 1.3 Build 3.
+
+---
+
 ## Version 1.3 (Build 2) — February 7, 2026
 
 ### Agent Coordination System

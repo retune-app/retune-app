@@ -240,7 +240,7 @@ export default function BreathingScreen() {
       
       sound.setOnPlaybackStatusUpdate((status) => {
         if ('error' in status && status.error) {
-          console.log('Affirmation playback issue, will retry:', status.error);
+          console.warn('Affirmation playback issue, will retry:', status.error);
           sound.unloadAsync().catch(() => {});
           affirmationSoundRef.current = null;
         }
@@ -248,7 +248,7 @@ export default function BreathingScreen() {
       
       affirmationSoundRef.current = sound;
     } catch (error) {
-      console.log('Could not play affirmation loop, skipping:', error);
+      console.warn('Could not play affirmation loop, skipping:', error);
     }
   }, [backgroundAffirmation]);
 

@@ -30,7 +30,7 @@ Preferred communication style: Simple, everyday language.
 - **Authentication**: Session-based for web, token-based for mobile.
 - **Notification Settings**: Customizable daily reminder settings.
 - **Voice Selection System**: Allows users to choose AI voices or clone their own, with UI for management and comparison.
-- **Security & Privacy**: Explicit voice consent, immediate deletion of voice recording files post-cloning, usage limits (2 voice clones, 20 AI affirmations/month), rate limiting on AI endpoints, and GDPR-compliant "Delete My Data" functionality.
+- **Security & Privacy**: Explicit voice consent, immediate deletion of voice recording files post-cloning, usage limits (5 voice clones, 20 AI affirmations/month), rate limiting on AI endpoints, and GDPR-compliant "Delete My Data" functionality.
 - **First-Time User Experience (FTUE)**: Onboarding slides, default landing on Believe tab, deferred voice setup with a nudge, first-play celebration, and contextual hints/tooltips.
 - **Navigation**: 2-tab structure (Breathe, Believe) with a central Create (+) button. Floating settings button.
 - **UI/UX Design**: "Serene Empowerment" theme with Primary Gold and Navy colors, Nunito typography, and custom components for enhanced experience (e.g., `GoldShimmer`, `BreathingPulse`, `MiniPlayer`). Haptic feedback and custom screen transitions are integrated.

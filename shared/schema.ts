@@ -18,8 +18,8 @@ export const users = pgTable("users", {
   voiceId: text("voice_id"),
   preferredVoiceType: text("preferred_voice_type").default("ai"), // 'personal' or 'ai'
   preferredAiGender: text("preferred_ai_gender").default("female"), // 'male' or 'female'
-  preferredMaleVoiceId: text("preferred_male_voice_id").default("onwK4e9ZLuTAKqWW03F9"), // Default: Daniel
-  preferredFemaleVoiceId: text("preferred_female_voice_id").default("hpp4J3VqNfWAUOO0d1Us"), // Default: Bella
+  preferredMaleVoiceId: text("preferred_male_voice_id").default("hume_orion"), // Default: Orion (Hume AI)
+  preferredFemaleVoiceId: text("preferred_female_voice_id").default("hume_seraphina"), // Default: Seraphina (Hume AI)
   // Usage limits for App Store compliance
   voiceClonesUsed: integer("voice_clones_used").default(0), // Max 2 lifetime clones
   affirmationsThisMonth: integer("affirmations_this_month").default(0), // Max 10 AI-generated per month

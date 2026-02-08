@@ -330,25 +330,17 @@ const directOpenAI = process.env.OPENAI_API_KEY
   ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   : null;
 
-const ELEVENLABS_TO_OPENAI_VOICE_MAP: Record<string, string> = {
-  "hpp4J3VqNfWAUOO0d1Us": "nova",     // Bella
-  "EXAVITQu4vr4xnSDxMaL": "shimmer",  // Sarah
-  "FGY2WhTYpPnrIDTdsKH5": "alloy",    // Laura
-  "Xb7hH8MSUJpSbSDYk0k2": "nova",     // Alice
-  "XrExE9yKIg1WjnnlVkGX": "shimmer",  // Matilda
-  "cgSgspJ2msm6clMCkdW9": "alloy",    // Jessica
-  "pFZP5JQG7iQjIQuC4Bku": "nova",     // Lily
-  "onwK4e9ZLuTAKqWW03F9": "onyx",     // Daniel
-  "CwhRBWXzGAHq8TQ4Fs17": "echo",     // Roger
-  "IKne3meq5aSn9XLyUdCD": "fable",    // Charlie
-  "JBFqnCBsd6RMkjVDRZzb": "onyx",     // George
-  "TX3LPaxmHKxFdv7VOQHJ": "echo",     // Liam
-  "bIHbv24MWmeRgasZH58o": "fable",    // Will
-  "cjVigY5qzO86Huf0OWal": "onyx",     // Eric
-  "iP95p4xoKVk53GoZ742B": "echo",     // Chris
-  "nPczCjzI2devNBz1zQrb": "onyx",     // Brian
-  "pNInz6obpgDQGcFmaJgB": "echo",     // Adam
-  "pqHfZKP75CvOlQylNhV4": "onyx",     // Bill
+const HUME_TO_OPENAI_VOICE_MAP: Record<string, string> = {
+  "hume_seraphina": "nova",
+  "hume_lotus": "shimmer",
+  "hume_amber": "alloy",
+  "hume_nova": "nova",
+  "hume_willow": "shimmer",
+  "hume_orion": "onyx",
+  "hume_atlas": "echo",
+  "hume_sage": "fable",
+  "hume_summit": "onyx",
+  "hume_bodhi": "echo",
 };
 
 // Map Hume voice IDs to their voice names for TTS API calls
@@ -374,9 +366,9 @@ function isHumeVoice(voiceId?: string): boolean {
   return !!voiceId && voiceId.startsWith("hume_");
 }
 
-function getOpenAIVoiceForElevenLabsId(elevenLabsId?: string): "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer" {
-  if (!elevenLabsId) return "nova";
-  const mapped = ELEVENLABS_TO_OPENAI_VOICE_MAP[elevenLabsId];
+function getOpenAIFallbackVoice(voiceId?: string): "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer" {
+  if (!voiceId) return "nova";
+  const mapped = HUME_TO_OPENAI_VOICE_MAP[voiceId];
   return (mapped as any) || "nova";
 }
 
@@ -473,7 +465,7 @@ async function generateAudioSimple(text: string, voiceId: string, isPersonalVoic
   // Fallback to OpenAI
   if (directOpenAI) {
     try {
-      const openaiVoice = getOpenAIVoiceForElevenLabsId(voiceId);
+      const openaiVoice = getOpenAIFallbackVoice(voiceId);
       return await generateAudioSimpleOpenAI(text, openaiVoice);
     } catch (openaiError: any) {
       console.error("OpenAI simple TTS fallback also failed:", openaiError?.message || openaiError);
@@ -530,7 +522,7 @@ async function generateAudio(
   // Fallback to OpenAI for stock voices
   if (directOpenAI) {
     try {
-      const openaiVoice = getOpenAIVoiceForElevenLabsId(voiceId);
+      const openaiVoice = getOpenAIFallbackVoice(voiceId);
       return await generateAudioOpenAI(script, openaiVoice);
     } catch (openaiError: any) {
       console.error("OpenAI TTS fallback also failed:", openaiError?.message || openaiError);
@@ -1332,8 +1324,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         preferredVoiceType: user.preferredVoiceType || "ai",
         preferredAiGender: user.preferredAiGender || "female",
-        preferredMaleVoiceId: user.preferredMaleVoiceId || "onwK4e9ZLuTAKqWW03F9",
-        preferredFemaleVoiceId: user.preferredFemaleVoiceId || "hpp4J3VqNfWAUOO0d1Us",
+        preferredMaleVoiceId: user.preferredMaleVoiceId || "hume_orion",
+        preferredFemaleVoiceId: user.preferredFemaleVoiceId || "hume_seraphina",
         hasPersonalVoice: !!user.hasVoiceSample && !!user.voiceId,
       });
     } catch (error) {
@@ -2526,8 +2518,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             continue;
           }
           
-          // Use the assigned AI voice or default to Sarah
-          const voiceId = affirmation.aiVoiceId || "EXAVITQu4vr4xnSDxMaL";
+          const voiceId = affirmation.aiVoiceId || "hume_seraphina";
           
           // Generate audio
           const audioResult = await generateAudio(affirmation.script, voiceId);

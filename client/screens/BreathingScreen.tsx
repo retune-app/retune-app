@@ -312,7 +312,7 @@ export default function BreathingScreen() {
     if (musicEnabled) {
       if (selectedMusic === 'none') {
         // No music selected, default to rain
-        await setSelectedMusic('rain');
+        await setSelectedMusic('rain-soft');
       } else {
         await startBackgroundMusic();
       }
@@ -340,7 +340,7 @@ export default function BreathingScreen() {
     
     if (musicEnabled) {
       if (selectedMusic === 'none') {
-        await setSelectedMusic('rain');
+        await setSelectedMusic('rain-soft');
       } else {
         await startBackgroundMusic();
       }

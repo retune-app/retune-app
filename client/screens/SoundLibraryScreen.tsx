@@ -28,30 +28,59 @@ const profileBackgroundLight = require("../../assets/images/library-background-l
 const ACCENT_GOLD = "#C9A227";
 
 const CATEGORY_INFO = {
-  nature: {
-    title: "Nature Sounds",
-    subtitle: "Immerse yourself in peaceful natural environments",
+  rain: {
+    title: "Rain",
+    subtitle: "Soothing rainfall sounds",
     emoji: "cloud-rain",
-    color: "#4CAF50",
+    color: "#4FC3F7",
   },
-  binaural: {
-    title: "Binaural Beats",
-    subtitle: "Brainwave entrainment for focus & relaxation",
-    emoji: "activity",
-    color: "#9C27B0",
+  ocean: {
+    title: "Ocean",
+    subtitle: "Calming waves & coastal sounds",
+    emoji: "droplet",
+    color: "#29B6F6",
+  },
+  forest: {
+    title: "Forest & Birds",
+    subtitle: "Peaceful natural environments",
+    emoji: "feather",
+    color: "#66BB6A",
+  },
+  meditation: {
+    title: "Meditation",
+    subtitle: "Ambient music for inner peace",
+    emoji: "heart",
+    color: "#E040FB",
   },
   solfeggio: {
     title: "Solfeggio Frequencies",
-    subtitle: "Ancient healing tones for mind & body",
+    subtitle: "Ancient healing tones",
     emoji: "star",
     color: ACCENT_GOLD,
+  },
+  binaural: {
+    title: "Binaural Beats",
+    subtitle: "Brainwave entrainment",
+    emoji: "activity",
+    color: "#9C27B0",
+  },
+  noise: {
+    title: "Noise",
+    subtitle: "Ambient noise for focus & sleep",
+    emoji: "radio",
+    color: "#78909C",
   },
 };
 
 function getCategoryColor(soundId: string): string {
-  if (["rain", "ocean", "forest", "wind"].includes(soundId)) return CATEGORY_INFO.nature.color;
-  if (["432hz", "528hz"].includes(soundId)) return CATEGORY_INFO.solfeggio.color;
-  return CATEGORY_INFO.binaural.color;
+  if (soundId.startsWith("rain-")) return CATEGORY_INFO.rain.color;
+  if (soundId.startsWith("ocean-")) return CATEGORY_INFO.ocean.color;
+  if (soundId.startsWith("forest-")) return CATEGORY_INFO.forest.color;
+  if (soundId.startsWith("meditation-")) return CATEGORY_INFO.meditation.color;
+  if (soundId.startsWith("solfeggio-")) return CATEGORY_INFO.solfeggio.color;
+  if (soundId.startsWith("binaural-")) return CATEGORY_INFO.binaural.color;
+  if (soundId.startsWith("noise-")) return CATEGORY_INFO.noise.color;
+  return CATEGORY_INFO.rain.color;
 }
 
 function RainAccent() {
@@ -214,19 +243,22 @@ function BinauralAccent({ color }: { color: string }) {
 }
 
 function AnimatedSoundAccent({ soundId }: { soundId: string }) {
-  switch (soundId) {
-    case "rain": return <RainAccent />;
-    case "ocean": return <OceanAccent />;
-    case "forest": return <ForestAccent />;
-    case "wind": return <WindAccent />;
-    case "432hz": return <SolfeggioAccent color={ACCENT_GOLD} />;
-    case "528hz": return <SolfeggioAccent color="#FF8F00" />;
-    case "theta": return <BinauralAccent color="#CE93D8" />;
-    case "alpha": return <BinauralAccent color="#FFB74D" />;
-    case "delta": return <BinauralAccent color="#90CAF9" />;
-    case "beta": return <BinauralAccent color="#FFD54F" />;
-    default: return null;
+  if (soundId.startsWith("rain-")) return <RainAccent />;
+  if (soundId.startsWith("ocean-")) return <OceanAccent />;
+  if (soundId.startsWith("forest-")) return <ForestAccent />;
+  if (soundId.startsWith("meditation-")) return <SolfeggioAccent color={CATEGORY_INFO.meditation.color} />;
+  if (soundId.startsWith("solfeggio-")) return <SolfeggioAccent color={ACCENT_GOLD} />;
+  if (soundId.startsWith("binaural-")) {
+    const binauralColors: Record<string, string> = {
+      "binaural-theta": "#CE93D8",
+      "binaural-alpha": "#FFB74D",
+      "binaural-delta": "#90CAF9",
+      "binaural-beta": "#FFD54F",
+    };
+    return <BinauralAccent color={binauralColors[soundId] || CATEGORY_INFO.binaural.color} />;
   }
+  if (soundId.startsWith("noise-")) return <WindAccent />;
+  return null;
 }
 
 function SelectedLeftBar({ color }: { color: string }) {
@@ -449,7 +481,7 @@ export default function SoundLibraryScreen() {
   const { theme, isDark } = useTheme();
   const { selectedMusic, setSelectedMusic, volume, setVolume } = useBackgroundMusic();
   
-  const { nature, binaural, solfeggio } = getSoundsByCategory();
+  const { rain, ocean, forest, meditation, solfeggio, binaural, noise } = getSoundsByCategory();
   
   const [previewingId, setPreviewingId] = useState<BackgroundMusicType | null>(null);
   const previewSoundRef = useRef<Audio.Sound | null>(null);
@@ -529,7 +561,7 @@ export default function SoundLibraryScreen() {
     await setSelectedMusic(id);
   };
 
-  const currentSelection = [...nature, ...binaural, ...solfeggio].find(o => o.id === selectedMusic);
+  const currentSelection = [...rain, ...ocean, ...forest, ...meditation, ...solfeggio, ...binaural, ...noise].find(o => o.id === selectedMusic);
 
   return (
     <ImageBackground
@@ -609,13 +641,40 @@ export default function SoundLibraryScreen() {
         ) : null}
 
         <CategorySection
-          category="nature"
-          options={nature}
+          category="rain"
+          options={rain}
           selectedMusic={selectedMusic}
           previewingId={previewingId}
           onSelectMusic={handleSelectMusic}
           onPreviewMusic={handlePreviewMusic}
           index={0}
+        />
+        <CategorySection
+          category="ocean"
+          options={ocean}
+          selectedMusic={selectedMusic}
+          previewingId={previewingId}
+          onSelectMusic={handleSelectMusic}
+          onPreviewMusic={handlePreviewMusic}
+          index={1}
+        />
+        <CategorySection
+          category="forest"
+          options={forest}
+          selectedMusic={selectedMusic}
+          previewingId={previewingId}
+          onSelectMusic={handleSelectMusic}
+          onPreviewMusic={handlePreviewMusic}
+          index={2}
+        />
+        <CategorySection
+          category="meditation"
+          options={meditation}
+          selectedMusic={selectedMusic}
+          previewingId={previewingId}
+          onSelectMusic={handleSelectMusic}
+          onPreviewMusic={handlePreviewMusic}
+          index={3}
         />
         <CategorySection
           category="solfeggio"
@@ -624,7 +683,7 @@ export default function SoundLibraryScreen() {
           previewingId={previewingId}
           onSelectMusic={handleSelectMusic}
           onPreviewMusic={handlePreviewMusic}
-          index={1}
+          index={4}
         />
         <CategorySection
           category="binaural"
@@ -633,11 +692,11 @@ export default function SoundLibraryScreen() {
           previewingId={previewingId}
           onSelectMusic={handleSelectMusic}
           onPreviewMusic={handlePreviewMusic}
-          index={2}
+          index={5}
         />
         
         <Animated.View 
-          entering={FadeInDown.delay(300).duration(400)}
+          entering={FadeInDown.delay(600).duration(400)}
           style={[styles.headphonesNote, { backgroundColor: `${theme.primary}15` }]}
         >
           <Feather name="headphones" size={16} color={theme.primary} />
@@ -645,6 +704,16 @@ export default function SoundLibraryScreen() {
             Binaural beats require headphones to work properly. Each ear needs to hear a slightly different frequency for your brain to perceive the beat.
           </ThemedText>
         </Animated.View>
+
+        <CategorySection
+          category="noise"
+          options={noise}
+          selectedMusic={selectedMusic}
+          previewingId={previewingId}
+          onSelectMusic={handleSelectMusic}
+          onPreviewMusic={handlePreviewMusic}
+          index={7}
+        />
       </ScrollView>
     </ImageBackground>
   );

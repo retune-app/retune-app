@@ -1092,6 +1092,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginTop: Spacing.xl,
     marginBottom: Spacing["3xl"],
+    marginHorizontal: -Spacing.lg,
     minHeight: 120,
   },
   infoContainer: {

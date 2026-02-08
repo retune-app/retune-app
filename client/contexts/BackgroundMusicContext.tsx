@@ -177,6 +177,12 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
 
     if (wasPlaying && type !== 'none') {
       try {
+        await Audio.setAudioModeAsync({
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: true,
+          shouldDuckAndroid: true,
+        });
+
         const { sound } = await Audio.Sound.createAsync(
           AUDIO_FILES[type],
           {
@@ -218,6 +224,12 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
     }
 
     try {
+      await Audio.setAudioModeAsync({
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: true,
+        shouldDuckAndroid: true,
+      });
+
       if (soundRef.current) {
         await soundRef.current.unloadAsync();
       }

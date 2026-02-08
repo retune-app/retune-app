@@ -147,7 +147,7 @@ export function RSVPDisplay({
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { borderColor: `${accentColor}30` }]}>
 
       <Animated.View style={[styles.wordContainer, animatedStyle]}>
         {currentWord &&
@@ -170,6 +170,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     minHeight: 200,
+    borderWidth: 1.5,
+    borderRadius: 20,
+    paddingVertical: 16,
+    paddingHorizontal: 12,
   },
   wordContainer: {
     flex: 1,

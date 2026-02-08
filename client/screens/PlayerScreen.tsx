@@ -1090,6 +1090,7 @@ const styles = StyleSheet.create({
   visualizerContainer: {
     alignItems: "center",
     justifyContent: "center",
+    marginTop: Spacing.xl,
     marginBottom: Spacing["3xl"],
     minHeight: 120,
   },

@@ -2411,10 +2411,26 @@ The suggested activity is: ${recommendation.technique}.`,
 
   app.post("/api/guided-moments/generate", requireAuth, guidedMomentLimiter, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { mood, timeOfDay, usePersonalVoice, voiceId, duration: rawDuration } = req.body;
+      const { mood, timeOfDay, usePersonalVoice, voiceId: rawVoiceId, duration: rawDuration } = req.body;
 
       if (!mood || !timeOfDay) {
         return res.status(400).json({ error: "mood and timeOfDay are required" });
+      }
+
+      let voiceId = rawVoiceId;
+      if (usePersonalVoice && !voiceId) {
+        const [voiceSample] = await db
+          .select({ voiceId: voiceSamples.voiceId })
+          .from(voiceSamples)
+          .where(and(eq(voiceSamples.userId, req.userId!), eq(voiceSamples.status, "completed")))
+          .orderBy(desc(voiceSamples.createdAt))
+          .limit(1);
+        if (voiceSample?.voiceId) {
+          voiceId = voiceSample.voiceId;
+          console.log(`Resolved personal voice clone ID: ${voiceId} for user ${req.userId}`);
+        } else {
+          console.warn(`User ${req.userId} requested personal voice but no completed voice clone found`);
+        }
       }
 
       const validMoods = ["calm", "stressed", "tired", "energized", "anxious", "grateful"];

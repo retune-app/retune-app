@@ -666,18 +666,6 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
   const renderBreathingRings = () => {
     const moodColors = MOOD_RING_COLORS[mood] || { primary: ACCENT_GOLD, secondary: `${ACCENT_GOLD}99` };
 
-    if (isCountingDown) {
-      return (
-        <View style={[styles.ringsContainer, { width: ringSize, height: ringSize }]}>
-          <View style={styles.ringsCenterContent}>
-            <ThemedText type="caption" style={styles.countdownInsideRings}>
-              {countdown}
-            </ThemedText>
-          </View>
-        </View>
-      );
-    }
-
     return (
     <View style={[styles.ringsContainer, { width: ringSize, height: ringSize }]}>
       <Animated.View
@@ -733,7 +721,11 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
       </Animated.View>
 
       <View style={styles.ringsCenterContent}>
-        {playerState === "generating" ? (
+        {isCountingDown ? (
+          <ThemedText type="caption" style={styles.countdownInsideRings}>
+            {countdown}
+          </ThemedText>
+        ) : playerState === "generating" ? (
           <View style={styles.centerTextContainer}>
             <Animated.View style={[styles.generatingPulse, generatingPulseStyle, { borderColor: moodColors.primary }]} />
           </View>
@@ -1368,10 +1360,13 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md,
   },
   countdownInsideRings: {
-    fontSize: 64,
+    fontSize: 36,
     fontWeight: "700",
     color: "#FFFFFF",
     textAlign: "center",
+    textShadowColor: "rgba(0,0,0,0.6)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 6,
   },
   controlsOverlay: {
     ...StyleSheet.absoluteFillObject,

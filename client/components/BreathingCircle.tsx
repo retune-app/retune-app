@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { View, StyleSheet, Text } from "react-native";
 import Animated, {
   useSharedValue,
@@ -47,9 +47,14 @@ export default function BreathingCircle({
   const idlePulse = useSharedValue(1);
   const [currentPhase, setCurrentPhase] = React.useState<BreathPhase>("inhale");
   const [currentCountdown, setCurrentCountdown] = React.useState(0);
+  const hapticsEnabledRef = useRef(hapticsEnabled);
+
+  useEffect(() => {
+    hapticsEnabledRef.current = hapticsEnabled;
+  }, [hapticsEnabled]);
 
   const triggerHaptic = () => {
-    if (hapticsEnabled) {
+    if (hapticsEnabledRef.current) {
       try {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       } catch (e) {}

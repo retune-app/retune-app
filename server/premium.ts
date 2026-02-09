@@ -20,7 +20,7 @@ export const FREE_FEATURES = [
 ];
 
 export const PREMIUM_FEATURES_LIST = [
-  "AI Mindful Moment - personalized wellness",
+  "Mindful Moment - AI personalized wellness",
   "Micro-Meditations - AI meditation audio",
   "Inner Voice - personal voice cloning",
   "Exclusive ambient tracks",

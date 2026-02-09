@@ -613,9 +613,9 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
           paddingBottom: insets.bottom + Spacing.sm,
         },
       ]}
-      pointerEvents={controlsVisible ? "auto" : "none"}
+      pointerEvents={controlsVisible ? "box-none" : "none"}
     >
-      <View style={styles.topControls}>
+      <View style={styles.topControls} pointerEvents="auto">
         <View style={styles.topLeft}>
           <View style={styles.moodBadge}>
             <ThemedText type="caption" style={styles.moodBadgeText}>
@@ -628,7 +628,6 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
             <>
               <Pressable
                 onPress={() => { setShowVoiceSelector(true); resetControlsTimer(); }}
-                hitSlop={12}
                 style={styles.controlBtn}
                 testID="button-voice-selector"
               >
@@ -636,7 +635,6 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
               </Pressable>
               <Pressable
                 onPress={() => { setShowSoundSwitcher(true); resetControlsTimer(); }}
-                hitSlop={12}
                 style={styles.controlBtn}
                 testID="button-sound-switcher"
               >
@@ -656,7 +654,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
       </View>
 
       {playerState !== "generating" ? (
-        <View style={styles.bottomControls}>
+        <View style={styles.bottomControls} pointerEvents="auto">
           {(playerState === "playing" || playerState === "paused") ? (
             <Pressable
               onPress={handlePlayAction}
@@ -1044,7 +1042,7 @@ const styles = StyleSheet.create({
   topRight: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.sm,
+    gap: Spacing.md,
   },
   moodBadge: {
     backgroundColor: `${ACCENT_GOLD}20`,

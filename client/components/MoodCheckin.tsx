@@ -20,6 +20,7 @@ import * as Haptics from "expo-haptics";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
+import { MeditationIcon } from "@/components/MeditationIcon";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
@@ -260,7 +261,7 @@ export function MoodCheckin({ onStartBreathing, onStartAffirmations, visible, on
                       end={{ x: 1, y: 1 }}
                       style={styles.actionButton}
                     >
-                      <Feather name="sunrise" size={22} color="#FFFFFF" />
+                      <MeditationIcon size={24} color="#FFFFFF" />
                       <ThemedText type="body" style={styles.actionButtonTextLight}>
                         {"Meditate"}
                       </ThemedText>

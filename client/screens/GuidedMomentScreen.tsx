@@ -943,11 +943,6 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
             {"Preparing your meditation..."}
           </ThemedText>
         ) : null}
-        {playerState === "ready" && countdown !== null && countdown > 0 ? (
-          <ThemedText type="caption" style={styles.countdownAboveRings}>
-            {countdown}
-          </ThemedText>
-        ) : null}
         <View style={isLandscape ? styles.landscapeLayout : styles.portraitLayout}>
           <View style={styles.ringsArea}>
             {(playerState === "idle" || playerState === "generating" || playerState === "ready") && isLandscape ? (
@@ -1025,6 +1020,14 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
 
       {renderControls()}
       {renderBottomStatus()}
+
+      {playerState === "ready" && countdown !== null && countdown > 0 ? (
+        <View style={styles.countdownOverlay} pointerEvents="none">
+          <ThemedText type="caption" style={styles.countdownAboveRings}>
+            {countdown}
+          </ThemedText>
+        </View>
+      ) : null}
 
       <Modal
         visible={showSoundSwitcher}
@@ -1357,16 +1360,21 @@ const styles = StyleSheet.create({
     color: ACCENT_GOLD,
     marginTop: Spacing.md,
   },
+  countdownOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 20,
+    paddingBottom: 280,
+  },
   countdownAboveRings: {
-    position: "absolute",
-    top: 100,
-    left: 0,
-    right: 0,
-    fontSize: 64,
+    fontSize: 72,
     fontWeight: "700",
     color: ACCENT_GOLD,
     textAlign: "center",
-    zIndex: 10,
+    textShadowColor: "rgba(0,0,0,0.5)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 8,
   },
   controlsOverlay: {
     ...StyleSheet.absoluteFillObject,

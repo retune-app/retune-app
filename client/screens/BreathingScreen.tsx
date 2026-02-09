@@ -341,7 +341,7 @@ export default function BreathingScreen() {
     setIsPlaying(true);
     setElapsedTime(0);
     setCyclesCompleted(0);
-    try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
+    if (hapticsEnabled) { try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {} }
     
     if (musicEnabled && voiceEnabled) {
       await setDucked(true);
@@ -360,7 +360,7 @@ export default function BreathingScreen() {
 
   const handlePause = async () => {
     setIsPlaying(false);
-    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
+    if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {} }
     
     await setDucked(false);
     if (isMusicPlaying) {
@@ -373,7 +373,7 @@ export default function BreathingScreen() {
 
   const handleResume = async () => {
     setIsPlaying(true);
-    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+    if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} }
     
     if (musicEnabled && voiceEnabled) {
       await setDucked(true);
@@ -401,7 +401,7 @@ export default function BreathingScreen() {
     controlsOpacity.value = 1;
     setControlsVisible(true);
     if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
-    try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
+    if (hapticsEnabled) { try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {} }
     
     await setDucked(false);
     if (isMusicPlaying) {
@@ -421,7 +421,7 @@ export default function BreathingScreen() {
 
   const handleCycleComplete = () => {
     setCyclesCompleted((prev) => prev + 1);
-    try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
+    if (hapticsEnabled) { try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {} }
   };
 
   const formatTime = (seconds: number) => {
@@ -556,7 +556,7 @@ export default function BreathingScreen() {
   }));
 
   const handleStartWithCountdown = useCallback(async () => {
-    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); } catch (e) {}
+    if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); } catch (e) {} }
     
     for (let i = 3; i >= 1; i--) {
       setCountdownValue(i);
@@ -574,7 +574,7 @@ export default function BreathingScreen() {
     
     await handleStart();
     setShowLandscapeMode(true);
-  }, [handleStart]);
+  }, [handleStart, hapticsEnabled]);
 
   useEffect(() => {
     if (showLandscapeMode && isPlaying) {

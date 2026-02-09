@@ -3,7 +3,6 @@ import {
   View,
   StyleSheet,
   Pressable,
-  ActivityIndicator,
   ScrollView,
   Modal,
   useWindowDimensions,
@@ -64,6 +63,15 @@ const MOOD_LABELS: Record<string, string> = {
   energized: "Energized",
   anxious: "Anxious",
   grateful: "Grateful",
+};
+
+const MOOD_RING_COLORS: Record<string, { primary: string; secondary: string }> = {
+  calm: { primary: "#50C9B0", secondary: "#3BA89A" },
+  stressed: { primary: "#E85D5D", secondary: "#C94A4A" },
+  tired: { primary: "#7B68EE", secondary: "#6552CC" },
+  energized: { primary: "#F5A623", secondary: "#D4901F" },
+  anxious: { primary: "#4FC3F7", secondary: "#3AADE0" },
+  grateful: { primary: "#C9A227", secondary: "#A88920" },
 };
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -151,6 +159,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
   const breathOpacity = useSharedValue(0.3);
   const progressAnim = useSharedValue(0);
   const controlsOpacity = useSharedValue(1);
+  const generatingPulse = useSharedValue(0);
 
   const ringSize = isLandscape ? Math.min(height * 0.75, width * 0.55) : width * 0.88;
 
@@ -205,6 +214,19 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
     } else {
       breathScale.value = withTiming(0.7, { duration: 600 });
       breathOpacity.value = withTiming(0.3, { duration: 600 });
+    }
+  }, [playerState]);
+
+  useEffect(() => {
+    if (playerState === "generating") {
+      generatingPulse.value = 0;
+      generatingPulse.value = withRepeat(
+        withTiming(1, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
+        -1,
+        true
+      );
+    } else {
+      generatingPulse.value = withTiming(0, { duration: 300 });
     }
   }, [playerState]);
 
@@ -273,6 +295,11 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
     opacity: controlsOpacity.value,
   }));
 
+  const generatingPulseStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: interpolate(generatingPulse.value, [0, 1], [0.6, 1.2]) }],
+    opacity: interpolate(generatingPulse.value, [0, 0.5, 1], [0.3, 0.8, 0.3]),
+  }));
+
   const cleanupVoice = useCallback(async () => {
     if (soundRef.current) {
       try {
@@ -319,7 +346,6 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
     setSelectedSound(autoSound);
     if (autoSound !== "none") {
       await setSelectedMusic(autoSound);
-      await startBackgroundMusic();
     }
 
     try {
@@ -541,7 +567,9 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
 
   const currentVoiceOption = allVoiceOptions.find((v) => v.id === selectedVoice) || VOICE_OPTIONS[0];
 
-  const renderBreathingRings = () => (
+  const renderBreathingRings = () => {
+    const moodColors = MOOD_RING_COLORS[mood] || { primary: ACCENT_GOLD, secondary: `${ACCENT_GOLD}99` };
+    return (
     <View style={[styles.ringsContainer, { width: ringSize, height: ringSize }]}>
       <Animated.View
         style={[
@@ -551,7 +579,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
             width: ringSize,
             height: ringSize,
             borderRadius: ringSize / 2,
-            borderColor: ACCENT_GOLD,
+            borderColor: moodColors.primary,
           },
         ]}
       />
@@ -564,7 +592,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
             width: ringSize * 0.85,
             height: ringSize * 0.85,
             borderRadius: ringSize * 0.425,
-            backgroundColor: ACCENT_GOLD,
+            backgroundColor: moodColors.primary,
           },
         ]}
       />
@@ -581,7 +609,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
         ]}
       >
         <LinearGradient
-          colors={[ACCENT_GOLD, `${ACCENT_GOLD}99`]}
+          colors={[moodColors.primary, moodColors.secondary]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={[
@@ -598,7 +626,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
       <View style={styles.ringsCenterContent}>
         {playerState === "generating" ? (
           <View style={styles.centerTextContainer}>
-            <ActivityIndicator size="small" color="#FFFFFF" />
+            <Animated.View style={[styles.generatingPulse, generatingPulseStyle, { borderColor: moodColors.primary }]} />
             <ThemedText type="caption" style={styles.centerStatusText}>
               {"Preparing..."}
             </ThemedText>
@@ -635,6 +663,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
       </View>
     </View>
   );
+  };
 
   const renderControls = () => (
     <Animated.View
@@ -790,7 +819,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
                 </ThemedText>
               ) : playerState === "playing" ? (
                 <ThemedText type="caption" style={styles.statusLabel}>
-                  {"Listening..."}
+                  {"Breathe and Listen"}
                 </ThemedText>
               ) : playerState === "paused" ? (
                 <ThemedText type="caption" style={styles.statusLabel}>
@@ -1018,6 +1047,13 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.7)",
     fontSize: 13,
   },
+  generatingPulse: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 2,
+    backgroundColor: "rgba(255,255,255,0.05)",
+  },
   rsvpInsideRings: {
     alignItems: "center",
     justifyContent: "center",
@@ -1036,7 +1072,7 @@ const styles = StyleSheet.create({
   progressSection: {
     width: "80%",
     alignItems: "center",
-    marginTop: Spacing.xxl,
+    marginTop: Spacing.xxl + Spacing.lg,
     paddingHorizontal: Spacing.lg,
   },
   progressBar: {

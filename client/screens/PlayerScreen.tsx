@@ -181,7 +181,7 @@ export default function PlayerScreen() {
       if (errStr.includes("QUOTA_EXCEEDED") || errStr.includes("quota")) {
         setErrorMessage("Your voice cloning credits have been used up. Please switch to an AI voice or wait for credits to reset.");
       } else if (errStr.includes("PERSONAL_VOICE_FAILED")) {
-        setErrorMessage("Could not generate audio with your personal voice. Try again or switch to an AI voice.");
+        setErrorMessage("Could not generate audio with your Inner Voice. Try again or switch to an AI voice.");
       } else {
         setErrorMessage("We couldn't regenerate the audio. Please try again.");
       }
@@ -207,7 +207,7 @@ export default function PlayerScreen() {
   // Get current voice display text
   const getCurrentVoiceLabel = () => {
     if (!affirmation) return "Loading...";
-    if (affirmation.voiceType === "personal") return "My Voice";
+    if (affirmation.voiceType === "personal") return "Inner Voice";
     const voiceName = getVoiceDisplayName(affirmation.voiceType, affirmation.voiceGender, affirmation.aiVoiceId);
     return voiceName;
   };
@@ -895,7 +895,7 @@ export default function PlayerScreen() {
                   marginLeft: 4,
                 }}
               >
-                My Voice
+                Inner Voice
               </ThemedText>
               {!voiceStatus?.hasClonedVoice ? (
                 <Feather name="alert-circle" size={12} color={theme.accent} style={{ marginLeft: 4 }} />

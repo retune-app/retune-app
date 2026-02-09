@@ -166,7 +166,7 @@ export function AffirmationCard({
 
   const getVoiceLabel = () => {
     if (voiceType === "personal") {
-      return { label: "My Voice", icon: "mic" as const };
+      return { label: "Inner Voice", icon: "mic" as const };
     }
     const voiceName = getVoiceDisplayName(voiceType, voiceGender, aiVoiceId);
     return { label: `AI Voice (${voiceName})`, icon: "cpu" as const };

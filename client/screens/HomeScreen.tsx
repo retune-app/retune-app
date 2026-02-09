@@ -393,7 +393,7 @@ export default function HomeScreen() {
                 },
               ]}
             >
-              {(voicePrefs?.preferredVoiceType === 'personal' && voicePrefs?.hasPersonalVoice) ? "My Voice Active" : "AI Voice"}
+              {(voicePrefs?.preferredVoiceType === 'personal' && voicePrefs?.hasPersonalVoice) ? "Inner Voice Active" : "AI Voice"}
             </ThemedText>
           </Pressable>
           <Pressable

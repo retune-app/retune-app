@@ -299,7 +299,7 @@ export default function VoiceSettingsScreen() {
                   styles.toggleText,
                   { color: voicePreferences?.preferredVoiceType === "personal" ? "#FFFFFF" : theme.text }
                 ]}>
-                  My Voice
+                  Inner Voice
                 </Text>
                 {!voicePreferences?.hasPersonalVoice ? (
                   <Text style={[
@@ -368,7 +368,7 @@ export default function VoiceSettingsScreen() {
                   />
                 )}
                 <Text style={[styles.personalPreviewButtonText, { color: ACCENT_GOLD }]}>
-                  {isPersonalPreviewPlaying ? "Stop Preview" : "Preview My Voice"}
+                  {isPersonalPreviewPlaying ? "Stop Preview" : "Preview Inner Voice"}
                 </Text>
                 {isPersonalPreviewPlaying && !isPersonalPreviewLoading ? (
                   <Feather name="volume-2" size={16} color={ACCENT_GOLD} style={{ marginLeft: Spacing.xs }} />
@@ -404,7 +404,7 @@ export default function VoiceSettingsScreen() {
               testID="button-compare-personal"
             >
               <Feather name="mic" size={24} color={isPersonalPreviewPlaying ? ACCENT_GOLD : theme.textSecondary} />
-              <Text style={[styles.compareCardLabel, { color: theme.text }]}>My Voice</Text>
+              <Text style={[styles.compareCardLabel, { color: theme.text }]}>Inner Voice</Text>
               <View
                 style={[
                   styles.comparePlayButton,
@@ -590,10 +590,10 @@ export default function VoiceSettingsScreen() {
           <Feather name="mic" size={20} color={ACCENT_GOLD} />
           <View style={styles.recordButtonText}>
             <ThemedText type="body" style={{ color: ACCENT_GOLD, fontWeight: "600" }}>
-              {voicePreferences?.hasPersonalVoice ? "Re-record My Voice" : "Record My Voice"}
+              {voicePreferences?.hasPersonalVoice ? "Re-record Inner Voice" : "Record Inner Voice"}
             </ThemedText>
             <ThemedText type="small" style={{ color: theme.textSecondary }}>
-              {voicePreferences?.hasPersonalVoice ? "Update your personal voice clone" : "Create a personalized voice clone"}
+              {voicePreferences?.hasPersonalVoice ? "Update your Inner Voice clone" : "Create your Inner Voice clone"}
             </ThemedText>
           </View>
           <Feather name="chevron-right" size={20} color={theme.textSecondary} />

@@ -281,7 +281,7 @@ export async function getElevenLabsApiKey() {
  */
 export async function cloneVoice(
   audioFilePath: string,
-  name: string = "My Voice"
+  name: string = "Inner Voice"
 ): Promise<string> {
   const apiKey = await getCredentials();
 

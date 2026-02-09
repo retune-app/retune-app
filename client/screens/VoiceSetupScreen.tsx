@@ -824,7 +824,7 @@ export default function VoiceSetupScreen() {
   };
 
   const getSubText = () => {
-    if (hasRecording && isValidDuration) return "Your voice sample is ready to create your personal voice clone.";
+    if (hasRecording && isValidDuration) return "Your voice sample is ready to create your Inner Voice clone.";
     if (hasRecording && !isValidDuration) return `Only ${recordingDuration}s recorded. You need at least 20 seconds for a good voice clone.`;
     if (isRecording) {
       if (recordingDuration < 20) return "Keep reading naturally...";
@@ -987,7 +987,7 @@ export default function VoiceSetupScreen() {
                 style={styles.continueButton}
                 testID="button-continue"
               >
-                Clone My Voice
+                Clone Inner Voice
               </Button>
               <Button
                 variant="secondary"

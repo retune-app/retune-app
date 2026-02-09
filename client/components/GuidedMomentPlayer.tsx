@@ -309,7 +309,7 @@ export function GuidedMomentPlayer({ mood, timeOfDay, onClose, visible }: Guided
 
           <ThemedText type="caption" style={[styles.statusText, { color: theme.textSecondary }]}>
             {playerState === "ready" ? "Tap to begin" :
-             playerState === "playing" ? "Listening..." :
+             playerState === "playing" ? "Breathe and Listen" :
              playerState === "paused" ? "Paused" :
              "Complete"}
           </ThemedText>

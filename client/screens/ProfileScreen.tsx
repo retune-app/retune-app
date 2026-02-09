@@ -412,7 +412,7 @@ export default function ProfileScreen() {
 
   const getCurrentVoiceLabel = () => {
     if (voicePreferences?.preferredVoiceType === "personal" && voicePreferences?.hasPersonalVoice) {
-      return "Using your personal voice";
+      return "Using your Inner Voice";
     }
     
     const gender = voicePreferences?.preferredAiGender || "female";

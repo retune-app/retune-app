@@ -482,7 +482,7 @@ async function generateAudioSimple(text: string, voiceId: string, isPersonalVoic
       if (isVoiceNotFound) {
         throw new Error("VOICE_EXPIRED: Your voice clone has expired or is no longer available. Please re-record your voice sample.");
       }
-      throw new Error("PERSONAL_VOICE_FAILED: Could not generate audio with your personal voice. Please try again or re-record your voice.");
+      throw new Error("PERSONAL_VOICE_FAILED: Could not generate audio with your Inner Voice. Please try again or re-record your voice.");
     }
   }
 
@@ -538,7 +538,7 @@ async function generateAudio(
       if (isVoiceNotFound) {
         throw new Error("VOICE_EXPIRED: Your voice clone has expired or is no longer available. Please re-record your voice sample.");
       }
-      throw new Error("PERSONAL_VOICE_FAILED: Could not generate audio with your personal voice. Please try again or re-record your voice.");
+      throw new Error("PERSONAL_VOICE_FAILED: Could not generate audio with your Inner Voice. Please try again or re-record your voice.");
     }
   }
 
@@ -855,7 +855,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (error?.message?.includes("QUOTA_EXCEEDED")) {
         res.status(429).json({ error: "QUOTA_EXCEEDED", message: "Your voice credits have been used up for this period. The affirmation will be created with an AI voice instead." });
       } else if (error?.message?.includes("PERSONAL_VOICE_FAILED")) {
-        res.status(422).json({ error: "PERSONAL_VOICE_FAILED", message: "Could not generate audio with your personal voice. You can try again or switch to an AI voice." });
+        res.status(422).json({ error: "PERSONAL_VOICE_FAILED", message: "Could not generate audio with your Inner Voice. You can try again or switch to an AI voice." });
       } else if (error?.message?.includes("TTS_UNAVAILABLE")) {
         res.status(503).json({ error: "Voice services are temporarily unavailable. Please try again later." });
       } else {
@@ -1298,7 +1298,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       if (!user.voiceId || !user.hasVoiceSample) {
-        return res.status(400).json({ error: "No personal voice recorded. Please record your voice first." });
+        return res.status(400).json({ error: "No Inner Voice recorded. Please record your voice first." });
       }
 
       let audioBuffer: ArrayBuffer;
@@ -1309,7 +1309,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (msg.includes("PERSONAL_VOICE_FAILED") || msg.includes("voice_not_found") || msg.includes("404")) {
           return res.status(422).json({ 
             error: "VOICE_EXPIRED",
-            message: "Your voice clone may have expired. Please re-record your voice to continue using personal voice features."
+            message: "Your voice clone may have expired. Please re-record your voice to continue using Inner Voice features."
           });
         }
         throw ttsError;
@@ -1323,11 +1323,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const base64Audio = Buffer.from(audioBuffer).toString("base64");
       res.json({ 
         audio: base64Audio,
-        voiceName: "My Voice",
+        voiceName: "Inner Voice",
       });
     } catch (error) {
-      console.error("Error generating personal voice preview:", error);
-      res.status(500).json({ error: "Failed to generate personal voice preview. Please try again." });
+      console.error("Error generating Inner Voice preview:", error);
+      res.status(500).json({ error: "Failed to generate Inner Voice preview. Please try again." });
     }
   });
 
@@ -1447,7 +1447,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!user?.voiceId || !user?.hasVoiceSample) {
           return res.status(400).json({ 
             error: "VOICE_ROTATED",
-            message: "Your personal voice has expired. Please re-record your voice sample to continue using your personal voice, or switch to an AI voice.",
+            message: "Your personal voice has expired. Please re-record your voice sample to continue using your Inner Voice, or switch to an AI voice.",
           });
         }
         voiceIdToUse = user.voiceId;
@@ -1523,7 +1523,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (errorMsg.includes("PERSONAL_VOICE_FAILED")) {
         return res.status(422).json({ 
           error: "PERSONAL_VOICE_FAILED",
-          message: "Could not generate audio with your personal voice. Please try again or switch to an AI voice."
+          message: "Could not generate audio with your Inner Voice. Please try again or switch to an AI voice."
         });
       }
       res.status(500).json({ error: "Failed to regenerate voice" });

@@ -414,8 +414,8 @@ export default function CreateScreen() {
         );
       } else if (errorType === "PERSONAL_VOICE_FAILED") {
         Alert.alert(
-          "Personal Voice Failed",
-          "Could not generate audio with your personal voice. Would you like to try again or use an AI voice instead?",
+          "Inner Voice Failed",
+          "Could not generate audio with your Inner Voice. Would you like to try again or use an AI voice instead?",
           [
             { text: "Cancel", style: "cancel" },
             { text: "Try Again", onPress: () => createMutation.mutate({}) },

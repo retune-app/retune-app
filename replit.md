@@ -1,7 +1,21 @@
 # Retuned
 
 ## Overview
-Retuned is a mobile application (React Native/Expo) that enables users to reprogram their subconscious mind using personalized audio affirmations. It achieves this by generating AI-powered affirmation scripts based on user goals and delivering them in the user's own cloned voice. The app aims to offer a blend of therapeutic tranquility and motivational energy with a "Serene Empowerment" aesthetic, serving as an accessible tool for mental well-being and personal growth.
+Retuned helps you reprogram your subconscious mind using personalized audio affirmations — spoken in your own cloned voice or a curated AI voice.
+
+**How it works:** Tell the app your goals, and AI generates powerful affirmation scripts using Subconscious Language Patterns — optimized for present tense, positive language, sensory imagery, and emotional anchoring. Then listen to them in a voice that resonates with you.
+
+**Key Features:**
+- **Clone Your Voice** — Record a short sample and hear your affirmations in your own voice, powered by advanced voice cloning technology.
+- **10 Curated AI Voices** — Choose from 5 female and 5 male voices, each designed to inspire calm, confidence, and clarity.
+- **RSVP Mode** — Word-synced text display follows along as you listen, reinforcing every affirmation visually.
+- **Guided Breathing** — Four science-backed techniques (Box Breathing, 4-7-8 Relaxing, Coherent Breathing, Energizing Breath) with animated visuals, customizable durations, and ambient soundscapes. Tap the info icon on any technique to learn the science behind it and its specific benefits.
+- **Ambient Sound Library** — 22 seamless loops across 7 categories including Rain, Ocean, Forest, Meditation, Solfeggio, Binaural, and Noise.
+- **Personal Analytics** — Track your breathing streaks, listening habits, technique breakdown, and category insights.
+- **AI Daily Greetings** — A personalized message each day based on your real progress and activity.
+- **Privacy First** — Voice recordings are deleted immediately after cloning. Full data deletion available anytime.
+
+**Technical stack:** React Native/Expo frontend with Express backend, PostgreSQL database, and "Serene Empowerment" aesthetic.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.

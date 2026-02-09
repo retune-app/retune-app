@@ -2,7 +2,7 @@
 
 ## 1. Brand Identity
 
-**Purpose**: Empower users to rewire their subconscious mind through personalized audio affirmations in their own voice, replacing limiting beliefs with positive programming.
+**Purpose**: Help users reprogram their subconscious mind using personalized audio affirmations — spoken in their own cloned voice or a curated AI voice. AI generates powerful affirmation scripts using Subconscious Language Patterns — optimized for present tense, positive language, sensory imagery, and emotional anchoring.
 
 **Aesthetic Direction**: **Serene Empowerment** - A calming yet purposeful aesthetic that blends therapeutic tranquility with motivational energy. Think meditation app meets personal coaching.
 

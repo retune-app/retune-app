@@ -718,12 +718,6 @@ export default function BreathingScreen() {
               <Animated.View style={[styles.fsBottomControls, controlsAnimatedStyle]} pointerEvents={controlsVisible ? 'auto' : 'none'} onStartShouldSetResponder={() => true}>
                 <View style={styles.fsCenterControls}>
                   <Pressable
-                    onPress={() => { resetControlsTimer(); handleStop(); }}
-                    style={styles.landscapeStopButton}
-                  >
-                    <Feather name="square" size={20} color="#FFFFFF" />
-                  </Pressable>
-                  <Pressable
                     onPress={() => { resetControlsTimer(); (isPlaying ? handlePause : handleResume)(); }}
                   >
                     <LinearGradient
@@ -735,8 +729,7 @@ export default function BreathingScreen() {
                   </Pressable>
                   <Pressable
                     onPress={() => { resetControlsTimer(); handleStop(); }}
-                    style={[styles.landscapeStopButton, { opacity: 0 }]}
-                    disabled
+                    style={styles.landscapeStopButton}
                   >
                     <Feather name="square" size={20} color="#FFFFFF" />
                   </Pressable>

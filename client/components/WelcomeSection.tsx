@@ -15,6 +15,7 @@ import * as Haptics from "expo-haptics";
 import { useQuery } from "@tanstack/react-query";
 
 import { ThemedText } from "@/components/ThemedText";
+import { MeditationIcon } from "@/components/MeditationIcon";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import type { Affirmation } from "@shared/schema";
@@ -174,7 +175,7 @@ export function WelcomeSection({
               style={[styles.headerActionButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
               testID="button-mood-checkin"
             >
-              <Feather name="compass" size={20} color={theme.gold} />
+              <MeditationIcon size={20} color="#50C9B0" glow />
             </Pressable>
           ) : null}
           {onSettingsPress ? (

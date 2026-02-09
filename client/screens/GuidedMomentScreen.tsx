@@ -661,8 +661,23 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
 
   const currentVoiceOption = allVoiceOptions.find((v) => v.id === selectedVoice) || VOICE_OPTIONS[0];
 
+  const isCountingDown = playerState === "ready" && countdown !== null && countdown > 0;
+
   const renderBreathingRings = () => {
     const moodColors = MOOD_RING_COLORS[mood] || { primary: ACCENT_GOLD, secondary: `${ACCENT_GOLD}99` };
+
+    if (isCountingDown) {
+      return (
+        <View style={[styles.ringsContainer, { width: ringSize, height: ringSize }]}>
+          <View style={styles.ringsCenterContent}>
+            <ThemedText type="caption" style={styles.countdownInsideRings}>
+              {countdown}
+            </ThemedText>
+          </View>
+        </View>
+      );
+    }
+
     return (
     <View style={[styles.ringsContainer, { width: ringSize, height: ringSize }]}>
       <Animated.View
@@ -738,10 +753,6 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
               ambient={true}
             />
           </View>
-        ) : playerState === "ready" && countdown !== null && countdown > 0 ? (
-          <ThemedText type="caption" style={styles.countdownInsideRings}>
-            {countdown}
-          </ThemedText>
         ) : playerState === "finished" ? (
           <Pressable
             onPress={handlePlayAction}

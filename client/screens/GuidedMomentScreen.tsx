@@ -5,13 +5,12 @@ import {
   Pressable,
   ActivityIndicator,
   ScrollView,
-  FlatList,
   Modal,
-  Dimensions,
+  useWindowDimensions,
+  Platform,
 } from "react-native";
 import Animated, {
   FadeIn,
-  FadeInDown,
   FadeInUp,
   useSharedValue,
   useAnimatedStyle,
@@ -19,6 +18,8 @@ import Animated, {
   withRepeat,
   withSequence,
   Easing,
+  interpolate,
+  runOnJS,
 } from "react-native-reanimated";
 import { Audio } from "expo-av";
 import { Feather } from "@expo/vector-icons";
@@ -26,11 +27,13 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { apiRequest, getApiUrl } from "@/lib/query-client";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   BackgroundMusicType,
   BACKGROUND_MUSIC_OPTIONS,
@@ -38,6 +41,7 @@ import {
   useBackgroundMusic,
   BackgroundMusicOption,
 } from "@/contexts/BackgroundMusicContext";
+import { RSVPDisplay, WordTiming } from "@/components/RSVPDisplay";
 
 const ACCENT_GOLD = "#C9A227";
 const GOLD_LIGHT = "#E5C95C";
@@ -82,6 +86,14 @@ const CATEGORY_LABELS: Record<string, string> = {
   noise: "Noise",
 };
 
+const VOICE_OPTIONS = [
+  { id: "hume_lotus", label: "Lotus", description: "Female Guide", icon: "sun" as const },
+  { id: "hume_sage", label: "Sage", description: "Male Guide", icon: "moon" as const },
+];
+
+const VOICE_STORAGE_KEY = "@retuned/guided-moment-voice";
+const CONTROLS_AUTO_HIDE_MS = 3000;
+
 type PlayerState = "idle" | "generating" | "ready" | "playing" | "paused" | "finished" | "error";
 
 interface GeneratedMoment {
@@ -91,8 +103,6 @@ interface GeneratedMoment {
   wordTimings: Array<{ word: string; startMs: number; endMs: number }>;
   disclaimer: string;
 }
-
-type ScreenPhase = "selection" | "player";
 
 interface CategorySection {
   key: string;
@@ -110,6 +120,9 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
   const { mood, timeOfDay } = (route.params as GuidedMomentScreenParams) || { mood: "calm", timeOfDay: "morning" };
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
+  const { width, height } = useWindowDimensions();
+  const isLandscape = width > height;
+  const { user } = useAuth();
   const {
     selectedMusic,
     setSelectedMusic,
@@ -118,19 +131,26 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
     isPlaying: isBgPlaying,
   } = useBackgroundMusic();
 
-  const [phase, setPhase] = useState<ScreenPhase>("selection");
-  const [selectedSound, setSelectedSound] = useState<BackgroundMusicType>(
-    MOOD_SOUND_MAP[mood] || "ocean-waves-beach"
-  );
   const [playerState, setPlayerState] = useState<PlayerState>("idle");
   const [moment, setMoment] = useState<GeneratedMoment | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [currentPosition, setCurrentPosition] = useState(0);
+  const [selectedSound, setSelectedSound] = useState<BackgroundMusicType>(
+    MOOD_SOUND_MAP[mood] || "ocean-waves-beach"
+  );
+  const [selectedVoice, setSelectedVoice] = useState("hume_lotus");
   const [showSoundSwitcher, setShowSoundSwitcher] = useState(false);
+  const [showVoiceSelector, setShowVoiceSelector] = useState(false);
+  const [controlsVisible, setControlsVisible] = useState(true);
   const soundRef = useRef<Audio.Sound | null>(null);
+  const controlsTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const pulseAnim = useSharedValue(1);
+  const breathScale = useSharedValue(0.7);
+  const breathOpacity = useSharedValue(0.3);
   const progressAnim = useSharedValue(0);
+  const controlsOpacity = useSharedValue(1);
+
+  const ringSize = isLandscape ? Math.min(height * 0.7, 260) : Math.min(width * 0.7, 280);
 
   const categories = useMemo<CategorySection[]>(() => {
     const byCategory = getSoundsByCategory();
@@ -145,28 +165,110 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
     }));
   }, []);
 
+  const hasPersonalVoice = user?.hasVoiceSample === true;
+  const allVoiceOptions = useMemo(() => {
+    const opts = [...VOICE_OPTIONS];
+    if (hasPersonalVoice) {
+      opts.push({ id: "personal", label: "My Voice", description: "Cloned Voice", icon: "mic" as const });
+    }
+    return opts;
+  }, [hasPersonalVoice]);
+
+  useEffect(() => {
+    AsyncStorage.getItem(VOICE_STORAGE_KEY).then((stored) => {
+      if (stored && allVoiceOptions.some((v) => v.id === stored)) {
+        setSelectedVoice(stored);
+      }
+    }).catch(() => {});
+  }, [allVoiceOptions]);
+
   useEffect(() => {
     if (playerState === "playing") {
-      pulseAnim.value = withRepeat(
+      breathScale.value = withRepeat(
         withSequence(
-          withTiming(1.12, { duration: 3000, easing: Easing.inOut(Easing.ease) }),
-          withTiming(1, { duration: 3000, easing: Easing.inOut(Easing.ease) })
+          withTiming(1, { duration: 4000, easing: Easing.inOut(Easing.ease) }),
+          withTiming(0.7, { duration: 4000, easing: Easing.inOut(Easing.ease) })
+        ),
+        -1,
+        true
+      );
+      breathOpacity.value = withRepeat(
+        withSequence(
+          withTiming(0.8, { duration: 4000, easing: Easing.inOut(Easing.ease) }),
+          withTiming(0.3, { duration: 4000, easing: Easing.inOut(Easing.ease) })
         ),
         -1,
         true
       );
     } else {
-      pulseAnim.value = withTiming(1, { duration: 300 });
+      breathScale.value = withTiming(0.7, { duration: 600 });
+      breathOpacity.value = withTiming(0.3, { duration: 600 });
     }
   }, [playerState]);
 
-  const pulseStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pulseAnim.value }],
-    opacity: 0.15,
+  useEffect(() => {
+    if (playerState === "playing") {
+      resetControlsTimer();
+    } else {
+      showControls();
+    }
+    return () => {
+      if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
+    };
+  }, [playerState]);
+
+  const showControls = useCallback(() => {
+    setControlsVisible(true);
+    controlsOpacity.value = withTiming(1, { duration: 250 });
+    if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
+  }, []);
+
+  const hideControls = useCallback(() => {
+    setControlsVisible(false);
+    controlsOpacity.value = withTiming(0, { duration: 400 });
+  }, []);
+
+  const resetControlsTimer = useCallback(() => {
+    showControls();
+    if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
+    controlsTimerRef.current = setTimeout(() => {
+      if (playerState === "playing") {
+        hideControls();
+      }
+    }, CONTROLS_AUTO_HIDE_MS);
+  }, [playerState, showControls, hideControls]);
+
+  const handleScreenTap = useCallback(() => {
+    if (playerState === "playing" || playerState === "paused") {
+      if (controlsVisible) {
+        hideControls();
+      } else {
+        resetControlsTimer();
+      }
+    }
+  }, [playerState, controlsVisible, hideControls, resetControlsTimer]);
+
+  const mainCircleStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: breathScale.value }],
+    opacity: breathOpacity.value,
   }));
 
-  const progressStyle = useAnimatedStyle(() => ({
+  const innerGlowStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: interpolate(breathScale.value, [0.7, 1], [0.85, 1.1]) }],
+    opacity: interpolate(breathScale.value, [0.7, 1], [0.15, 0.4]),
+  }));
+
+  const outerRingStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: interpolate(breathScale.value, [0.7, 1], [1.0, 1.15]) }],
+    opacity: interpolate(breathScale.value, [0.7, 1], [0.08, 0.2]),
+  }));
+
+  const progressBarStyle = useAnimatedStyle(() => ({
     width: `${progressAnim.value * 100}%`,
+  }));
+
+  const controlsFadeStyle = useAnimatedStyle(() => ({
+    opacity: controlsOpacity.value,
   }));
 
   const cleanupVoice = useCallback(async () => {
@@ -180,6 +282,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
   }, []);
 
   useEffect(() => {
+    beginGeneration();
     return () => {
       cleanupVoice();
       stopBackgroundMusic();
@@ -191,19 +294,6 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
     await stopBackgroundMusic();
     navigation.goBack();
   }, [cleanupVoice, stopBackgroundMusic, navigation]);
-
-  const handleSelectSound = useCallback(async (soundId: BackgroundMusicType) => {
-    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
-    setSelectedSound(soundId);
-
-    if (soundId === "none") {
-      await stopBackgroundMusic();
-      return;
-    }
-
-    await setSelectedMusic(soundId);
-    await startBackgroundMusic();
-  }, [setSelectedMusic, startBackgroundMusic, stopBackgroundMusic]);
 
   const handleSwitchSoundDuringPlayback = useCallback(async (soundId: BackgroundMusicType) => {
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
@@ -217,23 +307,27 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
     }
   }, [setSelectedMusic, startBackgroundMusic, stopBackgroundMusic]);
 
-  const handleBeginGuidedMoment = useCallback(async () => {
+  const beginGeneration = useCallback(async () => {
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
-    setPhase("player");
     setPlayerState("generating");
     setErrorMessage("");
+    progressAnim.value = 0;
 
-    if (selectedSound !== "none") {
-      await setSelectedMusic(selectedSound);
+    const autoSound = MOOD_SOUND_MAP[mood] || "ocean-waves-beach";
+    setSelectedSound(autoSound);
+    if (autoSound !== "none") {
+      await setSelectedMusic(autoSound);
       await startBackgroundMusic();
     }
 
     try {
+      const isPersonal = selectedVoice === "personal";
       const url = new URL("/api/guided-moments/generate", getApiUrl()).toString();
       const result = await apiRequest("POST", url, {
         mood,
         timeOfDay,
-        usePersonalVoice: false,
+        usePersonalVoice: isPersonal,
+        voiceId: isPersonal ? undefined : selectedVoice,
       });
       const data = await result.json();
 
@@ -250,13 +344,15 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
       setErrorMessage("Something went wrong. Please try again.");
       setPlayerState("error");
     }
-  }, [mood, timeOfDay, selectedSound, setSelectedMusic, startBackgroundMusic]);
+  }, [mood, timeOfDay, selectedVoice, setSelectedMusic, startBackgroundMusic]);
 
   const playAudio = useCallback(async () => {
     if (!moment?.audioBase64) return;
 
     try {
       await cleanupVoice();
+      setCurrentPosition(0);
+      progressAnim.value = 0;
 
       await Audio.setAudioModeAsync({
         playsInSilentModeIOS: true,
@@ -267,7 +363,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
       const uri = `data:audio/mp3;base64,${moment.audioBase64}`;
       const { sound } = await Audio.Sound.createAsync(
         { uri },
-        { shouldPlay: true, progressUpdateIntervalMillis: 150 },
+        { shouldPlay: true, progressUpdateIntervalMillis: 100 },
         (status) => {
           if (status.isLoaded) {
             setCurrentPosition(status.positionMillis || 0);
@@ -310,23 +406,21 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
     } catch (e) {}
   }, []);
 
-  const getVisibleWords = useCallback(() => {
-    if (!moment?.wordTimings || moment.wordTimings.length === 0) {
-      if (!moment?.script) return [];
-      const words = moment.script.split(/\s+/);
-      const totalDuration = (moment.duration || 60) * 1000;
-      const avgDuration = totalDuration / words.length;
-      return words.map((word, i) => ({
-        word,
-        visible: currentPosition >= i * avgDuration,
-      }));
+  const handlePlayAction = useCallback(() => {
+    if (playerState === "ready" || playerState === "finished") {
+      playAudio();
+    } else {
+      togglePlayPause();
     }
+    resetControlsTimer();
+  }, [playerState, playAudio, togglePlayPause, resetControlsTimer]);
 
-    return moment.wordTimings.map((wt) => ({
-      word: wt.word,
-      visible: currentPosition >= wt.startMs,
-    }));
-  }, [moment, currentPosition]);
+  const handleVoiceSelect = useCallback(async (voiceId: string) => {
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+    setSelectedVoice(voiceId);
+    await AsyncStorage.setItem(VOICE_STORAGE_KEY, voiceId).catch(() => {});
+    setShowVoiceSelector(false);
+  }, []);
 
   const renderSoundTile = useCallback((
     sound: BackgroundMusicOption,
@@ -412,127 +506,143 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
     );
   }, [selectedSound]);
 
-  if (phase === "selection") {
-    return (
-      <LinearGradient
-        colors={[NAVY, NAVY_MID] as [string, string]}
-        style={styles.container}
-      >
-        <View style={[styles.header, { paddingTop: insets.top + Spacing.sm }]}>
-          <View style={styles.headerLeft}>
-            <ThemedText type="h3" style={styles.headerTitle}>
-              {"Choose Your Sound Bath"}
-            </ThemedText>
-            <View style={styles.moodBadge}>
-              <ThemedText type="caption" style={styles.moodBadgeText}>
-                {MOOD_LABELS[mood] || mood}
-              </ThemedText>
-            </View>
-          </View>
-          <Pressable
-            onPress={handleClose}
-            hitSlop={12}
-            style={styles.closeButton}
-            testID="button-close-guided-moment"
-          >
-            <Feather name="x" size={24} color="rgba(255,255,255,0.7)" />
-          </Pressable>
-        </View>
+  const currentVoiceOption = allVoiceOptions.find((v) => v.id === selectedVoice) || VOICE_OPTIONS[0];
 
-        <ScrollView
-          style={styles.selectionScroll}
-          contentContainerStyle={styles.selectionScrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.noSoundRow}>
-            {renderNoSoundTile(handleSelectSound)}
-            <View style={styles.noSoundLabel}>
-              <ThemedText type="small" style={styles.noSoundText}>
-                {"Prefer silence? Select no sound for a quiet guided moment."}
-              </ThemedText>
-            </View>
-          </View>
-
-          {categories.map((category) => (
-            <Animated.View
-              key={category.key}
-              entering={FadeIn.duration(300)}
-              style={styles.categorySection}
-            >
-              <ThemedText
-                type="small"
-                style={[styles.categoryHeader, { color: category.color }]}
-              >
-                {category.label}
-              </ThemedText>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.categoryRow}
-              >
-                {category.sounds.map((sound) =>
-                  renderSoundTile(
-                    sound,
-                    selectedSound === sound.id,
-                    handleSelectSound
-                  )
-                )}
-              </ScrollView>
-            </Animated.View>
-          ))}
-        </ScrollView>
-
-        <View style={[styles.bottomAction, { paddingBottom: insets.bottom + Spacing.md }]}>
-          <Pressable onPress={handleBeginGuidedMoment} testID="button-begin-guided-moment">
-            <LinearGradient
-              colors={[ACCENT_GOLD, GOLD_LIGHT] as [string, string]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.beginButton}
-            >
-              <Feather name="play" size={20} color={NAVY} />
-              <ThemedText type="body" style={styles.beginButtonText}>
-                {"Begin Guided Moment"}
-              </ThemedText>
-            </LinearGradient>
-          </Pressable>
-        </View>
-      </LinearGradient>
-    );
-  }
-
-  return (
-    <LinearGradient
-      colors={[NAVY, NAVY_MID] as [string, string]}
-      style={styles.container}
-    >
+  const renderBreathingRings = () => (
+    <View style={[styles.ringsContainer, { width: ringSize, height: ringSize }]}>
       <Animated.View
-        style={[styles.breathingCircleBg, pulseStyle]}
+        style={[
+          styles.outerRing,
+          outerRingStyle,
+          {
+            width: ringSize,
+            height: ringSize,
+            borderRadius: ringSize / 2,
+            borderColor: ACCENT_GOLD,
+          },
+        ]}
+      />
+
+      <Animated.View
+        style={[
+          styles.innerGlow,
+          innerGlowStyle,
+          {
+            width: ringSize * 0.85,
+            height: ringSize * 0.85,
+            borderRadius: ringSize * 0.425,
+            backgroundColor: ACCENT_GOLD,
+          },
+        ]}
+      />
+
+      <Animated.View
+        style={[
+          mainCircleStyle,
+          styles.mainCircle,
+          {
+            width: ringSize * 0.7,
+            height: ringSize * 0.7,
+            borderRadius: ringSize * 0.35,
+          },
+        ]}
       >
-        <View style={styles.breathingCircle} />
+        <LinearGradient
+          colors={[ACCENT_GOLD, `${ACCENT_GOLD}99`]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[
+            styles.gradientCircle,
+            {
+              width: ringSize * 0.7,
+              height: ringSize * 0.7,
+              borderRadius: ringSize * 0.35,
+            },
+          ]}
+        />
       </Animated.View>
 
-      <View style={[styles.playerHeader, { paddingTop: insets.top + Spacing.sm }]}>
-        <View style={styles.playerHeaderLeft}>
+      <View style={styles.ringsCenterContent}>
+        {playerState === "generating" ? (
+          <View style={styles.centerTextContainer}>
+            <ActivityIndicator size="small" color="#FFFFFF" />
+            <ThemedText type="caption" style={styles.centerStatusText}>
+              {"Preparing..."}
+            </ThemedText>
+          </View>
+        ) : playerState === "error" ? (
+          <View style={styles.centerTextContainer}>
+            <Feather name="alert-circle" size={28} color="#E85D5D" />
+          </View>
+        ) : (playerState === "playing" || playerState === "paused") && moment?.wordTimings ? (
+          <View style={[styles.rsvpInsideRings, { width: ringSize * 0.55 }]}>
+            <RSVPDisplay
+              wordTimings={moment.wordTimings}
+              currentPositionMs={currentPosition}
+              isPlaying={playerState === "playing"}
+              fontSize="M"
+              showHighlight={true}
+              forceDarkMode={true}
+            />
+          </View>
+        ) : playerState === "ready" || playerState === "finished" ? (
+          <Pressable
+            onPress={handlePlayAction}
+            style={styles.playIconCenter}
+            testID="button-guided-moment-play"
+          >
+            <Feather
+              name="play"
+              size={36}
+              color="#FFFFFF"
+              style={{ marginLeft: 4 }}
+            />
+          </Pressable>
+        ) : null}
+      </View>
+    </View>
+  );
+
+  const renderControls = () => (
+    <Animated.View
+      style={[
+        styles.controlsOverlay,
+        controlsFadeStyle,
+        {
+          paddingTop: insets.top + Spacing.sm,
+          paddingBottom: insets.bottom + Spacing.sm,
+        },
+      ]}
+      pointerEvents={controlsVisible ? "auto" : "none"}
+    >
+      <View style={styles.topControls}>
+        <View style={styles.topLeft}>
           <View style={styles.moodBadge}>
             <ThemedText type="caption" style={styles.moodBadgeText}>
               {MOOD_LABELS[mood] || mood}
             </ThemedText>
           </View>
-          <ThemedText type="caption" style={styles.timeText}>
-            {timeOfDay}
-          </ThemedText>
         </View>
-        <View style={styles.playerHeaderRight}>
+        <View style={styles.topRight}>
           {(playerState === "playing" || playerState === "paused" || playerState === "ready") ? (
-            <Pressable
-              onPress={() => setShowSoundSwitcher(true)}
-              hitSlop={12}
-              style={styles.soundSwitcherBtn}
-              testID="button-sound-switcher"
-            >
-              <Feather name="music" size={20} color={ACCENT_GOLD} />
-            </Pressable>
+            <>
+              <Pressable
+                onPress={() => { setShowVoiceSelector(true); resetControlsTimer(); }}
+                hitSlop={12}
+                style={styles.controlBtn}
+                testID="button-voice-selector"
+              >
+                <Feather name={currentVoiceOption.icon} size={18} color={ACCENT_GOLD} />
+              </Pressable>
+              <Pressable
+                onPress={() => { setShowSoundSwitcher(true); resetControlsTimer(); }}
+                hitSlop={12}
+                style={styles.controlBtn}
+                testID="button-sound-switcher"
+              >
+                <Feather name="music" size={18} color={ACCENT_GOLD} />
+              </Pressable>
+            </>
           ) : null}
           <Pressable
             onPress={handleClose}
@@ -540,143 +650,135 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
             style={styles.closeButton}
             testID="button-close-player"
           >
-            <Feather name="x" size={24} color="rgba(255,255,255,0.7)" />
+            <Feather name="x" size={22} color="rgba(255,255,255,0.7)" />
           </Pressable>
         </View>
       </View>
 
-      <View style={styles.playerContent}>
-        {playerState === "generating" ? (
-          <Animated.View entering={FadeIn.duration(300)} style={styles.generatingContainer}>
-            <ActivityIndicator size="large" color={ACCENT_GOLD} />
-            <ThemedText type="body" style={styles.generatingText}>
-              {"Crafting your guided moment..."}
-            </ThemedText>
-            <ThemedText type="caption" style={styles.generatingSubtext}>
-              {"Generating script and voice audio"}
-            </ThemedText>
-          </Animated.View>
-        ) : playerState === "error" ? (
-          <Animated.View entering={FadeIn.duration(300)} style={styles.errorContainer}>
-            <Feather name="alert-circle" size={40} color="#E85D5D" />
-            <ThemedText type="body" style={styles.errorText}>
-              {errorMessage}
-            </ThemedText>
+      {playerState !== "generating" ? (
+        <View style={styles.bottomControls}>
+          {(playerState === "playing" || playerState === "paused") ? (
             <Pressable
-              onPress={handleBeginGuidedMoment}
-              style={styles.retryButton}
-              testID="button-retry-guided-moment"
-            >
-              <ThemedText type="caption" style={{ color: ACCENT_GOLD }}>
-                {"Try Again"}
-              </ThemedText>
-            </Pressable>
-            <Pressable onPress={handleClose} style={styles.dismissBtn}>
-              <ThemedText type="caption" style={styles.dismissText}>
-                {"Close"}
-              </ThemedText>
-            </Pressable>
-          </Animated.View>
-        ) : (
-          <Animated.View entering={FadeIn.duration(400)} style={styles.playerMain}>
-            <Animated.View style={[styles.playCircleOuter, pulseStyle]}>
-              <View style={styles.playCircleGlow} />
-            </Animated.View>
-
-            <Pressable
-              onPress={
-                playerState === "ready" || playerState === "finished"
-                  ? playAudio
-                  : togglePlayPause
-              }
-              style={styles.playCircle}
-              testID="button-guided-moment-play"
+              onPress={handlePlayAction}
+              style={styles.bottomPlayBtn}
+              testID="button-guided-moment-toggle"
             >
               <Feather
                 name={playerState === "playing" ? "pause" : "play"}
-                size={36}
+                size={22}
                 color={ACCENT_GOLD}
-                style={playerState !== "playing" ? { marginLeft: 4 } : undefined}
+                style={playerState !== "playing" ? { marginLeft: 2 } : undefined}
               />
             </Pressable>
+          ) : null}
 
-            <View style={styles.progressContainer}>
-              <View style={styles.progressBar}>
-                <Animated.View
-                  style={[styles.progressFill, progressStyle]}
-                />
-              </View>
-            </View>
-
-            <ThemedText type="caption" style={styles.statusText}>
-              {playerState === "ready"
-                ? "Tap to begin"
-                : playerState === "playing"
-                ? "Listening..."
-                : playerState === "paused"
-                ? "Paused"
-                : "Complete"}
-            </ThemedText>
-
-            {(playerState === "playing" || playerState === "paused" || playerState === "finished") && moment?.script ? (
-              <ScrollView
-                style={styles.scriptScroll}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.scriptScrollContent}
+          {playerState === "finished" ? (
+            <View style={styles.finishedActions}>
+              <Pressable
+                onPress={playAudio}
+                style={styles.replayButton}
+                testID="button-replay-guided-moment"
               >
-                <View style={styles.scriptContainer}>
-                  {getVisibleWords().map((item, index) => (
-                    <ThemedText
-                      key={index}
-                      type="body"
-                      style={[
-                        styles.scriptWord,
-                        {
-                          color: item.visible
-                            ? "rgba(255,255,255,0.95)"
-                            : "rgba(255,255,255,0.15)",
-                        },
-                      ]}
-                    >
-                      {item.word}{" "}
-                    </ThemedText>
-                  ))}
-                </View>
-              </ScrollView>
-            ) : null}
-
-            {playerState === "finished" ? (
-              <Animated.View entering={FadeInUp.duration(400)} style={styles.finishedActions}>
-                <Pressable
-                  onPress={playAudio}
-                  style={styles.replayButton}
-                  testID="button-replay-guided-moment"
+                <Feather name="rotate-ccw" size={16} color={ACCENT_GOLD} />
+                <ThemedText type="caption" style={{ color: ACCENT_GOLD, marginLeft: 6 }}>
+                  {"Replay"}
+                </ThemedText>
+              </Pressable>
+              <Pressable onPress={handleClose} testID="button-done-guided-moment">
+                <LinearGradient
+                  colors={[ACCENT_GOLD, GOLD_LIGHT] as [string, string]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.doneButtonGradient}
                 >
-                  <Feather name="rotate-ccw" size={16} color={ACCENT_GOLD} />
-                  <ThemedText type="caption" style={{ color: ACCENT_GOLD, marginLeft: 6 }}>
-                    {"Replay"}
+                  <ThemedText type="caption" style={{ color: NAVY, fontWeight: "700" }}>
+                    {"Done"}
                   </ThemedText>
-                </Pressable>
-                <Pressable onPress={handleClose} testID="button-done-guided-moment">
-                  <LinearGradient
-                    colors={[ACCENT_GOLD, GOLD_LIGHT] as [string, string]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.doneButtonGradient}
-                  >
-                    <ThemedText type="caption" style={{ color: NAVY, fontWeight: "700" }}>
-                      {"Done"}
-                    </ThemedText>
-                  </LinearGradient>
-                </Pressable>
-              </Animated.View>
-            ) : null}
-          </Animated.View>
-        )}
-      </View>
+                </LinearGradient>
+              </Pressable>
+            </View>
+          ) : null}
 
-      {moment?.disclaimer ? (
-        <View style={[styles.disclaimerContainer, { paddingBottom: insets.bottom + Spacing.md }]}>
+          {playerState === "error" ? (
+            <View style={styles.finishedActions}>
+              <Pressable
+                onPress={beginGeneration}
+                style={styles.replayButton}
+                testID="button-retry-guided-moment"
+              >
+                <Feather name="refresh-cw" size={16} color={ACCENT_GOLD} />
+                <ThemedText type="caption" style={{ color: ACCENT_GOLD, marginLeft: 6 }}>
+                  {"Try Again"}
+                </ThemedText>
+              </Pressable>
+              <Pressable onPress={handleClose}>
+                <View style={[styles.doneButtonGradient, { backgroundColor: "rgba(255,255,255,0.1)" }]}>
+                  <ThemedText type="caption" style={{ color: "rgba(255,255,255,0.6)", fontWeight: "600" }}>
+                    {"Close"}
+                  </ThemedText>
+                </View>
+              </Pressable>
+            </View>
+          ) : null}
+        </View>
+      ) : null}
+    </Animated.View>
+  );
+
+  return (
+    <LinearGradient
+      colors={[NAVY, NAVY_MID] as [string, string]}
+      style={styles.container}
+    >
+      <Pressable
+        style={styles.tapArea}
+        onPress={handleScreenTap}
+        testID="guided-moment-tap-area"
+      >
+        <View style={isLandscape ? styles.landscapeLayout : styles.portraitLayout}>
+          <View style={styles.ringsArea}>
+            {renderBreathingRings()}
+          </View>
+
+          {!isLandscape ? (
+            <View style={styles.progressSection}>
+              <View style={styles.progressBar}>
+                <Animated.View style={[styles.progressFill, progressBarStyle]} />
+              </View>
+              {playerState === "generating" ? (
+                <ThemedText type="caption" style={styles.statusLabel}>
+                  {"Crafting your guided moment..."}
+                </ThemedText>
+              ) : playerState === "error" ? (
+                <ThemedText type="caption" style={[styles.statusLabel, { color: "#E85D5D" }]}>
+                  {errorMessage || "Something went wrong"}
+                </ThemedText>
+              ) : playerState === "ready" ? (
+                <ThemedText type="caption" style={styles.statusLabel}>
+                  {"Tap to begin"}
+                </ThemedText>
+              ) : playerState === "playing" ? (
+                <ThemedText type="caption" style={styles.statusLabel}>
+                  {"Listening..."}
+                </ThemedText>
+              ) : playerState === "paused" ? (
+                <ThemedText type="caption" style={styles.statusLabel}>
+                  {"Paused"}
+                </ThemedText>
+              ) : playerState === "finished" ? (
+                <ThemedText type="caption" style={styles.statusLabel}>
+                  {"Complete"}
+                </ThemedText>
+              ) : null}
+            </View>
+          ) : null}
+        </View>
+      </Pressable>
+
+      {renderControls()}
+
+      {moment?.disclaimer && (playerState === "finished") ? (
+        <View style={[styles.disclaimerContainer, { bottom: insets.bottom + 60 }]}>
           <ThemedText type="caption" style={styles.disclaimer}>
             {moment.disclaimer}
           </ThemedText>
@@ -690,16 +792,16 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
         onRequestClose={() => setShowSoundSwitcher(false)}
       >
         <Pressable
-          style={styles.switcherOverlay}
+          style={styles.modalOverlay}
           onPress={() => setShowSoundSwitcher(false)}
         >
           <Pressable
-            style={[styles.switcherContent, { paddingBottom: insets.bottom + Spacing.md }]}
+            style={[styles.modalContent, { paddingBottom: insets.bottom + Spacing.md }]}
             onPress={(e) => e.stopPropagation()}
           >
-            <View style={styles.switcherHandle} />
-            <View style={styles.switcherHeader}>
-              <ThemedText type="h4" style={styles.switcherTitle}>
+            <View style={styles.modalHandle} />
+            <View style={styles.modalHeader}>
+              <ThemedText type="h4" style={styles.modalTitle}>
                 {"Switch Sound"}
               </ThemedText>
               <Pressable
@@ -712,24 +814,24 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
             </View>
 
             <ScrollView
-              style={styles.switcherScroll}
+              style={styles.modalScroll}
               showsVerticalScrollIndicator={false}
             >
-              <View style={styles.switcherNoSound}>
+              <View style={styles.modalNoSound}>
                 {renderNoSoundTile(handleSwitchSoundDuringPlayback, true)}
               </View>
               {categories.map((category) => (
-                <View key={category.key} style={styles.switcherCategory}>
+                <View key={category.key} style={styles.modalCategory}>
                   <ThemedText
                     type="caption"
-                    style={[styles.switcherCategoryLabel, { color: category.color }]}
+                    style={[styles.modalCategoryLabel, { color: category.color }]}
                   >
                     {category.label}
                   </ThemedText>
                   <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.switcherRow}
+                    contentContainerStyle={styles.modalRow}
                   >
                     {category.sounds.map((sound) =>
                       renderSoundTile(
@@ -746,242 +848,163 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
           </Pressable>
         </Pressable>
       </Modal>
+
+      <Modal
+        visible={showVoiceSelector}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowVoiceSelector(false)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setShowVoiceSelector(false)}
+        >
+          <Pressable
+            style={[styles.voiceModalContent, { paddingBottom: insets.bottom + Spacing.md }]}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <View style={styles.modalHandle} />
+            <View style={styles.modalHeader}>
+              <ThemedText type="h4" style={styles.modalTitle}>
+                {"Meditation Voice"}
+              </ThemedText>
+              <Pressable
+                onPress={() => setShowVoiceSelector(false)}
+                hitSlop={12}
+                testID="button-close-voice-selector"
+              >
+                <Feather name="x" size={20} color="rgba(255,255,255,0.6)" />
+              </Pressable>
+            </View>
+
+            <ThemedText type="caption" style={styles.voiceNote}>
+              {"Voice changes apply to your next guided moment"}
+            </ThemedText>
+
+            <View style={styles.voiceList}>
+              {allVoiceOptions.map((voice) => {
+                const isActive = selectedVoice === voice.id;
+                return (
+                  <Pressable
+                    key={voice.id}
+                    onPress={() => handleVoiceSelect(voice.id)}
+                    style={[
+                      styles.voiceOption,
+                      isActive ? styles.voiceOptionActive : null,
+                    ]}
+                    testID={`button-voice-${voice.id}`}
+                  >
+                    <View style={[
+                      styles.voiceIconCircle,
+                      { backgroundColor: isActive ? `${ACCENT_GOLD}30` : "rgba(255,255,255,0.08)" },
+                    ]}>
+                      <Feather
+                        name={voice.icon}
+                        size={20}
+                        color={isActive ? ACCENT_GOLD : "rgba(255,255,255,0.5)"}
+                      />
+                    </View>
+                    <View style={styles.voiceTextCol}>
+                      <ThemedText type="body" style={[
+                        styles.voiceLabel,
+                        { color: isActive ? ACCENT_GOLD : "rgba(255,255,255,0.9)" },
+                      ]}>
+                        {voice.label}
+                      </ThemedText>
+                      <ThemedText type="caption" style={styles.voiceDesc}>
+                        {voice.description}
+                      </ThemedText>
+                    </View>
+                    {isActive ? (
+                      <Feather name="check-circle" size={20} color={ACCENT_GOLD} />
+                    ) : null}
+                  </Pressable>
+                );
+              })}
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </LinearGradient>
   );
 }
-
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.md,
-  },
-  headerLeft: {
+  tapArea: {
     flex: 1,
-    marginRight: Spacing.md,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  headerTitle: {
-    color: "rgba(255,255,255,0.95)",
-    marginBottom: Spacing.xs,
-  },
-  closeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.08)",
+  portraitLayout: {
     alignItems: "center",
     justifyContent: "center",
   },
-  moodBadge: {
-    alignSelf: "flex-start",
-    backgroundColor: `${ACCENT_GOLD}20`,
-    paddingVertical: 3,
-    paddingHorizontal: 10,
-    borderRadius: 10,
-  },
-  moodBadgeText: {
-    color: ACCENT_GOLD,
-    fontSize: 11,
-    fontWeight: "600",
-  },
-  selectionScroll: {
-    flex: 1,
-  },
-  selectionScrollContent: {
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.xl,
-  },
-  noSoundRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: Spacing.lg,
-    gap: Spacing.md,
-  },
-  noSoundLabel: {
-    flex: 1,
-  },
-  noSoundText: {
-    color: "rgba(255,255,255,0.5)",
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  categorySection: {
-    marginBottom: Spacing.lg,
-  },
-  categoryHeader: {
-    fontWeight: "700",
-    fontSize: 13,
-    marginBottom: Spacing.sm,
-    textTransform: "uppercase",
-    letterSpacing: 1,
-  },
-  categoryRow: {
-    gap: Spacing.sm,
-    paddingRight: Spacing.sm,
-  },
-  soundTile: {
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: Spacing.xs,
-  },
-  soundTileName: {
-    textAlign: "center",
-    fontWeight: "500",
-    paddingHorizontal: 4,
-  },
-  bottomAction: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: "rgba(255,255,255,0.06)",
-  },
-  beginButton: {
+  landscapeLayout: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 16,
-    borderRadius: BorderRadius.lg,
-    gap: Spacing.sm,
+    flex: 1,
+    paddingHorizontal: Spacing.xxl,
   },
-  beginButtonText: {
-    color: NAVY,
-    fontWeight: "700",
-    fontSize: 17,
+  ringsArea: {
+    alignItems: "center",
+    justifyContent: "center",
   },
-  breathingCircleBg: {
+  ringsContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  outerRing: {
     position: "absolute",
-    top: "30%",
-    left: "50%",
-    marginLeft: -120,
-    marginTop: -120,
-    width: 240,
-    height: 240,
+    borderWidth: 2,
+  },
+  innerGlow: {
+    position: "absolute",
+  },
+  mainCircle: {
     alignItems: "center",
     justifyContent: "center",
   },
-  breathingCircle: {
-    width: 240,
-    height: 240,
-    borderRadius: 120,
-    backgroundColor: ACCENT_GOLD,
-  },
-  playerHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  gradientCircle: {
     alignItems: "center",
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.md,
-    zIndex: 2,
+    justifyContent: "center",
   },
-  playerHeaderLeft: {
-    flexDirection: "row",
+  ringsCenterContent: {
+    position: "absolute",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
+    height: "100%",
+  },
+  centerTextContainer: {
     alignItems: "center",
     gap: Spacing.sm,
   },
-  playerHeaderRight: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.sm,
-  },
-  timeText: {
-    color: "rgba(255,255,255,0.5)",
-    fontSize: 12,
-  },
-  soundSwitcherBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: `${ACCENT_GOLD}15`,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  playerContent: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: Spacing.lg,
-    zIndex: 2,
-  },
-  generatingContainer: {
-    alignItems: "center",
-  },
-  generatingText: {
-    color: "rgba(255,255,255,0.9)",
-    marginTop: Spacing.lg,
-    fontSize: 17,
-    fontWeight: "600",
-  },
-  generatingSubtext: {
-    color: "rgba(255,255,255,0.5)",
-    marginTop: Spacing.xs,
+  centerStatusText: {
+    color: "rgba(255,255,255,0.7)",
     fontSize: 13,
   },
-  errorContainer: {
-    alignItems: "center",
-    paddingHorizontal: Spacing.xl,
-  },
-  errorText: {
-    color: "rgba(255,255,255,0.9)",
-    marginTop: Spacing.md,
-    textAlign: "center",
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  retryButton: {
-    marginTop: Spacing.lg,
-    paddingVertical: 10,
-    paddingHorizontal: 24,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
-    borderColor: `${ACCENT_GOLD}40`,
-  },
-  dismissBtn: {
-    paddingVertical: Spacing.md,
-    marginTop: Spacing.sm,
-  },
-  dismissText: {
-    color: "rgba(255,255,255,0.5)",
-  },
-  playerMain: {
-    alignItems: "center",
-    width: "100%",
-  },
-  playCircleOuter: {
-    position: "absolute",
-    width: 140,
-    height: 140,
-    borderRadius: 70,
+  rsvpInsideRings: {
     alignItems: "center",
     justifyContent: "center",
+    height: "60%",
   },
-  playCircleGlow: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    backgroundColor: ACCENT_GOLD,
-  },
-  playCircle: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    borderWidth: 2.5,
-    borderColor: `${ACCENT_GOLD}60`,
+  playIconCenter: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "rgba(255,255,255,0.12)",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: `${NAVY}E0`,
-    zIndex: 3,
+    borderWidth: 1.5,
+    borderColor: "rgba(255,255,255,0.2)",
   },
-  progressContainer: {
-    width: "100%",
+  progressSection: {
+    width: "80%",
+    alignItems: "center",
     marginTop: Spacing.xxl,
     paddingHorizontal: Spacing.lg,
   },
@@ -997,32 +1020,77 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     backgroundColor: ACCENT_GOLD,
   },
-  statusText: {
+  statusLabel: {
     color: "rgba(255,255,255,0.5)",
     marginTop: Spacing.sm,
     fontSize: 13,
   },
-  scriptScroll: {
-    maxHeight: 180,
-    width: "100%",
-    marginTop: Spacing.lg,
+  controlsOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: "space-between",
+    paddingHorizontal: Spacing.lg,
+    pointerEvents: "box-none",
   },
-  scriptScrollContent: {
-    paddingHorizontal: Spacing.sm,
-  },
-  scriptContainer: {
+  topControls: {
     flexDirection: "row",
-    flexWrap: "wrap",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  topLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  topRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  moodBadge: {
+    backgroundColor: `${ACCENT_GOLD}20`,
+    paddingVertical: 3,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+  },
+  moodBadgeText: {
+    color: ACCENT_GOLD,
+    fontSize: 11,
+    fontWeight: "600",
+  },
+  controlBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: `${ACCENT_GOLD}15`,
+    alignItems: "center",
     justifyContent: "center",
   },
-  scriptWord: {
-    fontSize: 17,
-    lineHeight: 28,
+  closeButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  bottomControls: {
+    alignItems: "center",
+    paddingBottom: Spacing.md,
+  },
+  bottomPlayBtn: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    borderWidth: 1.5,
+    borderColor: `${ACCENT_GOLD}40`,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: `${NAVY}E0`,
   },
   finishedActions: {
     flexDirection: "row",
     gap: Spacing.md,
-    marginTop: Spacing.xxl,
+    alignItems: "center",
   },
   replayButton: {
     flexDirection: "row",
@@ -1041,8 +1109,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   disclaimerContainer: {
-    paddingHorizontal: Spacing.xxl,
-    zIndex: 2,
+    position: "absolute",
+    left: Spacing.xxl,
+    right: Spacing.xxl,
   },
   disclaimer: {
     color: "rgba(255,255,255,0.3)",
@@ -1051,19 +1120,31 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
     lineHeight: 14,
   },
-  switcherOverlay: {
+  soundTile: {
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.xs,
+  },
+  soundTileName: {
+    textAlign: "center",
+    fontWeight: "500",
+    paddingHorizontal: 4,
+  },
+  modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "flex-end",
   },
-  switcherContent: {
+  modalContent: {
     backgroundColor: NAVY_MID,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: Spacing.md,
     maxHeight: "65%",
   },
-  switcherHandle: {
+  modalHandle: {
     width: 40,
     height: 4,
     borderRadius: 2,
@@ -1071,34 +1152,84 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     marginBottom: Spacing.md,
   },
-  switcherHeader: {
+  modalHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: Spacing.lg,
     marginBottom: Spacing.md,
   },
-  switcherTitle: {
+  modalTitle: {
     color: "rgba(255,255,255,0.9)",
   },
-  switcherScroll: {
+  modalScroll: {
     paddingHorizontal: Spacing.lg,
   },
-  switcherNoSound: {
+  modalNoSound: {
     marginBottom: Spacing.md,
   },
-  switcherCategory: {
+  modalCategory: {
     marginBottom: Spacing.md,
   },
-  switcherCategoryLabel: {
+  modalCategoryLabel: {
     fontWeight: "700",
     fontSize: 11,
     marginBottom: Spacing.xs,
     textTransform: "uppercase",
     letterSpacing: 1,
   },
-  switcherRow: {
+  modalRow: {
     gap: Spacing.sm,
     paddingRight: Spacing.sm,
+  },
+  voiceModalContent: {
+    backgroundColor: NAVY_MID,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingTop: Spacing.md,
+  },
+  voiceNote: {
+    color: "rgba(255,255,255,0.4)",
+    fontSize: 12,
+    paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
+  },
+  voiceList: {
+    paddingHorizontal: Spacing.lg,
+    gap: Spacing.sm,
+  },
+  voiceOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: BorderRadius.md,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.06)",
+  },
+  voiceOptionActive: {
+    backgroundColor: `${ACCENT_GOLD}12`,
+    borderColor: `${ACCENT_GOLD}30`,
+  },
+  voiceIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: Spacing.md,
+  },
+  voiceTextCol: {
+    flex: 1,
+  },
+  voiceLabel: {
+    fontWeight: "600",
+    fontSize: 15,
+  },
+  voiceDesc: {
+    color: "rgba(255,255,255,0.5)",
+    fontSize: 12,
+    marginTop: 2,
   },
 });

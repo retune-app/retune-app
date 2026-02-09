@@ -726,6 +726,39 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
         </View>
       </View>
 
+      {!isLandscape ? (
+        <View style={styles.bottomStatusSection} pointerEvents="none">
+          <View style={styles.progressBar}>
+            <Animated.View style={[styles.progressFill, progressBarStyle]} />
+          </View>
+          {playerState === "generating" ? (
+            <ThemedText type="caption" style={styles.statusLabel}>
+              {"Crafting your micro-meditation..."}
+            </ThemedText>
+          ) : playerState === "error" ? (
+            <ThemedText type="caption" style={[styles.statusLabel, { color: "#E85D5D" }]}>
+              {errorMessage || "Something went wrong"}
+            </ThemedText>
+          ) : playerState === "ready" ? (
+            <ThemedText type="caption" style={styles.statusLabel}>
+              {"Tap to begin"}
+            </ThemedText>
+          ) : playerState === "playing" ? (
+            <ThemedText type="caption" style={styles.statusLabel}>
+              {"Breathe and Listen"}
+            </ThemedText>
+          ) : playerState === "paused" ? (
+            <ThemedText type="caption" style={styles.statusLabel}>
+              {"Paused"}
+            </ThemedText>
+          ) : playerState === "finished" ? (
+            <ThemedText type="caption" style={styles.statusLabel}>
+              {"Complete"}
+            </ThemedText>
+          ) : null}
+        </View>
+      ) : null}
+
       {playerState !== "generating" ? (
         <View style={styles.bottomControls} pointerEvents="auto">
           {(playerState === "playing" || playerState === "paused") ? (
@@ -844,38 +877,6 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
             {renderBreathingRings()}
           </View>
 
-          {!isLandscape ? (
-            <View style={styles.progressSection}>
-              <View style={styles.progressBar}>
-                <Animated.View style={[styles.progressFill, progressBarStyle]} />
-              </View>
-              {playerState === "generating" ? (
-                <ThemedText type="caption" style={styles.statusLabel}>
-                  {"Crafting your micro-meditation..."}
-                </ThemedText>
-              ) : playerState === "error" ? (
-                <ThemedText type="caption" style={[styles.statusLabel, { color: "#E85D5D" }]}>
-                  {errorMessage || "Something went wrong"}
-                </ThemedText>
-              ) : playerState === "ready" ? (
-                <ThemedText type="caption" style={styles.statusLabel}>
-                  {"Tap to begin"}
-                </ThemedText>
-              ) : playerState === "playing" ? (
-                <ThemedText type="caption" style={styles.statusLabel}>
-                  {"Breathe and Listen"}
-                </ThemedText>
-              ) : playerState === "paused" ? (
-                <ThemedText type="caption" style={styles.statusLabel}>
-                  {"Paused"}
-                </ThemedText>
-              ) : playerState === "finished" ? (
-                <ThemedText type="caption" style={styles.statusLabel}>
-                  {"Complete"}
-                </ThemedText>
-              ) : null}
-            </View>
-          ) : null}
         </View>
       </Pressable>
 
@@ -1135,6 +1136,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: Spacing.xxl + Spacing.lg,
     paddingHorizontal: Spacing.lg,
+  },
+  bottomStatusSection: {
+    alignItems: "center",
+    paddingHorizontal: Spacing.xl,
+    marginBottom: Spacing.xs,
   },
   progressBar: {
     width: "100%",

@@ -17,7 +17,7 @@ const GOLD_LIGHT = "#E5C95C";
 const NAVY = "#0F1C3F";
 
 const FREE_ICONS: Record<string, string> = {
-  "Basic breathing exercises (4 techniques)": "wind",
+  "Breathing exercises (4 techniques)": "wind",
   "RSVP Focus Mode": "type",
   "Up to 10 AI affirmations per month": "mic",
   "Stock AI voices (Lotus & Sage)": "volume-2",

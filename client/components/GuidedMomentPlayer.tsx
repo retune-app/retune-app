@@ -116,6 +116,7 @@ export function GuidedMomentPlayer({ mood, timeOfDay, onClose, visible }: Guided
         mood,
         timeOfDay,
         usePersonalVoice: false,
+        duration: 1,
       });
       const data = await result.json();
 
@@ -228,10 +229,10 @@ export function GuidedMomentPlayer({ mood, timeOfDay, onClose, visible }: Guided
             <Feather name="headphones" size={28} color={PURPLE_SOFT} />
           </View>
           <ThemedText type="h3" style={[styles.offerTitle, { color: theme.text }]}>
-            Your Guided Moment
+            Your Micro-Meditation
           </ThemedText>
           <ThemedText type="body" style={[styles.offerBody, { color: theme.textSecondary }]}>
-            A personalized 60-second mindfulness exercise just for you, based on how you are feeling right now.
+            A personalized mindfulness exercise just for you, based on how you are feeling right now.
           </ThemedText>
           <Pressable onPress={generateMoment} testID="button-start-guided-moment">
             <LinearGradient
@@ -242,7 +243,7 @@ export function GuidedMomentPlayer({ mood, timeOfDay, onClose, visible }: Guided
             >
               <Feather name="play" size={18} color={NAVY} />
               <ThemedText type="body" style={styles.generateButtonText}>
-                Create My Moment
+                Begin
               </ThemedText>
             </LinearGradient>
           </Pressable>
@@ -256,10 +257,10 @@ export function GuidedMomentPlayer({ mood, timeOfDay, onClose, visible }: Guided
         <Animated.View entering={FadeIn.duration(300)} style={styles.generatingCard}>
           <ActivityIndicator size="large" color={ACCENT_GOLD} />
           <ThemedText type="body" style={[styles.generatingText, { color: theme.text }]}>
-            Crafting your guided moment...
+            Crafting your micro-meditation...
           </ThemedText>
           <ThemedText type="caption" style={[styles.generatingSubtext, { color: theme.textSecondary }]}>
-            Generating script and voice audio
+            Generating your personalized audio
           </ThemedText>
         </Animated.View>
       ) : playerState === "error" ? (

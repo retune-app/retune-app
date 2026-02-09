@@ -84,7 +84,7 @@ const dailyGreetingLimiter = rateLimit({
 const guidedMomentLimiter = rateLimit({
   windowMs: 24 * 60 * 60 * 1000,
   max: 5,
-  message: { error: "You've reached today's limit for guided moments. Come back tomorrow for a fresh session." },
+  message: { error: "You've reached today's limit for micro-meditations. Come back tomorrow for a fresh session." },
   standardHeaders: true,
   legacyHeaders: false,
   validate: false,
@@ -2407,11 +2407,11 @@ The suggested activity is: ${recommendation.technique}.`,
     }
   });
 
-  // ============ Guided Moments API ============
+  // ============ Micro-Meditations API ============
 
   app.post("/api/guided-moments/generate", requireAuth, guidedMomentLimiter, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { mood, timeOfDay, usePersonalVoice, voiceId } = req.body;
+      const { mood, timeOfDay, usePersonalVoice, voiceId, duration: rawDuration } = req.body;
 
       if (!mood || !timeOfDay) {
         return res.status(400).json({ error: "mood and timeOfDay are required" });
@@ -2419,6 +2419,7 @@ The suggested activity is: ${recommendation.technique}.`,
 
       const validMoods = ["calm", "stressed", "tired", "energized", "anxious", "grateful"];
       const validTimes = ["morning", "afternoon", "evening", "night"];
+      const validDurations = [1, 2, 3, 5];
 
       if (!validMoods.includes(mood)) {
         return res.status(400).json({ error: "Invalid mood value" });
@@ -2427,11 +2428,25 @@ The suggested activity is: ${recommendation.technique}.`,
         return res.status(400).json({ error: "Invalid timeOfDay value" });
       }
 
+      const duration = validDurations.includes(Number(rawDuration)) ? Number(rawDuration) : 1;
+
+      const wordCountMap: Record<number, { min: number; max: number }> = {
+        1: { min: 90, max: 135 },
+        2: { min: 180, max: 250 },
+        3: { min: 270, max: 370 },
+        5: { min: 450, max: 600 },
+      };
+      const maxTokensMap: Record<number, number> = { 1: 300, 2: 500, 3: 700, 5: 1000 };
+      const wordCount = wordCountMap[duration] || wordCountMap[1];
+      const maxTokens = maxTokensMap[duration] || 300;
+
+      const durationLabel = duration === 1 ? "60-90 seconds" : `${duration} minutes`;
+
       const userId = req.userId!;
       const [user] = await db.select({ name: users.name }).from(users).where(eq(users.id, userId)).limit(1);
       const userName = user?.name?.split(" ")[0] || "Friend";
 
-      console.log(`Generating guided moment for user ${userId} (${userName}), mood: ${mood}, time: ${timeOfDay}`);
+      console.log(`Generating micro-meditation (${duration}min) for user ${userId} (${userName}), mood: ${mood}, time: ${timeOfDay}`);
       const startTime = Date.now();
 
       const scriptPromise = openai.chat.completions.create({
@@ -2440,7 +2455,7 @@ The suggested activity is: ${recommendation.technique}.`,
           {
             role: "system",
             content: [
-              `You are an expert mindfulness meditation guide creating a personalized guided moment. This is a brief mindfulness exercise (60-90 seconds when read aloud at a calm pace).`,
+              `You are an expert mindfulness meditation guide creating a personalized micro-meditation. This is a mindfulness exercise (${durationLabel} when read aloud at a calm pace).`,
               ``,
               `STRUCTURE (follow this order):`,
               `1. OPENING (1-2 sentences): Grounding cue — invite them to close their eyes, notice their breath, or feel their body in the present moment.`,
@@ -2450,7 +2465,7 @@ The suggested activity is: ${recommendation.technique}.`,
               `5. CLOSING (1-2 sentences): Gently guide them back — "When you are ready, let your eyes open" or similar. End with a brief, empowering statement.`,
               ``,
               `RULES:`,
-              `- Total length: 120-180 words (60-90 seconds at meditation pace)`,
+              `- Total length: ${wordCount.min}-${wordCount.max} words (${durationLabel} at meditation pace)`,
               `- Use the person's name once, naturally (not at the very start)`,
               `- Include natural pauses marked with "..." (2-3 throughout)`,
               `- Write in second person ("you") for guidance, first person ("I am") for affirmations`,
@@ -2465,11 +2480,11 @@ The suggested activity is: ${recommendation.technique}.`,
           },
           {
             role: "user",
-            content: `Create a guided moment for someone named ${userName} feeling ${mood} during the ${timeOfDay}.`,
+            content: `Create a ${duration}-minute micro-meditation for someone named ${userName} feeling ${mood} during the ${timeOfDay}.`,
           },
         ],
         temperature: 0.85,
-        max_tokens: 300,
+        max_tokens: maxTokens,
       });
 
       const scriptResponse = await scriptPromise;
@@ -2483,7 +2498,7 @@ The suggested activity is: ${recommendation.technique}.`,
 
       let audioBuffer: ArrayBuffer;
       let wordTimings: WordTiming[] = [];
-      let duration = 0;
+      let audioDuration = 0;
 
       const ttsStartTime = Date.now();
       try {
@@ -2491,18 +2506,18 @@ The suggested activity is: ${recommendation.technique}.`,
           const result = await generateAudio(script, voiceId, true);
           audioBuffer = result.audio;
           wordTimings = result.wordTimings;
-          duration = result.duration;
+          audioDuration = result.duration;
         } else {
           const stockVoiceId = voiceId && isHumeVoice(voiceId) ? voiceId : "hume_lotus";
           const result = await generateAudio(script, stockVoiceId);
           audioBuffer = result.audio;
           wordTimings = result.wordTimings;
-          duration = result.duration;
+          audioDuration = result.duration;
         }
       } catch (ttsError: any) {
         console.error("Guided moment TTS failed:", ttsError?.message || ttsError);
         return res.status(500).json({ 
-          error: "Could not generate audio for your guided moment. Please try again.",
+          error: "Could not generate audio for your micro-meditation. Please try again.",
           code: ttsError?.message?.includes("QUOTA_EXCEEDED") ? "QUOTA_EXCEEDED" : 
                 ttsError?.message?.includes("VOICE_EXPIRED") ? "VOICE_EXPIRED" : "TTS_FAILED"
         });
@@ -2513,19 +2528,19 @@ The suggested activity is: ${recommendation.technique}.`,
       const audioBase64 = Buffer.from(audioBuffer).toString("base64");
 
       const totalTime = Date.now() - startTime;
-      console.log(`Guided moment generated: ${duration}s audio, ${audioBase64.length} base64 chars (script: ${scriptTime}ms, tts: ${ttsTime}ms, total: ${totalTime}ms)`);
+      console.log(`Micro-meditation (${duration}min) generated: ${audioDuration}s audio, ${audioBase64.length} base64 chars (script: ${scriptTime}ms, tts: ${ttsTime}ms, total: ${totalTime}ms)`);
 
       res.json({
         script,
         audioBase64,
-        duration,
+        duration: audioDuration,
         wordTimings,
         mood,
         disclaimer: "This is a mindfulness exercise for relaxation purposes. It is not a substitute for professional mental health care.",
       });
     } catch (error: any) {
-      console.error("Error generating guided moment:", error);
-      res.status(500).json({ error: "Failed to generate guided moment. Please try again." });
+      console.error("Error generating micro-meditation:", error);
+      res.status(500).json({ error: "Failed to generate micro-meditation. Please try again." });
     }
   });
 

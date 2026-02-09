@@ -20,7 +20,7 @@ export const FREE_FEATURES = [
 ];
 
 export const PREMIUM_FEATURES_LIST = [
-  "Guided Moments - AI meditation audio",
+  "Micro-Meditations - AI meditation audio",
   "Inner Voice - personal voice cloning",
   "Unlimited AI affirmations",
   "Advanced analytics & insights",

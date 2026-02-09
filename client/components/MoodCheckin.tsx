@@ -244,11 +244,11 @@ export function MoodCheckin({ onStartBreathing, onStartAffirmations, visible, on
                     });
                   }}
                   style={[styles.guidedMomentButton, { borderColor: `${ACCENT_GOLD}30` }]}
-                  testID="button-try-guided-moment"
+                  testID="button-try-micro-meditation"
                 >
                   <Feather name="headphones" size={16} color={ACCENT_GOLD} />
                   <ThemedText type="caption" style={{ color: ACCENT_GOLD, marginLeft: 6, fontWeight: "600" }}>
-                    {"Or try a Guided Moment"}
+                    {"Or try a Micro-Meditation"}
                   </ThemedText>
                 </Pressable>
 

@@ -47,6 +47,13 @@ const GOLD_LIGHT = "#E5C95C";
 const NAVY = "#0F1C3F";
 const NAVY_MID = "#1A2D4F";
 
+const DURATION_OPTIONS = [
+  { value: 1, label: "1 min" },
+  { value: 2, label: "2 min" },
+  { value: 3, label: "3 min" },
+  { value: 5, label: "5 min" },
+];
+
 const MOOD_SOUND_MAP: Record<string, BackgroundMusicType> = {
   calm: "ocean-waves-beach",
   stressed: "rain-soft",
@@ -145,6 +152,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
   const [moment, setMoment] = useState<GeneratedMoment | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [currentPosition, setCurrentPosition] = useState(0);
+  const [selectedDuration, setSelectedDuration] = useState<number>(1);
   const [selectedSound, setSelectedSound] = useState<BackgroundMusicType>(
     MOOD_SOUND_MAP[mood] || "ocean-waves-beach"
   );
@@ -356,6 +364,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
         timeOfDay,
         usePersonalVoice: isPersonal,
         voiceId: isPersonal ? undefined : selectedVoice,
+        duration: selectedDuration,
       });
       const data = await result.json();
 
@@ -372,7 +381,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
       setErrorMessage("Something went wrong. Please try again.");
       setPlayerState("error");
     }
-  }, [mood, timeOfDay, selectedVoice, setSelectedMusic, startBackgroundMusic]);
+  }, [mood, timeOfDay, selectedVoice, selectedDuration, setSelectedMusic, startBackgroundMusic]);
 
   const playAudio = useCallback(async () => {
     if (!moment?.audioBase64) return;
@@ -463,6 +472,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
         timeOfDay,
         usePersonalVoice: isPersonal,
         voiceId: isPersonal ? undefined : voiceId,
+        duration: selectedDuration,
       });
       const data = await result.json();
 
@@ -628,7 +638,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
           <View style={styles.centerTextContainer}>
             <Animated.View style={[styles.generatingPulse, generatingPulseStyle, { borderColor: moodColors.primary }]} />
             <ThemedText type="caption" style={styles.centerStatusText}>
-              {"Preparing..."}
+              {"Preparing your meditation..."}
             </ThemedText>
           </View>
         ) : playerState === "error" ? (
@@ -636,12 +646,12 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
             <Feather name="alert-circle" size={28} color="#E85D5D" />
           </View>
         ) : (playerState === "playing" || playerState === "paused") && moment?.wordTimings ? (
-          <View style={[styles.rsvpInsideRings, { width: ringSize * 0.42 }]}>
+          <View style={[styles.rsvpInsideRings, { width: ringSize * 0.52 }]}>
             <RSVPDisplay
               wordTimings={moment.wordTimings}
               currentPositionMs={currentPosition}
               isPlaying={playerState === "playing"}
-              fontSize="M"
+              fontSize="S"
               showHighlight={true}
               forceDarkMode={true}
             />
@@ -797,6 +807,39 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
       >
         <View style={isLandscape ? styles.landscapeLayout : styles.portraitLayout}>
           <View style={styles.ringsArea}>
+            {(playerState === "idle" || playerState === "generating" || playerState === "ready") ? (
+              <View style={styles.durationRow}>
+                {DURATION_OPTIONS.map((opt) => {
+                  const isSelected = selectedDuration === opt.value;
+                  return (
+                    <Pressable
+                      key={opt.value}
+                      onPress={() => {
+                        try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+                        setSelectedDuration(opt.value);
+                      }}
+                      style={[
+                        styles.durationPill,
+                        isSelected
+                          ? { backgroundColor: ACCENT_GOLD, borderColor: ACCENT_GOLD }
+                          : { backgroundColor: "transparent", borderColor: "rgba(255,255,255,0.3)" },
+                      ]}
+                      testID={`button-duration-${opt.value}`}
+                    >
+                      <ThemedText
+                        type="caption"
+                        style={[
+                          styles.durationPillText,
+                          { color: isSelected ? "#FFFFFF" : "rgba(255,255,255,0.8)" },
+                        ]}
+                      >
+                        {opt.label}
+                      </ThemedText>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            ) : null}
             {renderBreathingRings()}
           </View>
 
@@ -807,7 +850,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
               </View>
               {playerState === "generating" ? (
                 <ThemedText type="caption" style={styles.statusLabel}>
-                  {"Crafting your guided moment..."}
+                  {"Crafting your micro-meditation..."}
                 </ThemedText>
               ) : playerState === "error" ? (
                 <ThemedText type="caption" style={[styles.statusLabel, { color: "#E85D5D" }]}>
@@ -1053,6 +1096,23 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     borderWidth: 2,
     backgroundColor: "rgba(255,255,255,0.05)",
+  },
+  durationRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  durationPill: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  durationPillText: {
+    fontSize: 12,
+    fontWeight: "600",
   },
   rsvpInsideRings: {
     alignItems: "center",

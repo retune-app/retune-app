@@ -42,6 +42,10 @@ function getORPIndex(word: string): number {
   return 4;
 }
 
+function isStandalonePunctuation(word: string): boolean {
+  return /^[,.!?;:'\-"—–…]+$/.test(word);
+}
+
 function renderWordWithORP(
   word: string,
   fontSize: number,
@@ -102,7 +106,9 @@ export function RSVPDisplay({
     for (let i = wordTimings.length - 1; i >= 0; i--) {
       if (currentPositionMs >= wordTimings[i].startMs) {
         if (currentPositionMs <= wordTimings[i].endMs + 200) {
-          return wordTimings[i];
+          if (!isStandalonePunctuation(wordTimings[i].word)) {
+            return wordTimings[i];
+          }
         }
         if (i < wordTimings.length - 1) {
           const gapToNext = wordTimings[i + 1].startMs - wordTimings[i].endMs;
@@ -110,7 +116,9 @@ export function RSVPDisplay({
             return null;
           }
         }
-        return wordTimings[i];
+        if (!isStandalonePunctuation(wordTimings[i].word)) {
+          return wordTimings[i];
+        }
       }
     }
 

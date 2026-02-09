@@ -889,9 +889,42 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
         onPress={handleScreenTap}
         testID="guided-moment-tap-area"
       >
+        {(playerState === "idle" || playerState === "generating" || playerState === "ready") && !isLandscape ? (
+          <View style={styles.durationRowTop}>
+            {DURATION_OPTIONS.map((opt) => {
+              const isSelected = selectedDuration === opt.value;
+              return (
+                <Pressable
+                  key={opt.value}
+                  onPress={() => {
+                    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+                    setSelectedDuration(opt.value);
+                  }}
+                  style={[
+                    styles.durationPill,
+                    isSelected
+                      ? { backgroundColor: ACCENT_GOLD, borderColor: ACCENT_GOLD }
+                      : { backgroundColor: "transparent", borderColor: "rgba(255,255,255,0.3)" },
+                  ]}
+                  testID={`button-duration-${opt.value}`}
+                >
+                  <ThemedText
+                    type="caption"
+                    style={[
+                      styles.durationPillText,
+                      { color: isSelected ? "#FFFFFF" : "rgba(255,255,255,0.8)" },
+                    ]}
+                  >
+                    {opt.label}
+                  </ThemedText>
+                </Pressable>
+              );
+            })}
+          </View>
+        ) : null}
         <View style={isLandscape ? styles.landscapeLayout : styles.portraitLayout}>
           <View style={styles.ringsArea}>
-            {(playerState === "idle" || playerState === "generating" || playerState === "ready") ? (
+            {(playerState === "idle" || playerState === "generating" || playerState === "ready") && isLandscape ? (
               <View style={styles.durationRow}>
                 {DURATION_OPTIONS.map((opt) => {
                   const isSelected = selectedDuration === opt.value;
@@ -1180,6 +1213,14 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     borderWidth: 2,
     backgroundColor: "rgba(255,255,255,0.05)",
+  },
+  durationRowTop: {
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: Spacing.md,
+    marginBottom: Spacing.md,
   },
   durationRow: {
     flexDirection: "row",

@@ -94,6 +94,10 @@ export default function BreathingScreen() {
   const [showCompletionAnimation, setShowCompletionAnimation] = useState(false);
   const [progressIndicatorEnabled, setProgressIndicatorEnabled] = useState(true);
 
+  const [countdownValue, setCountdownValue] = useState<number | null>(null);
+  const countdownScale = useSharedValue(0.5);
+  const countdownOpacityVal = useSharedValue(0);
+
   const [showTechniqueInfo, setShowTechniqueInfo] = useState(false);
   const [showMoodCheckin, setShowMoodCheckin] = useState(false);
 
@@ -337,7 +341,7 @@ export default function BreathingScreen() {
     }
     if (musicEnabled) {
       if (selectedMusic === 'none') {
-        await setSelectedMusic('forest-night');
+        await setSelectedMusic('forest-rain-birds');
       } else {
         await startBackgroundMusic();
       }
@@ -369,7 +373,7 @@ export default function BreathingScreen() {
     }
     if (musicEnabled) {
       if (selectedMusic === 'none') {
-        await setSelectedMusic('forest-night');
+        await setSelectedMusic('forest-rain-birds');
       } else {
         await startBackgroundMusic();
       }
@@ -498,6 +502,32 @@ export default function BreathingScreen() {
     opacity: controlsOpacity.value,
   }));
 
+  const countdownAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: countdownScale.value }],
+    opacity: countdownOpacityVal.value,
+  }));
+
+  const handleStartWithCountdown = useCallback(async () => {
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); } catch (e) {}
+    
+    for (let i = 3; i >= 1; i--) {
+      setCountdownValue(i);
+      countdownScale.value = 0.5;
+      countdownOpacityVal.value = 0;
+      countdownScale.value = withTiming(1.2, { duration: 600, easing: Easing.out(Easing.cubic) });
+      countdownOpacityVal.value = withTiming(1, { duration: 200 });
+      
+      await new Promise(resolve => setTimeout(resolve, 600));
+      countdownOpacityVal.value = withTiming(0, { duration: 200 });
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
+    
+    setCountdownValue(null);
+    
+    await handleStart();
+    setShowLandscapeMode(true);
+  }, [handleStart]);
+
   useEffect(() => {
     if (showLandscapeMode && isPlaying) {
       resetControlsTimer();
@@ -610,6 +640,12 @@ export default function BreathingScreen() {
                 </View>
                 
                 <View style={styles.portraitControlsRow}>
+                  <Pressable
+                    onPress={() => { resetControlsTimer(); setHapticsEnabled(!hapticsEnabled); try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} }}
+                    style={[styles.landscapeStopButton, { backgroundColor: hapticsEnabled ? `${selectedTechnique.color}40` : 'rgba(255,255,255,0.2)' }]}
+                  >
+                    <Feather name="smartphone" size={18} color={hapticsEnabled ? selectedTechnique.color : '#FFFFFF'} />
+                  </Pressable>
                   <Pressable
                     onPress={() => { resetControlsTimer(); handleStop(); }}
                     style={styles.landscapeStopButton}
@@ -742,6 +778,12 @@ export default function BreathingScreen() {
               </View>
               
               <View style={styles.landscapeControlsRow}>
+                <Pressable
+                  onPress={() => { resetControlsTimer(); setHapticsEnabled(!hapticsEnabled); try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} }}
+                  style={[styles.landscapeStopButton, { backgroundColor: hapticsEnabled ? `${selectedTechnique.color}40` : 'rgba(255,255,255,0.2)' }]}
+                >
+                  <Feather name="smartphone" size={18} color={hapticsEnabled ? selectedTechnique.color : '#FFFFFF'} />
+                </Pressable>
                 <Pressable
                   onPress={() => { resetControlsTimer(); handleStop(); }}
                   style={styles.landscapeStopButton}
@@ -885,64 +927,67 @@ export default function BreathingScreen() {
               hapticsEnabled={hapticsEnabled}
               size={isPlaying ? Math.min(SCREEN_WIDTH * 0.85, SCREEN_HEIGHT * 0.45) : 260}
             />
+            {!isPlaying && countdownValue === null ? (
+              <Pressable
+                onPress={handleStartWithCountdown}
+                testID="button-start-breathing"
+                style={{
+                  position: 'absolute',
+                  width: 100,
+                  height: 100,
+                  borderRadius: 50,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+              >
+                <LinearGradient
+                  colors={[selectedTechnique.color, `${selectedTechnique.color}CC`]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={{
+                    width: 80,
+                    height: 80,
+                    borderRadius: 40,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    shadowColor: selectedTechnique.color,
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.4,
+                    shadowRadius: 12,
+                    elevation: 8,
+                  }}
+                >
+                  <Feather name="play" size={32} color="#FFFFFF" />
+                </LinearGradient>
+              </Pressable>
+            ) : null}
+            {countdownValue !== null ? (
+              <Animated.View
+                style={[
+                  {
+                    position: 'absolute',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  },
+                  countdownAnimatedStyle,
+                ]}
+              >
+                <Text style={{
+                  fontSize: 72,
+                  fontWeight: '800',
+                  color: selectedTechnique.color,
+                  textShadowColor: `${selectedTechnique.color}40`,
+                  textShadowOffset: { width: 0, height: 0 },
+                  textShadowRadius: 20,
+                }}>
+                  {countdownValue}
+                </Text>
+              </Animated.View>
+            ) : null}
           </View>
 
 
         </Animated.View>
-
-        {/* Control Buttons - Horizontal below circle */}
-        {!isPlaying ? (
-          <Animated.View 
-            entering={FadeIn.delay(350).duration(400)}
-            style={styles.controlButtonsHorizontal}
-          >
-            <Pressable 
-              onPress={() => setHapticsEnabled(!hapticsEnabled)} 
-              style={[styles.secondaryControlButton, { backgroundColor: hapticsEnabled ? `${ACCENT_GOLD}15` : 'transparent', borderColor: hapticsEnabled ? ACCENT_GOLD : `${ACCENT_GOLD}50` }]}
-            >
-              <Feather name="smartphone" size={18} color={hapticsEnabled ? ACCENT_GOLD : theme.textSecondary} />
-              <ThemedText type="caption" style={{ marginTop: 2, fontSize: 9, color: hapticsEnabled ? ACCENT_GOLD : theme.textSecondary }}>Haptics</ThemedText>
-            </Pressable>
-            <Pressable 
-              onPressIn={() => {
-                if (hapticsEnabled) {
-                  try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); } catch (e) {}
-                }
-              }}
-              onPress={handleStart}
-              testID="button-start-breathing"
-            >
-              {({ pressed }) => (
-                <Animated.View
-                  style={[
-                    styles.startButtonShadow,
-                    { 
-                      shadowColor: selectedTechnique.color,
-                      transform: [{ scale: pressed ? 0.9 : 1 }],
-                    },
-                  ]}
-                >
-                  <LinearGradient
-                    colors={[selectedTechnique.color, `${selectedTechnique.color}99`]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.primaryPlayButton}
-                  >
-                    <Feather name="play" size={28} color="#FFFFFF" />
-                    <Text style={styles.primaryButtonText}>Start</Text>
-                  </LinearGradient>
-                </Animated.View>
-              )}
-            </Pressable>
-            <Pressable 
-              onPress={enterFullscreen} 
-              style={[styles.secondaryControlButton, { backgroundColor: 'transparent', borderColor: `${theme.textSecondary}40` }]}
-            >
-              <Feather name="maximize-2" size={18} color={theme.textSecondary} />
-              <ThemedText type="caption" style={{ marginTop: 2, fontSize: 9, color: theme.textSecondary }}>Expand</ThemedText>
-            </Pressable>
-          </Animated.View>
-        ) : null}
 
         {/* Bottom Options Panel */}
         {!isPlaying ? (
@@ -1069,70 +1114,6 @@ export default function BreathingScreen() {
         ) : null}
 
       </View>
-
-      {/* Playing Controls - Horizontal row at bottom during active session */}
-      {isPlaying ? (
-        <Animated.View 
-          entering={FadeIn.duration(400)} 
-          style={[styles.playingControlsBottom, { paddingBottom: insets.bottom + 100 }]}
-        >
-          {/* Stats Row - Above controls */}
-          <View style={styles.activeStatsRow}>
-            <View style={styles.statItem}>
-              <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                Time Left
-              </ThemedText>
-              <ThemedText type="h2" style={{ color: theme.text }}>{formatTime(remainingTime)}</ThemedText>
-            </View>
-            <View style={[styles.statDivider, { backgroundColor: theme.border }]} />
-            <View style={styles.statItem}>
-              <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                Progress
-              </ThemedText>
-              <ThemedText type="h2" style={{ color: selectedTechnique.color }}>{progressPercent}%</ThemedText>
-            </View>
-            <View style={[styles.statDivider, { backgroundColor: theme.border }]} />
-            <View style={styles.statItem}>
-              <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                Cycles
-              </ThemedText>
-              <ThemedText type="h2" style={{ color: theme.text }}>
-                {cyclesCompleted}/{totalCycles}
-              </ThemedText>
-            </View>
-          </View>
-          <View style={styles.playingControlsRow}>
-            <Pressable
-              onPress={handleStop}
-              style={[styles.playingSecondaryButton, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border }, Shadows.small]}
-              testID="button-stop-breathing"
-            >
-              <Feather name="square" size={20} color={theme.text} />
-              <ThemedText type="caption" style={{ marginTop: 4 }}>Stop</ThemedText>
-            </Pressable>
-            <Pressable
-              onPress={isPlaying ? handlePause : handleResume}
-              testID="button-pause-breathing"
-            >
-              <LinearGradient
-                colors={[selectedTechnique.color, `${selectedTechnique.color}CC`]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={[styles.playingPrimaryButton, Shadows.large]}
-              >
-                <Feather name="pause" size={32} color="#FFFFFF" />
-              </LinearGradient>
-            </Pressable>
-            <Pressable
-              onPress={() => setShowLandscapeMode(true)}
-              style={[styles.playingSecondaryButton, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border }, Shadows.small]}
-            >
-              <Feather name="maximize-2" size={20} color={theme.text} />
-              <ThemedText type="caption" style={{ marginTop: 4 }}>Expand</ThemedText>
-            </Pressable>
-          </View>
-        </Animated.View>
-      ) : null}
 
       {/* Technique Selection Modal */}
       <Modal

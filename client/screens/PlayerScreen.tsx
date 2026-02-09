@@ -51,7 +51,7 @@ export default function PlayerScreen() {
   const { theme } = useTheme();
   const queryClient = useQueryClient();
 
-  const { affirmationId, isNew = false } = route.params;
+  const { affirmationId, isNew = false, autoPlay = false } = route.params;
 
   const {
     currentAffirmation,
@@ -92,6 +92,8 @@ export default function PlayerScreen() {
 
   // Haptic feedback setting
   const [hapticEnabled, setHapticEnabled] = useState(true);
+
+  const autoPlayedRef = useRef(false);
 
   // Focus mode tip (one-time hint)
   const [showFocusModeTip, setShowFocusModeTip] = useState(false);
@@ -263,6 +265,13 @@ export default function PlayerScreen() {
       ),
     });
   }, [navigation, handleSave, handleDelete, autoSaveMutation.isPending, theme, isNew, hasSaved]);
+
+  useEffect(() => {
+    if (autoPlay && affirmation && !autoPlayedRef.current) {
+      autoPlayedRef.current = true;
+      playAffirmation(affirmation);
+    }
+  }, [autoPlay, affirmation]);
 
   useEffect(() => {
     const loadSettings = async () => {

@@ -27,7 +27,7 @@ export type RootStackParamList = {
   VoiceSettings: undefined;
   SoundLibrary: undefined;
   Create: undefined;
-  Player: { affirmationId: number; isNew?: boolean };
+  Player: { affirmationId: number; isNew?: boolean; autoPlay?: boolean };
   Analytics: undefined;
   GuidedMoment: { mood: string; timeOfDay: string };
 };

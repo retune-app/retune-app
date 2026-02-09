@@ -160,7 +160,7 @@ export function MoodCheckin({ onStartBreathing, onStartAffirmations, visible, on
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
     handleClose();
     if (response?.listen?.hasAffirmation && response.listen.affirmationId) {
-      navigation.navigate("Player", { affirmationId: response.listen.affirmationId });
+      navigation.navigate("Player", { affirmationId: response.listen.affirmationId, autoPlay: true });
     } else if (response?.listen?.hasAnyAffirmations) {
       onStartAffirmations?.();
     } else {

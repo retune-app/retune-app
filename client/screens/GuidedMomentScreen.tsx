@@ -210,7 +210,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
   const controlsOpacity = useSharedValue(1);
   const generatingPulse = useSharedValue(0);
 
-  const ringSize = isLandscape ? Math.min(height * 0.75, width * 0.55) : Math.min(width * 0.82, height * 0.42);
+  const ringSize = isLandscape ? Math.min(height * 0.75, width * 0.55) : Math.min(width * 0.92, height * 0.45);
 
   const categories = useMemo<CategorySection[]>(() => {
     const byCategory = getSoundsByCategory();

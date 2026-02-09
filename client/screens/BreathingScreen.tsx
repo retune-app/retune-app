@@ -519,29 +519,29 @@ export default function BreathingScreen() {
 
   useEffect(() => {
     if (!isPlaying && countdownValue === null) {
-      const duration = 2400;
+      const duration = 3600;
       const startRipple = (scaleVal: { value: number }, opacityVal: { value: number }, delay: number) => {
         scaleVal.value = 1;
         opacityVal.value = 0;
         scaleVal.value = withDelay(delay, withRepeat(
-          withTiming(1.8, { duration, easing: Easing.out(Easing.cubic) }),
+          withTiming(1.35, { duration, easing: Easing.out(Easing.quad) }),
           -1, false
         ));
         opacityVal.value = withDelay(delay, withRepeat(
           withSequence(
-            withTiming(0.35, { duration: duration * 0.15, easing: Easing.out(Easing.ease) }),
-            withTiming(0, { duration: duration * 0.85, easing: Easing.in(Easing.ease) }),
+            withTiming(0.25, { duration: duration * 0.12, easing: Easing.out(Easing.ease) }),
+            withTiming(0, { duration: duration * 0.88, easing: Easing.in(Easing.ease) }),
           ),
           -1, false
         ));
       };
       startRipple(ripple1Scale, ripple1Opacity, 0);
-      startRipple(ripple2Scale, ripple2Opacity, 800);
-      startRipple(ripple3Scale, ripple3Opacity, 1600);
+      startRipple(ripple2Scale, ripple2Opacity, 1200);
+      startRipple(ripple3Scale, ripple3Opacity, 2400);
     } else {
-      ripple1Opacity.value = withTiming(0, { duration: 300 });
-      ripple2Opacity.value = withTiming(0, { duration: 300 });
-      ripple3Opacity.value = withTiming(0, { duration: 300 });
+      ripple1Opacity.value = withTiming(0, { duration: 400 });
+      ripple2Opacity.value = withTiming(0, { duration: 400 });
+      ripple3Opacity.value = withTiming(0, { duration: 400 });
     }
   }, [isPlaying, countdownValue]);
 
@@ -563,14 +563,14 @@ export default function BreathingScreen() {
     
     for (let i = 3; i >= 1; i--) {
       setCountdownValue(i);
-      countdownScale.value = 0.5;
+      countdownScale.value = 0.8;
       countdownOpacityVal.value = 0;
-      countdownScale.value = withTiming(1.2, { duration: 600, easing: Easing.out(Easing.cubic) });
-      countdownOpacityVal.value = withTiming(1, { duration: 200 });
+      countdownScale.value = withTiming(1, { duration: 700, easing: Easing.out(Easing.quad) });
+      countdownOpacityVal.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.ease) });
       
-      await new Promise(resolve => setTimeout(resolve, 600));
-      countdownOpacityVal.value = withTiming(0, { duration: 200 });
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise(resolve => setTimeout(resolve, 700));
+      countdownOpacityVal.value = withTiming(0, { duration: 300, easing: Easing.in(Easing.ease) });
+      await new Promise(resolve => setTimeout(resolve, 300));
     }
     
     setCountdownValue(null);
@@ -943,26 +943,26 @@ export default function BreathingScreen() {
               <>
                 <Animated.View style={[{
                   position: 'absolute',
-                  width: 260,
-                  height: 260,
-                  borderRadius: 130,
-                  borderWidth: 1.5,
+                  width: 220,
+                  height: 220,
+                  borderRadius: 110,
+                  borderWidth: 1,
                   borderColor: selectedTechnique.color,
                 }, ripple1Style]} />
                 <Animated.View style={[{
                   position: 'absolute',
-                  width: 260,
-                  height: 260,
-                  borderRadius: 130,
-                  borderWidth: 1.5,
+                  width: 220,
+                  height: 220,
+                  borderRadius: 110,
+                  borderWidth: 1,
                   borderColor: selectedTechnique.color,
                 }, ripple2Style]} />
                 <Animated.View style={[{
                   position: 'absolute',
-                  width: 260,
-                  height: 260,
-                  borderRadius: 130,
-                  borderWidth: 1,
+                  width: 220,
+                  height: 220,
+                  borderRadius: 110,
+                  borderWidth: 0.5,
                   borderColor: selectedTechnique.color,
                 }, ripple3Style]} />
               </>
@@ -1055,12 +1055,10 @@ export default function BreathingScreen() {
                 ]}
               >
                 <Text style={{
-                  fontSize: 72,
-                  fontWeight: '800',
-                  color: selectedTechnique.color,
-                  textShadowColor: `${selectedTechnique.color}40`,
-                  textShadowOffset: { width: 0, height: 0 },
-                  textShadowRadius: 20,
+                  fontSize: 48,
+                  fontWeight: '300',
+                  color: '#FFFFFF',
+                  letterSpacing: 2,
                 }}>
                   {countdownValue}
                 </Text>

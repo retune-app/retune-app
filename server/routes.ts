@@ -10,6 +10,7 @@ import { eq, desc, asc, and, sql, sum } from "drizzle-orm";
 import { openai } from "./replit_integrations/audio/client";
 import OpenAI from "openai";
 import { isPremiumUser, FREE_FEATURES, PREMIUM_FEATURES_LIST, BETA_MODE } from "./premium";
+import { MOOD_TAG_PREFERENCES, type MoodType, type TimeOfDay } from "@shared/pillars";
 import {
   cloneVoice,
   textToSpeech as elevenLabsTTS,
@@ -2340,27 +2341,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const hasAffirmations = userAffirmationsList.length > 0;
       const hasAffirmationsWithAudio = userAffirmationsList.filter(a => a.audioUrl).length > 0;
 
-      const moodPillarMap: Record<string, string[]> = {
-        calm: ["Spirit", "Mind"],
-        stressed: ["Mind", "Body"],
-        tired: ["Body", "Achievement"],
-        energized: ["Achievement", "Connection"],
-        anxious: ["Mind", "Spirit"],
-        grateful: ["Connection", "Spirit"],
-      };
+      const moodPrefs = MOOD_TAG_PREFERENCES[mood as MoodType]?.[timeOfDay as TimeOfDay];
+      const preferredTags = moodPrefs?.preferredTags || [];
+      const preferredPillars = moodPrefs?.preferredPillars || ["Mind"];
 
-      const relevantPillars = moodPillarMap[mood] || ["Mind"];
       let matchedAffirmation: { id: number; title: string; voiceType: string | null } | null = null;
+      let matchReason: "tag" | "pillar" | "any" | null = null;
 
-      const pillarMatches = userAffirmationsList.filter(a => a.audioUrl && a.pillar && relevantPillars.includes(a.pillar));
-      if (pillarMatches.length > 0) {
-        const favorites = pillarMatches.filter(a => a.isFavorite);
-        const pool = favorites.length > 0 ? favorites : pillarMatches;
-        matchedAffirmation = pool[Math.floor(Math.random() * pool.length)];
-      } else if (hasAffirmationsWithAudio) {
-        const withAudio = userAffirmationsList.filter(a => a.audioUrl);
-        matchedAffirmation = withAudio[Math.floor(Math.random() * withAudio.length)];
+      const withAudio = userAffirmationsList.filter(a => a.audioUrl);
+
+      if (withAudio.length > 0) {
+        const scoreAffirmation = (a: typeof withAudio[0]) => {
+          let score = 0;
+          const tags = (a.categoryName || "").split(",").map(t => t.trim()).filter(Boolean);
+          const tagMatches = tags.filter(t => preferredTags.includes(t)).length;
+          score += tagMatches * 3;
+          if (a.pillar && preferredPillars.includes(a.pillar)) {
+            score += preferredPillars.indexOf(a.pillar) === 0 ? 2 : 1;
+          }
+          if (a.isFavorite) score += 1;
+          return score;
+        };
+
+        const scored = withAudio.map(a => ({ ...a, score: scoreAffirmation(a) }));
+        scored.sort((a, b) => b.score - a.score);
+
+        const topScore = scored[0].score;
+        if (topScore > 0) {
+          const topPool = scored.filter(a => a.score === topScore);
+          const picked = topPool[Math.floor(Math.random() * topPool.length)];
+          matchedAffirmation = picked;
+          matchReason = topScore >= 3 ? "tag" : "pillar";
+        } else {
+          matchedAffirmation = withAudio[Math.floor(Math.random() * withAudio.length)];
+          matchReason = "any";
+        }
       }
+
+      const suggestedCreationTheme = !matchedAffirmation ? (() => {
+        const themeMap: Record<string, Record<string, string>> = {
+          tired: { morning: "gentle energy and vitality", afternoon: "renewed focus and stamina", evening: "restful sleep and deep recovery", night: "peaceful sleep and body restoration" },
+          stressed: { morning: "calm clarity to start your day", afternoon: "releasing tension and finding ease", evening: "letting go of the day's weight", night: "peaceful surrender into rest" },
+          anxious: { morning: "grounded confidence for the day ahead", afternoon: "calm resilience and inner safety", evening: "releasing worry and finding peace", night: "safe, calm sleep and letting go of fear" },
+          calm: { morning: "deepening your morning serenity", afternoon: "sustaining your peaceful presence", evening: "gratitude and gentle reflection", night: "honoring your calm with restful sleep" },
+          energized: { morning: "channeling your energy into purpose", afternoon: "focused drive and achievement", evening: "grateful reflection on your vitality", night: "peaceful transition from energy to rest" },
+          grateful: { morning: "amplifying morning gratitude", afternoon: "sharing your grateful heart with others", evening: "savoring the day's blessings", night: "drifting to sleep wrapped in thankfulness" },
+        };
+        return themeMap[mood]?.[timeOfDay] || "your current emotional state";
+      })() : null;
 
       const breatheMap: Record<string, Record<string, { name: string; id: string }>> = {
         calm: {
@@ -2406,11 +2434,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let listenContext = "";
       if (matchedAffirmation) {
         const isInnerVoice = matchedAffirmation.voiceType === "personal";
-        listenContext = `The user has an affirmation called "${matchedAffirmation.title}"${isInnerVoice ? " recorded in their own cloned voice (Inner Voice)" : ""}. This is available for them to listen to.`;
+        const matchQuality = matchReason === "tag" ? "closely matches their mood and time of day" : matchReason === "pillar" ? "aligns with their current emotional needs" : "is available to listen to";
+        listenContext = `The user has an affirmation called "${matchedAffirmation.title}"${isInnerVoice ? " recorded in their own cloned voice (Inner Voice)" : ""} that ${matchQuality}. It is ${timeOfDay} — tailor your note accordingly.`;
       } else if (hasAffirmations) {
-        listenContext = "The user has affirmations but none with audio yet.";
+        listenContext = `The user has affirmations but none with audio yet. It is ${timeOfDay} — suggest bringing one to life.`;
       } else {
-        listenContext = "The user hasn't created any affirmations yet.";
+        listenContext = `The user hasn't created any affirmations yet. Suggest creating one about ${suggestedCreationTheme}.`;
       }
 
       const voiceContext = hasClonedVoice
@@ -2436,7 +2465,7 @@ Respond as JSON with exactly these fields:
   "acknowledgment": "A warm, specific 1-sentence reflection (max 15 words). Use ${userName}'s name. Never say 'it's tough' or 'I hear you'. Be creative and genuine — reflect their specific emotional state as if you truly see them. Vary your language every time.",
   "breatheNote": "One sentence (max 12 words) connecting ${breathing.name} to their ${mood} feeling. Reference a specific body sensation or neural mechanism (vagus nerve, cortisol, amygdala, etc.) in plain language.",
   "meditateNote": "One sentence (max 12 words) about why a guided meditation fits their current state. Be specific to ${mood} + ${timeOfDay}.",
-  "listenNote": "One sentence (max 12 words). ${matchedAffirmation ? `Reference their affirmation '${matchedAffirmation.title}' and why hearing it now would resonate with feeling ${mood}.` : hasAffirmations ? "Encourage them to bring one of their affirmations to life with audio." : `Suggest creating a personal affirmation that speaks to their ${mood} feeling${!hasClonedVoice ? " — especially powerful in their own voice" : ""}.`}"
+  "listenNote": "One sentence (max 12 words). ${matchedAffirmation ? `Reference their affirmation '${matchedAffirmation.title}' and why hearing it at ${timeOfDay} while feeling ${mood} would resonate. Be specific to the time — e.g. nighttime = rest/sleep framing, morning = energizing framing.` : hasAffirmations ? "Encourage them to bring one of their affirmations to life with audio." : `Suggest creating a personal affirmation about ${suggestedCreationTheme}${!hasClonedVoice ? " — especially powerful in their own voice" : ""}.`}"
 }
 
 Rules:
@@ -2460,7 +2489,7 @@ Rules:
       let meditateNote = "A guided moment to reconnect with yourself.";
       let listenNote = matchedAffirmation
         ? `Your affirmation "${matchedAffirmation.title}" is waiting for you.`
-        : "Create an affirmation that speaks to how you feel.";
+        : suggestedCreationTheme ? `Create an affirmation about ${suggestedCreationTheme}.` : "Create an affirmation that speaks to how you feel.";
 
       try {
         const parsed = JSON.parse(response.choices[0]?.message?.content || "{}");
@@ -2488,6 +2517,7 @@ Rules:
           hasClonedVoice: hasClonedVoice,
           hasAnyAffirmations: hasAffirmations,
           note: listenNote,
+          suggestedTheme: suggestedCreationTheme,
         },
       });
     } catch (error) {

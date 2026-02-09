@@ -55,13 +55,43 @@ const DURATION_OPTIONS = [
   { value: 5, label: "5 min" },
 ];
 
-const MOOD_SOUND_MAP: Record<string, BackgroundMusicType> = {
-  calm: "ocean-waves-beach",
-  stressed: "rain-soft",
-  tired: "meditation-morning-mist",
-  energized: "binaural-beta",
-  anxious: "meditation-singing-bowls",
-  grateful: "forest-night",
+const MOOD_SOUND_MAP: Record<string, Record<string, BackgroundMusicType>> = {
+  calm: {
+    morning: "ocean-waves-beach",
+    afternoon: "ocean-waves-beach",
+    evening: "meditation-gentle-chimes",
+    night: "meditation-deep-drone",
+  },
+  stressed: {
+    morning: "rain-soft",
+    afternoon: "rain-calming",
+    evening: "meditation-singing-bowls",
+    night: "binaural-delta",
+  },
+  tired: {
+    morning: "forest-birds-morning",
+    afternoon: "binaural-alpha",
+    evening: "meditation-gentle-chimes",
+    night: "meditation-deep-drone",
+  },
+  energized: {
+    morning: "binaural-beta",
+    afternoon: "binaural-beta",
+    evening: "meditation-forest-melody",
+    night: "meditation-gentle-chimes",
+  },
+  anxious: {
+    morning: "meditation-singing-bowls",
+    afternoon: "rain-soft",
+    evening: "meditation-singing-bowls",
+    night: "binaural-delta",
+  },
+  grateful: {
+    morning: "forest-birds-morning",
+    afternoon: "forest-rain-birds",
+    evening: "meditation-forest-melody",
+    night: "forest-night",
+  },
 };
 
 const MOOD_LABELS: Record<string, string> = {
@@ -157,7 +187,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
   const [currentPosition, setCurrentPosition] = useState(0);
   const [selectedDuration, setSelectedDuration] = useState<number>(1);
   const [selectedSound, setSelectedSound] = useState<BackgroundMusicType>(
-    MOOD_SOUND_MAP[mood] || "ocean-waves-beach"
+    MOOD_SOUND_MAP[mood]?.[timeOfDay] || MOOD_SOUND_MAP[mood]?.["morning"] || "ocean-waves-beach"
   );
   const [selectedVoice, setSelectedVoice] = useState("hume_lotus");
   const [showSoundSwitcher, setShowSoundSwitcher] = useState(false);
@@ -360,7 +390,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
     setErrorMessage("");
     progressAnim.value = 0;
 
-    const autoSound = MOOD_SOUND_MAP[mood] || "ocean-waves-beach";
+    const autoSound = MOOD_SOUND_MAP[mood]?.[timeOfDay] || MOOD_SOUND_MAP[mood]?.["morning"] || "ocean-waves-beach";
     setSelectedSound(autoSound);
     if (autoSound !== "none") {
       await setSelectedMusic(autoSound);

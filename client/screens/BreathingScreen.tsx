@@ -729,7 +729,7 @@ export default function BreathingScreen() {
                   </Pressable>
                   <Pressable
                     onPress={() => { resetControlsTimer(); handleStop(); }}
-                    style={[styles.landscapeStopButton, { marginLeft: Spacing.lg }]}
+                    style={[styles.landscapeStopButton, { position: 'absolute', right: -60 }]}
                   >
                     <Feather name="square" size={20} color="#FFFFFF" />
                   </Pressable>
@@ -1694,6 +1694,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    zIndex: 1,
   },
   fsTopControls: {
     flexDirection: "row",

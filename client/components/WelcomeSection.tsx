@@ -252,6 +252,7 @@ const styles = StyleSheet.create({
   },
   suggestion: {
     marginLeft: 28,
+    minHeight: 34,
   },
   quickPlayCard: {
     borderRadius: BorderRadius.lg,

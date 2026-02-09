@@ -66,11 +66,11 @@ export default function BreathingCircle({
     if (!isPlaying) {
       idlePulse.value = withRepeat(
         withSequence(
-          withTiming(1.06, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
-          withTiming(1, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
+          withTiming(1.08, { duration: 1400, easing: Easing.inOut(Easing.ease) }),
+          withTiming(0.97, { duration: 1400, easing: Easing.inOut(Easing.ease) }),
         ),
         -1,
-        false,
+        true,
       );
     } else {
       idlePulse.value = withTiming(1, { duration: 300 });

@@ -23,6 +23,9 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
+  withRepeat,
+  withSequence,
+  withDelay,
   Easing,
   FadeIn,
   FadeOut,
@@ -97,6 +100,13 @@ export default function BreathingScreen() {
   const [countdownValue, setCountdownValue] = useState<number | null>(null);
   const countdownScale = useSharedValue(0.5);
   const countdownOpacityVal = useSharedValue(0);
+
+  const ripple1Scale = useSharedValue(1);
+  const ripple1Opacity = useSharedValue(0);
+  const ripple2Scale = useSharedValue(1);
+  const ripple2Opacity = useSharedValue(0);
+  const ripple3Scale = useSharedValue(1);
+  const ripple3Opacity = useSharedValue(0);
 
   const [showTechniqueInfo, setShowTechniqueInfo] = useState(false);
   const [showMoodCheckin, setShowMoodCheckin] = useState(false);
@@ -507,6 +517,47 @@ export default function BreathingScreen() {
     opacity: countdownOpacityVal.value,
   }));
 
+  useEffect(() => {
+    if (!isPlaying && countdownValue === null) {
+      const duration = 2400;
+      const startRipple = (scaleVal: { value: number }, opacityVal: { value: number }, delay: number) => {
+        scaleVal.value = 1;
+        opacityVal.value = 0;
+        scaleVal.value = withDelay(delay, withRepeat(
+          withTiming(1.8, { duration, easing: Easing.out(Easing.cubic) }),
+          -1, false
+        ));
+        opacityVal.value = withDelay(delay, withRepeat(
+          withSequence(
+            withTiming(0.35, { duration: duration * 0.15, easing: Easing.out(Easing.ease) }),
+            withTiming(0, { duration: duration * 0.85, easing: Easing.in(Easing.ease) }),
+          ),
+          -1, false
+        ));
+      };
+      startRipple(ripple1Scale, ripple1Opacity, 0);
+      startRipple(ripple2Scale, ripple2Opacity, 800);
+      startRipple(ripple3Scale, ripple3Opacity, 1600);
+    } else {
+      ripple1Opacity.value = withTiming(0, { duration: 300 });
+      ripple2Opacity.value = withTiming(0, { duration: 300 });
+      ripple3Opacity.value = withTiming(0, { duration: 300 });
+    }
+  }, [isPlaying, countdownValue]);
+
+  const ripple1Style = useAnimatedStyle(() => ({
+    transform: [{ scale: ripple1Scale.value }],
+    opacity: ripple1Opacity.value,
+  }));
+  const ripple2Style = useAnimatedStyle(() => ({
+    transform: [{ scale: ripple2Scale.value }],
+    opacity: ripple2Opacity.value,
+  }));
+  const ripple3Style = useAnimatedStyle(() => ({
+    transform: [{ scale: ripple3Scale.value }],
+    opacity: ripple3Opacity.value,
+  }));
+
   const handleStartWithCountdown = useCallback(async () => {
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); } catch (e) {}
     
@@ -888,6 +939,34 @@ export default function BreathingScreen() {
           ]}
         >
           <View style={styles.circleContainer}>
+            {!isPlaying ? (
+              <>
+                <Animated.View style={[{
+                  position: 'absolute',
+                  width: 260,
+                  height: 260,
+                  borderRadius: 130,
+                  borderWidth: 1.5,
+                  borderColor: selectedTechnique.color,
+                }, ripple1Style]} />
+                <Animated.View style={[{
+                  position: 'absolute',
+                  width: 260,
+                  height: 260,
+                  borderRadius: 130,
+                  borderWidth: 1.5,
+                  borderColor: selectedTechnique.color,
+                }, ripple2Style]} />
+                <Animated.View style={[{
+                  position: 'absolute',
+                  width: 260,
+                  height: 260,
+                  borderRadius: 130,
+                  borderWidth: 1,
+                  borderColor: selectedTechnique.color,
+                }, ripple3Style]} />
+              </>
+            ) : null}
             {/* Progress Ring - Only visible when playing and enabled */}
             {isPlaying && progressIndicatorEnabled ? (
               <View style={styles.progressRingContainer}>

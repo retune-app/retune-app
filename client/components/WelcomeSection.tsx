@@ -228,6 +228,7 @@ const styles = StyleSheet.create({
   },
   greetingContent: {
     flex: 1,
+    marginRight: Spacing.sm,
   },
   headerActions: {
     flexDirection: "row",

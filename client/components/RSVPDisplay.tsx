@@ -46,6 +46,10 @@ function isStandalonePunctuation(word: string): boolean {
   return /^[,.!?;:'\-"—–…]+$/.test(word);
 }
 
+function stripPunctuation(word: string): string {
+  return word.replace(/^[,.!?;:'\-"—–…]+|[,.!?;:'\-"—–…]+$/g, "");
+}
+
 function renderWordWithORP(
   word: string,
   fontSize: number,
@@ -161,7 +165,7 @@ export function RSVPDisplay({
       <Animated.View style={[styles.wordContainer, animatedStyle]}>
         {currentWord &&
           renderWordWithORP(
-            currentWord.word,
+            stripPunctuation(currentWord.word) || currentWord.word,
             fontSizeValue,
             textColor,
             accentColor,

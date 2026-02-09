@@ -2,6 +2,7 @@ import React from "react";
 import { View, StyleSheet, ScrollView, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -38,18 +39,18 @@ const PREMIUM_ICONS: Record<string, string> = {
 export default function PlansScreen() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
+  const tabBarHeight = useBottomTabBarHeight();
   const { theme, isDark } = useTheme();
   const { tier, isPremium, betaMode, freeFeatures, premiumFeatures } = useSubscription();
 
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]} testID="screen-plans">
       <ScrollView
-        style={styles.scrollView}
         contentContainerStyle={[
           styles.scrollContent,
           {
             paddingTop: headerHeight + Spacing.lg,
-            paddingBottom: Spacing.lg,
+            paddingBottom: tabBarHeight + Spacing.lg,
           },
         ]}
         scrollIndicatorInsets={{ bottom: insets.bottom }}
@@ -163,38 +164,34 @@ export default function PlansScreen() {
           </View>
         </View>
 
-      </ScrollView>
-
-      <View style={[
-        styles.stickyFooter,
-        {
-          paddingBottom: Math.max(insets.bottom, Spacing.md),
-          backgroundColor: theme.backgroundRoot,
-          borderTopColor: theme.border,
-        }
-      ]}>
-        <ThemedText type="caption" style={[styles.footerNote, { color: theme.textSecondary }]}>
-          All premium features are currently available during beta
-        </ThemedText>
-        <Pressable
-          style={({ pressed }) => [
-            styles.ctaButton,
-            { opacity: pressed ? 0.9 : 1 },
-          ]}
-        >
-          <LinearGradient
-            colors={[GOLD_LIGHT, GOLD]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.ctaGradient}
+        <View style={[
+          styles.footerSection,
+          { borderTopColor: theme.border }
+        ]}>
+          <ThemedText type="caption" style={[styles.footerNote, { color: theme.textSecondary }]}>
+            All premium features are currently available during beta
+          </ThemedText>
+          <Pressable
+            style={({ pressed }) => [
+              styles.ctaButton,
+              { opacity: pressed ? 0.9 : 1 },
+            ]}
           >
-            <Feather name="clock" size={16} color={NAVY} />
-            <ThemedText type="body" style={styles.ctaText}>
-              Pricing Coming Soon
-            </ThemedText>
-          </LinearGradient>
-        </Pressable>
-      </View>
+            <LinearGradient
+              colors={[GOLD_LIGHT, GOLD]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.ctaGradient}
+            >
+              <Feather name="clock" size={16} color={NAVY} />
+              <ThemedText type="body" style={styles.ctaText}>
+                Pricing Coming Soon
+              </ThemedText>
+            </LinearGradient>
+          </Pressable>
+        </View>
+
+      </ScrollView>
     </View>
   );
 }
@@ -284,12 +281,9 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
   },
-  scrollView: {
-    flex: 1,
-  },
-  stickyFooter: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.sm,
+  footerSection: {
+    marginTop: Spacing.xl,
+    paddingTop: Spacing.lg,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   ctaButton: {

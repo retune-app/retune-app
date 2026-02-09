@@ -11,7 +11,7 @@ export const PREMIUM_FEATURES = {
 
 export const FREE_FEATURES = [
   "Basic breathing exercises (4 techniques)",
-  "AI mood check-in",
+  "AI Mindful Moment",
   "Up to 10 AI affirmations per month",
   "Stock AI voices (Lotus & Sage)",
   "Ambient sound library (25 tracks)",

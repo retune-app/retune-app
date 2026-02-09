@@ -221,10 +221,10 @@ export function MoodCheckin({ onStartBreathing, onStartAffirmations, visible, on
             {!selectedMood ? (
               <Animated.View entering={FadeIn.duration(200)}>
                 <ThemedText type="h3" style={styles.modalTitle}>
-                  How are you feeling right now?
+                  Mindful Moment
                 </ThemedText>
                 <ThemedText type="body" style={[styles.modalSubtitle, { color: theme.textSecondary }]}>
-                  Tap to get your personalized recommendation
+                  How are you feeling right now?
                 </ThemedText>
 
                 <View style={styles.moodGrid}>

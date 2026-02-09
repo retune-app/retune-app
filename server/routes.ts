@@ -2314,92 +2314,181 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const userId = req.userId!;
-      const [user] = await db.select({ name: users.name }).from(users).where(eq(users.id, userId)).limit(1);
-      const userName = user?.name?.split(" ")[0] || "Friend";
 
-      const techniqueMap: Record<string, Record<string, { technique: string; techniqueId: string; activityType: string }>> = {
+      const [userData, userAffirmationsList, latestVoiceSample] = await Promise.all([
+        db.select({ name: users.name, voiceId: users.voiceId }).from(users).where(eq(users.id, userId)).limit(1),
+        db.select({
+          id: affirmations.id,
+          title: affirmations.title,
+          pillar: affirmations.pillar,
+          categoryName: affirmations.categoryName,
+          voiceType: affirmations.voiceType,
+          audioUrl: affirmations.audioUrl,
+          playCount: affirmations.playCount,
+          isFavorite: affirmations.isFavorite,
+        }).from(affirmations).where(eq(affirmations.userId, userId)),
+        db.select({ status: voiceSamples.status, voiceId: voiceSamples.voiceId })
+          .from(voiceSamples)
+          .where(eq(voiceSamples.userId, userId))
+          .orderBy(desc(voiceSamples.createdAt))
+          .limit(1),
+      ]);
+
+      const user = userData[0];
+      const userName = user?.name?.split(" ")[0] || "Friend";
+      const hasClonedVoice = !!(latestVoiceSample[0]?.status === "ready" && latestVoiceSample[0]?.voiceId) || !!user?.voiceId;
+      const hasAffirmations = userAffirmationsList.length > 0;
+      const hasAffirmationsWithAudio = userAffirmationsList.filter(a => a.audioUrl).length > 0;
+
+      const moodPillarMap: Record<string, string[]> = {
+        calm: ["Spirit", "Mind"],
+        stressed: ["Mind", "Body"],
+        tired: ["Body", "Achievement"],
+        energized: ["Achievement", "Connection"],
+        anxious: ["Mind", "Spirit"],
+        grateful: ["Connection", "Spirit"],
+      };
+
+      const relevantPillars = moodPillarMap[mood] || ["Mind"];
+      let matchedAffirmation: { id: number; title: string; voiceType: string | null } | null = null;
+
+      const pillarMatches = userAffirmationsList.filter(a => a.audioUrl && a.pillar && relevantPillars.includes(a.pillar));
+      if (pillarMatches.length > 0) {
+        const favorites = pillarMatches.filter(a => a.isFavorite);
+        const pool = favorites.length > 0 ? favorites : pillarMatches;
+        matchedAffirmation = pool[Math.floor(Math.random() * pool.length)];
+      } else if (hasAffirmationsWithAudio) {
+        const withAudio = userAffirmationsList.filter(a => a.audioUrl);
+        matchedAffirmation = withAudio[Math.floor(Math.random() * withAudio.length)];
+      }
+
+      const breatheMap: Record<string, Record<string, { name: string; id: string }>> = {
         calm: {
-          morning: { technique: "Coherent Breathing", techniqueId: "coherent", activityType: "breathe" },
-          afternoon: { technique: "Coherent Breathing", techniqueId: "coherent", activityType: "breathe" },
-          evening: { technique: "listen to your affirmations", techniqueId: "", activityType: "believe" },
-          night: { technique: "4-7-8 Relaxation", techniqueId: "478", activityType: "breathe" },
+          morning: { name: "Coherent Breathing", id: "coherent" },
+          afternoon: { name: "Coherent Breathing", id: "coherent" },
+          evening: { name: "4-7-8 Relaxation", id: "478" },
+          night: { name: "4-7-8 Relaxation", id: "478" },
         },
         stressed: {
-          morning: { technique: "Box Breathing", techniqueId: "box", activityType: "breathe" },
-          afternoon: { technique: "Box Breathing", techniqueId: "box", activityType: "breathe" },
-          evening: { technique: "4-7-8 Relaxation", techniqueId: "478", activityType: "breathe" },
-          night: { technique: "4-7-8 Relaxation", techniqueId: "478", activityType: "breathe" },
+          morning: { name: "Box Breathing", id: "box" },
+          afternoon: { name: "Box Breathing", id: "box" },
+          evening: { name: "4-7-8 Relaxation", id: "478" },
+          night: { name: "4-7-8 Relaxation", id: "478" },
         },
         tired: {
-          morning: { technique: "Energizing Breath", techniqueId: "energizing", activityType: "breathe" },
-          afternoon: { technique: "Energizing Breath", techniqueId: "energizing", activityType: "breathe" },
-          evening: { technique: "Coherent Breathing", techniqueId: "coherent", activityType: "breathe" },
-          night: { technique: "4-7-8 Relaxation", techniqueId: "478", activityType: "breathe" },
+          morning: { name: "Energizing Breath", id: "energizing" },
+          afternoon: { name: "Energizing Breath", id: "energizing" },
+          evening: { name: "Coherent Breathing", id: "coherent" },
+          night: { name: "4-7-8 Relaxation", id: "478" },
         },
         energized: {
-          morning: { technique: "listen to your affirmations", techniqueId: "", activityType: "believe" },
-          afternoon: { technique: "listen to your affirmations", techniqueId: "", activityType: "believe" },
-          evening: { technique: "Coherent Breathing", techniqueId: "coherent", activityType: "breathe" },
-          night: { technique: "listen to your affirmations", techniqueId: "", activityType: "believe" },
+          morning: { name: "Coherent Breathing", id: "coherent" },
+          afternoon: { name: "Energizing Breath", id: "energizing" },
+          evening: { name: "Coherent Breathing", id: "coherent" },
+          night: { name: "4-7-8 Relaxation", id: "478" },
         },
         anxious: {
-          morning: { technique: "4-7-8 Relaxation", techniqueId: "478", activityType: "breathe" },
-          afternoon: { technique: "Box Breathing", techniqueId: "box", activityType: "breathe" },
-          evening: { technique: "4-7-8 Relaxation", techniqueId: "478", activityType: "breathe" },
-          night: { technique: "4-7-8 Relaxation", techniqueId: "478", activityType: "breathe" },
+          morning: { name: "4-7-8 Relaxation", id: "478" },
+          afternoon: { name: "Box Breathing", id: "box" },
+          evening: { name: "4-7-8 Relaxation", id: "478" },
+          night: { name: "4-7-8 Relaxation", id: "478" },
         },
         grateful: {
-          morning: { technique: "listen to your affirmations", techniqueId: "", activityType: "believe" },
-          afternoon: { technique: "Coherent Breathing", techniqueId: "coherent", activityType: "breathe" },
-          evening: { technique: "listen to your affirmations", techniqueId: "", activityType: "believe" },
-          night: { technique: "Coherent Breathing", techniqueId: "coherent", activityType: "breathe" },
+          morning: { name: "Coherent Breathing", id: "coherent" },
+          afternoon: { name: "Coherent Breathing", id: "coherent" },
+          evening: { name: "Coherent Breathing", id: "coherent" },
+          night: { name: "Coherent Breathing", id: "coherent" },
         },
       };
 
-      const recommendation = techniqueMap[mood]?.[timeOfDay] || { technique: "Box Breathing", techniqueId: "box", activityType: "breathe" };
+      const breathing = breatheMap[mood]?.[timeOfDay] || { name: "Box Breathing", id: "box" };
+
+      let listenContext = "";
+      if (matchedAffirmation) {
+        const isInnerVoice = matchedAffirmation.voiceType === "personal";
+        listenContext = `The user has an affirmation called "${matchedAffirmation.title}"${isInnerVoice ? " recorded in their own cloned voice (Inner Voice)" : ""}. This is available for them to listen to.`;
+      } else if (hasAffirmations) {
+        listenContext = "The user has affirmations but none with audio yet.";
+      } else {
+        listenContext = "The user hasn't created any affirmations yet.";
+      }
+
+      const voiceContext = hasClonedVoice
+        ? "The user has set up their Inner Voice (personal cloned voice)."
+        : "The user hasn't set up their Inner Voice yet — hearing affirmations in your own voice deepens subconscious impact.";
 
       const response = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
           {
             role: "system",
-            content: `You are a warm, empathetic wellness companion for the Retuned mindfulness app with neuroscience knowledge. 
-The user just told you how they're feeling. Respond with:
-1. A brief empathetic acknowledgment (1 sentence, max 12 words)
-2. A recommendation message that includes a short neuroscience-based reason why this activity helps (1-2 sentences, max 25 words total). Reference real brain science in accessible language — e.g., vagus nerve activation, amygdala calming, cortisol reduction, neural pathway strengthening, prefrontal cortex engagement, neuroplasticity, reduced cognitive resistance, stronger belief formation through repetition. Pick the most relevant concept for their mood and activity.
+            content: `You are a warm, perceptive companion in the Retuned app. The user just shared how they feel. Your role is to reflect their feeling with genuine empathy (never give advice or use cliches) and provide short, personalized context for three wellness pathways.
 
-Format your response as JSON: {"acknowledgment": "...", "recommendation": "..."}
-Do NOT use quotation marks, exclamation marks, or generic phrases.
-Be specific to their mood. Use their name "${userName}" naturally in the acknowledgment.
-The suggested activity is: ${recommendation.technique}.`,
+User context:
+- Name: ${userName}
+- ${listenContext}
+- ${voiceContext}
+- Total affirmations: ${userAffirmationsList.length}
+- Best breathing match: ${breathing.name}
+
+Respond as JSON with exactly these fields:
+{
+  "acknowledgment": "A warm, specific 1-sentence reflection (max 15 words). Use ${userName}'s name. Never say 'it's tough' or 'I hear you'. Be creative and genuine — reflect their specific emotional state as if you truly see them. Vary your language every time.",
+  "breatheNote": "One sentence (max 12 words) connecting ${breathing.name} to their ${mood} feeling. Reference a specific body sensation or neural mechanism (vagus nerve, cortisol, amygdala, etc.) in plain language.",
+  "meditateNote": "One sentence (max 12 words) about why a guided meditation fits their current state. Be specific to ${mood} + ${timeOfDay}.",
+  "listenNote": "One sentence (max 12 words). ${matchedAffirmation ? `Reference their affirmation '${matchedAffirmation.title}' and why hearing it now would resonate with feeling ${mood}.` : hasAffirmations ? "Encourage them to bring one of their affirmations to life with audio." : `Suggest creating a personal affirmation that speaks to their ${mood} feeling${!hasClonedVoice ? " — especially powerful in their own voice" : ""}.`}"
+}
+
+Rules:
+- No advice, no prescriptions, no "you should"
+- No exclamation marks
+- Be emotionally specific, not generic
+- Each note should feel distinct and purposeful, not repetitive`,
           },
           {
             role: "user",
             content: `I'm feeling ${mood} and it's ${timeOfDay}.`,
           },
         ],
-        temperature: 0.9,
-        max_tokens: 80,
+        temperature: 0.95,
+        max_tokens: 200,
         response_format: { type: "json_object" },
       });
 
-      let acknowledgment = `${userName}, I hear you.`;
-      let recommendationText = `${recommendation.technique} can help you right now.`;
+      let acknowledgment = `${userName}, this moment is yours.`;
+      let breatheNote = `${breathing.name} can help settle your nervous system.`;
+      let meditateNote = "A guided moment to reconnect with yourself.";
+      let listenNote = matchedAffirmation
+        ? `Your affirmation "${matchedAffirmation.title}" is waiting for you.`
+        : "Create an affirmation that speaks to how you feel.";
 
       try {
         const parsed = JSON.parse(response.choices[0]?.message?.content || "{}");
         if (parsed.acknowledgment) acknowledgment = parsed.acknowledgment;
-        if (parsed.recommendation) recommendationText = parsed.recommendation;
-      } catch (e) {
-        // Use defaults above
-      }
+        if (parsed.breatheNote) breatheNote = parsed.breatheNote;
+        if (parsed.meditateNote) meditateNote = parsed.meditateNote;
+        if (parsed.listenNote) listenNote = parsed.listenNote;
+      } catch (e) {}
 
       res.json({
         acknowledgment,
-        recommendation: recommendationText,
-        activityType: recommendation.activityType,
-        techniqueId: recommendation.techniqueId,
-        techniqueName: recommendation.technique,
+        breathe: {
+          techniqueId: breathing.id,
+          techniqueName: breathing.name,
+          note: breatheNote,
+        },
+        meditate: {
+          note: meditateNote,
+        },
+        listen: {
+          hasAffirmation: !!matchedAffirmation,
+          affirmationId: matchedAffirmation?.id || null,
+          affirmationTitle: matchedAffirmation?.title || null,
+          isInnerVoice: matchedAffirmation?.voiceType === "personal",
+          hasClonedVoice: hasClonedVoice,
+          hasAnyAffirmations: hasAffirmations,
+          note: listenNote,
+        },
       });
     } catch (error) {
       console.error("Error in mood check-in:", error);

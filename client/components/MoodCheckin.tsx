@@ -23,7 +23,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { MeditationIcon } from "@/components/MeditationIcon";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
-import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
+import { Spacing, BorderRadius } from "@/constants/theme";
 import { apiRequest, getApiUrl } from "@/lib/query-client";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
@@ -62,12 +62,31 @@ interface MoodCheckinProps {
   onClose: () => void;
 }
 
-interface MoodResponse {
-  acknowledgment: string;
-  recommendation: string;
-  activityType: string;
+interface BreatheRec {
   techniqueId: string;
   techniqueName: string;
+  note: string;
+}
+
+interface MeditateRec {
+  note: string;
+}
+
+interface ListenRec {
+  hasAffirmation: boolean;
+  affirmationId: number | null;
+  affirmationTitle: string | null;
+  isInnerVoice: boolean;
+  hasClonedVoice: boolean;
+  hasAnyAffirmations: boolean;
+  note: string;
+}
+
+interface MoodResponse {
+  acknowledgment: string;
+  breathe: BreatheRec;
+  meditate: MeditateRec;
+  listen: ListenRec;
 }
 
 export function MoodCheckin({ onStartBreathing, onStartAffirmations, visible, onClose }: MoodCheckinProps) {
@@ -96,29 +115,58 @@ export function MoodCheckin({ onStartBreathing, onStartAffirmations, visible, on
       setResponse(data);
     } catch (error) {
       setResponse({
-        acknowledgment: "I hear you.",
-        recommendation: "A moment of mindfulness can make a difference right now.",
-        activityType: "breathe",
-        techniqueId: "box",
-        techniqueName: "Box Breathing",
+        acknowledgment: "This moment is yours.",
+        breathe: {
+          techniqueId: "box",
+          techniqueName: "Box Breathing",
+          note: "Rhythmic breathing activates your vagus nerve, calming the body.",
+        },
+        meditate: {
+          note: "A guided meditation to settle into this moment.",
+        },
+        listen: {
+          hasAffirmation: false,
+          affirmationId: null,
+          affirmationTitle: null,
+          isInnerVoice: false,
+          hasClonedVoice: false,
+          hasAnyAffirmations: false,
+          note: "Create a personal affirmation that speaks to how you feel.",
+        },
       });
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  const handleStartActivity = useCallback(() => {
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    } catch (e) {}
-
-    if (response?.activityType === "believe") {
-      onStartAffirmations?.();
-    } else if (response?.techniqueId) {
-      onStartBreathing?.(response.techniqueId);
+  const handleBreathe = useCallback(() => {
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
+    if (response?.breathe?.techniqueId) {
+      onStartBreathing?.(response.breathe.techniqueId);
     }
     handleClose();
-  }, [response, onStartBreathing, onStartAffirmations]);
+  }, [response, onStartBreathing]);
+
+  const handleMeditate = useCallback(() => {
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
+    handleClose();
+    navigation.navigate("GuidedMoment", {
+      mood: selectedMood!,
+      timeOfDay: getTimeOfDay(),
+    });
+  }, [selectedMood, navigation]);
+
+  const handleListen = useCallback(() => {
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
+    handleClose();
+    if (response?.listen?.hasAffirmation && response.listen.affirmationId) {
+      navigation.navigate("Player", { affirmationId: response.listen.affirmationId });
+    } else if (response?.listen?.hasAnyAffirmations) {
+      onStartAffirmations?.();
+    } else {
+      navigation.navigate("Create");
+    }
+  }, [response, navigation, onStartAffirmations]);
 
   const handleClose = useCallback(() => {
     onClose();
@@ -127,6 +175,27 @@ export function MoodCheckin({ onStartBreathing, onStartAffirmations, visible, on
       setResponse(null);
     }, 300);
   }, [onClose]);
+
+  const getListenLabel = () => {
+    if (!response?.listen) return "Listen";
+    if (response.listen.hasAffirmation) return "Listen";
+    if (response.listen.hasAnyAffirmations) return "Listen";
+    return "Create";
+  };
+
+  const getListenSublabel = () => {
+    if (!response?.listen) return "Personal affirmation";
+    if (response.listen.hasAffirmation && response.listen.isInnerVoice) return "In your Inner Voice";
+    if (response.listen.hasAffirmation) return "Your affirmation";
+    if (!response.listen.hasAnyAffirmations && !response.listen.hasClonedVoice) return "With your Inner Voice";
+    return "Personal affirmation";
+  };
+
+  const getListenIcon = (): string => {
+    if (!response?.listen) return "headphones";
+    if (response.listen.hasAffirmation) return "headphones";
+    return "plus-circle";
+  };
 
   return (
     <>
@@ -183,92 +252,109 @@ export function MoodCheckin({ onStartBreathing, onStartAffirmations, visible, on
               <Animated.View entering={FadeIn.duration(200)} style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={ACCENT_GOLD} />
                 <ThemedText type="body" style={[styles.loadingText, { color: theme.textSecondary }]}>
-                  Finding the perfect activity for you...
+                  Tuning in to you...
                 </ThemedText>
               </Animated.View>
             ) : response ? (
               <Animated.View entering={FadeIn.duration(300)}>
-                <View style={[styles.responseCard, { backgroundColor: `${ACCENT_GOLD}08`, borderColor: `${ACCENT_GOLD}20` }]}>
-                  <View style={styles.responseAckRow}>
-                    <Feather name="message-circle" size={18} color={ACCENT_GOLD} />
-                    <ThemedText type="body" style={[styles.responseAck, { color: theme.text }]}>
-                      {response.acknowledgment}
-                    </ThemedText>
-                  </View>
-
-                  <View style={[styles.divider, { backgroundColor: `${ACCENT_GOLD}15` }]} />
-
-                  <View style={styles.recommendationRow}>
-                    <View style={[styles.recommendIcon, { backgroundColor: `${ACCENT_GOLD}15` }]}>
-                      <Feather
-                        name={response.activityType === "breathe" ? "wind" : "heart"}
-                        size={24}
-                        color={ACCENT_GOLD}
-                      />
-                    </View>
-                    <View style={styles.recommendText}>
-                      <ThemedText type="body" style={{ fontWeight: "700", fontSize: 16 }}>
-                        {response.techniqueName}
-                      </ThemedText>
-                      <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: 4, lineHeight: 18 }}>
-                        {response.recommendation}
-                      </ThemedText>
-                    </View>
-                  </View>
+                <View style={[styles.ackCard, { borderColor: `${ACCENT_GOLD}20` }]}>
+                  <Feather name="message-circle" size={16} color={ACCENT_GOLD} style={styles.ackIcon} />
+                  <ThemedText type="body" style={[styles.ackText, { color: theme.text }]}>
+                    {response.acknowledgment}
+                  </ThemedText>
                 </View>
 
-                <ThemedText type="caption" style={[styles.chooseLabel, { color: theme.textSecondary }]}>
-                  {"Choose your practice"}
+                <ThemedText type="caption" style={[styles.pathwayLabel, { color: theme.textSecondary }]}>
+                  {"Choose your path"}
                 </ThemedText>
 
-                <View style={styles.actionButtonsRow}>
+                <View style={styles.pathwayCards}>
                   <Pressable
-                    onPress={handleStartActivity}
-                    style={styles.actionButtonWrapper}
-                    testID="button-start-recommended"
+                    onPress={handleBreathe}
+                    style={styles.pathwayCardWrapper}
+                    testID="button-pathway-breathe"
                   >
                     <LinearGradient
                       colors={[ACCENT_GOLD, GOLD_LIGHT] as [string, string]}
                       start={{ x: 0, y: 0 }}
                       end={{ x: 1, y: 1 }}
-                      style={styles.actionButton}
+                      style={styles.pathwayCard}
                     >
-                      <Feather name="wind" size={22} color={NAVY} />
-                      <ThemedText type="body" style={styles.actionButtonTextDark}>
-                        {"Breathe"}
+                      <View style={styles.pathwayCardHeader}>
+                        <View style={[styles.pathwayIconCircle, { backgroundColor: `${NAVY}20` }]}>
+                          <Feather name="wind" size={18} color={NAVY} />
+                        </View>
+                        <ThemedText type="body" style={styles.pathwayCardTitle}>
+                          {"Breathe"}
+                        </ThemedText>
+                      </View>
+                      <ThemedText type="caption" style={styles.pathwayCardNote}>
+                        {response.breathe.note}
                       </ThemedText>
-                      <ThemedText type="caption" style={styles.actionButtonSubDark}>
-                        {"Guided breathing"}
+                      <ThemedText type="caption" style={styles.pathwayCardTechnique}>
+                        {response.breathe.techniqueName}
                       </ThemedText>
                     </LinearGradient>
                   </Pressable>
 
                   <Pressable
-                    onPress={() => {
-                      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
-                      handleClose();
-                      navigation.navigate("GuidedMoment", {
-                        mood: selectedMood!,
-                        timeOfDay: getTimeOfDay(),
-                      });
-                    }}
-                    style={styles.actionButtonWrapper}
-                    testID="button-try-micro-meditation"
+                    onPress={handleMeditate}
+                    style={styles.pathwayCardWrapper}
+                    testID="button-pathway-meditate"
                   >
                     <LinearGradient
                       colors={["#50C9B0", "#3BA89A"] as [string, string]}
                       start={{ x: 0, y: 0 }}
                       end={{ x: 1, y: 1 }}
-                      style={styles.actionButton}
+                      style={styles.pathwayCard}
                     >
-                      <MeditationIcon size={24} color="#FFFFFF" />
-                      <ThemedText type="body" style={styles.actionButtonTextLight}>
-                        {"Meditate"}
+                      <View style={styles.pathwayCardHeader}>
+                        <View style={[styles.pathwayIconCircle, { backgroundColor: "rgba(255,255,255,0.2)" }]}>
+                          <MeditationIcon size={18} color="#FFFFFF" />
+                        </View>
+                        <ThemedText type="body" style={styles.pathwayCardTitleLight}>
+                          {"Meditate"}
+                        </ThemedText>
+                      </View>
+                      <ThemedText type="caption" style={styles.pathwayCardNoteLight}>
+                        {response.meditate.note}
                       </ThemedText>
-                      <ThemedText type="caption" style={styles.actionButtonSubLight}>
-                        {"AI micro-meditation"}
+                      <ThemedText type="caption" style={styles.pathwayCardTechniqueLight}>
+                        {"AI Guided Moment"}
                       </ThemedText>
                     </LinearGradient>
+                  </Pressable>
+
+                  <Pressable
+                    onPress={handleListen}
+                    style={styles.pathwayCardWrapper}
+                    testID="button-pathway-listen"
+                  >
+                    <View style={[styles.pathwayCard, styles.listenCard, { borderColor: `${ACCENT_GOLD}25` }]}>
+                      <View style={styles.pathwayCardHeader}>
+                        <View style={[styles.pathwayIconCircle, { backgroundColor: `${ACCENT_GOLD}15` }]}>
+                          <Feather name={getListenIcon() as any} size={18} color={ACCENT_GOLD} />
+                        </View>
+                        <ThemedText type="body" style={[styles.pathwayCardTitle, { color: theme.text }]}>
+                          {getListenLabel()}
+                        </ThemedText>
+                      </View>
+                      <ThemedText type="caption" style={[styles.pathwayCardNote, { color: theme.textSecondary }]}>
+                        {response.listen.note}
+                      </ThemedText>
+                      {response.listen.hasAffirmation && response.listen.affirmationTitle ? (
+                        <View style={styles.affirmationTag}>
+                          <Feather name="music" size={10} color={ACCENT_GOLD} />
+                          <ThemedText type="caption" style={styles.affirmationTagText} numberOfLines={1}>
+                            {response.listen.affirmationTitle}
+                          </ThemedText>
+                        </View>
+                      ) : (
+                        <ThemedText type="caption" style={[styles.pathwayCardTechnique, { color: `${ACCENT_GOLD}90` }]}>
+                          {getListenSublabel()}
+                        </ThemedText>
+                      )}
+                    </View>
                   </Pressable>
                 </View>
 
@@ -354,87 +440,113 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md,
     fontSize: 14,
   },
-  responseCard: {
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1,
-    padding: Spacing.md,
-    marginBottom: Spacing.lg,
-  },
-  responseAckRow: {
+  ackCard: {
     flexDirection: "row",
     alignItems: "flex-start",
+    backgroundColor: `${ACCENT_GOLD}08`,
+    borderWidth: 1,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
+    marginBottom: Spacing.lg,
     gap: Spacing.sm,
-    paddingBottom: Spacing.md,
   },
-  responseAck: {
+  ackIcon: {
+    marginTop: 2,
+  },
+  ackText: {
     flex: 1,
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 16,
+    lineHeight: 23,
     fontStyle: "italic",
+    fontWeight: "500",
   },
-  divider: {
-    height: 1,
-    marginBottom: Spacing.md,
-  },
-  recommendationRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.sm,
-  },
-  recommendIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  recommendText: {
-    flex: 1,
-  },
-  chooseLabel: {
+  pathwayLabel: {
     textAlign: "center",
-    fontSize: 12,
-    fontWeight: "600",
+    fontSize: 11,
+    fontWeight: "700",
     textTransform: "uppercase",
-    letterSpacing: 1,
+    letterSpacing: 1.2,
     marginBottom: Spacing.sm,
   },
-  actionButtonsRow: {
-    flexDirection: "row",
+  pathwayCards: {
     gap: Spacing.sm,
   },
-  actionButtonWrapper: {
-    flex: 1,
+  pathwayCardWrapper: {
     borderRadius: BorderRadius.lg,
     overflow: "hidden",
   },
-  actionButton: {
+  pathwayCard: {
+    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    gap: 6,
+  },
+  listenCard: {
+    backgroundColor: `${ACCENT_GOLD}06`,
+    borderWidth: 1,
+  },
+  pathwayCardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+    marginBottom: 2,
+  },
+  pathwayIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 18,
-    paddingHorizontal: Spacing.sm,
-    borderRadius: BorderRadius.lg,
-    gap: 4,
   },
-  actionButtonTextDark: {
+  pathwayCardTitle: {
+    fontWeight: "700",
+    fontSize: 16,
     color: NAVY,
+  },
+  pathwayCardTitleLight: {
     fontWeight: "700",
     fontSize: 16,
-    marginTop: 4,
-  },
-  actionButtonSubDark: {
-    color: `${NAVY}90`,
-    fontSize: 11,
-  },
-  actionButtonTextLight: {
     color: "#FFFFFF",
-    fontWeight: "700",
-    fontSize: 16,
-    marginTop: 4,
   },
-  actionButtonSubLight: {
-    color: "rgba(255,255,255,0.8)",
+  pathwayCardNote: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: `${NAVY}B0`,
+    paddingLeft: 44,
+  },
+  pathwayCardNoteLight: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: "rgba(255,255,255,0.85)",
+    paddingLeft: 44,
+  },
+  pathwayCardTechnique: {
     fontSize: 11,
+    fontWeight: "600",
+    color: `${NAVY}70`,
+    paddingLeft: 44,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  pathwayCardTechniqueLight: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "rgba(255,255,255,0.5)",
+    paddingLeft: 44,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  affirmationTag: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingLeft: 44,
+    marginTop: 2,
+  },
+  affirmationTagText: {
+    color: ACCENT_GOLD,
+    fontSize: 12,
+    fontWeight: "600",
+    flex: 1,
   },
   dismissButton: {
     alignItems: "center",

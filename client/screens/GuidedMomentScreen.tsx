@@ -33,6 +33,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { apiRequest, getApiUrl } from "@/lib/query-client";
+import { getAuthToken } from "@/lib/auth-token";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   BackgroundMusicType,
@@ -202,6 +203,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
   const controlsTimerRef = useRef<NodeJS.Timeout | null>(null);
   const autoPlayRef = useRef(false);
   const playAudioRef = useRef<() => Promise<void>>(() => Promise.resolve());
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const breathScale = useSharedValue(0.7);
   const breathOpacity = useSharedValue(0.3);
@@ -404,6 +406,9 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
       beginGeneration();
     }
     return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
       cleanupVoice();
       stopBackgroundMusic();
     };
@@ -428,6 +433,12 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
   }, [setSelectedMusic, startBackgroundMusic, stopBackgroundMusic]);
 
   const beginGeneration = useCallback(async () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
     setPlayerState("generating");
     setErrorMessage("");
@@ -442,12 +453,23 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
     try {
       const isPersonal = selectedVoice === "personal";
       const url = new URL("/api/guided-moments/generate", getApiUrl()).toString();
-      const result = await apiRequest("POST", url, {
-        mood,
-        timeOfDay,
-        usePersonalVoice: isPersonal,
-        voiceId: isPersonal ? undefined : selectedVoice,
-        duration: selectedDuration,
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      const authToken = getAuthToken();
+      if (authToken) {
+        headers["X-Auth-Token"] = authToken;
+      }
+      const result = await fetch(url, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          mood,
+          timeOfDay,
+          usePersonalVoice: isPersonal,
+          voiceId: isPersonal ? undefined : selectedVoice,
+          duration: selectedDuration,
+        }),
+        credentials: "include",
+        signal: controller.signal,
       });
       const data = await result.json();
 
@@ -463,10 +485,20 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
       autoPlayRef.current = true;
       setCountdown(3);
     } catch (error: any) {
+      if (error?.name === 'AbortError') return;
       setErrorMessage("Something went wrong. Please try again.");
       setPlayerState("error");
     }
   }, [mood, timeOfDay, selectedVoice, selectedDuration, setSelectedMusic, startBackgroundMusic]);
+
+  const durationChangeRef = useRef(selectedDuration);
+  useEffect(() => {
+    if (durationChangeRef.current !== selectedDuration && (playerState === "generating" || playerState === "ready")) {
+      durationChangeRef.current = selectedDuration;
+      beginGeneration();
+    }
+    durationChangeRef.current = selectedDuration;
+  }, [selectedDuration]);
 
   const playAudio = useCallback(async () => {
     if (!moment?.audioBase64) return;
@@ -552,6 +584,12 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
   }, [playerState, playAudio, togglePlayPause, resetControlsTimer]);
 
   const handleVoiceSelect = useCallback(async (voiceId: string) => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
     setSelectedVoice(voiceId);
     await AsyncStorage.setItem(VOICE_STORAGE_KEY, voiceId).catch(() => {});
@@ -566,12 +604,23 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
     try {
       const isPersonal = voiceId === "personal";
       const url = new URL("/api/guided-moments/generate", getApiUrl()).toString();
-      const result = await apiRequest("POST", url, {
-        mood,
-        timeOfDay,
-        usePersonalVoice: isPersonal,
-        voiceId: isPersonal ? undefined : voiceId,
-        duration: selectedDuration,
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      const authToken = getAuthToken();
+      if (authToken) {
+        headers["X-Auth-Token"] = authToken;
+      }
+      const result = await fetch(url, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          mood,
+          timeOfDay,
+          usePersonalVoice: isPersonal,
+          voiceId: isPersonal ? undefined : voiceId,
+          duration: selectedDuration,
+        }),
+        credentials: "include",
+        signal: controller.signal,
       });
       const data = await result.json();
 
@@ -587,6 +636,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
       autoPlayRef.current = true;
       setCountdown(3);
     } catch (error: any) {
+      if (error?.name === 'AbortError') return;
       setErrorMessage("Something went wrong. Please try again.");
       setPlayerState("error");
     }

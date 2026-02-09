@@ -92,6 +92,15 @@ export default function BreathingScreen() {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [cyclesCompleted, setCyclesCompleted] = useState(0);
   const [hapticsEnabled, setHapticsEnabled] = useState(true);
+  useFocusEffect(
+    useCallback(() => {
+      AsyncStorage.getItem('@settings/hapticFeedback').then((value) => {
+        if (value !== null) {
+          setHapticsEnabled(value === 'true');
+        }
+      });
+    }, [])
+  );
   const [showTechniqueSelector, setShowTechniqueSelector] = useState(false);
   const [isLandscape, setIsLandscape] = useState(false);
   const [musicEnabled, setMusicEnabled] = useState(false);
@@ -696,13 +705,6 @@ export default function BreathingScreen() {
                 
                 <View style={styles.portraitControlsRow}>
                   <Pressable
-                    onPress={() => { resetControlsTimer(); const next = !hapticsEnabled; setHapticsEnabled(next); if (next) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} } }}
-                    style={[styles.landscapeStopButton, { backgroundColor: hapticsEnabled ? 'rgba(201,162,39,0.25)' : 'rgba(255,255,255,0.15)' }]}
-                  >
-                    <Feather name="smartphone" size={16} color={hapticsEnabled ? '#C9A227' : 'rgba(255,255,255,0.5)'} />
-                    <Text style={{ fontSize: 8, color: hapticsEnabled ? '#C9A227' : 'rgba(255,255,255,0.4)', marginTop: 2, letterSpacing: 0.5 }}>Haptics</Text>
-                  </Pressable>
-                  <Pressable
                     onPress={() => { resetControlsTimer(); (isPlaying ? handlePause : handleResume)(); }}
                   >
                     <LinearGradient
@@ -836,13 +838,6 @@ export default function BreathingScreen() {
               </View>
               
               <View style={styles.landscapeControlsRow}>
-                <Pressable
-                  onPress={() => { resetControlsTimer(); const next = !hapticsEnabled; setHapticsEnabled(next); if (next) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} } }}
-                  style={[styles.landscapeStopButton, { backgroundColor: hapticsEnabled ? 'rgba(201,162,39,0.25)' : 'rgba(255,255,255,0.15)' }]}
-                >
-                  <Feather name="smartphone" size={16} color={hapticsEnabled ? '#C9A227' : 'rgba(255,255,255,0.5)'} />
-                  <Text style={{ fontSize: 8, color: hapticsEnabled ? '#C9A227' : 'rgba(255,255,255,0.4)', marginTop: 2, letterSpacing: 0.5 }}>Haptics</Text>
-                </Pressable>
                 <Pressable
                   onPress={() => { resetControlsTimer(); (isPlaying ? handlePause : handleResume)(); }}
                 >

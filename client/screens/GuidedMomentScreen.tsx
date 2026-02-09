@@ -687,7 +687,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
         {playerState === "generating" ? (
           <View style={styles.centerTextContainer}>
             <Animated.View style={[styles.generatingPulse, generatingPulseStyle, { borderColor: moodColors.primary }]} />
-            <ThemedText type="caption" style={styles.centerStatusText}>
+            <ThemedText type="caption" style={[styles.centerStatusText, { marginTop: Spacing.md }]}>
               {"Preparing your meditation..."}
             </ThemedText>
           </View>
@@ -1204,7 +1204,7 @@ const styles = StyleSheet.create({
   },
   centerTextContainer: {
     alignItems: "center",
-    gap: Spacing.sm,
+    justifyContent: "center",
   },
   centerStatusText: {
     color: "rgba(255,255,255,0.7)",

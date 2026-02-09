@@ -853,6 +853,20 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
         <View style={styles.topRight}>
           {(playerState === "playing" || playerState === "paused" || playerState === "ready") ? (
             <>
+              {isLandscape && (playerState === "playing" || playerState === "paused") ? (
+                <Pressable
+                  onPress={handlePlayAction}
+                  style={styles.controlBtn}
+                  testID="button-guided-moment-toggle-landscape"
+                >
+                  <Feather
+                    name={playerState === "playing" ? "pause" : "play"}
+                    size={18}
+                    color={ACCENT_GOLD}
+                    style={playerState !== "playing" ? { marginLeft: 2 } : undefined}
+                  />
+                </Pressable>
+              ) : null}
               <Pressable
                 onPress={() => { setShowVoiceSelector(true); resetControlsTimer(); }}
                 style={styles.controlBtn}

@@ -5,6 +5,7 @@ import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import * as Haptics from "expo-haptics";
 
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
@@ -165,6 +166,71 @@ export default function PlansScreen() {
           </View>
         </View>
 
+        <View style={styles.whyPremiumSection}>
+          <ThemedText type="h3" style={[styles.whyPremiumTitle, { color: theme.text }]}>
+            Why Premium?
+          </ThemedText>
+          <ThemedText type="small" style={[styles.whyPremiumSubtitle, { color: theme.textSecondary }]}>
+            Backed by neuroscience and behavioral psychology
+          </ThemedText>
+
+          <View style={styles.benefitCard}>
+            <View style={[styles.benefitIcon, { backgroundColor: "#7C3AED" + "18" }]}>
+              <Feather name="cpu" size={18} color="#7C3AED" />
+            </View>
+            <View style={styles.benefitContent}>
+              <ThemedText type="body" style={[styles.benefitTitle, { color: theme.text }]}>
+                Rewire Neural Pathways
+              </ThemedText>
+              <ThemedText type="small" style={{ color: theme.textSecondary, lineHeight: 18 }}>
+                Hearing affirmations in your own voice activates the brain's self-referential network, making new beliefs feel authentic and deeply personal.
+              </ThemedText>
+            </View>
+          </View>
+
+          <View style={styles.benefitCard}>
+            <View style={[styles.benefitIcon, { backgroundColor: "#0EA5E9" + "18" }]}>
+              <Feather name="activity" size={18} color="#0EA5E9" />
+            </View>
+            <View style={styles.benefitContent}>
+              <ThemedText type="body" style={[styles.benefitTitle, { color: theme.text }]}>
+                Regulate Your Nervous System
+              </ThemedText>
+              <ThemedText type="small" style={{ color: theme.textSecondary, lineHeight: 18 }}>
+                AI-guided breathing and meditation activate your parasympathetic response, lowering cortisol and shifting you from fight-or-flight to calm focus.
+              </ThemedText>
+            </View>
+          </View>
+
+          <View style={styles.benefitCard}>
+            <View style={[styles.benefitIcon, { backgroundColor: GOLD + "18" }]}>
+              <Feather name="target" size={18} color={GOLD} />
+            </View>
+            <View style={styles.benefitContent}>
+              <ThemedText type="body" style={[styles.benefitTitle, { color: theme.text }]}>
+                Build Lasting Habits
+              </ThemedText>
+              <ThemedText type="small" style={{ color: theme.textSecondary, lineHeight: 18 }}>
+                Personalized mood routing and smart reminders leverage the habit loop — cue, routine, reward — to make self-care feel effortless.
+              </ThemedText>
+            </View>
+          </View>
+
+          <View style={[styles.benefitCard, { marginBottom: 0 }]}>
+            <View style={[styles.benefitIcon, { backgroundColor: "#10B981" + "18" }]}>
+              <Feather name="headphones" size={18} color="#10B981" />
+            </View>
+            <View style={styles.benefitContent}>
+              <ThemedText type="body" style={[styles.benefitTitle, { color: theme.text }]}>
+                Deepen Subconscious Absorption
+              </ThemedText>
+              <ThemedText type="small" style={{ color: theme.textSecondary, lineHeight: 18 }}>
+                Ambient soundscapes and binaural beats entrain brainwaves toward alpha and theta states — where the subconscious is most receptive to change.
+              </ThemedText>
+            </View>
+          </View>
+        </View>
+
         <View style={[
           styles.footerSection,
           { borderTopColor: theme.border }
@@ -173,6 +239,7 @@ export default function PlansScreen() {
             All premium features are currently available during beta
           </ThemedText>
           <Pressable
+            onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)}
             style={({ pressed }) => [
               styles.ctaButton,
               { opacity: pressed ? 0.9 : 1 },
@@ -282,8 +349,42 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
   },
+  whyPremiumSection: {
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  whyPremiumTitle: {
+    textAlign: "center",
+    marginBottom: 4,
+  },
+  whyPremiumSubtitle: {
+    textAlign: "center",
+    marginBottom: Spacing.lg,
+  },
+  benefitCard: {
+    flexDirection: "row",
+    marginBottom: Spacing.md,
+    alignItems: "flex-start",
+  },
+  benefitIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: Spacing.sm + 2,
+    marginTop: 2,
+  },
+  benefitContent: {
+    flex: 1,
+  },
+  benefitTitle: {
+    fontFamily: "Nunito_600SemiBold",
+    fontSize: 15,
+    marginBottom: 2,
+  },
   footerSection: {
-    marginTop: Spacing.xl,
+    marginTop: Spacing.lg,
     paddingTop: Spacing.lg,
     borderTopWidth: StyleSheet.hairlineWidth,
   },

@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import {
   View,
+  Text,
   StyleSheet,
   Pressable,
   ScrollView,
@@ -722,9 +723,9 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
 
       <View style={styles.ringsCenterContent}>
         {isCountingDown ? (
-          <ThemedText type="caption" style={styles.countdownInsideRings}>
+          <Text style={styles.countdownInsideRings}>
             {countdown}
-          </ThemedText>
+          </Text>
         ) : playerState === "generating" ? (
           <View style={styles.centerTextContainer}>
             <Animated.View style={[styles.generatingPulse, generatingPulseStyle, { borderColor: moodColors.primary }]} />
@@ -1360,13 +1361,13 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md,
   },
   countdownInsideRings: {
-    fontSize: 36,
-    fontWeight: "700",
+    fontSize: 48,
+    fontWeight: "800",
     color: "#FFFFFF",
     textAlign: "center",
-    textShadowColor: "rgba(0,0,0,0.6)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 6,
+    textShadowColor: "rgba(0,0,0,0.7)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 10,
   },
   controlsOverlay: {
     ...StyleSheet.absoluteFillObject,

@@ -20,7 +20,6 @@ import * as Haptics from "expo-haptics";
 import Animated, {
   FadeIn,
   FadeOut,
-  FadeInDown,
   useSharedValue,
   useAnimatedStyle,
   withTiming,
@@ -181,14 +180,10 @@ function getRandomInspirations(count: number, pillar: PillarName | null): GoalIn
   return shuffled.slice(0, Math.min(count, shuffled.length));
 }
 
-function getDynamicPlaceholder(pillar: PillarName | null, tags: string[]): string {
-  if (tags.length > 0 && TAG_EXAMPLES[tags[0]]) {
-    return TAG_EXAMPLES[tags[0]];
-  }
-  if (pillar && PILLAR_EXAMPLES[pillar]) {
-    return PILLAR_EXAMPLES[pillar];
-  }
-  return "What do you want to change in your life?";
+function getDynamicPlaceholder(pillar: PillarName | null, tags: string[], inspirations: GoalInspiration[]): string {
+  const examples = inspirations.map((g) => `"${g.text}"`).join("\n");
+  const tagHint = tags.length > 0 && TAG_EXAMPLES[tags[0]] ? `\n\n${TAG_EXAMPLES[tags[0]]}` : "";
+  return `Try something like...\n\n${examples}${tagHint}`;
 }
 
 export default function CreateScreen() {
@@ -304,21 +299,6 @@ export default function CreateScreen() {
     setSelectedSubcategories(prev => prev.filter(s => s !== tag));
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
-
-  const handleShuffleSuggestions = useCallback(() => {
-    setSuggestions(getRandomInspirations(3, selectedPillar));
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  }, [selectedPillar]);
-
-  const handleSuggestionTap = useCallback((suggestion: GoalInspiration) => {
-    setGoal(suggestion.text);
-    setSelectedPillar(suggestion.pillar);
-    setSelectedSubcategories(suggestion.tags);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    if (currentStep < 2) {
-      setCurrentStep(2);
-    }
-  }, [currentStep]);
 
   useEffect(() => {
     setSuggestions(getRandomInspirations(3, selectedPillar));
@@ -965,7 +945,7 @@ export default function CreateScreen() {
                   style={[styles.goalInput, { color: theme.text }]}
                   placeholder={
                     mode === "ai"
-                      ? getDynamicPlaceholder(selectedPillar, selectedSubcategories)
+                      ? getDynamicPlaceholder(selectedPillar, selectedSubcategories, suggestions)
                       : "Write or paste your affirmation script here..."
                   }
                   placeholderTextColor={theme.placeholder}
@@ -980,58 +960,6 @@ export default function CreateScreen() {
                 </ThemedText>
               </View>
 
-              {mode === "ai" && goal.length === 0 ? (
-                <Animated.View
-                  entering={FadeIn.duration(300)}
-                  exiting={FadeOut.duration(200)}
-                  style={styles.suggestionsContainer}
-                >
-                  <View style={styles.suggestionsHeader}>
-                    <Pressable
-                      onPress={handleShuffleSuggestions}
-                      style={styles.shuffleButton}
-                      testID="button-shuffle-suggestions"
-                    >
-                      <Feather name="refresh-cw" size={13} color={theme.textSecondary} />
-                    </Pressable>
-                  </View>
-                  <View style={styles.suggestionsRow}>
-                    {suggestions.map((suggestion, index) => {
-                      const chipColor = PILLARS[suggestion.pillar]?.color || accentColor;
-                      return (
-                        <Animated.View
-                          key={`${suggestion.text}-${index}`}
-                          entering={FadeInDown.delay(index * 80).duration(250)}
-                        >
-                          <Pressable
-                            onPress={() => handleSuggestionTap(suggestion)}
-                            style={[
-                              styles.suggestionChip,
-                              { backgroundColor: `${chipColor}18`, borderColor: `${chipColor}40` },
-                            ]}
-                            testID={`button-suggestion-${index}`}
-                          >
-                            <Feather name="zap" size={12} color={chipColor} />
-                            <ThemedText
-                              type="caption"
-                              style={[styles.suggestionPrefix, { color: chipColor }]}
-                            >
-                              Try:
-                            </ThemedText>
-                            <ThemedText
-                              type="caption"
-                              style={[styles.suggestionText, { color: theme.text }]}
-                              numberOfLines={1}
-                            >
-                              {suggestion.text}
-                            </ThemedText>
-                          </Pressable>
-                        </Animated.View>
-                      );
-                    })}
-                  </View>
-                </Animated.View>
-              ) : null}
 
               {mode === "ai" ? (
                 <>
@@ -1637,42 +1565,5 @@ const styles = StyleSheet.create({
   pillarTipDismiss: {
     padding: Spacing.sm,
     marginRight: Spacing.xs,
-  },
-  suggestionsContainer: {
-    marginTop: Spacing.sm,
-  },
-  suggestionsHeader: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    marginBottom: Spacing.xs,
-  },
-  shuffleButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  suggestionsRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: Spacing.sm,
-  },
-  suggestionChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    height: 32,
-    paddingHorizontal: Spacing.md,
-    borderRadius: BorderRadius.full,
-    borderWidth: 1,
-    gap: Spacing.xs,
-  },
-  suggestionPrefix: {
-    fontWeight: "600",
-    fontSize: 11,
-  },
-  suggestionText: {
-    fontSize: 12,
-    flexShrink: 1,
   },
 });

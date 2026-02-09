@@ -1180,7 +1180,7 @@ const styles = StyleSheet.create({
   },
   aboveRingsStatusText: {
     position: "absolute",
-    top: 80,
+    top: 140,
     left: 0,
     right: 0,
     color: "rgba(255,255,255,0.7)",

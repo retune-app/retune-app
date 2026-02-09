@@ -831,10 +831,6 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
             <ThemedText type="caption" style={[styles.statusLabel, { color: "#E85D5D" }]}>
               {errorMessage || "Something went wrong"}
             </ThemedText>
-          ) : playerState === "ready" && countdown !== null && countdown > 0 ? (
-            <ThemedText type="caption" style={[styles.statusLabel, styles.countdownLabel]}>
-              {countdown}
-            </ThemedText>
           ) : playerState === "ready" ? (
             <ThemedText type="caption" style={styles.statusLabel}>
               {"Tap to begin"}
@@ -945,6 +941,11 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
         {playerState === "generating" ? (
           <ThemedText type="caption" style={styles.aboveRingsStatusText}>
             {"Preparing your meditation..."}
+          </ThemedText>
+        ) : null}
+        {playerState === "ready" && countdown !== null && countdown > 0 ? (
+          <ThemedText type="caption" style={styles.countdownAboveRings}>
+            {countdown}
           </ThemedText>
         ) : null}
         <View style={isLandscape ? styles.landscapeLayout : styles.portraitLayout}>
@@ -1355,6 +1356,13 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: ACCENT_GOLD,
     marginTop: Spacing.md,
+  },
+  countdownAboveRings: {
+    fontSize: 48,
+    fontWeight: "700",
+    color: ACCENT_GOLD,
+    textAlign: "center",
+    marginBottom: 16,
   },
   controlsOverlay: {
     ...StyleSheet.absoluteFillObject,

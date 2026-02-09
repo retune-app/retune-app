@@ -195,15 +195,12 @@ export default function BreathingScreen() {
   // Load progress indicator setting - refresh on screen focus
   useFocusEffect(
     useCallback(() => {
-      if (!isPlaying) {
-        setShowLandscapeMode(false);
-      }
       AsyncStorage.getItem(PROGRESS_INDICATOR_KEY).then((value) => {
         if (value !== null) {
           setProgressIndicatorEnabled(value === "true");
         }
       });
-    }, [isPlaying])
+    }, [])
   );
 
   // Cleanup on unmount

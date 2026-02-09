@@ -21,7 +21,6 @@ import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 import { ThemedText } from "@/components/ThemedText";
-import { MeditationIcon } from "@/components/MeditationIcon";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { apiRequest, getApiUrl } from "@/lib/query-client";
@@ -217,41 +216,60 @@ export function MoodCheckin({ onStartBreathing, onStartAffirmations, visible, on
                   </View>
                 </View>
 
-                <Pressable onPress={handleStartActivity} testID="button-start-recommended">
-                  <LinearGradient
-                    colors={[ACCENT_GOLD, GOLD_LIGHT] as [string, string]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.startButton}
-                  >
-                    <Feather
-                      name={response.activityType === "breathe" ? "play" : "headphones"}
-                      size={20}
-                      color={NAVY}
-                    />
-                    <ThemedText type="body" style={styles.startButtonText}>
-                      {response.activityType === "breathe" ? "Start Breathing" : "Listen Now"}
-                    </ThemedText>
-                  </LinearGradient>
-                </Pressable>
+                <ThemedText type="caption" style={[styles.chooseLabel, { color: theme.textSecondary }]}>
+                  {"Choose your practice"}
+                </ThemedText>
 
-                <Pressable
-                  onPress={() => {
-                    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
-                    handleClose();
-                    navigation.navigate("GuidedMoment", {
-                      mood: selectedMood,
-                      timeOfDay: getTimeOfDay(),
-                    });
-                  }}
-                  style={[styles.guidedMomentButton, { borderColor: `${ACCENT_GOLD}30` }]}
-                  testID="button-try-micro-meditation"
-                >
-                  <MeditationIcon size={16} color={"#50C9B0"} />
-                  <ThemedText type="caption" style={{ color: ACCENT_GOLD, marginLeft: 6, fontWeight: "600" }}>
-                    {"Or try a Micro-Meditation"}
-                  </ThemedText>
-                </Pressable>
+                <View style={styles.actionButtonsRow}>
+                  <Pressable
+                    onPress={handleStartActivity}
+                    style={styles.actionButtonWrapper}
+                    testID="button-start-recommended"
+                  >
+                    <LinearGradient
+                      colors={[ACCENT_GOLD, GOLD_LIGHT] as [string, string]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.actionButton}
+                    >
+                      <Feather name="wind" size={22} color={NAVY} />
+                      <ThemedText type="body" style={styles.actionButtonTextDark}>
+                        {"Breathe"}
+                      </ThemedText>
+                      <ThemedText type="caption" style={styles.actionButtonSubDark}>
+                        {"Guided breathing"}
+                      </ThemedText>
+                    </LinearGradient>
+                  </Pressable>
+
+                  <Pressable
+                    onPress={() => {
+                      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+                      handleClose();
+                      navigation.navigate("GuidedMoment", {
+                        mood: selectedMood!,
+                        timeOfDay: getTimeOfDay(),
+                      });
+                    }}
+                    style={styles.actionButtonWrapper}
+                    testID="button-try-micro-meditation"
+                  >
+                    <LinearGradient
+                      colors={["#50C9B0", "#3BA89A"] as [string, string]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.actionButton}
+                    >
+                      <Feather name="sunrise" size={22} color="#FFFFFF" />
+                      <ThemedText type="body" style={styles.actionButtonTextLight}>
+                        {"Meditate"}
+                      </ThemedText>
+                      <ThemedText type="caption" style={styles.actionButtonSubLight}>
+                        {"AI micro-meditation"}
+                      </ThemedText>
+                    </LinearGradient>
+                  </Pressable>
+                </View>
 
                 <Pressable onPress={handleClose} style={styles.dismissButton}>
                   <ThemedText type="caption" style={{ color: theme.textSecondary }}>
@@ -372,27 +390,50 @@ const styles = StyleSheet.create({
   recommendText: {
     flex: 1,
   },
-  startButton: {
+  chooseLabel: {
+    textAlign: "center",
+    fontSize: 12,
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    marginBottom: Spacing.sm,
+  },
+  actionButtonsRow: {
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 14,
-    borderRadius: BorderRadius.lg,
     gap: Spacing.sm,
   },
-  startButtonText: {
+  actionButtonWrapper: {
+    flex: 1,
+    borderRadius: BorderRadius.lg,
+    overflow: "hidden",
+  },
+  actionButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 18,
+    paddingHorizontal: Spacing.sm,
+    borderRadius: BorderRadius.lg,
+    gap: 4,
+  },
+  actionButtonTextDark: {
     color: NAVY,
     fontWeight: "700",
     fontSize: 16,
+    marginTop: 4,
   },
-  guidedMomentButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 10,
-    marginTop: Spacing.sm,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
+  actionButtonSubDark: {
+    color: `${NAVY}90`,
+    fontSize: 11,
+  },
+  actionButtonTextLight: {
+    color: "#FFFFFF",
+    fontWeight: "700",
+    fontSize: 16,
+    marginTop: 4,
+  },
+  actionButtonSubLight: {
+    color: "rgba(255,255,255,0.8)",
+    fontSize: 11,
   },
   dismissButton: {
     alignItems: "center",

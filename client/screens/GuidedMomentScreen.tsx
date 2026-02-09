@@ -209,6 +209,8 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
   const progressAnim = useSharedValue(0);
   const controlsOpacity = useSharedValue(1);
   const generatingPulse = useSharedValue(0);
+  const centerContentOpacity = useSharedValue(1);
+  const centerContentScale = useSharedValue(1);
 
   const ringSize = isLandscape ? Math.min(height * 0.75, width * 0.55) : Math.min(width - 64, height * 0.42);
 
@@ -290,7 +292,13 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
 
   useEffect(() => {
     if (playerState === "playing") {
+      centerContentOpacity.value = withTiming(1, { duration: 600, easing: Easing.in(Easing.ease) });
+      centerContentScale.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.ease) });
       resetControlsTimer();
+    } else if (playerState === "idle" || playerState === "generating") {
+      centerContentOpacity.value = 1;
+      centerContentScale.value = 1;
+      showControls();
     } else {
       showControls();
     }
@@ -308,6 +316,10 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
         playAudioRef.current();
       }
       return;
+    }
+    if (countdown === 1) {
+      centerContentOpacity.value = withTiming(0, { duration: 800, easing: Easing.out(Easing.ease) });
+      centerContentScale.value = withTiming(0.8, { duration: 800, easing: Easing.out(Easing.ease) });
     }
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
     const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
@@ -371,6 +383,11 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
   const generatingPulseStyle = useAnimatedStyle(() => ({
     transform: [{ scale: interpolate(generatingPulse.value, [0, 1], [0.6, 1.2]) }],
     opacity: interpolate(generatingPulse.value, [0, 0.5, 1], [0.3, 0.8, 0.3]),
+  }));
+
+  const centerContentAnimStyle = useAnimatedStyle(() => ({
+    opacity: centerContentOpacity.value,
+    transform: [{ scale: centerContentScale.value }],
   }));
 
   const cleanupVoice = useCallback(async () => {
@@ -721,7 +738,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
         />
       </Animated.View>
 
-      <View style={styles.ringsCenterContent}>
+      <Animated.View style={[styles.ringsCenterContent, centerContentAnimStyle]}>
         {isCountingDown ? (
           <Text style={styles.countdownInsideRings}>
             {countdown}
@@ -760,7 +777,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
             />
           </Pressable>
         ) : null}
-      </View>
+      </Animated.View>
     </View>
   );
   };

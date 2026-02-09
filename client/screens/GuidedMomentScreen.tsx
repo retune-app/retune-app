@@ -994,8 +994,8 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
             {renderBreathingRings()}
           </View>
 
-          {(playerState === "idle" || playerState === "generating" || playerState === "ready") && !isLandscape ? (
-            <View style={styles.durationRowBelow}>
+          {!isLandscape ? (
+            <View style={[styles.durationRowBelow, (playerState !== "idle" && playerState !== "generating" && playerState !== "ready") ? { opacity: 0 } : undefined]} pointerEvents={(playerState === "idle" || playerState === "generating" || playerState === "ready") ? "auto" : "none"}>
               {DURATION_OPTIONS.map((opt) => {
                 const isSelected = selectedDuration === opt.value;
                 return (
@@ -1222,6 +1222,11 @@ const styles = StyleSheet.create({
   portraitLayout: {
     alignItems: "center",
     justifyContent: "center",
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
   },
   landscapeLayout: {
     flexDirection: "row",

@@ -944,7 +944,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
 
       {playerState !== "generating" ? (
         <View pointerEvents="auto" style={{ alignItems: "center" }}>
-          {(playerState === "playing" || playerState === "paused") ? (
+          {!isLandscape && (playerState === "playing" || playerState === "paused") ? (
             <Pressable
               onPress={handlePlayAction}
               style={styles.bottomPlayBtn}

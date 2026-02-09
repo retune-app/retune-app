@@ -1349,7 +1349,7 @@ export default function BreathingScreen() {
           if (technique) {
             setSelectedTechnique(technique);
             AsyncStorage.setItem(DEFAULT_BREATHING_TECHNIQUE_KEY, technique.id).catch(() => {});
-            setTimeout(() => handleStart(), 300);
+            setTimeout(() => handleStartWithCountdown(), 300);
           }
         }}
         onStartAffirmations={() => {

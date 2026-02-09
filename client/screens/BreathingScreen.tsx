@@ -434,7 +434,7 @@ export default function BreathingScreen() {
     if (!isPlaying) {
       setSelectedTechnique(technique);
       setShowTechniqueSelector(false);
-      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+      if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} }
       
       // Save as the last selected technique
       try {
@@ -446,7 +446,7 @@ export default function BreathingScreen() {
   };
 
   const handleLongPressTechnique = (technique: BreathingTechnique) => {
-    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
+    if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {} }
     Alert.alert(
       "Set as Default",
       `Always start with "${technique.name}" when you open the app?`,
@@ -459,7 +459,7 @@ export default function BreathingScreen() {
               await AsyncStorage.setItem(DEFAULT_BREATHING_TECHNIQUE_KEY, technique.id);
               setSelectedTechnique(technique);
               setShowTechniqueSelector(false);
-              try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
+              if (hapticsEnabled) { try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {} }
             } catch (error) {
               console.error('Error setting default technique:', error);
             }
@@ -910,7 +910,7 @@ export default function BreathingScreen() {
             <Pressable
               testID="button-technique-info"
               onPress={() => {
-                try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+                if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} }
                 setShowTechniqueInfo(true);
               }}
               style={[
@@ -1081,7 +1081,7 @@ export default function BreathingScreen() {
                     key={option.value}
                     onPress={() => {
                       setSelectedDuration(option.value);
-                      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+                      if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} }
                     }}
                     style={[
                       styles.optionPill,
@@ -1111,7 +1111,7 @@ export default function BreathingScreen() {
                   onPress={() => {
                     setMusicEnabled(false);
                     setVoiceEnabled(false);
-                    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+                    if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} }
                   }}
                   style={[
                     styles.optionPillFixed,
@@ -1133,12 +1133,11 @@ export default function BreathingScreen() {
                       setMusicEnabled(true);
                       navigation.navigate('SoundLibrary');
                     }
-                    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+                    if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} }
                   }}
                   onLongPress={() => {
-                    // Long press toggles music off
                     setMusicEnabled(false);
-                    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
+                    if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {} }
                   }}
                   style={[
                     styles.optionPill,
@@ -1168,12 +1167,11 @@ export default function BreathingScreen() {
                       // Enable voice
                       setVoiceEnabled(true);
                     }
-                    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+                    if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} }
                   }}
                   onLongPress={() => {
-                    // Long press toggles voice off
                     setVoiceEnabled(false);
-                    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
+                    if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {} }
                   }}
                   style={[
                     styles.optionPillFixed,

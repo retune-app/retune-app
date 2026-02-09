@@ -20,6 +20,7 @@ import * as Haptics from "expo-haptics";
 import Animated, {
   FadeIn,
   FadeOut,
+  FadeInDown,
   useSharedValue,
   useAnimatedStyle,
   withTiming,
@@ -59,36 +60,126 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 import ScriptPager from './ScriptPager';
 
 const PILLAR_EXAMPLES: Record<string, string> = {
-  Mind: "e.g., Stay calm and focused under pressure, think clearly in stressful situations...",
-  Body: "e.g., Feel energized and strong throughout the day, embrace a healthy lifestyle...",
-  Spirit: "e.g., Feel deeply grateful for life's blessings, connect with inner peace...",
-  Connection: "e.g., Build deeper, more meaningful relationships, communicate with empathy...",
-  Achievement: "e.g., Reach my career goals with confidence, attract financial abundance...",
-  Home: "e.g., Create a peaceful and harmonious home, strengthen family bonds...",
+  Mind: "e.g., Stop overthinking everything, feel calmer under pressure...",
+  Body: "e.g., Sleep better and wake up refreshed, have more energy...",
+  Spirit: "e.g., Feel truly grateful for what I have, find more joy...",
+  Connection: "e.g., Have deeper conversations with people I care about...",
+  Achievement: "e.g., Get promoted at work, feel confident about money...",
+  Home: "e.g., Create a peaceful home, be more patient with family...",
 };
 
 const TAG_EXAMPLES: Record<string, string> = {
-  Confidence: "e.g., Speak up boldly in meetings, trust my decisions completely...",
-  Focus: "e.g., Stay deeply focused for hours, eliminate distractions effortlessly...",
-  Resilience: "e.g., Bounce back from setbacks stronger, handle challenges with grace...",
-  Emotion: "e.g., Stay emotionally balanced, process feelings with clarity and calm...",
-  Health: "e.g., Feel vibrant and full of energy, make healthy choices naturally...",
-  Sleep: "e.g., Fall asleep effortlessly, wake up feeling refreshed and renewed...",
-  "Body Image": "e.g., Love and appreciate my body exactly as it is, feel comfortable in my skin...",
-  Gratitude: "e.g., Notice and appreciate the good in every day, feel abundant and thankful...",
-  Happiness: "e.g., Choose joy in every moment, radiate positivity and warmth...",
-  Vision: "e.g., See my future clearly, take inspired action toward my dreams...",
-  Relationships: "e.g., Attract loving, supportive people, nurture deep connections...",
-  "Self-Compassion": "e.g., Speak kindly to myself, forgive my mistakes and grow from them...",
-  Career: "e.g., Excel in my professional role, attract new opportunities effortlessly...",
-  Wealth: "e.g., Attract financial abundance, manage money wisely and confidently...",
-  Skills: "e.g., Learn new skills quickly, master my craft with dedication...",
-  Habits: "e.g., Build powerful daily routines, replace old habits with empowering ones...",
-  Motivation: "e.g., Wake up driven and inspired, pursue my goals with relentless energy...",
-  Family: "e.g., Be a loving and patient family member, create joyful family moments...",
-  Organization: "e.g., Keep my space clean and organized, bring order to every area of life...",
-  Environment: "e.g., Create a calming and inspiring living space, feel at peace in my home...",
+  Confidence: "e.g., Feel more confident at work, trust my own decisions...",
+  Focus: "e.g., Stay focused without getting distracted, finish what I start...",
+  Resilience: "e.g., Bounce back faster from setbacks, handle stress better...",
+  Calm: "e.g., Feel calm and centered even on busy days, stop worrying so much...",
+  "Letting Go": "e.g., Let go of things I can't control, stop dwelling on the past...",
+  Clarity: "e.g., Think more clearly when making decisions, clear my mental clutter...",
+  Health: "e.g., Take better care of my body, make healthier choices...",
+  Sleep: "e.g., Sleep through the night peacefully, fall asleep faster...",
+  Energy: "e.g., Have more energy throughout the day, stop feeling exhausted...",
+  "Body Love": "e.g., Feel good about how I look, accept my body as it is...",
+  Healing: "e.g., Recover faster from illness, support my body's healing...",
+  Gratitude: "e.g., Notice the good things in my life, feel more thankful...",
+  Joy: "e.g., Find more joy in everyday moments, laugh more often...",
+  "Inner Peace": "e.g., Feel a sense of inner peace, quiet my racing mind...",
+  Purpose: "e.g., Discover what I'm meant to do, feel more fulfilled...",
+  Presence: "e.g., Be more present and mindful, stop living on autopilot...",
+  Love: "e.g., Have deeper conversations, strengthen my relationships...",
+  "Self-Compassion": "e.g., Be kinder to myself when I make mistakes, stop being so hard on myself...",
+  Forgiveness: "e.g., Let go of old grudges, forgive people who hurt me...",
+  Belonging: "e.g., Feel like I belong somewhere, find my people...",
+  Career: "e.g., Get promoted or advance at work, find a job I love...",
+  Abundance: "e.g., Feel confident about my finances, stop worrying about money...",
+  Growth: "e.g., Learn something new and get good at it, keep growing as a person...",
+  Discipline: "e.g., Build better daily habits, stick to my routines...",
+  Drive: "e.g., Stay motivated to reach my goals, stop procrastinating...",
+  Family: "e.g., Be more patient with my family, spend quality time together...",
+  Harmony: "e.g., Create a more organized home, keep my space tidy...",
+  Safety: "e.g., Feel safe and secure at home, create a stable environment...",
+  Comfort: "e.g., Make my living space feel comfortable, enjoy being at home...",
 };
+
+interface GoalInspiration {
+  text: string;
+  pillar: PillarName;
+  tags: string[];
+}
+
+const GOAL_INSPIRATIONS: GoalInspiration[] = [
+  { text: "I want to feel more confident at work", pillar: "Mind", tags: ["Confidence"] },
+  { text: "Stop overthinking everything", pillar: "Mind", tags: ["Calm", "Clarity"] },
+  { text: "Trust my own decisions more", pillar: "Mind", tags: ["Confidence", "Clarity"] },
+  { text: "Feel calm and centered even on busy days", pillar: "Mind", tags: ["Calm"] },
+  { text: "Stay focused without getting distracted", pillar: "Mind", tags: ["Focus"] },
+  { text: "Let go of things I can't control", pillar: "Mind", tags: ["Letting Go"] },
+  { text: "Handle stress without falling apart", pillar: "Mind", tags: ["Resilience", "Calm"] },
+  { text: "Think more clearly when I'm under pressure", pillar: "Mind", tags: ["Clarity", "Focus"] },
+  { text: "Stop worrying about things that haven't happened", pillar: "Mind", tags: ["Calm", "Letting Go"] },
+  { text: "Bounce back faster when things go wrong", pillar: "Mind", tags: ["Resilience"] },
+  { text: "Finish what I start without losing motivation", pillar: "Mind", tags: ["Focus", "Resilience"] },
+  { text: "Clear my head and stop the mental chatter", pillar: "Mind", tags: ["Clarity", "Calm"] },
+  { text: "Sleep better and wake up refreshed", pillar: "Body", tags: ["Sleep"] },
+  { text: "Have more energy throughout the day", pillar: "Body", tags: ["Energy"] },
+  { text: "Sleep through the night peacefully", pillar: "Body", tags: ["Sleep"] },
+  { text: "Feel good about how I look", pillar: "Body", tags: ["Body Love"] },
+  { text: "Take better care of my health", pillar: "Body", tags: ["Health"] },
+  { text: "Wake up feeling rested and ready", pillar: "Body", tags: ["Sleep", "Energy"] },
+  { text: "Recover faster from illness", pillar: "Body", tags: ["Healing"] },
+  { text: "Stop feeling exhausted all the time", pillar: "Body", tags: ["Energy", "Health"] },
+  { text: "Accept and appreciate my body", pillar: "Body", tags: ["Body Love"] },
+  { text: "Support my body's natural healing", pillar: "Body", tags: ["Healing", "Health"] },
+  { text: "Build a healthier daily routine", pillar: "Body", tags: ["Health", "Energy"] },
+  { text: "Feel truly grateful for what I have", pillar: "Spirit", tags: ["Gratitude"] },
+  { text: "Find more joy in everyday moments", pillar: "Spirit", tags: ["Joy"] },
+  { text: "Feel a sense of inner peace", pillar: "Spirit", tags: ["Inner Peace"] },
+  { text: "Discover what I'm meant to do", pillar: "Spirit", tags: ["Purpose"] },
+  { text: "Be more present and mindful", pillar: "Spirit", tags: ["Presence"] },
+  { text: "Stop living on autopilot", pillar: "Spirit", tags: ["Presence", "Purpose"] },
+  { text: "Feel more connected to something bigger", pillar: "Spirit", tags: ["Inner Peace", "Purpose"] },
+  { text: "Notice and appreciate the small things", pillar: "Spirit", tags: ["Gratitude", "Presence"] },
+  { text: "Quiet my racing mind and find stillness", pillar: "Spirit", tags: ["Inner Peace", "Presence"] },
+  { text: "Laugh more and enjoy life", pillar: "Spirit", tags: ["Joy"] },
+  { text: "Feel more fulfilled in my daily life", pillar: "Spirit", tags: ["Purpose", "Joy"] },
+  { text: "Have deeper conversations with people I care about", pillar: "Connection", tags: ["Love"] },
+  { text: "Be kinder to myself when I make mistakes", pillar: "Connection", tags: ["Self-Compassion"] },
+  { text: "Let go of old grudges", pillar: "Connection", tags: ["Forgiveness"] },
+  { text: "Feel like I belong somewhere", pillar: "Connection", tags: ["Belonging"] },
+  { text: "Stop being so hard on myself", pillar: "Connection", tags: ["Self-Compassion"] },
+  { text: "Build stronger friendships", pillar: "Connection", tags: ["Love", "Belonging"] },
+  { text: "Forgive people who have hurt me", pillar: "Connection", tags: ["Forgiveness"] },
+  { text: "Feel more comfortable opening up to others", pillar: "Connection", tags: ["Love", "Belonging"] },
+  { text: "Find my people and feel accepted", pillar: "Connection", tags: ["Belonging"] },
+  { text: "Strengthen my closest relationships", pillar: "Connection", tags: ["Love"] },
+  { text: "Get promoted or advance in my career", pillar: "Achievement", tags: ["Career"] },
+  { text: "Feel confident about my finances", pillar: "Achievement", tags: ["Abundance"] },
+  { text: "Learn something new and get good at it", pillar: "Achievement", tags: ["Growth"] },
+  { text: "Build better daily habits", pillar: "Achievement", tags: ["Discipline"] },
+  { text: "Stay motivated to reach my goals", pillar: "Achievement", tags: ["Drive"] },
+  { text: "Stop procrastinating on important things", pillar: "Achievement", tags: ["Discipline", "Drive"] },
+  { text: "Stop worrying about money", pillar: "Achievement", tags: ["Abundance"] },
+  { text: "Find a career that excites me", pillar: "Achievement", tags: ["Career", "Growth"] },
+  { text: "Stick to my goals even when it gets hard", pillar: "Achievement", tags: ["Drive", "Discipline"] },
+  { text: "Keep growing as a person", pillar: "Achievement", tags: ["Growth"] },
+  { text: "Develop a morning routine that sets me up for success", pillar: "Achievement", tags: ["Discipline"] },
+  { text: "Create a peaceful home environment", pillar: "Home", tags: ["Harmony", "Comfort"] },
+  { text: "Be more patient with my family", pillar: "Home", tags: ["Family"] },
+  { text: "Feel safe and secure at home", pillar: "Home", tags: ["Safety"] },
+  { text: "Make my living space feel comfortable", pillar: "Home", tags: ["Comfort"] },
+  { text: "Spend more quality time with my family", pillar: "Home", tags: ["Family"] },
+  { text: "Keep my home organized and tidy", pillar: "Home", tags: ["Harmony"] },
+  { text: "Create a stable and nurturing environment", pillar: "Home", tags: ["Safety", "Family"] },
+  { text: "Enjoy being at home and feel relaxed there", pillar: "Home", tags: ["Comfort", "Harmony"] },
+  { text: "Build stronger bonds with the people I live with", pillar: "Home", tags: ["Family"] },
+];
+
+function getRandomInspirations(count: number, pillar: PillarName | null): GoalInspiration[] {
+  const pool = pillar
+    ? GOAL_INSPIRATIONS.filter((g) => g.pillar === pillar)
+    : GOAL_INSPIRATIONS;
+  const shuffled = [...pool].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, Math.min(count, shuffled.length));
+}
 
 function getDynamicPlaceholder(pillar: PillarName | null, tags: string[]): string {
   if (tags.length > 0 && TAG_EXAMPLES[tags[0]]) {
@@ -97,7 +188,7 @@ function getDynamicPlaceholder(pillar: PillarName | null, tags: string[]): strin
   if (pillar && PILLAR_EXAMPLES[pillar]) {
     return PILLAR_EXAMPLES[pillar];
   }
-  return "e.g., Build confidence in public speaking, achieve financial independence...";
+  return "What do you want to change in your life?";
 }
 
 export default function CreateScreen() {
@@ -134,6 +225,7 @@ export default function CreateScreen() {
   const [showPillarHelp, setShowPillarHelp] = useState(false);
   const [showPillarTip, setShowPillarTip] = useState(false);
   const [showCreatingOverlay, setShowCreatingOverlay] = useState(false);
+  const [suggestions, setSuggestions] = useState<GoalInspiration[]>(() => getRandomInspirations(3, null));
   const scrollViewRef = useRef<ScrollView>(null);
   const step2Ref = useRef<View | null>(null);
   const step3Ref = useRef<View | null>(null);
@@ -212,6 +304,25 @@ export default function CreateScreen() {
     setSelectedSubcategories(prev => prev.filter(s => s !== tag));
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
+
+  const handleShuffleSuggestions = useCallback(() => {
+    setSuggestions(getRandomInspirations(3, selectedPillar));
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  }, [selectedPillar]);
+
+  const handleSuggestionTap = useCallback((suggestion: GoalInspiration) => {
+    setGoal(suggestion.text);
+    setSelectedPillar(suggestion.pillar);
+    setSelectedSubcategories(suggestion.tags);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (currentStep < 2) {
+      setCurrentStep(2);
+    }
+  }, [currentStep]);
+
+  useEffect(() => {
+    setSuggestions(getRandomInspirations(3, selectedPillar));
+  }, [selectedPillar]);
 
   const handleStartAddingTag = () => {
     setIsAddingTag(true);
@@ -869,6 +980,59 @@ export default function CreateScreen() {
                 </ThemedText>
               </View>
 
+              {mode === "ai" && goal.length === 0 ? (
+                <Animated.View
+                  entering={FadeIn.duration(300)}
+                  exiting={FadeOut.duration(200)}
+                  style={styles.suggestionsContainer}
+                >
+                  <View style={styles.suggestionsHeader}>
+                    <Pressable
+                      onPress={handleShuffleSuggestions}
+                      style={styles.shuffleButton}
+                      testID="button-shuffle-suggestions"
+                    >
+                      <Feather name="refresh-cw" size={13} color={theme.textSecondary} />
+                    </Pressable>
+                  </View>
+                  <View style={styles.suggestionsRow}>
+                    {suggestions.map((suggestion, index) => {
+                      const chipColor = PILLARS[suggestion.pillar]?.color || accentColor;
+                      return (
+                        <Animated.View
+                          key={`${suggestion.text}-${index}`}
+                          entering={FadeInDown.delay(index * 80).duration(250)}
+                        >
+                          <Pressable
+                            onPress={() => handleSuggestionTap(suggestion)}
+                            style={[
+                              styles.suggestionChip,
+                              { backgroundColor: `${chipColor}18`, borderColor: `${chipColor}40` },
+                            ]}
+                            testID={`button-suggestion-${index}`}
+                          >
+                            <Feather name="zap" size={12} color={chipColor} />
+                            <ThemedText
+                              type="caption"
+                              style={[styles.suggestionPrefix, { color: chipColor }]}
+                            >
+                              Try:
+                            </ThemedText>
+                            <ThemedText
+                              type="caption"
+                              style={[styles.suggestionText, { color: theme.text }]}
+                              numberOfLines={1}
+                            >
+                              {suggestion.text}
+                            </ThemedText>
+                          </Pressable>
+                        </Animated.View>
+                      );
+                    })}
+                  </View>
+                </Animated.View>
+              ) : null}
+
               {mode === "ai" ? (
                 <>
                   <ThemedText type="h4" style={styles.sectionTitle}>
@@ -1473,5 +1637,42 @@ const styles = StyleSheet.create({
   pillarTipDismiss: {
     padding: Spacing.sm,
     marginRight: Spacing.xs,
+  },
+  suggestionsContainer: {
+    marginTop: Spacing.sm,
+  },
+  suggestionsHeader: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    marginBottom: Spacing.xs,
+  },
+  shuffleButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  suggestionsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: Spacing.sm,
+  },
+  suggestionChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    height: 32,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1,
+    gap: Spacing.xs,
+  },
+  suggestionPrefix: {
+    fontWeight: "600",
+    fontSize: 11,
+  },
+  suggestionText: {
+    fontSize: 12,
+    flexShrink: 1,
   },
 });

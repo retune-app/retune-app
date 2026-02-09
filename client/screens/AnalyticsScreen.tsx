@@ -128,6 +128,55 @@ export default function AnalyticsScreen() {
         showsVerticalScrollIndicator={false}
       >
         <Animated.View style={animatedStyle}>
+          {/* Mindful Minutes Combined Summary */}
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+              TOTAL MINDFUL MINUTES
+            </Text>
+
+            <LinearGradient
+              colors={[theme.gold + "30", theme.gold + "10"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={[styles.mindfulCard, { borderColor: theme.gold + "50" }]}
+            >
+              <View style={styles.mindfulHeader}>
+                <Feather name="sunrise" size={24} color={theme.gold} />
+                <Text style={[styles.mindfulTitle, { color: theme.gold }]}>
+                  Breathing + Listening
+                </Text>
+              </View>
+              <View style={styles.mindfulRow}>
+                <View style={styles.mindfulStat}>
+                  <Text style={[styles.mindfulNumber, { color: theme.gold }]}>
+                    {formatMinutes(stats?.mindfulMinutes?.today || 0)}
+                  </Text>
+                  <Text style={[styles.mindfulLabel, { color: theme.textSecondary }]}>
+                    Today
+                  </Text>
+                </View>
+                <View style={[styles.mindfulDivider, { backgroundColor: theme.gold + "40" }]} />
+                <View style={styles.mindfulStat}>
+                  <Text style={[styles.mindfulNumber, { color: theme.gold }]}>
+                    {formatMinutes(stats?.mindfulMinutes?.thisWeek || 0)}
+                  </Text>
+                  <Text style={[styles.mindfulLabel, { color: theme.textSecondary }]}>
+                    This Week
+                  </Text>
+                </View>
+                <View style={[styles.mindfulDivider, { backgroundColor: theme.gold + "40" }]} />
+                <View style={styles.mindfulStat}>
+                  <Text style={[styles.mindfulNumber, { color: theme.gold }]}>
+                    {formatMinutes(stats?.mindfulMinutes?.lifetime || 0)}
+                  </Text>
+                  <Text style={[styles.mindfulLabel, { color: theme.textSecondary }]}>
+                    Lifetime
+                  </Text>
+                </View>
+              </View>
+            </LinearGradient>
+          </View>
+
           {/* Breathing Section - Primary Analytics */}
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>
@@ -144,7 +193,7 @@ export default function AnalyticsScreen() {
                 <Feather name="wind" size={32} color={theme.gold} />
                 <View style={styles.todayText}>
                   <Text style={[styles.todayMinutes, { color: theme.gold }]}>
-                    {formatMinutes(stats?.meditation?.todayMinutes || 0)}
+                    {formatMinutes(stats?.meditation?.minutesToday || 0)}
                   </Text>
                   <Text style={[styles.todayLabel, { color: theme.textSecondary }]}>
                     mindful minutes today
@@ -659,5 +708,44 @@ const styles = StyleSheet.create({
   emptyCategory: {
     padding: Spacing.xl,
     alignItems: "center",
+  },
+  mindfulCard: {
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    borderWidth: 1,
+  },
+  mindfulHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Spacing.md,
+    gap: Spacing.sm,
+  },
+  mindfulTitle: {
+    fontSize: 14,
+    fontWeight: "600" as const,
+    letterSpacing: 0.5,
+  },
+  mindfulRow: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+  },
+  mindfulStat: {
+    alignItems: "center",
+    flex: 1,
+  },
+  mindfulNumber: {
+    fontSize: 24,
+    fontWeight: "700" as const,
+    lineHeight: 32,
+    marginBottom: Spacing.xs,
+  },
+  mindfulLabel: {
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  mindfulDivider: {
+    width: 1,
+    height: 40,
   },
 });

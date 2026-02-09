@@ -31,7 +31,7 @@ const PREMIUM_ICONS: Record<string, string> = {
   "Micro-Meditations - AI meditation audio": "sun",
   "Inner Voice - personal voice cloning": "user",
   "Exclusive ambient tracks": "music",
-  "Unlimited AI affirmations": "infinity",
+  "Unlimited AI affirmations": "zap",
   "Advanced analytics & insights": "trending-up",
   "Priority support": "shield",
   "Bedtime Stories — coming soon": "moon",

@@ -15,10 +15,12 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
+import * as StoreReview from "expo-store-review";
 
 const AUTO_REPLAY_KEY = "@settings/autoReplay";
 const BACKGROUND_WALLPAPER_KEY = "@settings/backgroundWallpaper";
 const PROGRESS_INDICATOR_KEY = "@settings/progressIndicator";
+const HAPTIC_FEEDBACK_KEY = "@settings/hapticFeedback";
 
 
 // Voice preference types
@@ -116,6 +118,7 @@ export default function ProfileScreen() {
   const [autoReplayEnabled, setAutoReplayEnabled] = useState(true);
   const [backgroundWallpaperEnabled, setBackgroundWallpaperEnabled] = useState(false);
   const [progressIndicatorEnabled, setProgressIndicatorEnabled] = useState(true);
+  const [hapticFeedbackEnabled, setHapticFeedbackEnabled] = useState(true);
 
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
@@ -156,6 +159,9 @@ export default function ProfileScreen() {
   const { data: voiceOptions } = useQuery<VoiceOptions>({
     queryKey: ["/api/voices"],
   });
+
+  // Reminders query
+  const { data: reminders } = useQuery<any[]>({ queryKey: ["/api/reminders"] });
 
   const updateNameMutation = useMutation({
     mutationFn: async (name: string) => {
@@ -208,6 +214,11 @@ export default function ProfileScreen() {
         setProgressIndicatorEnabled(value === "true");
       }
     });
+    AsyncStorage.getItem(HAPTIC_FEEDBACK_KEY).then((value) => {
+      if (value !== null) {
+        setHapticFeedbackEnabled(value === "true");
+      }
+    });
 
   }, []);
 
@@ -246,6 +257,12 @@ export default function ProfileScreen() {
     const newValue = !progressIndicatorEnabled;
     setProgressIndicatorEnabled(newValue);
     await AsyncStorage.setItem(PROGRESS_INDICATOR_KEY, String(newValue));
+  };
+
+  const handleToggleHapticFeedback = async () => {
+    const newValue = !hapticFeedbackEnabled;
+    setHapticFeedbackEnabled(newValue);
+    await AsyncStorage.setItem(HAPTIC_FEEDBACK_KEY, String(newValue));
   };
 
 
@@ -563,7 +580,7 @@ export default function ProfileScreen() {
           <SettingItem
             icon="bell"
             label="Daily Reminders"
-            value="Personalized AI notifications"
+            value={reminders ? `${reminders.length} active reminder${reminders.length !== 1 ? 's' : ''}` : "Personalized AI notifications"}
             onPress={() => (navigation as any).navigate("Reminders")}
             testID="button-daily-reminders"
           />
@@ -575,63 +592,32 @@ export default function ProfileScreen() {
           APPEARANCE
         </ThemedText>
         <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
-          <Pressable
-            onPress={() => setThemeMode("light")}
-            style={({ pressed }) => [
-              styles.settingItem,
-              { backgroundColor: pressed ? theme.backgroundSecondary : "transparent" },
-            ]}
-            testID="button-theme-light"
-          >
-            <View style={[styles.settingIcon, { backgroundColor: theme.backgroundSecondary }]}>
-              <Feather name="sun" size={20} color={theme.primary} />
-            </View>
-            <View style={styles.settingContent}>
-              <ThemedText type="body">Light Mode</ThemedText>
-            </View>
-            {themeMode === "light" ? (
-              <Feather name="check" size={20} color={theme.primary} />
-            ) : null}
-          </Pressable>
-          <Pressable
-            onPress={() => setThemeMode("dark")}
-            style={({ pressed }) => [
-              styles.settingItem,
-              { backgroundColor: pressed ? theme.backgroundSecondary : "transparent" },
-            ]}
-            testID="button-theme-dark"
-          >
-            <View style={[styles.settingIcon, { backgroundColor: theme.backgroundSecondary }]}>
-              <Feather name="moon" size={20} color={theme.primary} />
-            </View>
-            <View style={styles.settingContent}>
-              <ThemedText type="body">Dark Mode</ThemedText>
-            </View>
-            {themeMode === "dark" ? (
-              <Feather name="check" size={20} color={theme.primary} />
-            ) : null}
-          </Pressable>
-          <Pressable
-            onPress={() => setThemeMode("system")}
-            style={({ pressed }) => [
-              styles.settingItem,
-              { backgroundColor: pressed ? theme.backgroundSecondary : "transparent" },
-            ]}
-            testID="button-theme-system"
-          >
-            <View style={[styles.settingIcon, { backgroundColor: theme.backgroundSecondary }]}>
-              <Feather name="smartphone" size={20} color={theme.primary} />
-            </View>
-            <View style={styles.settingContent}>
-              <ThemedText type="body">System Default</ThemedText>
-              <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                Match device settings
-              </ThemedText>
-            </View>
-            {themeMode === "system" ? (
-              <Feather name="check" size={20} color={theme.primary} />
-            ) : null}
-          </Pressable>
+          <View style={[styles.themeSelector, { backgroundColor: theme.backgroundSecondary }]}>
+            {([
+              { mode: "light" as const, label: "Light", icon: "sun" as const },
+              { mode: "dark" as const, label: "Dark", icon: "moon" as const },
+              { mode: "system" as const, label: "System", icon: "smartphone" as const },
+            ]).map((option) => {
+              const isActive = themeMode === option.mode;
+              return (
+                <Pressable
+                  key={option.mode}
+                  onPress={() => setThemeMode(option.mode)}
+                  style={[
+                    styles.themePill,
+                    isActive && { backgroundColor: theme.cardBackground },
+                    isActive && Shadows.small,
+                  ]}
+                  testID={`button-theme-${option.mode}`}
+                >
+                  <Feather name={option.icon} size={16} color={isActive ? theme.primary : theme.textSecondary} />
+                  <ThemedText type="small" style={{ color: isActive ? theme.text : theme.textSecondary, marginLeft: 6, fontWeight: isActive ? "600" : "400" }}>
+                    {option.label}
+                  </ThemedText>
+                </Pressable>
+              );
+            })}
+          </View>
           <SettingItem
             icon="image"
             label="Background Wallpaper"
@@ -660,6 +646,20 @@ export default function ProfileScreen() {
               />
             }
           />
+          <SettingItem
+            icon="smartphone"
+            label="Haptic Feedback"
+            value={hapticFeedbackEnabled ? "Vibrations enabled" : "Off"}
+            showArrow={false}
+            rightElement={
+              <Switch
+                value={hapticFeedbackEnabled}
+                onValueChange={handleToggleHapticFeedback}
+                trackColor={{ false: theme.border, true: ACCENT_GOLD + "80" }}
+                thumbColor={hapticFeedbackEnabled ? ACCENT_GOLD : theme.textSecondary}
+              />
+            }
+          />
 
         </View>
       </View>
@@ -672,45 +672,65 @@ export default function ProfileScreen() {
           </ThemedText>
           <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
             <View style={styles.usageLimitItem}>
-              <View style={[styles.usageLimitIcon, { backgroundColor: "#6366F120" }]}>
-                <Feather name="mic" size={20} color="#6366F1" />
+              <View style={styles.usageLimitRow}>
+                <View style={[styles.usageLimitIcon, { backgroundColor: "#6366F120" }]}>
+                  <Feather name="mic" size={20} color="#6366F1" />
+                </View>
+                <View style={styles.usageLimitContent}>
+                  <ThemedText type="body">Voice Clones</ThemedText>
+                  <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                    {usageLimits.voiceClones.used} of {usageLimits.voiceClones.limit} used (lifetime)
+                  </ThemedText>
+                </View>
+                <View style={[styles.usageLimitBadge, { 
+                  backgroundColor: usageLimits.voiceClones.remaining > 0 ? "#10B98120" : "#EF444420" 
+                }]}>
+                  <ThemedText type="small" style={{ 
+                    color: usageLimits.voiceClones.remaining > 0 ? "#10B981" : "#EF4444",
+                    fontWeight: "600"
+                  }}>
+                    {usageLimits.voiceClones.remaining} left
+                  </ThemedText>
+                </View>
               </View>
-              <View style={styles.usageLimitContent}>
-                <ThemedText type="body">Voice Clones</ThemedText>
-                <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                  {usageLimits.voiceClones.used} of {usageLimits.voiceClones.limit} used (lifetime)
-                </ThemedText>
-              </View>
-              <View style={[styles.usageLimitBadge, { 
-                backgroundColor: usageLimits.voiceClones.remaining > 0 ? "#10B98120" : "#EF444420" 
-              }]}>
-                <ThemedText type="small" style={{ 
-                  color: usageLimits.voiceClones.remaining > 0 ? "#10B981" : "#EF4444",
-                  fontWeight: "600"
-                }}>
-                  {usageLimits.voiceClones.remaining} left
-                </ThemedText>
+              <View style={styles.usageBarContainer}>
+                <View style={[styles.usageBarTrack, { backgroundColor: theme.backgroundSecondary }]}>
+                  <View style={[styles.usageBarFill, { 
+                    width: `${Math.min((usageLimits.voiceClones.used / usageLimits.voiceClones.limit) * 100, 100)}%`,
+                    backgroundColor: usageLimits.voiceClones.remaining > 0 ? "#6366F1" : "#EF4444",
+                  }]} />
+                </View>
               </View>
             </View>
             <View style={styles.usageLimitItem}>
-              <View style={[styles.usageLimitIcon, { backgroundColor: "#C9A22720" }]}>
-                <Feather name="zap" size={20} color="#C9A227" />
+              <View style={styles.usageLimitRow}>
+                <View style={[styles.usageLimitIcon, { backgroundColor: "#C9A22720" }]}>
+                  <Feather name="zap" size={20} color="#C9A227" />
+                </View>
+                <View style={styles.usageLimitContent}>
+                  <ThemedText type="body">AI Affirmations</ThemedText>
+                  <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                    {usageLimits.aiAffirmations.used} of {usageLimits.aiAffirmations.limit} used this month
+                  </ThemedText>
+                </View>
+                <View style={[styles.usageLimitBadge, { 
+                  backgroundColor: usageLimits.aiAffirmations.remaining > 0 ? "#10B98120" : "#EF444420" 
+                }]}>
+                  <ThemedText type="small" style={{ 
+                    color: usageLimits.aiAffirmations.remaining > 0 ? "#10B981" : "#EF4444",
+                    fontWeight: "600"
+                  }}>
+                    {usageLimits.aiAffirmations.remaining} left
+                  </ThemedText>
+                </View>
               </View>
-              <View style={styles.usageLimitContent}>
-                <ThemedText type="body">AI Affirmations</ThemedText>
-                <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                  {usageLimits.aiAffirmations.used} of {usageLimits.aiAffirmations.limit} used this month
-                </ThemedText>
-              </View>
-              <View style={[styles.usageLimitBadge, { 
-                backgroundColor: usageLimits.aiAffirmations.remaining > 0 ? "#10B98120" : "#EF444420" 
-              }]}>
-                <ThemedText type="small" style={{ 
-                  color: usageLimits.aiAffirmations.remaining > 0 ? "#10B981" : "#EF4444",
-                  fontWeight: "600"
-                }}>
-                  {usageLimits.aiAffirmations.remaining} left
-                </ThemedText>
+              <View style={styles.usageBarContainer}>
+                <View style={[styles.usageBarTrack, { backgroundColor: theme.backgroundSecondary }]}>
+                  <View style={[styles.usageBarFill, { 
+                    width: `${Math.min((usageLimits.aiAffirmations.used / usageLimits.aiAffirmations.limit) * 100, 100)}%`,
+                    backgroundColor: usageLimits.aiAffirmations.remaining > 0 ? "#C9A227" : "#EF4444",
+                  }]} />
+                </View>
               </View>
             </View>
           </View>
@@ -744,6 +764,19 @@ export default function ProfileScreen() {
             value="Share your thoughts"
             onPress={() => navigation.navigate("Feedback" as never)}
             testID="button-feedback"
+          />
+          <SettingItem
+            icon="star"
+            label="Rate Retuned"
+            value="Enjoying the app? Let us know"
+            onPress={async () => {
+              try {
+                if (await StoreReview.hasAction()) {
+                  await StoreReview.requestReview();
+                }
+              } catch (e) {}
+            }}
+            testID="button-rate-app"
           />
           <SettingItem
             icon="award"
@@ -1286,10 +1319,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   usageLimitItem: {
-    flexDirection: "row",
-    alignItems: "center",
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.lg,
+  },
+  usageLimitRow: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   usageLimitIcon: {
     width: 40,
@@ -1306,6 +1341,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.xs,
     borderRadius: BorderRadius.sm,
+  },
+  usageBarContainer: {
+    marginTop: Spacing.xs,
+    paddingLeft: 52,
+  },
+  usageBarTrack: {
+    height: 4,
+    borderRadius: 2,
+    overflow: "hidden",
+  },
+  usageBarFill: {
+    height: "100%",
+    borderRadius: 2,
+  },
+  themeSelector: {
+    flexDirection: "row",
+    borderRadius: BorderRadius.md,
+    padding: 4,
+    marginBottom: Spacing.xs,
+  },
+  themePill: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.md - 2,
   },
   deleteButton: {
     padding: Spacing.sm,

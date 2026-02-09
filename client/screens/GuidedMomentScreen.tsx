@@ -850,7 +850,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
     <View
       style={[
         styles.bottomStatusOverlay,
-        { paddingBottom: insets.bottom + Spacing.sm },
+        { paddingBottom: insets.bottom + Spacing.lg },
       ]}
       pointerEvents="box-none"
     >
@@ -1326,13 +1326,13 @@ const styles = StyleSheet.create({
   bottomStatusSection: {
     alignItems: "center",
     paddingHorizontal: Spacing.xl,
-    marginBottom: Spacing.xs,
+    width: "100%",
   },
   progressBar: {
     width: "100%",
-    height: 3,
+    height: 4,
     borderRadius: 2,
-    backgroundColor: "rgba(255,255,255,0.08)",
+    backgroundColor: "rgba(255,255,255,0.12)",
     overflow: "hidden",
   },
   progressFill: {
@@ -1342,7 +1342,7 @@ const styles = StyleSheet.create({
   },
   statusLabel: {
     color: "rgba(255,255,255,0.5)",
-    marginTop: Spacing.sm,
+    marginTop: Spacing.md,
     fontSize: 13,
   },
   countdownLabel: {
@@ -1364,6 +1364,7 @@ const styles = StyleSheet.create({
     right: 0,
     alignItems: "center",
     paddingHorizontal: Spacing.lg,
+    gap: Spacing.xl,
   },
   topControls: {
     flexDirection: "row",

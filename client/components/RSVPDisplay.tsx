@@ -87,7 +87,7 @@ function renderWordWithORP(
     <View style={{ transform: [{ translateX: offsetX }] }}>
       <Text style={[styles.word, { fontSize }]}>
         <Text style={{ color: textColor }}>{before}</Text>
-        <Text style={{ color: accentColor, fontWeight: '900' }}>{orpChar}</Text>
+        <Text style={{ color: accentColor }}>{orpChar}</Text>
         <Text style={{ color: textColor }}>{after}</Text>
       </Text>
     </View>
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
     minHeight: 100,
   },
   word: {
-    fontFamily: "Nunito_700Bold",
+    fontFamily: "Nunito_400Regular",
     textAlign: "center",
     letterSpacing: 1,
   },

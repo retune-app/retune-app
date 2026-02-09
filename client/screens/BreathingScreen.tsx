@@ -645,29 +645,27 @@ export default function BreathingScreen() {
                   </Text>
                 </View>
                 <View style={styles.fsTopRight}>
-                  {musicEnabled ? (
-                    <Pressable
-                      onPress={() => { resetControlsTimer(); setVolume(volume > 0.05 ? 0 : 0.7); }}
-                      style={[styles.fsControlBtn, { backgroundColor: `${selectedTechnique.color}20` }]}
-                    >
-                      <Feather name={volume > 0.05 ? "music" : "volume-x"} size={18} color={selectedTechnique.color} />
-                    </Pressable>
-                  ) : null}
-                  {voiceEnabled ? (
-                    <Pressable
-                      onPress={async () => {
-                        resetControlsTimer();
-                        const newVol = voiceVolume > 0.05 ? 0 : 0.7;
-                        setVoiceVolume(newVol);
-                        if (affirmationSoundRef.current) {
-                          try { await affirmationSoundRef.current.setVolumeAsync(newVol); } catch {}
-                        }
-                      }}
-                      style={[styles.fsControlBtn, { backgroundColor: `${selectedTechnique.color}20` }]}
-                    >
-                      <Feather name={voiceVolume > 0.05 ? "mic" : "mic-off"} size={18} color={selectedTechnique.color} />
-                    </Pressable>
-                  ) : null}
+                  <Pressable
+                    onPress={() => { resetControlsTimer(); setVolume(volume > 0.05 ? 0 : 0.7); }}
+                    style={[styles.fsControlBtn, { backgroundColor: `${selectedTechnique.color}20`, opacity: musicEnabled ? 1 : 0.4 }]}
+                    disabled={!musicEnabled}
+                  >
+                    <Feather name={musicEnabled && volume > 0.05 ? "music" : "volume-x"} size={18} color={selectedTechnique.color} />
+                  </Pressable>
+                  <Pressable
+                    onPress={async () => {
+                      resetControlsTimer();
+                      const newVol = voiceVolume > 0.05 ? 0 : 0.7;
+                      setVoiceVolume(newVol);
+                      if (affirmationSoundRef.current) {
+                        try { await affirmationSoundRef.current.setVolumeAsync(newVol); } catch {}
+                      }
+                    }}
+                    style={[styles.fsControlBtn, { backgroundColor: `${selectedTechnique.color}20`, opacity: voiceEnabled ? 1 : 0.4 }]}
+                    disabled={!voiceEnabled}
+                  >
+                    <Feather name={voiceEnabled && voiceVolume > 0.05 ? "mic" : "mic-off"} size={18} color={selectedTechnique.color} />
+                  </Pressable>
                   <Pressable onPress={() => { resetControlsTimer(); exitFullscreen(); }} style={styles.fsCloseBtn}>
                     <Feather name="x" size={22} color="rgba(255,255,255,0.7)" />
                   </Pressable>

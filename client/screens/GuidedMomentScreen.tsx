@@ -869,29 +869,36 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
             ) : null}
 
             {playerState === "finished" ? (
-              <View style={styles.finishedActions}>
-                <Pressable
-                  onPress={playAudio}
-                  style={styles.replayButton}
-                  testID="button-replay-guided-moment"
-                >
-                  <Feather name="rotate-ccw" size={16} color={ACCENT_GOLD} />
-                  <ThemedText type="caption" style={{ color: ACCENT_GOLD, marginLeft: 6 }}>
-                    {"Replay"}
+              <View style={styles.finishedSection}>
+                {moment?.disclaimer ? (
+                  <ThemedText type="caption" style={styles.disclaimer}>
+                    {moment.disclaimer}
                   </ThemedText>
-                </Pressable>
-                <Pressable onPress={handleClose} testID="button-done-guided-moment">
-                  <LinearGradient
-                    colors={[ACCENT_GOLD, GOLD_LIGHT] as [string, string]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.doneButtonGradient}
+                ) : null}
+                <View style={styles.finishedActions}>
+                  <Pressable
+                    onPress={playAudio}
+                    style={styles.replayButton}
+                    testID="button-replay-guided-moment"
                   >
-                    <ThemedText type="caption" style={{ color: NAVY, fontWeight: "700" }}>
-                      {"Done"}
+                    <Feather name="rotate-ccw" size={16} color={ACCENT_GOLD} />
+                    <ThemedText type="caption" style={{ color: ACCENT_GOLD, marginLeft: 6 }}>
+                      {"Replay"}
                     </ThemedText>
-                  </LinearGradient>
-                </Pressable>
+                  </Pressable>
+                  <Pressable onPress={handleClose} testID="button-done-guided-moment">
+                    <LinearGradient
+                      colors={[ACCENT_GOLD, GOLD_LIGHT] as [string, string]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.doneButtonGradient}
+                    >
+                      <ThemedText type="caption" style={{ color: NAVY, fontWeight: "700" }}>
+                        {"Done"}
+                      </ThemedText>
+                    </LinearGradient>
+                  </Pressable>
+                </View>
               </View>
             ) : null}
 
@@ -980,13 +987,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
 
       {renderControls()}
 
-      {moment?.disclaimer && (playerState === "finished") ? (
-        <View style={[styles.disclaimerContainer, { bottom: insets.bottom + 60 }]}>
-          <ThemedText type="caption" style={styles.disclaimer}>
-            {moment.disclaimer}
-          </ThemedText>
-        </View>
-      ) : null}
+
 
       <Modal
         visible={showSoundSwitcher}
@@ -1369,6 +1370,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: `${NAVY}E0`,
   },
+  finishedSection: {
+    alignItems: "center",
+    gap: Spacing.md,
+  },
   finishedActions: {
     flexDirection: "row",
     gap: Spacing.md,
@@ -1389,11 +1394,6 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.md,
     alignItems: "center",
     justifyContent: "center",
-  },
-  disclaimerContainer: {
-    position: "absolute",
-    left: Spacing.xxl,
-    right: Spacing.xxl,
   },
   disclaimer: {
     color: "rgba(255,255,255,0.3)",

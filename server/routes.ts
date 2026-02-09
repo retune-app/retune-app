@@ -2546,7 +2546,7 @@ Rules:
         const [voiceSample] = await db
           .select({ voiceId: voiceSamples.voiceId })
           .from(voiceSamples)
-          .where(and(eq(voiceSamples.userId, req.userId!), eq(voiceSamples.status, "completed")))
+          .where(and(eq(voiceSamples.userId, req.userId!), eq(voiceSamples.status, "ready")))
           .orderBy(desc(voiceSamples.createdAt))
           .limit(1);
         if (voiceSample?.voiceId) {

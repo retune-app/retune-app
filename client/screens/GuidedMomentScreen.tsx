@@ -776,106 +776,142 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
         </View>
       </View>
 
-      {!isLandscape ? (
-        <View style={styles.bottomStatusSection} pointerEvents="none">
-          <View style={styles.progressBar}>
-            <Animated.View style={[styles.progressFill, progressBarStyle]} />
-          </View>
-          {playerState === "generating" ? (
-            <ThemedText type="caption" style={styles.statusLabel}>
-              {"Crafting your micro-meditation..."}
-            </ThemedText>
-          ) : playerState === "error" ? (
-            <ThemedText type="caption" style={[styles.statusLabel, { color: "#E85D5D" }]}>
-              {errorMessage || "Something went wrong"}
-            </ThemedText>
-          ) : playerState === "ready" ? (
-            <ThemedText type="caption" style={styles.statusLabel}>
-              {"Tap to begin"}
-            </ThemedText>
-          ) : playerState === "playing" ? (
-            <ThemedText type="caption" style={styles.statusLabel}>
-              {"Breathe and Listen"}
-            </ThemedText>
-          ) : playerState === "paused" ? (
-            <ThemedText type="caption" style={styles.statusLabel}>
-              {"Paused"}
-            </ThemedText>
-          ) : playerState === "finished" ? (
-            <ThemedText type="caption" style={styles.statusLabel}>
-              {"Complete"}
-            </ThemedText>
-          ) : null}
-        </View>
-      ) : null}
-
-      {playerState !== "generating" ? (
-        <View style={styles.bottomControls} pointerEvents="auto">
-          {(playerState === "playing" || playerState === "paused") ? (
-            <Pressable
-              onPress={handlePlayAction}
-              style={styles.bottomPlayBtn}
-              testID="button-guided-moment-toggle"
-            >
-              <Feather
-                name={playerState === "playing" ? "pause" : "play"}
-                size={22}
-                color={ACCENT_GOLD}
-                style={playerState !== "playing" ? { marginLeft: 2 } : undefined}
-              />
-            </Pressable>
-          ) : null}
-
-          {playerState === "finished" ? (
-            <View style={styles.finishedActions}>
-              <Pressable
-                onPress={playAudio}
-                style={styles.replayButton}
-                testID="button-replay-guided-moment"
-              >
-                <Feather name="rotate-ccw" size={16} color={ACCENT_GOLD} />
-                <ThemedText type="caption" style={{ color: ACCENT_GOLD, marginLeft: 6 }}>
-                  {"Replay"}
-                </ThemedText>
-              </Pressable>
-              <Pressable onPress={handleClose} testID="button-done-guided-moment">
-                <LinearGradient
-                  colors={[ACCENT_GOLD, GOLD_LIGHT] as [string, string]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.doneButtonGradient}
+      <View style={styles.bottomControls} pointerEvents="auto">
+        {(playerState === "idle" || playerState === "generating" || playerState === "ready") && !isLandscape ? (
+          <View style={styles.durationRowTop}>
+            {DURATION_OPTIONS.map((opt) => {
+              const isSelected = selectedDuration === opt.value;
+              return (
+                <Pressable
+                  key={opt.value}
+                  onPress={() => {
+                    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+                    setSelectedDuration(opt.value);
+                  }}
+                  style={[
+                    styles.durationPill,
+                    isSelected
+                      ? { backgroundColor: ACCENT_GOLD, borderColor: ACCENT_GOLD }
+                      : { backgroundColor: "transparent", borderColor: "rgba(255,255,255,0.3)" },
+                  ]}
+                  testID={`button-duration-${opt.value}`}
                 >
-                  <ThemedText type="caption" style={{ color: NAVY, fontWeight: "700" }}>
-                    {"Done"}
+                  <ThemedText
+                    type="caption"
+                    style={[
+                      styles.durationPillText,
+                      { color: isSelected ? "#FFFFFF" : "rgba(255,255,255,0.8)" },
+                    ]}
+                  >
+                    {opt.label}
                   </ThemedText>
-                </LinearGradient>
-              </Pressable>
-            </View>
-          ) : null}
+                </Pressable>
+              );
+            })}
+          </View>
+        ) : null}
 
-          {playerState === "error" ? (
-            <View style={styles.finishedActions}>
-              <Pressable
-                onPress={beginGeneration}
-                style={styles.replayButton}
-                testID="button-retry-guided-moment"
-              >
-                <Feather name="refresh-cw" size={16} color={ACCENT_GOLD} />
-                <ThemedText type="caption" style={{ color: ACCENT_GOLD, marginLeft: 6 }}>
-                  {"Try Again"}
-                </ThemedText>
-              </Pressable>
-              <Pressable onPress={handleClose}>
-                <View style={[styles.doneButtonGradient, { backgroundColor: "rgba(255,255,255,0.1)" }]}>
-                  <ThemedText type="caption" style={{ color: "rgba(255,255,255,0.6)", fontWeight: "600" }}>
-                    {"Close"}
-                  </ThemedText>
-                </View>
-              </Pressable>
+        {!isLandscape ? (
+          <View style={styles.bottomStatusSection} pointerEvents="none">
+            <View style={styles.progressBar}>
+              <Animated.View style={[styles.progressFill, progressBarStyle]} />
             </View>
-          ) : null}
-        </View>
-      ) : null}
+            {playerState === "generating" ? (
+              <ThemedText type="caption" style={styles.statusLabel}>
+                {"Crafting your micro-meditation..."}
+              </ThemedText>
+            ) : playerState === "error" ? (
+              <ThemedText type="caption" style={[styles.statusLabel, { color: "#E85D5D" }]}>
+                {errorMessage || "Something went wrong"}
+              </ThemedText>
+            ) : playerState === "ready" ? (
+              <ThemedText type="caption" style={styles.statusLabel}>
+                {"Tap to begin"}
+              </ThemedText>
+            ) : playerState === "playing" ? (
+              <ThemedText type="caption" style={styles.statusLabel}>
+                {"Breathe and Listen"}
+              </ThemedText>
+            ) : playerState === "paused" ? (
+              <ThemedText type="caption" style={styles.statusLabel}>
+                {"Paused"}
+              </ThemedText>
+            ) : playerState === "finished" ? (
+              <ThemedText type="caption" style={styles.statusLabel}>
+                {"Complete"}
+              </ThemedText>
+            ) : null}
+          </View>
+        ) : null}
+
+        {playerState !== "generating" ? (
+          <View pointerEvents="auto">
+            {(playerState === "playing" || playerState === "paused") ? (
+              <Pressable
+                onPress={handlePlayAction}
+                style={styles.bottomPlayBtn}
+                testID="button-guided-moment-toggle"
+              >
+                <Feather
+                  name={playerState === "playing" ? "pause" : "play"}
+                  size={22}
+                  color={ACCENT_GOLD}
+                  style={playerState !== "playing" ? { marginLeft: 2 } : undefined}
+                />
+              </Pressable>
+            ) : null}
+
+            {playerState === "finished" ? (
+              <View style={styles.finishedActions}>
+                <Pressable
+                  onPress={playAudio}
+                  style={styles.replayButton}
+                  testID="button-replay-guided-moment"
+                >
+                  <Feather name="rotate-ccw" size={16} color={ACCENT_GOLD} />
+                  <ThemedText type="caption" style={{ color: ACCENT_GOLD, marginLeft: 6 }}>
+                    {"Replay"}
+                  </ThemedText>
+                </Pressable>
+                <Pressable onPress={handleClose} testID="button-done-guided-moment">
+                  <LinearGradient
+                    colors={[ACCENT_GOLD, GOLD_LIGHT] as [string, string]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.doneButtonGradient}
+                  >
+                    <ThemedText type="caption" style={{ color: NAVY, fontWeight: "700" }}>
+                      {"Done"}
+                    </ThemedText>
+                  </LinearGradient>
+                </Pressable>
+              </View>
+            ) : null}
+
+            {playerState === "error" ? (
+              <View style={styles.finishedActions}>
+                <Pressable
+                  onPress={beginGeneration}
+                  style={styles.replayButton}
+                  testID="button-retry-guided-moment"
+                >
+                  <Feather name="refresh-cw" size={16} color={ACCENT_GOLD} />
+                  <ThemedText type="caption" style={{ color: ACCENT_GOLD, marginLeft: 6 }}>
+                    {"Try Again"}
+                  </ThemedText>
+                </Pressable>
+                <Pressable onPress={handleClose}>
+                  <View style={[styles.doneButtonGradient, { backgroundColor: "rgba(255,255,255,0.1)" }]}>
+                    <ThemedText type="caption" style={{ color: "rgba(255,255,255,0.6)", fontWeight: "600" }}>
+                      {"Close"}
+                    </ThemedText>
+                  </View>
+                </Pressable>
+              </View>
+            ) : null}
+          </View>
+        ) : null}
+      </View>
     </Animated.View>
   );
 
@@ -884,40 +920,6 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
       colors={[NAVY, NAVY_MID] as [string, string]}
       style={styles.container}
     >
-      {(playerState === "idle" || playerState === "generating" || playerState === "ready") && !isLandscape ? (
-        <View style={[styles.durationRowTop, { marginTop: insets.top + 52 }]}>
-          {DURATION_OPTIONS.map((opt) => {
-            const isSelected = selectedDuration === opt.value;
-            return (
-              <Pressable
-                key={opt.value}
-                onPress={() => {
-                  try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
-                  setSelectedDuration(opt.value);
-                }}
-                style={[
-                  styles.durationPill,
-                  isSelected
-                    ? { backgroundColor: ACCENT_GOLD, borderColor: ACCENT_GOLD }
-                    : { backgroundColor: "transparent", borderColor: "rgba(255,255,255,0.3)" },
-                ]}
-                testID={`button-duration-${opt.value}`}
-              >
-                <ThemedText
-                  type="caption"
-                  style={[
-                    styles.durationPillText,
-                    { color: isSelected ? "#FFFFFF" : "rgba(255,255,255,0.8)" },
-                  ]}
-                >
-                  {opt.label}
-                </ThemedText>
-              </Pressable>
-            );
-          })}
-        </View>
-      ) : null}
-
       <Pressable
         style={styles.tapArea}
         onPress={handleScreenTap}
@@ -1334,6 +1336,7 @@ const styles = StyleSheet.create({
   bottomControls: {
     alignItems: "center",
     paddingBottom: Spacing.md,
+    gap: Spacing.sm,
   },
   bottomPlayBtn: {
     width: 52,

@@ -126,6 +126,8 @@ interface BackgroundMusicContextType {
   setDucked: (ducked: boolean) => Promise<void>;
   startBackgroundMusic: () => Promise<void>;
   stopBackgroundMusic: () => Promise<void>;
+  pauseBackgroundMusic: () => Promise<void>;
+  resumeBackgroundMusic: () => Promise<void>;
 }
 
 const BackgroundMusicContext = createContext<BackgroundMusicContextType | undefined>(undefined);
@@ -273,6 +275,34 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
     }
   }, []);
 
+  const pauseBackgroundMusic = useCallback(async () => {
+    try {
+      if (soundRef.current) {
+        const status = await soundRef.current.getStatusAsync();
+        if (status.isLoaded && status.isPlaying) {
+          await soundRef.current.pauseAsync();
+          setIsPlaying(false);
+        }
+      }
+    } catch (error) {
+      console.error('Error pausing background music:', error);
+    }
+  }, []);
+
+  const resumeBackgroundMusic = useCallback(async () => {
+    try {
+      if (soundRef.current) {
+        const status = await soundRef.current.getStatusAsync();
+        if (status.isLoaded && !status.isPlaying) {
+          await soundRef.current.playAsync();
+          setIsPlaying(true);
+        }
+      }
+    } catch (error) {
+      console.error('Error resuming background music:', error);
+    }
+  }, []);
+
   return (
     <BackgroundMusicContext.Provider
       value={{
@@ -285,6 +315,8 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
         setDucked,
         startBackgroundMusic,
         stopBackgroundMusic,
+        pauseBackgroundMusic,
+        resumeBackgroundMusic,
       }}
     >
       {children}

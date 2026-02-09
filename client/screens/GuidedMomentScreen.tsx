@@ -178,6 +178,8 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
     setVolume: setBgVolume,
     startBackgroundMusic,
     stopBackgroundMusic,
+    pauseBackgroundMusic,
+    resumeBackgroundMusic,
     isPlaying: isBgPlaying,
   } = useBackgroundMusic();
 
@@ -489,15 +491,17 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
       if (status.isLoaded) {
         if (status.isPlaying) {
           await soundRef.current.pauseAsync();
+          await pauseBackgroundMusic();
           setPlayerState("paused");
         } else {
           await soundRef.current.playAsync();
+          await resumeBackgroundMusic();
           setPlayerState("playing");
         }
       }
       try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
     } catch (e) {}
-  }, []);
+  }, [pauseBackgroundMusic, resumeBackgroundMusic]);
 
   const handlePlayAction = useCallback(() => {
     if (playerState === "ready" || playerState === "finished") {

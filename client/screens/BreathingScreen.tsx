@@ -97,6 +97,7 @@ export default function BreathingScreen() {
 
   const [showTechniqueInfo, setShowTechniqueInfo] = useState(false);
   const [showMoodCheckin, setShowMoodCheckin] = useState(false);
+  const autoStartRef = useRef(false);
 
   const [voiceVolume, setVoiceVolume] = useState(0.8);
 
@@ -347,6 +348,13 @@ export default function BreathingScreen() {
       await startAffirmationLoop();
     }
   };
+
+  useEffect(() => {
+    if (autoStartRef.current && !isPlaying) {
+      autoStartRef.current = false;
+      handleStart();
+    }
+  }, [selectedTechnique]);
 
   const handlePause = async () => {
     setIsPlaying(false);
@@ -1260,6 +1268,7 @@ export default function BreathingScreen() {
         onStartBreathing={(techniqueId) => {
           const technique = BREATHING_TECHNIQUES.find(t => t.id === techniqueId);
           if (technique) {
+            autoStartRef.current = true;
             setSelectedTechnique(technique);
             AsyncStorage.setItem(DEFAULT_BREATHING_TECHNIQUE_KEY, technique.id).catch(() => {});
           }

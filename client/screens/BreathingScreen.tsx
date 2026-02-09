@@ -692,7 +692,7 @@ export default function BreathingScreen() {
                 
                 <View style={styles.portraitControlsRow}>
                   <Pressable
-                    onPress={() => { resetControlsTimer(); setHapticsEnabled(!hapticsEnabled); try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} }}
+                    onPress={() => { resetControlsTimer(); const next = !hapticsEnabled; setHapticsEnabled(next); if (next) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} } }}
                     style={[styles.landscapeStopButton, { backgroundColor: hapticsEnabled ? 'rgba(201,162,39,0.25)' : 'rgba(255,255,255,0.15)' }]}
                   >
                     <Feather name="smartphone" size={16} color={hapticsEnabled ? '#C9A227' : 'rgba(255,255,255,0.5)'} />
@@ -703,9 +703,9 @@ export default function BreathingScreen() {
                   >
                     <LinearGradient
                       colors={[selectedTechnique.color, `${selectedTechnique.color}CC`]}
-                      style={styles.landscapePlayButton}
+                      style={styles.portraitPlayButton}
                     >
-                      <Feather name={isPlaying ? "pause" : "play"} size={24} color="#FFFFFF" />
+                      <Feather name={isPlaying ? "pause" : "play"} size={28} color="#FFFFFF" />
                     </LinearGradient>
                   </Pressable>
                   <Pressable
@@ -831,7 +831,7 @@ export default function BreathingScreen() {
               
               <View style={styles.landscapeControlsRow}>
                 <Pressable
-                  onPress={() => { resetControlsTimer(); setHapticsEnabled(!hapticsEnabled); try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} }}
+                  onPress={() => { resetControlsTimer(); const next = !hapticsEnabled; setHapticsEnabled(next); if (next) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} } }}
                   style={[styles.landscapeStopButton, { backgroundColor: hapticsEnabled ? 'rgba(201,162,39,0.25)' : 'rgba(255,255,255,0.15)' }]}
                 >
                   <Feather name="smartphone" size={16} color={hapticsEnabled ? '#C9A227' : 'rgba(255,255,255,0.5)'} />
@@ -1780,6 +1780,13 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  portraitPlayButton: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     alignItems: "center",
     justifyContent: "center",
   },

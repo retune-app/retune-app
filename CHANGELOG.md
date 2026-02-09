@@ -1,5 +1,40 @@
 # RETUNED Changelog
 
+## Version 1.5 (Build 1) — February 9, 2026
+
+### Breathing Screen Layout Overhaul
+- Restructured fullscreen breathing UI with a clear visual hierarchy: top bar (technique badge, audio controls, close button), centered breathing rings, and bottom control area.
+- Moved play/pause button to the true center-bottom of the screen using absolute positioning, ensuring it never shifts off-center regardless of other elements.
+- Stop button positioned to the right of the play/pause button, out of the way but easily accessible.
+- Replaced rigid transition animations with organic spring-based physics (damping: 20, stiffness: 60) for smoother fullscreen modal entrance/exit.
+
+### Always-Visible Audio Controls
+- Music and voice audio buttons now always appear in the top bar during breathing sessions, even when no sound or voice is active.
+- When not enabled for the session, buttons appear dimmed (40% opacity) and are disabled to prevent accidental taps.
+- Fixed z-index layering so breathing rings no longer overlap the top bar controls (center section z-index: 1, top controls z-index: 10).
+
+### Meditation Landscape Controls
+- In landscape mode on the Guided Moment (meditation) screen, the play/pause button now appears in the top-right control bar alongside voice selector, music, and close buttons.
+- Bottom-center play/pause button hidden in landscape to avoid duplication and keep the breathing rings clean.
+- Portrait mode retains the bottom-center play/pause button as before.
+
+### Haptic Feedback Cleanup
+- Removed in-session haptic toggle button from the breathing screen; haptic preference now reads from global Settings via AsyncStorage (`@settings/hapticFeedback`).
+
+### Code Cleanup
+- Cleaned up ~100+ lines of dead code from BreathingScreen.tsx (removed unused playing-state branches, duplicate progress ring, 12 unused styles).
+- Deleted all conversation screenshots from attached_assets/.
+- Version bumped to 1.5 Build 1.
+
+### Files Changed
+- `client/screens/BreathingScreen.tsx` — Fullscreen layout overhaul, audio button visibility, z-index fixes, play/pause centering
+- `client/screens/GuidedMomentScreen.tsx` — Landscape play/pause button in top-right controls
+- `app.json` — Version bump to 1.5
+- `CHANGELOG.md` — Comprehensive change documentation
+- `replit.md` — Updated documentation
+
+---
+
 ## Version 1.3 (Build 3) — February 8, 2026
 
 ### Technique Info Modal

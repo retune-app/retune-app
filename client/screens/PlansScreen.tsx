@@ -19,7 +19,7 @@ const NAVY = "#0F1C3F";
 const FREE_ICONS: Record<string, string> = {
   "Breathing exercises (4 techniques)": "wind",
   "RSVP Focus Mode": "type",
-  "Up to 10 AI affirmations per month": "mic",
+  "Up to 20 AI affirmations per month": "mic",
   "Stock AI voices (Lotus & Sage)": "volume-2",
   "Ambient sound library": "headphones",
   "Daily reminders (up to 5)": "bell",

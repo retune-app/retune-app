@@ -678,7 +678,7 @@ export default function BreathingScreen() {
                 />
               </View>
 
-              <Animated.View style={[styles.portraitBottomSection, controlsAnimatedStyle]} pointerEvents={controlsVisible ? 'auto' : 'none'}>
+              <Animated.View style={[styles.portraitBottomSection, controlsAnimatedStyle]} pointerEvents={controlsVisible ? 'auto' : 'none'} onStartShouldSetResponder={() => true}>
                 <View style={styles.portraitStatsRow}>
                   <View style={styles.portraitStatItem}>
                     <Text style={styles.landscapeStatLabel}>Time Left</Text>
@@ -771,7 +771,7 @@ export default function BreathingScreen() {
           </Animated.View>
 
           <View style={[styles.landscapeContent, { paddingLeft: Math.max(insets.left, 48), paddingRight: Math.max(insets.right, 48) }]}>
-            <Animated.View style={[styles.landscapeSidePanel, controlsAnimatedStyle]} pointerEvents={controlsVisible ? 'auto' : 'none'}>
+            <Animated.View style={[styles.landscapeSidePanel, controlsAnimatedStyle]} pointerEvents={controlsVisible ? 'auto' : 'none'} onStartShouldSetResponder={() => true}>
               <Text style={[styles.landscapeTechniqueName, { color: selectedTechnique.color }]}>
                 {selectedTechnique.name}
               </Text>
@@ -821,7 +821,7 @@ export default function BreathingScreen() {
               />
             </View>
 
-            <Animated.View style={[styles.landscapeSidePanel, controlsAnimatedStyle]} pointerEvents={controlsVisible ? 'auto' : 'none'}>
+            <Animated.View style={[styles.landscapeSidePanel, controlsAnimatedStyle]} pointerEvents={controlsVisible ? 'auto' : 'none'} onStartShouldSetResponder={() => true}>
               <View style={styles.landscapeStats}>
                 <Text style={styles.landscapeStatLabel}>Time Left</Text>
                 <Text style={styles.landscapeStatValue}>{formatTime(remainingTime)}</Text>

@@ -22,6 +22,7 @@ import { SwipeableAffirmationCard } from "@/components/SwipeableAffirmationCard"
 import { CategoryChip } from "@/components/CategoryChip";
 import { LibraryTip } from "@/components/LibraryTip";
 import { FloatingSettingsButton } from "@/components/FloatingSettingsButton";
+import { MoodCheckin } from "@/components/MoodCheckin";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAudio } from "@/contexts/AudioContext";
@@ -69,6 +70,7 @@ export default function HomeScreen() {
   const [backgroundWallpaperEnabled, setBackgroundWallpaperEnabled] = useState(false);
   const [isFirstPlay, setIsFirstPlay] = useState(false);
   const [firstPlayTriggered, setFirstPlayTriggered] = useState(false);
+  const [showMoodCheckin, setShowMoodCheckin] = useState(false);
 
   useEffect(() => {
     AsyncStorage.getItem("@settings/hapticEnabled").then((value) => {
@@ -363,6 +365,13 @@ export default function HomeScreen() {
               testID="input-search"
             />
           </View>
+          <Pressable
+            onPress={() => setShowMoodCheckin(true)}
+            style={[styles.headerSettingsButton, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder }]}
+            testID="button-header-mood-checkin"
+          >
+            <Feather name="activity" size={20} color={theme.gold} />
+          </Pressable>
         </View>
         <View style={styles.badgeRow}>
           <Pressable
@@ -607,6 +616,15 @@ export default function HomeScreen() {
 
       {/* Floating Settings Button */}
       <FloatingSettingsButton bottomOffset={tabBarHeight + 16} />
+
+      <MoodCheckin
+        visible={showMoodCheckin}
+        onClose={() => setShowMoodCheckin(false)}
+        onStartBreathing={() => {
+          (navigation as any).navigate("Main", { screen: "BreatheTab" });
+        }}
+        onStartAffirmations={() => {}}
+      />
     </>
   );
 

@@ -729,7 +729,7 @@ export default function BreathingScreen() {
                   </Pressable>
                   <Pressable
                     onPress={() => { resetControlsTimer(); handleStop(); }}
-                    style={[styles.landscapeStopButton, { position: 'absolute', left: '50%', marginLeft: 40 }]}
+                    style={[styles.landscapeStopButton, { marginLeft: Spacing.lg }]}
                   >
                     <Feather name="square" size={20} color="#FFFFFF" />
                   </Pressable>

@@ -1052,9 +1052,9 @@ export default function BreathingScreen() {
                 ]}
               >
                 <Text style={{
-                  fontSize: 40,
-                  fontWeight: '300',
-                  color: '#C9A227',
+                  fontSize: 32,
+                  fontWeight: '700',
+                  color: 'rgba(255,255,255,0.85)',
                   letterSpacing: 2,
                 }}>
                   {countdownValue}

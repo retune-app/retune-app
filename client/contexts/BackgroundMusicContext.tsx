@@ -139,6 +139,8 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
   const [isDucked, setIsDucked] = useState(false);
   const soundRef = useRef<Audio.Sound | null>(null);
   const isDuckedRef = useRef(false);
+  const isPlayingRef = useRef(false);
+  const switchingRef = useRef(false);
 
   useEffect(() => {
     loadSavedPreferences();
@@ -174,20 +176,30 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
     }
   };
 
-  const setSelectedMusic = async (type: BackgroundMusicType) => {
-    const wasPlaying = isPlaying;
-    setSelectedMusicState(type);
-    await AsyncStorage.setItem(STORAGE_KEY, type);
-    
-    if (soundRef.current) {
-      await soundRef.current.stopAsync();
-      await soundRef.current.unloadAsync();
-      soundRef.current = null;
-      setIsPlaying(false);
-    }
+  const updateIsPlaying = (playing: boolean) => {
+    isPlayingRef.current = playing;
+    setIsPlaying(playing);
+  };
 
-    if (wasPlaying && type !== 'none') {
-      try {
+  const setSelectedMusic = async (type: BackgroundMusicType) => {
+    if (switchingRef.current) return;
+    switchingRef.current = true;
+
+    try {
+      const wasPlaying = isPlayingRef.current;
+      setSelectedMusicState(type);
+      AsyncStorage.setItem(STORAGE_KEY, type);
+
+      if (soundRef.current) {
+        try {
+          await soundRef.current.stopAsync();
+          await soundRef.current.unloadAsync();
+        } catch (e) {}
+        soundRef.current = null;
+        updateIsPlaying(false);
+      }
+
+      if (wasPlaying && type !== 'none') {
         await Audio.setAudioModeAsync({
           playsInSilentModeIOS: true,
           staysActiveInBackground: true,
@@ -203,10 +215,12 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
           }
         );
         soundRef.current = sound;
-        setIsPlaying(true);
-      } catch (error) {
-        console.error('Error switching background music:', error);
+        updateIsPlaying(true);
       }
+    } catch (error) {
+      console.error('Error switching background music:', error);
+    } finally {
+      switchingRef.current = false;
     }
   };
 
@@ -256,7 +270,7 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
       );
       
       soundRef.current = sound;
-      setIsPlaying(true);
+      updateIsPlaying(true);
     } catch (error) {
       console.error('Error starting background music:', error);
     }
@@ -265,11 +279,13 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
   const stopBackgroundMusic = useCallback(async () => {
     try {
       if (soundRef.current) {
-        await soundRef.current.stopAsync();
-        await soundRef.current.unloadAsync();
+        try {
+          await soundRef.current.stopAsync();
+          await soundRef.current.unloadAsync();
+        } catch (e) {}
         soundRef.current = null;
       }
-      setIsPlaying(false);
+      updateIsPlaying(false);
     } catch (error) {
       console.error('Error stopping background music:', error);
     }
@@ -281,7 +297,7 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
         const status = await soundRef.current.getStatusAsync();
         if (status.isLoaded && status.isPlaying) {
           await soundRef.current.pauseAsync();
-          setIsPlaying(false);
+          updateIsPlaying(false);
         }
       }
     } catch (error) {
@@ -295,7 +311,7 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
         const status = await soundRef.current.getStatusAsync();
         if (status.isLoaded && !status.isPlaying) {
           await soundRef.current.playAsync();
-          setIsPlaying(true);
+          updateIsPlaying(true);
         }
       }
     } catch (error) {

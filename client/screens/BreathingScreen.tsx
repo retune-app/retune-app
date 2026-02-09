@@ -26,9 +26,11 @@ import Animated, {
   withRepeat,
   withSequence,
   withDelay,
+  withSpring,
   Easing,
   FadeIn,
   FadeOut,
+  interpolate,
 } from "react-native-reanimated";
 import { useQuery } from "@tanstack/react-query";
 import { BlurView } from "expo-blur";
@@ -117,11 +119,10 @@ export default function BreathingScreen() {
   const controlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const controlsOpacity = useSharedValue(1);
 
-  const fullscreenOpacity = useSharedValue(0);
-  const fullscreenScale = useSharedValue(0.96);
+  const fullscreenProgress = useSharedValue(0);
   const fullscreenTransitionStyle = useAnimatedStyle(() => ({
-    opacity: fullscreenOpacity.value,
-    transform: [{ scale: fullscreenScale.value }],
+    opacity: interpolate(fullscreenProgress.value, [0, 0.4, 1], [0, 0.6, 1]),
+    transform: [{ scale: interpolate(fullscreenProgress.value, [0, 1], [0.92, 1]) }],
   }));
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -477,17 +478,15 @@ export default function BreathingScreen() {
   };
 
   const exitFullscreen = () => {
-    fullscreenOpacity.value = withTiming(0, { duration: 400, easing: Easing.in(Easing.quad) });
-    fullscreenScale.value = withTiming(0.96, { duration: 400, easing: Easing.in(Easing.quad) });
+    fullscreenProgress.value = withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) });
     setTimeout(() => {
       setShowLandscapeMode(false);
       controlsOpacity.value = 1;
       setControlsVisible(true);
       if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
       handleStop();
-      fullscreenOpacity.value = 0;
-      fullscreenScale.value = 0.96;
-    }, 400);
+      fullscreenProgress.value = 0;
+    }, 500);
   };
 
   const resetControlsTimer = useCallback(() => {
@@ -577,11 +576,9 @@ export default function BreathingScreen() {
     
     setCountdownValue(null);
     
-    fullscreenOpacity.value = 0;
-    fullscreenScale.value = 0.96;
+    fullscreenProgress.value = 0;
     setShowLandscapeMode(true);
-    fullscreenOpacity.value = withTiming(1, { duration: 800, easing: Easing.out(Easing.quad) });
-    fullscreenScale.value = withTiming(1, { duration: 800, easing: Easing.out(Easing.quad) });
+    fullscreenProgress.value = withSpring(1, { damping: 20, stiffness: 60, mass: 1 });
     await handleStart();
   }, [handleStart, hapticsEnabled]);
 

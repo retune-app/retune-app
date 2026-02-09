@@ -203,7 +203,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
   const controlsOpacity = useSharedValue(1);
   const generatingPulse = useSharedValue(0);
 
-  const ringSize = isLandscape ? Math.min(height * 0.75, width * 0.55) : width * 0.88;
+  const ringSize = isLandscape ? Math.min(height * 0.75, width * 0.55) : Math.min(width * 0.82, height * 0.42);
 
   const categories = useMemo<CategorySection[]>(() => {
     const byCategory = getSoundsByCategory();
@@ -1220,12 +1220,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
   },
   bottomStatusSection: {
-    position: "absolute",
-    bottom: 80,
-    left: 0,
-    right: 0,
     alignItems: "center",
     paddingHorizontal: Spacing.xl,
+    marginBottom: Spacing.xs,
   },
   progressBar: {
     width: "100%",

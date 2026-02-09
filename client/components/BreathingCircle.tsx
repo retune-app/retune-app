@@ -4,6 +4,8 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
+  withRepeat,
+  withSequence,
   Easing,
   interpolate,
   runOnJS,
@@ -23,6 +25,7 @@ interface BreathingCircleProps {
   onCycleComplete?: () => void;
   size?: number;
   hapticsEnabled?: boolean;
+  showContent?: boolean;
 }
 
 const ACCENT_GOLD = "#C9A227";
@@ -34,12 +37,14 @@ export default function BreathingCircle({
   onCycleComplete,
   size = 280,
   hapticsEnabled = true,
+  showContent = true,
 }: BreathingCircleProps) {
   const { theme } = useTheme();
   const scale = useSharedValue(0.6);
   const opacity = useSharedValue(0.3);
   const phaseIndex = useSharedValue(0);
   const countdown = useSharedValue(0);
+  const idlePulse = useSharedValue(1);
   const [currentPhase, setCurrentPhase] = React.useState<BreathPhase>("inhale");
   const [currentCountdown, setCurrentCountdown] = React.useState(0);
 
@@ -56,6 +61,21 @@ export default function BreathingCircle({
     setCurrentCountdown(count);
     onPhaseChange?.(phase, count);
   };
+
+  useEffect(() => {
+    if (!isPlaying) {
+      idlePulse.value = withRepeat(
+        withSequence(
+          withTiming(1.06, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
+          withTiming(1, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
+        ),
+        -1,
+        false,
+      );
+    } else {
+      idlePulse.value = withTiming(1, { duration: 300 });
+    }
+  }, [isPlaying]);
 
   useEffect(() => {
     if (!isPlaying) {
@@ -119,20 +139,24 @@ export default function BreathingCircle({
     opacity: opacity.value,
   }));
 
+  const idlePulseStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: idlePulse.value }],
+  }));
+
   const innerGlowStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: interpolate(scale.value, [0.6, 1], [0.8, 1.1]) }],
-    opacity: interpolate(scale.value, [0.6, 1], [0.2, 0.5]),
+    transform: [{ scale: interpolate(scale.value, [0.6, 1], [0.85, 1.1]) }],
+    opacity: interpolate(scale.value, [0.6, 1], [0.15, 0.5]),
   }));
 
   const outerRingStyle = useAnimatedStyle(() => ({
     transform: [{ scale: interpolate(scale.value, [0.6, 1], [1.0, 1.15]) }],
-    opacity: interpolate(scale.value, [0.6, 1], [0.1, 0.25]),
+    opacity: interpolate(scale.value, [0.6, 1], [0.08, 0.25]),
   }));
 
   const phaseColor = technique.color || ACCENT_GOLD;
 
   return (
-    <View style={[styles.container, { width: size, height: size }]}>
+    <Animated.View style={[styles.container, { width: size, height: size }, !isPlaying ? idlePulseStyle : undefined]}>
       <Animated.View
         style={[
           styles.outerRing,
@@ -151,9 +175,9 @@ export default function BreathingCircle({
           styles.innerGlow,
           innerGlowStyle,
           {
-            width: size * 0.85,
-            height: size * 0.85,
-            borderRadius: size * 0.425,
+            width: size * 0.75,
+            height: size * 0.75,
+            borderRadius: size * 0.375,
             backgroundColor: phaseColor,
           },
         ]}
@@ -164,9 +188,9 @@ export default function BreathingCircle({
           animatedCircleStyle,
           styles.mainCircle,
           {
-            width: size * 0.7,
-            height: size * 0.7,
-            borderRadius: size * 0.35,
+            width: size * 0.5,
+            height: size * 0.5,
+            borderRadius: size * 0.25,
           },
         ]}
       >
@@ -177,24 +201,26 @@ export default function BreathingCircle({
           style={[
             styles.gradientCircle,
             {
-              width: size * 0.7,
-              height: size * 0.7,
-              borderRadius: size * 0.35,
+              width: size * 0.5,
+              height: size * 0.5,
+              borderRadius: size * 0.25,
             },
           ]}
         >
-          <View style={styles.textContainer}>
-            <ThemedText
-              type="h2"
-              style={[styles.phaseText, { color: "#FFFFFF" }]}
-            >
-              {PHASE_LABELS[currentPhase]}
-            </ThemedText>
-            <Text style={styles.countdownText}>{currentCountdown}</Text>
-          </View>
+          {showContent && isPlaying ? (
+            <View style={styles.textContainer}>
+              <ThemedText
+                type="h2"
+                style={[styles.phaseText, { color: "#FFFFFF" }]}
+              >
+                {PHASE_LABELS[currentPhase]}
+              </ThemedText>
+              <Text style={styles.countdownText}>{currentCountdown}</Text>
+            </View>
+          ) : null}
         </LinearGradient>
       </Animated.View>
-    </View>
+    </Animated.View>
   );
 }
 

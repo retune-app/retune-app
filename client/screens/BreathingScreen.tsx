@@ -926,6 +926,7 @@ export default function BreathingScreen() {
               onCycleComplete={handleCycleComplete}
               hapticsEnabled={hapticsEnabled}
               size={isPlaying ? Math.min(SCREEN_WIDTH * 0.85, SCREEN_HEIGHT * 0.45) : 260}
+              showContent={countdownValue === null}
             />
             {!isPlaying && countdownValue === null ? (
               <Pressable

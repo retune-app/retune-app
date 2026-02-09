@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useCallback } from "react";
 import { View, StyleSheet, Pressable } from "react-native";
 import Animated, {
   useSharedValue,
@@ -6,8 +6,10 @@ import Animated, {
   withRepeat,
   withSequence,
   withTiming,
+  withSpring,
   Easing,
   interpolate,
+  cancelAnimation,
 } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
@@ -87,6 +89,9 @@ export function WelcomeSection({
 }: WelcomeSectionProps) {
   const { theme, isDark, setThemeMode } = useTheme();
   const pulseValue = useSharedValue(0);
+  const moodPulse = useSharedValue(0);
+  const moodGlow = useSharedValue(0);
+  const [moodTapped, setMoodTapped] = useState(false);
 
   const handleToggleTheme = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -103,6 +108,44 @@ export function WelcomeSection({
       false
     );
   }, []);
+
+  React.useEffect(() => {
+    if (!moodTapped) {
+      moodPulse.value = withRepeat(
+        withSequence(
+          withTiming(1, { duration: 1800, easing: Easing.inOut(Easing.sin) }),
+          withTiming(0, { duration: 1800, easing: Easing.inOut(Easing.sin) })
+        ),
+        -1,
+        false
+      );
+      moodGlow.value = withRepeat(
+        withSequence(
+          withTiming(1, { duration: 1800, easing: Easing.inOut(Easing.sin) }),
+          withTiming(0, { duration: 1800, easing: Easing.inOut(Easing.sin) })
+        ),
+        -1,
+        false
+      );
+    }
+  }, [moodTapped]);
+
+  const settleMoodAnimation = useCallback(() => {
+    setMoodTapped(true);
+    cancelAnimation(moodPulse);
+    cancelAnimation(moodGlow);
+    moodPulse.value = withSpring(0, { damping: 15, stiffness: 150 });
+    moodGlow.value = withTiming(0, { duration: 300 });
+  }, []);
+
+  const moodButtonStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: interpolate(moodPulse.value, [0, 1], [1, 1.12]) }],
+  }));
+
+  const moodGlowStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(moodGlow.value, [0, 1], [0, 0.6]),
+    transform: [{ scale: interpolate(moodGlow.value, [0, 1], [0.8, 1.6]) }],
+  }));
 
   const pulseStyle = useAnimatedStyle(() => {
     return {
@@ -166,17 +209,22 @@ export function WelcomeSection({
         </View>
         <View style={styles.headerActions}>
           {onMoodPress ? (
-            <Pressable
-              onPress={(e) => {
-                e.stopPropagation();
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                onMoodPress();
-              }}
-              style={[styles.headerActionButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
-              testID="button-mood-checkin"
-            >
-              <Feather name="smile" size={20} color="#50C9B0" />
-            </Pressable>
+            <Animated.View style={[styles.moodButtonWrapper, moodButtonStyle]}>
+              <Animated.View style={[styles.moodGlowRing, moodGlowStyle]} />
+              <Pressable
+                onPress={(e) => {
+                  e.stopPropagation();
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  settleMoodAnimation();
+                  onMoodPress();
+                }}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 6 }}
+                style={[styles.moodButton, { backgroundColor: isDark ? 'rgba(80,201,176,0.15)' : 'rgba(80,201,176,0.12)' }]}
+                testID="button-mood-checkin"
+              >
+                <Feather name="smile" size={20} color="#50C9B0" />
+              </Pressable>
+            </Animated.View>
           ) : null}
           {onSettingsPress ? (
             <Pressable
@@ -184,6 +232,7 @@ export function WelcomeSection({
                 e.stopPropagation();
                 handleSettingsPress();
               }}
+              hitSlop={{ top: 12, bottom: 12, left: 6, right: 12 }}
               style={[styles.headerActionButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
               testID="button-welcome-settings"
             >
@@ -234,12 +283,34 @@ const styles = StyleSheet.create({
   headerActions: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 12,
+  },
+  moodButtonWrapper: {
+    position: "relative",
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  moodGlowRing: {
+    position: "absolute",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(80,201,176,0.35)",
+  },
+  moodButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 1,
   },
   headerActionButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
   },

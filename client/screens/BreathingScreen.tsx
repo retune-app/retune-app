@@ -631,19 +631,11 @@ export default function BreathingScreen() {
           <StatusBar hidden />
           <Animated.View style={[{ flex: 1 }, fullscreenTransitionStyle]}>
           <Pressable style={[styles.landscapeContainer, { backgroundColor: theme.navy }]} onPress={toggleControls}>
-            <Animated.View style={[styles.landscapeCloseButton, { top: insets.top + 4 }, controlsAnimatedStyle]} pointerEvents={controlsVisible ? 'auto' : 'none'}>
-              <Pressable onPress={() => { resetControlsTimer(); exitFullscreen(); }}>
-                <BlurView intensity={40} tint="dark" style={styles.blurButton}>
-                  <Feather name="x" size={24} color="#FFFFFF" />
-                </BlurView>
-              </Pressable>
-            </Animated.View>
-
             <View style={[
               styles.portraitFullscreenWrapper,
               { 
-                paddingTop: insets.top + Spacing.xl,
-                paddingBottom: insets.bottom + Spacing.xl,
+                paddingTop: insets.top + Spacing.md,
+                paddingBottom: insets.bottom + Spacing.lg,
               }
             ]}>
               <Animated.View style={[styles.fsTopControls, controlsAnimatedStyle]} pointerEvents={controlsVisible ? 'auto' : 'none'} onStartShouldSetResponder={() => true}>
@@ -676,6 +668,9 @@ export default function BreathingScreen() {
                       <Feather name={voiceVolume > 0.05 ? "mic" : "mic-off"} size={18} color={selectedTechnique.color} />
                     </Pressable>
                   ) : null}
+                  <Pressable onPress={() => { resetControlsTimer(); exitFullscreen(); }} style={styles.fsCloseBtn}>
+                    <Feather name="x" size={22} color="rgba(255,255,255,0.7)" />
+                  </Pressable>
                 </View>
               </Animated.View>
 
@@ -718,8 +713,25 @@ export default function BreathingScreen() {
                   hapticsEnabled={hapticsEnabled}
                   size={portraitCircleSize}
                 />
+              </View>
 
-                <Animated.View style={[styles.fsCenterControls, controlsAnimatedStyle]} pointerEvents={controlsVisible ? 'auto' : 'none'} onStartShouldSetResponder={() => true}>
+              <Animated.View style={[styles.fsBottomControls, controlsAnimatedStyle]} pointerEvents={controlsVisible ? 'auto' : 'none'} onStartShouldSetResponder={() => true}>
+                <View style={styles.portraitStatsRow}>
+                  <View style={styles.portraitStatItem}>
+                    <Text style={styles.landscapeStatLabel}>Time Left</Text>
+                    <Text style={styles.landscapeStatValue}>{formatTime(remainingTime)}</Text>
+                  </View>
+                  <View style={styles.portraitStatItem}>
+                    <Text style={styles.landscapeStatLabel}>Progress</Text>
+                    <Text style={[styles.landscapeStatValue, { color: selectedTechnique.color }]}>{progressPercent}%</Text>
+                  </View>
+                  <View style={styles.portraitStatItem}>
+                    <Text style={styles.landscapeStatLabel}>Cycles</Text>
+                    <Text style={styles.landscapeStatValue}>{cyclesCompleted}/{totalCycles}</Text>
+                  </View>
+                </View>
+
+                <View style={styles.fsCenterControls}>
                   <Pressable
                     onPress={() => { resetControlsTimer(); (isPlaying ? handlePause : handleResume)(); }}
                   >
@@ -736,23 +748,6 @@ export default function BreathingScreen() {
                   >
                     <Feather name="square" size={20} color="#FFFFFF" />
                   </Pressable>
-                </Animated.View>
-              </View>
-
-              <Animated.View style={[styles.portraitBottomSection, controlsAnimatedStyle]} pointerEvents={controlsVisible ? 'auto' : 'none'} onStartShouldSetResponder={() => true}>
-                <View style={styles.portraitStatsRow}>
-                  <View style={styles.portraitStatItem}>
-                    <Text style={styles.landscapeStatLabel}>Time Left</Text>
-                    <Text style={styles.landscapeStatValue}>{formatTime(remainingTime)}</Text>
-                  </View>
-                  <View style={styles.portraitStatItem}>
-                    <Text style={styles.landscapeStatLabel}>Progress</Text>
-                    <Text style={[styles.landscapeStatValue, { color: selectedTechnique.color }]}>{progressPercent}%</Text>
-                  </View>
-                  <View style={styles.portraitStatItem}>
-                    <Text style={styles.landscapeStatLabel}>Cycles</Text>
-                    <Text style={styles.landscapeStatValue}>{cyclesCompleted}/{totalCycles}</Text>
-                  </View>
                 </View>
               </Animated.View>
             </View>
@@ -1731,14 +1726,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  fsCloseBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(255,255,255,0.1)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   fsCenterControls: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: Spacing.lg,
-    marginTop: Spacing.xl,
+    marginTop: Spacing.md,
   },
-  portraitBottomSection: {
+  fsBottomControls: {
     alignItems: "center",
     gap: Spacing.lg,
   },

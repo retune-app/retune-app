@@ -27,6 +27,7 @@ import * as Haptics from "expo-haptics";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Slider from "@react-native-community/slider";
 
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
@@ -143,6 +144,8 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
   const {
     selectedMusic,
     setSelectedMusic,
+    volume: bgVolume,
+    setVolume: setBgVolume,
     startBackgroundMusic,
     stopBackgroundMusic,
     isPlaying: isBgPlaying,
@@ -160,6 +163,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
   const [showSoundSwitcher, setShowSoundSwitcher] = useState(false);
   const [showVoiceSelector, setShowVoiceSelector] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(true);
+  const [voiceVolume, setVoiceVolume] = useState(0.8);
   const soundRef = useRef<Audio.Sound | null>(null);
   const controlsTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -200,6 +204,12 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
       }
     }).catch(() => {});
   }, [allVoiceOptions]);
+
+  useEffect(() => {
+    AsyncStorage.getItem('@retuned_voice_volume').then((saved) => {
+      if (saved) setVoiceVolume(parseFloat(saved));
+    });
+  }, []);
 
   useEffect(() => {
     if (playerState === "playing") {
@@ -400,7 +410,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
       const uri = `data:audio/mp3;base64,${moment.audioBase64}`;
       const { sound } = await Audio.Sound.createAsync(
         { uri },
-        { shouldPlay: true, progressUpdateIntervalMillis: 100 },
+        { shouldPlay: true, progressUpdateIntervalMillis: 100, volume: voiceVolume },
         (status) => {
           if (status.isLoaded) {
             setCurrentPosition(status.positionMillis || 0);
@@ -423,7 +433,17 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
       setErrorMessage("Could not play audio. Please try again.");
       setPlayerState("error");
     }
-  }, [moment, cleanupVoice]);
+  }, [moment, cleanupVoice, voiceVolume]);
+
+  const handleVoiceVolumeChange = useCallback(async (value: number) => {
+    setVoiceVolume(value);
+    await AsyncStorage.setItem('@retuned_voice_volume', value.toString());
+    if (soundRef.current) {
+      try {
+        await soundRef.current.setVolumeAsync(value);
+      } catch (e) {}
+    }
+  }, []);
 
   const togglePlayPause = useCallback(async () => {
     if (!soundRef.current) return;
@@ -918,6 +938,23 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
               </Pressable>
             </View>
 
+            {selectedSound !== 'none' ? (
+              <View style={styles.volumeSliderRow}>
+                <Feather name="volume-1" size={14} color="rgba(255,255,255,0.5)" />
+                <Slider
+                  style={styles.volumeSlider}
+                  minimumValue={0}
+                  maximumValue={1}
+                  value={bgVolume}
+                  onValueChange={setBgVolume}
+                  minimumTrackTintColor={ACCENT_GOLD}
+                  maximumTrackTintColor="rgba(255,255,255,0.15)"
+                  thumbTintColor={ACCENT_GOLD}
+                />
+                <Feather name="volume-2" size={14} color="rgba(255,255,255,0.5)" />
+              </View>
+            ) : null}
+
             <ScrollView
               style={styles.modalScroll}
               showsVerticalScrollIndicator={false}
@@ -985,6 +1022,21 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
             <ThemedText type="caption" style={styles.voiceNote}>
               {"Switching voice will regenerate your guided moment"}
             </ThemedText>
+
+            <View style={styles.volumeSliderRow}>
+              <Feather name="volume-1" size={14} color="rgba(255,255,255,0.5)" />
+              <Slider
+                style={styles.volumeSlider}
+                minimumValue={0}
+                maximumValue={1}
+                value={voiceVolume}
+                onValueChange={handleVoiceVolumeChange}
+                minimumTrackTintColor={ACCENT_GOLD}
+                maximumTrackTintColor="rgba(255,255,255,0.15)"
+                thumbTintColor={ACCENT_GOLD}
+              />
+              <Feather name="volume-2" size={14} color="rgba(255,255,255,0.5)" />
+            </View>
 
             <View style={styles.voiceList}>
               {allVoiceOptions.map((voice) => {
@@ -1365,5 +1417,16 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.5)",
     fontSize: 12,
     marginTop: 2,
+  },
+  volumeSliderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
+    gap: Spacing.sm,
+  },
+  volumeSlider: {
+    flex: 1,
+    height: 30,
   },
 });

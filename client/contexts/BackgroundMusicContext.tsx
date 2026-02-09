@@ -132,7 +132,7 @@ const BackgroundMusicContext = createContext<BackgroundMusicContextType | undefi
 
 export function BackgroundMusicProvider({ children }: { children: React.ReactNode }) {
   const [selectedMusic, setSelectedMusicState] = useState<BackgroundMusicType>('forest-night');
-  const [volume, setVolumeState] = useState(0.5);
+  const [volume, setVolumeState] = useState(0.25);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isDucked, setIsDucked] = useState(false);
   const soundRef = useRef<Audio.Sound | null>(null);
@@ -164,8 +164,8 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
       if (savedVolume) {
         setVolumeState(parseFloat(savedVolume));
       } else {
-        await AsyncStorage.setItem(VOLUME_STORAGE_KEY, '0.5');
-        setVolumeState(0.5);
+        await AsyncStorage.setItem(VOLUME_STORAGE_KEY, '0.25');
+        setVolumeState(0.25);
       }
     } catch (error) {
       console.error('Error loading background music preferences:', error);

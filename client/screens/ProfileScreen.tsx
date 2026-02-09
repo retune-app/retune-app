@@ -755,7 +755,7 @@ export default function ProfileScreen() {
           <SettingItem
             icon="info"
             label="About Retuned"
-            value={`v${Constants.expoConfig?.version || "1.0"} Build ${Constants.expoConfig?.ios?.buildNumber || "1"}`}
+            value={`v${Constants.expoConfig?.version || "1.0"} (${Constants.expoConfig?.ios?.buildNumber || "1"})`}
             showArrow={false}
           />
         </View>

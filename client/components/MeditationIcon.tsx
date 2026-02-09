@@ -1,6 +1,6 @@
 import React from "react";
 import { View, StyleSheet } from "react-native";
-import Svg, { Path, Circle } from "react-native-svg";
+import Svg, { Path } from "react-native-svg";
 
 interface MeditationIconProps {
   size?: number;
@@ -27,11 +27,10 @@ export function MeditationIcon({ size = 24, color = "#50C9B0", glow = false, glo
         }]} />
       ) : null}
       <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-        <Circle cx="12" cy="4.5" r="2.5" stroke={color} strokeWidth="1.8" fill="none" />
-        <Path d="M12 7 L12 14" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-        <Path d="M7.5 12 Q9 10.5 12 11 Q15 10.5 16.5 12" stroke={color} strokeWidth="1.8" strokeLinecap="round" fill="none" />
-        <Path d="M7 19 Q9.5 15 12 16 Q14.5 15 17 19" stroke={color} strokeWidth="1.8" strokeLinecap="round" fill="none" />
-        <Path d="M8.5 17.5 Q12 14.5 15.5 17.5" stroke={color} strokeWidth="1.4" strokeLinecap="round" fill="none" />
+        <Path d="M12 2 C9 2 7 5 7 8 C7 10 8 11.5 9.5 12.5 L9.5 14 C9.5 14 9 15 9 16 L9 21" stroke={color} strokeWidth="1.8" strokeLinecap="round" fill="none" />
+        <Path d="M12 2 C15 2 17 5 17 8 C17 10 16 11.5 14.5 12.5 L14.5 14 C14.5 14 15 15 15 16 L15 21" stroke={color} strokeWidth="1.8" strokeLinecap="round" fill="none" />
+        <Path d="M9.5 14 L14.5 14" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
+        <Path d="M9.5 12.5 L14.5 12.5" stroke={color} strokeWidth="1.4" strokeLinecap="round" />
       </Svg>
     </View>
   );

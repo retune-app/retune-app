@@ -21,7 +21,6 @@ import { EmptyState } from "@/components/EmptyState";
 import { SwipeableAffirmationCard } from "@/components/SwipeableAffirmationCard";
 import { CategoryChip } from "@/components/CategoryChip";
 import { LibraryTip } from "@/components/LibraryTip";
-import { FloatingSettingsButton } from "@/components/FloatingSettingsButton";
 import { MoodCheckin } from "@/components/MoodCheckin";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
@@ -613,9 +612,6 @@ export default function HomeScreen() {
           </Pressable>
         </Pressable>
       </Modal>
-
-      {/* Floating Settings Button */}
-      <FloatingSettingsButton bottomOffset={tabBarHeight + 16} />
 
       <MoodCheckin
         visible={showMoodCheckin}

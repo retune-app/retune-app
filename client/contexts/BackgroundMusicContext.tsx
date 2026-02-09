@@ -133,7 +133,7 @@ interface BackgroundMusicContextType {
 const BackgroundMusicContext = createContext<BackgroundMusicContextType | undefined>(undefined);
 
 export function BackgroundMusicProvider({ children }: { children: React.ReactNode }) {
-  const [selectedMusic, setSelectedMusicState] = useState<BackgroundMusicType>('forest-night');
+  const [selectedMusic, setSelectedMusicState] = useState<BackgroundMusicType>('forest-rain-birds');
   const [volume, setVolumeState] = useState(0.25);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isDucked, setIsDucked] = useState(false);
@@ -161,8 +161,8 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
       if (savedMusic) {
         setSelectedMusicState(savedMusic as BackgroundMusicType);
       } else {
-        await AsyncStorage.setItem(STORAGE_KEY, 'forest-night');
-        setSelectedMusicState('forest-night');
+        await AsyncStorage.setItem(STORAGE_KEY, 'forest-rain-birds');
+        setSelectedMusicState('forest-rain-birds');
       }
       
       if (savedVolume) {

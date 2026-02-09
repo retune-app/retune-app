@@ -59,7 +59,6 @@ export default function MainTabNavigator() {
   useEffect(() => {
     AsyncStorage.getItem(FIRST_TAB_VISIT_KEY).then((value) => {
       if (value !== "done") {
-        setInitialRoute("AffirmTab");
         AsyncStorage.setItem(FIRST_TAB_VISIT_KEY, "done").catch(() => {});
       }
       setReady(true);

@@ -1916,25 +1916,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         {
           title: "Grateful Spirit",
           pillar: "Spirit",
-          categoryName: "Gratitude,Happiness",
+          categoryName: "Gratitude,Joy",
           script: "I am grateful for this quiet moment. Gratitude fills me like warm sunlight. I appreciate the small blessings that surround me today. In stillness, I discover that everything I need is already within me.",
         },
         {
           title: "Present with Others",
           pillar: "Connection",
-          categoryName: "Relationships,Self-Compassion",
+          categoryName: "Love,Self-Compassion",
           script: "I am fully present when I am with the people I love. I listen with patience and speak with kindness. By nurturing my own inner peace through meditation, I bring a calmer, more compassionate version of myself to every conversation. I attract meaningful connections because I first connect deeply with myself. The love I cultivate in stillness radiates outward and touches everyone around me.",
         },
         {
           title: "Focused Achievement",
           pillar: "Achievement",
-          categoryName: "Career,Motivation",
+          categoryName: "Career,Drive",
           script: "I accomplish my goals with steady focus. Each morning I take a moment to breathe, set my intention, and move forward with clarity. Success flows naturally when my mind is calm.",
         },
         {
           title: "Peaceful Home",
           pillar: "Home",
-          categoryName: "Family,Environment",
+          categoryName: "Family,Comfort",
           script: "My home is a sanctuary of peace and warmth. I create calm in my living space by first cultivating calm within myself. When I pause to breathe and center my thoughts, that serenity flows into every room. My family feels safe and loved because I choose presence over distraction. I tend to my home with the same gentle attention I give to my meditation practice. Order, beauty, and tranquility are not things I chase. They are things I create, one mindful moment at a time. My home reflects the peace I carry inside.",
         },
       ];

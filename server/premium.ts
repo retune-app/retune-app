@@ -10,9 +10,9 @@ export const PREMIUM_FEATURES = {
 } as const;
 
 export const FREE_FEATURES = [
-  "Basic breathing exercises (4 techniques)",
+  "Breathing exercises (4 techniques)",
   "RSVP Focus Mode",
-  "Up to 10 AI affirmations per month",
+  "Up to 20 AI affirmations per month",
   "Stock AI voices (Lotus & Sage)",
   "Ambient sound library",
   "Daily reminders (up to 5)",

@@ -139,12 +139,12 @@ export function WelcomeSection({
   }, []);
 
   const moodButtonStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: interpolate(moodPulse.value, [0, 1], [1, 1.12]) }],
+    transform: [{ scale: interpolate(moodPulse.value, [0, 1], [1, 1.05]) }],
   }));
 
   const moodGlowStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(moodGlow.value, [0, 1], [0, 0.6]),
-    transform: [{ scale: interpolate(moodGlow.value, [0, 1], [0.8, 1.6]) }],
+    opacity: interpolate(moodGlow.value, [0, 1], [0, 0.25]),
+    transform: [{ scale: interpolate(moodGlow.value, [0, 1], [0.9, 1.3]) }],
   }));
 
   const pulseStyle = useAnimatedStyle(() => {
@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "rgba(80,201,176,0.35)",
+    backgroundColor: "rgba(80,201,176,0.18)",
   },
   moodButton: {
     width: 40,

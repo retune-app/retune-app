@@ -22,7 +22,7 @@ import Animated, {
   runOnJS,
 } from "react-native-reanimated";
 import { Audio } from "expo-av";
-import { Feather } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -133,11 +133,11 @@ const CATEGORY_LABELS: Record<string, string> = {
   noise: "Noise",
 };
 
-type VoiceIcon = "sun" | "moon" | "mic";
+type VoiceIcon = "female" | "male" | "person";
 
 const VOICE_OPTIONS: { id: string; label: string; description: string; icon: VoiceIcon }[] = [
-  { id: "hume_lotus", label: "Lotus", description: "Female Guide", icon: "sun" },
-  { id: "hume_sage", label: "Sage", description: "Male Guide", icon: "moon" },
+  { id: "hume_lotus", label: "Lotus", description: "Female Guide", icon: "female" },
+  { id: "hume_sage", label: "Sage", description: "Male Guide", icon: "male" },
 ];
 
 const VOICE_STORAGE_KEY = "@retuned/guided-moment-voice";
@@ -231,7 +231,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
   const allVoiceOptions = useMemo(() => {
     const opts = [...VOICE_OPTIONS];
     if (hasPersonalVoice) {
-      opts.push({ id: "personal", label: "Inner Voice", description: "Your Cloned Voice", icon: "mic" as const });
+      opts.push({ id: "personal", label: "Inner Voice", description: "Your Cloned Voice", icon: "person" as const });
     }
     return opts;
   }, [hasPersonalVoice]);
@@ -810,7 +810,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
                 style={styles.controlBtn}
                 testID="button-voice-selector"
               >
-                <Feather name={currentVoiceOption.icon} size={18} color={ACCENT_GOLD} />
+                <Ionicons name={currentVoiceOption.icon} size={18} color={ACCENT_GOLD} />
               </Pressable>
               <Pressable
                 onPress={() => { setShowSoundSwitcher(true); resetControlsTimer(); }}
@@ -1196,7 +1196,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
                       styles.voiceIconCircle,
                       { backgroundColor: isActive ? `${ACCENT_GOLD}30` : "rgba(255,255,255,0.08)" },
                     ]}>
-                      <Feather
+                      <Ionicons
                         name={voice.icon}
                         size={20}
                         color={isActive ? ACCENT_GOLD : "rgba(255,255,255,0.5)"}

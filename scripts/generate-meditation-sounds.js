@@ -218,11 +218,129 @@ function generateDeepDrone() {
   convertToMp3(wavPath, 'meditation-deep-drone.mp3');
 }
 
+function generateForestMelody() {
+  console.log('\n4. Generating Forest Melody...');
+  const totalSamples = SAMPLE_RATE * DURATION;
+  const samples = new Float32Array(totalSamples);
+  const rand = seededRandom(77);
+
+  for (let i = 0; i < totalSamples; i++) {
+    const t = i / SAMPLE_RATE;
+    let pad = 0;
+    pad += generateSineWave(220, i, SAMPLE_RATE) * 0.18;
+    pad += generateSineWave(330, i, SAMPLE_RATE) * 0.12;
+    pad += generateSineWave(440, i, SAMPLE_RATE) * 0.08;
+    pad += generateSineWave(165, i, SAMPLE_RATE) * 0.10;
+    const padLfo = 1 + generateSineWave(0.04, i, SAMPLE_RATE) * 0.2;
+    const padLfo2 = 1 + generateSineWave(0.07, i, SAMPLE_RATE) * 0.1;
+    samples[i] = pad * padLfo * padLfo2 * MASTER_VOLUME;
+  }
+
+  const melodyNotes = [330, 392, 440, 494, 523, 587, 659, 523, 494, 440, 392, 330];
+  const noteCount = 90;
+  for (let n = 0; n < noteCount; n++) {
+    const startTime = rand() * (DURATION - 5);
+    const noteFreq = melodyNotes[Math.floor(rand() * melodyNotes.length)];
+    const startSample = Math.floor(startTime * SAMPLE_RATE);
+    const noteDuration = 2.0 + rand() * 3.0;
+    const noteSamples = Math.floor(noteDuration * SAMPLE_RATE);
+    const noteAmp = 0.06 + rand() * 0.08;
+
+    for (let i = 0; i < noteSamples; i++) {
+      const idx = startSample + i;
+      if (idx >= totalSamples) break;
+      const env = Math.sin(Math.PI * i / noteSamples);
+      let tone = generateSineWave(noteFreq, i, SAMPLE_RATE) * 0.6;
+      tone += generateSineWave(noteFreq * 2, i, SAMPLE_RATE) * 0.25;
+      tone += generateSineWave(noteFreq * 0.5, i, SAMPLE_RATE) * 0.15;
+      samples[idx] += tone * env * noteAmp * MASTER_VOLUME;
+    }
+  }
+
+  const birdCount = 40;
+  for (let b = 0; b < birdCount; b++) {
+    const startTime = rand() * (DURATION - 2);
+    const baseFreq = 1800 + rand() * 2000;
+    const startSample = Math.floor(startTime * SAMPLE_RATE);
+    const chirpDuration = 0.1 + rand() * 0.3;
+    const chirpSamples = Math.floor(chirpDuration * SAMPLE_RATE);
+    const chirpAmp = 0.02 + rand() * 0.03;
+
+    for (let i = 0; i < chirpSamples; i++) {
+      const idx = startSample + i;
+      if (idx >= totalSamples) break;
+      const env = Math.sin(Math.PI * i / chirpSamples);
+      const freqMod = baseFreq + Math.sin(2 * Math.PI * 15 * i / SAMPLE_RATE) * 300;
+      const tone = Math.sin(2 * Math.PI * freqMod * i / SAMPLE_RATE);
+      samples[idx] += tone * env * chirpAmp * MASTER_VOLUME;
+    }
+  }
+
+  applyCrossfade(samples, 3.0);
+  applyEnvelope(samples, 2.0);
+
+  const wavPath = writeMonoWav('meditation-forest-melody.wav', samples);
+  convertToMp3(wavPath, 'meditation-forest-melody.mp3');
+}
+
+function generateMorningMist() {
+  console.log('\n5. Generating Morning Mist...');
+  const totalSamples = SAMPLE_RATE * DURATION;
+  const samples = new Float32Array(totalSamples);
+  const rand = seededRandom(99);
+
+  for (let i = 0; i < totalSamples; i++) {
+    let pad = 0;
+    const lfo1 = 1 + generateSineWave(0.025, i, SAMPLE_RATE) * 0.3;
+    const lfo2 = 1 + generateSineWave(0.04, i, SAMPLE_RATE) * 0.2;
+    const lfo3 = 1 + generateSineWave(0.06, i, SAMPLE_RATE) * 0.15;
+
+    pad += generateSineWave(174, i, SAMPLE_RATE) * 0.20 * lfo1;
+    pad += generateSineWave(261, i, SAMPLE_RATE) * 0.15 * lfo2;
+    pad += generateSineWave(349, i, SAMPLE_RATE) * 0.10 * lfo3;
+    pad += generateSineWave(196, i, SAMPLE_RATE) * 0.12 * lfo1;
+    pad += generateSineWave(293, i, SAMPLE_RATE) * 0.08 * lfo2;
+
+    pad += generateSineWave(523, i, SAMPLE_RATE) * 0.03 * lfo3;
+    pad += generateSineWave(659, i, SAMPLE_RATE) * 0.02 * lfo1;
+
+    samples[i] = pad * MASTER_VOLUME;
+  }
+
+  const shimmerCount = 60;
+  for (let s = 0; s < shimmerCount; s++) {
+    const startTime = rand() * (DURATION - 6);
+    const freq = 600 + rand() * 1400;
+    const startSample = Math.floor(startTime * SAMPLE_RATE);
+    const shimDuration = 3.0 + rand() * 3.0;
+    const shimSamples = Math.floor(shimDuration * SAMPLE_RATE);
+    const shimAmp = 0.03 + rand() * 0.04;
+
+    for (let i = 0; i < shimSamples; i++) {
+      const idx = startSample + i;
+      if (idx >= totalSamples) break;
+      const env = Math.sin(Math.PI * i / shimSamples);
+      let tone = generateSineWave(freq, i, SAMPLE_RATE) * 0.5;
+      tone += generateSineWave(freq * 1.5, i, SAMPLE_RATE) * 0.3;
+      tone += generateSineWave(freq * 2, i, SAMPLE_RATE) * 0.2;
+      samples[idx] += tone * env * shimAmp * MASTER_VOLUME;
+    }
+  }
+
+  applyCrossfade(samples, 3.0);
+  applyEnvelope(samples, 2.0);
+
+  const wavPath = writeMonoWav('meditation-morning-mist.wav', samples);
+  convertToMp3(wavPath, 'meditation-morning-mist.mp3');
+}
+
 console.log('Generating meditation audio tracks...');
 console.log(`Duration: ${DURATION}s | Sample rate: ${SAMPLE_RATE}Hz | Volume: ${MASTER_VOLUME}`);
 
 generateSingingBowls();
 generateGentleChimes();
 generateDeepDrone();
+generateForestMelody();
+generateMorningMist();
 
 console.log('\nDone! All meditation tracks generated.');

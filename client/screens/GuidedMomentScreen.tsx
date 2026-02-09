@@ -1358,11 +1358,15 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md,
   },
   countdownAboveRings: {
-    fontSize: 48,
+    position: "absolute",
+    top: 100,
+    left: 0,
+    right: 0,
+    fontSize: 64,
     fontWeight: "700",
     color: ACCENT_GOLD,
     textAlign: "center",
-    marginBottom: 16,
+    zIndex: 10,
   },
   controlsOverlay: {
     ...StyleSheet.absoluteFillObject,

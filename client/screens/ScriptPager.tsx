@@ -1,6 +1,7 @@
 import React from "react";
 import { View, ScrollView, StyleSheet } from "react-native";
 import { ThemedText } from "@/components/ThemedText";
+import { Spacing } from "@/constants/theme";
 
 interface ScriptPagerProps {
   pagerRef: React.RefObject<any>;
@@ -11,9 +12,9 @@ interface ScriptPagerProps {
 }
 
 const HEIGHT_MAP: Record<string, number> = {
-  short: 100,
-  medium: 180,
-  long: 280,
+  short: 180,
+  medium: 300,
+  long: 420,
 };
 
 export default function ScriptPager({ 
@@ -27,7 +28,8 @@ export default function ScriptPager({
     <View style={[styles.pagerView, { height }]}>
       <ScrollView 
         style={styles.scriptScrollView}
-        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scriptContentContainer}
+        showsVerticalScrollIndicator={true}
       >
         <ThemedText type="body" style={styles.scriptText}>
           {scripts[currentIndex] || ""}
@@ -38,11 +40,18 @@ export default function ScriptPager({
 }
 
 const styles = StyleSheet.create({
-  pagerView: {},
+  pagerView: {
+    marginTop: Spacing.xs,
+  },
   scriptScrollView: {
     flex: 1,
   },
+  scriptContentContainer: {
+    paddingTop: Spacing.xs,
+    paddingBottom: Spacing.lg,
+  },
   scriptText: {
-    lineHeight: 24,
+    lineHeight: 26,
+    fontSize: 16,
   },
 });

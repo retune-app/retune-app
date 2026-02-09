@@ -922,13 +922,13 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
         onPress={handleScreenTap}
         testID="guided-moment-tap-area"
       >
+        {playerState === "generating" ? (
+          <ThemedText type="caption" style={styles.aboveRingsStatusText}>
+            {"Preparing your meditation..."}
+          </ThemedText>
+        ) : null}
         <View style={isLandscape ? styles.landscapeLayout : styles.portraitLayout}>
           <View style={styles.ringsArea}>
-            {playerState === "generating" ? (
-              <ThemedText type="caption" style={styles.aboveRingsStatusText}>
-                {"Preparing your meditation..."}
-              </ThemedText>
-            ) : null}
             {(playerState === "idle" || playerState === "generating" || playerState === "ready") && isLandscape ? (
               <View style={styles.durationRow}>
                 {DURATION_OPTIONS.map((opt) => {
@@ -1181,8 +1181,8 @@ const styles = StyleSheet.create({
   aboveRingsStatusText: {
     color: "rgba(255,255,255,0.7)",
     fontSize: 14,
-    marginBottom: Spacing.md,
     textAlign: "center",
+    paddingTop: Spacing.lg,
   },
   ringsContainer: {
     alignItems: "center",

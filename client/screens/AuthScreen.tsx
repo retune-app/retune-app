@@ -307,6 +307,37 @@ export function AuthScreen() {
               Your data is encrypted and securely stored
             </Text>
           </View>
+
+          {__DEV__ ? (
+            <Pressable
+              onPress={async () => {
+                setError("");
+                setIsLoading(true);
+                try {
+                  const result = await oauthLogin({
+                    email: "appreview@retuned.app",
+                    name: "App Reviewer",
+                    provider: "apple",
+                    providerId: "apple-review-test-account",
+                  });
+                  if (!result.success) {
+                    setError(result.error || "Dev login failed");
+                  }
+                } catch (err) {
+                  setError("Dev login failed");
+                } finally {
+                  setIsLoading(false);
+                }
+              }}
+              disabled={isLoading}
+              style={{ paddingVertical: 12, alignItems: 'center', marginTop: 8 }}
+              testID="button-dev-login"
+            >
+              <Text style={{ color: 'rgba(255,255,255,0.3)', fontSize: 12, fontFamily: 'Nunito_400Regular' }}>
+                Dev Login
+              </Text>
+            </Pressable>
+          ) : null}
           </ScrollView>
         </KeyboardAvoidingView>
       </ImageBackground>

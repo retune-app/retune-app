@@ -175,7 +175,7 @@ export function WelcomeSection({
               style={[styles.headerActionButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
               testID="button-mood-checkin"
             >
-              <MeditationIcon size={20} color="#50C9B0" glow />
+              <Feather name="heart" size={20} color="#50C9B0" />
             </Pressable>
           ) : null}
           {onSettingsPress ? (

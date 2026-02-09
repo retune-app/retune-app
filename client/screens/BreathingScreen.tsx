@@ -1300,12 +1300,10 @@ const styles = StyleSheet.create({
   circleSection: {
     alignItems: "center",
     flex: 1,
-    justifyContent: "flex-start",
-    paddingTop: Spacing.md,
+    justifyContent: "center",
   },
   circleSectionPlaying: {
     justifyContent: "center",
-    paddingTop: 0,
   },
   circleContainer: {
     position: "relative",

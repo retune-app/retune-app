@@ -54,27 +54,6 @@ export default function PlansScreen() {
         scrollIndicatorInsets={{ bottom: insets.bottom }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.headerArea}>
-          <LinearGradient
-            colors={[GOLD + "20", GOLD + "08"]}
-            style={styles.headerGlow}
-          />
-          <View style={styles.crownCircle}>
-            <LinearGradient
-              colors={[GOLD_LIGHT, GOLD]}
-              style={styles.crownGradient}
-            >
-              <Feather name="star" size={28} color="#FFFFFF" />
-            </LinearGradient>
-          </View>
-          <ThemedText type="h2" style={styles.headerTitle}>
-            Choose Your Path
-          </ThemedText>
-          <ThemedText type="small" style={[styles.headerSubtitle, { color: theme.textSecondary }]}>
-            Unlock the full power of your inner voice
-          </ThemedText>
-        </View>
-
         {betaMode ? (
           <View style={[styles.betaBadge, { backgroundColor: theme.success + "18", borderColor: theme.success + "40" }]}>
             <Feather name="zap" size={14} color={theme.success} />
@@ -225,36 +204,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: Spacing.lg,
-  },
-  headerArea: {
-    alignItems: "center",
-    marginBottom: Spacing.xl,
-    position: "relative",
-  },
-  headerGlow: {
-    position: "absolute",
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    top: -60,
-  },
-  crownCircle: {
-    marginBottom: Spacing.md,
-    ...Shadows.medium,
-  },
-  crownGradient: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  headerTitle: {
-    textAlign: "center",
-  },
-  headerSubtitle: {
-    textAlign: "center",
-    marginTop: Spacing.xs,
   },
   betaBadge: {
     flexDirection: "row",

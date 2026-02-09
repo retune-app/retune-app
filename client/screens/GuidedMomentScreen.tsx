@@ -652,8 +652,9 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
               currentPositionMs={currentPosition}
               isPlaying={playerState === "playing"}
               fontSize="S"
-              showHighlight={true}
+              showHighlight={false}
               forceDarkMode={true}
+              ambient={true}
             />
           </View>
         ) : playerState === "ready" || playerState === "finished" ? (

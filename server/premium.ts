@@ -28,6 +28,7 @@ export const PREMIUM_FEATURES_LIST = [
   "Advanced analytics & insights",
   "Priority support",
   "Bedtime Stories — coming soon",
+  "Sleep Timer — coming soon",
 ];
 
 const BETA_MODE = true;

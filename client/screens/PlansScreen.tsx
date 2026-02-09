@@ -34,6 +34,7 @@ const PREMIUM_ICONS: Record<string, string> = {
   "Advanced analytics & insights": "trending-up",
   "Priority support": "shield",
   "Bedtime Stories — coming soon": "moon",
+  "Sleep Timer — coming soon": "clock",
 };
 
 export default function PlansScreen() {

@@ -1179,10 +1179,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   aboveRingsStatusText: {
+    position: "absolute",
+    top: Spacing.xl,
+    left: 0,
+    right: 0,
     color: "rgba(255,255,255,0.7)",
     fontSize: 14,
     textAlign: "center",
-    paddingTop: Spacing.lg,
   },
   ringsContainer: {
     alignItems: "center",

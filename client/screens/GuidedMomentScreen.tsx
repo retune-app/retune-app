@@ -1367,7 +1367,8 @@ const styles = StyleSheet.create({
   },
   countdownInsideRings: {
     fontSize: 48,
-    fontWeight: "800",
+    fontFamily: "Nunito_700Bold",
+    fontWeight: "700",
     color: "#FFFFFF",
     textAlign: "center",
     textShadowColor: "rgba(0,0,0,0.7)",

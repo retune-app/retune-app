@@ -2534,27 +2534,14 @@ Rules:
   // ============ Micro-Meditations API ============
 
   app.post("/api/guided-moments/generate", requireAuth, guidedMomentLimiter, async (req: AuthenticatedRequest, res: Response) => {
+    let clientDisconnected = false;
+    req.on("close", () => { clientDisconnected = true; });
+
     try {
       const { mood, timeOfDay, usePersonalVoice, voiceId: rawVoiceId, duration: rawDuration } = req.body;
 
       if (!mood || !timeOfDay) {
         return res.status(400).json({ error: "mood and timeOfDay are required" });
-      }
-
-      let voiceId = rawVoiceId;
-      if (usePersonalVoice && !voiceId) {
-        const [voiceSample] = await db
-          .select({ voiceId: voiceSamples.voiceId })
-          .from(voiceSamples)
-          .where(and(eq(voiceSamples.userId, req.userId!), eq(voiceSamples.status, "ready")))
-          .orderBy(desc(voiceSamples.createdAt))
-          .limit(1);
-        if (voiceSample?.voiceId) {
-          voiceId = voiceSample.voiceId;
-          console.log(`Resolved personal voice clone ID: ${voiceId} for user ${req.userId}`);
-        } else {
-          console.warn(`User ${req.userId} requested personal voice but no completed voice clone found`);
-        }
       }
 
       const validMoods = ["calm", "stressed", "tired", "energized", "anxious", "grateful"];
@@ -2583,11 +2570,34 @@ Rules:
       const durationLabel = duration === 1 ? "60-90 seconds" : `${duration} minutes`;
 
       const userId = req.userId!;
-      const [user] = await db.select({ name: users.name }).from(users).where(eq(users.id, userId)).limit(1);
-      const userName = user?.name?.split(" ")[0] || "Friend";
+      const startTime = Date.now();
+
+      const [userResult, voiceResult] = await Promise.all([
+        db.select({ name: users.name }).from(users).where(eq(users.id, userId)).limit(1),
+        (usePersonalVoice && !rawVoiceId)
+          ? db.select({ voiceId: voiceSamples.voiceId }).from(voiceSamples)
+              .where(and(eq(voiceSamples.userId, userId), eq(voiceSamples.status, "ready")))
+              .orderBy(desc(voiceSamples.createdAt)).limit(1)
+          : Promise.resolve([]),
+      ]);
+
+      const userName = userResult[0]?.name?.split(" ")[0] || "Friend";
+      let voiceId = rawVoiceId;
+      if (usePersonalVoice && !voiceId) {
+        if (voiceResult[0]?.voiceId) {
+          voiceId = voiceResult[0].voiceId;
+          console.log(`Resolved personal voice clone ID: ${voiceId} for user ${userId}`);
+        } else {
+          console.warn(`User ${userId} requested personal voice but no completed voice clone found`);
+        }
+      }
+
+      if (clientDisconnected) {
+        console.log(`Client disconnected before script generation (${duration}min), aborting`);
+        return;
+      }
 
       console.log(`Generating micro-meditation (${duration}min) for user ${userId} (${userName}), mood: ${mood}, time: ${timeOfDay}`);
-      const startTime = Date.now();
 
       const scriptPromise = openai.chat.completions.create({
         model: "gpt-4o-mini",
@@ -2635,6 +2645,11 @@ Rules:
 
       const scriptTime = Date.now() - startTime;
       console.log(`Script generated in ${scriptTime}ms (${script.split(/\s+/).length} words): ${script.substring(0, 80)}...`);
+
+      if (clientDisconnected) {
+        console.log(`Client disconnected after script generation (${duration}min), skipping TTS`);
+        return;
+      }
 
       let audioBuffer: ArrayBuffer;
       let wordTimings: WordTiming[] = [];

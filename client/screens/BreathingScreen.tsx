@@ -1742,7 +1742,7 @@ const styles = StyleSheet.create({
   techniqueInfoButton: {
     alignSelf: "flex-start",
     marginTop: 4,
-    marginLeft: 24,
+    marginLeft: 0,
     width: 32,
     height: 32,
     borderRadius: 16,

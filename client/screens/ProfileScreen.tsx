@@ -14,6 +14,7 @@ import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Constants from "expo-constants";
 
 const AUTO_REPLAY_KEY = "@settings/autoReplay";
 const BACKGROUND_WALLPAPER_KEY = "@settings/backgroundWallpaper";
@@ -754,7 +755,7 @@ export default function ProfileScreen() {
           <SettingItem
             icon="info"
             label="About Retuned"
-            value="Version 1.0.0"
+            value={`v${Constants.expoConfig?.version || "1.0"} Build ${Constants.expoConfig?.ios?.buildNumber || "1"}`}
             showArrow={false}
           />
         </View>

@@ -21,6 +21,7 @@ import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 import { ThemedText } from "@/components/ThemedText";
+import { MeditationIcon } from "@/components/MeditationIcon";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { apiRequest, getApiUrl } from "@/lib/query-client";
@@ -246,7 +247,7 @@ export function MoodCheckin({ onStartBreathing, onStartAffirmations, visible, on
                   style={[styles.guidedMomentButton, { borderColor: `${ACCENT_GOLD}30` }]}
                   testID="button-try-micro-meditation"
                 >
-                  <Feather name="headphones" size={16} color={ACCENT_GOLD} />
+                  <MeditationIcon size={16} color={"#50C9B0"} />
                   <ThemedText type="caption" style={{ color: ACCENT_GOLD, marginLeft: 6, fontWeight: "600" }}>
                     {"Or try a Micro-Meditation"}
                   </ThemedText>

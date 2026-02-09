@@ -22,6 +22,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 
 import { ThemedText } from "@/components/ThemedText";
+import { MeditationIcon } from "@/components/MeditationIcon";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { apiRequest, getApiUrl } from "@/lib/query-client";
@@ -226,7 +227,7 @@ export function GuidedMomentPlayer({ mood, timeOfDay, onClose, visible }: Guided
       {playerState === "idle" ? (
         <Animated.View entering={FadeInDown.duration(400)} style={styles.offerCard}>
           <View style={[styles.iconCircle, { backgroundColor: `${PURPLE_SOFT}20` }]}>
-            <Feather name="headphones" size={28} color={PURPLE_SOFT} />
+            <MeditationIcon size={28} color={PURPLE_SOFT} glow />
           </View>
           <ThemedText type="h3" style={[styles.offerTitle, { color: theme.text }]}>
             Your Micro-Meditation

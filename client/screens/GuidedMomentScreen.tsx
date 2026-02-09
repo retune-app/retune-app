@@ -425,11 +425,12 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
       setMoment(data);
       setPlayerState("ready");
       try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
+      setTimeout(() => playAudio(), 300);
     } catch (error: any) {
       setErrorMessage("Something went wrong. Please try again.");
       setPlayerState("error");
     }
-  }, [mood, timeOfDay, selectedVoice, selectedDuration, setSelectedMusic, startBackgroundMusic]);
+  }, [mood, timeOfDay, selectedVoice, selectedDuration, setSelectedMusic, startBackgroundMusic, playAudio]);
 
   const playAudio = useCallback(async () => {
     if (!moment?.audioBase64) return;
@@ -545,11 +546,12 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
       setMoment(data);
       setPlayerState("ready");
       try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
+      setTimeout(() => playAudio(), 300);
     } catch (error: any) {
       setErrorMessage("Something went wrong. Please try again.");
       setPlayerState("error");
     }
-  }, [mood, timeOfDay, cleanupVoice]);
+  }, [mood, timeOfDay, cleanupVoice, playAudio]);
 
   const renderSoundTile = useCallback((
     sound: BackgroundMusicOption,

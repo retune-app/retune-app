@@ -351,7 +351,7 @@ export default function HomeScreen() {
             style={[styles.headerSettingsButton, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder }]}
             testID="button-header-mood-checkin"
           >
-            <Feather name="activity" size={20} color={theme.gold} />
+            <Feather name="smile" size={20} color={theme.gold} />
           </Pressable>
           <View style={[styles.searchContainer, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder }]}>
             <Feather name="search" size={18} color={theme.placeholder} />

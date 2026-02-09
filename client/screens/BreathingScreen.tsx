@@ -713,8 +713,16 @@ export default function BreathingScreen() {
                   hapticsEnabled={hapticsEnabled}
                   size={portraitCircleSize}
                 />
+              </View>
 
-                <Animated.View style={[styles.fsCenterControls, controlsAnimatedStyle]} pointerEvents={controlsVisible ? 'auto' : 'none'} onStartShouldSetResponder={() => true}>
+              <Animated.View style={[styles.fsBottomControls, controlsAnimatedStyle]} pointerEvents={controlsVisible ? 'auto' : 'none'} onStartShouldSetResponder={() => true}>
+                <View style={styles.fsCenterControls}>
+                  <Pressable
+                    onPress={() => { resetControlsTimer(); handleStop(); }}
+                    style={styles.landscapeStopButton}
+                  >
+                    <Feather name="square" size={20} color="#FFFFFF" />
+                  </Pressable>
                   <Pressable
                     onPress={() => { resetControlsTimer(); (isPlaying ? handlePause : handleResume)(); }}
                   >
@@ -727,14 +735,13 @@ export default function BreathingScreen() {
                   </Pressable>
                   <Pressable
                     onPress={() => { resetControlsTimer(); handleStop(); }}
-                    style={styles.landscapeStopButton}
+                    style={[styles.landscapeStopButton, { opacity: 0 }]}
+                    disabled
                   >
                     <Feather name="square" size={20} color="#FFFFFF" />
                   </Pressable>
-                </Animated.View>
-              </View>
+                </View>
 
-              <Animated.View style={[styles.fsBottomControls, controlsAnimatedStyle]} pointerEvents={controlsVisible ? 'auto' : 'none'} onStartShouldSetResponder={() => true}>
                 <View style={styles.portraitStatsRow}>
                   <View style={styles.portraitStatItem}>
                     <Text style={styles.landscapeStatLabel}>Time Left</Text>

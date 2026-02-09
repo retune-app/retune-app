@@ -55,6 +55,31 @@ function splitIntoSentences(text: string): string[] {
   return parts.map(s => s.trim()).filter(s => s.length > 0);
 }
 
+function fixPerUtteranceTimestamps(
+  rawTimings: WordTiming[],
+  trailingSilenceMs: number
+): WordTiming[] {
+  if (rawTimings.length <= 1) return rawTimings;
+
+  const result: WordTiming[] = [];
+  let cumulativeOffset = 0;
+
+  for (let i = 0; i < rawTimings.length; i++) {
+    if (i > 0 && rawTimings[i].startMs < rawTimings[i - 1].endMs - 100) {
+      const prevAdjustedEnd = rawTimings[i - 1].endMs + cumulativeOffset;
+      cumulativeOffset = prevAdjustedEnd + trailingSilenceMs;
+    }
+
+    result.push({
+      word: rawTimings[i].word,
+      startMs: rawTimings[i].startMs + cumulativeOffset,
+      endMs: rawTimings[i].endMs + cumulativeOffset,
+    });
+  }
+
+  return result;
+}
+
 export async function humeTextToSpeech(
   text: string,
   voiceName: string = "Kora"
@@ -124,9 +149,10 @@ export async function humeTextToSpeech(
     }
   }
 
+  wordTimings = fixPerUtteranceTimestamps(wordTimings, SENTENCE_PAUSE_SECONDS * 1000);
   wordTimings = sanitizeWordTimings(wordTimings);
 
-  console.log(`Hume TTS: Got ${wordTimings.length} word timings from ${utterances.length} utterances (native pauses, no ffmpeg)`);
+  console.log(`Hume TTS: Got ${wordTimings.length} word timings from ${utterances.length} utterances, last timing endMs: ${wordTimings.length > 0 ? wordTimings[wordTimings.length - 1].endMs : 0}ms`);
 
   let estimatedDuration: number;
   if (

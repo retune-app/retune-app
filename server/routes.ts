@@ -2546,7 +2546,7 @@ Rules:
 
       const validMoods = ["calm", "stressed", "tired", "energized", "anxious", "grateful"];
       const validTimes = ["morning", "afternoon", "evening", "night"];
-      const validDurations = [1, 2, 3, 5];
+      const validDurations = [1, 2, 3];
 
       if (!validMoods.includes(mood)) {
         return res.status(400).json({ error: "Invalid mood value" });
@@ -2558,12 +2558,11 @@ Rules:
       const duration = validDurations.includes(Number(rawDuration)) ? Number(rawDuration) : 1;
 
       const wordCountMap: Record<number, { min: number; max: number }> = {
-        1: { min: 90, max: 135 },
-        2: { min: 180, max: 250 },
-        3: { min: 270, max: 370 },
-        5: { min: 450, max: 600 },
+        1: { min: 70, max: 100 },
+        2: { min: 140, max: 190 },
+        3: { min: 210, max: 280 },
       };
-      const maxTokensMap: Record<number, number> = { 1: 300, 2: 500, 3: 700, 5: 1000 };
+      const maxTokensMap: Record<number, number> = { 1: 250, 2: 400, 3: 550 };
       const wordCount = wordCountMap[duration] || wordCountMap[1];
       const maxTokens = maxTokensMap[duration] || 300;
 

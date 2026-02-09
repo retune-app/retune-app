@@ -145,11 +145,11 @@ export function MoodCheckin({ onStartBreathing, onStartAffirmations, visible, on
 
   const handleMeditate = useCallback(() => {
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
-    handleClose();
     navigation.navigate("GuidedMoment", {
       mood: selectedMood!,
       timeOfDay: getTimeOfDay(),
     });
+    handleClose();
   }, [selectedMood, navigation]);
 
   const handleListen = useCallback(() => {

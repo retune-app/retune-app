@@ -839,25 +839,6 @@ export default function BreathingScreen() {
             />
           </View>
 
-          {!isPlaying ? (
-            <Pressable
-              testID="button-technique-info"
-              onPress={() => {
-                try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
-                setShowTechniqueInfo(true);
-              }}
-              style={[
-                styles.techniqueInfoButton,
-                {
-                  backgroundColor: `${selectedTechnique.color}14`,
-                  borderWidth: 1,
-                  borderColor: `${selectedTechnique.color}26`,
-                },
-              ]}
-            >
-              <Feather name="info" size={18} color={`${selectedTechnique.color}66`} />
-            </Pressable>
-          ) : null}
 
         </Animated.View>
 

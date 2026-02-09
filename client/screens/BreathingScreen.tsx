@@ -784,6 +784,23 @@ export default function BreathingScreen() {
                 <Feather name="chevron-right" size={20} color={theme.textSecondary} />
               </View>
             </Pressable>
+            <Pressable
+              testID="button-technique-info"
+              onPress={() => {
+                try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+                setShowTechniqueInfo(true);
+              }}
+              style={[
+                styles.techniqueInfoButton,
+                {
+                  backgroundColor: `${selectedTechnique.color}14`,
+                  borderWidth: 1,
+                  borderColor: `${selectedTechnique.color}26`,
+                },
+              ]}
+            >
+              <Feather name="info" size={18} color={`${selectedTechnique.color}66`} />
+            </Pressable>
           </Animated.View>
         ) : null}
 
@@ -1723,9 +1740,8 @@ const styles = StyleSheet.create({
   },
 
   techniqueInfoButton: {
-    position: "absolute",
-    top: 0,
-    right: 0,
+    alignSelf: "flex-end",
+    marginTop: 6,
     width: 32,
     height: 32,
     borderRadius: 16,

@@ -818,13 +818,17 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
     </Animated.View>
   );
 
-  const renderBottomStatus = () => (
-    <View
+  const renderBottomStatus = () => {
+    const shouldAlwaysShow = playerState === "generating" || playerState === "ready" || playerState === "error" || playerState === "idle";
+
+    return (
+    <Animated.View
       style={[
         styles.bottomStatusOverlay,
         { paddingBottom: insets.bottom + Spacing.lg },
+        shouldAlwaysShow ? undefined : controlsFadeStyle,
       ]}
-      pointerEvents="box-none"
+      pointerEvents={shouldAlwaysShow || controlsVisible ? "box-none" : "none"}
     >
       {!isLandscape ? (
         <View style={styles.bottomStatusSection} pointerEvents="none">
@@ -933,8 +937,9 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
           ) : null}
         </View>
       ) : null}
-    </View>
+    </Animated.View>
   );
+  };
 
   return (
     <LinearGradient

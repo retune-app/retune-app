@@ -660,7 +660,7 @@ export default function CreateScreen() {
         style={styles.scrollView}
         contentContainerStyle={[
           styles.content,
-          { paddingTop: headerHeight + Spacing.lg, paddingBottom: insets.bottom + Spacing["4xl"] },
+          { paddingTop: headerHeight + Spacing.lg, paddingBottom: insets.bottom + 120 },
         ]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
@@ -1084,13 +1084,14 @@ export default function CreateScreen() {
                       </View>
                       <Button
                         variant="gradient"
+                        size="large"
                         onPress={handleCreate}
                         loading={createMutation.isPending}
                         disabled={!selectedPillar}
-                        style={[styles.createButton, !selectedPillar ? { opacity: 0.5 } : undefined]}
+                        style={[styles.ctaButton, !selectedPillar ? { opacity: 0.5 } : undefined]}
                         testID="button-create"
                       >
-                        Create Affirmation
+                        Bring It to Life
                       </Button>
                     </Animated.View>
                   ) : null}
@@ -1100,13 +1101,14 @@ export default function CreateScreen() {
               {mode === "manual" && manualScript.trim() ? (
                 <Button
                   variant="gradient"
+                  size="large"
                   onPress={handleCreate}
                   loading={createMutation.isPending}
                   disabled={!selectedPillar}
-                  style={[styles.createButton, !selectedPillar ? { opacity: 0.5 } : undefined]}
+                  style={[styles.ctaButton, !selectedPillar ? { opacity: 0.5 } : undefined]}
                   testID="button-create"
                 >
-                  Create Affirmation
+                  Bring It to Life
                 </Button>
               ) : null}
             </Animated.View>
@@ -1377,19 +1379,6 @@ const styles = StyleSheet.create({
     marginTop: Spacing.lg,
     marginBottom: Spacing.sm,
   },
-  scriptText: {
-    lineHeight: 26,
-  },
-  pagerView: {
-    height: 200,
-    marginBottom: Spacing.sm,
-  },
-  scriptPage: {
-    flex: 1,
-  },
-  scriptScrollView: {
-    flex: 1,
-  },
   paginationContainer: {
     flexDirection: "row",
     justifyContent: "center",
@@ -1408,8 +1397,9 @@ const styles = StyleSheet.create({
   swipeHint: {
     textAlign: "center",
   },
-  createButton: {
+  ctaButton: {
     marginTop: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   continueButton: {
     marginTop: Spacing.sm,

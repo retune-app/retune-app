@@ -572,8 +572,8 @@ export default function BreathingScreen() {
     
     setCountdownValue(null);
     
-    await handleStart();
     setShowLandscapeMode(true);
+    await handleStart();
   }, [handleStart, hapticsEnabled]);
 
   useEffect(() => {

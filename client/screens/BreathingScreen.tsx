@@ -99,6 +99,10 @@ export default function BreathingScreen() {
 
   const [voiceVolume, setVoiceVolume] = useState(0.8);
 
+  const [controlsVisible, setControlsVisible] = useState(true);
+  const controlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const controlsOpacity = useSharedValue(1);
+
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const sessionCompletedNaturally = useRef(false);
   const affirmationSoundRef = useRef<Audio.Sound | null>(null);
@@ -383,6 +387,9 @@ export default function BreathingScreen() {
     setElapsedTime(0);
     setCyclesCompleted(0);
     setShowLandscapeMode(false);
+    controlsOpacity.value = 1;
+    setControlsVisible(true);
+    if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
     try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
     
     await setDucked(false);
@@ -461,9 +468,51 @@ export default function BreathingScreen() {
 
   const exitFullscreen = () => {
     setShowLandscapeMode(false);
-    // Orientation lock is handled by the useEffect
+    controlsOpacity.value = 1;
+    setControlsVisible(true);
+    if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
     handleStop();
   };
+
+  const resetControlsTimer = useCallback(() => {
+    setControlsVisible(true);
+    controlsOpacity.value = withTiming(1, { duration: 250 });
+    if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
+    controlsTimerRef.current = setTimeout(() => {
+      controlsOpacity.value = withTiming(0, { duration: 500 });
+      setControlsVisible(false);
+    }, 3000);
+  }, []);
+
+  const toggleControls = useCallback(() => {
+    if (controlsVisible) {
+      if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
+      controlsOpacity.value = withTiming(0, { duration: 500 });
+      setControlsVisible(false);
+    } else {
+      resetControlsTimer();
+    }
+  }, [controlsVisible, resetControlsTimer]);
+
+  const controlsAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: controlsOpacity.value,
+  }));
+
+  useEffect(() => {
+    if (showLandscapeMode && isPlaying) {
+      resetControlsTimer();
+    } else if (!isPlaying && showLandscapeMode) {
+      if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
+      controlsOpacity.value = withTiming(1, { duration: 250 });
+      setControlsVisible(true);
+    }
+  }, [showLandscapeMode, isPlaying]);
+
+  useEffect(() => {
+    return () => {
+      if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
+    };
+  }, []);
 
   // Fullscreen Mode - responsive to orientation
   if (showLandscapeMode) {
@@ -487,18 +536,15 @@ export default function BreathingScreen() {
           presentationStyle="fullScreen"
         >
           <StatusBar hidden />
-          <View style={[styles.landscapeContainer, { backgroundColor: theme.navy }]}>
-            {/* Close button */}
-            <Pressable
-              onPress={exitFullscreen}
-              style={[styles.landscapeCloseButton, { top: insets.top + 4 }]}
-            >
-              <BlurView intensity={40} tint="dark" style={styles.blurButton}>
-                <Feather name="x" size={24} color="#FFFFFF" />
-              </BlurView>
-            </Pressable>
+          <Pressable style={[styles.landscapeContainer, { backgroundColor: theme.navy }]} onPress={toggleControls}>
+            <Animated.View style={[styles.landscapeCloseButton, { top: insets.top + 4 }, controlsAnimatedStyle]} pointerEvents={controlsVisible ? 'auto' : 'none'}>
+              <Pressable onPress={() => { resetControlsTimer(); exitFullscreen(); }}>
+                <BlurView intensity={40} tint="dark" style={styles.blurButton}>
+                  <Feather name="x" size={24} color="#FFFFFF" />
+                </BlurView>
+              </Pressable>
+            </Animated.View>
 
-            {/* Portrait layout: centered circle with stats/controls at bottom */}
             <View style={[
               styles.portraitFullscreenWrapper,
               { 
@@ -506,9 +552,7 @@ export default function BreathingScreen() {
                 paddingBottom: insets.bottom + Spacing.xl,
               }
             ]}>
-              {/* Center section - breathing circle (centered in available space) */}
               <View style={styles.portraitCenterSection}>
-                {/* Progress Ring */}
                 {progressIndicatorEnabled ? (
                   <View style={styles.progressRingContainer}>
                     <Svg 
@@ -549,8 +593,7 @@ export default function BreathingScreen() {
                 />
               </View>
 
-              {/* Bottom section - stats and controls */}
-              <View style={styles.portraitBottomSection}>
+              <Animated.View style={[styles.portraitBottomSection, controlsAnimatedStyle]} pointerEvents={controlsVisible ? 'auto' : 'none'}>
                 <View style={styles.portraitStatsRow}>
                   <View style={styles.portraitStatItem}>
                     <Text style={styles.landscapeStatLabel}>Time Left</Text>
@@ -568,13 +611,13 @@ export default function BreathingScreen() {
                 
                 <View style={styles.portraitControlsRow}>
                   <Pressable
-                    onPress={handleStop}
+                    onPress={() => { resetControlsTimer(); handleStop(); }}
                     style={styles.landscapeStopButton}
                   >
                     <Feather name="square" size={20} color="#FFFFFF" />
                   </Pressable>
                   <Pressable
-                    onPress={isPlaying ? handlePause : handleResume}
+                    onPress={() => { resetControlsTimer(); (isPlaying ? handlePause : handleResume)(); }}
                   >
                     <LinearGradient
                       colors={[selectedTechnique.color, `${selectedTechnique.color}CC`]}
@@ -597,7 +640,7 @@ export default function BreathingScreen() {
                       minimumValue={0.05}
                       maximumValue={1}
                       value={musicEnabled ? volume : voiceVolume}
-                      onValueChange={handleSessionVolumeChange}
+                      onValueChange={(val: number) => { resetControlsTimer(); handleSessionVolumeChange(val); }}
                       minimumTrackTintColor="rgba(255,255,255,0.35)"
                       maximumTrackTintColor="rgba(255,255,255,0.1)"
                       thumbTintColor="rgba(255,255,255,0.5)"
@@ -606,9 +649,9 @@ export default function BreathingScreen() {
                     <Feather name="volume-2" size={14} color="rgba(255,255,255,0.3)" />
                   </View>
                 ) : null}
-              </View>
+              </Animated.View>
             </View>
-          </View>
+          </Pressable>
         </Modal>
       );
     }
@@ -623,33 +666,27 @@ export default function BreathingScreen() {
         presentationStyle="fullScreen"
       >
         <StatusBar hidden />
-        <View style={[styles.landscapeContainer, { backgroundColor: theme.navy }]}>
+        <Pressable style={[styles.landscapeContainer, { backgroundColor: theme.navy }]} onPress={toggleControls}>
 
-          {/* Close button */}
-          <Pressable
-            onPress={exitFullscreen}
-            style={[styles.landscapeCloseButton, { top: insets.top + 4 }]}
-          >
-            <BlurView intensity={40} tint="dark" style={styles.blurButton}>
-              <Feather name="x" size={24} color="#FFFFFF" />
-            </BlurView>
-          </Pressable>
+          <Animated.View style={[styles.landscapeCloseButton, { top: insets.top + 4 }, controlsAnimatedStyle]} pointerEvents={controlsVisible ? 'auto' : 'none'}>
+            <Pressable onPress={() => { resetControlsTimer(); exitFullscreen(); }}>
+              <BlurView intensity={40} tint="dark" style={styles.blurButton}>
+                <Feather name="x" size={24} color="#FFFFFF" />
+              </BlurView>
+            </Pressable>
+          </Animated.View>
 
-          {/* Landscape layout: horizontal row */}
           <View style={[styles.landscapeContent, { paddingLeft: Math.max(insets.left, 48), paddingRight: Math.max(insets.right, 48) }]}>
-            {/* Left side - technique info */}
-            <View style={styles.landscapeSidePanel}>
+            <Animated.View style={[styles.landscapeSidePanel, controlsAnimatedStyle]} pointerEvents={controlsVisible ? 'auto' : 'none'}>
               <Text style={[styles.landscapeTechniqueName, { color: selectedTechnique.color }]}>
                 {selectedTechnique.name}
               </Text>
               <Text style={styles.landscapePhaseLabel}>
                 {selectedTechnique.benefits}
               </Text>
-            </View>
+            </Animated.View>
 
-            {/* Center - breathing circle */}
             <View style={styles.landscapeCircleContainer}>
-              {/* Progress Ring */}
               {progressIndicatorEnabled ? (
                 <View style={styles.progressRingContainer}>
                   <Svg 
@@ -690,8 +727,7 @@ export default function BreathingScreen() {
               />
             </View>
 
-            {/* Right side - stats and controls */}
-            <View style={styles.landscapeSidePanel}>
+            <Animated.View style={[styles.landscapeSidePanel, controlsAnimatedStyle]} pointerEvents={controlsVisible ? 'auto' : 'none'}>
               <View style={styles.landscapeStats}>
                 <Text style={styles.landscapeStatLabel}>Time Left</Text>
                 <Text style={styles.landscapeStatValue}>{formatTime(remainingTime)}</Text>
@@ -707,13 +743,13 @@ export default function BreathingScreen() {
               
               <View style={styles.landscapeControlsRow}>
                 <Pressable
-                  onPress={handleStop}
+                  onPress={() => { resetControlsTimer(); handleStop(); }}
                   style={styles.landscapeStopButton}
                 >
                   <Feather name="square" size={20} color="#FFFFFF" />
                 </Pressable>
                 <Pressable
-                  onPress={isPlaying ? handlePause : handleResume}
+                  onPress={() => { resetControlsTimer(); (isPlaying ? handlePause : handleResume)(); }}
                 >
                   <LinearGradient
                     colors={[selectedTechnique.color, `${selectedTechnique.color}CC`]}
@@ -723,9 +759,9 @@ export default function BreathingScreen() {
                   </LinearGradient>
                 </Pressable>
               </View>
-            </View>
+            </Animated.View>
           </View>
-        </View>
+        </Pressable>
       </Modal>
     );
   }

@@ -885,7 +885,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
       style={styles.container}
     >
       {(playerState === "idle" || playerState === "generating" || playerState === "ready") && !isLandscape ? (
-        <View style={styles.durationRowTop}>
+        <View style={[styles.durationRowTop, { marginTop: insets.top + 52 }]}>
           {DURATION_OPTIONS.map((opt) => {
             const isSelected = selectedDuration === opt.value;
             return (

@@ -93,7 +93,7 @@ export default function FeedbackScreen() {
             Thank You!
           </ThemedText>
           <ThemedText type="body" style={[styles.successMessage, { color: theme.textSecondary }]}>
-            Your {selectedType === "feature" ? "feature request" : selectedType === "bug" ? "bug report" : "feedback"} has been received. We appreciate you helping make Retuned better.
+            Your {selectedType === "feature" ? "feature request" : selectedType === "bug" ? "bug report" : "feedback"} has been sent to team@retuned.app. We appreciate you helping make Retuned better.
           </ThemedText>
           <Pressable
             onPress={handleReset}
@@ -123,7 +123,7 @@ export default function FeedbackScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <ThemedText type="body" style={[styles.intro, { color: theme.textSecondary }]}>
-          Your voice shapes the future of Retuned. Tell us what you love, what could be better, or what you wish existed.
+          Your voice shapes the future of Retuned. Share your thoughts with team@retuned.app -- we read every message.
         </ThemedText>
 
         <View style={styles.typeSelector}>

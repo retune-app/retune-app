@@ -1025,7 +1025,7 @@ export default function ProfileScreen() {
                   </View>
                   <ThemedText type="h4" style={styles.modalTitle}>Request Submitted!</ThemedText>
                   <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "center", marginTop: Spacing.sm }}>
-                    Thank you for reaching out. We'll get back to you at {supportEmail} as soon as possible.
+                    Thank you for reaching out. Our support team at support@retuned.app will get back to you as soon as possible.
                   </ThemedText>
                 </View>
                 <Pressable
@@ -1044,7 +1044,7 @@ export default function ProfileScreen() {
                   </View>
                   <ThemedText type="h4" style={styles.modalTitle}>Help & Support</ThemedText>
                   <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "center", marginTop: Spacing.xs }}>
-                    Send us a message and we'll get back to you
+                    Send us a message at support@retuned.app
                   </ThemedText>
                 </View>
 

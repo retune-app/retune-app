@@ -298,8 +298,30 @@ async function autoGenerateTitle(script: string): Promise<string> {
       messages: [
         {
           role: "system",
-          content: `You are a title generator for affirmations. Create a short, inspiring title (3-6 words) that captures the essence of the affirmation. 
-The title should be motivational and concise. Do NOT include quotation marks.
+          content: `You are a title generator for personalized affirmations. Create a short, inspiring title (3-6 words) that captures the core theme of the affirmation.
+
+TITLE RULES:
+- Be specific and vivid — reflect the unique theme, not generic motivation
+- Use fresh, varied language — never default to the same patterns
+- Do NOT include quotation marks
+
+OVERUSED WORDS TO AVOID (use sparingly or not at all):
+Embrace, Unlock, Harness, Ignite, Unleash, Empower, Elevate, Manifest, Radiate, Cultivate, Transcend, Awaken, Thrive, Navigate, Journey, Transform, Limitless, Boundless, Infinite, Unstoppable, Abundant, Sacred, Divine, Vibrant, Magnetic
+
+GOOD TITLE EXAMPLES:
+- Steady Mind, Open Heart
+- Strength in Every Step
+- Rest That Restores
+- Roots of Real Confidence
+- Sleep Like Still Water
+- Bright Focus, Clear Path
+
+BAD TITLE EXAMPLES (too generic or overused words):
+- Embrace Your Inner Power
+- Unlock Your True Potential
+- Radiate Boundless Energy
+- Manifest Infinite Abundance
+
 Respond with ONLY the title, nothing else.`,
         },
         {

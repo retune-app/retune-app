@@ -37,7 +37,6 @@ import { getApiUrl } from "@/lib/query-client";
 const PROGRESS_INDICATOR_KEY = "@settings/progressIndicator";
 const DEFAULT_BREATHING_TECHNIQUE_KEY = "@breathing/defaultTechnique";
 
-
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import BreathingCircle from "@/components/BreathingCircle";
@@ -127,12 +126,9 @@ export default function BreathingScreen() {
     return categoryMatch || affirmations[0];
   }, [affirmations, breathingAffirmation]);
 
-  // Alias for compatibility
-  const suggestedAffirmation = backgroundAffirmation;
-
   // Quick play handler for WelcomeSection
   const handleQuickPlay = async () => {
-    const affirmationToPlay = currentAffirmation || suggestedAffirmation;
+    const affirmationToPlay = currentAffirmation || backgroundAffirmation;
     if (affirmationToPlay) {
       if (currentAffirmation?.id === affirmationToPlay.id) {
         await togglePlayPause();
@@ -222,7 +218,6 @@ export default function BreathingScreen() {
     };
     loadDefaultTechnique();
   }, []);
-
 
   // Affirmation audio playback functions
   const startAffirmationLoop = useCallback(async () => {
@@ -753,7 +748,7 @@ export default function BreathingScreen() {
             <WelcomeSection
               userName={user?.name}
               lastPlayedAffirmation={currentAffirmation}
-              suggestedAffirmation={suggestedAffirmation as any}
+              suggestedAffirmation={backgroundAffirmation as any}
               onQuickPlay={handleQuickPlay}
               onSettingsPress={() => navigation.navigate("Main", { screen: "SettingsTab" })}
               onMoodPress={() => setShowMoodCheckin(true)}

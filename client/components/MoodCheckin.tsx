@@ -9,9 +9,6 @@ import {
 } from "react-native";
 import Animated, {
   FadeIn,
-  FadeOut,
-  SlideInUp,
-  SlideInDown,
 } from "react-native-reanimated";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -95,7 +92,6 @@ export function MoodCheckin({ onStartBreathing, onStartAffirmations, visible, on
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState<MoodResponse | null>(null);
-
 
   const handleMoodSelect = useCallback(async (mood: MoodOption) => {
     try {
@@ -198,18 +194,17 @@ export function MoodCheckin({ onStartBreathing, onStartAffirmations, visible, on
   };
 
   return (
-    <>
-      <Modal
-        visible={visible}
-        animationType="fade"
-        transparent
-        onRequestClose={handleClose}
-      >
-        <Pressable style={styles.modalOverlay} onPress={handleClose}>
-          <Pressable
-            style={[styles.modalContent, { backgroundColor: theme.backgroundRoot }]}
-            onPress={(e) => e.stopPropagation()}
-          >
+    <Modal
+      visible={visible}
+      animationType="fade"
+      transparent
+      onRequestClose={handleClose}
+    >
+      <Pressable style={styles.modalOverlay} onPress={handleClose}>
+        <Pressable
+          style={[styles.modalContent, { backgroundColor: theme.backgroundRoot }]}
+          onPress={(e) => e.stopPropagation()}
+        >
             <View style={styles.modalHandle} />
             <ScrollView
               showsVerticalScrollIndicator={false}
@@ -365,11 +360,10 @@ export function MoodCheckin({ onStartBreathing, onStartAffirmations, visible, on
                 </Pressable>
               </Animated.View>
             ) : null}
-            </ScrollView>
-          </Pressable>
+          </ScrollView>
         </Pressable>
-      </Modal>
-    </>
+      </Pressable>
+    </Modal>
   );
 }
 

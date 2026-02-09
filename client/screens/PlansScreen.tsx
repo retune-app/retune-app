@@ -43,11 +43,12 @@ export default function PlansScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]} testID="screen-plans">
       <ScrollView
+        style={styles.scrollView}
         contentContainerStyle={[
           styles.scrollContent,
           {
             paddingTop: headerHeight + Spacing.lg,
-            paddingBottom: 120,
+            paddingBottom: Spacing.lg,
           },
         ]}
         scrollIndicatorInsets={{ bottom: insets.bottom }}
@@ -187,7 +188,7 @@ export default function PlansScreen() {
       <View style={[
         styles.stickyFooter,
         {
-          paddingBottom: insets.bottom + Spacing.sm,
+          paddingBottom: Math.max(insets.bottom, Spacing.md),
           backgroundColor: theme.backgroundRoot,
           borderTopColor: theme.border,
         }
@@ -333,11 +334,10 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
   },
+  scrollView: {
+    flex: 1,
+  },
   stickyFooter: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.sm,
     borderTopWidth: StyleSheet.hairlineWidth,

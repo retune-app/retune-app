@@ -11,7 +11,6 @@ import Animated, {
   interpolate,
   cancelAnimation,
 } from "react-native-reanimated";
-import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useQuery } from "@tanstack/react-query";
@@ -19,7 +18,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ThemedText } from "@/components/ThemedText";
 
 import { useTheme } from "@/hooks/useTheme";
-import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
+import { Spacing, BorderRadius } from "@/constants/theme";
 import type { Affirmation } from "@shared/schema";
 
 interface WelcomeSectionProps {
@@ -60,20 +59,6 @@ function getTimeGreeting(): { greeting: string; suggestion: string; icon: string
       suggestion: "Prepare your mind for restful sleep",
       icon: "moon",
     };
-  }
-}
-
-function getSuggestedCategory(): string {
-  const hour = new Date().getHours();
-  
-  if (hour >= 5 && hour < 12) {
-    return "Confidence";
-  } else if (hour >= 12 && hour < 17) {
-    return "Career";
-  } else if (hour >= 17 && hour < 21) {
-    return "Health";
-  } else {
-    return "Sleep";
   }
 }
 
@@ -155,7 +140,6 @@ export function WelcomeSection({
   });
 
   const { greeting, suggestion, icon } = useMemo(() => getTimeGreeting(), []);
-  const suggestedCategory = useMemo(() => getSuggestedCategory(), []);
 
   const timeOfDay = useMemo(() => {
     const hour = new Date().getHours();
@@ -174,7 +158,6 @@ export function WelcomeSection({
   const displaySuggestion = aiGreeting?.message || suggestion;
 
   const displayName = userName?.split(" ")[0] || "there";
-  const hasQuickAction = lastPlayedAffirmation || suggestedAffirmation;
 
   const handleQuickPlay = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -326,33 +309,5 @@ const styles = StyleSheet.create({
   suggestion: {
     marginLeft: 28,
     minHeight: 34,
-  },
-  quickPlayCard: {
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1,
-    overflow: "hidden",
-  },
-  quickPlayContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: Spacing.md,
-  },
-  quickPlayText: {
-    flex: 1,
-    marginRight: Spacing.md,
-  },
-  quickPlayTitle: {
-    marginTop: Spacing.xs,
-    marginBottom: Spacing.xs,
-  },
-  categoryBadge: {
-    flexDirection: "row",
-  },
-  playButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: "center",
-    justifyContent: "center",
   },
 });

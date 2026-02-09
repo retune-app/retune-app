@@ -190,6 +190,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
     MOOD_SOUND_MAP[mood]?.[timeOfDay] || MOOD_SOUND_MAP[mood]?.["morning"] || "ocean-waves-beach"
   );
   const [selectedVoice, setSelectedVoice] = useState("hume_lotus");
+  const [voicePreferenceLoaded, setVoicePreferenceLoaded] = useState(false);
   const [showSoundSwitcher, setShowSoundSwitcher] = useState(false);
   const [showVoiceSelector, setShowVoiceSelector] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(true);
@@ -232,7 +233,10 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
       if (stored && allVoiceOptions.some((v) => v.id === stored)) {
         setSelectedVoice(stored);
       }
-    }).catch(() => {});
+      setVoicePreferenceLoaded(true);
+    }).catch(() => {
+      setVoicePreferenceLoaded(true);
+    });
   }, [allVoiceOptions]);
 
   useEffect(() => {
@@ -359,12 +363,14 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
   }, []);
 
   useEffect(() => {
-    beginGeneration();
+    if (voicePreferenceLoaded) {
+      beginGeneration();
+    }
     return () => {
       cleanupVoice();
       stopBackgroundMusic();
     };
-  }, []);
+  }, [voicePreferenceLoaded]);
 
   const handleClose = useCallback(async () => {
     await cleanupVoice();

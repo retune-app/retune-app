@@ -11,17 +11,19 @@ export const PREMIUM_FEATURES = {
 
 export const FREE_FEATURES = [
   "Basic breathing exercises (4 techniques)",
-  "AI Mindful Moment",
+  "RSVP Focus Mode",
   "Up to 10 AI affirmations per month",
   "Stock AI voices (Lotus & Sage)",
-  "Ambient sound library (25 tracks)",
+  "Ambient sound library",
   "Daily reminders (up to 5)",
   "Basic listening analytics",
 ];
 
 export const PREMIUM_FEATURES_LIST = [
+  "AI Mindful Moment - personalized wellness",
   "Micro-Meditations - AI meditation audio",
   "Inner Voice - personal voice cloning",
+  "Exclusive ambient tracks",
   "Unlimited AI affirmations",
   "Advanced analytics & insights",
   "Priority support",

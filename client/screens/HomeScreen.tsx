@@ -348,11 +348,11 @@ export default function HomeScreen() {
         {/* Search bar with settings button */}
         <View style={styles.searchRow}>
           <Pressable
-            onPress={handleSettingsPress}
+            onPress={() => setShowMoodCheckin(true)}
             style={[styles.headerSettingsButton, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder }]}
-            testID="button-header-settings"
+            testID="button-header-mood-checkin"
           >
-            <Feather name="settings" size={20} color={theme.gold} />
+            <Feather name="activity" size={20} color={theme.gold} />
           </Pressable>
           <View style={[styles.searchContainer, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder }]}>
             <Feather name="search" size={18} color={theme.placeholder} />
@@ -366,11 +366,11 @@ export default function HomeScreen() {
             />
           </View>
           <Pressable
-            onPress={() => setShowMoodCheckin(true)}
+            onPress={handleSettingsPress}
             style={[styles.headerSettingsButton, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder }]}
-            testID="button-header-mood-checkin"
+            testID="button-header-settings"
           >
-            <Feather name="activity" size={20} color={theme.gold} />
+            <Feather name="settings" size={20} color={theme.gold} />
           </Pressable>
         </View>
         <View style={styles.badgeRow}>

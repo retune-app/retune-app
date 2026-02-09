@@ -687,9 +687,6 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
         {playerState === "generating" ? (
           <View style={styles.centerTextContainer}>
             <Animated.View style={[styles.generatingPulse, generatingPulseStyle, { borderColor: moodColors.primary }]} />
-            <ThemedText type="caption" style={[styles.centerStatusText, { marginTop: Spacing.md }]}>
-              {"Preparing your meditation..."}
-            </ThemedText>
           </View>
         ) : playerState === "error" ? (
           <View style={styles.centerTextContainer}>
@@ -927,6 +924,11 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
       >
         <View style={isLandscape ? styles.landscapeLayout : styles.portraitLayout}>
           <View style={styles.ringsArea}>
+            {playerState === "generating" ? (
+              <ThemedText type="caption" style={styles.aboveRingsStatusText}>
+                {"Preparing your meditation..."}
+              </ThemedText>
+            ) : null}
             {(playerState === "idle" || playerState === "generating" || playerState === "ready") && isLandscape ? (
               <View style={styles.durationRow}>
                 {DURATION_OPTIONS.map((opt) => {
@@ -1175,6 +1177,12 @@ const styles = StyleSheet.create({
   ringsArea: {
     alignItems: "center",
     justifyContent: "center",
+  },
+  aboveRingsStatusText: {
+    color: "rgba(255,255,255,0.7)",
+    fontSize: 14,
+    marginBottom: Spacing.md,
+    textAlign: "center",
   },
   ringsContainer: {
     alignItems: "center",

@@ -692,10 +692,11 @@ export default function BreathingScreen() {
                 
                 <View style={styles.portraitControlsRow}>
                   <Pressable
-                    onPress={() => { resetControlsTimer(); handleStop(); }}
-                    style={styles.landscapeStopButton}
+                    onPress={() => { resetControlsTimer(); setHapticsEnabled(!hapticsEnabled); try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} }}
+                    style={[styles.landscapeStopButton, { backgroundColor: hapticsEnabled ? 'rgba(201,162,39,0.25)' : 'rgba(255,255,255,0.15)' }]}
                   >
-                    <Feather name="square" size={20} color="#FFFFFF" />
+                    <Feather name="smartphone" size={16} color={hapticsEnabled ? '#C9A227' : 'rgba(255,255,255,0.5)'} />
+                    <Text style={{ fontSize: 8, color: hapticsEnabled ? '#C9A227' : 'rgba(255,255,255,0.4)', marginTop: 2, letterSpacing: 0.5 }}>Haptics</Text>
                   </Pressable>
                   <Pressable
                     onPress={() => { resetControlsTimer(); (isPlaying ? handlePause : handleResume)(); }}
@@ -708,11 +709,10 @@ export default function BreathingScreen() {
                     </LinearGradient>
                   </Pressable>
                   <Pressable
-                    onPress={() => { resetControlsTimer(); setHapticsEnabled(!hapticsEnabled); try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} }}
-                    style={[styles.landscapeStopButton, { backgroundColor: hapticsEnabled ? 'rgba(201,162,39,0.25)' : 'rgba(255,255,255,0.15)' }]}
+                    onPress={() => { resetControlsTimer(); handleStop(); }}
+                    style={styles.landscapeStopButton}
                   >
-                    <Feather name="smartphone" size={16} color={hapticsEnabled ? '#C9A227' : 'rgba(255,255,255,0.5)'} />
-                    <Text style={{ fontSize: 8, color: hapticsEnabled ? '#C9A227' : 'rgba(255,255,255,0.4)', marginTop: 2, letterSpacing: 0.5 }}>Haptics</Text>
+                    <Feather name="square" size={20} color="#FFFFFF" />
                   </Pressable>
                 </View>
 
@@ -831,10 +831,11 @@ export default function BreathingScreen() {
               
               <View style={styles.landscapeControlsRow}>
                 <Pressable
-                  onPress={() => { resetControlsTimer(); handleStop(); }}
-                  style={styles.landscapeStopButton}
+                  onPress={() => { resetControlsTimer(); setHapticsEnabled(!hapticsEnabled); try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} }}
+                  style={[styles.landscapeStopButton, { backgroundColor: hapticsEnabled ? 'rgba(201,162,39,0.25)' : 'rgba(255,255,255,0.15)' }]}
                 >
-                  <Feather name="square" size={20} color="#FFFFFF" />
+                  <Feather name="smartphone" size={16} color={hapticsEnabled ? '#C9A227' : 'rgba(255,255,255,0.5)'} />
+                  <Text style={{ fontSize: 8, color: hapticsEnabled ? '#C9A227' : 'rgba(255,255,255,0.4)', marginTop: 2, letterSpacing: 0.5 }}>Haptics</Text>
                 </Pressable>
                 <Pressable
                   onPress={() => { resetControlsTimer(); (isPlaying ? handlePause : handleResume)(); }}
@@ -847,11 +848,10 @@ export default function BreathingScreen() {
                   </LinearGradient>
                 </Pressable>
                 <Pressable
-                  onPress={() => { resetControlsTimer(); setHapticsEnabled(!hapticsEnabled); try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} }}
-                  style={[styles.landscapeStopButton, { backgroundColor: hapticsEnabled ? 'rgba(201,162,39,0.25)' : 'rgba(255,255,255,0.15)' }]}
+                  onPress={() => { resetControlsTimer(); handleStop(); }}
+                  style={styles.landscapeStopButton}
                 >
-                  <Feather name="smartphone" size={16} color={hapticsEnabled ? '#C9A227' : 'rgba(255,255,255,0.5)'} />
-                  <Text style={{ fontSize: 8, color: hapticsEnabled ? '#C9A227' : 'rgba(255,255,255,0.4)', marginTop: 2, letterSpacing: 0.5 }}>Haptics</Text>
+                  <Feather name="square" size={20} color="#FFFFFF" />
                 </Pressable>
               </View>
             </Animated.View>

@@ -713,25 +713,8 @@ export default function BreathingScreen() {
                   hapticsEnabled={hapticsEnabled}
                   size={portraitCircleSize}
                 />
-              </View>
 
-              <Animated.View style={[styles.fsBottomControls, controlsAnimatedStyle]} pointerEvents={controlsVisible ? 'auto' : 'none'} onStartShouldSetResponder={() => true}>
-                <View style={styles.portraitStatsRow}>
-                  <View style={styles.portraitStatItem}>
-                    <Text style={styles.landscapeStatLabel}>Time Left</Text>
-                    <Text style={styles.landscapeStatValue}>{formatTime(remainingTime)}</Text>
-                  </View>
-                  <View style={styles.portraitStatItem}>
-                    <Text style={styles.landscapeStatLabel}>Progress</Text>
-                    <Text style={[styles.landscapeStatValue, { color: selectedTechnique.color }]}>{progressPercent}%</Text>
-                  </View>
-                  <View style={styles.portraitStatItem}>
-                    <Text style={styles.landscapeStatLabel}>Cycles</Text>
-                    <Text style={styles.landscapeStatValue}>{cyclesCompleted}/{totalCycles}</Text>
-                  </View>
-                </View>
-
-                <View style={styles.fsCenterControls}>
+                <Animated.View style={[styles.fsCenterControls, controlsAnimatedStyle]} pointerEvents={controlsVisible ? 'auto' : 'none'} onStartShouldSetResponder={() => true}>
                   <Pressable
                     onPress={() => { resetControlsTimer(); (isPlaying ? handlePause : handleResume)(); }}
                   >
@@ -748,6 +731,23 @@ export default function BreathingScreen() {
                   >
                     <Feather name="square" size={20} color="#FFFFFF" />
                   </Pressable>
+                </Animated.View>
+              </View>
+
+              <Animated.View style={[styles.fsBottomControls, controlsAnimatedStyle]} pointerEvents={controlsVisible ? 'auto' : 'none'} onStartShouldSetResponder={() => true}>
+                <View style={styles.portraitStatsRow}>
+                  <View style={styles.portraitStatItem}>
+                    <Text style={styles.landscapeStatLabel}>Time Left</Text>
+                    <Text style={styles.landscapeStatValue}>{formatTime(remainingTime)}</Text>
+                  </View>
+                  <View style={styles.portraitStatItem}>
+                    <Text style={styles.landscapeStatLabel}>Progress</Text>
+                    <Text style={[styles.landscapeStatValue, { color: selectedTechnique.color }]}>{progressPercent}%</Text>
+                  </View>
+                  <View style={styles.portraitStatItem}>
+                    <Text style={styles.landscapeStatLabel}>Cycles</Text>
+                    <Text style={styles.landscapeStatValue}>{cyclesCompleted}/{totalCycles}</Text>
+                  </View>
                 </View>
               </Animated.View>
             </View>

@@ -2486,7 +2486,8 @@ Return ONLY the script text, no formatting or labels.`,
           wordTimings = result.wordTimings;
           duration = result.duration;
         } else {
-          const result = await generateAudio(script, "hume_kora");
+          const stockVoiceId = voiceId && isHumeVoice(voiceId) ? voiceId : "hume_lotus";
+          const result = await generateAudio(script, stockVoiceId);
           audioBuffer = result.audio;
           wordTimings = result.wordTimings;
           duration = result.duration;

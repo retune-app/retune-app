@@ -469,14 +469,6 @@ export default function BreathingScreen() {
     );
   };
 
-  const enterFullscreen = () => {
-    setShowLandscapeMode(true);
-    // Orientation lock is handled by the useEffect
-    if (!isPlaying) {
-      handleStart();
-    }
-  };
-
   const exitFullscreen = () => {
     setShowLandscapeMode(false);
     controlsOpacity.value = 1;
@@ -870,70 +862,63 @@ export default function BreathingScreen() {
           },
         ]}
       >
-        {/* Welcome Section at Top - hidden during breathing session */}
-        {!isPlaying ? (
-          <Animated.View entering={FadeIn.duration(600)} style={styles.welcomeWrapper}>
-            <WelcomeSection
-              userName={user?.name}
-              lastPlayedAffirmation={currentAffirmation}
-              suggestedAffirmation={backgroundAffirmation as any}
-              onQuickPlay={handleQuickPlay}
-              onSettingsPress={() => navigation.navigate("Main", { screen: "SettingsTab" })}
-              onMoodPress={() => setShowMoodCheckin(true)}
-              isPlaying={isAudioPlaying}
-            />
-          </Animated.View>
-        ) : null}
+        {/* Welcome Section at Top */}
+        <Animated.View entering={FadeIn.duration(600)} style={styles.welcomeWrapper}>
+          <WelcomeSection
+            userName={user?.name}
+            lastPlayedAffirmation={currentAffirmation}
+            suggestedAffirmation={backgroundAffirmation as any}
+            onQuickPlay={handleQuickPlay}
+            onSettingsPress={() => navigation.navigate("Main", { screen: "SettingsTab" })}
+            onMoodPress={() => setShowMoodCheckin(true)}
+            isPlaying={isAudioPlaying}
+          />
+        </Animated.View>
 
         {/* Technique Selector Card - Compact */}
-        {!isPlaying ? (
-          <Animated.View entering={FadeIn.delay(100).duration(600)} style={styles.techniqueWrapper}>
-            <Pressable
-              onPress={() => setShowTechniqueSelector(true)}
-              style={[styles.techniqueCard, { backgroundColor: theme.cardBackground, borderWidth: 2, borderColor: `${selectedTechnique.color}60` }, Shadows.medium]}
-            >
-              <View style={styles.techniqueCardContent}>
-                <View style={[styles.techniqueIconSmall, { backgroundColor: `${selectedTechnique.color}30` }]}>
-                  <Feather name={selectedTechnique.icon as any} size={22} color={selectedTechnique.color} />
-                </View>
-                <View style={styles.techniqueCardInfo}>
-                  <ThemedText type="body" style={{ fontWeight: "600" }}>
-                    {selectedTechnique.name}
-                  </ThemedText>
-                  <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                    {selectedTechnique.benefits}
-                  </ThemedText>
-                </View>
-                <Feather name="chevron-right" size={20} color={theme.textSecondary} />
+        <Animated.View entering={FadeIn.delay(100).duration(600)} style={styles.techniqueWrapper}>
+          <Pressable
+            onPress={() => setShowTechniqueSelector(true)}
+            style={[styles.techniqueCard, { backgroundColor: theme.cardBackground, borderWidth: 2, borderColor: `${selectedTechnique.color}60` }, Shadows.medium]}
+          >
+            <View style={styles.techniqueCardContent}>
+              <View style={[styles.techniqueIconSmall, { backgroundColor: `${selectedTechnique.color}30` }]}>
+                <Feather name={selectedTechnique.icon as any} size={22} color={selectedTechnique.color} />
               </View>
-            </Pressable>
-            <Pressable
-              testID="button-technique-info"
-              onPress={() => {
-                if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} }
-                setShowTechniqueInfo(true);
-              }}
-              style={[
-                styles.techniqueInfoButton,
-                {
-                  backgroundColor: `${selectedTechnique.color}14`,
-                  borderWidth: 1,
-                  borderColor: `${selectedTechnique.color}26`,
-                },
-              ]}
-            >
-              <Feather name="info" size={18} color={`${selectedTechnique.color}66`} />
-            </Pressable>
-          </Animated.View>
-        ) : null}
+              <View style={styles.techniqueCardInfo}>
+                <ThemedText type="body" style={{ fontWeight: "600" }}>
+                  {selectedTechnique.name}
+                </ThemedText>
+                <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                  {selectedTechnique.benefits}
+                </ThemedText>
+              </View>
+              <Feather name="chevron-right" size={20} color={theme.textSecondary} />
+            </View>
+          </Pressable>
+          <Pressable
+            testID="button-technique-info"
+            onPress={() => {
+              if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} }
+              setShowTechniqueInfo(true);
+            }}
+            style={[
+              styles.techniqueInfoButton,
+              {
+                backgroundColor: `${selectedTechnique.color}14`,
+                borderWidth: 1,
+                borderColor: `${selectedTechnique.color}26`,
+              },
+            ]}
+          >
+            <Feather name="info" size={18} color={`${selectedTechnique.color}66`} />
+          </Pressable>
+        </Animated.View>
 
         {/* Breathing Circle - Hero Element */}
         <Animated.View 
           entering={FadeIn.delay(200).duration(800)} 
-          style={[
-            styles.circleSection,
-            isPlaying && styles.circleSectionPlaying
-          ]}
+          style={styles.circleSection}
         >
           <View style={styles.circleContainer}>
             {!isPlaying ? (
@@ -964,46 +949,12 @@ export default function BreathingScreen() {
                 }, ripple3Style]} />
               </>
             ) : null}
-            {/* Progress Ring - Only visible when playing and enabled */}
-            {isPlaying && progressIndicatorEnabled ? (
-              <View style={styles.progressRingContainer}>
-                <Svg 
-                  width={Math.min(SCREEN_WIDTH * 0.85, SCREEN_HEIGHT * 0.45) + 40} 
-                  height={Math.min(SCREEN_WIDTH * 0.85, SCREEN_HEIGHT * 0.45) + 40}
-                  style={styles.progressRing}
-                >
-                  {/* Background ring */}
-                  <Circle
-                    cx={(Math.min(SCREEN_WIDTH * 0.85, SCREEN_HEIGHT * 0.45) + 40) / 2}
-                    cy={(Math.min(SCREEN_WIDTH * 0.85, SCREEN_HEIGHT * 0.45) + 40) / 2}
-                    r={(Math.min(SCREEN_WIDTH * 0.85, SCREEN_HEIGHT * 0.45) + 20) / 2}
-                    stroke={`${selectedTechnique.color}15`}
-                    strokeWidth={3}
-                    fill="transparent"
-                  />
-                  {/* Progress ring */}
-                  <Circle
-                    cx={(Math.min(SCREEN_WIDTH * 0.85, SCREEN_HEIGHT * 0.45) + 40) / 2}
-                    cy={(Math.min(SCREEN_WIDTH * 0.85, SCREEN_HEIGHT * 0.45) + 40) / 2}
-                    r={(Math.min(SCREEN_WIDTH * 0.85, SCREEN_HEIGHT * 0.45) + 20) / 2}
-                    stroke={selectedTechnique.color}
-                    strokeWidth={3}
-                    fill="transparent"
-                    strokeDasharray={`${Math.PI * (Math.min(SCREEN_WIDTH * 0.85, SCREEN_HEIGHT * 0.45) + 20)}`}
-                    strokeDashoffset={Math.PI * (Math.min(SCREEN_WIDTH * 0.85, SCREEN_HEIGHT * 0.45) + 20) * (1 - progressPercent / 100)}
-                    strokeLinecap="round"
-                    rotation="-90"
-                    origin={`${(Math.min(SCREEN_WIDTH * 0.85, SCREEN_HEIGHT * 0.45) + 40) / 2}, ${(Math.min(SCREEN_WIDTH * 0.85, SCREEN_HEIGHT * 0.45) + 40) / 2}`}
-                  />
-                </Svg>
-              </View>
-            ) : null}
             <BreathingCircle
               technique={selectedTechnique}
               isPlaying={isPlaying}
               onCycleComplete={handleCycleComplete}
               hapticsEnabled={hapticsEnabled}
-              size={isPlaying ? Math.min(SCREEN_WIDTH * 0.85, SCREEN_HEIGHT * 0.45) : 260}
+              size={260}
               showContent={countdownValue === null}
             />
             {!isPlaying && countdownValue === null ? (
@@ -1067,126 +1018,120 @@ export default function BreathingScreen() {
         </Animated.View>
 
         {/* Bottom Options Panel */}
-        {!isPlaying ? (
-          <Animated.View entering={FadeIn.delay(400).duration(600)} style={styles.bottomPanel}>
-            {/* Duration Row */}
-            <View style={styles.optionRow}>
-              <View style={styles.optionLabelContainer}>
-                <Feather name="clock" size={16} color={selectedTechnique.color} />
-                <ThemedText type="caption" style={{ color: theme.textSecondary, marginLeft: 6 }}>Duration</ThemedText>
-              </View>
-              <View style={styles.optionPillsRow}>
-                {DURATION_OPTIONS.map((option) => (
-                  <Pressable
-                    key={option.value}
-                    onPress={() => {
-                      setSelectedDuration(option.value);
-                      if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} }
-                    }}
-                    style={[
-                      styles.optionPill,
-                      {
-                        backgroundColor: selectedDuration === option.value ? selectedTechnique.color : 'transparent',
-                        borderColor: selectedDuration === option.value ? selectedTechnique.color : `${ACCENT_GOLD}50`,
-                      },
-                    ]}
-                    testID={`duration-${option.value}`}
-                  >
-                    <Text style={[styles.optionPillText, { color: selectedDuration === option.value ? "#FFFFFF" : theme.text }]}>
-                      {option.label}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
+        <Animated.View entering={FadeIn.delay(400).duration(600)} style={styles.bottomPanel}>
+          {/* Duration Row */}
+          <View style={styles.optionRow}>
+            <View style={styles.optionLabelContainer}>
+              <Feather name="clock" size={16} color={selectedTechnique.color} />
+              <ThemedText type="caption" style={{ color: theme.textSecondary, marginLeft: 6 }}>Duration</ThemedText>
             </View>
-
-            {/* Audio Row */}
-            <View style={styles.optionRow}>
-              <View style={styles.optionLabelContainer}>
-                <Feather name="volume-2" size={16} color={selectedTechnique.color} />
-                <ThemedText type="caption" style={{ color: theme.textSecondary, marginLeft: 6 }}>Audio</ThemedText>
-              </View>
-              <View style={styles.optionPillsRow}>
+            <View style={styles.optionPillsRow}>
+              {DURATION_OPTIONS.map((option) => (
                 <Pressable
+                  key={option.value}
                   onPress={() => {
-                    setMusicEnabled(false);
-                    setVoiceEnabled(false);
+                    setSelectedDuration(option.value);
                     if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} }
-                  }}
-                  style={[
-                    styles.optionPillFixed,
-                    { 
-                      backgroundColor: (!musicEnabled && !voiceEnabled) ? selectedTechnique.color : 'transparent',
-                      borderColor: (!musicEnabled && !voiceEnabled) ? selectedTechnique.color : `${ACCENT_GOLD}50`,
-                    },
-                  ]}
-                >
-                  <Text style={[styles.optionPillText, { color: (!musicEnabled && !voiceEnabled) ? "#FFFFFF" : theme.text }]}>Off</Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => {
-                    if (musicEnabled) {
-                      // Already enabled - navigate to sound library to change selection
-                      navigation.navigate('SoundLibrary');
-                    } else {
-                      // Enable music
-                      setMusicEnabled(true);
-                      navigation.navigate('SoundLibrary');
-                    }
-                    if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} }
-                  }}
-                  onLongPress={() => {
-                    setMusicEnabled(false);
-                    if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {} }
                   }}
                   style={[
                     styles.optionPill,
-                    { 
-                      backgroundColor: musicEnabled ? selectedTechnique.color : 'transparent',
-                      borderColor: musicEnabled ? selectedTechnique.color : `${ACCENT_GOLD}50`,
+                    {
+                      backgroundColor: selectedDuration === option.value ? selectedTechnique.color : 'transparent',
+                      borderColor: selectedDuration === option.value ? selectedTechnique.color : `${ACCENT_GOLD}50`,
                     },
                   ]}
+                  testID={`duration-${option.value}`}
                 >
-                  <Text style={[styles.optionPillText, { color: musicEnabled ? "#FFFFFF" : theme.text }]} numberOfLines={1}>
-                    {selectedMusic !== 'none' 
-                      ? BACKGROUND_MUSIC_OPTIONS.find(o => o.id === selectedMusic)?.name || 'Music'
-                      : 'Music'}
+                  <Text style={[styles.optionPillText, { color: selectedDuration === option.value ? "#FFFFFF" : theme.text }]}>
+                    {option.label}
                   </Text>
                 </Pressable>
-                <Pressable
-                  onPress={() => {
-                    if (voiceEnabled) {
-                      // Already enabled - navigate to Affirm tab to show selected affirmation
-                      if (breathingAffirmation) {
-                        requestHighlightAffirmation(breathingAffirmation.id);
-                        navigation.navigate("Main", { screen: "AffirmTab" });
-                      } else {
-                        navigation.navigate("Main", { screen: "AffirmTab" });
-                      }
-                    } else {
-                      // Enable voice
-                      setVoiceEnabled(true);
-                    }
-                    if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} }
-                  }}
-                  onLongPress={() => {
-                    setVoiceEnabled(false);
-                    if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {} }
-                  }}
-                  style={[
-                    styles.optionPillFixed,
-                    { 
-                      backgroundColor: voiceEnabled ? selectedTechnique.color : 'transparent',
-                      borderColor: voiceEnabled ? selectedTechnique.color : `${ACCENT_GOLD}50`,
-                    },
-                  ]}
-                >
-                  <Text style={[styles.optionPillText, { color: voiceEnabled ? "#FFFFFF" : theme.text }]}>Voice</Text>
-                </Pressable>
-              </View>
+              ))}
             </View>
-          </Animated.View>
-        ) : null}
+          </View>
+
+          {/* Audio Row */}
+          <View style={styles.optionRow}>
+            <View style={styles.optionLabelContainer}>
+              <Feather name="volume-2" size={16} color={selectedTechnique.color} />
+              <ThemedText type="caption" style={{ color: theme.textSecondary, marginLeft: 6 }}>Audio</ThemedText>
+            </View>
+            <View style={styles.optionPillsRow}>
+              <Pressable
+                onPress={() => {
+                  setMusicEnabled(false);
+                  setVoiceEnabled(false);
+                  if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} }
+                }}
+                style={[
+                  styles.optionPillFixed,
+                  { 
+                    backgroundColor: (!musicEnabled && !voiceEnabled) ? selectedTechnique.color : 'transparent',
+                    borderColor: (!musicEnabled && !voiceEnabled) ? selectedTechnique.color : `${ACCENT_GOLD}50`,
+                  },
+                ]}
+              >
+                <Text style={[styles.optionPillText, { color: (!musicEnabled && !voiceEnabled) ? "#FFFFFF" : theme.text }]}>Off</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  if (musicEnabled) {
+                    navigation.navigate('SoundLibrary');
+                  } else {
+                    setMusicEnabled(true);
+                    navigation.navigate('SoundLibrary');
+                  }
+                  if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} }
+                }}
+                onLongPress={() => {
+                  setMusicEnabled(false);
+                  if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {} }
+                }}
+                style={[
+                  styles.optionPill,
+                  { 
+                    backgroundColor: musicEnabled ? selectedTechnique.color : 'transparent',
+                    borderColor: musicEnabled ? selectedTechnique.color : `${ACCENT_GOLD}50`,
+                  },
+                ]}
+              >
+                <Text style={[styles.optionPillText, { color: musicEnabled ? "#FFFFFF" : theme.text }]} numberOfLines={1}>
+                  {selectedMusic !== 'none' 
+                    ? BACKGROUND_MUSIC_OPTIONS.find(o => o.id === selectedMusic)?.name || 'Music'
+                    : 'Music'}
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  if (voiceEnabled) {
+                    if (breathingAffirmation) {
+                      requestHighlightAffirmation(breathingAffirmation.id);
+                      navigation.navigate("Main", { screen: "AffirmTab" });
+                    } else {
+                      navigation.navigate("Main", { screen: "AffirmTab" });
+                    }
+                  } else {
+                    setVoiceEnabled(true);
+                  }
+                  if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} }
+                }}
+                onLongPress={() => {
+                  setVoiceEnabled(false);
+                  if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {} }
+                }}
+                style={[
+                  styles.optionPillFixed,
+                  { 
+                    backgroundColor: voiceEnabled ? selectedTechnique.color : 'transparent',
+                    borderColor: voiceEnabled ? selectedTechnique.color : `${ACCENT_GOLD}50`,
+                  },
+                ]}
+              >
+                <Text style={[styles.optionPillText, { color: voiceEnabled ? "#FFFFFF" : theme.text }]}>Voice</Text>
+              </Pressable>
+            </View>
+          </View>
+        </Animated.View>
 
       </View>
 
@@ -1388,9 +1333,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
   },
-  circleSectionPlaying: {
-    justifyContent: "center",
-  },
   circleContainer: {
     position: "relative",
     alignItems: "center",
@@ -1538,76 +1480,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
 
-
-  // Floating Buttons
-  fullscreenButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  inlineControlButtons: {
-    alignSelf: "flex-end",
-    alignItems: "center",
-    gap: Spacing.sm,
-    marginBottom: Spacing.lg,
-    marginTop: -Spacing.xl * 2,
-  },
-  floatingControlSection: {
-    position: "absolute",
-    right: Spacing.lg,
-    zIndex: 10,
-  },
-  floatingStartButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  floatingPlayingControls: {
-    alignItems: "center",
-    gap: Spacing.md,
-  },
-  floatingControlButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  floatingPauseButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  playingControlsBottom: {
-    paddingHorizontal: Spacing.lg,
-  },
-  playingControlsRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: Spacing.xl,
-  },
-  playingSecondaryButton: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-  },
-  playingPrimaryButton: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    alignItems: "center",
-    justifyContent: "center",
-  },
 
   // Modal Styles
   modalOverlay: {

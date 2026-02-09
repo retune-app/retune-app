@@ -205,6 +205,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 0,
+    paddingRight: Spacing.sm,
   },
   greetingRowLight: {
     backgroundColor: "rgba(201, 162, 39, 0.12)",
@@ -233,7 +234,7 @@ const styles = StyleSheet.create({
   headerActions: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 8,
   },
   headerActionButton: {
     width: 36,

@@ -197,8 +197,11 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
   const [showVoiceSelector, setShowVoiceSelector] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(true);
   const [voiceVolume, setVoiceVolume] = useState(0.8);
+  const [countdown, setCountdown] = useState<number | null>(null);
   const soundRef = useRef<Audio.Sound | null>(null);
   const controlsTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const autoPlayRef = useRef(false);
+  const playAudioRef = useRef<() => Promise<void>>(() => Promise.resolve());
 
   const breathScale = useSharedValue(0.7);
   const breathOpacity = useSharedValue(0.3);
@@ -294,6 +297,21 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
       if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
     };
   }, [playerState]);
+
+  useEffect(() => {
+    if (countdown === null) return;
+    if (countdown <= 0) {
+      setCountdown(null);
+      if (autoPlayRef.current) {
+        autoPlayRef.current = false;
+        playAudioRef.current();
+      }
+      return;
+    }
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+    const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [countdown]);
 
   const showControls = useCallback(() => {
     setControlsVisible(true);
@@ -425,12 +443,13 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
       setMoment(data);
       setPlayerState("ready");
       try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
-      setTimeout(() => playAudio(), 300);
+      autoPlayRef.current = true;
+      setCountdown(3);
     } catch (error: any) {
       setErrorMessage("Something went wrong. Please try again.");
       setPlayerState("error");
     }
-  }, [mood, timeOfDay, selectedVoice, selectedDuration, setSelectedMusic, startBackgroundMusic, playAudio]);
+  }, [mood, timeOfDay, selectedVoice, selectedDuration, setSelectedMusic, startBackgroundMusic]);
 
   const playAudio = useCallback(async () => {
     if (!moment?.audioBase64) return;
@@ -473,6 +492,8 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
       setPlayerState("error");
     }
   }, [moment, cleanupVoice, voiceVolume]);
+
+  playAudioRef.current = playAudio;
 
   const handleVoiceVolumeChange = useCallback(async (value: number) => {
     setVoiceVolume(value);
@@ -546,12 +567,13 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
       setMoment(data);
       setPlayerState("ready");
       try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
-      setTimeout(() => playAudio(), 300);
+      autoPlayRef.current = true;
+      setCountdown(3);
     } catch (error: any) {
       setErrorMessage("Something went wrong. Please try again.");
       setPlayerState("error");
     }
-  }, [mood, timeOfDay, cleanupVoice, playAudio]);
+  }, [mood, timeOfDay, cleanupVoice]);
 
   const renderSoundTile = useCallback((
     sound: BackgroundMusicOption,
@@ -832,6 +854,10 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
             ) : playerState === "error" ? (
               <ThemedText type="caption" style={[styles.statusLabel, { color: "#E85D5D" }]}>
                 {errorMessage || "Something went wrong"}
+              </ThemedText>
+            ) : playerState === "ready" && countdown !== null && countdown > 0 ? (
+              <ThemedText type="caption" style={[styles.statusLabel, styles.countdownLabel]}>
+                {countdown}
               </ThemedText>
             ) : playerState === "ready" ? (
               <ThemedText type="caption" style={styles.statusLabel}>
@@ -1308,6 +1334,12 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.5)",
     marginTop: Spacing.sm,
     fontSize: 13,
+  },
+  countdownLabel: {
+    fontSize: 32,
+    fontWeight: "700",
+    color: ACCENT_GOLD,
+    marginTop: Spacing.md,
   },
   controlsOverlay: {
     ...StyleSheet.absoluteFillObject,

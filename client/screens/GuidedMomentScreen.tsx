@@ -1220,9 +1220,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
   },
   bottomStatusSection: {
+    position: "absolute",
+    bottom: 80,
+    left: 0,
+    right: 0,
     alignItems: "center",
     paddingHorizontal: Spacing.xl,
-    marginBottom: Spacing.xs,
   },
   progressBar: {
     width: "100%",

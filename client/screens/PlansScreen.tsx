@@ -47,7 +47,7 @@ export default function PlansScreen() {
           styles.scrollContent,
           {
             paddingTop: headerHeight + Spacing.lg,
-            paddingBottom: insets.bottom + Spacing.xl,
+            paddingBottom: 120,
           },
         ]}
         scrollIndicatorInsets={{ bottom: insets.bottom }}
@@ -182,6 +182,19 @@ export default function PlansScreen() {
           </View>
         </View>
 
+      </ScrollView>
+
+      <View style={[
+        styles.stickyFooter,
+        {
+          paddingBottom: insets.bottom + Spacing.sm,
+          backgroundColor: theme.backgroundRoot,
+          borderTopColor: theme.border,
+        }
+      ]}>
+        <ThemedText type="caption" style={[styles.footerNote, { color: theme.textSecondary }]}>
+          All premium features are currently available during beta
+        </ThemedText>
         <Pressable
           style={({ pressed }) => [
             styles.ctaButton,
@@ -200,11 +213,7 @@ export default function PlansScreen() {
             </ThemedText>
           </LinearGradient>
         </Pressable>
-
-        <ThemedText type="caption" style={[styles.footerNote, { color: theme.textSecondary }]}>
-          All premium features are currently available during beta
-        </ThemedText>
-      </ScrollView>
+      </View>
     </View>
   );
 }
@@ -324,6 +333,15 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
   },
+  stickyFooter: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
   ctaButton: {
     marginTop: Spacing.sm,
     borderRadius: BorderRadius.lg,
@@ -344,6 +362,5 @@ const styles = StyleSheet.create({
   },
   footerNote: {
     textAlign: "center",
-    marginTop: Spacing.md,
   },
 });

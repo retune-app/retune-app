@@ -32,6 +32,7 @@ const PREMIUM_ICONS: Record<string, string> = {
   "Unlimited AI affirmations": "infinity",
   "Advanced analytics & insights": "trending-up",
   "Priority support": "shield",
+  "Bedtime Stories — coming soon": "moon",
 };
 
 export default function PlansScreen() {

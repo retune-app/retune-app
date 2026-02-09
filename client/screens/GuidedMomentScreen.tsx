@@ -738,11 +738,11 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
               ambient={true}
             />
           </View>
-        ) : (playerState === "ready" && countdown !== null && countdown > 0) ? (
+        ) : playerState === "ready" && countdown !== null && countdown > 0 ? (
           <ThemedText type="caption" style={styles.countdownInsideRings}>
             {countdown}
           </ThemedText>
-        ) : playerState === "ready" || playerState === "finished" ? (
+        ) : playerState === "finished" ? (
           <Pressable
             onPress={handlePlayAction}
             style={styles.playIconCenter}
@@ -837,7 +837,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
             </ThemedText>
           ) : playerState === "ready" ? (
             <ThemedText type="caption" style={styles.statusLabel}>
-              {"Tap to begin"}
+              {countdown !== null && countdown > 0 ? "Get ready..." : "Starting..."}
             </ThemedText>
           ) : playerState === "playing" ? (
             <ThemedText type="caption" style={styles.statusLabel}>

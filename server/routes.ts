@@ -9,6 +9,7 @@ import { affirmations, voiceSamples, categories, users, collections, customCateg
 import { eq, desc, asc, and, sql, sum } from "drizzle-orm";
 import { openai } from "./replit_integrations/audio/client";
 import OpenAI from "openai";
+import { isPremiumUser, FREE_FEATURES, PREMIUM_FEATURES_LIST, BETA_MODE } from "./premium";
 import {
   cloneVoice,
   textToSpeech as elevenLabsTTS,
@@ -3088,6 +3089,29 @@ Respond with ONLY the notification message text.${avoidClause}`,
     } catch (error) {
       console.error("Error updating voice consent:", error);
       res.status(500).json({ error: "Failed to update consent" });
+    }
+  });
+
+  // Get user's subscription info
+  app.get("/api/subscription", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const [user] = await db
+        .select({ subscriptionTier: users.subscriptionTier })
+        .from(users)
+        .where(eq(users.id, req.userId!))
+        .limit(1);
+
+      const tier = (user?.subscriptionTier || "free") as "free" | "premium";
+      res.json({
+        tier,
+        isPremium: isPremiumUser({ subscriptionTier: tier } as any),
+        betaMode: BETA_MODE,
+        freeFeatures: FREE_FEATURES,
+        premiumFeatures: PREMIUM_FEATURES_LIST,
+      });
+    } catch (error) {
+      console.error("Error fetching subscription:", error);
+      res.status(500).json({ error: "Failed to fetch subscription info" });
     }
   });
 

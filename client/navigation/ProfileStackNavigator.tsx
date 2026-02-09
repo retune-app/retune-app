@@ -9,6 +9,7 @@ import ProfileScreen from "@/screens/ProfileScreen";
 import SecurityPrivacyScreen from "@/screens/SecurityPrivacyScreen";
 import BenefitsScreen from "@/screens/BenefitsScreen";
 import RemindersScreen from "@/screens/RemindersScreen";
+import PlansScreen from "@/screens/PlansScreen";
 import { useScreenOptions } from "@/hooks/useScreenOptions";
 import { useTheme } from "@/hooks/useTheme";
 
@@ -17,6 +18,7 @@ export type ProfileStackParamList = {
   SecurityPrivacy: undefined;
   Benefits: undefined;
   Reminders: undefined;
+  Plans: undefined;
 };
 
 const Stack = createNativeStackNavigator<ProfileStackParamList>();
@@ -72,6 +74,13 @@ export default function ProfileStackNavigator() {
         component={RemindersScreen}
         options={{
           title: "Daily Reminders",
+        }}
+      />
+      <Stack.Screen
+        name="Plans"
+        component={PlansScreen}
+        options={{
+          title: "Plans",
         }}
       />
     </Stack.Navigator>

@@ -722,6 +722,13 @@ export default function ProfileScreen() {
         </ThemedText>
         <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
           <SettingItem
+            icon="award"
+            label="Plans"
+            value="Free (Beta)"
+            onPress={() => navigation.navigate("Plans" as never)}
+            testID="button-plans"
+          />
+          <SettingItem
             icon="heart"
             label="Benefits for Wellbeing"
             onPress={() => navigation.navigate("Benefits" as never)}

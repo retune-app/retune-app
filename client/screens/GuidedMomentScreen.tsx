@@ -86,9 +86,11 @@ const CATEGORY_LABELS: Record<string, string> = {
   noise: "Noise",
 };
 
-const VOICE_OPTIONS = [
-  { id: "hume_lotus", label: "Lotus", description: "Female Guide", icon: "sun" as const },
-  { id: "hume_sage", label: "Sage", description: "Male Guide", icon: "moon" as const },
+type VoiceIcon = "sun" | "moon" | "mic";
+
+const VOICE_OPTIONS: { id: string; label: string; description: string; icon: VoiceIcon }[] = [
+  { id: "hume_lotus", label: "Lotus", description: "Female Guide", icon: "sun" },
+  { id: "hume_sage", label: "Sage", description: "Male Guide", icon: "moon" },
 ];
 
 const VOICE_STORAGE_KEY = "@retuned/guided-moment-voice";
@@ -150,7 +152,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
   const progressAnim = useSharedValue(0);
   const controlsOpacity = useSharedValue(1);
 
-  const ringSize = isLandscape ? Math.min(height * 0.7, 260) : Math.min(width * 0.7, 280);
+  const ringSize = isLandscape ? Math.min(height * 0.75, width * 0.55) : width * 0.88;
 
   const categories = useMemo<CategorySection[]>(() => {
     const byCategory = getSoundsByCategory();
@@ -169,7 +171,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
   const allVoiceOptions = useMemo(() => {
     const opts = [...VOICE_OPTIONS];
     if (hasPersonalVoice) {
-      opts.push({ id: "personal", label: "My Voice", description: "Cloned Voice", icon: "mic" as const });
+      opts.push({ id: "personal", label: "Inner Voice", description: "Your Cloned Voice", icon: "mic" as const });
     }
     return opts;
   }, [hasPersonalVoice]);
@@ -420,7 +422,38 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
     setSelectedVoice(voiceId);
     await AsyncStorage.setItem(VOICE_STORAGE_KEY, voiceId).catch(() => {});
     setShowVoiceSelector(false);
-  }, []);
+
+    await cleanupVoice();
+    setMoment(null);
+    setPlayerState("generating");
+    setErrorMessage("");
+    progressAnim.value = 0;
+    
+    try {
+      const isPersonal = voiceId === "personal";
+      const url = new URL("/api/guided-moments/generate", getApiUrl()).toString();
+      const result = await apiRequest("POST", url, {
+        mood,
+        timeOfDay,
+        usePersonalVoice: isPersonal,
+        voiceId: isPersonal ? undefined : voiceId,
+      });
+      const data = await result.json();
+
+      if (data.error) {
+        setErrorMessage(data.error);
+        setPlayerState("error");
+        return;
+      }
+
+      setMoment(data);
+      setPlayerState("ready");
+      try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
+    } catch (error: any) {
+      setErrorMessage("Something went wrong. Please try again.");
+      setPlayerState("error");
+    }
+  }, [mood, timeOfDay, cleanupVoice]);
 
   const renderSoundTile = useCallback((
     sound: BackgroundMusicOption,
@@ -575,7 +608,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
             <Feather name="alert-circle" size={28} color="#E85D5D" />
           </View>
         ) : (playerState === "playing" || playerState === "paused") && moment?.wordTimings ? (
-          <View style={[styles.rsvpInsideRings, { width: ringSize * 0.55 }]}>
+          <View style={[styles.rsvpInsideRings, { width: ringSize * 0.42 }]}>
             <RSVPDisplay
               wordTimings={moment.wordTimings}
               currentPositionMs={currentPosition}
@@ -876,7 +909,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
             </View>
 
             <ThemedText type="caption" style={styles.voiceNote}>
-              {"Voice changes apply to your next guided moment"}
+              {"Switching voice will regenerate your guided moment"}
             </ThemedText>
 
             <View style={styles.voiceList}>

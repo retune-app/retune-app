@@ -718,16 +718,9 @@ export default function ProfileScreen() {
 
       <View style={styles.section}>
         <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-          SUPPORT & INFO
+          INFO & SUPPORT
         </ThemedText>
         <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
-          <SettingItem
-            icon="award"
-            label="Plans"
-            value="Free (Beta)"
-            onPress={() => navigation.navigate("Plans" as never)}
-            testID="button-plans"
-          />
           <SettingItem
             icon="heart"
             label="Benefits for Wellbeing"
@@ -743,6 +736,20 @@ export default function ProfileScreen() {
             label="Help & Support"
             value="Get assistance"
             onPress={handleOpenSupportModal}
+          />
+          <SettingItem
+            icon="message-square"
+            label="Feedback & Ideas"
+            value="Share your thoughts"
+            onPress={() => navigation.navigate("Feedback" as never)}
+            testID="button-feedback"
+          />
+          <SettingItem
+            icon="award"
+            label="Plans"
+            value="Free (Beta)"
+            onPress={() => navigation.navigate("Plans" as never)}
+            testID="button-plans"
           />
           <SettingItem
             icon="info"

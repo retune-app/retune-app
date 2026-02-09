@@ -3165,6 +3165,35 @@ Respond with ONLY the notification message text.${avoidClause}`,
     }
   });
 
+  // Feedback & feature requests endpoint
+  app.post("/api/feedback", optionalAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { type, title, message, email } = req.body;
+
+      if (!title || !message) {
+        return res.status(400).json({ error: "Title and message are required" });
+      }
+
+      const userId = req.userId || null;
+      const subject = `[${type || "feedback"}] ${title}`;
+
+      const [request] = await db
+        .insert(supportRequests)
+        .values({
+          userId,
+          email: email || "not provided",
+          subject,
+          message,
+        })
+        .returning();
+
+      res.json({ success: true, requestId: request.id });
+    } catch (error: any) {
+      console.error("Error submitting feedback:", error);
+      res.status(500).json({ error: "Failed to submit feedback" });
+    }
+  });
+
   // TEMPORARY: Admin endpoint to generate audio for sample affirmations
   app.post("/api/admin/generate-sample-audio", async (req: Request, res: Response) => {
     try {

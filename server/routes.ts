@@ -2558,11 +2558,11 @@ Rules:
       const duration = validDurations.includes(Number(rawDuration)) ? Number(rawDuration) : 1;
 
       const wordCountMap: Record<number, { min: number; max: number }> = {
-        1: { min: 70, max: 100 },
-        2: { min: 140, max: 190 },
-        3: { min: 210, max: 280 },
+        1: { min: 50, max: 75 },
+        2: { min: 100, max: 145 },
+        3: { min: 150, max: 210 },
       };
-      const maxTokensMap: Record<number, number> = { 1: 250, 2: 400, 3: 550 };
+      const maxTokensMap: Record<number, number> = { 1: 200, 2: 350, 3: 450 };
       const wordCount = wordCountMap[duration] || wordCountMap[1];
       const maxTokens = maxTokensMap[duration] || 300;
 

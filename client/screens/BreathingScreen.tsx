@@ -646,6 +646,39 @@ export default function BreathingScreen() {
                 paddingBottom: insets.bottom + Spacing.xl,
               }
             ]}>
+              <Animated.View style={[styles.fsTopControls, controlsAnimatedStyle]} pointerEvents={controlsVisible ? 'auto' : 'none'} onStartShouldSetResponder={() => true}>
+                <View style={styles.fsTopLeft}>
+                  <Text style={[styles.fsTechniqueBadge, { backgroundColor: `${selectedTechnique.color}20`, color: selectedTechnique.color }]}>
+                    {selectedTechnique.name}
+                  </Text>
+                </View>
+                <View style={styles.fsTopRight}>
+                  {musicEnabled ? (
+                    <Pressable
+                      onPress={() => { resetControlsTimer(); setVolume(volume > 0.05 ? 0 : 0.7); }}
+                      style={[styles.fsControlBtn, { backgroundColor: `${selectedTechnique.color}20` }]}
+                    >
+                      <Feather name={volume > 0.05 ? "music" : "volume-x"} size={18} color={selectedTechnique.color} />
+                    </Pressable>
+                  ) : null}
+                  {voiceEnabled ? (
+                    <Pressable
+                      onPress={async () => {
+                        resetControlsTimer();
+                        const newVol = voiceVolume > 0.05 ? 0 : 0.7;
+                        setVoiceVolume(newVol);
+                        if (affirmationSoundRef.current) {
+                          try { await affirmationSoundRef.current.setVolumeAsync(newVol); } catch {}
+                        }
+                      }}
+                      style={[styles.fsControlBtn, { backgroundColor: `${selectedTechnique.color}20` }]}
+                    >
+                      <Feather name={voiceVolume > 0.05 ? "mic" : "mic-off"} size={18} color={selectedTechnique.color} />
+                    </Pressable>
+                  ) : null}
+                </View>
+              </Animated.View>
+
               <View style={styles.portraitCenterSection}>
                 {progressIndicatorEnabled ? (
                   <View style={styles.progressRingContainer}>
@@ -685,6 +718,25 @@ export default function BreathingScreen() {
                   hapticsEnabled={hapticsEnabled}
                   size={portraitCircleSize}
                 />
+
+                <Animated.View style={[styles.fsCenterControls, controlsAnimatedStyle]} pointerEvents={controlsVisible ? 'auto' : 'none'} onStartShouldSetResponder={() => true}>
+                  <Pressable
+                    onPress={() => { resetControlsTimer(); (isPlaying ? handlePause : handleResume)(); }}
+                  >
+                    <LinearGradient
+                      colors={[selectedTechnique.color, `${selectedTechnique.color}CC`]}
+                      style={styles.portraitPlayButton}
+                    >
+                      <Feather name={isPlaying ? "pause" : "play"} size={28} color="#FFFFFF" />
+                    </LinearGradient>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => { resetControlsTimer(); handleStop(); }}
+                    style={styles.landscapeStopButton}
+                  >
+                    <Feather name="square" size={20} color="#FFFFFF" />
+                  </Pressable>
+                </Animated.View>
               </View>
 
               <Animated.View style={[styles.portraitBottomSection, controlsAnimatedStyle]} pointerEvents={controlsVisible ? 'auto' : 'none'} onStartShouldSetResponder={() => true}>
@@ -702,47 +754,6 @@ export default function BreathingScreen() {
                     <Text style={styles.landscapeStatValue}>{cyclesCompleted}/{totalCycles}</Text>
                   </View>
                 </View>
-                
-                <View style={styles.portraitControlsRow}>
-                  <Pressable
-                    onPress={() => { resetControlsTimer(); (isPlaying ? handlePause : handleResume)(); }}
-                  >
-                    <LinearGradient
-                      colors={[selectedTechnique.color, `${selectedTechnique.color}CC`]}
-                      style={styles.portraitPlayButton}
-                    >
-                      <Feather name={isPlaying ? "pause" : "play"} size={28} color="#FFFFFF" />
-                    </LinearGradient>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => { resetControlsTimer(); handleStop(); }}
-                    style={styles.landscapeStopButton}
-                  >
-                    <Feather name="square" size={20} color="#FFFFFF" />
-                  </Pressable>
-                </View>
-
-                {(musicEnabled || voiceEnabled) ? (
-                  <View style={styles.sessionVolumeRow}>
-                    <Feather
-                      name={(musicEnabled ? volume : voiceVolume) > 0.05 ? "volume-1" : "volume-x"}
-                      size={14}
-                      color="rgba(255,255,255,0.3)"
-                    />
-                    <Slider
-                      style={styles.sessionVolumeSlider}
-                      minimumValue={0.05}
-                      maximumValue={1}
-                      value={musicEnabled ? volume : voiceVolume}
-                      onValueChange={(val: number) => { resetControlsTimer(); handleSessionVolumeChange(val); }}
-                      minimumTrackTintColor="rgba(255,255,255,0.35)"
-                      maximumTrackTintColor="rgba(255,255,255,0.1)"
-                      thumbTintColor="rgba(255,255,255,0.5)"
-                      testID="slider-session-volume"
-                    />
-                    <Feather name="volume-2" size={14} color="rgba(255,255,255,0.3)" />
-                  </View>
-                ) : null}
               </Animated.View>
             </View>
           </Pressable>
@@ -1689,16 +1700,43 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  sessionVolumeRow: {
+  fsTopControls: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "100%",
+  },
+  fsTopLeft: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: Spacing.xl,
-    gap: Spacing.xs,
-    marginTop: Spacing.sm,
   },
-  sessionVolumeSlider: {
-    flex: 1,
+  fsTopRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  fsTechniqueBadge: {
+    fontSize: 12,
+    fontFamily: "Nunito_600SemiBold",
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    overflow: "hidden",
+    letterSpacing: 0.5,
+  },
+  fsControlBtn: {
+    width: 36,
     height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  fsCenterControls: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.lg,
+    marginTop: Spacing.xl,
   },
   portraitBottomSection: {
     alignItems: "center",
@@ -1712,13 +1750,6 @@ const styles = StyleSheet.create({
   portraitStatItem: {
     alignItems: "center",
   },
-  portraitControlsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: Spacing.md,
-  },
-
   techniqueInfoButton: {
     alignSelf: "flex-start",
     marginTop: 4,

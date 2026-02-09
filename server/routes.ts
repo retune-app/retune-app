@@ -249,6 +249,8 @@ SUBCONSCIOUS LANGUAGE RULES (apply ALL of these):
 
 8. EMOTIONAL ANCHORING: Each sentence should evoke a specific positive emotion (safety, pride, gratitude, excitement, peace, love). Name the emotion when possible: "I feel deeply proud of who I am becoming."
 
+9. WORD VARIETY: Avoid overusing any single verb or adjective. Specifically, do NOT overuse these words: embrace, unlock, harness, ignite, unleash, manifest, radiate, transcend, awaken, abundant, limitless, boundless, infinite. Use each at most ONCE across the entire script, and prefer simpler, more natural alternatives like "welcome", "hold", "carry", "choose", "build", "step into", "notice", "trust".
+
 FORMAT: No titles, no instructions, no numbering, no quotes. Just ${config.sentences} flowing sentences, each on its own line. Write as if speaking directly to the deepest part of someone's mind.
 
 TONE AND STYLE: ${toneInstruction}`;
@@ -300,13 +302,14 @@ async function autoGenerateTitle(script: string): Promise<string> {
           role: "system",
           content: `You are a title generator for personalized affirmations. Create a short, inspiring title (3-6 words) that captures the core theme of the affirmation.
 
-TITLE RULES:
+CRITICAL RULES:
 - Be specific and vivid — reflect the unique theme, not generic motivation
 - Use fresh, varied language — never default to the same patterns
 - Do NOT include quotation marks
+- NEVER start the title with any word from the banned list below
 
-OVERUSED WORDS TO AVOID (use sparingly or not at all):
-Embrace, Unlock, Harness, Ignite, Unleash, Empower, Elevate, Manifest, Radiate, Cultivate, Transcend, Awaken, Thrive, Navigate, Journey, Transform, Limitless, Boundless, Infinite, Unstoppable, Abundant, Sacred, Divine, Vibrant, Magnetic
+BANNED WORDS (NEVER use these in titles):
+Embrace, Unlock, Harness, Ignite, Unleash, Empower, Elevate, Manifest, Radiate, Cultivate, Transcend, Awaken, Thrive, Navigate, Journey, Transform, Limitless, Boundless, Infinite, Unstoppable, Abundant, Sacred, Divine, Vibrant, Magnetic, Unleashing, Embracing, Unlocking, Harnessing, Igniting
 
 GOOD TITLE EXAMPLES:
 - Steady Mind, Open Heart
@@ -315,12 +318,18 @@ GOOD TITLE EXAMPLES:
 - Roots of Real Confidence
 - Sleep Like Still Water
 - Bright Focus, Clear Path
+- Calm in the Storm
+- My Voice, My Power
+- Growing Stronger Each Day
+- Peaceful and Present
 
-BAD TITLE EXAMPLES (too generic or overused words):
+BAD TITLE EXAMPLES (REJECTED — uses banned words):
 - Embrace Your Inner Power
 - Unlock Your True Potential
 - Radiate Boundless Energy
 - Manifest Infinite Abundance
+- Embracing Growth and Confidence
+- Embrace the Abundance Within
 
 Respond with ONLY the title, nothing else.`,
         },
@@ -329,11 +338,13 @@ Respond with ONLY the title, nothing else.`,
           content: script,
         },
       ],
-      temperature: 0.7,
+      temperature: 0.9,
       max_tokens: 30,
     });
 
-    return response.choices[0]?.message?.content?.trim() || "My Affirmation";
+    let title = response.choices[0]?.message?.content?.trim() || "My Affirmation";
+    title = title.replace(/^["']|["']$/g, "");
+    return title;
   } catch (error) {
     console.error("Auto-title generation failed:", error);
     return "My Affirmation";

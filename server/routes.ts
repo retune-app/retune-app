@@ -2382,7 +2382,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           night: { name: "4-7-8 Relaxation", id: "478" },
         },
         energized: {
-          morning: { name: "Coherent Breathing", id: "coherent" },
+          morning: { name: "Energizing Breath", id: "energizing" },
           afternoon: { name: "Energizing Breath", id: "energizing" },
           evening: { name: "Coherent Breathing", id: "coherent" },
           night: { name: "4-7-8 Relaxation", id: "478" },

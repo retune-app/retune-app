@@ -111,10 +111,10 @@ const STORAGE_KEY = '@rewired_background_music';
 const VOLUME_STORAGE_KEY = '@rewired_background_music_volume';
 
 function applyVolumeCurve(linearVolume: number): number {
-  return Math.pow(linearVolume, 3);
+  return Math.pow(linearVolume, 2);
 }
 
-const DUCK_FACTOR = 0.4;
+const DUCK_FACTOR = 0.6;
 
 interface BackgroundMusicContextType {
   selectedMusic: BackgroundMusicType;

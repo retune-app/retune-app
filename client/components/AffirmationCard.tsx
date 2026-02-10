@@ -383,10 +383,13 @@ const styles = StyleSheet.create({
   content: {
     flexDirection: "row",
     alignItems: "center",
-    padding: Spacing.lg,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.sm,
+    paddingBottom: Spacing.lg,
   },
   textContainer: {
     flex: 1,
+    paddingRight: Spacing.sm,
   },
   title: {
     marginBottom: 2,

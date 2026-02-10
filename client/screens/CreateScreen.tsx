@@ -1462,7 +1462,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   swipeHint: {
-    textAlign: "center",
+    textAlign: "left",
   },
   ctaButton: {
     marginTop: Spacing.lg,

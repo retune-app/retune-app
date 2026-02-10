@@ -688,11 +688,127 @@
       justify-content: center;
     }
 
-    .journey-images img {
-      width: 180px;
+    .journey-images .phone-frame {
+      max-width: 240px;
+    }
+
+    /* ===== PHONE FRAME ===== */
+    .phone-frame {
+      position: relative;
+      display: inline-block;
+      border-radius: 32px;
+      overflow: hidden;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.12), 0 2px 10px rgba(0,0,0,0.06);
+      border: 3px solid rgba(44, 44, 44, 0.08);
+      background: #000;
+    }
+
+    .phone-frame img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    /* ===== AFFIRMATION JOURNEY ===== */
+    .affirmation-journey {
+      padding: 120px 0;
+      background: var(--white);
+    }
+
+    .journey-steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 40px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .journey-step {
+      text-align: center;
+      position: relative;
+    }
+
+    .step-number {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--believe);
+      color: var(--white);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+    }
+
+    .journey-step .phone-frame {
+      max-width: 220px;
+      margin: 0 auto 24px;
+    }
+
+    .journey-step h3 {
+      font-size: 18px;
+      margin-bottom: 10px;
+      color: var(--text);
+    }
+
+    .journey-step p {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.65;
+      max-width: 280px;
+      margin: 0 auto;
+    }
+
+    /* ===== CAPABILITIES SHOWCASE ===== */
+    .capabilities-showcase {
+      margin-top: 60px;
+    }
+
+    .showcase-card {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 48px;
+      align-items: center;
+      margin-bottom: 60px;
+      padding: 40px;
+      background: var(--bg);
       border-radius: 24px;
-      box-shadow: var(--card-shadow);
       border: 1px solid var(--border);
+    }
+
+    .showcase-card:last-child {
+      margin-bottom: 0;
+    }
+
+    .showcase-card.reverse {
+      direction: rtl;
+    }
+
+    .showcase-card.reverse > * {
+      direction: ltr;
+    }
+
+    .showcase-card .phone-frame {
+      max-width: 200px;
+    }
+
+    .showcase-info h3 {
+      font-size: clamp(20px, 2.5vw, 26px);
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+
+    .showcase-info p {
+      font-size: 15px;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+
+    .showcase-info .journey-tag {
+      margin-bottom: 12px;
     }
 
     /* ===== CAPABILITIES GRID ===== */
@@ -1250,6 +1366,20 @@
       .footer-grid {
         grid-template-columns: repeat(2, 1fr);
       }
+
+      .journey-steps {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 24px;
+      }
+
+      .showcase-card {
+        gap: 32px;
+        padding: 28px;
+      }
+
+      .showcase-card .phone-frame {
+        max-width: 170px;
+      }
     }
 
     @media (max-width: 768px) {
@@ -1271,8 +1401,39 @@
         gap: 40px;
       }
 
-      .journey-images img {
-        width: 140px;
+      .journey-images .phone-frame {
+        max-width: 200px;
+      }
+
+      .affirmation-journey {
+        padding: 70px 0;
+      }
+
+      .journey-steps {
+        grid-template-columns: 1fr;
+        gap: 48px;
+        max-width: 320px;
+        margin: 0 auto;
+      }
+
+      .journey-step .phone-frame {
+        max-width: 200px;
+      }
+
+      .showcase-card {
+        grid-template-columns: 1fr;
+        text-align: center;
+        gap: 24px;
+        padding: 24px;
+      }
+
+      .showcase-card.reverse {
+        direction: ltr;
+      }
+
+      .showcase-card .phone-frame {
+        max-width: 200px;
+        margin: 0 auto;
       }
 
       .comparison-table {
@@ -1344,8 +1505,16 @@
         justify-content: center;
       }
 
-      .journey-images img {
-        width: 120px;
+      .journey-images .phone-frame {
+        max-width: 180px;
+      }
+
+      .journey-step .phone-frame {
+        max-width: 180px;
+      }
+
+      .showcase-card .phone-frame {
+        max-width: 180px;
       }
 
       .timeline {
@@ -1545,8 +1714,9 @@
           <p>You're listening to "I am calm and grounded." You tap Breathe. The app doesn't just switch tabs&#8212;it carries your affirmation with you. Your words become the voice guiding your breath. They loop softly under ambient music while you breathe. What you were hearing becomes what you're feeling.</p>
         </div>
         <div class="journey-images">
-          <img src="/landing-assets/hero-light.jpg" alt="RETUNED affirmation player showing active session" loading="lazy" width="180" height="390">
-          <img src="/landing-assets/breathing-active.jpg" alt="RETUNED breathing mode with affirmation guide" loading="lazy" width="180" height="390">
+          <div class="phone-frame">
+            <img src="/landing-assets/screenshot-library-favorites.jpg" alt="RETUNED Believe tab showing affirmation library with Inner Voice, favorites, and mini player" loading="lazy">
+          </div>
         </div>
       </div>
 
@@ -1558,8 +1728,9 @@
           <p>After breathing, the Mindful Moment check-in asks how you feel. Based on your response, the app recommends a micro-meditation&#8212;personalized in real-time by AI. You stay in the same immersive environment. The breathing ring becomes your meditation space. RSVP words sync with audio as you listen.</p>
         </div>
         <div class="journey-images">
-          <img src="/landing-assets/breathing-inhale.jpg" alt="RETUNED breathing exercise in progress" loading="lazy" width="180" height="390">
-          <img src="/landing-assets/rsvp-focus.jpg" alt="RETUNED RSVP meditation with synced words" loading="lazy" width="180" height="390">
+          <div class="phone-frame">
+            <img src="/landing-assets/screenshot-breathe-home.jpg" alt="RETUNED Breathe tab with Box Breathing, daily greeting, and Radiant Bloom rings" loading="lazy">
+          </div>
         </div>
       </div>
 
@@ -1571,8 +1742,45 @@
           <p>After your meditation, the app suggests an affirmation that matches your post-practice state. Maybe it's one you already have. Maybe it suggests creating a new one based on what you just experienced. The system learns: Which affirmations help which moods? What time of day do you need breathwork? The more you use the flywheel, the more personalized it becomes.</p>
         </div>
         <div class="journey-images">
-          <img src="/landing-assets/library-favorites.jpg" alt="RETUNED affirmation library with smart suggestions" loading="lazy" width="180" height="390">
-          <img src="/landing-assets/create-script.jpg" alt="RETUNED create new affirmation screen" loading="lazy" width="180" height="390">
+          <div class="phone-frame">
+            <img src="/landing-assets/screenshot-radiant-bloom.png" alt="RETUNED Radiant Bloom breathing visualization with concentric rings" loading="lazy">
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- YOUR AFFIRMATION JOURNEY -->
+  <section class="affirmation-journey">
+    <div class="container">
+      <div class="section-header fade-in">
+        <h2>Create Affirmations That Speak to You</h2>
+        <p>From choosing your focus to hearing your words in your own voice — in three simple steps.</p>
+      </div>
+      <div class="journey-steps">
+        <div class="journey-step fade-in">
+          <div class="step-number">1</div>
+          <div class="phone-frame">
+            <img src="/landing-assets/screenshot-create-pillars.jpg" alt="Choose your Life Pillar: Mind, Body, Spirit, Connection, or Achievement" loading="lazy">
+          </div>
+          <h3>Choose Your Focus</h3>
+          <p>Select from five Life Pillars — Mind, Body, Spirit, Connection, or Achievement — to ground your affirmation in what matters most right now.</p>
+        </div>
+        <div class="journey-step fade-in">
+          <div class="step-number">2</div>
+          <div class="phone-frame">
+            <img src="/landing-assets/screenshot-create-goals.jpg" alt="Share your intentions and choose affirmation length" loading="lazy">
+          </div>
+          <h3>Share Your Intention</h3>
+          <p>Tell the app what you want to achieve in your own words. Add tags, pick a length, and let AI understand your unique goals.</p>
+        </div>
+        <div class="journey-step fade-in">
+          <div class="step-number">3</div>
+          <div class="phone-frame">
+            <img src="/landing-assets/screenshot-create-script.jpg" alt="AI-generated affirmation script with Subconscious Language Patterns" loading="lazy">
+          </div>
+          <h3>AI Writes Your Script</h3>
+          <p>Powered by Subconscious Language Patterns, the AI crafts affirmations in present tense with sensory imagery, emotional anchoring, and progressive believability.</p>
         </div>
       </div>
     </div>
@@ -1639,6 +1847,28 @@
           </div>
           <h3>Adaptive Intelligence</h3>
           <p>The flywheel learns your patterns: which transitions you prefer, what moods need what practices, when you engage most. Every session makes the next one more relevant.</p>
+        </div>
+      </div>
+      <div class="capabilities-showcase fade-in">
+        <div class="showcase-card">
+          <div class="phone-frame">
+            <img src="/landing-assets/screenshot-rsvp-playback.jpg" alt="RSVP Focus Mode with word-synced playback and customizable settings" loading="lazy">
+          </div>
+          <div class="showcase-info">
+            <span class="journey-tag believe-breathe">RSVP Focus Mode</span>
+            <h3>Words That Follow Your Voice</h3>
+            <p>Each word appears in sync with the audio, reinforcing your affirmations visually. Adjust font size, toggle highlight focus, and enable haptic feedback — all designed to deepen the experience.</p>
+          </div>
+        </div>
+        <div class="showcase-card reverse">
+          <div class="phone-frame">
+            <img src="/landing-assets/screenshot-library-all.jpg" alt="Affirmation library with Inner Voice, AI voices, categories, and tags" loading="lazy">
+          </div>
+          <div class="showcase-info">
+            <span class="journey-tag meditate-believe">Your Affirmation Library</span>
+            <h3>Every Affirmation, Organized and Ready</h3>
+            <p>Browse by Life Pillar, search by tag, or filter your favorites. Each affirmation shows its voice, length, and emotional tags — so you always find the right words for the moment.</p>
+          </div>
         </div>
       </div>
     </div>

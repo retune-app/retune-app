@@ -148,9 +148,9 @@ export default function BreathingCircle({
     transform: [{ scale: idlePulse.value }],
   }));
 
-  const innerGlowStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: interpolate(scale.value, [0.6, 1], [0.85, 1.1]) }],
-    opacity: interpolate(scale.value, [0.6, 1], [0.15, 0.5]),
+  const midRingStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: interpolate(scale.value, [0.6, 1], [0.9, 1.08]) }],
+    opacity: interpolate(scale.value, [0.6, 1], [0.1, 0.35]),
   }));
 
   const outerRingStyle = useAnimatedStyle(() => ({
@@ -184,27 +184,16 @@ export default function BreathingCircle({
         shouldRasterizeIOS={rasterize}
         renderToHardwareTextureAndroid={hardwareTexture}
         style={[
-          styles.innerGlow,
-          innerGlowStyle,
+          styles.midRing,
+          midRingStyle,
           {
             width: size * 0.75,
             height: size * 0.75,
             borderRadius: size * 0.375,
+            borderColor: phaseColor,
           },
         ]}
-      >
-        <LinearGradient
-          colors={[`${phaseColor}CC`, `${phaseColor}40`, `${phaseColor}00`]}
-          locations={[0, 0.6, 1]}
-          start={{ x: 0.5, y: 0.5 }}
-          end={{ x: 1, y: 1 }}
-          style={{
-            width: size * 0.75,
-            height: size * 0.75,
-            borderRadius: size * 0.375,
-          }}
-        />
-      </Animated.View>
+      />
 
       <Animated.View
         shouldRasterizeIOS={rasterize}
@@ -269,8 +258,9 @@ const styles = StyleSheet.create({
     position: "absolute",
     borderWidth: 2,
   },
-  innerGlow: {
+  midRing: {
     position: "absolute",
+    borderWidth: 1.5,
   },
   mainCircle: {
     alignItems: "center",

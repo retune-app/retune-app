@@ -218,20 +218,11 @@ export default function BreathingCircle({
             <View style={styles.textContainer}>
               <ThemedText
                 type="h2"
-                style={[styles.phaseText, {
-                  color: "#FFFFFF",
-                  textShadowColor: "rgba(0,0,0,0.35)",
-                  textShadowOffset: { width: 0, height: 1 },
-                  textShadowRadius: 3,
-                }]}
+                style={[styles.phaseText, { color: "#FFFFFF" }]}
               >
                 {PHASE_LABELS[currentPhase]}
               </ThemedText>
-              <Text style={[styles.countdownText, {
-                textShadowColor: "rgba(0,0,0,0.35)",
-                textShadowOffset: { width: 0, height: 1 },
-                textShadowRadius: 4,
-              }]}>{currentCountdown}</Text>
+              <Text style={styles.countdownText}>{currentCountdown}</Text>
             </View>
           ) : null}
         </LinearGradient>

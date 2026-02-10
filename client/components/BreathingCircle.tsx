@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { View, StyleSheet, Text, Platform, PixelRatio } from "react-native";
+import { View, StyleSheet, Text } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -160,14 +160,9 @@ export default function BreathingCircle({
 
   const phaseColor = technique.color || ACCENT_GOLD;
 
-  const rasterize = Platform.OS === "ios";
-  const hardwareTexture = Platform.OS === "android";
-
   return (
     <Animated.View style={[styles.container, { width: size, height: size }, !isPlaying ? idlePulseStyle : undefined]}>
       <Animated.View
-        shouldRasterizeIOS={rasterize}
-        renderToHardwareTextureAndroid={hardwareTexture}
         style={[
           styles.outerRing,
           outerRingStyle,
@@ -181,8 +176,6 @@ export default function BreathingCircle({
       />
 
       <Animated.View
-        shouldRasterizeIOS={rasterize}
-        renderToHardwareTextureAndroid={hardwareTexture}
         style={[
           styles.midRing,
           midRingStyle,
@@ -196,8 +189,6 @@ export default function BreathingCircle({
       />
 
       <Animated.View
-        shouldRasterizeIOS={rasterize}
-        renderToHardwareTextureAndroid={hardwareTexture}
         style={[
           animatedCircleStyle,
           styles.mainCircle,

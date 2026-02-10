@@ -1395,7 +1395,7 @@ const styles = StyleSheet.create({
   regenerateButton: {
     flexDirection: "row",
     alignItems: "center",
-    alignSelf: "flex-start",
+    alignSelf: "flex-end",
     paddingVertical: 6,
     paddingHorizontal: Spacing.lg,
   },

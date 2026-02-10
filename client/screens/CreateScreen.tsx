@@ -1045,47 +1045,49 @@ export default function CreateScreen() {
                             {scriptsByLength[viewingLength] || ""}
                           </ThemedText>
                         </View>
-                        <Pressable onPress={handleRegenerate} disabled={generateMutation.isPending} style={styles.regenerateButton}>
-                          <Feather 
-                            name="refresh-cw" 
-                            size={14} 
-                            color={generateMutation.isPending ? theme.textSecondary : theme.primary} 
-                          />
-                          <ThemedText type="caption" style={{ color: generateMutation.isPending ? theme.textSecondary : theme.primary, marginLeft: 4 }}>
-                            Try another
-                          </ThemedText>
-                        </Pressable>
                         {availableLengths.length > 1 ? (
                           <>
-                            <View style={styles.paginationContainer}>
-                              {availableLengths.map((lengthKey) => (
-                                <Pressable
-                                  key={lengthKey}
-                                  onPress={() => setViewingLength(lengthKey)}
-                                  style={[
-                                    styles.lengthPill,
-                                    {
-                                      backgroundColor: lengthKey === viewingLength
-                                        ? (selectedPillarData?.color || theme.primary)
-                                        : `${selectedPillarData?.color || theme.primary}15`,
-                                      borderColor: lengthKey === viewingLength
-                                        ? (selectedPillarData?.color || theme.primary)
-                                        : `${selectedPillarData?.color || theme.primary}40`,
-                                    },
-                                  ]}
-                                >
-                                  <ThemedText
-                                    type="caption"
-                                    style={{
-                                      color: lengthKey === viewingLength ? "#fff" : (selectedPillarData?.color || theme.primary),
-                                      fontWeight: "700",
-                                      fontSize: 12,
-                                    }}
+                            <View style={styles.paginationRow}>
+                              <View style={styles.paginationContainer}>
+                                {availableLengths.map((lengthKey) => (
+                                  <Pressable
+                                    key={lengthKey}
+                                    onPress={() => setViewingLength(lengthKey)}
+                                    style={[
+                                      styles.lengthPill,
+                                      {
+                                        backgroundColor: lengthKey === viewingLength
+                                          ? (selectedPillarData?.color || theme.primary)
+                                          : `${selectedPillarData?.color || theme.primary}15`,
+                                        borderColor: lengthKey === viewingLength
+                                          ? (selectedPillarData?.color || theme.primary)
+                                          : `${selectedPillarData?.color || theme.primary}40`,
+                                      },
+                                    ]}
                                   >
-                                    {LENGTH_LABELS[lengthKey]}
-                                  </ThemedText>
-                                </Pressable>
-                              ))}
+                                    <ThemedText
+                                      type="caption"
+                                      style={{
+                                        color: lengthKey === viewingLength ? "#fff" : (selectedPillarData?.color || theme.primary),
+                                        fontWeight: "700",
+                                        fontSize: 12,
+                                      }}
+                                    >
+                                      {LENGTH_LABELS[lengthKey]}
+                                    </ThemedText>
+                                  </Pressable>
+                                ))}
+                              </View>
+                              <Pressable onPress={handleRegenerate} disabled={generateMutation.isPending} style={styles.regenerateButton}>
+                                <Feather 
+                                  name="refresh-cw" 
+                                  size={14} 
+                                  color={generateMutation.isPending ? theme.textSecondary : theme.primary} 
+                                />
+                                <ThemedText type="caption" style={{ color: generateMutation.isPending ? theme.textSecondary : theme.primary, marginLeft: 4 }}>
+                                  Try another
+                                </ThemedText>
+                              </Pressable>
                             </View>
                             <ThemedText type="caption" style={[styles.swipeHint, { color: theme.textSecondary }]}>
                               {availableLengths.length < 3
@@ -1094,9 +1096,21 @@ export default function CreateScreen() {
                             </ThemedText>
                           </>
                         ) : (
-                          <ThemedText type="caption" style={[styles.swipeHint, { color: theme.textSecondary }]}>
-                            Try generating Short, Medium, and Long to compare
-                          </ThemedText>
+                          <View style={styles.paginationRow}>
+                            <ThemedText type="caption" style={[styles.swipeHint, { color: theme.textSecondary, flex: 1 }]}>
+                              Try generating Short, Medium, and Long to compare
+                            </ThemedText>
+                            <Pressable onPress={handleRegenerate} disabled={generateMutation.isPending} style={styles.regenerateButton}>
+                              <Feather 
+                                name="refresh-cw" 
+                                size={14} 
+                                color={generateMutation.isPending ? theme.textSecondary : theme.primary} 
+                              />
+                              <ThemedText type="caption" style={{ color: generateMutation.isPending ? theme.textSecondary : theme.primary, marginLeft: 4 }}>
+                                Try another
+                              </ThemedText>
+                            </Pressable>
+                          </View>
                         )}
                       </Card>
                     </Animated.View>
@@ -1395,9 +1409,7 @@ const styles = StyleSheet.create({
   regenerateButton: {
     flexDirection: "row",
     alignItems: "center",
-    alignSelf: "flex-end",
-    paddingVertical: 6,
-    paddingHorizontal: Spacing.lg,
+    paddingVertical: 4,
   },
   shimmerOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -1429,12 +1441,17 @@ const styles = StyleSheet.create({
     minWidth: 36,
     alignItems: "center" as const,
   },
+  paginationRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.xs,
+  },
   paginationContainer: {
     flexDirection: "row",
-    justifyContent: "center",
     alignItems: "center",
     gap: Spacing.sm,
-    marginBottom: Spacing.sm,
   },
   dotTouchArea: {
     padding: Spacing.xs,

@@ -191,6 +191,16 @@ export default function BreathingCircle({
   const glowD = size * 0.72;
   const coreD = size * 0.55;
 
+  const textBreathStyle = useAnimatedStyle(() => {
+    const p = progress.value;
+    const s = interpolate(p, [0, 1], [0.85, 1.1]);
+    const o = interpolate(p, [0, 1], [0.7, 1.0]);
+    return {
+      transform: [{ scale: s }],
+      opacity: o,
+    };
+  });
+
   const countdownFontSize = Math.round(size * 0.16);
   const phaseFontSize = Math.round(size * 0.05);
 
@@ -290,7 +300,7 @@ export default function BreathingCircle({
       </Animated.View>
 
       {showContent && isPlaying ? (
-        <View style={styles.textOverlay} pointerEvents="none">
+        <Animated.View style={[styles.textOverlay, textBreathStyle]} pointerEvents="none">
           <Text
             style={[
               styles.phaseLabel,
@@ -313,7 +323,7 @@ export default function BreathingCircle({
           >
             {currentCountdown}
           </Text>
-        </View>
+        </Animated.View>
       ) : null}
     </View>
   );

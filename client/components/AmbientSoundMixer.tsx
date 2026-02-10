@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { View, StyleSheet, Pressable, Modal, ScrollView } from "react-native";
+import React, { useState, useCallback } from "react";
+import { View, StyleSheet, Pressable, Modal, ScrollView, Dimensions, PanResponder } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -9,6 +9,7 @@ import Animated, {
   withTiming,
   Easing,
   interpolate,
+  runOnJS,
 } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
@@ -35,6 +36,37 @@ export function AmbientSoundMixer({ compact = false }: AmbientSoundMixerProps) {
   const { selectedMusic, setSelectedMusic, volume, setVolume, isPlaying } = useBackgroundMusic();
   const [showModal, setShowModal] = useState(false);
   const pulseValue = useSharedValue(0);
+  const translateY = useSharedValue(0);
+
+  const closeModal = useCallback(() => {
+    setShowModal(false);
+    translateY.value = 0;
+  }, []);
+
+  const panResponder = React.useMemo(() => PanResponder.create({
+    onStartShouldSetPanResponder: () => false,
+    onMoveShouldSetPanResponder: (_, gestureState) => {
+      return gestureState.dy > 10 && Math.abs(gestureState.dy) > Math.abs(gestureState.dx);
+    },
+    onPanResponderMove: (_, gestureState) => {
+      if (gestureState.dy > 0) {
+        translateY.value = gestureState.dy;
+      }
+    },
+    onPanResponderRelease: (_, gestureState) => {
+      if (gestureState.dy > 80 || gestureState.vy > 0.5) {
+        translateY.value = withTiming(Dimensions.get("window").height, { duration: 200 }, () => {
+          runOnJS(closeModal)();
+        });
+      } else {
+        translateY.value = withSpring(0, { damping: 20, stiffness: 300 });
+      }
+    },
+  }), [closeModal]);
+
+  const modalSlideStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+  }));
 
   React.useEffect(() => {
     if (isPlaying && selectedMusic !== "none") {
@@ -60,7 +92,7 @@ export function AmbientSoundMixer({ compact = false }: AmbientSoundMixerProps) {
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
     await setSelectedMusic(type);
     if (compact) {
-      setShowModal(false);
+      closeModal();
     }
   };
 
@@ -96,11 +128,13 @@ export function AmbientSoundMixer({ compact = false }: AmbientSoundMixerProps) {
           visible={showModal}
           transparent
           animationType="slide"
-          onRequestClose={() => setShowModal(false)}
+          onRequestClose={closeModal}
+          onShow={() => { translateY.value = 0; }}
         >
-          <Pressable style={styles.modalOverlay} onPress={() => setShowModal(false)}>
-            <View
-              style={[styles.modalContent, { backgroundColor: theme.cardBackground }]}
+          <Pressable style={styles.modalOverlay} onPress={closeModal}>
+            <Animated.View
+              style={[styles.modalContent, { backgroundColor: theme.cardBackground }, modalSlideStyle]}
+              {...panResponder.panHandlers}
               onStartShouldSetResponder={() => true}
             >
               <View style={styles.modalHandle} />
@@ -433,7 +467,7 @@ export function AmbientSoundMixer({ compact = false }: AmbientSoundMixerProps) {
                   />
                 </View>
               ) : null}
-            </View>
+            </Animated.View>
           </Pressable>
         </Modal>
       </>

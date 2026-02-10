@@ -204,6 +204,7 @@ export default function CreateScreen() {
   const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>([]);
   const [goal, setGoal] = useState("");
   const [scriptsByLength, setScriptsByLength] = useState<Record<string, string>>({});
+  const [titlesByLength, setTitlesByLength] = useState<Record<string, string>>({});
   const [viewingLength, setViewingLength] = useState<string>("medium");
   const [manualScript, setManualScript] = useState("");
   const [selectedLength, setSelectedLength] = useState<LengthOption>("Medium");
@@ -389,6 +390,12 @@ export default function CreateScreen() {
         ...prev,
         [lengthKey]: data.script,
       }));
+      if (data.title) {
+        setTitlesByLength((prev) => ({
+          ...prev,
+          [lengthKey]: data.title,
+        }));
+      }
       setViewingLength(lengthKey);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Keyboard.dismiss();
@@ -460,7 +467,7 @@ export default function CreateScreen() {
   const createMutation = useMutation({
     mutationFn: async (options?: { forceAiVoice?: boolean }) => {
       const res = await apiRequest("POST", "/api/affirmations/create-with-voice", {
-        title: goal.substring(0, 50) || "My Affirmation",
+        title: titlesByLength[viewingLength] || goal.substring(0, 50) || "My Affirmation",
         script: currentScript,
         pillar: selectedPillar,
         categories: selectedSubcategories,
@@ -1025,7 +1032,7 @@ export default function CreateScreen() {
                         <View style={styles.scriptHeader}>
                           <View style={styles.scriptTitleRow}>
                             <Feather name="file-text" size={16} color={accentColor} />
-                            <ThemedText type="h4">Your Script</ThemedText>
+                            <ThemedText type="h4" numberOfLines={1} style={{ flexShrink: 1 }}>{titlesByLength[viewingLength] || "Your Script"}</ThemedText>
                             <View style={[styles.lengthBadge, { backgroundColor: `${selectedPillarData?.color || theme.primary}20` }]}>
                               <ThemedText type="caption" style={{ color: selectedPillarData?.color || theme.primary, fontWeight: "600" }}>
                                 {LENGTH_FULL[viewingLength] || viewingLength}

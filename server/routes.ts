@@ -748,6 +748,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const categoryList = categories || (category ? [category] : []);
       const script = await generateScript(goal, categoryList, length, pillar);
       
+      const title = await autoGenerateTitle(script);
+      
       // Increment usage counter after successful generation
       await db
         .update(users)
@@ -758,6 +760,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ 
         script,
+        title,
         usage: {
           used: limits.affirmationsThisMonth + 1,
           remaining: limits.affirmationsRemaining - 1,

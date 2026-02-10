@@ -652,12 +652,9 @@ export default function BreathingScreen() {
     if (hapticsEnabled) { try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {} }
     
     await setDucked(false);
-    if (isMusicPlaying) {
-      await stopBackgroundMusic();
-    }
-    if (voiceEnabled) {
-      await stopAffirmationLoop();
-    }
+    await stopBackgroundMusic();
+    await stopAffirmationLoop();
+    await stopAffirmationAudio();
     
     if (wasNaturalCompletion) {
       setShowCompletionAnimation(true);

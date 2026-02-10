@@ -52,7 +52,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/query-client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAudio } from "@/contexts/AudioContext";
-import { useBackgroundMusic, BACKGROUND_MUSIC_OPTIONS, type BackgroundMusicType } from "@/contexts/BackgroundMusicContext";
+import { useBackgroundMusic, BACKGROUND_MUSIC_OPTIONS, type BackgroundMusicType, getSoundsByCategory, type BackgroundMusicOption } from "@/contexts/BackgroundMusicContext";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import {
   BREATHING_TECHNIQUES,
@@ -101,9 +101,6 @@ export default function BreathingScreen() {
       });
     }, [])
   );
-  useEffect(() => {
-    setVolume(0.5);
-  }, []);
   const [showTechniqueSelector, setShowTechniqueSelector] = useState(false);
   const [isLandscape, setIsLandscape] = useState(false);
   const [musicEnabled, setMusicEnabled] = useState(true);
@@ -126,6 +123,21 @@ export default function BreathingScreen() {
   const [showMoodCheckin, setShowMoodCheckin] = useState(false);
 
   const [voiceVolume, setVoiceVolume] = useState(0.8);
+
+  const [showSoundSwitcher, setShowSoundSwitcher] = useState(false);
+
+  const categories = React.useMemo(() => {
+    const byCategory = getSoundsByCategory();
+    const order: Array<keyof ReturnType<typeof getSoundsByCategory>> = [
+      "rain", "ocean", "forest", "meditation", "solfeggio", "binaural", "noise",
+    ];
+    return order.map((key) => ({
+      key,
+      label: { rain: "Rain", ocean: "Ocean", forest: "Forest & Birds", meditation: "Meditation", solfeggio: "Solfeggio", binaural: "Binaural", noise: "Noise" }[key] || key,
+      color: { rain: "#4FC3F7", ocean: "#29B6F6", forest: "#66BB6A", meditation: "#E040FB", solfeggio: "#C9A227", binaural: "#9C27B0", noise: "#78909C" }[key] || "#999",
+      sounds: byCategory[key],
+    }));
+  }, []);
 
   const [controlsVisible, setControlsVisible] = useState(true);
   const controlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -288,6 +300,101 @@ export default function BreathingScreen() {
     }
   }, [backgroundAffirmation]);
 
+  const handleSwitchSoundDuringPlayback = useCallback(async (soundId: BackgroundMusicType) => {
+    if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} }
+    
+    if (soundId === 'none') {
+      setMusicEnabled(false);
+      await stopBackgroundMusic();
+    } else {
+      setMusicEnabled(true);
+      await setSelectedMusic(soundId);
+      if (isPlaying) {
+        await startBackgroundMusic();
+      }
+    }
+  }, [hapticsEnabled, setSelectedMusic, startBackgroundMusic, stopBackgroundMusic, isPlaying]);
+
+  const renderSoundTile = useCallback((
+    sound: BackgroundMusicOption,
+    isSelected: boolean,
+    onPress: (id: BackgroundMusicType) => void,
+  ) => {
+    const tileSize = 88;
+    return (
+      <Pressable
+        key={sound.id}
+        onPress={() => onPress(sound.id)}
+        style={[
+          styles.soundTile,
+          {
+            width: tileSize,
+            height: tileSize,
+            backgroundColor: isSelected ? `${ACCENT_GOLD}20` : "rgba(255,255,255,0.06)",
+            borderColor: isSelected ? ACCENT_GOLD : "rgba(255,255,255,0.1)",
+          },
+        ]}
+        testID={`button-sound-${sound.id}`}
+      >
+        <Feather
+          name={sound.icon as any}
+          size={20}
+          color={isSelected ? ACCENT_GOLD : "rgba(255,255,255,0.6)"}
+        />
+        <ThemedText
+          type="caption"
+          style={{
+            color: isSelected ? ACCENT_GOLD : "rgba(255,255,255,0.7)",
+            fontSize: 10,
+            textAlign: "center",
+            marginTop: 4,
+          }}
+        >
+          {sound.name}
+        </ThemedText>
+      </Pressable>
+    );
+  }, []);
+
+  const renderNoSoundTile = useCallback((
+    onPress: (id: BackgroundMusicType) => void,
+  ) => {
+    const isSelected = !musicEnabled;
+    const tileSize = 88;
+    return (
+      <Pressable
+        onPress={() => onPress("none" as BackgroundMusicType)}
+        style={[
+          styles.soundTile,
+          {
+            width: tileSize,
+            height: tileSize,
+            backgroundColor: isSelected ? `${ACCENT_GOLD}20` : "rgba(255,255,255,0.06)",
+            borderColor: isSelected ? ACCENT_GOLD : "rgba(255,255,255,0.1)",
+          },
+        ]}
+        testID="button-sound-none"
+      >
+        <Feather
+          name="volume-x"
+          size={20}
+          color={isSelected ? ACCENT_GOLD : "rgba(255,255,255,0.6)"}
+        />
+        <ThemedText
+          type="caption"
+          style={{
+            color: isSelected ? ACCENT_GOLD : "rgba(255,255,255,0.7)",
+            fontSize: 10,
+            textAlign: "center",
+            marginTop: 4,
+          }}
+        >
+          {"No sound"}
+        </ThemedText>
+      </Pressable>
+    );
+  }, [musicEnabled]);
+
   const stopAffirmationLoop = useCallback(async () => {
     if (affirmationSoundRef.current) {
       try {
@@ -367,11 +474,7 @@ export default function BreathingScreen() {
       await setDucked(true);
     }
     if (musicEnabled) {
-      if (selectedMusic === 'none') {
-        await setSelectedMusic('forest-rain-birds');
-      } else {
-        await startBackgroundMusic();
-      }
+      await startBackgroundMusic();
     }
     if (voiceEnabled) {
       await startAffirmationLoop();
@@ -399,11 +502,7 @@ export default function BreathingScreen() {
       await setDucked(true);
     }
     if (musicEnabled) {
-      if (selectedMusic === 'none') {
-        await setSelectedMusic('forest-rain-birds');
-      } else {
-        await startBackgroundMusic();
-      }
+      await startBackgroundMusic();
     }
     if (voiceEnabled) {
       await resumeAffirmationLoop();
@@ -649,11 +748,10 @@ export default function BreathingScreen() {
                 </View>
                 <View style={styles.fsTopRight}>
                   <Pressable
-                    onPress={() => { resetControlsTimer(); setVolume(volume > 0.05 ? 0 : 0.7); }}
-                    style={[styles.fsControlBtn, { backgroundColor: `${selectedTechnique.color}20`, opacity: musicEnabled ? 1 : 0.4 }]}
-                    disabled={!musicEnabled}
+                    onPress={() => { resetControlsTimer(); setShowSoundSwitcher(true); }}
+                    style={[styles.fsControlBtn, { backgroundColor: `${selectedTechnique.color}20` }]}
                   >
-                    <Feather name={musicEnabled && volume > 0.05 ? "music" : "volume-x"} size={18} color={selectedTechnique.color} />
+                    <Feather name={musicEnabled ? "music" : "volume-x"} size={18} color={selectedTechnique.color} />
                   </Pressable>
                   <Pressable
                     onPress={async () => {
@@ -1322,6 +1420,86 @@ export default function BreathingScreen() {
         }}
       />
 
+      <Modal
+        visible={showSoundSwitcher}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowSoundSwitcher(false)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setShowSoundSwitcher(false)}
+        >
+          <Pressable
+            style={[styles.soundSwitcherContent, { paddingBottom: insets.bottom + Spacing.md }]}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <View style={styles.modalHandle} />
+            <View style={styles.soundSwitcherHeader}>
+              <ThemedText type="h4" style={{ color: "#fff", fontSize: 17 }}>
+                Switch Sound
+              </ThemedText>
+              <Pressable
+                onPress={() => setShowSoundSwitcher(false)}
+                hitSlop={12}
+                testID="button-close-sound-switcher"
+              >
+                <Feather name="x" size={20} color="rgba(255,255,255,0.6)" />
+              </Pressable>
+            </View>
+
+            {musicEnabled ? (
+              <View style={styles.soundVolumeRow}>
+                <Feather name="volume-1" size={14} color="rgba(255,255,255,0.5)" />
+                <Slider
+                  style={{ flex: 1, marginHorizontal: 8 }}
+                  minimumValue={0}
+                  maximumValue={1}
+                  value={volume}
+                  onValueChange={(val: number) => setVolume(val)}
+                  minimumTrackTintColor={ACCENT_GOLD}
+                  maximumTrackTintColor="rgba(255,255,255,0.15)"
+                  thumbTintColor={ACCENT_GOLD}
+                />
+                <Feather name="volume-2" size={14} color="rgba(255,255,255,0.5)" />
+              </View>
+            ) : null}
+
+            <ScrollView
+              style={{ maxHeight: 340 }}
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={{ paddingHorizontal: 16, marginBottom: 8 }}>
+                {renderNoSoundTile(handleSwitchSoundDuringPlayback)}
+              </View>
+              {categories.map((category) => (
+                <View key={category.key} style={{ paddingHorizontal: 16, marginBottom: 12 }}>
+                  <ThemedText
+                    type="caption"
+                    style={{ color: category.color, fontSize: 11, fontWeight: "700", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}
+                  >
+                    {category.label}
+                  </ThemedText>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ gap: 8 }}
+                  >
+                    {category.sounds.map((sound) =>
+                      renderSoundTile(
+                        sound,
+                        musicEnabled && selectedMusic === sound.id,
+                        handleSwitchSoundDuringPlayback,
+                      )
+                    )}
+                  </ScrollView>
+                </View>
+              ))}
+            </ScrollView>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
     </ThemedView>
   );
 }
@@ -1814,5 +1992,35 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     borderRadius: BorderRadius.full,
     alignItems: "center",
+  },
+  soundTile: {
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 8,
+  },
+  soundSwitcherContent: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "rgba(15, 28, 63, 0.97)",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingTop: 12,
+  },
+  soundSwitcherHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    marginBottom: 12,
+  },
+  soundVolumeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    marginBottom: 12,
   },
 });

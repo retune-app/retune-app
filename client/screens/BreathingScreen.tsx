@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import {
   View,
   StyleSheet,
@@ -10,6 +10,7 @@ import {
   StatusBar,
   Alert,
   useWindowDimensions,
+  PanResponder,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
@@ -414,6 +415,35 @@ export default function BreathingScreen() {
     );
   }, [musicEnabled]);
 
+  const soundSheetTranslateY = useSharedValue(0);
+
+  const soundSheetPanResponder = useMemo(() => PanResponder.create({
+    onStartShouldSetPanResponder: () => false,
+    onMoveShouldSetPanResponder: (_, gestureState) => {
+      return gestureState.dy > 8 && Math.abs(gestureState.dy) > Math.abs(gestureState.dx);
+    },
+    onPanResponderMove: (_, gestureState) => {
+      if (gestureState.dy > 0) {
+        soundSheetTranslateY.value = gestureState.dy;
+      }
+    },
+    onPanResponderRelease: (_, gestureState) => {
+      if (gestureState.dy > 80 || gestureState.vy > 0.5) {
+        soundSheetTranslateY.value = withTiming(500, { duration: 250 }, () => {});
+        setTimeout(() => {
+          setShowSoundSwitcher(false);
+          soundSheetTranslateY.value = 0;
+        }, 250);
+      } else {
+        soundSheetTranslateY.value = withTiming(0, { duration: 200 });
+      }
+    },
+  }), []);
+
+  const soundSheetAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: soundSheetTranslateY.value }],
+  }));
+
   const renderSoundSwitcherModal = useCallback(() => (
     <Modal
       visible={showSoundSwitcher}
@@ -425,10 +455,11 @@ export default function BreathingScreen() {
         style={styles.modalOverlay}
         onPress={() => setShowSoundSwitcher(false)}
       >
-        <Pressable
-          style={[styles.soundSwitcherContent, { paddingBottom: insets.bottom + Spacing.md }]}
-          onPress={(e) => e.stopPropagation()}
+        <Animated.View
+          style={[styles.soundSwitcherContent, { paddingBottom: insets.bottom + Spacing.md }, soundSheetAnimatedStyle]}
+          {...soundSheetPanResponder.panHandlers}
         >
+          <Pressable onPress={(e) => e.stopPropagation()} style={{ flex: 0 }}>
           <View style={styles.modalHandle} />
           <View style={styles.soundSwitcherHeader}>
             <ThemedText type="h4" style={{ color: "#fff", fontSize: 17 }}>
@@ -489,10 +520,11 @@ export default function BreathingScreen() {
               </View>
             ))}
           </ScrollView>
-        </Pressable>
+          </Pressable>
+        </Animated.View>
       </Pressable>
     </Modal>
-  ), [showSoundSwitcher, musicEnabled, volume, selectedMusic, categories, insets.bottom, handleSwitchSoundDuringPlayback, renderSoundTile, renderNoSoundTile, setVolume, voiceEnabled]);
+  ), [showSoundSwitcher, musicEnabled, volume, selectedMusic, categories, insets.bottom, handleSwitchSoundDuringPlayback, renderSoundTile, renderNoSoundTile, setVolume, voiceEnabled, soundSheetAnimatedStyle, soundSheetPanResponder]);
 
   const stopAffirmationLoop = useCallback(async () => {
     if (affirmationSoundRef.current) {

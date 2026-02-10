@@ -33,7 +33,7 @@ import type { Affirmation } from "@shared/schema";
 const AUTO_REPLAY_KEY = "@settings/autoReplay";
 const RSVP_ENABLED_KEY = "@settings/rsvpEnabled";
 const SETTINGS_VERSION_KEY = "@settings/version";
-const CURRENT_SETTINGS_VERSION = "2"; // Increment to reset defaults
+const CURRENT_SETTINGS_VERSION = "3"; // Increment to reset defaults
 const RSVP_FONT_SIZE_KEY = "@settings/rsvpFontSize";
 const RSVP_HIGHLIGHT_KEY = "@settings/rsvpHighlight";
 const SHOW_SCRIPT_KEY = "@settings/showScript";
@@ -70,9 +70,9 @@ export default function PlayerScreen() {
   } = useAudio();
   const [rsvpEnabled, setRsvpEnabled] = useState(true);
   const [rsvpFontSize, setRsvpFontSize] = useState<RSVPFontSize>("M");
-  const [rsvpHighlight, setRsvpHighlight] = useState(false);
+  const [rsvpHighlight, setRsvpHighlight] = useState(true);
   const [showRsvpSettings, setShowRsvpSettings] = useState(false);
-  const [showScript, setShowScript] = useState(false);
+  const [showScript, setShowScript] = useState(true);
   const [isLandscape, setIsLandscape] = useState(false);
   const [isInFullscreenMode, setIsInFullscreenMode] = useState(false);
   const [hasSaved, setHasSaved] = useState(false);
@@ -280,10 +280,12 @@ export default function PlayerScreen() {
       if (storedVersion !== CURRENT_SETTINGS_VERSION) {
         // Reset RSVP and Show Script to new defaults
         await AsyncStorage.setItem(RSVP_ENABLED_KEY, "true");
-        await AsyncStorage.setItem(SHOW_SCRIPT_KEY, "false");
+        await AsyncStorage.setItem(SHOW_SCRIPT_KEY, "true");
+        await AsyncStorage.setItem(RSVP_HIGHLIGHT_KEY, "true");
         await AsyncStorage.setItem(SETTINGS_VERSION_KEY, CURRENT_SETTINGS_VERSION);
         setRsvpEnabled(true);
-        setShowScript(false);
+        setShowScript(true);
+        setRsvpHighlight(true);
       } else {
         // Load saved settings
         const rsvpValue = await AsyncStorage.getItem(RSVP_ENABLED_KEY);

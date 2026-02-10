@@ -106,6 +106,10 @@ export default function BreathingScreen() {
   const [isLandscape, setIsLandscape] = useState(false);
   const [musicEnabled, setMusicEnabled] = useState(true);
   const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const voiceEnabledRef = useRef(voiceEnabled);
+  const musicEnabledRef = useRef(musicEnabled);
+  useEffect(() => { voiceEnabledRef.current = voiceEnabled; }, [voiceEnabled]);
+  useEffect(() => { musicEnabledRef.current = musicEnabled; }, [musicEnabled]);
   const [showCompletionAnimation, setShowCompletionAnimation] = useState(false);
   const [progressIndicatorEnabled, setProgressIndicatorEnabled] = useState(true);
 
@@ -557,24 +561,19 @@ export default function BreathingScreen() {
     };
   }, [isPlaying, selectedDuration]);
 
-  const handleStart = async (overrides?: { forceVoice?: boolean; forceMusic?: boolean }) => {
-    const useVoice = overrides?.forceVoice ?? voiceEnabled;
-    const useMusic = overrides?.forceMusic ?? musicEnabled;
-    
+  const handleStart = async () => {
     await stopAffirmationAudio();
-    
     setIsPlaying(true);
     setElapsedTime(0);
     setCyclesCompleted(0);
     if (hapticsEnabled) { try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {} }
-    
-    if (useMusic && useVoice) {
+    if (musicEnabledRef.current && voiceEnabledRef.current) {
       await setDucked(true);
     }
-    if (useMusic) {
+    if (musicEnabledRef.current) {
       await startBackgroundMusic();
     }
-    if (useVoice) {
+    if (voiceEnabledRef.current) {
       await startAffirmationLoop();
     }
   };
@@ -727,6 +726,66 @@ export default function BreathingScreen() {
     opacity: countdownOpacityVal.value,
   }));
 
+  const renderCountdownOverlay = useCallback((fontSize: number = 48) => {
+    if (countdownValue === null) return null;
+    return (
+      <Animated.View
+        style={[
+          {
+            position: 'absolute',
+            justifyContent: 'center',
+            alignItems: 'center',
+          },
+          countdownAnimatedStyle,
+        ]}
+      >
+        <Text style={{
+          fontSize,
+          fontWeight: '700',
+          color: 'rgba(255,255,255,0.85)',
+          letterSpacing: 2,
+        }}>
+          {countdownValue}
+        </Text>
+      </Animated.View>
+    );
+  }, [countdownValue, countdownAnimatedStyle]);
+
+  const renderProgressRing = useCallback((ringSize: number) => {
+    if (!progressIndicatorEnabled) return null;
+    const padding = 24;
+    const totalSize = ringSize + padding;
+    const radius = (ringSize + padding / 2) / 2;
+    const circumference = Math.PI * (ringSize + padding / 2);
+    return (
+      <View style={styles.progressRingContainer}>
+        <Svg width={totalSize} height={totalSize} style={styles.progressRing}>
+          <Circle
+            cx={totalSize / 2}
+            cy={totalSize / 2}
+            r={radius}
+            stroke={`${selectedTechnique.color}15`}
+            strokeWidth={3}
+            fill="transparent"
+          />
+          <Circle
+            cx={totalSize / 2}
+            cy={totalSize / 2}
+            r={radius}
+            stroke={selectedTechnique.color}
+            strokeWidth={3}
+            fill="transparent"
+            strokeDasharray={`${circumference}`}
+            strokeDashoffset={circumference * (1 - progressPercent / 100)}
+            strokeLinecap="round"
+            rotation="-90"
+            origin={`${totalSize / 2}, ${totalSize / 2}`}
+          />
+        </Svg>
+      </View>
+    );
+  }, [progressIndicatorEnabled, selectedTechnique.color, progressPercent]);
+
   useEffect(() => {
     if (!isPlaying && countdownValue === null) {
       const duration = 3600;
@@ -768,7 +827,7 @@ export default function BreathingScreen() {
     opacity: ripple3Opacity.value,
   }));
 
-  const handleStartWithCountdown = useCallback(async (overrides?: { forceVoice?: boolean; forceMusic?: boolean }) => {
+  const handleStartWithCountdown = useCallback(async () => {
     if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); } catch (e) {} }
     
     fullscreenProgress.value = 0;
@@ -788,13 +847,13 @@ export default function BreathingScreen() {
     }
     
     setCountdownValue(null);
-    await handleStart(overrides);
+    await handleStart();
   }, [handleStart, hapticsEnabled]);
 
   useEffect(() => {
     if (pendingAutoStartRef.current && backgroundAffirmation?.audioUrl) {
       pendingAutoStartRef.current = false;
-      setTimeout(() => handleStartWithCountdown({ forceVoice: true, forceMusic: true }), 300);
+      setTimeout(() => handleStartWithCountdown(), 300);
     }
   }, [backgroundAffirmation, handleStartWithCountdown]);
 
@@ -824,7 +883,7 @@ export default function BreathingScreen() {
       : Math.min(screenWidth * 0.7, 260);
 
     // Portrait fullscreen layout - clean, centered design for max focus
-    const portraitCircleSize = Math.min(screenWidth * 0.85, screenHeight * 0.45);
+    const portraitCircleSize = Math.min(screenWidth * 0.65, screenHeight * 0.38);
     
     if (!isCurrentlyLandscape) {
       return (
@@ -879,37 +938,7 @@ export default function BreathingScreen() {
               </Animated.View>
 
               <View style={styles.portraitCenterSection}>
-                {progressIndicatorEnabled ? (
-                  <View style={styles.progressRingContainer}>
-                    <Svg 
-                      width={portraitCircleSize + 40} 
-                      height={portraitCircleSize + 40}
-                      style={styles.progressRing}
-                    >
-                      <Circle
-                        cx={(portraitCircleSize + 40) / 2}
-                        cy={(portraitCircleSize + 40) / 2}
-                        r={(portraitCircleSize + 20) / 2}
-                        stroke={`${selectedTechnique.color}15`}
-                        strokeWidth={3}
-                        fill="transparent"
-                      />
-                      <Circle
-                        cx={(portraitCircleSize + 40) / 2}
-                        cy={(portraitCircleSize + 40) / 2}
-                        r={(portraitCircleSize + 20) / 2}
-                        stroke={selectedTechnique.color}
-                        strokeWidth={3}
-                        fill="transparent"
-                        strokeDasharray={`${Math.PI * (portraitCircleSize + 20)}`}
-                        strokeDashoffset={Math.PI * (portraitCircleSize + 20) * (1 - progressPercent / 100)}
-                        strokeLinecap="round"
-                        rotation="-90"
-                        origin={`${(portraitCircleSize + 40) / 2}, ${(portraitCircleSize + 40) / 2}`}
-                      />
-                    </Svg>
-                  </View>
-                ) : null}
+                {renderProgressRing(portraitCircleSize)}
                 <BreathingCircle
                   technique={selectedTechnique}
                   isPlaying={isPlaying}
@@ -918,27 +947,7 @@ export default function BreathingScreen() {
                   size={portraitCircleSize}
                   showContent={countdownValue === null}
                 />
-                {countdownValue !== null ? (
-                  <Animated.View
-                    style={[
-                      {
-                        position: 'absolute',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                      },
-                      countdownAnimatedStyle,
-                    ]}
-                  >
-                    <Text style={{
-                      fontSize: 48,
-                      fontWeight: '700',
-                      color: 'rgba(255,255,255,0.85)',
-                      letterSpacing: 2,
-                    }}>
-                      {countdownValue}
-                    </Text>
-                  </Animated.View>
-                ) : null}
+                {renderCountdownOverlay(48)}
               </View>
 
               <Animated.View style={[styles.fsBottomControls, controlsAnimatedStyle]} pointerEvents={controlsVisible ? 'auto' : 'none'} onStartShouldSetResponder={() => true}>
@@ -1016,37 +1025,7 @@ export default function BreathingScreen() {
             </Animated.View>
 
             <View style={styles.landscapeCircleContainer}>
-              {progressIndicatorEnabled ? (
-                <View style={styles.progressRingContainer}>
-                  <Svg 
-                    width={circleSize + 40} 
-                    height={circleSize + 40}
-                    style={styles.progressRing}
-                  >
-                    <Circle
-                      cx={(circleSize + 40) / 2}
-                      cy={(circleSize + 40) / 2}
-                      r={(circleSize + 20) / 2}
-                      stroke={`${selectedTechnique.color}15`}
-                      strokeWidth={3}
-                      fill="transparent"
-                    />
-                    <Circle
-                      cx={(circleSize + 40) / 2}
-                      cy={(circleSize + 40) / 2}
-                      r={(circleSize + 20) / 2}
-                      stroke={selectedTechnique.color}
-                      strokeWidth={3}
-                      fill="transparent"
-                      strokeDasharray={`${Math.PI * (circleSize + 20)}`}
-                      strokeDashoffset={Math.PI * (circleSize + 20) * (1 - progressPercent / 100)}
-                      strokeLinecap="round"
-                      rotation="-90"
-                      origin={`${(circleSize + 40) / 2}, ${(circleSize + 40) / 2}`}
-                    />
-                  </Svg>
-                </View>
-              ) : null}
+              {renderProgressRing(circleSize)}
               <BreathingCircle
                 technique={selectedTechnique}
                 isPlaying={isPlaying}
@@ -1055,27 +1034,7 @@ export default function BreathingScreen() {
                 size={circleSize}
                 showContent={countdownValue === null}
               />
-              {countdownValue !== null ? (
-                <Animated.View
-                  style={[
-                    {
-                      position: 'absolute',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                    },
-                    countdownAnimatedStyle,
-                  ]}
-                >
-                  <Text style={{
-                    fontSize: 48,
-                    fontWeight: '700',
-                    color: 'rgba(255,255,255,0.85)',
-                    letterSpacing: 2,
-                  }}>
-                    {countdownValue}
-                  </Text>
-                </Animated.View>
-              ) : null}
+              {renderCountdownOverlay(48)}
             </View>
 
             <Animated.View style={[styles.landscapeSidePanel, controlsAnimatedStyle]} pointerEvents={controlsVisible ? 'auto' : 'none'} onStartShouldSetResponder={() => true}>
@@ -1260,27 +1219,7 @@ export default function BreathingScreen() {
                 </LinearGradient>
               </Pressable>
             ) : null}
-            {countdownValue !== null ? (
-              <Animated.View
-                style={[
-                  {
-                    position: 'absolute',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                  },
-                  countdownAnimatedStyle,
-                ]}
-              >
-                <Text style={{
-                  fontSize: 32,
-                  fontWeight: '700',
-                  color: 'rgba(255,255,255,0.85)',
-                  letterSpacing: 2,
-                }}>
-                  {countdownValue}
-                </Text>
-              </Animated.View>
-            ) : null}
+            {renderCountdownOverlay(32)}
           </View>
 
 
@@ -1883,6 +1822,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden",
   },
   landscapeStats: {
     alignItems: "center",
@@ -1945,6 +1885,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     zIndex: 1,
+    overflow: "hidden",
   },
   fsTopControls: {
     flexDirection: "row",

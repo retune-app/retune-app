@@ -191,7 +191,7 @@ export default function CreateScreen() {
   const { theme, isDark } = useTheme();
   const navigation = useNavigation<NavigationProp>();
   const queryClient = useQueryClient();
-  const { breathingAffirmation, setBreathingAffirmation } = useAudio();
+  const { breathingAffirmation, setBreathingAffirmation, requestHighlightAffirmation } = useAudio();
 
   const { data: userLimits } = useQuery<{
     aiAffirmations: { used: number; limit: number; remaining: number };
@@ -477,6 +477,7 @@ export default function CreateScreen() {
         setBreathingAffirmation(data);
       }
       
+      requestHighlightAffirmation(data.id);
       navigation.dispatch(
         CommonActions.reset({
           index: 0,

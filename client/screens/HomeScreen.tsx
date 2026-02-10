@@ -124,11 +124,11 @@ export default function HomeScreen() {
         }, 500);
       }
       
-      // Clear highlight after 3.5 seconds
+      // Clear highlight after 2 seconds
       setTimeout(() => {
         setHighlightedAffirmationId(null);
         clearHighlightAffirmation();
-      }, 3500);
+      }, 2000);
     }
   }, [highlightAffirmationId, affirmations, clearHighlightAffirmation]);
 
@@ -150,7 +150,7 @@ export default function HomeScreen() {
         setTimeout(() => {
           setHighlightedAffirmationId(null);
           clearHighlightAffirmation();
-        }, 3500);
+        }, 2000);
       }
     }, [highlightAffirmationId, affirmations, highlightedAffirmationId, clearHighlightAffirmation])
   );

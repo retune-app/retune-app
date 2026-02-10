@@ -196,12 +196,11 @@ export default function BreathingCircle({
             width: size * 0.5,
             height: size * 0.5,
             borderRadius: size * 0.25,
-            overflow: "hidden",
           },
         ]}
       >
         <LinearGradient
-          colors={[phaseColor, `${phaseColor}BB`]}
+          colors={[phaseColor, `${phaseColor}99`]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={[
@@ -210,7 +209,6 @@ export default function BreathingCircle({
               width: size * 0.5,
               height: size * 0.5,
               borderRadius: size * 0.25,
-              overflow: "hidden",
             },
           ]}
         >

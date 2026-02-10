@@ -21,12 +21,12 @@ import { IconButton } from "@/components/IconButton";
 import { AmbientSoundMixer } from "@/components/AmbientSoundMixer";
 import { FocusModeTip } from "@/components/FocusModeTip";
 import { ThemedModal } from "@/components/ThemedModal";
-import QuickBreathingModal from "@/components/QuickBreathingModal";
 import { useTheme } from "@/hooks/useTheme";
 import { useAudio } from "@/contexts/AudioContext";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { apiRequest } from "@/lib/query-client";
 import { getVoiceDisplayName } from "@shared/voiceMapping";
+import { breathingAutoStartRef } from "@/navigation/MainTabNavigator";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import type { Affirmation } from "@shared/schema";
 
@@ -104,7 +104,6 @@ export default function PlayerScreen() {
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [showVoiceSetupModal, setShowVoiceSetupModal] = useState(false);
-  const [showBreathingModal, setShowBreathingModal] = useState(false);
 
   const isCurrentlyPlaying = currentAffirmation?.id === affirmationId && isPlaying;
 
@@ -731,9 +730,16 @@ export default function PlayerScreen() {
             testID="button-favorite"
           />
           <Pressable
-            onPress={() => setShowBreathingModal(true)}
+            onPress={async () => {
+              if (affirmation) {
+                await stop();
+                await setBreathingAffirmation(affirmation);
+                breathingAutoStartRef.current = true;
+                navigation.navigate("MainTabs" as any, { screen: "Breathe" });
+              }
+            }}
             style={[styles.breatheButton, { backgroundColor: theme.backgroundSecondary }]}
-            testID="button-breathe-first"
+            testID="button-breathe"
           >
             <Feather name="wind" size={20} color={theme.primary} />
             <ThemedText type="small" style={{ color: theme.primary, marginLeft: 6, fontWeight: "600" }}>
@@ -1094,16 +1100,6 @@ export default function PlayerScreen() {
         ]}
       />
 
-      <QuickBreathingModal
-        visible={showBreathingModal}
-        onClose={() => setShowBreathingModal(false)}
-        onComplete={() => {
-          setShowBreathingModal(false);
-          if (affirmation) {
-            playAffirmation(affirmation);
-          }
-        }}
-      />
     </ThemedView>
   );
 }

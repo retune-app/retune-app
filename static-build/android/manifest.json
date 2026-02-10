@@ -1,11 +1,11 @@
 {
-  "id": "298d84e5-73c1-4568-b6fd-37ecf2ac9ed5",
-  "createdAt": "2026-02-10T08:05:29.754Z",
+  "id": "eb6ba1ab-0d2a-4136-a628-85b0355f4b3e",
+  "createdAt": "2026-02-10T12:18:33.342Z",
   "runtimeVersion": "exposdk:54.0.0",
   "launchAsset": {
-    "key": "bundle-1770710729754-3820",
+    "key": "bundle-1770725913342-1985",
     "contentType": "application/javascript",
-    "url": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev:5000/1770710729754-3820/_expo/static/js/android/bundle.js"
+    "url": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev:5000/1770725913342-1985/_expo/static/js/android/bundle.js"
   },
   "assets": [],
   "metadata": {},
@@ -136,6 +136,6 @@
       },
       "mainModuleName": "client/index"
     },
-    "scopeKey": "@anonymous/subconscious-rewire-d951526b-7bf6-45eb-b0d4-4b6efb942df0"
+    "scopeKey": "@anonymous/subconscious-rewire-967c74fd-7e6b-4e61-b7fa-00279b6729d7"
   }
 }

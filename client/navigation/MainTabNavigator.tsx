@@ -141,7 +141,7 @@ export default function MainTabNavigator() {
         options={{
           title: "Believe",
           tabBarIcon: ({ color, size }) => (
-            <Feather name="music" size={size} color={color} />
+            <Feather name="headphones" size={size} color={color} />
           ),
         }}
       />

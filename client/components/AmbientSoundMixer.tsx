@@ -134,9 +134,8 @@ export function AmbientSoundMixer({ compact = false }: AmbientSoundMixerProps) {
           <Pressable style={styles.modalOverlay} onPress={closeModal}>
             <Animated.View
               style={[styles.modalContent, { backgroundColor: theme.cardBackground }, modalSlideStyle]}
-              {...panResponder.panHandlers}
-              onStartShouldSetResponder={() => true}
             >
+              <View {...panResponder.panHandlers} onStartShouldSetResponder={() => true}>
               <View style={styles.modalHandle} />
               <ThemedText type="h3" style={styles.modalTitle}>
                 Background Sounds
@@ -467,6 +466,7 @@ export function AmbientSoundMixer({ compact = false }: AmbientSoundMixerProps) {
                   />
                 </View>
               ) : null}
+              </View>
             </Animated.View>
           </Pressable>
         </Modal>

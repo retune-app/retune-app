@@ -337,6 +337,7 @@ export default function BreathingCircle({
                 fontSize: phaseFontSize,
                 letterSpacing: phaseFontSize * 0.18,
               },
+              (currentPhase === "holdIn" || currentPhase === "holdOut") ? styles.phaseLabelBold : undefined,
               phaseTextStyle,
             ]}
           >
@@ -380,6 +381,9 @@ const styles = StyleSheet.create({
     fontWeight: "300",
     textAlign: "center",
     marginBottom: 2,
+  },
+  phaseLabelBold: {
+    fontWeight: "700",
   },
   countdownNumber: {
     color: "#FFFFFF",

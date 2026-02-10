@@ -1,5 +1,42 @@
 # RETUNED Changelog
 
+## Version 1.5 (Build 2) — February 10, 2026
+
+### Radiant Bloom Breathing Visualization
+- Completely redesigned the BreathingCircle component with a "Radiant Bloom" design: hybrid approach combining a gradient-filled core orb with 4 concentric rings.
+- Each ring has independent scale and opacity animations creating a natural breathing rhythm.
+- Dynamic color intensity: rings shift from dim/muted on exhale to bright/luminous on inhale using smooth color interpolation on the UI thread.
+- Inner rings brighten earlier than outer rings, creating a satisfying ripple effect.
+
+### Inverse Text Breathing Animation
+- Phase labels ("Breathe In", "Breathe Out", "Hold") now scale inversely with breathing: text shrinks during inhale and grows during exhale, creating a visual rhythm that matches the breath.
+- Countdown numbers remain at a fixed size for easy readability during sessions.
+
+### Bold Hold Phase Text
+- "HOLD" text now appears bold (weight 700) during holdIn and holdOut phases for clear visual emphasis.
+- Inhale and exhale labels retain their light (weight 300) styling.
+
+### Audio Leak Fix
+- Fixed a bug where background music and/or affirmation audio could continue playing after a breathing session ended.
+- `handleStop` now unconditionally stops all audio sources (background music, affirmation loop, TTS) regardless of React state values, preventing stale-state audio leaks.
+
+### Breathing Circle Centering
+- Improved vertical centering of the breathing visualization on the Breathe home screen.
+- Circle container now has explicit dimensions and a minimum height on the flex section, ensuring the visualization is always centered between the technique selector and bottom controls on any phone size.
+
+### Code Cleanup
+- Removed 4 unused imports, 4 unused variables, and 15+ unused style definitions from BreathingScreen.tsx.
+- Deleted all conversation screenshots from attached_assets/.
+- Version bumped to 1.5 Build 2.
+
+### Files Changed
+- `client/components/BreathingCircle.tsx` — Radiant Bloom redesign, inverse text scaling, bold Hold phase
+- `client/screens/BreathingScreen.tsx` — Audio leak fix (unconditional stop), circle centering, code cleanup
+- `CHANGELOG.md` — Comprehensive change documentation
+- `replit.md` — Updated documentation
+
+---
+
 ## Version 1.5 (Build 1) — February 9, 2026
 
 ### Breathing Screen Layout Overhaul

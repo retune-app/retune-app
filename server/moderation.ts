@@ -29,6 +29,8 @@ const SUPPORTIVE_MESSAGES: Record<string, string> = {
   "violence/graphic": "This content contains graphic violence and isn't appropriate for affirmations. Let's focus on healing and empowerment.",
 };
 
+const POLITICAL_MESSAGE = "Retuned is a space for personal growth, not politics. Affirmations work best when they focus on you — your mindset, your goals, your well-being.";
+
 const DEFAULT_MESSAGE = "This content doesn't align with Retuned's purpose of positive self-empowerment. Please revise your text to focus on growth, healing, or well-being.";
 
 export async function moderateContent(text: string): Promise<ModerationResult> {
@@ -113,6 +115,7 @@ ALLOW content that is:
 - Even if imperfect or casual in tone, as long as intent is self-improvement
 
 REJECT content that is:
+- Political in any way — mentions of politicians, political parties, elections, political movements, government policies, or political figures (e.g. "I love [any politician]", "I support [any party]"). This applies uniformly regardless of political affiliation or viewpoint.
 - Harmful intentions toward others (robbery, violence, revenge, manipulation)
 - Sexually explicit or crude/vulgar language
 - Promoting illegal activities or substance abuse
@@ -135,12 +138,15 @@ Respond with ONLY valid JSON: {"allowed": true} or {"allowed": false, "reason": 
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0]);
       if (parsed.allowed === false) {
+        const isPolitical = parsed.reason && /politic|politician|party|election|government/i.test(parsed.reason);
         return {
           flagged: true,
-          categories: ["affirmation_policy"],
-          message: parsed.reason
-            ? `This doesn't seem like a positive affirmation. ${parsed.reason}. Try rephrasing to focus on what you want to attract into your life.`
-            : DEFAULT_MESSAGE,
+          categories: [isPolitical ? "political_content" : "affirmation_policy"],
+          message: isPolitical
+            ? POLITICAL_MESSAGE
+            : parsed.reason
+              ? `This doesn't seem like a positive affirmation. ${parsed.reason}. Try rephrasing to focus on what you want to attract into your life.`
+              : DEFAULT_MESSAGE,
         };
       }
     }

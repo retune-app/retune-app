@@ -56,7 +56,6 @@ type CustomTagsMap = Record<string, string[]>;
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-import ScriptPager from './ScriptPager';
 
 const PILLAR_EXAMPLES: Record<string, string> = {
   Mind: "e.g., Stop overthinking everything, feel calmer under pressure...",
@@ -1033,13 +1032,11 @@ export default function CreateScreen() {
                             </Pressable>
                           ) : null}
                         </View>
-                        <ScriptPager
-                          pagerRef={pagerRef}
-                          scripts={scriptHistory}
-                          currentIndex={currentScriptIndex}
-                          onPageSelected={setCurrentScriptIndex}
-                          scriptLength={selectedLength.toLowerCase()}
-                        />
+                        <View style={styles.scriptBody}>
+                          <ThemedText type="body" style={styles.scriptBodyText}>
+                            {scriptHistory[currentScriptIndex] || ""}
+                          </ThemedText>
+                        </View>
                         <View style={styles.paginationContainer}>
                           {scriptHistory.map((_, index) => (
                             <Pressable
@@ -1344,6 +1341,14 @@ const styles = StyleSheet.create({
   scriptCard: {
     marginBottom: Spacing.md,
     position: "relative",
+  },
+  scriptBody: {
+    marginTop: Spacing.sm,
+    paddingBottom: Spacing.md,
+  },
+  scriptBodyText: {
+    lineHeight: 28,
+    fontSize: 16,
   },
   scriptHeader: {
     flexDirection: "row",

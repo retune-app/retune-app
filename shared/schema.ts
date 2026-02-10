@@ -105,6 +105,7 @@ export const affirmations = pgTable("affirmations", {
   isFavorite: boolean("is_favorite").default(false),
   playCount: integer("play_count").default(0),
   displayOrder: integer("display_order").default(0),
+  description: text("description"),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });

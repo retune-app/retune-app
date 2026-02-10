@@ -205,6 +205,7 @@ export default function CreateScreen() {
   const [goal, setGoal] = useState("");
   const [scriptsByLength, setScriptsByLength] = useState<Record<string, string>>({});
   const [titlesByLength, setTitlesByLength] = useState<Record<string, string>>({});
+  const [descriptionsByLength, setDescriptionsByLength] = useState<Record<string, string>>({});
   const [viewingLength, setViewingLength] = useState<string>("medium");
   const [manualScript, setManualScript] = useState("");
   const [selectedLength, setSelectedLength] = useState<LengthOption>("Medium");
@@ -406,6 +407,12 @@ export default function CreateScreen() {
           [lengthKey]: data.title,
         }));
       }
+      if (data.description) {
+        setDescriptionsByLength((prev) => ({
+          ...prev,
+          [lengthKey]: data.description,
+        }));
+      }
       setViewingLength(lengthKey);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Keyboard.dismiss();
@@ -490,6 +497,7 @@ export default function CreateScreen() {
         pillar: selectedPillar,
         categories: selectedSubcategories,
         isManual: mode === "manual",
+        description: descriptionsByLength[viewingLength] || null,
         ...(options?.forceAiVoice ? { forceAiVoice: true } : {}),
       });
       return res.json();

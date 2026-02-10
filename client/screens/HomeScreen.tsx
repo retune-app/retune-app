@@ -70,6 +70,7 @@ export default function HomeScreen() {
   const [isFirstPlay, setIsFirstPlay] = useState(false);
   const [firstPlayTriggered, setFirstPlayTriggered] = useState(false);
   const [showMoodCheckin, setShowMoodCheckin] = useState(false);
+  const [hasBackfilled, setHasBackfilled] = useState(false);
 
   useEffect(() => {
     AsyncStorage.getItem("@settings/hapticEnabled").then((value) => {
@@ -105,6 +106,20 @@ export default function HomeScreen() {
   const { data: affirmations = [], refetch, isLoading } = useQuery<Affirmation[]>({
     queryKey: ["/api/affirmations"],
   });
+
+  useEffect(() => {
+    if (affirmations.length > 0 && !hasBackfilled) {
+      const needsBackfill = affirmations.some(a => !a.description);
+      if (needsBackfill) {
+        setHasBackfilled(true);
+        apiRequest("POST", "/api/affirmations/backfill-descriptions")
+          .then(() => {
+            refetch();
+          })
+          .catch(console.error);
+      }
+    }
+  }, [affirmations, hasBackfilled]);
 
   // Handle context-based highlight request for affirmation
   useEffect(() => {

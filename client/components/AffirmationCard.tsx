@@ -23,6 +23,7 @@ import { getPillarColor } from "@shared/pillars";
 interface AffirmationCardProps {
   id: number;
   title: string;
+  description?: string | null;
   pillar?: string | null;
   category?: string;
   duration?: number;
@@ -46,6 +47,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 export function AffirmationCard({
   id,
   title,
+  description = null,
   pillar,
   category,
   duration,
@@ -251,6 +253,15 @@ export function AffirmationCard({
             <ThemedText type="h4" numberOfLines={2} style={styles.title}>
               {title}
             </ThemedText>
+            {description ? (
+              <ThemedText
+                type="caption"
+                numberOfLines={1}
+                style={[styles.description, { color: theme.textSecondary }]}
+              >
+                {description}
+              </ThemedText>
+            ) : null}
             <View style={styles.meta}>
               {category ? (
                 <View style={styles.categoriesContainer}>
@@ -391,6 +402,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexWrap: "wrap",
     gap: 4,
+  },
+  description: {
+    fontStyle: "italic",
+    fontSize: 11,
+    marginBottom: Spacing.xs,
+    opacity: 0.7,
   },
   categoryBadge: {
     paddingHorizontal: 6,

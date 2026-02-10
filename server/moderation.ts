@@ -82,3 +82,72 @@ export async function moderateMultipleTexts(texts: string[]): Promise<Moderation
   const combined = texts.filter(t => t && t.trim()).join(" | ");
   return moderateContent(combined);
 }
+
+export async function validateAffirmationContent(text: string): Promise<ModerationResult> {
+  if (!text || text.trim().length === 0) {
+    return { flagged: false, categories: [], message: "" };
+  }
+
+  const moderationResult = await moderateContent(text);
+  if (moderationResult.flagged) {
+    return moderationResult;
+  }
+
+  const client = directOpenAI || replitOpenAI;
+  if (!client) {
+    console.warn("No OpenAI client available for affirmation validation — skipping check");
+    return { flagged: false, categories: [], message: "" };
+  }
+
+  try {
+    const response = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: `You are a content validator for a self-affirmation app called Retuned. Your job is to determine if user-written text is appropriate as a personal affirmation or goal.
+
+ALLOW content that is:
+- Positive self-talk, personal growth, or wellness goals
+- Statements about health, confidence, relationships, career, spirituality
+- Even if imperfect or casual in tone, as long as intent is self-improvement
+
+REJECT content that is:
+- Harmful intentions toward others (robbery, violence, revenge, manipulation)
+- Sexually explicit or crude/vulgar language
+- Promoting illegal activities or substance abuse
+- Nonsensical or trolling input with no self-improvement intent
+- Negative self-talk disguised as affirmations (e.g. "I am worthless")
+
+Respond with ONLY valid JSON: {"allowed": true} or {"allowed": false, "reason": "brief explanation"}`
+        },
+        {
+          role: "user",
+          content: text
+        }
+      ],
+      temperature: 0,
+      max_tokens: 80,
+    });
+
+    const content = response.choices[0]?.message?.content?.trim() || "";
+    const jsonMatch = content.match(/\{.*\}/s);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (parsed.allowed === false) {
+        return {
+          flagged: true,
+          categories: ["affirmation_policy"],
+          message: parsed.reason
+            ? `This doesn't seem like a positive affirmation. ${parsed.reason}. Try rephrasing to focus on what you want to attract into your life.`
+            : DEFAULT_MESSAGE,
+        };
+      }
+    }
+
+    return { flagged: false, categories: [], message: "" };
+  } catch (error) {
+    console.error("Affirmation validation error:", error);
+    return { flagged: false, categories: [], message: "" };
+  }
+}

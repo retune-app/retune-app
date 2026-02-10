@@ -557,7 +557,10 @@ export default function BreathingScreen() {
     };
   }, [isPlaying, selectedDuration]);
 
-  const handleStart = async () => {
+  const handleStart = async (overrides?: { forceVoice?: boolean; forceMusic?: boolean }) => {
+    const useVoice = overrides?.forceVoice ?? voiceEnabled;
+    const useMusic = overrides?.forceMusic ?? musicEnabled;
+    
     await stopAffirmationAudio();
     
     setIsPlaying(true);
@@ -565,13 +568,13 @@ export default function BreathingScreen() {
     setCyclesCompleted(0);
     if (hapticsEnabled) { try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {} }
     
-    if (musicEnabled && voiceEnabled) {
+    if (useMusic && useVoice) {
       await setDucked(true);
     }
-    if (musicEnabled) {
+    if (useMusic) {
       await startBackgroundMusic();
     }
-    if (voiceEnabled) {
+    if (useVoice) {
       await startAffirmationLoop();
     }
   };
@@ -765,7 +768,7 @@ export default function BreathingScreen() {
     opacity: ripple3Opacity.value,
   }));
 
-  const handleStartWithCountdown = useCallback(async () => {
+  const handleStartWithCountdown = useCallback(async (overrides?: { forceVoice?: boolean; forceMusic?: boolean }) => {
     if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); } catch (e) {} }
     
     fullscreenProgress.value = 0;
@@ -785,13 +788,13 @@ export default function BreathingScreen() {
     }
     
     setCountdownValue(null);
-    await handleStart();
+    await handleStart(overrides);
   }, [handleStart, hapticsEnabled]);
 
   useEffect(() => {
     if (pendingAutoStartRef.current && backgroundAffirmation?.audioUrl) {
       pendingAutoStartRef.current = false;
-      setTimeout(() => handleStartWithCountdown(), 300);
+      setTimeout(() => handleStartWithCountdown({ forceVoice: true, forceMusic: true }), 300);
     }
   }, [backgroundAffirmation, handleStartWithCountdown]);
 
@@ -1225,7 +1228,7 @@ export default function BreathingScreen() {
             />
             {!isPlaying && countdownValue === null ? (
               <Pressable
-                onPress={handleStartWithCountdown}
+                onPress={() => handleStartWithCountdown()}
                 testID="button-start-breathing"
                 style={{
                   position: 'absolute',

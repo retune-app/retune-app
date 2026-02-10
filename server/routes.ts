@@ -2569,6 +2569,185 @@ Rules:
 
   // ============ Micro-Meditations API ============
 
+  app.post("/api/guided-moments/script", requireAuth, guidedMomentLimiter, async (req: AuthenticatedRequest, res: Response) => {
+    let clientDisconnected = false;
+    req.on("close", () => { clientDisconnected = true; });
+
+    try {
+      const { mood, timeOfDay, duration: rawDuration } = req.body;
+
+      if (!mood || !timeOfDay) {
+        return res.status(400).json({ error: "mood and timeOfDay are required" });
+      }
+
+      const validMoods = ["calm", "stressed", "tired", "energized", "anxious", "grateful"];
+      const validTimes = ["morning", "afternoon", "evening", "night"];
+      const validDurations = [1, 2, 3];
+
+      if (!validMoods.includes(mood)) {
+        return res.status(400).json({ error: "Invalid mood value" });
+      }
+      if (!validTimes.includes(timeOfDay)) {
+        return res.status(400).json({ error: "Invalid timeOfDay value" });
+      }
+
+      const duration = validDurations.includes(Number(rawDuration)) ? Number(rawDuration) : 1;
+
+      const wordCountMap: Record<number, { min: number; max: number }> = {
+        1: { min: 50, max: 75 },
+        2: { min: 100, max: 145 },
+        3: { min: 150, max: 210 },
+      };
+      const maxTokensMap: Record<number, number> = { 1: 200, 2: 350, 3: 450 };
+      const wordCount = wordCountMap[duration] || wordCountMap[1];
+      const maxTokens = maxTokensMap[duration] || 300;
+
+      const durationLabel = duration === 1 ? "60-90 seconds" : `${duration} minutes`;
+
+      const userId = req.userId!;
+
+      const [userResult] = await Promise.all([
+        db.select({ name: users.name }).from(users).where(eq(users.id, userId)).limit(1),
+      ]);
+
+      const userName = userResult[0]?.name?.split(" ")[0] || "Friend";
+
+      if (clientDisconnected) {
+        console.log(`Client disconnected before script generation (${duration}min), aborting`);
+        return;
+      }
+
+      console.log(`Generating micro-meditation script (${duration}min) for user ${userId} (${userName}), mood: ${mood}, time: ${timeOfDay}`);
+
+      const scriptResponse = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: [
+              `You are an expert mindfulness meditation guide creating a personalized micro-meditation. This is a mindfulness exercise (${durationLabel} when read aloud at a calm pace).`,
+              ``,
+              `STRUCTURE (follow this order):`,
+              `1. OPENING (1-2 sentences): Grounding cue — invite them to close their eyes, notice their breath, or feel their body in the present moment.`,
+              `2. BREATHING GUIDANCE (2-3 sentences): Lead a brief breathing cycle tailored to their mood. For stressed/anxious: slow exhales for vagus nerve activation. For tired: energizing breath with counts. For calm/grateful: simple awareness breath.`,
+              `3. VISUALIZATION (3-4 sentences): Paint a vivid, sensory-rich scene using present tense. Include at least 2 senses (sight + touch, or sound + warmth, etc.). Match the imagery to their mood — calming scenes for stress, expansive scenes for energy, warm scenes for gratitude.`,
+              `4. AFFIRMATION ANCHORING (2-3 sentences): Weave in identity-level affirmations using "I am" or "I choose" language. Use embedded commands naturally. Connect the affirmation to the visualization scene.`,
+              `5. CLOSING (1-2 sentences): Gently guide them back — "When you are ready, let your eyes open" or similar. End with a brief, empowering statement.`,
+              ``,
+              `RULES:`,
+              `- Total length: ${wordCount.min}-${wordCount.max} words (${durationLabel} at meditation pace)`,
+              `- Use the person's name once, naturally (not at the very start)`,
+              `- Include natural pauses marked with "..." (2-3 throughout)`,
+              `- Write in second person ("you") for guidance, first person ("I am") for affirmations`,
+              `- Tone: warm, grounding, unhurried — like a trusted guide speaking softly`,
+              `- No exclamation marks, no questions, no medical claims`,
+              `- Reference accessible neuroscience concepts naturally (e.g., "your nervous system settles," "each breath sends a signal of safety")`,
+              `- Mood-specific emphasis: stressed→release/safety, anxious→grounding/presence, tired→vitality/awakening, calm→deepening/peace, energized→channeling/focus, grateful→expansion/abundance`,
+              `- This is a mindfulness exercise, not medical advice`,
+              ``,
+              `Return ONLY the script text, no formatting or labels.`,
+            ].join("\n"),
+          },
+          {
+            role: "user",
+            content: `Create a ${duration}-minute micro-meditation for someone named ${userName} feeling ${mood} during the ${timeOfDay}.`,
+          },
+        ],
+        temperature: 0.85,
+        max_tokens: maxTokens,
+      });
+
+      const script = scriptResponse.choices[0]?.message?.content?.trim();
+      if (!script) {
+        return res.status(500).json({ error: "Failed to generate meditation script" });
+      }
+
+      console.log(`Script generated (${script.split(/\s+/).length} words): ${script.substring(0, 80)}...`);
+
+      res.json({
+        script,
+        mood,
+        disclaimer: "This is a mindfulness exercise for relaxation purposes. It is not a substitute for professional mental health care.",
+      });
+    } catch (error: any) {
+      console.error("Error generating micro-meditation script:", error);
+      res.status(500).json({ error: "Failed to generate micro-meditation script. Please try again." });
+    }
+  });
+
+  app.post("/api/guided-moments/audio", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    let clientDisconnected = false;
+    req.on("close", () => { clientDisconnected = true; });
+
+    try {
+      const { script, usePersonalVoice, voiceId: rawVoiceId } = req.body;
+
+      if (!script || typeof script !== "string" || script.trim().length === 0) {
+        return res.status(400).json({ error: "script is required and must be a non-empty string" });
+      }
+
+      const userId = req.userId!;
+
+      let voiceId = rawVoiceId;
+      if (usePersonalVoice && !voiceId) {
+        const voiceResult = await db.select({ voiceId: voiceSamples.voiceId }).from(voiceSamples)
+          .where(and(eq(voiceSamples.userId, userId), eq(voiceSamples.status, "ready")))
+          .orderBy(desc(voiceSamples.createdAt)).limit(1);
+        if (voiceResult[0]?.voiceId) {
+          voiceId = voiceResult[0].voiceId;
+          console.log(`Resolved personal voice clone ID: ${voiceId} for user ${userId}`);
+        } else {
+          console.warn(`User ${userId} requested personal voice but no completed voice clone found`);
+        }
+      }
+
+      if (clientDisconnected) {
+        console.log(`Client disconnected before TTS, aborting`);
+        return;
+      }
+
+      let audioBuffer: ArrayBuffer;
+      let wordTimings: WordTiming[] = [];
+      let audioDuration = 0;
+
+      const ttsStartTime = Date.now();
+      try {
+        if (usePersonalVoice && voiceId) {
+          const result = await generateAudio(script, voiceId, true);
+          audioBuffer = result.audio;
+          wordTimings = result.wordTimings;
+          audioDuration = result.duration;
+        } else {
+          const stockVoiceId = voiceId && isHumeVoice(voiceId) ? voiceId : "hume_lotus";
+          const result = await generateAudio(script, stockVoiceId);
+          audioBuffer = result.audio;
+          wordTimings = result.wordTimings;
+          audioDuration = result.duration;
+        }
+      } catch (ttsError: any) {
+        console.error("Guided moment TTS failed:", ttsError?.message || ttsError);
+        return res.status(500).json({
+          error: "Could not generate audio for your micro-meditation. Please try again.",
+          code: ttsError?.message?.includes("QUOTA_EXCEEDED") ? "QUOTA_EXCEEDED" :
+                ttsError?.message?.includes("VOICE_EXPIRED") ? "VOICE_EXPIRED" : "TTS_FAILED"
+        });
+      }
+      const ttsTime = Date.now() - ttsStartTime;
+      console.log(`TTS generated in ${ttsTime}ms`);
+
+      const audioBase64 = Buffer.from(audioBuffer).toString("base64");
+
+      res.json({
+        audioBase64,
+        duration: audioDuration,
+        wordTimings,
+      });
+    } catch (error: any) {
+      console.error("Error generating micro-meditation audio:", error);
+      res.status(500).json({ error: "Failed to generate micro-meditation audio. Please try again." });
+    }
+  });
+
   app.post("/api/guided-moments/generate", requireAuth, guidedMomentLimiter, async (req: AuthenticatedRequest, res: Response) => {
     let clientDisconnected = false;
     req.on("close", () => { clientDisconnected = true; });

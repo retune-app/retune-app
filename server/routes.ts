@@ -1541,7 +1541,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         preferredVoiceType: user.preferredVoiceType || "ai",
         preferredAiGender: user.preferredAiGender || "female",
         preferredMaleVoiceId: user.preferredMaleVoiceId || "hume_orion",
-        preferredFemaleVoiceId: user.preferredFemaleVoiceId || "hume_seraphina",
+        preferredFemaleVoiceId: user.preferredFemaleVoiceId || "hume_lotus",
         hasPersonalVoice: !!user.hasVoiceSample && !!user.voiceId,
       });
     } catch (error) {
@@ -3606,7 +3606,7 @@ Respond with ONLY the notification message text.${avoidClause}`,
             continue;
           }
           
-          const voiceId = affirmation.aiVoiceId || "hume_seraphina";
+          const voiceId = affirmation.aiVoiceId || "hume_lotus";
           
           // Generate audio
           const audioResult = await generateAudio(affirmation.script, voiceId);

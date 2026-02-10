@@ -205,7 +205,7 @@ export default function RootStackNavigator() {
           component={GuidedMomentScreen}
           options={{
             headerShown: false,
-            presentation: "fullScreenModal",
+            presentation: "card",
             animation: "fade",
             gestureEnabled: false,
           }}

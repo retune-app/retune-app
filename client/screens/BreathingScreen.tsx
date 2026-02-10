@@ -883,7 +883,7 @@ export default function BreathingScreen() {
       : Math.min(screenWidth * 0.7, 260);
 
     // Portrait fullscreen layout - max size with safe margin for outer ring (1.15x scale) + progress ring (24px)
-    const portraitCircleSize = Math.min((screenWidth - 32) / 1.15, screenHeight * 0.42);
+    const portraitCircleSize = Math.min((screenWidth - 48) / 1.15, screenHeight * 0.44);
     
     if (!isCurrentlyLandscape) {
       return (
@@ -1822,7 +1822,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    overflow: "hidden",
   },
   landscapeStats: {
     alignItems: "center",
@@ -1885,7 +1884,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     zIndex: 1,
-    overflow: "hidden",
   },
   fsTopControls: {
     flexDirection: "row",

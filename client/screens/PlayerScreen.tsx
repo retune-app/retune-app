@@ -512,7 +512,20 @@ export default function PlayerScreen() {
         isFavorite: !affirmation?.isFavorite,
       });
     },
-    onSuccess: () => {
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["/api/affirmations", affirmationId] });
+      const previous = queryClient.getQueryData(["/api/affirmations", affirmationId]);
+      queryClient.setQueryData(["/api/affirmations", affirmationId], (old: any) =>
+        old ? { ...old, isFavorite: !old.isFavorite } : old
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(["/api/affirmations", affirmationId], context.previous);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/affirmations"] });
       queryClient.invalidateQueries({ queryKey: ["/api/affirmations", affirmationId] });
       if (hapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

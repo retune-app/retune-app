@@ -54,7 +54,7 @@ export async function moderateContent(text: string): Promise<ModerationResult> {
     }
 
     const flaggedCategories: string[] = [];
-    const cats = result.categories as Record<string, boolean>;
+    const cats = result.categories as unknown as Record<string, boolean>;
     for (const [category, isFlagged] of Object.entries(cats)) {
       if (isFlagged) {
         flaggedCategories.push(category);

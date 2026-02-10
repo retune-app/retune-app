@@ -721,6 +721,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/moderate-content", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { text } = req.body;
+      if (!text || typeof text !== "string") {
+        return res.status(400).json({ error: "Text is required" });
+      }
+      const result = await moderateContent(text);
+      res.json(result);
+    } catch (error) {
+      console.error("Moderation check error:", error);
+      res.json({ flagged: false, categories: [], message: "" });
+    }
+  });
+
   // Generate script using AI (requires auth) - Limited to MAX_AI_AFFIRMATIONS_PER_MONTH per month
   // Rate limited: max 5 requests per minute
   app.post("/api/affirmations/generate-script", requireAuth, aiGenerationLimiter, async (req: AuthenticatedRequest, res: Response) => {

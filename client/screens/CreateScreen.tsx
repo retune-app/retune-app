@@ -224,6 +224,7 @@ export default function CreateScreen() {
   const [showPillarHelp, setShowPillarHelp] = useState(false);
   const [showPillarTip, setShowPillarTip] = useState(false);
   const [showCreatingOverlay, setShowCreatingOverlay] = useState(false);
+  const [contentWarning, setContentWarning] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<GoalInspiration[]>(() => getRandomInspirations(3, null));
   const scrollViewRef = useRef<ScrollView>(null);
   const step2Ref = useRef<View | null>(null);
@@ -271,7 +272,7 @@ export default function CreateScreen() {
     }, 250);
   }, [headerHeight]);
 
-  const handleAddCustomTag = () => {
+  const handleAddCustomTag = async () => {
     if (!selectedPillar || !newTagName.trim()) return;
     
     const trimmedName = newTagName.trim();
@@ -287,6 +288,15 @@ export default function CreateScreen() {
       Alert.alert("Duplicate Tag", "This tag already exists.");
       return;
     }
+
+    try {
+      const modResult = await apiRequest("POST", "/api/moderate-content", { text: trimmedName });
+      const modData = await modResult.json();
+      if (modData.flagged) {
+        setContentWarning(modData.message || "This tag contains content that doesn't align with Retuned's purpose. Please choose a different tag name.");
+        return;
+      }
+    } catch (e) {}
     
     const newTags = { ...customTags, [selectedPillar]: [...pillarTags, trimmedName] };
     saveCustomTags(newTags);
@@ -450,15 +460,23 @@ export default function CreateScreen() {
     },
     onError: (error: any) => {
       let message = "Failed to generate script. Please try again.";
+      let errorType = "";
       try {
         const errorStr = error?.message || "";
-        const jsonMatch = errorStr.match(/\{.*\}/);
+        const jsonMatch = errorStr.match(/\{.*\}/s);
         if (jsonMatch) {
           const parsed = JSON.parse(jsonMatch[0]);
-          if (parsed.error) message = parsed.error;
+          if (parsed.error) {
+            errorType = parsed.error;
+            message = parsed.message || parsed.error;
+          }
         }
       } catch {}
-      Alert.alert("Limit Reached", message);
+      if (errorType === "content_flagged") {
+        setContentWarning(message);
+      } else {
+        Alert.alert("Limit Reached", message);
+      }
     },
   });
 
@@ -501,18 +519,23 @@ export default function CreateScreen() {
     },
     onError: (error: any) => {
       let errorType = "";
+      let errorMessage = "";
       try {
         const errorStr = error?.message || "";
-        const jsonMatch = errorStr.match(/\{.*\}/);
+        const jsonMatch = errorStr.match(/\{.*\}/s);
         if (jsonMatch) {
           const parsed = JSON.parse(jsonMatch[0]);
           if (parsed.error) errorType = parsed.error;
+          if (parsed.message) errorMessage = parsed.message;
         }
         if (!errorType && errorStr.includes("QUOTA_EXCEEDED")) errorType = "QUOTA_EXCEEDED";
         if (!errorType && errorStr.includes("PERSONAL_VOICE_FAILED")) errorType = "PERSONAL_VOICE_FAILED";
       } catch {}
 
-      if (errorType === "QUOTA_EXCEEDED") {
+      if (errorType === "content_flagged") {
+        setShowCreatingOverlay(false);
+        setContentWarning(errorMessage || "This content doesn't align with Retuned's purpose of positive self-empowerment. Please revise your text.");
+      } else if (errorType === "QUOTA_EXCEEDED") {
         Alert.alert(
           "Credits Used Up",
           "Your voice cloning credits have been used up for this period. Would you like to use an AI voice instead?",
@@ -1218,6 +1241,41 @@ export default function CreateScreen() {
         </Pressable>
       </Modal>
 
+      {contentWarning ? (
+        <Modal
+          visible={!!contentWarning}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setContentWarning(null)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={[styles.contentWarningCard, { backgroundColor: theme.cardBackground }]}>
+              <View style={[styles.contentWarningIcon, { backgroundColor: `${theme.primary}20` }]}>
+                <Feather name="shield" size={28} color={theme.primary} />
+              </View>
+              <ThemedText type="h3" style={{ marginTop: Spacing.lg, textAlign: "center" }}>
+                Content Notice
+              </ThemedText>
+              <ThemedText
+                type="body"
+                style={{ color: theme.textSecondary, marginTop: Spacing.md, textAlign: "center", lineHeight: 22, paddingHorizontal: Spacing.sm }}
+              >
+                {contentWarning}
+              </ThemedText>
+              <Pressable
+                onPress={() => setContentWarning(null)}
+                style={[styles.contentWarningButton, { backgroundColor: theme.primary }]}
+                testID="button-dismiss-content-warning"
+              >
+                <ThemedText type="body" style={{ color: "#fff", fontWeight: "600" }}>
+                  I Understand
+                </ThemedText>
+              </Pressable>
+            </View>
+          </View>
+        </Modal>
+      ) : null}
+
       {showCreatingOverlay ? (
         <Modal
           visible={showCreatingOverlay}
@@ -1622,5 +1680,27 @@ const styles = StyleSheet.create({
   pillarTipDismiss: {
     padding: Spacing.sm,
     marginRight: Spacing.xs,
+  },
+  contentWarningCard: {
+    width: "85%",
+    maxWidth: 340,
+    borderRadius: BorderRadius.xl,
+    padding: Spacing["2xl"],
+    alignItems: "center",
+  },
+  contentWarningIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  contentWarningButton: {
+    marginTop: Spacing.xl,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing["2xl"],
+    borderRadius: BorderRadius.lg,
+    alignItems: "center",
+    minWidth: 160,
   },
 });

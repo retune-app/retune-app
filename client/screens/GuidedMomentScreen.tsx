@@ -463,8 +463,19 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
   }, [voicePreferenceLoaded]);
 
   const handleClose = useCallback(async () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    if (controlsTimerRef.current) {
+      clearTimeout(controlsTimerRef.current);
+      controlsTimerRef.current = null;
+    }
     await cleanupVoice();
     await stopBackgroundMusic();
+    setPlayerState("idle");
+    cachedScriptRef.current = null;
+    scriptFetchingRef.current = false;
     navigation.navigate("Main", { screen: "BreatheTab" } as any);
   }, [cleanupVoice, stopBackgroundMusic, navigation]);
 

@@ -474,6 +474,10 @@ export default function HomeScreen() {
 
   const handleSetForBreathing = useCallback((affirmation: Affirmation) => {
     setBreathingAffirmation(affirmation);
+    setHighlightedAffirmationId(affirmation.id);
+    setTimeout(() => {
+      setHighlightedAffirmationId(null);
+    }, 2000);
   }, [setBreathingAffirmation]);
 
   const handleAfterDelete = useCallback((deletedAffirmation: Affirmation) => {

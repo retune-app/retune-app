@@ -207,6 +207,7 @@ export default function RootStackNavigator() {
             headerShown: false,
             presentation: "fullScreenModal",
             animation: "fade",
+            gestureEnabled: false,
           }}
         />
       </Stack.Navigator>

@@ -202,54 +202,60 @@ export function AffirmationCard({
           (pillar || isBreathingAffirmation) && { borderLeftWidth: 0, borderTopLeftRadius: 0, borderBottomLeftRadius: 0 },
         ]}>
         <View style={[styles.cardHeader, { borderBottomColor: isDark ? 'rgba(255,255,255,0.08)' : theme.border }]}>
-          <View style={styles.headerLeft}>
-            <View style={styles.ownershipBadge}>
-              <Feather name={voiceInfo.icon} size={10} color={theme.gold} />
-              <ThemedText style={[styles.ownershipText, { color: theme.gold }]}>
-                {voiceInfo.label}
+          <View style={styles.headerTopRow}>
+            <View style={styles.headerLeft}>
+              <View style={styles.ownershipBadge}>
+                <Feather name={voiceInfo.icon} size={10} color={theme.gold} />
+                <ThemedText style={[styles.ownershipText, { color: theme.gold }]}>
+                  {voiceInfo.label}
+                </ThemedText>
+              </View>
+              <ThemedText style={[styles.durationText, { color: theme.textSecondary }]}>
+                {formatDuration(duration)}
               </ThemedText>
             </View>
-            <ThemedText style={[styles.durationText, { color: theme.textSecondary }]}>
-              {formatDuration(duration)}
-            </ThemedText>
-          </View>
-          <View style={styles.headerRight}>
-            {pillar ? (
-              <View style={[styles.pillarBadge, { borderColor: pillarColor }]}>
-                <ThemedText style={[styles.pillarBadgeText, { color: pillarColor }]}>
-                  {pillar}
+            <View style={styles.headerRight}>
+              <Pressable 
+                onPress={(e) => {
+                  e.stopPropagation?.();
+                  if (hapticEnabled) try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+                  onFavoriteToggle?.();
+                }}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                style={styles.favoriteButton}
+              >
+                <Feather 
+                  name={isFavorite ? "heart" : "heart"} 
+                  size={14} 
+                  color={isFavorite ? "#E91E63" : theme.textSecondary} 
+                  style={isFavorite ? { opacity: 1 } : { opacity: 0.5 }}
+                />
+              </Pressable>
+              {formatCreatedDate(createdAt) ? (
+                <ThemedText style={[styles.dateText, { color: theme.textSecondary }]}>
+                  {formatCreatedDate(createdAt)}
                 </ThemedText>
-              </View>
-            ) : null}
-            {lengthInfo.label ? (
-              <View style={[styles.lengthBadge, { borderColor: lengthInfo.color }]}>
-                <ThemedText style={[styles.lengthText, { color: lengthInfo.color }]}>
-                  {lengthInfo.label}
-                </ThemedText>
-              </View>
-            ) : null}
-            <Pressable 
-              onPress={(e) => {
-                e.stopPropagation?.();
-                if (hapticEnabled) try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
-                onFavoriteToggle?.();
-              }}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              style={styles.favoriteButton}
-            >
-              <Feather 
-                name={isFavorite ? "heart" : "heart"} 
-                size={14} 
-                color={isFavorite ? "#E91E63" : theme.textSecondary} 
-                style={isFavorite ? { opacity: 1 } : { opacity: 0.5 }}
-              />
-            </Pressable>
-            {formatCreatedDate(createdAt) ? (
-              <ThemedText style={[styles.dateText, { color: theme.textSecondary }]}>
-                {formatCreatedDate(createdAt)}
-              </ThemedText>
-            ) : null}
+              ) : null}
+            </View>
           </View>
+          {(pillar || lengthInfo.label) ? (
+            <View style={styles.headerBadgeRow}>
+              {pillar ? (
+                <View style={[styles.pillarBadge, { borderColor: pillarColor }]}>
+                  <ThemedText style={[styles.pillarBadgeText, { color: pillarColor }]}>
+                    {pillar}
+                  </ThemedText>
+                </View>
+              ) : null}
+              {lengthInfo.label ? (
+                <View style={[styles.lengthBadge, { borderColor: lengthInfo.color }]}>
+                  <ThemedText style={[styles.lengthText, { color: lengthInfo.color }]}>
+                    {lengthInfo.label}
+                  </ThemedText>
+                </View>
+              ) : null}
+            </View>
+          ) : null}
         </View>
         <View style={styles.content}>
           <View style={styles.textContainer}>
@@ -337,12 +343,21 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
     borderBottomWidth: 1,
+    gap: 4,
+  },
+  headerTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  headerBadgeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.xs,
+    marginTop: 2,
   },
   headerLeft: {
     flexDirection: "row",

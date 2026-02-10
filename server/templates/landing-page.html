@@ -226,10 +226,11 @@
     }
 
     .hero .container {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 60px;
+      display: flex;
+      flex-direction: column;
       align-items: center;
+      text-align: center;
+      max-width: 720px;
     }
 
     .hero-content {
@@ -262,15 +263,17 @@
       font-size: 18px;
       color: var(--text-muted);
       margin-bottom: 40px;
-      max-width: 500px;
+      max-width: 560px;
       line-height: 1.7;
+      margin-left: auto;
+      margin-right: auto;
     }
 
     .hero-actions {
       display: flex;
       flex-direction: column;
       gap: 16px;
-      align-items: flex-start;
+      align-items: center;
     }
 
     .btn-primary {
@@ -343,26 +346,6 @@
       border-radius: 4px;
     }
 
-    /* Hero flywheel visual */
-    .hero-visual {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 1;
-    }
-
-    .flywheel-hero {
-      width: 100%;
-      max-width: 420px;
-      aspect-ratio: 1 / 1;
-      position: relative;
-    }
-
-    .flywheel-hero svg {
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
 
     .flywheel-circle-path {
       fill: none;
@@ -1348,29 +1331,8 @@
         text-align: center;
       }
 
-      .hero-content {
-        order: 1;
-      }
-
-      .hero-visual {
-        order: 0;
-      }
-
       .hero h1 {
         max-width: 100%;
-      }
-
-      .hero-description {
-        margin-left: auto;
-        margin-right: auto;
-      }
-
-      .hero-actions {
-        align-items: center;
-      }
-
-      .flywheel-hero {
-        max-width: 320px;
       }
 
       .journey-point {

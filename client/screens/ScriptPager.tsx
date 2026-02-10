@@ -11,20 +11,22 @@ interface ScriptPagerProps {
   scriptLength?: string;
 }
 
+const HEIGHT_MAP: Record<string, number> = {
+  short: 200,
+  medium: 320,
+  long: 460,
+};
+
 export default function ScriptPager({ 
   scripts, 
   currentIndex,
   scriptLength = "medium",
 }: ScriptPagerProps) {
   const key = scriptLength.toLowerCase();
+  const boxHeight = HEIGHT_MAP[key] || HEIGHT_MAP.medium;
 
   return (
-    <View style={[
-      styles.pagerView,
-      key === "short" && styles.pagerShort,
-      key === "medium" && styles.pagerMedium,
-      key === "long" && styles.pagerLong,
-    ]}>
+    <View style={[styles.pagerView, { height: boxHeight }]}>
       <ScrollView 
         style={styles.scriptScrollView}
         contentContainerStyle={styles.scriptContentContainer}
@@ -42,18 +44,6 @@ export default function ScriptPager({
 const styles = StyleSheet.create({
   pagerView: {
     marginTop: Spacing.sm,
-  },
-  pagerShort: {
-    minHeight: 180,
-    maxHeight: 220,
-  },
-  pagerMedium: {
-    minHeight: 280,
-    maxHeight: 360,
-  },
-  pagerLong: {
-    minHeight: 380,
-    maxHeight: 500,
   },
   scriptScrollView: {
     flex: 1,

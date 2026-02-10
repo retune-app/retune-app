@@ -1344,7 +1344,6 @@ const styles = StyleSheet.create({
   scriptCard: {
     marginBottom: Spacing.md,
     position: "relative",
-    overflow: "hidden",
   },
   scriptHeader: {
     flexDirection: "row",
@@ -1367,6 +1366,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     zIndex: 1,
     pointerEvents: "none",
+    overflow: "hidden",
   },
   shimmerGradient: {
     height: "100%",

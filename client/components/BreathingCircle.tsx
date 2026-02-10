@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { View, StyleSheet, Text } from "react-native";
+import { View, StyleSheet, Text, Platform } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -9,12 +9,10 @@ import Animated, {
   Easing,
   interpolate,
   runOnJS,
+  SharedValue,
 } from "react-native-reanimated";
-import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 
-import { useTheme } from "@/hooks/useTheme";
-import { ThemedText } from "@/components/ThemedText";
 import type { BreathPhase, BreathingTechnique } from "@shared/breathingTechniques";
 import { PHASE_LABELS } from "@shared/breathingTechniques";
 
@@ -30,6 +28,134 @@ interface BreathingCircleProps {
 
 const ACCENT_GOLD = "#C9A227";
 
+function hexToRgba(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function AnimatedRing({
+  size,
+  color,
+  ringIndex,
+  totalRings,
+  progress,
+  isPlaying,
+  idlePulse,
+}: {
+  size: number;
+  color: string;
+  ringIndex: number;
+  totalRings: number;
+  progress: SharedValue<number>;
+  isPlaying: boolean;
+  idlePulse: SharedValue<number>;
+}) {
+  const fraction = (ringIndex + 1) / totalRings;
+  const ringDiameter = size * (0.38 + fraction * 0.62);
+  const baseOpacity = 0.06 + (1 - fraction) * 0.12;
+  const expandedOpacity = 0.15 + (1 - fraction) * 0.25;
+  const borderW = ringIndex === 0 ? 2 : 1.5 - ringIndex * 0.15;
+
+  const animStyle = useAnimatedStyle(() => {
+    const p = progress.value;
+    const scaleRange = 0.04 + fraction * 0.08;
+    const s = interpolate(p, [0, 1], [1 - scaleRange, 1 + scaleRange * 0.5]);
+    const o = interpolate(p, [0, 1], [baseOpacity, expandedOpacity]);
+    const idleS = isPlaying ? 1 : idlePulse.value;
+    return {
+      transform: [{ scale: s * idleS }],
+      opacity: o,
+    };
+  });
+
+  return (
+    <Animated.View
+      style={[
+        styles.ring,
+        animStyle,
+        {
+          width: ringDiameter,
+          height: ringDiameter,
+          borderRadius: ringDiameter / 2,
+          borderWidth: borderW,
+          borderColor: color,
+        },
+      ]}
+    />
+  );
+}
+
+function CoreOrb({
+  size,
+  color,
+  progress,
+  isPlaying,
+  idlePulse,
+}: {
+  size: number;
+  color: string;
+  progress: SharedValue<number>;
+  isPlaying: boolean;
+  idlePulse: SharedValue<number>;
+}) {
+  const orbSize = size * 0.32;
+
+  const orbStyle = useAnimatedStyle(() => {
+    const p = progress.value;
+    const s = interpolate(p, [0, 1], [0.7, 1.0]);
+    const o = interpolate(p, [0, 1], [0.25, 0.65]);
+    const idleS = isPlaying ? 1 : idlePulse.value;
+    return {
+      transform: [{ scale: s * idleS }],
+      opacity: o,
+    };
+  });
+
+  const glowStyle = useAnimatedStyle(() => {
+    const p = progress.value;
+    const s = interpolate(p, [0, 1], [0.75, 1.15]);
+    const o = interpolate(p, [0, 1], [0.08, 0.2]);
+    const idleS = isPlaying ? 1 : idlePulse.value;
+    return {
+      transform: [{ scale: s * idleS }],
+      opacity: o,
+    };
+  });
+
+  const glowSize = orbSize * 1.8;
+
+  return (
+    <>
+      <Animated.View
+        style={[
+          styles.ring,
+          glowStyle,
+          {
+            width: glowSize,
+            height: glowSize,
+            borderRadius: glowSize / 2,
+            backgroundColor: hexToRgba(color, 0.15),
+          },
+        ]}
+      />
+      <Animated.View
+        style={[
+          styles.ring,
+          orbStyle,
+          {
+            width: orbSize,
+            height: orbSize,
+            borderRadius: orbSize / 2,
+            backgroundColor: color,
+          },
+        ]}
+      />
+    </>
+  );
+}
+
 export default function BreathingCircle({
   technique,
   isPlaying,
@@ -39,11 +165,7 @@ export default function BreathingCircle({
   hapticsEnabled = true,
   showContent = true,
 }: BreathingCircleProps) {
-  const { theme } = useTheme();
-  const scale = useSharedValue(0.6);
-  const opacity = useSharedValue(0.3);
-  const phaseIndex = useSharedValue(0);
-  const countdown = useSharedValue(0);
+  const progress = useSharedValue(0);
   const idlePulse = useSharedValue(1);
   const [currentPhase, setCurrentPhase] = React.useState<BreathPhase>("inhale");
   const [currentCountdown, setCurrentCountdown] = React.useState(0);
@@ -71,8 +193,8 @@ export default function BreathingCircle({
     if (!isPlaying) {
       idlePulse.value = withRepeat(
         withSequence(
-          withTiming(1.05, { duration: 2200, easing: Easing.inOut(Easing.ease) }),
-          withTiming(0.98, { duration: 2200, easing: Easing.inOut(Easing.ease) }),
+          withTiming(1.03, { duration: 2500, easing: Easing.inOut(Easing.sin) }),
+          withTiming(0.97, { duration: 2500, easing: Easing.inOut(Easing.sin) }),
         ),
         -1,
         true,
@@ -84,8 +206,7 @@ export default function BreathingCircle({
 
   useEffect(() => {
     if (!isPlaying) {
-      scale.value = withTiming(0.6, { duration: 500 });
-      opacity.value = withTiming(0.3, { duration: 500 });
+      progress.value = withTiming(0, { duration: 600, easing: Easing.out(Easing.ease) });
       return;
     }
 
@@ -100,17 +221,11 @@ export default function BreathingCircle({
       runOnJS(updatePhaseState)(phaseName, currentCountdownVal);
       runOnJS(triggerHaptic)();
 
-      const targetScale = phaseName === "inhale" || phaseName === "holdIn" ? 1 : 0.6;
-      const targetOpacity = phaseName === "inhale" || phaseName === "holdIn" ? 0.8 : 0.3;
+      const targetProgress = phaseName === "inhale" || phaseName === "holdIn" ? 1 : 0;
 
-      scale.value = withTiming(targetScale, {
+      progress.value = withTiming(targetProgress, {
         duration: phase.duration * 1000,
-        easing: Easing.inOut(Easing.ease),
-      });
-
-      opacity.value = withTiming(targetOpacity, {
-        duration: phase.duration * 1000,
-        easing: Easing.inOut(Easing.ease),
+        easing: Easing.inOut(Easing.sin),
       });
     };
 
@@ -139,93 +254,62 @@ export default function BreathingCircle({
     };
   }, [isPlaying, technique]);
 
-  const animatedCircleStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-    opacity: opacity.value,
-  }));
-
-  const idlePulseStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: idlePulse.value }],
-  }));
-
-  const innerGlowStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: interpolate(scale.value, [0.6, 1], [0.85, 1.1]) }],
-    opacity: interpolate(scale.value, [0.6, 1], [0.15, 0.5]),
-  }));
-
-  const outerRingStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: interpolate(scale.value, [0.6, 1], [1.0, 1.15]) }],
-    opacity: interpolate(scale.value, [0.6, 1], [0.08, 0.25]),
-  }));
-
   const phaseColor = technique.color || ACCENT_GOLD;
+  const ringCount = 5;
+
+  const countdownFontSize = Math.round(size * 0.17);
+  const phaseFontSize = Math.round(size * 0.055);
 
   return (
-    <Animated.View style={[styles.container, { width: size, height: size }, !isPlaying ? idlePulseStyle : undefined]}>
-      <Animated.View
-        style={[
-          styles.outerRing,
-          outerRingStyle,
-          {
-            width: size,
-            height: size,
-            borderRadius: size / 2,
-            borderColor: phaseColor,
-          },
-        ]}
+    <View style={[styles.container, { width: size, height: size }]}>
+      {Array.from({ length: ringCount }, (_, i) => (
+        <AnimatedRing
+          key={i}
+          size={size}
+          color={phaseColor}
+          ringIndex={i}
+          totalRings={ringCount}
+          progress={progress}
+          isPlaying={isPlaying}
+          idlePulse={idlePulse}
+        />
+      ))}
+
+      <CoreOrb
+        size={size}
+        color={phaseColor}
+        progress={progress}
+        isPlaying={isPlaying}
+        idlePulse={idlePulse}
       />
 
-      <Animated.View
-        style={[
-          styles.innerGlow,
-          innerGlowStyle,
-          {
-            width: size * 0.75,
-            height: size * 0.75,
-            borderRadius: size * 0.375,
-            backgroundColor: phaseColor,
-          },
-        ]}
-      />
-
-      <Animated.View
-        style={[
-          animatedCircleStyle,
-          styles.mainCircle,
-          {
-            width: size * 0.5,
-            height: size * 0.5,
-            borderRadius: size * 0.25,
-          },
-        ]}
-      >
-        <LinearGradient
-          colors={[phaseColor, `${phaseColor}99`]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[
-            styles.gradientCircle,
-            {
-              width: size * 0.5,
-              height: size * 0.5,
-              borderRadius: size * 0.25,
-            },
-          ]}
-        >
-          {showContent && isPlaying ? (
-            <View style={styles.textContainer}>
-              <ThemedText
-                type="h2"
-                style={[styles.phaseText, { color: "#FFFFFF" }]}
-              >
-                {PHASE_LABELS[currentPhase]}
-              </ThemedText>
-              <Text style={styles.countdownText}>{currentCountdown}</Text>
-            </View>
-          ) : null}
-        </LinearGradient>
-      </Animated.View>
-    </Animated.View>
+      {showContent && isPlaying ? (
+        <View style={styles.textOverlay} pointerEvents="none">
+          <Text
+            style={[
+              styles.phaseLabel,
+              {
+                fontSize: phaseFontSize,
+                letterSpacing: phaseFontSize * 0.2,
+              },
+            ]}
+          >
+            {PHASE_LABELS[currentPhase].toUpperCase()}
+          </Text>
+          <Text
+            style={[
+              styles.countdownNumber,
+              {
+                fontSize: countdownFontSize,
+                lineHeight: countdownFontSize * 1.1,
+              },
+            ]}
+          >
+            {currentCountdown}
+          </Text>
+        </View>
+      ) : null}
+    </View>
   );
 }
 
@@ -234,32 +318,28 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  outerRing: {
-    position: "absolute",
-    borderWidth: 2,
-  },
-  innerGlow: {
+  ring: {
     position: "absolute",
   },
-  mainCircle: {
+  textOverlay: {
+    position: "absolute",
     alignItems: "center",
     justifyContent: "center",
+    zIndex: 10,
   },
-  gradientCircle: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  textContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  phaseText: {
+  phaseLabel: {
+    color: "rgba(255, 255, 255, 0.85)",
+    fontFamily: Platform.select({ ios: "System", android: "sans-serif-light", default: "sans-serif" }),
+    fontWeight: "300",
     textAlign: "center",
-    marginBottom: 8,
+    marginBottom: 4,
+    textTransform: "uppercase",
   },
-  countdownText: {
-    fontSize: 48,
-    fontWeight: "700",
+  countdownNumber: {
     color: "#FFFFFF",
+    fontFamily: Platform.select({ ios: "System", android: "sans-serif-thin", default: "sans-serif" }),
+    fontWeight: "200",
+    textAlign: "center",
+    includeFontPadding: false,
   },
 });

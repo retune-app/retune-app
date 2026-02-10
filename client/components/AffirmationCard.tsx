@@ -384,7 +384,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.sm,
+    paddingTop: 4,
     paddingBottom: Spacing.lg,
   },
   textContainer: {

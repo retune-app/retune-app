@@ -217,6 +217,14 @@ export default function SecurityPrivacyScreen() {
                 <Feather name="check" size={14} color="#10B981" />
               </View>
               <ThemedText type="small" style={{ color: theme.textSecondary, flex: 1 }}>
+                Your personal goals are never stored — they are used only to generate your affirmation and then discarded
+              </ThemedText>
+            </View>
+            <View style={styles.assuranceItem}>
+              <View style={[styles.checkIcon, { backgroundColor: "#10B98120" }]}>
+                <Feather name="check" size={14} color="#10B981" />
+              </View>
+              <ThemedText type="small" style={{ color: theme.textSecondary, flex: 1 }}>
                 We never sell or share your data to third parties
               </ThemedText>
             </View>

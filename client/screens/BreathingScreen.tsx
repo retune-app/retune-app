@@ -62,7 +62,7 @@ import {
   getCyclesForDuration,
   type BreathingTechnique,
 } from "@shared/breathingTechniques";
-import { breathingAutoStartRef } from "@/navigation/MainTabNavigator";
+import { breathingAutoStartRef } from "@/navigation/breathingAutoStart";
 
 const ACCENT_GOLD = "#C9A227";
 

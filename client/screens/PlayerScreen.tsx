@@ -26,7 +26,7 @@ import { useAudio } from "@/contexts/AudioContext";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { apiRequest } from "@/lib/query-client";
 import { getVoiceDisplayName } from "@shared/voiceMapping";
-import { breathingAutoStartRef } from "@/navigation/MainTabNavigator";
+import { breathingAutoStartRef } from "@/navigation/breathingAutoStart";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import type { Affirmation } from "@shared/schema";
 

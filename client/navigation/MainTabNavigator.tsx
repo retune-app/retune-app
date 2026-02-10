@@ -14,6 +14,7 @@ import ProfileStackNavigator from "@/navigation/ProfileStackNavigator";
 import { useTheme } from "@/hooks/useTheme";
 import { Shadows } from "@/constants/theme";
 import { useAudio } from "@/contexts/AudioContext";
+import { breathingAutoStartRef } from "@/navigation/breathingAutoStart";
 
 const FIRST_TAB_VISIT_KEY = "@navigation/firstTabVisit";
 
@@ -52,17 +53,11 @@ function EmptyComponent() {
   return null;
 }
 
-export const breathingAutoStartRef = { current: false };
-
 export default function MainTabNavigator() {
   const { theme, isDark } = useTheme();
   const audioContext = useAudio();
   const [initialRoute, setInitialRoute] = useState<"BreatheTab" | "AffirmTab">("BreatheTab");
   const [ready, setReady] = useState(false);
-
-  const setAutoStartBreathing = (value: boolean) => {
-    breathingAutoStartRef.current = value;
-  };
 
   useEffect(() => {
     AsyncStorage.getItem(FIRST_TAB_VISIT_KEY).then((value) => {
@@ -133,7 +128,7 @@ export default function MainTabNavigator() {
             if (currentAffirmation && isAffirmationPlaying) {
               stop();
               setBreathingAffirmation(currentAffirmation as any);
-              setAutoStartBreathing(true);
+              breathingAutoStartRef.current = true;
             }
           },
         })}

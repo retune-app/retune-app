@@ -465,7 +465,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
   const handleClose = useCallback(async () => {
     await cleanupVoice();
     await stopBackgroundMusic();
-    navigation.goBack();
+    navigation.navigate("Main", { screen: "BreatheTab" } as any);
   }, [cleanupVoice, stopBackgroundMusic, navigation]);
 
   const handleSwitchSoundDuringPlayback = useCallback(async (soundId: BackgroundMusicType) => {

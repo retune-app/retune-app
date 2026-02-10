@@ -203,6 +203,8 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
   const autoPlayRef = useRef(false);
   const playAudioRef = useRef<() => Promise<void>>(() => Promise.resolve());
   const abortControllerRef = useRef<AbortController | null>(null);
+  const cachedScriptRef = useRef<{ script: string; disclaimer: string; duration: number } | null>(null);
+  const scriptFetchingRef = useRef(false);
 
   const breathScale = useSharedValue(0.7);
   const breathOpacity = useSharedValue(0.3);
@@ -400,6 +402,53 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
     }
   }, []);
 
+  const prefetchScript = useCallback(async (duration: number, signal?: AbortSignal) => {
+    if (scriptFetchingRef.current) return;
+    scriptFetchingRef.current = true;
+    try {
+      const url = new URL("/api/guided-moments/script", getApiUrl()).toString();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      const authToken = getAuthToken();
+      if (authToken) headers["X-Auth-Token"] = authToken;
+      const result = await fetch(url, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ mood, timeOfDay, duration }),
+        credentials: "include",
+        signal,
+      });
+      const data = await result.json();
+      if (data.error) return;
+      cachedScriptRef.current = { script: data.script, disclaimer: data.disclaimer, duration };
+    } catch (e: any) {
+      if (e?.name === 'AbortError') return;
+    } finally {
+      scriptFetchingRef.current = false;
+    }
+  }, [mood, timeOfDay]);
+
+  const generateAudioFromScript = useCallback(async (script: string, disclaimer: string, voiceId: string, signal?: AbortSignal) => {
+    const isPersonal = voiceId === "personal";
+    const url = new URL("/api/guided-moments/audio", getApiUrl()).toString();
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    const authToken = getAuthToken();
+    if (authToken) headers["X-Auth-Token"] = authToken;
+    const result = await fetch(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        script,
+        usePersonalVoice: isPersonal,
+        voiceId: isPersonal ? undefined : voiceId,
+      }),
+      credentials: "include",
+      signal,
+    });
+    const data = await result.json();
+    if (data.error) throw new Error(data.error);
+    return { ...data, script, disclaimer };
+  }, []);
+
   useEffect(() => {
     if (voicePreferenceLoaded) {
       beginGeneration();
@@ -450,33 +499,19 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
     }
 
     try {
-      const isPersonal = selectedVoice === "personal";
-      const url = new URL("/api/guided-moments/generate", getApiUrl()).toString();
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      const authToken = getAuthToken();
-      if (authToken) {
-        headers["X-Auth-Token"] = authToken;
+      if (!cachedScriptRef.current || cachedScriptRef.current.duration !== selectedDuration) {
+        await prefetchScript(selectedDuration, controller.signal);
       }
-      const result = await fetch(url, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          mood,
-          timeOfDay,
-          usePersonalVoice: isPersonal,
-          voiceId: isPersonal ? undefined : selectedVoice,
-          duration: selectedDuration,
-        }),
-        credentials: "include",
-        signal: controller.signal,
-      });
-      const data = await result.json();
-
-      if (data.error) {
-        setErrorMessage(data.error);
+      if (!cachedScriptRef.current) {
+        setErrorMessage("Could not generate meditation script. Please try again.");
         setPlayerState("error");
         return;
       }
+
+      const { script, disclaimer } = cachedScriptRef.current;
+      const data = await generateAudioFromScript(script, disclaimer, selectedVoice, controller.signal);
+
+      if (controller.signal.aborted) return;
 
       setMoment(data);
       setPlayerState("ready");
@@ -485,15 +520,16 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
       setCountdown(3);
     } catch (error: any) {
       if (error?.name === 'AbortError') return;
-      setErrorMessage("Something went wrong. Please try again.");
+      setErrorMessage(error?.message || "Something went wrong. Please try again.");
       setPlayerState("error");
     }
-  }, [mood, timeOfDay, selectedVoice, selectedDuration, setSelectedMusic, startBackgroundMusic]);
+  }, [mood, timeOfDay, selectedVoice, selectedDuration, setSelectedMusic, startBackgroundMusic, prefetchScript, generateAudioFromScript]);
 
   const durationChangeRef = useRef(selectedDuration);
   useEffect(() => {
     if (durationChangeRef.current !== selectedDuration && (playerState === "generating" || playerState === "ready")) {
       durationChangeRef.current = selectedDuration;
+      cachedScriptRef.current = null;
       beginGeneration();
     }
     durationChangeRef.current = selectedDuration;
@@ -601,33 +637,19 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
     progressAnim.value = 0;
     
     try {
-      const isPersonal = voiceId === "personal";
-      const url = new URL("/api/guided-moments/generate", getApiUrl()).toString();
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      const authToken = getAuthToken();
-      if (authToken) {
-        headers["X-Auth-Token"] = authToken;
+      if (!cachedScriptRef.current || cachedScriptRef.current.duration !== selectedDuration) {
+        await prefetchScript(selectedDuration, controller.signal);
       }
-      const result = await fetch(url, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          mood,
-          timeOfDay,
-          usePersonalVoice: isPersonal,
-          voiceId: isPersonal ? undefined : voiceId,
-          duration: selectedDuration,
-        }),
-        credentials: "include",
-        signal: controller.signal,
-      });
-      const data = await result.json();
-
-      if (data.error) {
-        setErrorMessage(data.error);
+      if (!cachedScriptRef.current) {
+        setErrorMessage("Could not generate meditation script. Please try again.");
         setPlayerState("error");
         return;
       }
+
+      const { script, disclaimer } = cachedScriptRef.current;
+      const data = await generateAudioFromScript(script, disclaimer, voiceId, controller.signal);
+
+      if (controller.signal.aborted) return;
 
       setMoment(data);
       setPlayerState("ready");
@@ -636,10 +658,10 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
       setCountdown(3);
     } catch (error: any) {
       if (error?.name === 'AbortError') return;
-      setErrorMessage("Something went wrong. Please try again.");
+      setErrorMessage(error?.message || "Something went wrong. Please try again.");
       setPlayerState("error");
     }
-  }, [mood, timeOfDay, cleanupVoice]);
+  }, [mood, timeOfDay, cleanupVoice, selectedDuration, prefetchScript, generateAudioFromScript]);
 
   const renderSoundTile = useCallback((
     sound: BackgroundMusicOption,

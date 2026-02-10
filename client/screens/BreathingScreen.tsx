@@ -314,26 +314,6 @@ export default function BreathingScreen() {
     }
   }, [backgroundAffirmation]);
 
-  useEffect(() => {
-    if (pendingAutoStartRef.current && backgroundAffirmation?.audioUrl) {
-      pendingAutoStartRef.current = false;
-      const doAutoStart = async () => {
-        await stopAffirmationAudio();
-        setIsPlaying(true);
-        setElapsedTime(0);
-        setCyclesCompleted(0);
-        try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
-        await setDucked(true);
-        await startBackgroundMusic();
-        await startAffirmationLoop();
-        fullscreenProgress.value = 0;
-        setShowLandscapeMode(true);
-        fullscreenProgress.value = withSpring(1, { damping: 20, stiffness: 60, mass: 1 });
-      };
-      setTimeout(doAutoStart, 300);
-    }
-  }, [backgroundAffirmation, stopAffirmationAudio, setDucked, startBackgroundMusic, startAffirmationLoop]);
-
   const handleSwitchSoundDuringPlayback = useCallback(async (soundId: BackgroundMusicType) => {
     if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} }
     
@@ -788,6 +768,10 @@ export default function BreathingScreen() {
   const handleStartWithCountdown = useCallback(async () => {
     if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); } catch (e) {} }
     
+    fullscreenProgress.value = 0;
+    setShowLandscapeMode(true);
+    fullscreenProgress.value = withSpring(1, { damping: 20, stiffness: 60, mass: 1 });
+    
     for (let i = 3; i >= 1; i--) {
       setCountdownValue(i);
       countdownScale.value = 0.8;
@@ -801,12 +785,15 @@ export default function BreathingScreen() {
     }
     
     setCountdownValue(null);
-    
-    fullscreenProgress.value = 0;
-    setShowLandscapeMode(true);
-    fullscreenProgress.value = withSpring(1, { damping: 20, stiffness: 60, mass: 1 });
     await handleStart();
   }, [handleStart, hapticsEnabled]);
+
+  useEffect(() => {
+    if (pendingAutoStartRef.current && backgroundAffirmation?.audioUrl) {
+      pendingAutoStartRef.current = false;
+      setTimeout(() => handleStartWithCountdown(), 300);
+    }
+  }, [backgroundAffirmation, handleStartWithCountdown]);
 
   useEffect(() => {
     if (showLandscapeMode && isPlaying) {
@@ -926,7 +913,29 @@ export default function BreathingScreen() {
                   onCycleComplete={handleCycleComplete}
                   hapticsEnabled={hapticsEnabled}
                   size={portraitCircleSize}
+                  showContent={countdownValue === null}
                 />
+                {countdownValue !== null ? (
+                  <Animated.View
+                    style={[
+                      {
+                        position: 'absolute',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                      },
+                      countdownAnimatedStyle,
+                    ]}
+                  >
+                    <Text style={{
+                      fontSize: 48,
+                      fontWeight: '700',
+                      color: 'rgba(255,255,255,0.85)',
+                      letterSpacing: 2,
+                    }}>
+                      {countdownValue}
+                    </Text>
+                  </Animated.View>
+                ) : null}
               </View>
 
               <Animated.View style={[styles.fsBottomControls, controlsAnimatedStyle]} pointerEvents={controlsVisible ? 'auto' : 'none'} onStartShouldSetResponder={() => true}>
@@ -1041,7 +1050,29 @@ export default function BreathingScreen() {
                 onCycleComplete={handleCycleComplete}
                 hapticsEnabled={hapticsEnabled}
                 size={circleSize}
+                showContent={countdownValue === null}
               />
+              {countdownValue !== null ? (
+                <Animated.View
+                  style={[
+                    {
+                      position: 'absolute',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    },
+                    countdownAnimatedStyle,
+                  ]}
+                >
+                  <Text style={{
+                    fontSize: 48,
+                    fontWeight: '700',
+                    color: 'rgba(255,255,255,0.85)',
+                    letterSpacing: 2,
+                  }}>
+                    {countdownValue}
+                  </Text>
+                </Animated.View>
+              ) : null}
             </View>
 
             <Animated.View style={[styles.landscapeSidePanel, controlsAnimatedStyle]} pointerEvents={controlsVisible ? 'auto' : 'none'} onStartShouldSetResponder={() => true}>

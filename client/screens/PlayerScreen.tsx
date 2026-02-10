@@ -735,7 +735,7 @@ export default function PlayerScreen() {
                 await stop();
                 await setBreathingAffirmation(affirmation);
                 breathingAutoStartRef.current = true;
-                navigation.navigate("MainTabs" as any, { screen: "Breathe" });
+                navigation.navigate("Main" as any, { screen: "BreatheTab" });
               }
             }}
             style={[styles.breatheButton, { backgroundColor: theme.backgroundSecondary }]}

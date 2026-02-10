@@ -2507,6 +2507,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         db.select({
           id: affirmations.id,
           title: affirmations.title,
+          description: affirmations.description,
           pillar: affirmations.pillar,
           categoryName: affirmations.categoryName,
           voiceType: affirmations.voiceType,
@@ -2531,7 +2532,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const preferredTags = moodPrefs?.preferredTags || [];
       const preferredPillars = moodPrefs?.preferredPillars || ["Mind"];
 
-      let matchedAffirmation: { id: number; title: string; voiceType: string | null } | null = null;
+      let matchedAffirmation: { id: number; title: string; description: string | null; voiceType: string | null } | null = null;
       let matchReason: "tag" | "pillar" | "any" | null = null;
 
       const withAudio = userAffirmationsList.filter(a => a.audioUrl);
@@ -2621,7 +2622,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (matchedAffirmation) {
         const isInnerVoice = matchedAffirmation.voiceType === "personal";
         const matchQuality = matchReason === "tag" ? "closely matches their mood and time of day" : matchReason === "pillar" ? "aligns with their current emotional needs" : "is available to listen to";
-        listenContext = `The user has an affirmation called "${matchedAffirmation.title}"${isInnerVoice ? " recorded in their own cloned voice (Inner Voice)" : ""} that ${matchQuality}. It is ${timeOfDay} — tailor your note accordingly.`;
+        const descriptionContext = matchedAffirmation.description ? ` This affirmation is "${matchedAffirmation.description}".` : "";
+        listenContext = `The user has an affirmation called "${matchedAffirmation.title}"${isInnerVoice ? " recorded in their own cloned voice (Inner Voice)" : ""} that ${matchQuality}.${descriptionContext} It is ${timeOfDay} — tailor your note accordingly.`;
       } else if (hasAffirmations) {
         listenContext = `The user has affirmations but none with audio yet. It is ${timeOfDay} — suggest bringing one to life.`;
       } else {
@@ -2704,6 +2706,7 @@ Rules:
           hasAffirmation: !!matchedAffirmation,
           affirmationId: matchedAffirmation?.id || null,
           affirmationTitle: matchedAffirmation?.title || null,
+          affirmationDescription: matchedAffirmation?.description || null,
           isInnerVoice: matchedAffirmation?.voiceType === "personal",
           hasClonedVoice: hasClonedVoice,
           hasAnyAffirmations: hasAffirmations,

@@ -73,6 +73,7 @@ interface ListenRec {
   hasAffirmation: boolean;
   affirmationId: number | null;
   affirmationTitle: string | null;
+  affirmationDescription: string | null;
   isInnerVoice: boolean;
   hasClonedVoice: boolean;
   hasAnyAffirmations: boolean;
@@ -124,6 +125,7 @@ export function MoodCheckin({ onStartBreathing, onStartAffirmations, visible, on
           hasAffirmation: false,
           affirmationId: null,
           affirmationTitle: null,
+          affirmationDescription: null,
           isInnerVoice: false,
           hasClonedVoice: false,
           hasAnyAffirmations: false,
@@ -338,11 +340,18 @@ export function MoodCheckin({ onStartBreathing, onStartAffirmations, visible, on
                         {response.listen.note}
                       </ThemedText>
                       {response.listen.hasAffirmation && response.listen.affirmationTitle ? (
-                        <View style={styles.affirmationTag}>
-                          <Feather name="music" size={10} color={ACCENT_GOLD} />
-                          <ThemedText type="caption" style={styles.affirmationTagText} numberOfLines={1}>
-                            {response.listen.affirmationTitle}
-                          </ThemedText>
+                        <View>
+                          <View style={styles.affirmationTag}>
+                            <Feather name="music" size={10} color={ACCENT_GOLD} />
+                            <ThemedText type="caption" style={styles.affirmationTagText} numberOfLines={1}>
+                              {response.listen.affirmationTitle}
+                            </ThemedText>
+                          </View>
+                          {response.listen.affirmationDescription ? (
+                            <ThemedText type="caption" style={[styles.affirmationDescriptionText, { color: theme.textSecondary }]} numberOfLines={2}>
+                              {response.listen.affirmationDescription}
+                            </ThemedText>
+                          ) : null}
                         </View>
                       ) : (
                         <ThemedText type="caption" style={[styles.pathwayCardTechnique, { color: `${ACCENT_GOLD}90` }]}>
@@ -541,6 +550,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
     flex: 1,
+  },
+  affirmationDescriptionText: {
+    fontStyle: "italic",
+    fontSize: 11,
+    marginTop: 4,
+    paddingLeft: 44,
+    opacity: 0.8,
   },
   dismissButton: {
     alignItems: "center",

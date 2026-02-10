@@ -103,7 +103,7 @@ export default function BreathingScreen() {
   );
   const [showTechniqueSelector, setShowTechniqueSelector] = useState(false);
   const [isLandscape, setIsLandscape] = useState(false);
-  const [musicEnabled, setMusicEnabled] = useState(false);
+  const [musicEnabled, setMusicEnabled] = useState(true);
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [showCompletionAnimation, setShowCompletionAnimation] = useState(false);
   const [progressIndicatorEnabled, setProgressIndicatorEnabled] = useState(true);

@@ -399,6 +399,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexWrap: "wrap",
     gap: Spacing.xs,
+    marginTop: Spacing.sm,
   },
   categoriesContainer: {
     flexDirection: "row",

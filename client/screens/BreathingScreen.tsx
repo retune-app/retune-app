@@ -9,11 +9,9 @@ import {
   Modal,
   StatusBar,
   Alert,
-  useWindowDimensions,
   PanResponder,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useHeaderHeight } from "@react-navigation/elements";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -49,8 +47,6 @@ import BreathingCircle from "@/components/BreathingCircle";
 import { WelcomeSection } from "@/components/WelcomeSection";
 import { MoodCheckin } from "@/components/MoodCheckin";
 import { useTheme } from "@/hooks/useTheme";
-import { useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/query-client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAudio } from "@/contexts/AudioContext";
 import { useBackgroundMusic, BACKGROUND_MUSIC_OPTIONS, type BackgroundMusicType, getSoundsByCategory, type BackgroundMusicOption } from "@/contexts/BackgroundMusicContext";
@@ -76,17 +72,12 @@ interface Affirmation {
 
 export default function BreathingScreen() {
   const insets = useSafeAreaInsets();
-  const headerHeight = useHeaderHeight();
   const navigation = useNavigation<any>();
   const [showLandscapeMode, setShowLandscapeMode] = useState(false);
-  const { width: rawWidth, height: rawHeight } = useWindowDimensions();
-  const SCREEN_WIDTH = showLandscapeMode ? rawWidth : Math.min(rawWidth, rawHeight);
-  const SCREEN_HEIGHT = showLandscapeMode ? rawHeight : Math.max(rawWidth, rawHeight);
-  const { theme, isDark } = useTheme();
+  const { theme } = useTheme();
   const { user } = useAuth();
   const { currentAffirmation, isPlaying: isAudioPlaying, playAffirmation, togglePlayPause, breathingAffirmation, requestHighlightAffirmation, stop: stopAffirmationAudio } = useAudio();
   const { selectedMusic, setSelectedMusic, startBackgroundMusic, stopBackgroundMusic, isPlaying: isMusicPlaying, volume, setVolume, setDucked } = useBackgroundMusic();
-  const queryClient = useQueryClient();
 
   const [selectedTechnique, setSelectedTechnique] = useState<BreathingTechnique>(BREATHING_TECHNIQUES[0]);
   const [selectedDuration, setSelectedDuration] = useState(60);
@@ -1557,13 +1548,6 @@ const styles = StyleSheet.create({
   techniqueWrapper: {
     marginBottom: 0,
   },
-  scrollView: {
-    flex: 1,
-  },
-  contentContainer: {
-    paddingHorizontal: Spacing.lg,
-  },
-
   // Circle Section
   circleSection: {
     alignItems: "center",
@@ -1586,79 +1570,6 @@ const styles = StyleSheet.create({
   progressRing: {
     position: "absolute",
   },
-  circleControlButtons: {
-    position: "absolute",
-    right: -70,
-    alignItems: "center",
-    gap: Spacing.sm,
-  },
-  controlButtonsRight: {
-    position: "absolute",
-    right: Spacing.lg,
-    top: 380,
-    alignItems: "center",
-    gap: Spacing.sm,
-  },
-  controlButtonsHorizontal: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: Spacing.lg,
-    marginTop: Spacing.xl,
-    marginBottom: Spacing.xl,
-  },
-  startButtonShadow: {
-    borderRadius: 44,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
-    elevation: 12,
-  },
-  primaryPlayButton: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    alignItems: "center",
-    justifyContent: "center",
-    overflow: "hidden",
-  },
-  primaryButtonText: {
-    color: "#FFFFFF",
-    fontSize: 12,
-    fontWeight: "600",
-    marginTop: 2,
-  },
-  secondaryControlButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1.5,
-  },
-  statsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: Spacing.xl,
-    paddingHorizontal: Spacing.xl,
-  },
-  activeStatsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: Spacing.xl,
-    marginBottom: Spacing.lg,
-  },
-  statItem: {
-    alignItems: "center",
-    flex: 1,
-  },
-  statDivider: {
-    width: 1,
-    height: 40,
-    marginHorizontal: Spacing.lg,
-  },
-
   // Technique Card
   techniqueCard: {
     borderRadius: BorderRadius.lg,
@@ -1799,24 +1710,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  landscapeAffirmationBg: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 48,
-    opacity: 0.1,
-  },
-  landscapeAffirmationText: {
-    fontSize: 32,
-    fontWeight: "700",
-    color: "#FFFFFF",
-    textAlign: "center",
-    lineHeight: 44,
-  },
   landscapeCloseButton: {
     position: "absolute",
     right: 24,
@@ -1897,9 +1790,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  landscapeStatsRow: {
-    alignItems: "center",
-  },
   // Portrait fullscreen mode styles
   portraitFullscreenWrapper: {
     flex: 1,
@@ -1907,9 +1797,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: Spacing.xl,
-  },
-  portraitTopSection: {
-    alignItems: "center",
   },
   portraitCenterSection: {
     flex: 1,

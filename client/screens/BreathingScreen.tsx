@@ -1569,11 +1569,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flex: 1,
     justifyContent: "center",
+    minHeight: 260,
   },
   circleContainer: {
     position: "relative",
     alignItems: "center",
     justifyContent: "center",
+    width: 280,
+    height: 280,
   },
   progressRingContainer: {
     position: "absolute",

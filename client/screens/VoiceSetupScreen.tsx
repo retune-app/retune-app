@@ -31,6 +31,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { getApiUrl } from "@/lib/query-client";
 import { getAuthToken } from "@/lib/auth-token";
+import { useAuth } from "@/contexts/AuthContext";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
@@ -423,6 +424,7 @@ export default function VoiceSetupScreen() {
   const { theme } = useTheme();
   const navigation = useNavigation<NavigationProp>();
   const queryClient = useQueryClient();
+  const { refreshUser } = useAuth();
 
   const [showPrivacyNotice, setShowPrivacyNotice] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
@@ -499,6 +501,7 @@ export default function VoiceSetupScreen() {
         queryClient.invalidateQueries({ queryKey: ["/api/user/profile"] }),
         queryClient.invalidateQueries({ queryKey: ["/api/voice-samples/status"] }),
         queryClient.invalidateQueries({ queryKey: ["/api/voice-preferences"] }),
+        refreshUser(),
       ]);
       try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
       setShowSuccess(true);

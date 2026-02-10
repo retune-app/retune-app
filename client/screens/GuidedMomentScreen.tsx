@@ -32,6 +32,7 @@ import Slider from "@react-native-community/slider";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
+import { useQuery } from "@tanstack/react-query";
 import { apiRequest, getApiUrl } from "@/lib/query-client";
 import { getAuthToken } from "@/lib/auth-token";
 import { useAuth } from "@/contexts/AuthContext";
@@ -229,7 +230,8 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
     }));
   }, []);
 
-  const hasPersonalVoice = user?.hasVoiceSample === true;
+  const { data: voiceStatus } = useQuery<{ hasPersonalVoice: boolean }>({ queryKey: ["/api/voice-samples/status"] });
+  const hasPersonalVoice = user?.hasVoiceSample === true || voiceStatus?.hasPersonalVoice === true;
   const allVoiceOptions = useMemo(() => {
     const opts = [...VOICE_OPTIONS];
     if (hasPersonalVoice) {

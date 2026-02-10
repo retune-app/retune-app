@@ -22,7 +22,7 @@ import {
 import { humeTextToSpeech, humeSimpleTTS, HUME_VOICE_OPTIONS, type WordTiming as HumeWordTiming } from "./hume-client";
 import { findInactiveVoices, runVoiceRotation, getVoiceSlotStats, checkVoiceSlotWarning } from "./voice-rotation";
 import { setupAuth, requireAuth, optionalAuth, AuthenticatedRequest } from "./auth";
-import { moderateContent, moderateMultipleTexts } from "./moderation";
+import { moderateContent, moderateMultipleTexts, validateAffirmationContent } from "./moderation";
 import {
   postIssueComment,
   setIssueStatusLabel,
@@ -745,8 +745,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Goal is required" });
       }
 
-      // Moderate the user's goal input
-      const goalModResult = await moderateContent(goal);
+      // Validate goal input — checks both explicit content and affirmation alignment
+      const goalModResult = await validateAffirmationContent(goal);
       if (goalModResult.flagged) {
         return res.status(422).json({
           error: "content_flagged", 
@@ -808,12 +808,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Script is required" });
       }
 
-      // Content moderation check
+      // Content moderation check — validates both explicit content and affirmation alignment
       const textsToCheck = [script, title].filter(Boolean);
       if (categories && Array.isArray(categories)) {
         textsToCheck.push(...categories);
       }
-      const modResult = await moderateContent(textsToCheck.join(" "));
+      const modResult = await validateAffirmationContent(textsToCheck.join(" "));
       if (modResult.flagged) {
         return res.status(422).json({ 
           error: "content_flagged",

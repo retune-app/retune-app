@@ -305,15 +305,19 @@ export default function BreathingScreen() {
     
     if (soundId === 'none') {
       setMusicEnabled(false);
+      await setDucked(false);
       await stopBackgroundMusic();
     } else {
       setMusicEnabled(true);
+      if (voiceEnabled) {
+        await setDucked(true);
+      }
       await setSelectedMusic(soundId);
       if (isPlaying) {
         await startBackgroundMusic();
       }
     }
-  }, [hapticsEnabled, setSelectedMusic, startBackgroundMusic, stopBackgroundMusic, isPlaying]);
+  }, [hapticsEnabled, setSelectedMusic, startBackgroundMusic, stopBackgroundMusic, isPlaying, voiceEnabled, setDucked]);
 
   const renderSoundTile = useCallback((
     sound: BackgroundMusicOption,
@@ -424,22 +428,20 @@ export default function BreathingScreen() {
             </Pressable>
           </View>
 
-          {musicEnabled ? (
-            <View style={styles.soundVolumeRow}>
-              <Feather name="volume-1" size={14} color="rgba(255,255,255,0.5)" />
-              <Slider
-                style={{ flex: 1, marginHorizontal: 8 }}
-                minimumValue={0}
-                maximumValue={1}
-                value={volume}
-                onValueChange={(val: number) => setVolume(val)}
-                minimumTrackTintColor={ACCENT_GOLD}
-                maximumTrackTintColor="rgba(255,255,255,0.15)"
-                thumbTintColor={ACCENT_GOLD}
-              />
-              <Feather name="volume-2" size={14} color="rgba(255,255,255,0.5)" />
-            </View>
-          ) : null}
+          <View style={styles.soundVolumeRow}>
+            <Feather name="volume-1" size={14} color="rgba(255,255,255,0.5)" />
+            <Slider
+              style={{ flex: 1, marginHorizontal: 8 }}
+              minimumValue={0}
+              maximumValue={1}
+              value={volume}
+              onValueChange={(val: number) => setVolume(val)}
+              minimumTrackTintColor={ACCENT_GOLD}
+              maximumTrackTintColor="rgba(255,255,255,0.15)"
+              thumbTintColor={ACCENT_GOLD}
+            />
+            <Feather name="volume-2" size={14} color="rgba(255,255,255,0.5)" />
+          </View>
 
           <ScrollView
             style={{ maxHeight: 340 }}
@@ -475,7 +477,7 @@ export default function BreathingScreen() {
         </Pressable>
       </Pressable>
     </Modal>
-  ), [showSoundSwitcher, musicEnabled, volume, selectedMusic, categories, insets.bottom, handleSwitchSoundDuringPlayback, renderSoundTile, renderNoSoundTile, setVolume]);
+  ), [showSoundSwitcher, musicEnabled, volume, selectedMusic, categories, insets.bottom, handleSwitchSoundDuringPlayback, renderSoundTile, renderNoSoundTile, setVolume, voiceEnabled]);
 
   const stopAffirmationLoop = useCallback(async () => {
     if (affirmationSoundRef.current) {
@@ -833,7 +835,7 @@ export default function BreathingScreen() {
                     onPress={() => { resetControlsTimer(); setShowSoundSwitcher(true); }}
                     style={[styles.fsControlBtn, { backgroundColor: `${selectedTechnique.color}20` }]}
                   >
-                    <Feather name={musicEnabled ? "music" : "volume-x"} size={18} color={selectedTechnique.color} />
+                    <Feather name="music" size={18} color={selectedTechnique.color} />
                   </Pressable>
                   <Pressable
                     onPress={async () => {

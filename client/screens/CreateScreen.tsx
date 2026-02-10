@@ -1039,22 +1039,22 @@ export default function CreateScreen() {
                               </ThemedText>
                             </View>
                           </View>
-                          <Pressable onPress={handleRegenerate} disabled={generateMutation.isPending} style={styles.regenerateButton}>
-                            <Feather 
-                              name="refresh-cw" 
-                              size={16} 
-                              color={generateMutation.isPending ? theme.textSecondary : theme.primary} 
-                            />
-                            <ThemedText type="caption" style={{ color: generateMutation.isPending ? theme.textSecondary : theme.primary, marginLeft: 4 }}>
-                              Try another
-                            </ThemedText>
-                          </Pressable>
                         </View>
                         <View style={styles.scriptBody}>
                           <ThemedText type="body" style={styles.scriptBodyText}>
                             {scriptsByLength[viewingLength] || ""}
                           </ThemedText>
                         </View>
+                        <Pressable onPress={handleRegenerate} disabled={generateMutation.isPending} style={styles.regenerateButton}>
+                          <Feather 
+                            name="refresh-cw" 
+                            size={14} 
+                            color={generateMutation.isPending ? theme.textSecondary : theme.primary} 
+                          />
+                          <ThemedText type="caption" style={{ color: generateMutation.isPending ? theme.textSecondary : theme.primary, marginLeft: 4 }}>
+                            Try another
+                          </ThemedText>
+                        </Pressable>
                         {availableLengths.length > 1 ? (
                           <>
                             <View style={styles.paginationContainer}>
@@ -1395,8 +1395,9 @@ const styles = StyleSheet.create({
   regenerateButton: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    alignSelf: "flex-start",
+    paddingVertical: 6,
+    paddingHorizontal: Spacing.lg,
   },
   shimmerOverlay: {
     ...StyleSheet.absoluteFillObject,

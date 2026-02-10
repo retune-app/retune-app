@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { View, StyleSheet, Text } from "react-native";
+import { View, StyleSheet, Text, Platform, PixelRatio } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -160,9 +160,14 @@ export default function BreathingCircle({
 
   const phaseColor = technique.color || ACCENT_GOLD;
 
+  const rasterize = Platform.OS === "ios";
+  const hardwareTexture = Platform.OS === "android";
+
   return (
     <Animated.View style={[styles.container, { width: size, height: size }, !isPlaying ? idlePulseStyle : undefined]}>
       <Animated.View
+        shouldRasterizeIOS={rasterize}
+        renderToHardwareTextureAndroid={hardwareTexture}
         style={[
           styles.outerRing,
           outerRingStyle,
@@ -176,6 +181,8 @@ export default function BreathingCircle({
       />
 
       <Animated.View
+        shouldRasterizeIOS={rasterize}
+        renderToHardwareTextureAndroid={hardwareTexture}
         style={[
           styles.innerGlow,
           innerGlowStyle,
@@ -183,12 +190,25 @@ export default function BreathingCircle({
             width: size * 0.75,
             height: size * 0.75,
             borderRadius: size * 0.375,
-            backgroundColor: phaseColor,
           },
         ]}
-      />
+      >
+        <LinearGradient
+          colors={[`${phaseColor}CC`, `${phaseColor}40`, `${phaseColor}00`]}
+          locations={[0, 0.6, 1]}
+          start={{ x: 0.5, y: 0.5 }}
+          end={{ x: 1, y: 1 }}
+          style={{
+            width: size * 0.75,
+            height: size * 0.75,
+            borderRadius: size * 0.375,
+          }}
+        />
+      </Animated.View>
 
       <Animated.View
+        shouldRasterizeIOS={rasterize}
+        renderToHardwareTextureAndroid={hardwareTexture}
         style={[
           animatedCircleStyle,
           styles.mainCircle,
@@ -196,11 +216,12 @@ export default function BreathingCircle({
             width: size * 0.5,
             height: size * 0.5,
             borderRadius: size * 0.25,
+            overflow: "hidden",
           },
         ]}
       >
         <LinearGradient
-          colors={[phaseColor, `${phaseColor}99`]}
+          colors={[phaseColor, `${phaseColor}BB`]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={[
@@ -209,6 +230,7 @@ export default function BreathingCircle({
               width: size * 0.5,
               height: size * 0.5,
               borderRadius: size * 0.25,
+              overflow: "hidden",
             },
           ]}
         >
@@ -216,11 +238,20 @@ export default function BreathingCircle({
             <View style={styles.textContainer}>
               <ThemedText
                 type="h2"
-                style={[styles.phaseText, { color: "#FFFFFF" }]}
+                style={[styles.phaseText, {
+                  color: "#FFFFFF",
+                  textShadowColor: "rgba(0,0,0,0.35)",
+                  textShadowOffset: { width: 0, height: 1 },
+                  textShadowRadius: 3,
+                }]}
               >
                 {PHASE_LABELS[currentPhase]}
               </ThemedText>
-              <Text style={styles.countdownText}>{currentCountdown}</Text>
+              <Text style={[styles.countdownText, {
+                textShadowColor: "rgba(0,0,0,0.35)",
+                textShadowOffset: { width: 0, height: 1 },
+                textShadowRadius: 4,
+              }]}>{currentCountdown}</Text>
             </View>
           ) : null}
         </LinearGradient>

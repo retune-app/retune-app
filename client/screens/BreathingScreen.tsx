@@ -87,7 +87,7 @@ export default function BreathingScreen() {
   const queryClient = useQueryClient();
 
   const [selectedTechnique, setSelectedTechnique] = useState<BreathingTechnique>(BREATHING_TECHNIQUES[0]);
-  const [selectedDuration, setSelectedDuration] = useState(180);
+  const [selectedDuration, setSelectedDuration] = useState(60);
   const [isPlaying, setIsPlaying] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [cyclesCompleted, setCyclesCompleted] = useState(0);

@@ -202,13 +202,25 @@ export function AffirmationCard({
           (pillar || isBreathingAffirmation) && { borderLeftWidth: 0, borderTopLeftRadius: 0, borderBottomLeftRadius: 0 },
         ]}>
         <View style={[styles.cardHeader, { borderBottomColor: isDark ? 'rgba(255,255,255,0.08)' : theme.border }]}>
-          <View style={styles.ownershipBadge}>
-            <Feather name={voiceInfo.icon} size={10} color={theme.gold} />
-            <ThemedText style={[styles.ownershipText, { color: theme.gold }]}>
-              {voiceInfo.label}
+          <View style={styles.headerLeft}>
+            <View style={styles.ownershipBadge}>
+              <Feather name={voiceInfo.icon} size={10} color={theme.gold} />
+              <ThemedText style={[styles.ownershipText, { color: theme.gold }]}>
+                {voiceInfo.label}
+              </ThemedText>
+            </View>
+            <ThemedText style={[styles.durationText, { color: theme.textSecondary }]}>
+              {formatDuration(duration)}
             </ThemedText>
           </View>
           <View style={styles.headerRight}>
+            {pillar ? (
+              <View style={[styles.pillarBadge, { borderColor: pillarColor }]}>
+                <ThemedText style={[styles.pillarBadgeText, { color: pillarColor }]}>
+                  {pillar}
+                </ThemedText>
+              </View>
+            ) : null}
             {lengthInfo.label ? (
               <View style={[styles.lengthBadge, { borderColor: lengthInfo.color }]}>
                 <ThemedText style={[styles.lengthText, { color: lengthInfo.color }]}>
@@ -272,9 +284,6 @@ export function AffirmationCard({
                   </ThemedText>
                 </View>
               ) : null}
-              <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                {formatDuration(duration)}
-              </ThemedText>
             </View>
           </View>
           <View style={styles.actions}>
@@ -335,10 +344,19 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     borderBottomWidth: 1,
   },
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
   ownershipBadge: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
+  },
+  durationText: {
+    fontSize: 11,
+    fontWeight: "500",
   },
   ownershipText: {
     fontSize: 11,
@@ -400,6 +418,18 @@ const styles = StyleSheet.create({
   favoriteButton: {
     marginRight: Spacing.xs,
     padding: 2,
+  },
+  pillarBadge: {
+    paddingHorizontal: 5,
+    paddingVertical: 0,
+    borderRadius: BorderRadius.xs,
+    borderWidth: 1,
+  },
+  pillarBadgeText: {
+    fontSize: 9,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.3,
   },
   lengthBadge: {
     paddingHorizontal: 5,

@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
-import { useNavigation } from "@react-navigation/native";
+import { CommonActions, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
@@ -477,7 +477,12 @@ export default function CreateScreen() {
         setBreathingAffirmation(data);
       }
       
-      navigation.navigate("Player", { affirmationId: data.id, isNew: true });
+      navigation.dispatch(
+        CommonActions.navigate({
+          name: "Main",
+          params: { screen: "AffirmTab" },
+        })
+      );
     },
     onError: (error: any) => {
       let errorType = "";

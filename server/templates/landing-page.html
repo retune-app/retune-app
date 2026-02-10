@@ -366,15 +366,14 @@
     .flywheel-circle-path {
       fill: none;
       stroke: var(--border);
-      stroke-width: 2;
+      stroke-width: 2.5;
     }
 
     .flywheel-circle-animated {
       fill: none;
-      stroke: url(#flywheel-gradient);
-      stroke-width: 3;
-      stroke-dasharray: 880;
-      stroke-dashoffset: 880;
+      stroke-width: 5;
+      stroke-dasharray: 942;
+      stroke-dashoffset: 942;
       stroke-linecap: round;
       transition: stroke-dashoffset 2s ease;
     }
@@ -405,18 +404,25 @@
     .flywheel-node-glow.breathe-glow { animation-delay: 1s; }
     .flywheel-node-glow.meditate-glow { animation-delay: 2s; }
 
+    .flywheel-tagline {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      fill: var(--text);
+    }
+
     .flywheel-label {
       font-family: 'Space Grotesk', sans-serif;
       font-weight: 700;
-      font-size: 13px;
-      letter-spacing: 1px;
-      fill: var(--text);
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      fill: var(--text-muted);
     }
 
     .flywheel-sublabel {
       font-family: 'Nunito', sans-serif;
-      font-size: 11px;
-      fill: var(--text-muted);
+      font-size: 10px;
+      fill: var(--text-light);
     }
 
     .flywheel-arrow {
@@ -439,6 +445,15 @@
 
     .flywheel-hero.animate .flywheel-arrowhead {
       opacity: 0.5;
+    }
+
+    .flywheel-orbiter {
+      animation: orbit-flywheel 30s linear infinite;
+    }
+
+    @keyframes orbit-flywheel {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
     }
 
     /* ===== PROBLEM STATEMENT ===== */
@@ -597,8 +612,8 @@
     }
 
     .flywheel-diagram .flywheel-circle-animated {
-      stroke-dasharray: 880;
-      stroke-dashoffset: 880;
+      stroke-dasharray: 942;
+      stroke-dashoffset: 942;
       transition: stroke-dashoffset 2.5s ease;
     }
 
@@ -1592,7 +1607,7 @@
       </div>
       <div class="hero-visual fade-in">
         <div class="flywheel-hero" id="hero-flywheel">
-          <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+          <svg viewBox="0 0 500 480" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <linearGradient id="flywheel-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" style="stop-color:#C9A227"/>
@@ -1603,42 +1618,50 @@
               <filter id="glow-believe"><feGaussianBlur stdDeviation="8" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
               <filter id="glow-breathe"><feGaussianBlur stdDeviation="8" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
               <filter id="glow-meditate"><feGaussianBlur stdDeviation="8" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              <filter id="glow-orbiter"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
             </defs>
 
-            <circle cx="200" cy="200" r="140" class="flywheel-circle-path"/>
-            <circle cx="200" cy="200" r="140" class="flywheel-circle-animated"/>
+            <circle cx="250" cy="210" r="150" class="flywheel-circle-path"/>
+            <circle cx="250" cy="210" r="150" class="flywheel-circle-animated" stroke="url(#flywheel-gradient)"/>
 
-            <!-- Arrows along the path -->
-            <path d="M 240 68 L 260 60 L 245 78" class="flywheel-arrowhead" fill="var(--text-light)"/>
-            <path d="M 100 310 L 88 320 L 108 318" class="flywheel-arrowhead" fill="var(--text-light)"/>
-            <path d="M 325 280 L 335 295 L 318 288" class="flywheel-arrowhead" fill="var(--text-light)"/>
+            <path d="M 185 72 L 175 58 L 195 65" class="flywheel-arrowhead" fill="var(--text-light)"/>
+            <path d="M 145 330 L 130 340 L 148 345" class="flywheel-arrowhead" fill="var(--text-light)"/>
+            <path d="M 390 250 L 400 265 L 383 258" class="flywheel-arrowhead" fill="var(--text-light)"/>
 
-            <!-- BELIEVE node (top) -->
-            <circle cx="200" cy="60" r="20" class="flywheel-node-glow believe-glow" fill="var(--believe)" opacity="0.3" filter="url(#glow-believe)"/>
-            <circle cx="200" cy="60" r="16" fill="var(--believe)" class="flywheel-node"/>
-            <svg x="190" y="50" width="20" height="20" viewBox="0 0 24 24" fill="white">
-              <path d="M12 3v18M5.5 7.5l13 9M5.5 16.5l13-9" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <circle cx="250" cy="60" r="28" class="flywheel-node-glow believe-glow" fill="var(--believe)" opacity="0.3" filter="url(#glow-believe)"/>
+            <circle cx="250" cy="60" r="22" fill="var(--believe)" class="flywheel-node"/>
+            <svg x="238" y="48" width="24" height="24" viewBox="0 0 24 24" fill="white">
+              <path d="M12 2l2.4 7.2H22l-6 4.8 2.4 7.2L12 16.4l-6.4 4.8 2.4-7.2-6-4.8h7.6z"/>
             </svg>
-            <text x="200" y="100" text-anchor="middle" class="flywheel-label">BELIEVE</text>
-            <text x="200" y="115" text-anchor="middle" class="flywheel-sublabel">Affirmations</text>
+            <text x="250" y="98" text-anchor="middle" class="flywheel-tagline">Speak It Into Being</text>
+            <text x="250" y="115" text-anchor="middle" class="flywheel-label">BELIEVE</text>
+            <text x="250" y="130" text-anchor="middle" class="flywheel-sublabel">Affirmations</text>
 
-            <!-- BREATHE node (bottom-left) -->
-            <circle cx="79" cy="320" r="20" class="flywheel-node-glow breathe-glow" fill="var(--breathe)" opacity="0.3" filter="url(#glow-breathe)"/>
-            <circle cx="79" cy="320" r="16" fill="var(--breathe)" class="flywheel-node"/>
-            <svg x="69" y="310" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round">
-              <path d="M12 22c-4-3-8-6-8-11a8 8 0 0116 0c0 5-4 8-8 11z"/>
+            <circle cx="115" cy="285" r="28" class="flywheel-node-glow breathe-glow" fill="var(--breathe)" opacity="0.3" filter="url(#glow-breathe)"/>
+            <circle cx="115" cy="285" r="22" fill="var(--breathe)" class="flywheel-node"/>
+            <svg x="103" y="273" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round">
+              <path d="M3 8c3-2 6 2 9 0s6-2 9 0"/>
+              <path d="M3 12c3-2 6 2 9 0s6-2 9 0"/>
+              <path d="M3 16c3-2 6 2 9 0s6-2 9 0"/>
             </svg>
-            <text x="79" y="358" text-anchor="middle" class="flywheel-label">BREATHE</text>
-            <text x="79" y="373" text-anchor="middle" class="flywheel-sublabel">Breathwork</text>
+            <text x="115" y="323" text-anchor="middle" class="flywheel-tagline">Calm Your Nervous System</text>
+            <text x="115" y="340" text-anchor="middle" class="flywheel-label">BREATHE</text>
+            <text x="115" y="355" text-anchor="middle" class="flywheel-sublabel">Breathwork</text>
 
-            <!-- MEDITATE node (bottom-right) -->
-            <circle cx="321" cy="320" r="20" class="flywheel-node-glow meditate-glow" fill="var(--meditate)" opacity="0.3" filter="url(#glow-meditate)"/>
-            <circle cx="321" cy="320" r="16" fill="var(--meditate)" class="flywheel-node"/>
-            <svg x="311" y="310" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round">
-              <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+            <circle cx="385" cy="285" r="28" class="flywheel-node-glow meditate-glow" fill="var(--meditate)" opacity="0.3" filter="url(#glow-meditate)"/>
+            <circle cx="385" cy="285" r="22" fill="var(--meditate)" class="flywheel-node"/>
+            <svg x="373" y="273" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 21c-1.5-1.5-6-5-6-9 0-2 1-4 3-4s3 2 3 4c0-2 1-4 3-4s3 2 3 4c0 4-4.5 7.5-6 9z"/>
+              <path d="M12 13v4"/>
             </svg>
-            <text x="321" y="358" text-anchor="middle" class="flywheel-label">MEDITATE</text>
-            <text x="321" y="373" text-anchor="middle" class="flywheel-sublabel">Guided Sessions</text>
+            <text x="385" y="323" text-anchor="middle" class="flywheel-tagline">Let Your Mind Reset</text>
+            <text x="385" y="340" text-anchor="middle" class="flywheel-label">MEDITATE</text>
+            <text x="385" y="355" text-anchor="middle" class="flywheel-sublabel">Meditation</text>
+
+            <g class="flywheel-orbiter" style="transform-origin: 250px 210px;" filter="url(#glow-orbiter)">
+              <circle cx="250" cy="60" r="5" fill="white" opacity="0.9"/>
+              <circle cx="250" cy="60" r="8" fill="white" opacity="0.3"/>
+            </g>
           </svg>
         </div>
       </div>
@@ -1691,7 +1714,7 @@
       </div>
 
       <div class="flywheel-diagram fade-in" id="flywheel-diagram">
-        <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+        <svg viewBox="0 0 500 480" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <linearGradient id="flywheel-gradient-2" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" style="stop-color:#C9A227"/>
@@ -1699,28 +1722,53 @@
               <stop offset="66%" style="stop-color:#7C3AED"/>
               <stop offset="100%" style="stop-color:#C9A227"/>
             </linearGradient>
+            <filter id="glow-believe-2"><feGaussianBlur stdDeviation="8" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            <filter id="glow-breathe-2"><feGaussianBlur stdDeviation="8" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            <filter id="glow-meditate-2"><feGaussianBlur stdDeviation="8" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            <filter id="glow-orbiter-2"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
           </defs>
-          <circle cx="200" cy="200" r="140" class="flywheel-circle-path"/>
-          <circle cx="200" cy="200" r="140" class="flywheel-circle-animated" stroke="url(#flywheel-gradient-2)"/>
 
-          <path d="M 240 68 L 260 60 L 245 78" class="flywheel-arrowhead"/>
-          <path d="M 100 310 L 88 320 L 108 318" class="flywheel-arrowhead"/>
-          <path d="M 325 280 L 335 295 L 318 288" class="flywheel-arrowhead"/>
+          <circle cx="250" cy="210" r="150" class="flywheel-circle-path"/>
+          <circle cx="250" cy="210" r="150" class="flywheel-circle-animated" stroke="url(#flywheel-gradient-2)"/>
 
-          <circle cx="200" cy="60" r="20" class="flywheel-node-glow believe-glow" fill="var(--believe)" opacity="0.3"/>
-          <circle cx="200" cy="60" r="16" fill="var(--believe)"/>
-          <text x="200" y="100" text-anchor="middle" class="flywheel-label">BELIEVE</text>
-          <text x="200" y="115" text-anchor="middle" class="flywheel-sublabel">Affirmations</text>
+          <path d="M 185 72 L 175 58 L 195 65" class="flywheel-arrowhead" fill="var(--text-light)"/>
+          <path d="M 145 330 L 130 340 L 148 345" class="flywheel-arrowhead" fill="var(--text-light)"/>
+          <path d="M 390 250 L 400 265 L 383 258" class="flywheel-arrowhead" fill="var(--text-light)"/>
 
-          <circle cx="79" cy="320" r="20" class="flywheel-node-glow breathe-glow" fill="var(--breathe)" opacity="0.3"/>
-          <circle cx="79" cy="320" r="16" fill="var(--breathe)"/>
-          <text x="79" y="358" text-anchor="middle" class="flywheel-label">BREATHE</text>
-          <text x="79" y="373" text-anchor="middle" class="flywheel-sublabel">Breathwork</text>
+          <circle cx="250" cy="60" r="28" class="flywheel-node-glow believe-glow" fill="var(--believe)" opacity="0.3" filter="url(#glow-believe-2)"/>
+          <circle cx="250" cy="60" r="22" fill="var(--believe)" class="flywheel-node"/>
+          <svg x="238" y="48" width="24" height="24" viewBox="0 0 24 24" fill="white">
+            <path d="M12 2l2.4 7.2H22l-6 4.8 2.4 7.2L12 16.4l-6.4 4.8 2.4-7.2-6-4.8h7.6z"/>
+          </svg>
+          <text x="250" y="98" text-anchor="middle" class="flywheel-tagline">Speak It Into Being</text>
+          <text x="250" y="115" text-anchor="middle" class="flywheel-label">BELIEVE</text>
+          <text x="250" y="130" text-anchor="middle" class="flywheel-sublabel">Affirmations</text>
 
-          <circle cx="321" cy="320" r="20" class="flywheel-node-glow meditate-glow" fill="var(--meditate)" opacity="0.3"/>
-          <circle cx="321" cy="320" r="16" fill="var(--meditate)"/>
-          <text x="321" y="358" text-anchor="middle" class="flywheel-label">MEDITATE</text>
-          <text x="321" y="373" text-anchor="middle" class="flywheel-sublabel">Guided Sessions</text>
+          <circle cx="115" cy="285" r="28" class="flywheel-node-glow breathe-glow" fill="var(--breathe)" opacity="0.3" filter="url(#glow-breathe-2)"/>
+          <circle cx="115" cy="285" r="22" fill="var(--breathe)" class="flywheel-node"/>
+          <svg x="103" y="273" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round">
+            <path d="M3 8c3-2 6 2 9 0s6-2 9 0"/>
+            <path d="M3 12c3-2 6 2 9 0s6-2 9 0"/>
+            <path d="M3 16c3-2 6 2 9 0s6-2 9 0"/>
+          </svg>
+          <text x="115" y="323" text-anchor="middle" class="flywheel-tagline">Calm Your Nervous System</text>
+          <text x="115" y="340" text-anchor="middle" class="flywheel-label">BREATHE</text>
+          <text x="115" y="355" text-anchor="middle" class="flywheel-sublabel">Breathwork</text>
+
+          <circle cx="385" cy="285" r="28" class="flywheel-node-glow meditate-glow" fill="var(--meditate)" opacity="0.3" filter="url(#glow-meditate-2)"/>
+          <circle cx="385" cy="285" r="22" fill="var(--meditate)" class="flywheel-node"/>
+          <svg x="373" y="273" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 21c-1.5-1.5-6-5-6-9 0-2 1-4 3-4s3 2 3 4c0-2 1-4 3-4s3 2 3 4c0 4-4.5 7.5-6 9z"/>
+            <path d="M12 13v4"/>
+          </svg>
+          <text x="385" y="323" text-anchor="middle" class="flywheel-tagline">Let Your Mind Reset</text>
+          <text x="385" y="340" text-anchor="middle" class="flywheel-label">MEDITATE</text>
+          <text x="385" y="355" text-anchor="middle" class="flywheel-sublabel">Meditation</text>
+
+          <g class="flywheel-orbiter" style="transform-origin: 250px 210px;" filter="url(#glow-orbiter-2)">
+            <circle cx="250" cy="60" r="5" fill="white" opacity="0.9"/>
+            <circle cx="250" cy="60" r="8" fill="white" opacity="0.3"/>
+          </g>
         </svg>
       </div>
 

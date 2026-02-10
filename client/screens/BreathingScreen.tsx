@@ -101,6 +101,9 @@ export default function BreathingScreen() {
       });
     }, [])
   );
+  useEffect(() => {
+    setVolume(0.5);
+  }, []);
   const [showTechniqueSelector, setShowTechniqueSelector] = useState(false);
   const [isLandscape, setIsLandscape] = useState(false);
   const [musicEnabled, setMusicEnabled] = useState(true);

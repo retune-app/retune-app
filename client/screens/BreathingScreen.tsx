@@ -882,8 +882,8 @@ export default function BreathingScreen() {
       ? Math.min(screenHeight - 80, 320)
       : Math.min(screenWidth * 0.7, 260);
 
-    // Portrait fullscreen layout - clean, centered design for max focus
-    const portraitCircleSize = Math.min(screenWidth * 0.65, screenHeight * 0.38);
+    // Portrait fullscreen layout - max size with safe margin for outer ring (1.15x scale) + progress ring (24px)
+    const portraitCircleSize = Math.min((screenWidth - 32) / 1.15, screenHeight * 0.42);
     
     if (!isCurrentlyLandscape) {
       return (

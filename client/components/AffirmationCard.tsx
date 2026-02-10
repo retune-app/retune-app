@@ -256,7 +256,7 @@ export function AffirmationCard({
             {description ? (
               <ThemedText
                 type="caption"
-                numberOfLines={1}
+                numberOfLines={2}
                 style={[styles.description, { color: theme.textSecondary }]}
               >
                 {description}
@@ -389,7 +389,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    marginBottom: Spacing.xs,
+    marginBottom: 2,
   },
   meta: {
     flexDirection: "row",

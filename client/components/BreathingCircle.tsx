@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useMemo } from "react";
 import { View, StyleSheet, Text, Platform } from "react-native";
 import Animated, {
   useSharedValue,
@@ -8,8 +8,8 @@ import Animated, {
   withSequence,
   Easing,
   interpolate,
+  interpolateColor,
   runOnJS,
-  SharedValue,
 } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
@@ -34,6 +34,26 @@ function hexToRgba(hex: string, alpha: number): string {
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function lightenHex(hex: string, amount: number): string {
+  let r = parseInt(hex.slice(1, 3), 16);
+  let g = parseInt(hex.slice(3, 5), 16);
+  let b = parseInt(hex.slice(5, 7), 16);
+  r = Math.min(255, Math.round(r + (255 - r) * amount));
+  g = Math.min(255, Math.round(g + (255 - g) * amount));
+  b = Math.min(255, Math.round(b + (255 - b) * amount));
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+function dimHex(hex: string, amount: number): string {
+  let r = parseInt(hex.slice(1, 3), 16);
+  let g = parseInt(hex.slice(3, 5), 16);
+  let b = parseInt(hex.slice(5, 7), 16);
+  r = Math.round(r * (1 - amount));
+  g = Math.round(g * (1 - amount));
+  b = Math.round(b * (1 - amount));
+  return `rgb(${r}, ${g}, ${b})`;
 }
 
 export default function BreathingCircle({
@@ -136,44 +156,58 @@ export default function BreathingCircle({
 
   const phaseColor = technique.color || ACCENT_GOLD;
 
+  const colorDim = useMemo(() => dimHex(phaseColor, 0.55), [phaseColor]);
+  const colorBright = useMemo(() => lightenHex(phaseColor, 0.35), [phaseColor]);
+  const colorBase = useMemo(() => {
+    const r = parseInt(phaseColor.slice(1, 3), 16);
+    const g = parseInt(phaseColor.slice(3, 5), 16);
+    const b = parseInt(phaseColor.slice(5, 7), 16);
+    return `rgb(${r}, ${g}, ${b})`;
+  }, [phaseColor]);
+
   const outerHaloStyle = useAnimatedStyle(() => {
     const p = progress.value;
     const s = interpolate(p, [0, 1], [0.85, 1.2]);
     const o = interpolate(p, [0, 1], [0.04, 0.18]);
     const idleS = isPlaying ? 1 : idlePulse.value;
-    return { transform: [{ scale: s * idleS }], opacity: o };
+    const borderC = interpolateColor(p, [0, 0.5, 1], [colorDim, colorBase, colorBright]);
+    return { transform: [{ scale: s * idleS }], opacity: o, borderColor: borderC };
   });
 
   const ring3Style = useAnimatedStyle(() => {
     const p = progress.value;
     const s = interpolate(p, [0, 1], [0.82, 1.1]);
-    const o = interpolate(p, [0, 1], [0.06, 0.22]);
+    const o = interpolate(p, [0, 1], [0.06, 0.28]);
     const idleS = isPlaying ? 1 : idlePulse.value;
-    return { transform: [{ scale: s * idleS }], opacity: o };
+    const borderC = interpolateColor(p, [0, 0.5, 1], [colorDim, colorBase, colorBright]);
+    return { transform: [{ scale: s * idleS }], opacity: o, borderColor: borderC };
   });
 
   const ring2Style = useAnimatedStyle(() => {
     const p = progress.value;
     const s = interpolate(p, [0, 1], [0.78, 1.02]);
-    const o = interpolate(p, [0, 1], [0.08, 0.28]);
+    const o = interpolate(p, [0, 1], [0.08, 0.35]);
     const idleS = isPlaying ? 1 : idlePulse.value;
-    return { transform: [{ scale: s * idleS }], opacity: o };
+    const borderC = interpolateColor(p, [0, 0.4, 1], [colorDim, colorBase, colorBright]);
+    return { transform: [{ scale: s * idleS }], opacity: o, borderColor: borderC };
   });
 
   const ring1Style = useAnimatedStyle(() => {
     const p = progress.value;
     const s = interpolate(p, [0, 1], [0.75, 0.95]);
-    const o = interpolate(p, [0, 1], [0.1, 0.35]);
+    const o = interpolate(p, [0, 1], [0.1, 0.45]);
     const idleS = isPlaying ? 1 : idlePulse.value;
-    return { transform: [{ scale: s * idleS }], opacity: o };
+    const borderC = interpolateColor(p, [0, 0.3, 1], [colorDim, colorBase, colorBright]);
+    return { transform: [{ scale: s * idleS }], opacity: o, borderColor: borderC };
   });
 
   const glowStyle = useAnimatedStyle(() => {
     const p = progress.value;
     const s = interpolate(p, [0, 1], [0.55, 0.92]);
-    const o = interpolate(p, [0, 1], [0.12, 0.4]);
+    const o = interpolate(p, [0, 1], [0.12, 0.45]);
     const idleS = isPlaying ? 1 : idlePulse.value;
-    return { transform: [{ scale: s * idleS }], opacity: o };
+    const bgC = interpolateColor(p, [0, 0.5, 1], [colorDim, colorBase, colorBright]);
+    return { transform: [{ scale: s * idleS }], opacity: o, backgroundColor: bgC };
   });
 
   const coreStyle = useAnimatedStyle(() => {
@@ -184,13 +218,6 @@ export default function BreathingCircle({
     return { transform: [{ scale: s * idleS }], opacity: o };
   });
 
-  const haloD = size * 1.05;
-  const r3D = size * 0.92;
-  const r2D = size * 0.78;
-  const r1D = size * 0.65;
-  const glowD = size * 0.72;
-  const coreD = size * 0.55;
-
   const textBreathStyle = useAnimatedStyle(() => {
     const p = progress.value;
     const s = interpolate(p, [0, 1], [0.85, 1.1]);
@@ -200,6 +227,13 @@ export default function BreathingCircle({
       opacity: o,
     };
   });
+
+  const haloD = size * 1.05;
+  const r3D = size * 0.92;
+  const r2D = size * 0.78;
+  const r1D = size * 0.65;
+  const glowD = size * 0.72;
+  const coreD = size * 0.55;
 
   const countdownFontSize = Math.round(size * 0.16);
   const phaseFontSize = Math.round(size * 0.05);
@@ -214,8 +248,7 @@ export default function BreathingCircle({
             width: haloD,
             height: haloD,
             borderRadius: haloD / 2,
-            borderWidth: 1,
-            borderColor: hexToRgba(phaseColor, 0.4),
+            borderWidth: 1.5,
           },
         ]}
       />
@@ -229,7 +262,6 @@ export default function BreathingCircle({
             height: r3D,
             borderRadius: r3D / 2,
             borderWidth: 1.5,
-            borderColor: hexToRgba(phaseColor, 0.5),
           },
         ]}
       />
@@ -242,8 +274,7 @@ export default function BreathingCircle({
             width: r2D,
             height: r2D,
             borderRadius: r2D / 2,
-            borderWidth: 1.5,
-            borderColor: hexToRgba(phaseColor, 0.6),
+            borderWidth: 2,
           },
         ]}
       />
@@ -256,8 +287,7 @@ export default function BreathingCircle({
             width: r1D,
             height: r1D,
             borderRadius: r1D / 2,
-            borderWidth: 2,
-            borderColor: hexToRgba(phaseColor, 0.7),
+            borderWidth: 2.5,
           },
         ]}
       />
@@ -270,7 +300,6 @@ export default function BreathingCircle({
             width: glowD,
             height: glowD,
             borderRadius: glowD / 2,
-            backgroundColor: hexToRgba(phaseColor, 0.18),
           },
         ]}
       />

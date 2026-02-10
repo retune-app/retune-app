@@ -312,12 +312,9 @@ export default function BreathingScreen() {
       if (voiceEnabled) {
         await setDucked(true);
       }
-      await setSelectedMusic(soundId);
-      if (isPlaying) {
-        await startBackgroundMusic();
-      }
+      await setSelectedMusic(soundId, isPlaying);
     }
-  }, [hapticsEnabled, setSelectedMusic, startBackgroundMusic, stopBackgroundMusic, isPlaying, voiceEnabled, setDucked]);
+  }, [hapticsEnabled, setSelectedMusic, stopBackgroundMusic, isPlaying, voiceEnabled, setDucked]);
 
   const renderSoundTile = useCallback((
     sound: BackgroundMusicOption,

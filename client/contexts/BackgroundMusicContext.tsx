@@ -118,7 +118,7 @@ const DUCK_FACTOR = 0.4;
 
 interface BackgroundMusicContextType {
   selectedMusic: BackgroundMusicType;
-  setSelectedMusic: (type: BackgroundMusicType) => Promise<void>;
+  setSelectedMusic: (type: BackgroundMusicType, forceStart?: boolean) => Promise<void>;
   volume: number;
   setVolume: (volume: number) => Promise<void>;
   isPlaying: boolean;
@@ -181,7 +181,7 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
     setIsPlaying(playing);
   };
 
-  const setSelectedMusic = async (type: BackgroundMusicType) => {
+  const setSelectedMusic = async (type: BackgroundMusicType, forceStart = false) => {
     if (switchingRef.current) return;
     switchingRef.current = true;
 
@@ -199,18 +199,19 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
         updateIsPlaying(false);
       }
 
-      if (wasPlaying && type !== 'none') {
+      if ((wasPlaying || forceStart) && type !== 'none') {
         await Audio.setAudioModeAsync({
           playsInSilentModeIOS: true,
           staysActiveInBackground: true,
           shouldDuckAndroid: true,
         });
 
+        const effectiveVolume = isDuckedRef.current ? volume * DUCK_FACTOR : volume;
         const { sound } = await Audio.Sound.createAsync(
           AUDIO_FILES[type],
           {
             isLooping: true,
-            volume: applyVolumeCurve(volume),
+            volume: applyVolumeCurve(effectiveVolume),
             shouldPlay: true,
           }
         );

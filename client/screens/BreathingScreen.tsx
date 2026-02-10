@@ -61,6 +61,7 @@ import {
   getCyclesForDuration,
   type BreathingTechnique,
 } from "@shared/breathingTechniques";
+import { breathingAutoStartRef } from "@/navigation/MainTabNavigator";
 
 const ACCENT_GOLD = "#C9A227";
 
@@ -203,6 +204,19 @@ export default function BreathingScreen() {
     }, [showLandscapeMode])
   );
 
+  const pendingAutoStartRef = useRef(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (breathingAutoStartRef.current) {
+        breathingAutoStartRef.current = false;
+        pendingAutoStartRef.current = true;
+        setVoiceEnabled(true);
+        setMusicEnabled(true);
+      }
+    }, [])
+  );
+
   useEffect(() => {
     if (showLandscapeMode) {
       ScreenOrientation.unlockAsync();
@@ -299,6 +313,23 @@ export default function BreathingScreen() {
       console.warn('Could not play affirmation loop, skipping:', error);
     }
   }, [backgroundAffirmation]);
+
+  useEffect(() => {
+    if (pendingAutoStartRef.current && backgroundAffirmation?.audioUrl) {
+      pendingAutoStartRef.current = false;
+      const doAutoStart = async () => {
+        await stopAffirmationAudio();
+        setIsPlaying(true);
+        setElapsedTime(0);
+        setCyclesCompleted(0);
+        try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
+        await setDucked(true);
+        await startBackgroundMusic();
+        await startAffirmationLoop();
+      };
+      setTimeout(doAutoStart, 300);
+    }
+  }, [backgroundAffirmation, stopAffirmationAudio, setDucked, startBackgroundMusic, startAffirmationLoop]);
 
   const handleSwitchSoundDuringPlayback = useCallback(async (soundId: BackgroundMusicType) => {
     if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} }

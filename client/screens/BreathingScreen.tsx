@@ -326,6 +326,9 @@ export default function BreathingScreen() {
         await setDucked(true);
         await startBackgroundMusic();
         await startAffirmationLoop();
+        fullscreenProgress.value = 0;
+        setShowLandscapeMode(true);
+        fullscreenProgress.value = withSpring(1, { damping: 20, stiffness: 60, mass: 1 });
       };
       setTimeout(doAutoStart, 300);
     }

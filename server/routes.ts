@@ -626,7 +626,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const filename = path.basename(rawFilename);
       
       // SECURITY: Reject any filename that doesn't match expected pattern
-      if (!/^(affirmation|voice)-\d+(-\d+)?\.(mp3|m4a|wav|webm)$/.test(filename)) {
+      if (!/^(affirmation|voice)[-\w]+\.(mp3|m4a|wav|webm)$/.test(filename)) {
         return res.status(400).json({ error: "Invalid filename format" });
       }
       

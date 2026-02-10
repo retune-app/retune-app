@@ -395,6 +395,88 @@ export default function BreathingScreen() {
     );
   }, [musicEnabled]);
 
+  const renderSoundSwitcherModal = useCallback(() => (
+    <Modal
+      visible={showSoundSwitcher}
+      animationType="slide"
+      transparent
+      onRequestClose={() => setShowSoundSwitcher(false)}
+    >
+      <Pressable
+        style={styles.modalOverlay}
+        onPress={() => setShowSoundSwitcher(false)}
+      >
+        <Pressable
+          style={[styles.soundSwitcherContent, { paddingBottom: insets.bottom + Spacing.md }]}
+          onPress={(e) => e.stopPropagation()}
+        >
+          <View style={styles.modalHandle} />
+          <View style={styles.soundSwitcherHeader}>
+            <ThemedText type="h4" style={{ color: "#fff", fontSize: 17 }}>
+              Switch Sound
+            </ThemedText>
+            <Pressable
+              onPress={() => setShowSoundSwitcher(false)}
+              hitSlop={12}
+              testID="button-close-sound-switcher"
+            >
+              <Feather name="x" size={20} color="rgba(255,255,255,0.6)" />
+            </Pressable>
+          </View>
+
+          {musicEnabled ? (
+            <View style={styles.soundVolumeRow}>
+              <Feather name="volume-1" size={14} color="rgba(255,255,255,0.5)" />
+              <Slider
+                style={{ flex: 1, marginHorizontal: 8 }}
+                minimumValue={0}
+                maximumValue={1}
+                value={volume}
+                onValueChange={(val: number) => setVolume(val)}
+                minimumTrackTintColor={ACCENT_GOLD}
+                maximumTrackTintColor="rgba(255,255,255,0.15)"
+                thumbTintColor={ACCENT_GOLD}
+              />
+              <Feather name="volume-2" size={14} color="rgba(255,255,255,0.5)" />
+            </View>
+          ) : null}
+
+          <ScrollView
+            style={{ maxHeight: 340 }}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={{ paddingHorizontal: 16, marginBottom: 8 }}>
+              {renderNoSoundTile(handleSwitchSoundDuringPlayback)}
+            </View>
+            {categories.map((category) => (
+              <View key={category.key} style={{ paddingHorizontal: 16, marginBottom: 12 }}>
+                <ThemedText
+                  type="caption"
+                  style={{ color: category.color, fontSize: 11, fontWeight: "700", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}
+                >
+                  {category.label}
+                </ThemedText>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ gap: 8 }}
+                >
+                  {category.sounds.map((sound) =>
+                    renderSoundTile(
+                      sound,
+                      musicEnabled && selectedMusic === sound.id,
+                      handleSwitchSoundDuringPlayback,
+                    )
+                  )}
+                </ScrollView>
+              </View>
+            ))}
+          </ScrollView>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  ), [showSoundSwitcher, musicEnabled, volume, selectedMusic, categories, insets.bottom, handleSwitchSoundDuringPlayback, renderSoundTile, renderNoSoundTile, setVolume]);
+
   const stopAffirmationLoop = useCallback(async () => {
     if (affirmationSoundRef.current) {
       try {
@@ -852,6 +934,7 @@ export default function BreathingScreen() {
             </View>
           </Pressable>
           </Animated.View>
+          {renderSoundSwitcherModal()}
         </Modal>
       );
     }
@@ -964,6 +1047,7 @@ export default function BreathingScreen() {
           </View>
         </Pressable>
         </Animated.View>
+        {renderSoundSwitcherModal()}
       </Modal>
     );
   }
@@ -1419,86 +1503,6 @@ export default function BreathingScreen() {
           navigation.navigate("Main", { screen: "AffirmTab" });
         }}
       />
-
-      <Modal
-        visible={showSoundSwitcher}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setShowSoundSwitcher(false)}
-      >
-        <Pressable
-          style={styles.modalOverlay}
-          onPress={() => setShowSoundSwitcher(false)}
-        >
-          <Pressable
-            style={[styles.soundSwitcherContent, { paddingBottom: insets.bottom + Spacing.md }]}
-            onPress={(e) => e.stopPropagation()}
-          >
-            <View style={styles.modalHandle} />
-            <View style={styles.soundSwitcherHeader}>
-              <ThemedText type="h4" style={{ color: "#fff", fontSize: 17 }}>
-                Switch Sound
-              </ThemedText>
-              <Pressable
-                onPress={() => setShowSoundSwitcher(false)}
-                hitSlop={12}
-                testID="button-close-sound-switcher"
-              >
-                <Feather name="x" size={20} color="rgba(255,255,255,0.6)" />
-              </Pressable>
-            </View>
-
-            {musicEnabled ? (
-              <View style={styles.soundVolumeRow}>
-                <Feather name="volume-1" size={14} color="rgba(255,255,255,0.5)" />
-                <Slider
-                  style={{ flex: 1, marginHorizontal: 8 }}
-                  minimumValue={0}
-                  maximumValue={1}
-                  value={volume}
-                  onValueChange={(val: number) => setVolume(val)}
-                  minimumTrackTintColor={ACCENT_GOLD}
-                  maximumTrackTintColor="rgba(255,255,255,0.15)"
-                  thumbTintColor={ACCENT_GOLD}
-                />
-                <Feather name="volume-2" size={14} color="rgba(255,255,255,0.5)" />
-              </View>
-            ) : null}
-
-            <ScrollView
-              style={{ maxHeight: 340 }}
-              showsVerticalScrollIndicator={false}
-            >
-              <View style={{ paddingHorizontal: 16, marginBottom: 8 }}>
-                {renderNoSoundTile(handleSwitchSoundDuringPlayback)}
-              </View>
-              {categories.map((category) => (
-                <View key={category.key} style={{ paddingHorizontal: 16, marginBottom: 12 }}>
-                  <ThemedText
-                    type="caption"
-                    style={{ color: category.color, fontSize: 11, fontWeight: "700", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}
-                  >
-                    {category.label}
-                  </ThemedText>
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={{ gap: 8 }}
-                  >
-                    {category.sounds.map((sound) =>
-                      renderSoundTile(
-                        sound,
-                        musicEnabled && selectedMusic === sound.id,
-                        handleSwitchSoundDuringPlayback,
-                      )
-                    )}
-                  </ScrollView>
-                </View>
-              ))}
-            </ScrollView>
-          </Pressable>
-        </Pressable>
-      </Modal>
 
     </ThemedView>
   );

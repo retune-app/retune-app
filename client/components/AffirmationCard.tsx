@@ -215,6 +215,13 @@ export function AffirmationCard({
               </ThemedText>
             </View>
             <View style={styles.headerRight}>
+              {lengthInfo.label ? (
+                <View style={[styles.lengthBadge, { borderColor: lengthInfo.color }]}>
+                  <ThemedText style={[styles.lengthText, { color: lengthInfo.color }]}>
+                    {lengthInfo.label}
+                  </ThemedText>
+                </View>
+              ) : null}
               <Pressable 
                 onPress={(e) => {
                   e.stopPropagation?.();
@@ -238,24 +245,6 @@ export function AffirmationCard({
               ) : null}
             </View>
           </View>
-          {(pillar || lengthInfo.label) ? (
-            <View style={styles.headerBadgeRow}>
-              {pillar ? (
-                <View style={[styles.pillarBadge, { borderColor: pillarColor }]}>
-                  <ThemedText style={[styles.pillarBadgeText, { color: pillarColor }]}>
-                    {pillar}
-                  </ThemedText>
-                </View>
-              ) : null}
-              {lengthInfo.label ? (
-                <View style={[styles.lengthBadge, { borderColor: lengthInfo.color }]}>
-                  <ThemedText style={[styles.lengthText, { color: lengthInfo.color }]}>
-                    {lengthInfo.label}
-                  </ThemedText>
-                </View>
-              ) : null}
-            </View>
-          ) : null}
         </View>
         <View style={styles.content}>
           <View style={styles.textContainer}>
@@ -346,18 +335,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
     borderBottomWidth: 1,
-    gap: 4,
   },
   headerTopRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-  },
-  headerBadgeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.xs,
-    marginTop: 2,
   },
   headerLeft: {
     flexDirection: "row",

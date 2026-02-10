@@ -203,11 +203,15 @@ export default function CreateScreen() {
   const [selectedPillar, setSelectedPillar] = useState<PillarName | null>(null);
   const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>([]);
   const [goal, setGoal] = useState("");
-  const [scriptHistory, setScriptHistory] = useState<string[]>([]);
-  const [currentScriptIndex, setCurrentScriptIndex] = useState(0);
+  const [scriptsByLength, setScriptsByLength] = useState<Record<string, string>>({});
+  const [viewingLength, setViewingLength] = useState<string>("medium");
   const [manualScript, setManualScript] = useState("");
   const [selectedLength, setSelectedLength] = useState<LengthOption>("Medium");
-  const pagerRef = useRef<any>(null);
+
+  const LENGTH_ORDER = ["short", "medium", "long"] as const;
+  const LENGTH_LABELS: Record<string, string> = { short: "S", medium: "M", long: "L" };
+  const LENGTH_FULL: Record<string, string> = { short: "Short", medium: "Medium", long: "Long" };
+  const availableLengths = LENGTH_ORDER.filter((l) => l in scriptsByLength);
   
   const [customTags, setCustomTags] = useState<CustomTagsMap>({});
   const [isAddingTag, setIsAddingTag] = useState(false);
@@ -380,17 +384,12 @@ export default function CreateScreen() {
     },
     onSuccess: (data) => {
       setShowCreateButton(false);
-      setScriptHistory((prev) => {
-        const newHistory = [...prev, data.script].slice(-3);
-        const newIndex = newHistory.length - 1;
-        setCurrentScriptIndex(newIndex);
-        if (Platform.OS !== 'web') {
-          setTimeout(() => {
-            pagerRef.current?.setPage(newIndex);
-          }, 100);
-        }
-        return newHistory;
-      });
+      const lengthKey = selectedLength.toLowerCase();
+      setScriptsByLength((prev) => ({
+        ...prev,
+        [lengthKey]: data.script,
+      }));
+      setViewingLength(lengthKey);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Keyboard.dismiss();
       queryClient.invalidateQueries({ queryKey: ["/api/user/limits"] });
@@ -456,7 +455,7 @@ export default function CreateScreen() {
     },
   });
 
-  const currentScript = mode === "ai" ? scriptHistory[currentScriptIndex] || "" : manualScript;
+  const currentScript = mode === "ai" ? scriptsByLength[viewingLength] || "" : manualScript;
 
   const createMutation = useMutation({
     mutationFn: async (options?: { forceAiVoice?: boolean }) => {
@@ -557,15 +556,11 @@ export default function CreateScreen() {
   };
 
   const handleRegenerate = () => {
-    if (scriptHistory.length >= 3) {
-      Alert.alert("Limit Reached", "You've generated all 3 script variations. Swipe to compare them.");
-      return;
-    }
     generateMutation.mutate({
       goalText: goal,
       pillar: selectedPillar || "",
       subcategories: selectedSubcategories,
-      length: selectedLength.toLowerCase(),
+      length: viewingLength,
     });
   };
 
@@ -995,7 +990,7 @@ export default function CreateScreen() {
                 </Button>
               ) : null}
 
-              {scriptHistory.length > 0 && mode === "ai" ? (
+              {availableLengths.length > 0 && mode === "ai" ? (
                 <View ref={scriptCardRef} collapsable={false}>
                   <Animated.View style={[scriptGlowStyle, { borderRadius: BorderRadius.lg }]}>
                     <Animated.View style={scriptCardAnimStyle}>
@@ -1018,55 +1013,71 @@ export default function CreateScreen() {
                           <View style={styles.scriptTitleRow}>
                             <Feather name="file-text" size={16} color={accentColor} />
                             <ThemedText type="h4">Your Script</ThemedText>
-                          </View>
-                          {scriptHistory.length < 3 ? (
-                            <Pressable onPress={handleRegenerate} disabled={generateMutation.isPending} style={styles.regenerateButton}>
-                              <Feather 
-                                name="refresh-cw" 
-                                size={16} 
-                                color={generateMutation.isPending ? theme.textSecondary : theme.primary} 
-                              />
-                              <ThemedText type="caption" style={{ color: generateMutation.isPending ? theme.textSecondary : theme.primary, marginLeft: 4 }}>
-                                Try another
+                            <View style={[styles.lengthBadge, { backgroundColor: `${selectedPillarData?.color || theme.primary}20` }]}>
+                              <ThemedText type="caption" style={{ color: selectedPillarData?.color || theme.primary, fontWeight: "600" }}>
+                                {LENGTH_FULL[viewingLength] || viewingLength}
                               </ThemedText>
-                            </Pressable>
-                          ) : null}
+                            </View>
+                          </View>
+                          <Pressable onPress={handleRegenerate} disabled={generateMutation.isPending} style={styles.regenerateButton}>
+                            <Feather 
+                              name="refresh-cw" 
+                              size={16} 
+                              color={generateMutation.isPending ? theme.textSecondary : theme.primary} 
+                            />
+                            <ThemedText type="caption" style={{ color: generateMutation.isPending ? theme.textSecondary : theme.primary, marginLeft: 4 }}>
+                              Try another
+                            </ThemedText>
+                          </Pressable>
                         </View>
                         <View style={styles.scriptBody}>
                           <ThemedText type="body" style={styles.scriptBodyText}>
-                            {scriptHistory[currentScriptIndex] || ""}
+                            {scriptsByLength[viewingLength] || ""}
                           </ThemedText>
                         </View>
-                        <View style={styles.paginationContainer}>
-                          {scriptHistory.map((_, index) => (
-                            <Pressable
-                              key={index}
-                              onPress={() => {
-                                setCurrentScriptIndex(index);
-                                if (Platform.OS !== 'web') {
-                                  pagerRef.current?.setPage(index);
-                                }
-                              }}
-                              style={styles.dotTouchArea}
-                            >
-                              <View
-                                style={[
-                                  styles.paginationDot,
-                                  {
-                                    backgroundColor: index === currentScriptIndex 
-                                      ? (selectedPillarData?.color || theme.primary)
-                                      : `${selectedPillarData?.color || theme.primary}40`,
-                                  },
-                                ]}
-                              />
-                            </Pressable>
-                          ))}
-                        </View>
-                        <ThemedText type="caption" style={[styles.swipeHint, { color: theme.textSecondary }]}>
-                          {scriptHistory.length < 3 
-                            ? `${scriptHistory.length}/3 scripts generated` 
-                            : "Swipe to compare scripts"}
-                        </ThemedText>
+                        {availableLengths.length > 1 ? (
+                          <>
+                            <View style={styles.paginationContainer}>
+                              {availableLengths.map((lengthKey) => (
+                                <Pressable
+                                  key={lengthKey}
+                                  onPress={() => setViewingLength(lengthKey)}
+                                  style={[
+                                    styles.lengthPill,
+                                    {
+                                      backgroundColor: lengthKey === viewingLength
+                                        ? (selectedPillarData?.color || theme.primary)
+                                        : `${selectedPillarData?.color || theme.primary}15`,
+                                      borderColor: lengthKey === viewingLength
+                                        ? (selectedPillarData?.color || theme.primary)
+                                        : `${selectedPillarData?.color || theme.primary}40`,
+                                    },
+                                  ]}
+                                >
+                                  <ThemedText
+                                    type="caption"
+                                    style={{
+                                      color: lengthKey === viewingLength ? "#fff" : (selectedPillarData?.color || theme.primary),
+                                      fontWeight: "700",
+                                      fontSize: 12,
+                                    }}
+                                  >
+                                    {LENGTH_LABELS[lengthKey]}
+                                  </ThemedText>
+                                </Pressable>
+                              ))}
+                            </View>
+                            <ThemedText type="caption" style={[styles.swipeHint, { color: theme.textSecondary }]}>
+                              {availableLengths.length < 3
+                                ? `${availableLengths.length} of 3 lengths \u2022 Try generating a different length`
+                                : "All 3 lengths generated \u2022 Tap to compare"}
+                            </ThemedText>
+                          </>
+                        ) : (
+                          <ThemedText type="caption" style={[styles.swipeHint, { color: theme.textSecondary }]}>
+                            Try generating Short, Medium, and Long to compare
+                          </ThemedText>
+                        )}
                       </Card>
                     </Animated.View>
                   </Animated.View>
@@ -1383,6 +1394,19 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginTop: Spacing.lg,
     marginBottom: Spacing.sm,
+  },
+  lengthBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  lengthPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    minWidth: 36,
+    alignItems: "center" as const,
   },
   paginationContainer: {
     flexDirection: "row",

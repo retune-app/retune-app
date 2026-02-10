@@ -963,18 +963,18 @@ export default function PlayerScreen() {
                 <ThemedText type="h4" style={{ marginLeft: Spacing.xs }}>
                   Your Script
                 </ThemedText>
-                {(() => {
-                  const wordCount = affirmation.script.split(/\s+/).filter(Boolean).length;
-                  const label = wordCount < 80 ? "Short" : wordCount < 150 ? "Medium" : "Long";
-                  return (
-                    <View style={{ backgroundColor: theme.primary + '20', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8, marginLeft: Spacing.xs }}>
-                      <ThemedText type="caption" style={{ color: theme.primary, fontWeight: '600' }}>
-                        {label}
-                      </ThemedText>
-                    </View>
-                  );
-                })()}
               </View>
+              {(() => {
+                const wordCount = affirmation.script.split(/\s+/).filter(Boolean).length;
+                const label = wordCount < 80 ? "Short" : wordCount < 150 ? "Medium" : "Long";
+                return (
+                  <View style={{ backgroundColor: theme.primary + '20', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 }}>
+                    <ThemedText type="caption" style={{ color: theme.primary, fontWeight: '600' }}>
+                      {label}
+                    </ThemedText>
+                  </View>
+                );
+              })()}
             </View>
             <View style={[styles.scriptDivider, { backgroundColor: theme.primary + '30' }]} />
             {affirmation.script

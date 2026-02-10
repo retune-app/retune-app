@@ -11,6 +11,7 @@ import Animated, {
   runOnJS,
   SharedValue,
 } from "react-native-reanimated";
+import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 
 import type { BreathPhase, BreathingTechnique } from "@shared/breathingTechniques";
@@ -33,127 +34,6 @@ function hexToRgba(hex: string, alpha: number): string {
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
-
-function AnimatedRing({
-  size,
-  color,
-  ringIndex,
-  totalRings,
-  progress,
-  isPlaying,
-  idlePulse,
-}: {
-  size: number;
-  color: string;
-  ringIndex: number;
-  totalRings: number;
-  progress: SharedValue<number>;
-  isPlaying: boolean;
-  idlePulse: SharedValue<number>;
-}) {
-  const fraction = (ringIndex + 1) / totalRings;
-  const ringDiameter = size * (0.38 + fraction * 0.62);
-  const baseOpacity = 0.06 + (1 - fraction) * 0.12;
-  const expandedOpacity = 0.15 + (1 - fraction) * 0.25;
-  const borderW = ringIndex === 0 ? 2 : 1.5 - ringIndex * 0.15;
-
-  const animStyle = useAnimatedStyle(() => {
-    const p = progress.value;
-    const scaleRange = 0.04 + fraction * 0.08;
-    const s = interpolate(p, [0, 1], [1 - scaleRange, 1 + scaleRange * 0.5]);
-    const o = interpolate(p, [0, 1], [baseOpacity, expandedOpacity]);
-    const idleS = isPlaying ? 1 : idlePulse.value;
-    return {
-      transform: [{ scale: s * idleS }],
-      opacity: o,
-    };
-  });
-
-  return (
-    <Animated.View
-      style={[
-        styles.ring,
-        animStyle,
-        {
-          width: ringDiameter,
-          height: ringDiameter,
-          borderRadius: ringDiameter / 2,
-          borderWidth: borderW,
-          borderColor: color,
-        },
-      ]}
-    />
-  );
-}
-
-function CoreOrb({
-  size,
-  color,
-  progress,
-  isPlaying,
-  idlePulse,
-}: {
-  size: number;
-  color: string;
-  progress: SharedValue<number>;
-  isPlaying: boolean;
-  idlePulse: SharedValue<number>;
-}) {
-  const orbSize = size * 0.32;
-
-  const orbStyle = useAnimatedStyle(() => {
-    const p = progress.value;
-    const s = interpolate(p, [0, 1], [0.7, 1.0]);
-    const o = interpolate(p, [0, 1], [0.25, 0.65]);
-    const idleS = isPlaying ? 1 : idlePulse.value;
-    return {
-      transform: [{ scale: s * idleS }],
-      opacity: o,
-    };
-  });
-
-  const glowStyle = useAnimatedStyle(() => {
-    const p = progress.value;
-    const s = interpolate(p, [0, 1], [0.75, 1.15]);
-    const o = interpolate(p, [0, 1], [0.08, 0.2]);
-    const idleS = isPlaying ? 1 : idlePulse.value;
-    return {
-      transform: [{ scale: s * idleS }],
-      opacity: o,
-    };
-  });
-
-  const glowSize = orbSize * 1.8;
-
-  return (
-    <>
-      <Animated.View
-        style={[
-          styles.ring,
-          glowStyle,
-          {
-            width: glowSize,
-            height: glowSize,
-            borderRadius: glowSize / 2,
-            backgroundColor: hexToRgba(color, 0.15),
-          },
-        ]}
-      />
-      <Animated.View
-        style={[
-          styles.ring,
-          orbStyle,
-          {
-            width: orbSize,
-            height: orbSize,
-            borderRadius: orbSize / 2,
-            backgroundColor: color,
-          },
-        ]}
-      />
-    </>
-  );
 }
 
 export default function BreathingCircle({
@@ -193,8 +73,8 @@ export default function BreathingCircle({
     if (!isPlaying) {
       idlePulse.value = withRepeat(
         withSequence(
-          withTiming(1.03, { duration: 2500, easing: Easing.inOut(Easing.sin) }),
-          withTiming(0.97, { duration: 2500, easing: Easing.inOut(Easing.sin) }),
+          withTiming(1.04, { duration: 2400, easing: Easing.inOut(Easing.sin) }),
+          withTiming(0.96, { duration: 2400, easing: Easing.inOut(Easing.sin) }),
         ),
         -1,
         true,
@@ -255,33 +135,159 @@ export default function BreathingCircle({
   }, [isPlaying, technique]);
 
   const phaseColor = technique.color || ACCENT_GOLD;
-  const ringCount = 5;
 
-  const countdownFontSize = Math.round(size * 0.17);
-  const phaseFontSize = Math.round(size * 0.055);
+  const outerHaloStyle = useAnimatedStyle(() => {
+    const p = progress.value;
+    const s = interpolate(p, [0, 1], [0.85, 1.2]);
+    const o = interpolate(p, [0, 1], [0.04, 0.18]);
+    const idleS = isPlaying ? 1 : idlePulse.value;
+    return { transform: [{ scale: s * idleS }], opacity: o };
+  });
+
+  const ring3Style = useAnimatedStyle(() => {
+    const p = progress.value;
+    const s = interpolate(p, [0, 1], [0.82, 1.1]);
+    const o = interpolate(p, [0, 1], [0.06, 0.22]);
+    const idleS = isPlaying ? 1 : idlePulse.value;
+    return { transform: [{ scale: s * idleS }], opacity: o };
+  });
+
+  const ring2Style = useAnimatedStyle(() => {
+    const p = progress.value;
+    const s = interpolate(p, [0, 1], [0.78, 1.02]);
+    const o = interpolate(p, [0, 1], [0.08, 0.28]);
+    const idleS = isPlaying ? 1 : idlePulse.value;
+    return { transform: [{ scale: s * idleS }], opacity: o };
+  });
+
+  const ring1Style = useAnimatedStyle(() => {
+    const p = progress.value;
+    const s = interpolate(p, [0, 1], [0.75, 0.95]);
+    const o = interpolate(p, [0, 1], [0.1, 0.35]);
+    const idleS = isPlaying ? 1 : idlePulse.value;
+    return { transform: [{ scale: s * idleS }], opacity: o };
+  });
+
+  const glowStyle = useAnimatedStyle(() => {
+    const p = progress.value;
+    const s = interpolate(p, [0, 1], [0.55, 0.92]);
+    const o = interpolate(p, [0, 1], [0.12, 0.4]);
+    const idleS = isPlaying ? 1 : idlePulse.value;
+    return { transform: [{ scale: s * idleS }], opacity: o };
+  });
+
+  const coreStyle = useAnimatedStyle(() => {
+    const p = progress.value;
+    const s = interpolate(p, [0, 1], [0.5, 0.82]);
+    const o = interpolate(p, [0, 1], [0.35, 0.9]);
+    const idleS = isPlaying ? 1 : idlePulse.value;
+    return { transform: [{ scale: s * idleS }], opacity: o };
+  });
+
+  const haloD = size * 1.05;
+  const r3D = size * 0.92;
+  const r2D = size * 0.78;
+  const r1D = size * 0.65;
+  const glowD = size * 0.72;
+  const coreD = size * 0.55;
+
+  const countdownFontSize = Math.round(size * 0.16);
+  const phaseFontSize = Math.round(size * 0.05);
 
   return (
     <View style={[styles.container, { width: size, height: size }]}>
-      {Array.from({ length: ringCount }, (_, i) => (
-        <AnimatedRing
-          key={i}
-          size={size}
-          color={phaseColor}
-          ringIndex={i}
-          totalRings={ringCount}
-          progress={progress}
-          isPlaying={isPlaying}
-          idlePulse={idlePulse}
-        />
-      ))}
-
-      <CoreOrb
-        size={size}
-        color={phaseColor}
-        progress={progress}
-        isPlaying={isPlaying}
-        idlePulse={idlePulse}
+      <Animated.View
+        style={[
+          styles.centered,
+          outerHaloStyle,
+          {
+            width: haloD,
+            height: haloD,
+            borderRadius: haloD / 2,
+            borderWidth: 1,
+            borderColor: hexToRgba(phaseColor, 0.4),
+          },
+        ]}
       />
+
+      <Animated.View
+        style={[
+          styles.centered,
+          ring3Style,
+          {
+            width: r3D,
+            height: r3D,
+            borderRadius: r3D / 2,
+            borderWidth: 1.5,
+            borderColor: hexToRgba(phaseColor, 0.5),
+          },
+        ]}
+      />
+
+      <Animated.View
+        style={[
+          styles.centered,
+          ring2Style,
+          {
+            width: r2D,
+            height: r2D,
+            borderRadius: r2D / 2,
+            borderWidth: 1.5,
+            borderColor: hexToRgba(phaseColor, 0.6),
+          },
+        ]}
+      />
+
+      <Animated.View
+        style={[
+          styles.centered,
+          ring1Style,
+          {
+            width: r1D,
+            height: r1D,
+            borderRadius: r1D / 2,
+            borderWidth: 2,
+            borderColor: hexToRgba(phaseColor, 0.7),
+          },
+        ]}
+      />
+
+      <Animated.View
+        style={[
+          styles.centered,
+          glowStyle,
+          {
+            width: glowD,
+            height: glowD,
+            borderRadius: glowD / 2,
+            backgroundColor: hexToRgba(phaseColor, 0.18),
+          },
+        ]}
+      />
+
+      <Animated.View
+        style={[
+          styles.centered,
+          coreStyle,
+          {
+            width: coreD,
+            height: coreD,
+            borderRadius: coreD / 2,
+            overflow: "hidden",
+          },
+        ]}
+      >
+        <LinearGradient
+          colors={[
+            hexToRgba(phaseColor, 0.95),
+            hexToRgba(phaseColor, 0.6),
+            hexToRgba(phaseColor, 0.3),
+          ]}
+          start={{ x: 0.3, y: 0 }}
+          end={{ x: 0.7, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+      </Animated.View>
 
       {showContent && isPlaying ? (
         <View style={styles.textOverlay} pointerEvents="none">
@@ -290,7 +296,7 @@ export default function BreathingCircle({
               styles.phaseLabel,
               {
                 fontSize: phaseFontSize,
-                letterSpacing: phaseFontSize * 0.2,
+                letterSpacing: phaseFontSize * 0.18,
               },
             ]}
           >
@@ -301,7 +307,7 @@ export default function BreathingCircle({
               styles.countdownNumber,
               {
                 fontSize: countdownFontSize,
-                lineHeight: countdownFontSize * 1.1,
+                lineHeight: countdownFontSize * 1.15,
               },
             ]}
           >
@@ -318,8 +324,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  ring: {
+  centered: {
     position: "absolute",
+    alignItems: "center",
+    justifyContent: "center",
   },
   textOverlay: {
     position: "absolute",
@@ -328,18 +336,18 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   phaseLabel: {
-    color: "rgba(255, 255, 255, 0.85)",
-    fontFamily: Platform.select({ ios: "System", android: "sans-serif-light", default: "sans-serif" }),
+    color: "rgba(255, 255, 255, 0.9)",
     fontWeight: "300",
     textAlign: "center",
-    marginBottom: 4,
-    textTransform: "uppercase",
+    marginBottom: 2,
   },
   countdownNumber: {
     color: "#FFFFFF",
-    fontFamily: Platform.select({ ios: "System", android: "sans-serif-thin", default: "sans-serif" }),
     fontWeight: "200",
     textAlign: "center",
-    includeFontPadding: false,
+    ...Platform.select({
+      android: { includeFontPadding: false },
+      default: {},
+    }),
   },
 });

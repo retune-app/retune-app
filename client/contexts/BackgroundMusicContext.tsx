@@ -134,7 +134,7 @@ const BackgroundMusicContext = createContext<BackgroundMusicContextType | undefi
 
 export function BackgroundMusicProvider({ children }: { children: React.ReactNode }) {
   const [selectedMusic, setSelectedMusicState] = useState<BackgroundMusicType>('forest-rain-birds');
-  const [volume, setVolumeState] = useState(0.5);
+  const [volume, setVolumeState] = useState(0.25);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isDucked, setIsDucked] = useState(false);
   const soundRef = useRef<Audio.Sound | null>(null);

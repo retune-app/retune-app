@@ -22,6 +22,7 @@ import {
 import { humeTextToSpeech, humeSimpleTTS, HUME_VOICE_OPTIONS, type WordTiming as HumeWordTiming } from "./hume-client";
 import { findInactiveVoices, runVoiceRotation, getVoiceSlotStats, checkVoiceSlotWarning } from "./voice-rotation";
 import { setupAuth, requireAuth, optionalAuth, AuthenticatedRequest } from "./auth";
+import { moderateContent, moderateMultipleTexts } from "./moderation";
 import {
   postIssueComment,
   setIssueStatusLabel,
@@ -730,6 +731,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Goal is required" });
       }
 
+      // Moderate the user's goal input
+      const goalModResult = await moderateContent(goal);
+      if (goalModResult.flagged) {
+        return res.status(422).json({
+          error: "content_flagged", 
+          message: goalModResult.message,
+          categories: goalModResult.categories
+        });
+      }
+
       // Check monthly usage limit for AI-generated affirmations (skip for admin accounts)
       const isAdmin = ADMIN_USER_IDS.has(req.userId!);
       const limits = await checkAndResetMonthlyLimits(req.userId!);
@@ -781,6 +792,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (!script) {
         return res.status(400).json({ error: "Script is required" });
+      }
+
+      // Content moderation check
+      const textsToCheck = [script, title].filter(Boolean);
+      if (categories && Array.isArray(categories)) {
+        textsToCheck.push(...categories);
+      }
+      const modResult = await moderateContent(textsToCheck.join(" "));
+      if (modResult.flagged) {
+        return res.status(422).json({ 
+          error: "content_flagged",
+          message: modResult.message,
+          categories: modResult.categories
+        });
       }
 
       // Support both old single category and new multi-category format
@@ -1027,6 +1052,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const script = affirmation.script || affirmation.title || "";
+
+      // Content moderation check on the script
+      const autoSaveModResult = await moderateContent(script);
+      if (autoSaveModResult.flagged) {
+        return res.status(422).json({
+          error: "content_flagged",
+          message: autoSaveModResult.message,
+          categories: autoSaveModResult.categories
+        });
+      }
       
       // Only auto-categorize if no category is set
       const hasCategory = affirmation.categoryName;

@@ -412,6 +412,7 @@ export default function ProfileScreen() {
           email: supportEmail,
           subject: supportSubject,
           message: supportMessage,
+          appVersion: Constants.expoConfig?.version || "unknown",
         }),
       });
       

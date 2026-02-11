@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { View, StyleSheet, ScrollView, Pressable, TextInput, ActivityIndicator } from "react-native";
+import Constants from "expo-constants";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -61,6 +62,7 @@ export default function FeedbackScreen() {
           title: title.trim(),
           message: message.trim(),
           email: user?.email || "",
+          appVersion: Constants.expoConfig?.version || "unknown",
         }),
       });
 

@@ -339,9 +339,11 @@ export interface WordTiming {
  */
 export async function textToSpeech(
   text: string,
-  voiceId: string = "21m00Tcm4TlvDq8ikWAM" // Default Rachel voice
+  voiceId: string = "21m00Tcm4TlvDq8ikWAM", // Default Rachel voice
+  voiceSettingsOverride?: { stability?: number; style?: number; pauseSeconds?: number }
 ): Promise<{ audio: ArrayBuffer; duration: number; wordTimings: WordTiming[] }> {
   const apiKey = await getCredentials();
+  const effectivePause = voiceSettingsOverride?.pauseSeconds ?? SENTENCE_PAUSE_SECONDS;
 
   // Use the with-timestamps endpoint for word timing data
   const response = await fetch(
@@ -356,9 +358,9 @@ export async function textToSpeech(
         text,
         model_id: "eleven_multilingual_v2",
         voice_settings: {
-          stability: 0.5,
+          stability: voiceSettingsOverride?.stability ?? 0.5,
           similarity_boost: 0.75,
-          style: 0.3,
+          style: voiceSettingsOverride?.style ?? 0.3,
           use_speaker_boost: true,
         },
       }),
@@ -386,23 +388,21 @@ export async function textToSpeech(
   
   // Post-process: insert silence between sentences and adjust timings
   let finalAudioBuffer: Buffer = rawAudioBuffer;
-  if (sentenceEndIndices.length > 0 && SENTENCE_PAUSE_SECONDS > 0) {
-    // Insert silence into audio
+  if (sentenceEndIndices.length > 0 && effectivePause > 0) {
     finalAudioBuffer = await insertSilenceIntoAudio(
       rawAudioBuffer,
       wordTimings,
       sentenceEndIndices,
-      SENTENCE_PAUSE_SECONDS
+      effectivePause
     );
     
-    // Adjust word timings to account for inserted pauses
     wordTimings = adjustWordTimingsForPauses(
       wordTimings,
       sentenceEndIndices,
-      SENTENCE_PAUSE_SECONDS * 1000 // Convert to ms
+      effectivePause * 1000
     );
     
-    console.log(`Inserted ${sentenceEndIndices.length} pauses of ${SENTENCE_PAUSE_SECONDS}s each`);
+    console.log(`Inserted ${sentenceEndIndices.length} pauses of ${effectivePause}s each`);
   }
   
   // Calculate duration from the last word's end time, or estimate if no timing data

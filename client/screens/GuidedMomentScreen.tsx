@@ -442,6 +442,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
         script,
         usePersonalVoice: isPersonal,
         voiceId: isPersonal ? undefined : voiceId,
+        mood,
       }),
       credentials: "include",
       signal,
@@ -449,7 +450,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
     const data = await result.json();
     if (data.error) throw new Error(data.error);
     return { ...data, script, disclaimer };
-  }, []);
+  }, [mood]);
 
   useEffect(() => {
     if (voicePreferenceLoaded) {

@@ -96,6 +96,57 @@ const guidedMomentLimiter = rateLimit({
   },
 });
 
+const MEDITATION_MOOD_CONFIG: Record<string, {
+  scriptTone: string;
+  humeSpeed: number;
+  pauseSeconds: number;
+  elevenLabsStability: number;
+  elevenLabsStyle: number;
+}> = {
+  calm: {
+    scriptTone: "serene, spacious, and deeply unhurried — like floating on still water. Use languid, flowing language with long vowel sounds. Invite the listener to sink deeper into stillness.",
+    humeSpeed: 0.85,
+    pauseSeconds: 1.8,
+    elevenLabsStability: 0.6,
+    elevenLabsStyle: 0.25,
+  },
+  stressed: {
+    scriptTone: "soothing, reassuring, and safe — like a warm blanket wrapping around tension. Use short, simple sentences that feel like exhales. Emphasize releasing, letting go, and being held.",
+    humeSpeed: 0.9,
+    pauseSeconds: 1.7,
+    elevenLabsStability: 0.55,
+    elevenLabsStyle: 0.3,
+  },
+  tired: {
+    scriptTone: "gentle, nurturing, and restoring — like soft morning light. Use comforting, cozy language. Acknowledge weariness with compassion before gently inviting renewal.",
+    humeSpeed: 0.85,
+    pauseSeconds: 1.8,
+    elevenLabsStability: 0.55,
+    elevenLabsStyle: 0.25,
+  },
+  energized: {
+    scriptTone: "uplifting, dynamic, and motivating — like standing on a mountaintop with wind in your hair. Use vivid action words, strong verbs, and forward momentum. The pace should feel alive and purposeful, not calm or sleepy. Think motivational coach meets mindfulness, not lullaby.",
+    humeSpeed: 1.1,
+    pauseSeconds: 1.0,
+    elevenLabsStability: 0.35,
+    elevenLabsStyle: 0.5,
+  },
+  anxious: {
+    scriptTone: "grounding, steady, and anchoring — like roots growing deep into earth. Use concrete, physical language (feet on ground, weight of body, solid surfaces). Repeat grounding cues. Prioritize predictability and safety in word choice.",
+    humeSpeed: 0.9,
+    pauseSeconds: 1.7,
+    elevenLabsStability: 0.6,
+    elevenLabsStyle: 0.2,
+  },
+  grateful: {
+    scriptTone: "warm, expansive, and heartfelt — like sunlight spreading across your chest. Use rich sensory language about warmth, light, and connection. Invite savoring and appreciation with an open, generous tone.",
+    humeSpeed: 0.95,
+    pauseSeconds: 1.5,
+    elevenLabsStability: 0.45,
+    elevenLabsStyle: 0.4,
+  },
+};
+
 const dailyGreetingCache = new Map<string, { message: string; actionText?: string; actionType?: string }>();
 
 const dailyGreetingFallbacks: Record<string, string> = {
@@ -597,12 +648,17 @@ async function generateAudioSimple(text: string, voiceId: string, isPersonalVoic
 async function generateAudio(
   script: string,
   voiceId?: string,
-  isPersonalVoice: boolean = false
+  isPersonalVoice: boolean = false,
+  moodConfig?: typeof MEDITATION_MOOD_CONFIG[string]
 ): Promise<{ audio: ArrayBuffer; duration: number; wordTimings: WordTiming[] }> {
   // Personal voice: always use ElevenLabs (voice clones live there)
   if (isPersonalVoice) {
     try {
-      const result = await elevenLabsTTS(script, voiceId);
+      const result = await elevenLabsTTS(script, voiceId, moodConfig ? {
+        stability: moodConfig.elevenLabsStability,
+        style: moodConfig.elevenLabsStyle,
+        pauseSeconds: moodConfig.pauseSeconds,
+      } : undefined);
       return result;
     } catch (elevenLabsError: any) {
       const isQuotaExhausted = elevenLabsError?.message?.includes("quota_exceeded") ||
@@ -631,7 +687,7 @@ async function generateAudio(
   if (humeName) {
     try {
       console.log(`Using Hume AI TTS for stock voice: ${humeName}`);
-      const result = await humeTextToSpeech(script, humeName);
+      const result = await humeTextToSpeech(script, humeName, moodConfig?.humeSpeed, moodConfig?.pauseSeconds);
       return result;
     } catch (humeError: any) {
       console.error("Hume AI TTS failed, trying OpenAI fallback:", humeError?.message || humeError);
@@ -2763,6 +2819,9 @@ Rules:
         return;
       }
 
+      const moodConfig = MEDITATION_MOOD_CONFIG[mood] || MEDITATION_MOOD_CONFIG.calm;
+      const paceDescription = mood === "energized" ? "at a lively, motivated pace" : "at a calm pace";
+
       console.log(`Generating micro-meditation script (${duration}min) for user ${userId} (${userName}), mood: ${mood}, time: ${timeOfDay}, day: ${dayOfWeek}`);
 
       const scriptResponse = await openai.chat.completions.create({
@@ -2771,23 +2830,23 @@ Rules:
           {
             role: "system",
             content: [
-              `You are an expert mindfulness meditation guide creating a personalized micro-meditation. This is a mindfulness exercise (${durationLabel} when read aloud at a calm pace).`,
+              `You are an expert mindfulness meditation guide creating a personalized micro-meditation. This is a mindfulness exercise (${durationLabel} when read aloud ${paceDescription}).`,
               ``,
               `CONTEXT: It is ${dayOfWeek} ${timeOfDay}. The person is feeling ${mood}. Use this context naturally.`,
               ``,
               `STRUCTURE (follow this order):`,
               `1. OPENING (1-2 sentences): Begin with a brief, natural acknowledgment of where they are in their week and day — weave the day and time of day into a warm, conversational greeting before the grounding cue. Examples: "It's ${dayOfWeek} ${timeOfDay} — let this be your moment of calm..." or "The middle of the week can feel long... right here, right now, you're choosing stillness." Keep it effortless, never forced. Then invite them to close their eyes, notice their breath, or feel their body.`,
-              `2. BREATHING GUIDANCE (2-3 sentences): Lead a brief breathing cycle tailored to their mood. For stressed/anxious: slow exhales for vagus nerve activation. For tired: energizing breath with counts. For calm/grateful: simple awareness breath.`,
-              `3. VISUALIZATION (3-4 sentences): Paint a vivid, sensory-rich scene using present tense. Include at least 2 senses (sight + touch, or sound + warmth, etc.). Match the imagery to their mood — calming scenes for stress, expansive scenes for energy, warm scenes for gratitude.`,
+              `2. BREATHING GUIDANCE (2-3 sentences): Lead a brief breathing cycle tailored to their mood. For stressed/anxious: slow exhales for vagus nerve activation. For tired: energizing breath with counts. For calm/grateful: simple awareness breath.${mood === "energized" ? " For energized: strong rhythmic breathing that builds momentum and channels power." : ""}`,
+              `3. VISUALIZATION (3-4 sentences): Paint a vivid, sensory-rich scene using present tense. Include at least 2 senses (sight + touch, or sound + warmth, etc.). Match the imagery to their mood — calming scenes for stress, ${mood === "energized" ? "dynamic, expansive scenes with movement and light for energy" : "expansive scenes for energy"}, warm scenes for gratitude.`,
               `4. AFFIRMATION ANCHORING (2-3 sentences): Weave in identity-level affirmations using "I am" or "I choose" language. Use embedded commands naturally. Connect the affirmation to the visualization scene.`,
               `5. CLOSING (1-2 sentences): Gently guide them back — "When you are ready, let your eyes open" or similar. End with a brief, empowering send-off that subtly references the day or time ahead — e.g., "Carry this stillness into your evening" or "Let this energy move with you through the rest of your Friday." Keep it warm and natural, not formulaic.`,
               ``,
               `RULES:`,
-              `- Total length: ${wordCount.min}-${wordCount.max} words (${durationLabel} at meditation pace)`,
+              `- Total length: ${wordCount.min}-${wordCount.max} words (${durationLabel} ${paceDescription})`,
               `- Use the person's name once, naturally, about three-quarters of the way through — in the visualization or early affirmation anchoring section. Never at the very beginning, middle, or very end.`,
               `- Include natural pauses marked with "..." (2-3 throughout)`,
               `- Write in second person ("you") for guidance, first person ("I am") for affirmations`,
-              `- Tone: warm, grounding, unhurried — like a trusted guide speaking softly`,
+              `- Tone: ${moodConfig.scriptTone}`,
               `- No exclamation marks, no questions, no medical claims`,
               `- The day/time reference should feel organic and conversational — never robotic or templated. Vary your approach each time.`,
               `- Reference accessible neuroscience concepts naturally (e.g., "your nervous system settles," "each breath sends a signal of safety")`,
@@ -2829,7 +2888,8 @@ Rules:
     req.on("close", () => { clientDisconnected = true; });
 
     try {
-      const { script, usePersonalVoice, voiceId: rawVoiceId } = req.body;
+      const { script, usePersonalVoice, voiceId: rawVoiceId, mood } = req.body;
+      const moodConfig = mood ? MEDITATION_MOOD_CONFIG[mood] : undefined;
 
       if (!script || typeof script !== "string" || script.trim().length === 0) {
         return res.status(400).json({ error: "script is required and must be a non-empty string" });
@@ -2862,13 +2922,13 @@ Rules:
       const ttsStartTime = Date.now();
       try {
         if (usePersonalVoice && voiceId) {
-          const result = await generateAudio(script, voiceId, true);
+          const result = await generateAudio(script, voiceId, true, moodConfig);
           audioBuffer = result.audio;
           wordTimings = result.wordTimings;
           audioDuration = result.duration;
         } else {
           const stockVoiceId = voiceId && isHumeVoice(voiceId) ? voiceId : "hume_lotus";
-          const result = await generateAudio(script, stockVoiceId);
+          const result = await generateAudio(script, stockVoiceId, false, moodConfig);
           audioBuffer = result.audio;
           wordTimings = result.wordTimings;
           audioDuration = result.duration;
@@ -2964,6 +3024,9 @@ Rules:
         return;
       }
 
+      const moodConfig = MEDITATION_MOOD_CONFIG[mood] || MEDITATION_MOOD_CONFIG.calm;
+      const paceDescription = mood === "energized" ? "at a lively, motivated pace" : "at a calm pace";
+
       console.log(`Generating micro-meditation (${duration}min) for user ${userId} (${userName}), mood: ${mood}, time: ${timeOfDay}, day: ${dayOfWeek}`);
 
       const scriptPromise = openai.chat.completions.create({
@@ -2972,23 +3035,23 @@ Rules:
           {
             role: "system",
             content: [
-              `You are an expert mindfulness meditation guide creating a personalized micro-meditation. This is a mindfulness exercise (${durationLabel} when read aloud at a calm pace).`,
+              `You are an expert mindfulness meditation guide creating a personalized micro-meditation. This is a mindfulness exercise (${durationLabel} when read aloud ${paceDescription}).`,
               ``,
               `CONTEXT: It is ${dayOfWeek} ${timeOfDay}. The person is feeling ${mood}. Use this context naturally.`,
               ``,
               `STRUCTURE (follow this order):`,
               `1. OPENING (1-2 sentences): Begin with a brief, natural acknowledgment of where they are in their week and day — weave the day and time of day into a warm, conversational greeting before the grounding cue. Keep it effortless, never forced. Then invite them to close their eyes, notice their breath, or feel their body.`,
-              `2. BREATHING GUIDANCE (2-3 sentences): Lead a brief breathing cycle tailored to their mood. For stressed/anxious: slow exhales for vagus nerve activation. For tired: energizing breath with counts. For calm/grateful: simple awareness breath.`,
-              `3. VISUALIZATION (3-4 sentences): Paint a vivid, sensory-rich scene using present tense. Include at least 2 senses (sight + touch, or sound + warmth, etc.). Match the imagery to their mood — calming scenes for stress, expansive scenes for energy, warm scenes for gratitude.`,
+              `2. BREATHING GUIDANCE (2-3 sentences): Lead a brief breathing cycle tailored to their mood. For stressed/anxious: slow exhales for vagus nerve activation. For tired: energizing breath with counts. For calm/grateful: simple awareness breath.${mood === "energized" ? " For energized: strong rhythmic breathing that builds momentum and channels power." : ""}`,
+              `3. VISUALIZATION (3-4 sentences): Paint a vivid, sensory-rich scene using present tense. Include at least 2 senses (sight + touch, or sound + warmth, etc.). Match the imagery to their mood — calming scenes for stress, ${mood === "energized" ? "dynamic, expansive scenes with movement and light for energy" : "expansive scenes for energy"}, warm scenes for gratitude.`,
               `4. AFFIRMATION ANCHORING (2-3 sentences): Weave in identity-level affirmations using "I am" or "I choose" language. Use embedded commands naturally. Connect the affirmation to the visualization scene.`,
               `5. CLOSING (1-2 sentences): Gently guide them back — "When you are ready, let your eyes open" or similar. End with a brief, empowering send-off that subtly references the day or time ahead — e.g., "Carry this stillness into your evening" or "Let this energy move with you through the rest of your Friday." Keep it warm and natural, not formulaic.`,
               ``,
               `RULES:`,
-              `- Total length: ${wordCount.min}-${wordCount.max} words (${durationLabel} at meditation pace)`,
+              `- Total length: ${wordCount.min}-${wordCount.max} words (${durationLabel} ${paceDescription})`,
               `- Use the person's name once, naturally, about three-quarters of the way through — in the visualization or early affirmation anchoring section. Never at the very beginning, middle, or very end.`,
               `- Include natural pauses marked with "..." (2-3 throughout)`,
               `- Write in second person ("you") for guidance, first person ("I am") for affirmations`,
-              `- Tone: warm, grounding, unhurried — like a trusted guide speaking softly`,
+              `- Tone: ${moodConfig.scriptTone}`,
               `- No exclamation marks, no questions, no medical claims`,
               `- The day/time reference should feel organic and conversational — never robotic or templated. Vary your approach each time.`,
               `- Reference accessible neuroscience concepts naturally (e.g., "your nervous system settles," "each breath sends a signal of safety")`,
@@ -3028,13 +3091,13 @@ Rules:
       const ttsStartTime = Date.now();
       try {
         if (usePersonalVoice && voiceId) {
-          const result = await generateAudio(script, voiceId, true);
+          const result = await generateAudio(script, voiceId, true, moodConfig);
           audioBuffer = result.audio;
           wordTimings = result.wordTimings;
           audioDuration = result.duration;
         } else {
           const stockVoiceId = voiceId && isHumeVoice(voiceId) ? voiceId : "hume_lotus";
-          const result = await generateAudio(script, stockVoiceId);
+          const result = await generateAudio(script, stockVoiceId, false, moodConfig);
           audioBuffer = result.audio;
           wordTimings = result.wordTimings;
           audioDuration = result.duration;

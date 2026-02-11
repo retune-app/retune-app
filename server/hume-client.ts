@@ -82,21 +82,25 @@ function fixPerUtteranceTimestamps(
 
 export async function humeTextToSpeech(
   text: string,
-  voiceName: string = "Kora"
+  voiceName: string = "Kora",
+  speed?: number,
+  pauseSeconds?: number
 ): Promise<{ audio: ArrayBuffer; duration: number; wordTimings: WordTiming[] }> {
   const apiKey = process.env.HUME_API_KEY;
   if (!apiKey) {
     throw new Error("HUME_API_KEY environment variable is not set");
   }
 
+  const effectivePause = pauseSeconds ?? SENTENCE_PAUSE_SECONDS;
   const sentences = splitIntoSentences(text);
   const utterances = sentences.map((sentence, i) => ({
     text: sentence,
     voice: { name: voiceName, provider: "HUME_AI" },
-    trailing_silence: i < sentences.length - 1 ? SENTENCE_PAUSE_SECONDS : 0.35,
+    trailing_silence: i < sentences.length - 1 ? effectivePause : 0.35,
+    ...(speed !== undefined && { speed }),
   }));
 
-  console.log(`Hume TTS: Sending ${utterances.length} utterances with ${SENTENCE_PAUSE_SECONDS}s trailing silence`);
+  console.log(`Hume TTS: Sending ${utterances.length} utterances with ${effectivePause}s trailing silence${speed !== undefined ? `, speed: ${speed}` : ''}`);
 
   const response = await fetch("https://api.hume.ai/v0/tts", {
     method: "POST",
@@ -149,7 +153,7 @@ export async function humeTextToSpeech(
     }
   }
 
-  wordTimings = fixPerUtteranceTimestamps(wordTimings, SENTENCE_PAUSE_SECONDS * 1000);
+  wordTimings = fixPerUtteranceTimestamps(wordTimings, effectivePause * 1000);
   wordTimings = sanitizeWordTimings(wordTimings);
 
   console.log(`Hume TTS: Got ${wordTimings.length} word timings from ${utterances.length} utterances, last timing endMs: ${wordTimings.length > 0 ? wordTimings[wordTimings.length - 1].endMs : 0}ms`);

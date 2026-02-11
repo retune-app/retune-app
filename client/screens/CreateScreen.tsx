@@ -41,7 +41,8 @@ import { Card } from "@/components/Card";
 import { CategoryChip } from "@/components/CategoryChip";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
-import { apiRequest } from "@/lib/query-client";
+import { apiRequest, getApiUrl } from "@/lib/query-client";
+import { getAuthToken } from "@/lib/auth-token";
 import { useAudio } from "@/contexts/AudioContext";
 import { PILLARS, PILLAR_LIST, type PillarName } from "@shared/pillars";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
@@ -491,15 +492,36 @@ export default function CreateScreen() {
 
   const createMutation = useMutation({
     mutationFn: async (options?: { forceAiVoice?: boolean }) => {
-      const res = await apiRequest("POST", "/api/affirmations/create-with-voice", {
-        title: titlesByLength[viewingLength] || goal.substring(0, 50) || "My Affirmation",
-        script: currentScript,
-        pillar: selectedPillar,
-        categories: selectedSubcategories,
-        isManual: mode === "manual",
-        description: descriptionsByLength[viewingLength] || null,
-        ...(options?.forceAiVoice ? { forceAiVoice: true } : {}),
+      const baseUrl = getApiUrl();
+      const url = new URL("/api/affirmations/create-with-voice", baseUrl);
+      const authToken = getAuthToken();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (authToken) headers["X-Auth-Token"] = authToken;
+
+      const res = await fetch(url, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          title: titlesByLength[viewingLength] || goal.substring(0, 50) || "My Affirmation",
+          script: currentScript,
+          pillar: selectedPillar,
+          categories: selectedSubcategories,
+          isManual: mode === "manual",
+          description: descriptionsByLength[viewingLength] || null,
+          ...(options?.forceAiVoice ? { forceAiVoice: true } : {}),
+        }),
+        credentials: "include",
       });
+
+      if (!res.ok) {
+        let body: any = {};
+        try { body = await res.json(); } catch { body = { error: "unknown" }; }
+        const err: any = new Error(body.message || body.error || "Request failed");
+        err.errorType = body.error || "";
+        err.errorMessage = body.message || "";
+        throw err;
+      }
+
       return res.json();
     },
     onSuccess: (data) => {
@@ -526,24 +548,13 @@ export default function CreateScreen() {
       );
     },
     onError: (error: any) => {
-      let errorType = "";
-      let errorMessage = "";
-      try {
-        const errorStr = error?.message || "";
-        const jsonMatch = errorStr.match(/\{.*\}/s);
-        if (jsonMatch) {
-          const parsed = JSON.parse(jsonMatch[0]);
-          if (parsed.error) errorType = parsed.error;
-          if (parsed.message) errorMessage = parsed.message;
-        }
-        if (!errorType && errorStr.includes("QUOTA_EXCEEDED")) errorType = "QUOTA_EXCEEDED";
-        if (!errorType && errorStr.includes("PERSONAL_VOICE_FAILED")) errorType = "PERSONAL_VOICE_FAILED";
-      } catch {}
+      const errorType = error?.errorType || "";
+      const errorMessage = error?.errorMessage || "";
 
       if (errorType === "content_flagged") {
         setShowCreatingOverlay(false);
         setContentWarning(errorMessage || "This content doesn't align with Retuned's purpose of positive self-empowerment. Please revise your text.");
-      } else if (errorType === "QUOTA_EXCEEDED") {
+      } else if (errorType === "QUOTA_EXCEEDED" || error?.message?.includes("QUOTA_EXCEEDED")) {
         Alert.alert(
           "Credits Used Up",
           "Your voice cloning credits have been used up for this period. Would you like to use an AI voice instead?",
@@ -552,7 +563,7 @@ export default function CreateScreen() {
             { text: "Use AI Voice", onPress: () => createMutation.mutate({ forceAiVoice: true }) },
           ]
         );
-      } else if (errorType === "PERSONAL_VOICE_FAILED") {
+      } else if (errorType === "PERSONAL_VOICE_FAILED" || error?.message?.includes("PERSONAL_VOICE_FAILED")) {
         Alert.alert(
           "Inner Voice Failed",
           "Could not generate audio with your Inner Voice. Would you like to try again or use an AI voice instead?",

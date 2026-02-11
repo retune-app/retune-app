@@ -3525,7 +3525,7 @@ Respond with ONLY the notification message text.${avoidClause}`,
   // Support request submission
   app.post("/api/support", optionalAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { email, subject, message } = req.body;
+      const { email, subject, message, appVersion } = req.body;
       
       if (!email || !subject || !message) {
         return res.status(400).json({ error: "Email, subject, and message are required" });
@@ -3540,6 +3540,7 @@ Respond with ONLY the notification message text.${avoidClause}`,
           email,
           subject,
           message,
+          appVersion: appVersion || null,
         })
         .returning();
 
@@ -3553,7 +3554,7 @@ Respond with ONLY the notification message text.${avoidClause}`,
   // Feedback & feature requests endpoint
   app.post("/api/feedback", optionalAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { type, title, message, email } = req.body;
+      const { type, title, message, email, appVersion } = req.body;
 
       if (!title || !message) {
         return res.status(400).json({ error: "Title and message are required" });
@@ -3569,6 +3570,7 @@ Respond with ONLY the notification message text.${avoidClause}`,
           email: email || "not provided",
           subject,
           message,
+          appVersion: appVersion || null,
         })
         .returning();
 

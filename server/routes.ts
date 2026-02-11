@@ -2126,24 +2126,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
       ];
 
-      // Get user's voice preferences to use their preferred voice
-      const [userPrefs] = await db
-        .select({
-          preferredAiGender: users.preferredAiGender,
-          preferredMaleVoiceId: users.preferredMaleVoiceId,
-          preferredFemaleVoiceId: users.preferredFemaleVoiceId,
-        })
-        .from(users)
-        .where(eq(users.id, req.userId!));
-
-      // Determine voice to use based on preferences
-      const gender = userPrefs?.preferredAiGender || "female";
-      let voiceIdToUse: string;
-      if (gender === "male") {
-        voiceIdToUse = userPrefs?.preferredMaleVoiceId || VOICE_OPTIONS.male[0].id;
-      } else {
-        voiceIdToUse = userPrefs?.preferredFemaleVoiceId || VOICE_OPTIONS.female[0].id;
-      }
+      const voiceRotation = [
+        { id: "hume_lotus", gender: "female" },
+        { id: "hume_orion", gender: "male" },
+        { id: "hume_amber", gender: "female" },
+        { id: "hume_sage", gender: "male" },
+        { id: "hume_nova", gender: "female" },
+        { id: "hume_atlas", gender: "male" },
+      ];
       const createdAffirmations = [];
 
       // Ensure audio subdirectory exists
@@ -2152,17 +2142,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fs.mkdirSync(audioDir, { recursive: true });
       }
 
-      for (const sample of sampleAffirmations) {
+      for (let idx = 0; idx < sampleAffirmations.length; idx++) {
+        const sample = sampleAffirmations[idx];
+        const voice = voiceRotation[idx % voiceRotation.length];
         try {
-          // Generate audio with user's preferred voice
-          const audioResult = await generateAudio(sample.script, voiceIdToUse);
+          const audioResult = await generateAudio(sample.script, voice.id);
           
-          // Save audio file to audio subdirectory
           const audioFilename = `affirmation-${Date.now()}-${Math.random().toString(36).slice(2)}.mp3`;
           const audioPath = path.join(audioDir, audioFilename);
           fs.writeFileSync(audioPath, Buffer.from(audioResult.audio));
 
-          // Create affirmation record
           const [newAffirmation] = await db
             .insert(affirmations)
             .values({
@@ -2176,8 +2165,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               wordTimings: JSON.stringify(audioResult.wordTimings),
               isManual: false,
               voiceType: "ai",
-              voiceGender: gender,
-              aiVoiceId: voiceIdToUse,
+              voiceGender: voice.gender,
+              aiVoiceId: voice.id,
             })
             .returning();
 

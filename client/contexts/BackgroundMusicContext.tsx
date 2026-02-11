@@ -141,6 +141,16 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
   const isDuckedRef = useRef(false);
   const isPlayingRef = useRef(false);
   const switchingRef = useRef(false);
+  const selectedMusicRef = useRef<BackgroundMusicType>('forest-rain-birds');
+  const volumeRef = useRef(0.25);
+
+  useEffect(() => {
+    selectedMusicRef.current = selectedMusic;
+  }, [selectedMusic]);
+
+  useEffect(() => {
+    volumeRef.current = volume;
+  }, [volume]);
 
   useEffect(() => {
     loadSavedPreferences();
@@ -160,16 +170,21 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
       
       if (savedMusic) {
         setSelectedMusicState(savedMusic as BackgroundMusicType);
+        selectedMusicRef.current = savedMusic as BackgroundMusicType;
       } else {
         await AsyncStorage.setItem(STORAGE_KEY, 'forest-rain-birds');
         setSelectedMusicState('forest-rain-birds');
+        selectedMusicRef.current = 'forest-rain-birds';
       }
       
       if (savedVolume) {
-        setVolumeState(parseFloat(savedVolume));
+        const parsed = parseFloat(savedVolume);
+        setVolumeState(parsed);
+        volumeRef.current = parsed;
       } else {
         await AsyncStorage.setItem(VOLUME_STORAGE_KEY, '0.25');
         setVolumeState(0.25);
+        volumeRef.current = 0.25;
       }
     } catch (error) {
       console.error('Error loading background music preferences:', error);
@@ -181,6 +196,40 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
     setIsPlaying(playing);
   };
 
+  const unloadCurrentSound = async () => {
+    if (soundRef.current) {
+      const oldSound = soundRef.current;
+      soundRef.current = null;
+      try {
+        await oldSound.stopAsync();
+      } catch (e) {}
+      try {
+        await oldSound.unloadAsync();
+      } catch (e) {}
+      updateIsPlaying(false);
+    }
+  };
+
+  const loadAndPlaySound = async (musicType: Exclude<BackgroundMusicType, 'none'>) => {
+    await Audio.setAudioModeAsync({
+      playsInSilentModeIOS: true,
+      staysActiveInBackground: true,
+      shouldDuckAndroid: true,
+    });
+
+    const effectiveVolume = isDuckedRef.current ? volumeRef.current * DUCK_FACTOR : volumeRef.current;
+    const { sound } = await Audio.Sound.createAsync(
+      AUDIO_FILES[musicType],
+      {
+        isLooping: true,
+        volume: applyVolumeCurve(effectiveVolume),
+        shouldPlay: true,
+      }
+    );
+    soundRef.current = sound;
+    updateIsPlaying(true);
+  };
+
   const setSelectedMusic = async (type: BackgroundMusicType, forceStart = false) => {
     if (switchingRef.current) return;
     switchingRef.current = true;
@@ -188,35 +237,13 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
     try {
       const wasPlaying = isPlayingRef.current;
       setSelectedMusicState(type);
+      selectedMusicRef.current = type;
       AsyncStorage.setItem(STORAGE_KEY, type);
 
-      if (soundRef.current) {
-        try {
-          await soundRef.current.stopAsync();
-          await soundRef.current.unloadAsync();
-        } catch (e) {}
-        soundRef.current = null;
-        updateIsPlaying(false);
-      }
+      await unloadCurrentSound();
 
       if ((wasPlaying || forceStart) && type !== 'none') {
-        await Audio.setAudioModeAsync({
-          playsInSilentModeIOS: true,
-          staysActiveInBackground: true,
-          shouldDuckAndroid: true,
-        });
-
-        const effectiveVolume = isDuckedRef.current ? volume * DUCK_FACTOR : volume;
-        const { sound } = await Audio.Sound.createAsync(
-          AUDIO_FILES[type],
-          {
-            isLooping: true,
-            volume: applyVolumeCurve(effectiveVolume),
-            shouldPlay: true,
-          }
-        );
-        soundRef.current = sound;
-        updateIsPlaying(true);
+        await loadAndPlaySound(type);
       }
     } catch (error) {
       console.error('Error switching background music:', error);
@@ -227,6 +254,7 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
 
   const setVolume = async (newVolume: number) => {
     setVolumeState(newVolume);
+    volumeRef.current = newVolume;
     await AsyncStorage.setItem(VOLUME_STORAGE_KEY, newVolume.toString());
     
     if (soundRef.current) {
@@ -239,54 +267,43 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
     isDuckedRef.current = ducked;
     setIsDucked(ducked);
     if (soundRef.current) {
-      const effectiveVolume = ducked ? volume * DUCK_FACTOR : volume;
+      const effectiveVolume = ducked ? volumeRef.current * DUCK_FACTOR : volumeRef.current;
       await soundRef.current.setVolumeAsync(applyVolumeCurve(effectiveVolume));
     }
-  }, [volume]);
+  }, []);
 
   const startBackgroundMusic = useCallback(async () => {
-    if (selectedMusic === 'none') {
+    const currentMusic = selectedMusicRef.current;
+    if (currentMusic === 'none') {
       return;
     }
 
-    try {
-      await Audio.setAudioModeAsync({
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: true,
-        shouldDuckAndroid: true,
-      });
+    if (switchingRef.current) return;
+    switchingRef.current = true;
 
-      if (soundRef.current) {
-        await soundRef.current.unloadAsync();
-      }
-
-      const effectiveVolume = isDuckedRef.current ? volume * DUCK_FACTOR : volume;
-      const { sound } = await Audio.Sound.createAsync(
-        AUDIO_FILES[selectedMusic],
-        {
-          isLooping: true,
-          volume: applyVolumeCurve(effectiveVolume),
-          shouldPlay: true,
-        }
-      );
-      
-      soundRef.current = sound;
-      updateIsPlaying(true);
-    } catch (error) {
-      console.error('Error starting background music:', error);
-    }
-  }, [selectedMusic, volume]);
-
-  const stopBackgroundMusic = useCallback(async () => {
     try {
       if (soundRef.current) {
         try {
-          await soundRef.current.stopAsync();
-          await soundRef.current.unloadAsync();
+          const status = await soundRef.current.getStatusAsync();
+          if (status.isLoaded && status.isPlaying) {
+            switchingRef.current = false;
+            return;
+          }
         } catch (e) {}
-        soundRef.current = null;
       }
-      updateIsPlaying(false);
+
+      await unloadCurrentSound();
+      await loadAndPlaySound(currentMusic);
+    } catch (error) {
+      console.error('Error starting background music:', error);
+    } finally {
+      switchingRef.current = false;
+    }
+  }, []);
+
+  const stopBackgroundMusic = useCallback(async () => {
+    try {
+      await unloadCurrentSound();
     } catch (error) {
       console.error('Error stopping background music:', error);
     }

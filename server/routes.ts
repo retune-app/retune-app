@@ -2754,12 +2754,16 @@ Rules:
 
       const userName = userResult[0]?.name?.split(" ")[0] || "Friend";
 
+      const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+      const now = new Date();
+      const dayOfWeek = dayNames[now.getDay()];
+
       if (clientDisconnected) {
         console.log(`Client disconnected before script generation (${duration}min), aborting`);
         return;
       }
 
-      console.log(`Generating micro-meditation script (${duration}min) for user ${userId} (${userName}), mood: ${mood}, time: ${timeOfDay}`);
+      console.log(`Generating micro-meditation script (${duration}min) for user ${userId} (${userName}), mood: ${mood}, time: ${timeOfDay}, day: ${dayOfWeek}`);
 
       const scriptResponse = await openai.chat.completions.create({
         model: "gpt-4o-mini",
@@ -2769,8 +2773,10 @@ Rules:
             content: [
               `You are an expert mindfulness meditation guide creating a personalized micro-meditation. This is a mindfulness exercise (${durationLabel} when read aloud at a calm pace).`,
               ``,
+              `CONTEXT: It is ${dayOfWeek} ${timeOfDay}. The person is feeling ${mood}. Use this context naturally.`,
+              ``,
               `STRUCTURE (follow this order):`,
-              `1. OPENING (1-2 sentences): Grounding cue — invite them to close their eyes, notice their breath, or feel their body in the present moment.`,
+              `1. OPENING (1-2 sentences): Begin with a brief, natural acknowledgment of where they are in their week and day — weave the day and time of day into a warm, conversational greeting before the grounding cue. Examples: "It's ${dayOfWeek} ${timeOfDay} — let this be your moment of calm..." or "The middle of the week can feel long... right here, right now, you're choosing stillness." Keep it effortless, never forced. Then invite them to close their eyes, notice their breath, or feel their body.`,
               `2. BREATHING GUIDANCE (2-3 sentences): Lead a brief breathing cycle tailored to their mood. For stressed/anxious: slow exhales for vagus nerve activation. For tired: energizing breath with counts. For calm/grateful: simple awareness breath.`,
               `3. VISUALIZATION (3-4 sentences): Paint a vivid, sensory-rich scene using present tense. Include at least 2 senses (sight + touch, or sound + warmth, etc.). Match the imagery to their mood — calming scenes for stress, expansive scenes for energy, warm scenes for gratitude.`,
               `4. AFFIRMATION ANCHORING (2-3 sentences): Weave in identity-level affirmations using "I am" or "I choose" language. Use embedded commands naturally. Connect the affirmation to the visualization scene.`,
@@ -2783,6 +2789,7 @@ Rules:
               `- Write in second person ("you") for guidance, first person ("I am") for affirmations`,
               `- Tone: warm, grounding, unhurried — like a trusted guide speaking softly`,
               `- No exclamation marks, no questions, no medical claims`,
+              `- The day/time reference should feel organic and conversational — never robotic or templated. Vary your approach each time.`,
               `- Reference accessible neuroscience concepts naturally (e.g., "your nervous system settles," "each breath sends a signal of safety")`,
               `- Mood-specific emphasis: stressed→release/safety, anxious→grounding/presence, tired→vitality/awakening, calm→deepening/peace, energized→channeling/focus, grateful→expansion/abundance`,
               `- This is a mindfulness exercise, not medical advice`,
@@ -2792,7 +2799,7 @@ Rules:
           },
           {
             role: "user",
-            content: `Create a ${duration}-minute micro-meditation for someone named ${userName} feeling ${mood} during the ${timeOfDay}.`,
+            content: `Create a ${duration}-minute micro-meditation for someone named ${userName} feeling ${mood} on ${dayOfWeek} ${timeOfDay}.`,
           },
         ],
         temperature: 0.85,

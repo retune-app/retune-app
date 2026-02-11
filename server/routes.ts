@@ -96,7 +96,7 @@ const guidedMomentLimiter = rateLimit({
   },
 });
 
-const dailyGreetingCache = new Map<string, string>();
+const dailyGreetingCache = new Map<string, { message: string; actionText?: string; actionType?: string }>();
 
 const dailyGreetingFallbacks: Record<string, string> = {
   morning: "A new morning means a new chance to become who you are meant to be",
@@ -4098,18 +4098,37 @@ Respond with ONLY the notification message text.${avoidClause}`,
 
     const cached = dailyGreetingCache.get(cacheKey);
     if (cached) {
-      return res.json({ message: cached, cached: true });
+      return res.json({ ...cached, cached: true });
     }
 
     try {
       const [user] = await db.select({ name: users.name }).from(users).where(eq(users.id, userId));
       const firstName = user?.name?.split(" ")[0] || "";
 
-      const [sessionStats] = await db
-        .select({ total: sql<number>`count(*)::int` })
-        .from(breathingSessions)
-        .where(eq(breathingSessions.userId, userId));
-      const totalSessions = sessionStats?.total || 0;
+      const [sessionStats, affirmationCount, voiceCloneStatus, listeningCount] = await Promise.all([
+        db.select({ total: sql<number>`count(*)::int` })
+          .from(breathingSessions)
+          .where(eq(breathingSessions.userId, userId))
+          .then(r => r[0]),
+        db.select({ total: sql<number>`count(*)::int` })
+          .from(affirmations)
+          .where(eq(affirmations.userId, userId))
+          .then(r => r[0]),
+        db.select({ voiceId: voiceSamples.voiceId, status: voiceSamples.status })
+          .from(voiceSamples)
+          .where(and(eq(voiceSamples.userId, userId), eq(voiceSamples.status, "ready")))
+          .limit(1)
+          .then(r => r[0]),
+        db.select({ total: sql<number>`count(*)::int` })
+          .from(listeningSessions)
+          .where(eq(listeningSessions.userId, userId))
+          .then(r => r[0]),
+      ]);
+
+      const totalBreathingSessions = sessionStats?.total || 0;
+      const totalAffirmations = affirmationCount?.total || 0;
+      const hasVoiceClone = !!voiceCloneStatus;
+      const totalListens = listeningCount?.total || 0;
 
       const [streakResult] = await db
         .select({ dateKey: breathingSessions.dateKey })
@@ -4159,13 +4178,28 @@ Respond with ONLY the notification message text.${avoidClause}`,
         .orderBy(sql`count(*) desc`)
         .limit(1);
 
+      const nudgeOpportunities: string[] = [];
+      if (totalAffirmations === 0) nudgeOpportunities.push("NO_AFFIRMATIONS: User has never created an affirmation yet.");
+      else if (totalAffirmations < 3) nudgeOpportunities.push(`FEW_AFFIRMATIONS: User has only ${totalAffirmations} affirmation(s). Encourage creating more.`);
+      if (!hasVoiceClone) nudgeOpportunities.push("NO_VOICE_CLONE: User hasn't set up voice cloning (Inner Voice) yet.");
+      if (totalBreathingSessions === 0) nudgeOpportunities.push("NO_BREATHING: User hasn't tried any breathing exercises yet.");
+      if (totalListens === 0 && totalAffirmations > 0) nudgeOpportunities.push("NO_LISTENS: User has affirmations but hasn't listened to any yet.");
+
       let statsContext = "";
-      if (totalSessions > 0) {
+      if (totalBreathingSessions > 0 || totalAffirmations > 0) {
         const parts = [];
-        if (streak > 1) parts.push(`${streak}-day streak`);
-        parts.push(`${totalSessions} total sessions`);
-        if (topTechnique) parts.push(`favorite: ${topTechnique.techniqueId} breathing`);
-        statsContext = ` User stats: ${parts.join(", ")}.`;
+        if (streak > 1) parts.push(`${streak}-day breathing streak`);
+        if (totalBreathingSessions > 0) parts.push(`${totalBreathingSessions} breathing sessions`);
+        if (totalAffirmations > 0) parts.push(`${totalAffirmations} affirmation(s) created`);
+        if (totalListens > 0) parts.push(`${totalListens} listening sessions`);
+        if (hasVoiceClone) parts.push("has cloned voice (Inner Voice)");
+        if (topTechnique) parts.push(`favorite technique: ${topTechnique.techniqueId}`);
+        statsContext = `\nUser activity: ${parts.join(", ")}.`;
+      }
+
+      let nudgeContext = "";
+      if (nudgeOpportunities.length > 0) {
+        nudgeContext = `\nNudge opportunities (pick ONE randomly if you want to nudge, or skip if you prefer pure encouragement):\n${nudgeOpportunities.join("\n")}`;
       }
 
       const response = await openai.chat.completions.create({
@@ -4173,22 +4207,64 @@ Respond with ONLY the notification message text.${avoidClause}`,
         messages: [
           {
             role: "system",
-            content: `You write ultra-short empowering messages for the Retuned app. Rules: MAX 10 words, one sentence only, no quotation marks, no exclamation marks, ${normalizedTime} tone. Be warm, not cheery. Focus on inner strength and neuroscience-backed concepts. Weave in themes like: neural pathways strengthening with each session, your brain rewiring for confidence, reducing cognitive resistance through repetition, neuroplasticity shaping new beliefs, amygdala calming through breathwork, prefrontal cortex activation. Use accessible language — no jargon. Make it feel personal and science-grounded.${statsContext} Respond with ONLY the message.`,
+            content: [
+              `You write ultra-short empowering sub-messages for the Retuned wellness app. The greeting line ("Good morning, Name") is already shown above your message — you only write the sub-message below it.`,
+              ``,
+              `TONE: ${normalizedTime} mood. Warm, not cheery. Like a knowing friend. Be creative, witty, surprising — users should look forward to what it says next. No quotation marks, no exclamation marks.`,
+              ``,
+              `THEMES to weave in (pick one per message): neural pathways strengthening, brain rewiring for confidence, neuroplasticity shaping beliefs, amygdala calming through breathwork, prefrontal cortex activation. Use accessible language — no jargon.`,
+              `${statsContext}`,
+              `${nudgeContext}`,
+              ``,
+              `RESPONSE FORMAT: Return valid JSON only. No markdown, no code fences.`,
+              `{`,
+              `  "message": "Your main message text here (max 12 words)",`,
+              `  "actionText": "tappable link text (2-5 words, optional — omit key if no nudge)",`,
+              `  "actionType": "create | breathe | meditate | clone (only if actionText is provided)"`,
+              `}`,
+              ``,
+              `RULES:`,
+              `- "message" is the full visible text INCLUDING a natural lead-in to the action. Max 12 words total.`,
+              `- If nudging, end "message" with a dash or ellipsis, then put the call-to-action in "actionText". The actionText is rendered as a tappable link right after the message.`,
+              `  Example: { "message": "Your mind is ready for something new —", "actionText": "create your first affirmation", "actionType": "create" }`,
+              `  Example: { "message": "Imagine hearing these words in your voice —", "actionText": "try Inner Voice", "actionType": "clone" }`,
+              `  Example: { "message": "A 60-second reset could change your day —", "actionText": "breathe now", "actionType": "breathe" }`,
+              `  Example: { "message": "Let stillness find you —", "actionText": "start a guided moment", "actionType": "meditate" }`,
+              `- If no nudge fits, just return { "message": "..." } with pure encouragement (max 10 words).`,
+              `- actionType mapping: "create" = create new affirmation, "breathe" = breathing exercise, "meditate" = guided meditation, "clone" = voice cloning setup.`,
+              `- About 60% of the time, include a nudge when opportunities exist. 40% pure encouragement.`,
+              `- Never nag. Be curious, inviting, playful. Each message should feel fresh.`,
+            ].join("\n"),
           },
           {
             role: "user",
-            content: `Short ${normalizedTime} message.`,
+            content: `Generate a ${normalizedTime} sub-message.`,
           },
         ],
-        temperature: 0.7,
-        max_tokens: 30,
+        temperature: 0.85,
+        max_tokens: 80,
       });
 
-      let message = response.choices[0]?.message?.content?.trim() || dailyGreetingFallbacks[normalizedTime];
-      message = message.replace(/["""''!]/g, "");
+      const raw = response.choices[0]?.message?.content?.trim() || "";
+      let parsed: { message: string; actionText?: string; actionType?: string };
+      try {
+        const cleaned = raw.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+        parsed = JSON.parse(cleaned);
+        parsed.message = (parsed.message || "").replace(/["""''!]/g, "");
+        if (parsed.actionText) {
+          parsed.actionText = parsed.actionText.replace(/["""''!]/g, "");
+        }
+        const validActions = ["create", "breathe", "meditate", "clone"];
+        if (parsed.actionType && !validActions.includes(parsed.actionType)) {
+          delete parsed.actionText;
+          delete parsed.actionType;
+        }
+      } catch {
+        parsed = { message: raw.replace(/["""''!]/g, "").substring(0, 80) || dailyGreetingFallbacks[normalizedTime] };
+      }
 
-      dailyGreetingCache.set(cacheKey, message);
-      res.json({ message, cached: false });
+      dailyGreetingCache.set(cacheKey, parsed);
+      res.json({ ...parsed, cached: false });
     } catch (error) {
       console.error("Daily greeting generation failed:", error);
       res.json({ message: dailyGreetingFallbacks[normalizedTime], cached: false });

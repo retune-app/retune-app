@@ -189,17 +189,22 @@ export function WelcomeSection({
 
   return (
     <View style={styles.container}>
-      <Pressable
-        onPress={handleToggleTheme}
+      <View
         style={[
           styles.greetingRow,
           isDark ? styles.greetingRowDark : styles.greetingRowLight,
         ]}
-        testID="button-toggle-theme-banner"
+        testID="banner-greeting"
       >
         <View style={styles.greetingContent}>
           <View style={styles.greetingHeader}>
-            <Feather name={icon as any} size={16} color={theme.gold} />
+            <Pressable
+              onPress={handleToggleTheme}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 4 }}
+              testID="button-toggle-theme"
+            >
+              <Feather name={icon as any} size={16} color={theme.gold} />
+            </Pressable>
             <ThemedText type="body" style={[styles.greeting, { color: theme.text, fontSize: 16, fontWeight: "700" }]}>
               {greeting}, {displayName}
             </ThemedText>
@@ -210,10 +215,7 @@ export function WelcomeSection({
                 {displayMessage}{" "}
                 <Text
                   style={[styles.actionLink, { color: theme.gold }]}
-                  onPress={(e) => {
-                    e.stopPropagation?.();
-                    handleNudgePress();
-                  }}
+                  onPress={handleNudgePress}
                   testID="link-greeting-nudge"
                 >
                   {actionText}
@@ -259,7 +261,7 @@ export function WelcomeSection({
             </Pressable>
           ) : null}
         </View>
-      </Pressable>
+      </View>
     </View>
   );
 }

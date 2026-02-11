@@ -147,6 +147,52 @@ const MEDITATION_MOOD_CONFIG: Record<string, {
   },
 };
 
+const PILLAR_VOICE_CONFIG: Record<string, {
+  humeSpeed: number;
+  pauseSeconds: number;
+  elevenLabsStability: number;
+  elevenLabsStyle: number;
+}> = {
+  mind: {
+    humeSpeed: 0.95,
+    pauseSeconds: 1.2,
+    elevenLabsStability: 0.5,
+    elevenLabsStyle: 0.35,
+  },
+  body: {
+    humeSpeed: 1.0,
+    pauseSeconds: 1.0,
+    elevenLabsStability: 0.45,
+    elevenLabsStyle: 0.4,
+  },
+  spirit: {
+    humeSpeed: 0.88,
+    pauseSeconds: 1.6,
+    elevenLabsStability: 0.55,
+    elevenLabsStyle: 0.3,
+  },
+  connection: {
+    humeSpeed: 0.95,
+    pauseSeconds: 1.3,
+    elevenLabsStability: 0.45,
+    elevenLabsStyle: 0.45,
+  },
+  achievement: {
+    humeSpeed: 1.05,
+    pauseSeconds: 0.9,
+    elevenLabsStability: 0.4,
+    elevenLabsStyle: 0.5,
+  },
+};
+
+function getPillarVoiceConfig(pillar?: string | null): typeof MEDITATION_MOOD_CONFIG[string] | undefined {
+  if (!pillar) return undefined;
+  const key = pillar.toLowerCase();
+  const config = PILLAR_VOICE_CONFIG[key];
+  if (!config) return undefined;
+  return { ...config, scriptTone: '' };
+}
+
 const dailyGreetingCache = new Map<string, { message: string; actionText?: string; actionType?: string }>();
 
 const dailyGreetingFallbacks: Record<string, string> = {
@@ -981,7 +1027,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         audioResult = await generateAudio(
           script,
           voiceIdToUse,
-          usedPersonalVoice
+          usedPersonalVoice,
+          getPillarVoiceConfig(pillar)
         );
       } catch (genError: any) {
         if (usedPersonalVoice && genError?.message?.includes("QUOTA_EXCEEDED")) {
@@ -992,7 +1039,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             : (userWithPrefs?.preferredFemaleVoiceId || VOICE_OPTIONS.female[0].id);
           usedPersonalVoice = false;
           voiceIdToUse = fallbackVoiceId;
-          audioResult = await generateAudio(script, fallbackVoiceId, false);
+          audioResult = await generateAudio(script, fallbackVoiceId, false, getPillarVoiceConfig(pillar));
         } else if (usedPersonalVoice && (genError?.message?.includes("PERSONAL_VOICE_FAILED") || genError?.message?.includes("VOICE_EXPIRED"))) {
           console.log("Personal voice not found/expired, falling back to AI voice");
           const fallbackGender = usedGender || "female";
@@ -1001,7 +1048,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             : (userWithPrefs?.preferredFemaleVoiceId || VOICE_OPTIONS.female[0].id);
           usedPersonalVoice = false;
           voiceIdToUse = fallbackVoiceId;
-          audioResult = await generateAudio(script, fallbackVoiceId, false);
+          audioResult = await generateAudio(script, fallbackVoiceId, false, getPillarVoiceConfig(pillar));
         } else {
           throw genError;
         }
@@ -1712,7 +1759,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const isPersonalVoice = voiceType === "personal";
-      const audioResult = await generateAudio(affirmation.script, voiceIdToUse, isPersonalVoice);
+      const audioResult = await generateAudio(affirmation.script, voiceIdToUse, isPersonalVoice, getPillarVoiceConfig(affirmation.pillar));
 
       if (isPersonalVoice) {
         await db
@@ -3677,7 +3724,7 @@ Respond with ONLY the notification message text.${avoidClause}`,
           const voiceId = affirmation.aiVoiceId || "hume_lotus";
           
           // Generate audio
-          const audioResult = await generateAudio(affirmation.script, voiceId);
+          const audioResult = await generateAudio(affirmation.script, voiceId, false, getPillarVoiceConfig(affirmation.pillar));
           
           // Save audio file
           const audioFileName = `affirmation-${affirmation.id}-${Date.now()}.mp3`;

@@ -157,6 +157,7 @@ export const supportRequests = pgTable("support_requests", {
   email: text("email").notNull(),
   subject: text("subject").notNull(),
   message: text("message").notNull(),
+  appVersion: text("app_version"),
   status: text("status").default("pending"), // pending, in_progress, resolved
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });

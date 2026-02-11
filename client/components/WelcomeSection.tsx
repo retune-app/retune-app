@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useCallback } from "react";
-import { View, StyleSheet, Pressable } from "react-native";
+import { View, StyleSheet, Pressable, Text } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -29,6 +29,7 @@ interface WelcomeSectionProps {
   onSuggestionPress?: () => void;
   onSettingsPress?: () => void;
   onMoodPress?: () => void;
+  onNudgeAction?: (actionType: string) => void;
   isPlaying?: boolean;
 }
 
@@ -62,6 +63,13 @@ function getTimeGreeting(): { greeting: string; suggestion: string; icon: string
   }
 }
 
+interface GreetingResponse {
+  message: string;
+  actionText?: string;
+  actionType?: string;
+  cached: boolean;
+}
+
 export function WelcomeSection({
   userName,
   lastPlayedAffirmation,
@@ -70,6 +78,7 @@ export function WelcomeSection({
   onSuggestionPress,
   onSettingsPress,
   onMoodPress,
+  onNudgeAction,
   isPlaying = false,
 }: WelcomeSectionProps) {
   const { theme, isDark, setThemeMode } = useTheme();
@@ -149,13 +158,15 @@ export function WelcomeSection({
     return "night";
   }, []);
 
-  const { data: aiGreeting } = useQuery<{ message: string; cached: boolean }>({
+  const { data: aiGreeting } = useQuery<GreetingResponse>({
     queryKey: [`/api/daily-greeting?timeOfDay=${timeOfDay}`],
     staleTime: 1000 * 60 * 60,
     retry: false,
   });
 
-  const displaySuggestion = aiGreeting?.message || suggestion;
+  const displayMessage = aiGreeting?.message || suggestion;
+  const actionText = aiGreeting?.actionText;
+  const actionType = aiGreeting?.actionType;
 
   const displayName = userName?.split(" ")[0] || "there";
 
@@ -167,6 +178,13 @@ export function WelcomeSection({
   const handleSettingsPress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onSettingsPress?.();
+  };
+
+  const handleNudgePress = () => {
+    if (actionType && onNudgeAction) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      onNudgeAction(actionType);
+    }
   };
 
   return (
@@ -186,9 +204,27 @@ export function WelcomeSection({
               {greeting}, {displayName}
             </ThemedText>
           </View>
-          <ThemedText type="small" style={[styles.suggestion, { color: isDark ? theme.textSecondary : "#3A4A5E", fontSize: 13 }]}>
-            {displaySuggestion}
-          </ThemedText>
+          <View style={styles.suggestionRow}>
+            {actionText && actionType ? (
+              <Text style={[styles.suggestion, { color: isDark ? theme.textSecondary : "#3A4A5E", fontSize: 13 }]}>
+                {displayMessage}{" "}
+                <Text
+                  style={[styles.actionLink, { color: theme.gold }]}
+                  onPress={(e) => {
+                    e.stopPropagation?.();
+                    handleNudgePress();
+                  }}
+                  testID="link-greeting-nudge"
+                >
+                  {actionText}
+                </Text>
+              </Text>
+            ) : (
+              <ThemedText type="small" style={[styles.suggestion, { color: isDark ? theme.textSecondary : "#3A4A5E", fontSize: 13 }]}>
+                {displayMessage}
+              </ThemedText>
+            )}
+          </View>
         </View>
         <View style={styles.headerActions}>
           {onMoodPress ? (
@@ -306,8 +342,17 @@ const styles = StyleSheet.create({
   greeting: {
     letterSpacing: -0.5,
   },
-  suggestion: {
+  suggestionRow: {
     marginLeft: 28,
     minHeight: 34,
+  },
+  suggestion: {
+    lineHeight: 18,
+  },
+  actionLink: {
+    fontWeight: "700",
+    textDecorationLine: "underline",
+    fontSize: 13,
+    lineHeight: 18,
   },
 });

@@ -1119,6 +1119,22 @@ export default function BreathingScreen() {
             onQuickPlay={handleQuickPlay}
             onSettingsPress={() => navigation.navigate("Main", { screen: "SettingsTab" })}
             onMoodPress={() => setShowMoodCheckin(true)}
+            onNudgeAction={(actionType) => {
+              switch (actionType) {
+                case "create":
+                  navigation.navigate("Create");
+                  break;
+                case "breathe":
+                  handleStartWithCountdown();
+                  break;
+                case "meditate":
+                  setShowMoodCheckin(true);
+                  break;
+                case "clone":
+                  navigation.navigate("VoiceSetup");
+                  break;
+              }
+            }}
             isPlaying={isAudioPlaying}
           />
         </Animated.View>

@@ -149,19 +149,10 @@ export async function humeTextToSpeech(
     }
   }
 
-  const rawTimingsCopy = wordTimings.map(w => ({ ...w }));
   wordTimings = fixPerUtteranceTimestamps(wordTimings, SENTENCE_PAUSE_SECONDS * 1000);
-  const fixedTimingsCopy = wordTimings.map(w => ({ ...w }));
   wordTimings = sanitizeWordTimings(wordTimings);
 
   console.log(`Hume TTS: Got ${wordTimings.length} word timings from ${utterances.length} utterances, last timing endMs: ${wordTimings.length > 0 ? wordTimings[wordTimings.length - 1].endMs : 0}ms`);
-  if (wordTimings.length > 0) {
-    console.log(`Hume TTS DIAG: First 10 raw timings: ${JSON.stringify(rawTimingsCopy.slice(0, 10))}`);
-    console.log(`Hume TTS DIAG: First 10 fixed timings: ${JSON.stringify(fixedTimingsCopy.slice(0, 10))}`);
-    console.log(`Hume TTS DIAG: First 10 sanitized timings: ${JSON.stringify(wordTimings.slice(0, 10))}`);
-    const breaks = rawTimingsCopy.filter((w, i) => i > 0 && w.startMs < rawTimingsCopy[i-1].endMs - 100);
-    console.log(`Hume TTS DIAG: Detected ${breaks.length} utterance boundaries in raw timings`);
-  }
 
   let estimatedDuration: number;
   if (

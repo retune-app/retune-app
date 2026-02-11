@@ -118,20 +118,15 @@ export function RSVPDisplay({
 
     for (let i = wordTimings.length - 1; i >= 0; i--) {
       if (currentPositionMs >= wordTimings[i].startMs) {
-        if (currentPositionMs <= wordTimings[i].endMs + 200) {
-          if (!isStandalonePunctuation(wordTimings[i].word)) {
-            return wordTimings[i];
-          }
-        }
-        if (i < wordTimings.length - 1) {
-          const gapToNext = wordTimings[i + 1].startMs - wordTimings[i].endMs;
-          if (gapToNext > 500) {
-            return null;
-          }
-        }
         if (!isStandalonePunctuation(wordTimings[i].word)) {
           return wordTimings[i];
         }
+        for (let j = i - 1; j >= 0; j--) {
+          if (!isStandalonePunctuation(wordTimings[j].word)) {
+            return wordTimings[j];
+          }
+        }
+        return null;
       }
     }
 

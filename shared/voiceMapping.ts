@@ -1,7 +1,7 @@
 export const AI_VOICES = {
   female: [
-    { id: "hume_seraphina", name: "Seraphina", description: "Tranquil, radiant calm" },
     { id: "hume_lotus", name: "Lotus", description: "Peaceful, guiding presence" },
+    { id: "hume_seraphina", name: "Seraphina", description: "Tranquil, radiant calm" },
     { id: "hume_amber", name: "Amber", description: "Warm, grounding energy" },
     { id: "hume_nova", name: "Nova", description: "Gentle, luminous clarity" },
     { id: "hume_willow", name: "Willow", description: "Soft, graceful wisdom" },
@@ -45,5 +45,5 @@ export function getVoiceDisplayName(
     return "Orion";
   }
   
-  return "Seraphina";
+  return "Lotus";
 }

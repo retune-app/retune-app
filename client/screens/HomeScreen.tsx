@@ -387,7 +387,7 @@ export default function HomeScreen() {
             testID="button-header-mood-checkin"
           >
             <Animated.View style={[styles.headerIconButton, { backgroundColor: `${theme.gold}18`, borderColor: `${theme.gold}40` }, moodGlowStyle]}>
-              <Feather name="smile" size={20} color={theme.gold} />
+              <Feather name="smile" size={26} color={theme.gold} />
             </Animated.View>
           </Pressable>
           <View style={[styles.searchContainer, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder }]}>
@@ -406,7 +406,7 @@ export default function HomeScreen() {
             style={[styles.headerIconButton, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder }]}
             testID="button-header-settings"
           >
-            <Feather name="settings" size={20} color={theme.gold} />
+            <Feather name="settings" size={26} color={theme.gold} />
           </Pressable>
         </View>
         <View style={styles.badgeRow}>
@@ -748,8 +748,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   headerIconButton: {
-    width: 40,
-    height: 40,
+    width: 52,
+    height: 52,
     borderRadius: BorderRadius.full,
     borderWidth: 1,
     justifyContent: "center",

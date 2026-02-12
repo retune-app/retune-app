@@ -798,7 +798,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
         <View style={[styles.introMoodCircle, { backgroundColor: `${currentMoodInfo.color}20` }]}>
           <Feather name={currentMoodInfo.icon as any} size={32} color={currentMoodInfo.color} />
         </View>
-        <View style={styles.introDots}>
+        <Animated.View entering={FadeIn.delay(400).duration(600)} style={styles.introDots}>
           {[0, 1, 2, 3].map((i) => {
             const t = i / 3;
             const r1 = parseInt(currentMoodInfo.color.slice(1, 3), 16);
@@ -814,12 +814,11 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
             return (
               <Animated.View
                 key={i}
-                entering={FadeIn.delay(400 + i * 200).duration(400)}
                 style={[styles.introConnectDot, { backgroundColor: dotColor }, flowDotStyles[i]]}
               />
             );
           })}
-        </View>
+        </Animated.View>
         <Animated.View entering={FadeIn.delay(1000).duration(600)}>
           <View style={[styles.introMoodCircle, { backgroundColor: `${targetMoodInfo.color}20` }]}>
             <Feather name={targetMoodInfo.icon as any} size={32} color={targetMoodInfo.color} />
@@ -998,15 +997,14 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
         <View style={[styles.completeMoodCircle, { backgroundColor: `${currentMoodInfo.color}15` }]}>
           <Feather name={currentMoodInfo.icon as any} size={24} color={currentMoodInfo.color} />
         </View>
-        <View style={styles.completeArcLine}>
+        <Animated.View entering={FadeIn.delay(200).duration(600)} style={styles.completeArcLine}>
           {[0, 1, 2, 3, 4].map((i) => (
             <Animated.View
               key={i}
-              entering={FadeIn.delay(200 + i * 100).duration(400)}
               style={[styles.arcDot, { backgroundColor: ACCENT_GOLD }, flowDotStyles[i]]}
             />
           ))}
-        </View>
+        </Animated.View>
         <View style={[styles.completeMoodCircle, { backgroundColor: `${targetMoodInfo.color}15`, borderColor: `${targetMoodInfo.color}40`, borderWidth: 2 }]}>
           <Feather name={targetMoodInfo.icon as any} size={24} color={targetMoodInfo.color} />
         </View>

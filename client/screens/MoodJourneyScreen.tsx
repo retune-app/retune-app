@@ -27,6 +27,7 @@ import Animated, {
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
+import * as ScreenOrientation from "expo-screen-orientation";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useFocusEffect } from "@react-navigation/native";
@@ -144,6 +145,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
   const [hapticsEnabled, setHapticsEnabled] = useState(true);
   const [showSoundSwitcher, setShowSoundSwitcher] = useState(false);
   const [musicEnabled, setMusicEnabled] = useState(false);
+  const [isLandscape, setIsLandscape] = useState(false);
   const countdownScale = useSharedValue(0.8);
   const countdownOpacityVal = useSharedValue(0);
 
@@ -156,6 +158,27 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
   useEffect(() => {
     setMusicEnabled(isMusicPlaying);
   }, [isMusicPlaying]);
+
+  useEffect(() => {
+    if (phase === "breathing") {
+      ScreenOrientation.unlockAsync();
+      const subscription = ScreenOrientation.addOrientationChangeListener((event) => {
+        const o = event.orientationInfo.orientation;
+        setIsLandscape(
+          o === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
+          o === ScreenOrientation.Orientation.LANDSCAPE_RIGHT
+        );
+      });
+      return () => {
+        ScreenOrientation.removeOrientationChangeListener(subscription);
+        ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+        setIsLandscape(false);
+      };
+    } else {
+      setIsLandscape(false);
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+    }
+  }, [phase]);
 
   const categories = React.useMemo(() => {
     const byCategory = getSoundsByCategory();
@@ -826,26 +849,28 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
 
     return (
       <Animated.View entering={FadeIn.duration(600)} exiting={FadeOut.duration(400)} style={styles.breathingContainer}>
-        <Animated.View style={[{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 51 }, controlsAnimStyle]} pointerEvents={showControls ? "box-none" : "none"}>
-          <JourneyStepBar
-            currentStep={currentStepIndex}
-            totalSteps={journey.steps.length}
-            stepLabels={journeyStepLabels}
-            onPrevious={handleGoBack}
-            onSkip={currentStepIndex < journey.steps.length - 1 ? handleSkipStep : undefined}
-            showSkip={currentStepIndex < journey.steps.length - 1}
-            showPrevious={true}
-          />
-          <View style={[styles.journeyMusicButton, { top: insets.top + 70 }]}>
-            <Pressable
-              onPress={() => { resetControlsTimer(); setShowSoundSwitcher(true); }}
-              style={[styles.musicToggleBtn, isMusicPlaying ? { backgroundColor: `${ACCENT_GOLD}30`, borderColor: `${ACCENT_GOLD}50` } : undefined]}
-              hitSlop={8}
-            >
-              <Feather name="music" size={16} color={isMusicPlaying ? ACCENT_GOLD : "rgba(255,255,255,0.6)"} />
-            </Pressable>
-          </View>
-        </Animated.View>
+        {!isLandscape ? (
+          <Animated.View style={[{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 51 }, controlsAnimStyle]} pointerEvents={showControls ? "box-none" : "none"}>
+            <JourneyStepBar
+              currentStep={currentStepIndex}
+              totalSteps={journey.steps.length}
+              stepLabels={journeyStepLabels}
+              onPrevious={handleGoBack}
+              onSkip={currentStepIndex < journey.steps.length - 1 ? handleSkipStep : undefined}
+              showSkip={currentStepIndex < journey.steps.length - 1}
+              showPrevious={true}
+            />
+            <View style={[styles.journeyMusicButton, { top: insets.top + 70 }]}>
+              <Pressable
+                onPress={() => { resetControlsTimer(); setShowSoundSwitcher(true); }}
+                style={[styles.musicToggleBtn, isMusicPlaying ? { backgroundColor: `${ACCENT_GOLD}30`, borderColor: `${ACCENT_GOLD}50` } : undefined]}
+                hitSlop={8}
+              >
+                <Feather name="music" size={16} color={isMusicPlaying ? ACCENT_GOLD : "rgba(255,255,255,0.6)"} />
+              </Pressable>
+            </View>
+          </Animated.View>
+        ) : null}
         <FullscreenBreathingLayout
           technique={technique}
           isPlaying={breathingPlaying}
@@ -863,7 +888,15 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
           backgroundColor={NAVY}
           showContent={countdownValue === null}
           hapticsEnabled={hapticsEnabled}
-          hideTopControls={true}
+          hideTopControls={!isLandscape}
+          renderTopRightExtra={() => (
+            <Pressable
+              onPress={() => { resetControlsTimer(); setShowSoundSwitcher(true); }}
+              style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(0,0,0,0.3)", alignItems: "center", justifyContent: "center" }}
+            >
+              <Feather name="music" size={18} color="#FFFFFF" />
+            </Pressable>
+          )}
           stats={[
             { label: "Time Left", value: formatTime(breathingTimeLeft) },
             { label: "Progress", value: `${Math.round(((BREATHING_DURATION_SECONDS - breathingTimeLeft) / BREATHING_DURATION_SECONDS) * 100)}%`, color: technique.color || ACCENT_GOLD },

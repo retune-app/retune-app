@@ -161,14 +161,14 @@ export default function PlayerScreen() {
       hideJourneyControls();
     } else {
       showJourneyControls();
-      journeyControlsTimerRef.current = setTimeout(hideJourneyControls, 5000);
+      journeyControlsTimerRef.current = setTimeout(hideJourneyControls, 3000);
     }
   }, [journeyControlsVisible, showJourneyControls, hideJourneyControls]);
 
   const resetJourneyControlsTimer = useCallback(() => {
     if (journeyControlsTimerRef.current) clearTimeout(journeyControlsTimerRef.current);
     showJourneyControls();
-    journeyControlsTimerRef.current = setTimeout(hideJourneyControls, 5000);
+    journeyControlsTimerRef.current = setTimeout(hideJourneyControls, 3000);
   }, [showJourneyControls, hideJourneyControls]);
 
   useEffect(() => {

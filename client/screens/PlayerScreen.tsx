@@ -2,8 +2,6 @@ import React, { useState, useEffect, useCallback, useLayoutEffect, useMemo, useR
 import { View, StyleSheet, Pressable, Alert, ScrollView, Modal } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useHeaderHeight } from "@react-navigation/elements";
-import { HeaderButton } from "@react-navigation/elements";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -51,7 +49,6 @@ export default function PlayerScreen() {
   const route = useRoute<PlayerRouteProp>();
   const navigation = useNavigation<PlayerNavigationProp>();
   const insets = useSafeAreaInsets();
-  const headerHeight = useHeaderHeight();
   const { theme } = useTheme();
   const queryClient = useQueryClient();
 
@@ -136,65 +133,64 @@ export default function PlayerScreen() {
 
   const isCurrentlyPlaying = currentAffirmation?.id === affirmationId && isPlaying;
 
-  const [journeyControlsVisible, setJourneyControlsVisible] = useState(false);
-  const journeyControlsOpacity = useSharedValue(0);
-  const journeyControlsTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const journeyControlsFadeStyle = useAnimatedStyle(() => ({
-    opacity: journeyControlsOpacity.value,
+  const [controlsVisible, setControlsVisible] = useState(false);
+  const controlsOpacity = useSharedValue(0);
+  const controlsTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const controlsFadeStyle = useAnimatedStyle(() => ({
+    opacity: controlsOpacity.value,
   }));
 
   const isLastJourneyStep = journeyContext ? journeyContext.currentStep === journeyContext.totalSteps - 1 : false;
 
-  const hideJourneyControls = useCallback(() => {
-    setJourneyControlsVisible(false);
-    journeyControlsOpacity.value = withTiming(0, { duration: 400 });
+  const hideControls = useCallback(() => {
+    setControlsVisible(false);
+    controlsOpacity.value = withTiming(0, { duration: 400 });
   }, []);
 
-  const showJourneyControls = useCallback(() => {
-    setJourneyControlsVisible(true);
-    journeyControlsOpacity.value = withTiming(1, { duration: 250 });
+  const showControls = useCallback(() => {
+    setControlsVisible(true);
+    controlsOpacity.value = withTiming(1, { duration: 250 });
   }, []);
 
-  const toggleJourneyControls = useCallback(() => {
-    if (journeyControlsTimerRef.current) clearTimeout(journeyControlsTimerRef.current);
-    if (journeyControlsVisible) {
-      hideJourneyControls();
+  const toggleControls = useCallback(() => {
+    if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
+    if (controlsVisible) {
+      hideControls();
     } else {
-      showJourneyControls();
-      journeyControlsTimerRef.current = setTimeout(hideJourneyControls, 3000);
+      showControls();
+      controlsTimerRef.current = setTimeout(hideControls, 3000);
     }
-  }, [journeyControlsVisible, showJourneyControls, hideJourneyControls]);
+  }, [controlsVisible, showControls, hideControls]);
 
-  const resetJourneyControlsTimer = useCallback(() => {
-    if (journeyControlsTimerRef.current) clearTimeout(journeyControlsTimerRef.current);
-    showJourneyControls();
-    journeyControlsTimerRef.current = setTimeout(hideJourneyControls, 3000);
-  }, [showJourneyControls, hideJourneyControls]);
+  const resetControlsTimer = useCallback(() => {
+    if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
+    showControls();
+    controlsTimerRef.current = setTimeout(hideControls, 3000);
+  }, [showControls, hideControls]);
 
-  const journeyTapStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
-  const journeyScrolledRef = useRef(false);
+  const tapStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+  const scrolledRef = useRef(false);
 
-  const handleJourneyTouchStart = useCallback((e: any) => {
-    if (!journeyContext) return;
-    journeyScrolledRef.current = false;
+  const handleTouchStart = useCallback((e: any) => {
+    scrolledRef.current = false;
     const touch = e.nativeEvent;
-    journeyTapStartRef.current = { x: touch.pageX, y: touch.pageY, time: Date.now() };
-  }, [journeyContext]);
+    tapStartRef.current = { x: touch.pageX, y: touch.pageY, time: Date.now() };
+  }, []);
 
-  const handleJourneyTouchEnd = useCallback((e: any) => {
-    if (!journeyContext || !journeyTapStartRef.current || journeyScrolledRef.current) return;
+  const handleTouchEnd = useCallback((e: any) => {
+    if (!tapStartRef.current || scrolledRef.current) return;
     const touch = e.nativeEvent;
-    const dx = Math.abs(touch.pageX - journeyTapStartRef.current.x);
-    const dy = Math.abs(touch.pageY - journeyTapStartRef.current.y);
-    const dt = Date.now() - journeyTapStartRef.current.time;
-    journeyTapStartRef.current = null;
+    const dx = Math.abs(touch.pageX - tapStartRef.current.x);
+    const dy = Math.abs(touch.pageY - tapStartRef.current.y);
+    const dt = Date.now() - tapStartRef.current.time;
+    tapStartRef.current = null;
     if (dx < 10 && dy < 10 && dt < 300) {
-      toggleJourneyControls();
+      toggleControls();
     }
-  }, [journeyContext, toggleJourneyControls]);
+  }, [toggleControls]);
 
   useEffect(() => {
-    return () => { if (journeyControlsTimerRef.current) clearTimeout(journeyControlsTimerRef.current); };
+    return () => { if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current); };
   }, []);
 
   const deleteMutation = useMutation({
@@ -314,55 +310,10 @@ export default function PlayerScreen() {
   }, [hapticEnabled]);
 
   useLayoutEffect(() => {
-    const isInJourney = !!journeyContext;
-
     navigation.setOptions({
-      headerTitle: () => (
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <View style={{ width: 3, height: 14, borderRadius: 2, backgroundColor: theme.primary, marginRight: 8 }} />
-          <ThemedText type="caption" style={{ color: theme.primary, textTransform: 'uppercase', letterSpacing: 2, fontWeight: '600', fontSize: 11 }}>
-            My Affirmation
-          </ThemedText>
-        </View>
-      ),
-      headerShown: !isInJourney,
-      headerLeft: () => (
-        isNew && !hasSaved ? (
-          <HeaderButton
-            onPress={handleSave}
-            testID="button-save-affirmation"
-          >
-            <Feather 
-              name="save" 
-              size={22} 
-              color={autoSaveMutation.isPending ? theme.textSecondary : "#4CAF50"} 
-            />
-          </HeaderButton>
-        ) : (
-          <HeaderButton
-            onPress={() => navigation.goBack()}
-            testID="button-back"
-          >
-            <Feather name="arrow-left" size={22} color={theme.text} />
-          </HeaderButton>
-        )
-      ),
-      headerRight: () => (
-        <HeaderButton
-          onPress={() => {
-            if (navigation.canGoBack()) {
-              navigation.goBack();
-            } else {
-              (navigation as any).navigate("Main", { screen: "AffirmTab" });
-            }
-          }}
-          testID="button-close-affirmation"
-        >
-          <Feather name="x" size={22} color={theme.text} />
-        </HeaderButton>
-      ),
+      headerShown: false,
     });
-  }, [navigation, handleSave, handleDelete, autoSaveMutation.isPending, theme, isNew, hasSaved, journeyContext]);
+  }, [navigation]);
 
   useEffect(() => {
     if (autoPlay && affirmation && !autoPlayedRef.current) {
@@ -711,8 +662,8 @@ export default function PlayerScreen() {
         </View>
       </Modal>
 
-      {journeyContext ? (
-        <Animated.View style={[{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 51 }, journeyControlsFadeStyle]} pointerEvents={journeyControlsVisible ? "box-none" : "none"}>
+      <Animated.View style={[{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 51 }, controlsFadeStyle]} pointerEvents={controlsVisible ? "box-none" : "none"}>
+        {journeyContext ? (
           <JourneyStepBar
             currentStep={journeyContext.currentStep}
             totalSteps={journeyContext.totalSteps}
@@ -723,19 +674,60 @@ export default function PlayerScreen() {
             showEndJourney={true}
             onEndJourney={async () => { await stop(); journeyNavigationRef.action = 'complete'; (navigation as any).navigate("Main", { screen: "AffirmTab" }); }}
           />
-        </Animated.View>
-      ) : null}
+        ) : (
+          <View style={{ paddingTop: insets.top + 8, paddingHorizontal: Spacing.lg, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: theme.background }}>
+            <Pressable
+              onPress={() => {
+                if (isNew && !hasSaved) {
+                  handleSave();
+                } else {
+                  navigation.goBack();
+                }
+              }}
+              style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: theme.backgroundSecondary, alignItems: 'center', justifyContent: 'center' }}
+              testID={isNew && !hasSaved ? "button-save-affirmation" : "button-back"}
+            >
+              <Feather
+                name={isNew && !hasSaved ? "save" : "arrow-left"}
+                size={22}
+                color={isNew && !hasSaved ? (autoSaveMutation.isPending ? theme.textSecondary : "#4CAF50") : theme.text}
+              />
+            </Pressable>
+
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{ width: 3, height: 14, borderRadius: 2, backgroundColor: theme.primary, marginRight: 8 }} />
+              <ThemedText type="caption" style={{ color: theme.primary, textTransform: 'uppercase', letterSpacing: 2, fontWeight: '600', fontSize: 11 }}>
+                My Affirmation
+              </ThemedText>
+            </View>
+
+            <Pressable
+              onPress={() => {
+                if (navigation.canGoBack()) {
+                  navigation.goBack();
+                } else {
+                  (navigation as any).navigate("Main", { screen: "AffirmTab" });
+                }
+              }}
+              style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: theme.backgroundSecondary, alignItems: 'center', justifyContent: 'center' }}
+              testID="button-close-affirmation"
+            >
+              <Feather name="x" size={22} color={theme.text} />
+            </Pressable>
+          </View>
+        )}
+      </Animated.View>
 
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={[
           styles.content,
-          { paddingTop: journeyContext ? (insets.top + 70) : (headerHeight + Spacing.lg), paddingBottom: insets.bottom + Spacing["2xl"] },
+          { paddingTop: insets.top + 70, paddingBottom: insets.bottom + Spacing["2xl"] },
         ]}
         showsVerticalScrollIndicator={false}
-        onScrollBeginDrag={() => { if (journeyContext) { journeyScrolledRef.current = true; resetJourneyControlsTimer(); } }}
-        onTouchStart={handleJourneyTouchStart}
-        onTouchEnd={handleJourneyTouchEnd}
+        onScrollBeginDrag={() => { scrolledRef.current = true; resetControlsTimer(); }}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
       >
         <View style={styles.visualizerContainer}>
           {rsvpEnabled ? (

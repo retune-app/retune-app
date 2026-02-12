@@ -5,6 +5,7 @@ import {
   Pressable,
   Dimensions,
   StatusBar,
+  Text,
 } from "react-native";
 import Animated, {
   FadeIn,
@@ -470,98 +471,87 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
 
   const renderBreathing = () => {
     const technique = getBreathingTechnique();
+    const screenWidth = Dimensions.get("window").width;
+    const screenHeight = Dimensions.get("window").height;
+    const breathingCircleSize = Math.min((screenWidth - 48) / 1.15, screenHeight * 0.44);
+
     return (
-      <Animated.View
-        entering={FadeIn.duration(600)}
-        exiting={FadeOut.duration(400)}
-        style={styles.breathingContainer}
-      >
+      <Animated.View entering={FadeIn.duration(600)} exiting={FadeOut.duration(400)} style={styles.breathingContainer}>
         <Pressable onPress={toggleControls} style={styles.breathingPressable}>
           {showControls ? (
-            <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(200)}>
-              {renderStepProgress()}
-              <ThemedText type="caption" style={[styles.stepLabel, { color: ACCENT_GOLD, marginTop: Spacing.md }]}>
-                {`Step ${currentStepIndex + 1} of ${journey.steps.length}`}
-              </ThemedText>
-              <ThemedText type="h3" style={[styles.breathingTitle, { color: theme.text }]}>
-                {technique.name}
-              </ThemedText>
-              <ThemedText type="caption" style={[styles.breathingNote, { color: theme.textSecondary }]}>
-                {currentStep?.note || technique.description}
-              </ThemedText>
+            <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(200)} style={styles.fsTopControls} pointerEvents={showControls ? "auto" : "none"}>
+              <View style={styles.fsTopLeft}>
+                <Text style={[styles.fsTechniqueBadge, { backgroundColor: `${technique.color || ACCENT_GOLD}20`, color: technique.color || ACCENT_GOLD }]}>
+                  {technique.name}
+                </Text>
+              </View>
+              <View style={styles.fsTopRight}>
+                <Pressable onPress={handleEndJourney} style={styles.fsCloseBtn}>
+                  <Feather name="x" size={22} color="rgba(255,255,255,0.7)" />
+                </Pressable>
+              </View>
             </Animated.View>
-          ) : null}
+          ) : <View style={styles.fsTopControls} />}
 
-          <View style={styles.breathingCircleWrapper}>
+          <View style={styles.portraitCenterSection}>
             <BreathingCircle
               technique={technique}
               isPlaying={breathingPlaying}
               onCycleComplete={() => setCyclesCompleted((c) => c + 1)}
-              size={220}
+              size={breathingCircleSize}
             />
           </View>
 
           {showControls ? (
-            <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(200)} style={styles.breathingBottomControls}>
-              <ThemedText type="h2" style={[styles.timerText, { color: theme.text }]}>
-                {formatTime(breathingTimeLeft)}
-              </ThemedText>
-
-              <View style={styles.breathingControls}>
+            <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(200)} style={styles.fsBottomControls} pointerEvents={showControls ? "auto" : "none"}>
+              <View style={styles.fsCenterControls}>
                 <Pressable
                   onPress={() => {
                     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
                     setBreathingPlaying(!breathingPlaying);
                   }}
-                  style={[styles.controlButton, { backgroundColor: `${ACCENT_GOLD}15` }]}
                   testID="button-breathing-toggle"
                 >
-                  <Feather
-                    name={breathingPlaying ? "pause" : "play"}
-                    size={20}
-                    color={ACCENT_GOLD}
-                  />
+                  <LinearGradient
+                    colors={[technique.color || ACCENT_GOLD, `${technique.color || ACCENT_GOLD}CC`]}
+                    style={styles.portraitPlayButton}
+                  >
+                    <Feather name={breathingPlaying ? "pause" : "play"} size={28} color="#FFFFFF" />
+                  </LinearGradient>
                 </Pressable>
-                <Pressable
-                  onPress={handleSkipBreathing}
-                  style={[styles.skipButton, { borderColor: `${theme.textSecondary}30` }]}
-                  testID="button-skip-breathing"
-                >
-                  <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                    {breathingTimeLeft < BREATHING_DURATION_SECONDS ? "Done" : "Skip"}
-                  </ThemedText>
-                  <Feather name="chevron-right" size={14} color={theme.textSecondary} />
-                </Pressable>
+              </View>
+
+              <View style={styles.portraitStatsRow}>
+                <View style={styles.portraitStatItem}>
+                  <Text style={styles.statLabel}>Time Left</Text>
+                  <Text style={styles.statValue}>{formatTime(breathingTimeLeft)}</Text>
+                </View>
+                <View style={styles.portraitStatItem}>
+                  <Text style={styles.statLabel}>Step</Text>
+                  <Text style={[styles.statValue, { color: technique.color || ACCENT_GOLD }]}>{currentStepIndex + 1}/{journey.steps.length}</Text>
+                </View>
+                <View style={styles.portraitStatItem}>
+                  <Text style={styles.statLabel}>Cycles</Text>
+                  <Text style={styles.statValue}>{cyclesCompleted}</Text>
+                </View>
               </View>
 
               {journey.steps.length > 1 ? (
                 <View style={styles.stepNavRow}>
-                  <Pressable
-                    onPress={handleGoBack}
-                    style={[styles.stepNavButton, { borderColor: `${theme.textSecondary}25` }]}
-                    testID="button-journey-back"
-                  >
-                    <Feather name="chevron-left" size={14} color={theme.textSecondary} />
-                    <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                      {currentStepIndex > 0 ? "Previous" : "Exit"}
-                    </ThemedText>
+                  <Pressable onPress={handleGoBack} style={[styles.stepNavButton, { borderColor: "rgba(255,255,255,0.15)" }]} testID="button-journey-back">
+                    <Feather name="chevron-left" size={14} color="rgba(255,255,255,0.6)" />
+                    <Text style={styles.stepNavLabel}>{currentStepIndex > 0 ? "Previous" : "Exit"}</Text>
                   </Pressable>
                   {currentStepIndex < journey.steps.length - 1 ? (
-                    <Pressable
-                      onPress={handleSkipStep}
-                      style={[styles.stepNavButton, { borderColor: `${theme.textSecondary}25` }]}
-                      testID="button-journey-skip"
-                    >
-                      <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                        {"Next step"}
-                      </ThemedText>
-                      <Feather name="chevron-right" size={14} color={theme.textSecondary} />
+                    <Pressable onPress={handleSkipStep} style={[styles.stepNavButton, { borderColor: "rgba(255,255,255,0.15)" }]} testID="button-journey-skip">
+                      <Text style={styles.stepNavLabel}>Next step</Text>
+                      <Feather name="chevron-right" size={14} color="rgba(255,255,255,0.6)" />
                     </Pressable>
                   ) : null}
                 </View>
               ) : null}
             </Animated.View>
-          ) : null}
+          ) : <View style={styles.fsBottomControls} />}
         </Pressable>
       </Animated.View>
     );
@@ -693,7 +683,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
       />
 
       <View style={[styles.header, { paddingTop: insets.top + Spacing.sm }]}>
-        {phase !== "intro" && phase !== "complete" && (phase !== "breathing" || showControls) ? (
+        {phase !== "intro" && phase !== "complete" && phase !== "breathing" ? (
           <Pressable
             onPress={handleEndJourney}
             style={styles.closeButton}
@@ -814,45 +804,98 @@ const styles = StyleSheet.create({
   },
   breathingContainer: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
   },
   breathingPressable: {
     flex: 1,
+    flexDirection: "column",
+    justifyContent: "space-between",
     alignItems: "center",
-    justifyContent: "center",
     width: "100%",
+    paddingTop: 0,
+    paddingBottom: 0,
   },
-  breathingBottomControls: {
+  fsTopControls: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
+    width: "100%",
+    zIndex: 10,
+    minHeight: 36,
   },
-  breathingTitle: {
-    textAlign: "center",
-    marginBottom: Spacing.sm,
-  },
-  breathingNote: {
-    textAlign: "center",
-    fontSize: 13,
-    lineHeight: 18,
-    maxWidth: 280,
-    marginBottom: Spacing.lg,
-  },
-  breathingCircleWrapper: {
-    alignItems: "center",
-    justifyContent: "center",
-    marginVertical: Spacing.xl,
-  },
-  timerText: {
-    textAlign: "center",
-    fontWeight: "300",
-    fontSize: 22,
-    fontVariant: ["tabular-nums"],
-    marginBottom: Spacing.sm,
-  },
-  breathingControls: {
+  fsTopLeft: {
     flexDirection: "row",
     alignItems: "center",
+  },
+  fsTopRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  fsTechniqueBadge: {
+    fontSize: 12,
+    fontWeight: "600",
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    overflow: "hidden",
+    letterSpacing: 0.5,
+  },
+  fsCloseBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(255,255,255,0.1)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  portraitCenterSection: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1,
+  },
+  fsBottomControls: {
+    alignItems: "center",
     gap: Spacing.lg,
+    minHeight: 120,
+  },
+  fsCenterControls: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: Spacing.md,
+  },
+  portraitPlayButton: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  portraitStatsRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: Spacing.xl * 3,
+  },
+  portraitStatItem: {
+    alignItems: "center",
+  },
+  statLabel: {
+    fontSize: 11,
+    color: "rgba(255,255,255,0.5)",
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+    marginBottom: 2,
+  },
+  statValue: {
+    fontSize: 18,
+    color: "#FFFFFF",
+    fontWeight: "600",
+    fontVariant: ["tabular-nums"],
+  },
+  stepNavLabel: {
+    fontSize: 12,
+    color: "rgba(255,255,255,0.6)",
   },
   stepNavRow: {
     flexDirection: "row",

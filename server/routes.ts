@@ -124,13 +124,6 @@ const MEDITATION_MOOD_CONFIG: Record<string, {
     elevenLabsStability: 0.55,
     elevenLabsStyle: 0.25,
   },
-  energized: {
-    scriptTone: "uplifting, dynamic, and motivating — like standing on a mountaintop with wind in your hair. Use vivid action words, strong verbs, and forward momentum. The pace should feel alive and purposeful, not calm or sleepy. Think motivational coach meets mindfulness, not lullaby.",
-    humeSpeed: 1.1,
-    pauseSeconds: 1.0,
-    elevenLabsStability: 0.35,
-    elevenLabsStyle: 0.5,
-  },
   anxious: {
     scriptTone: "grounding, steady, and anchoring — like roots growing deep into earth. Use concrete, physical language (feet on ground, weight of body, solid surfaces). Repeat grounding cues. Prioritize predictability and safety in word choice.",
     humeSpeed: 0.9,
@@ -138,12 +131,19 @@ const MEDITATION_MOOD_CONFIG: Record<string, {
     elevenLabsStability: 0.6,
     elevenLabsStyle: 0.2,
   },
-  grateful: {
-    scriptTone: "warm, expansive, and heartfelt — like sunlight spreading across your chest. Use rich sensory language about warmth, light, and connection. Invite savoring and appreciation with an open, generous tone.",
-    humeSpeed: 0.95,
-    pauseSeconds: 1.5,
-    elevenLabsStability: 0.45,
-    elevenLabsStyle: 0.4,
+  sad: {
+    scriptTone: "warm, tender, and compassionate — like being gently held by someone who truly understands. Use soft, comforting language that acknowledges pain without rushing past it. Invite the listener to be gentle with themselves.",
+    humeSpeed: 0.88,
+    pauseSeconds: 1.8,
+    elevenLabsStability: 0.55,
+    elevenLabsStyle: 0.3,
+  },
+  overwhelmed: {
+    scriptTone: "steady, simplifying, and reassuring — like a calm hand on your shoulder when everything feels too much. Use short, clear sentences. Emphasize one thing at a time, letting go of what can wait, and coming back to this single breath.",
+    humeSpeed: 0.88,
+    pauseSeconds: 1.7,
+    elevenLabsStability: 0.6,
+    elevenLabsStyle: 0.2,
   },
 };
 
@@ -2595,7 +2595,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 Respond as JSON:
 {
-  "title": "A short, warm 3-6 word title that acknowledges their ${currentMood} feeling and hints at transformation. Use ${userName}'s name sometimes but not always. Examples for stressed: 'Let's lighten that load, ${userName}', 'You deserve some ease'. Examples for tired: 'Rest is calling you', 'Time to recharge, ${userName}'. Examples for anxious: 'Let's find your ground'. Examples for calm: 'Beautiful — let's build on this'. Examples for energized: 'Love that spark, ${userName}'. Examples for grateful: 'What a gift that is'. Never use emojis.",
+  "title": "A short, warm 3-6 word title that acknowledges their ${currentMood} feeling and hints at transformation. Use ${userName}'s name sometimes but not always. Examples for stressed: 'Let's lighten that load, ${userName}', 'You deserve some ease'. Examples for tired: 'Rest is calling you', 'Time to recharge, ${userName}'. Examples for anxious: 'Let's find your ground'. Examples for sad: 'Sunshine is on its way'. Examples for overwhelmed: 'One breath at a time'. Examples for calm: 'Beautiful — let's build on this'. Never use emojis.",
   "subtitle": "A short 5-10 word sentence about choosing their destination mood. Creative and warm, not clinical. Examples: 'Pick the feeling you want to carry', 'Where shall we take you?', 'Choose the version of you that's waiting'. Never use emojis."
 }
 
@@ -2942,7 +2942,7 @@ Rules for tone:
         return res.status(400).json({ error: "mood and timeOfDay are required" });
       }
 
-      const validMoods = ["calm", "stressed", "tired", "energized", "anxious", "grateful"];
+      const validMoods = ["calm", "stressed", "tired", "anxious", "sad", "overwhelmed"];
       const validTimes = ["morning", "afternoon", "evening", "night"];
       const validDurations = [1, 2, 3];
 
@@ -2984,7 +2984,7 @@ Rules for tone:
       }
 
       const moodConfig = MEDITATION_MOOD_CONFIG[mood] || MEDITATION_MOOD_CONFIG.calm;
-      const paceDescription = mood === "energized" ? "at a lively, motivated pace" : "at a calm pace";
+      const paceDescription = "at a calm pace";
 
       console.log(`Generating micro-meditation script (${duration}min) for user ${userId} (${userName}), mood: ${mood}, time: ${timeOfDay}, day: ${dayOfWeek}`);
 
@@ -3000,8 +3000,8 @@ Rules for tone:
               ``,
               `STRUCTURE (follow this order):`,
               `1. OPENING (1-2 sentences): Begin with a brief, natural acknowledgment of where they are in their week and day — weave the day and time of day into a warm, conversational greeting before the grounding cue. Examples: "It's ${dayOfWeek} ${timeOfDay} — let this be your moment of calm..." or "The middle of the week can feel long... right here, right now, you're choosing stillness." Keep it effortless, never forced. Then invite them to close their eyes, notice their breath, or feel their body.`,
-              `2. BREATHING GUIDANCE (2-3 sentences): Lead a brief breathing cycle tailored to their mood. For stressed/anxious: slow exhales for vagus nerve activation. For tired: energizing breath with counts. For calm/grateful: simple awareness breath.${mood === "energized" ? " For energized: strong rhythmic breathing that builds momentum and channels power." : ""}`,
-              `3. VISUALIZATION (3-4 sentences): Paint a vivid, sensory-rich scene using present tense. Include at least 2 senses (sight + touch, or sound + warmth, etc.). Match the imagery to their mood — calming scenes for stress, ${mood === "energized" ? "dynamic, expansive scenes with movement and light for energy" : "expansive scenes for energy"}, warm scenes for gratitude.`,
+              `2. BREATHING GUIDANCE (2-3 sentences): Lead a brief breathing cycle tailored to their mood. For stressed/anxious/overwhelmed: slow exhales for vagus nerve activation. For tired: energizing breath with counts. For sad: gentle, warming breaths. For calm: simple awareness breath.`,
+              `3. VISUALIZATION (3-4 sentences): Paint a vivid, sensory-rich scene using present tense. Include at least 2 senses (sight + touch, or sound + warmth, etc.). Match the imagery to their mood — calming scenes for stress/overwhelm, gentle uplifting scenes for sadness, expansive scenes for energy, warm scenes for gratitude.`,
               `4. AFFIRMATION ANCHORING (2-3 sentences): Weave in identity-level affirmations using "I am" or "I choose" language. Use embedded commands naturally. Connect the affirmation to the visualization scene.`,
               `5. GENTLE RETURN (2-3 sentences): Slowly guide them back to their surroundings. Include a physical cue like "wiggle your fingers" or "notice the sounds around you." Then invite them to open their eyes when ready — never rush this transition. Add a pause ("...") before the final line.`,
               `6. WARM SIGN-OFF (1-2 sentences): End with a genuine, heartfelt send-off that feels like a friend wishing them well. Match the time of day: morning→"carry this into your day," afternoon→"let this fuel your afternoon," evening→"take this peace into your night." Occasionally (~30% of the time), add a playful or tender touch like "and don't forget to breathe" or "you've already done something beautiful today." The closing should feel like a gentle landing, never abrupt — the listener should feel held until the very last word.`,
@@ -3016,7 +3016,7 @@ Rules for tone:
               `- The day/time reference should feel organic and conversational — never robotic or templated. Vary your approach each time.`,
               `- The ending must never feel rushed or cut short. The last 2-3 sentences should slow down in pacing and feel like a soft exhale.`,
               `- Reference accessible neuroscience concepts naturally (e.g., "your nervous system settles," "each breath sends a signal of safety")`,
-              `- Mood-specific emphasis: stressed→release/safety, anxious→grounding/presence, tired→vitality/awakening, calm→deepening/peace, energized→channeling/focus, grateful→expansion/abundance`,
+              `- Mood-specific emphasis: stressed→release/safety, anxious→grounding/presence, tired→vitality/awakening, sad→warmth/comfort, overwhelmed→simplicity/clarity, calm→deepening/peace`,
               `- This is a mindfulness exercise, not medical advice`,
               ``,
               `Return ONLY the script text, no formatting or labels.`,
@@ -3134,7 +3134,7 @@ Rules for tone:
         return res.status(400).json({ error: "mood and timeOfDay are required" });
       }
 
-      const validMoods = ["calm", "stressed", "tired", "energized", "anxious", "grateful"];
+      const validMoods = ["calm", "stressed", "tired", "anxious", "sad", "overwhelmed"];
       const validTimes = ["morning", "afternoon", "evening", "night"];
       const validDurations = [1, 2, 3];
 
@@ -3191,7 +3191,7 @@ Rules for tone:
       }
 
       const moodConfig = MEDITATION_MOOD_CONFIG[mood] || MEDITATION_MOOD_CONFIG.calm;
-      const paceDescription = mood === "energized" ? "at a lively, motivated pace" : "at a calm pace";
+      const paceDescription = "at a calm pace";
 
       console.log(`Generating micro-meditation (${duration}min) for user ${userId} (${userName}), mood: ${mood}, time: ${timeOfDay}, day: ${dayOfWeek}`);
 
@@ -3207,8 +3207,8 @@ Rules for tone:
               ``,
               `STRUCTURE (follow this order):`,
               `1. OPENING (1-2 sentences): Begin with a brief, natural acknowledgment of where they are in their week and day — weave the day and time of day into a warm, conversational greeting before the grounding cue. Keep it effortless, never forced. Then invite them to close their eyes, notice their breath, or feel their body.`,
-              `2. BREATHING GUIDANCE (2-3 sentences): Lead a brief breathing cycle tailored to their mood. For stressed/anxious: slow exhales for vagus nerve activation. For tired: energizing breath with counts. For calm/grateful: simple awareness breath.${mood === "energized" ? " For energized: strong rhythmic breathing that builds momentum and channels power." : ""}`,
-              `3. VISUALIZATION (3-4 sentences): Paint a vivid, sensory-rich scene using present tense. Include at least 2 senses (sight + touch, or sound + warmth, etc.). Match the imagery to their mood — calming scenes for stress, ${mood === "energized" ? "dynamic, expansive scenes with movement and light for energy" : "expansive scenes for energy"}, warm scenes for gratitude.`,
+              `2. BREATHING GUIDANCE (2-3 sentences): Lead a brief breathing cycle tailored to their mood. For stressed/anxious/overwhelmed: slow exhales for vagus nerve activation. For tired: energizing breath with counts. For sad: gentle, warming breaths. For calm: simple awareness breath.`,
+              `3. VISUALIZATION (3-4 sentences): Paint a vivid, sensory-rich scene using present tense. Include at least 2 senses (sight + touch, or sound + warmth, etc.). Match the imagery to their mood — calming scenes for stress/overwhelm, gentle uplifting scenes for sadness, expansive scenes for energy, warm scenes for gratitude.`,
               `4. AFFIRMATION ANCHORING (2-3 sentences): Weave in identity-level affirmations using "I am" or "I choose" language. Use embedded commands naturally. Connect the affirmation to the visualization scene.`,
               `5. GENTLE RETURN (2-3 sentences): Slowly guide them back to their surroundings. Include a physical cue like "wiggle your fingers" or "notice the sounds around you." Then invite them to open their eyes when ready — never rush this transition. Add a pause ("...") before the final line.`,
               `6. WARM SIGN-OFF (1-2 sentences): End with a genuine, heartfelt send-off that feels like a friend wishing them well. Match the time of day: morning→"carry this into your day," afternoon→"let this fuel your afternoon," evening→"take this peace into your night." Occasionally (~30% of the time), add a playful or tender touch like "and don't forget to breathe" or "you've already done something beautiful today." The closing should feel like a gentle landing, never abrupt — the listener should feel held until the very last word.`,
@@ -3223,7 +3223,7 @@ Rules for tone:
               `- The day/time reference should feel organic and conversational — never robotic or templated. Vary your approach each time.`,
               `- The ending must never feel rushed or cut short. The last 2-3 sentences should slow down in pacing and feel like a soft exhale.`,
               `- Reference accessible neuroscience concepts naturally (e.g., "your nervous system settles," "each breath sends a signal of safety")`,
-              `- Mood-specific emphasis: stressed→release/safety, anxious→grounding/presence, tired→vitality/awakening, calm→deepening/peace, energized→channeling/focus, grateful→expansion/abundance`,
+              `- Mood-specific emphasis: stressed→release/safety, anxious→grounding/presence, tired→vitality/awakening, sad→warmth/comfort, overwhelmed→simplicity/clarity, calm→deepening/peace`,
               `- This is a mindfulness exercise, not medical advice`,
               ``,
               `Return ONLY the script text, no formatting or labels.`,

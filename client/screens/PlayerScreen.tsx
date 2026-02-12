@@ -317,7 +317,13 @@ export default function PlayerScreen() {
       ),
       headerRight: () => (
         <HeaderButton
-          onPress={() => (navigation as any).navigate("Main", { screen: "AffirmTab" })}
+          onPress={() => {
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              (navigation as any).navigate("Main", { screen: "AffirmTab" });
+            }
+          }}
           testID="button-close-affirmation"
         >
           <Feather name="x" size={22} color={theme.text} />

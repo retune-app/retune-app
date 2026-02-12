@@ -178,7 +178,7 @@ export default function RootStackNavigator() {
             headerTitle: "",
             headerTransparent: true,
             animation: "fade",
-            animationDuration: 250,
+            animationDuration: 150,
           }}
         />
         <Stack.Screen

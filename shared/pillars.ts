@@ -98,33 +98,15 @@ export const TAG_MIGRATION_MAP: Record<string, string> = {
   "Environment": "Comfort",
 };
 
-export type MoodType = "calm" | "stressed" | "tired" | "energized" | "anxious" | "grateful";
+export type MoodType = "calm" | "stressed" | "tired" | "anxious" | "sad" | "overwhelmed";
 export type TimeOfDay = "morning" | "afternoon" | "evening" | "night";
 
 export const MOOD_TAG_PREFERENCES: Record<MoodType, Record<TimeOfDay, { preferredTags: string[]; preferredPillars: string[] }>> = {
-  calm: {
-    morning: { preferredTags: ["Presence", "Gratitude", "Inner Peace", "Purpose"], preferredPillars: ["Spirit", "Mind"] },
-    afternoon: { preferredTags: ["Focus", "Clarity", "Inner Peace", "Presence"], preferredPillars: ["Mind", "Spirit"] },
-    evening: { preferredTags: ["Gratitude", "Joy", "Inner Peace", "Love"], preferredPillars: ["Spirit", "Connection"] },
-    night: { preferredTags: ["Sleep", "Inner Peace", "Calm", "Comfort"], preferredPillars: ["Body", "Spirit"] },
-  },
   stressed: {
     morning: { preferredTags: ["Calm", "Clarity", "Focus", "Resilience"], preferredPillars: ["Mind", "Body"] },
     afternoon: { preferredTags: ["Letting Go", "Calm", "Clarity", "Focus"], preferredPillars: ["Mind", "Body"] },
     evening: { preferredTags: ["Letting Go", "Calm", "Inner Peace", "Comfort"], preferredPillars: ["Mind", "Home"] },
     night: { preferredTags: ["Sleep", "Letting Go", "Calm", "Comfort"], preferredPillars: ["Body", "Mind"] },
-  },
-  tired: {
-    morning: { preferredTags: ["Energy", "Drive", "Confidence", "Health"], preferredPillars: ["Body", "Achievement"] },
-    afternoon: { preferredTags: ["Energy", "Focus", "Drive", "Clarity"], preferredPillars: ["Body", "Achievement"] },
-    evening: { preferredTags: ["Sleep", "Calm", "Healing", "Comfort"], preferredPillars: ["Body", "Home"] },
-    night: { preferredTags: ["Sleep", "Healing", "Calm", "Comfort"], preferredPillars: ["Body", "Home"] },
-  },
-  energized: {
-    morning: { preferredTags: ["Drive", "Confidence", "Growth", "Purpose"], preferredPillars: ["Achievement", "Mind"] },
-    afternoon: { preferredTags: ["Focus", "Career", "Growth", "Abundance"], preferredPillars: ["Achievement", "Mind"] },
-    evening: { preferredTags: ["Gratitude", "Joy", "Love", "Presence"], preferredPillars: ["Spirit", "Connection"] },
-    night: { preferredTags: ["Gratitude", "Inner Peace", "Calm", "Presence"], preferredPillars: ["Spirit", "Mind"] },
   },
   anxious: {
     morning: { preferredTags: ["Calm", "Resilience", "Confidence", "Safety"], preferredPillars: ["Mind", "Home"] },
@@ -132,11 +114,29 @@ export const MOOD_TAG_PREFERENCES: Record<MoodType, Record<TimeOfDay, { preferre
     evening: { preferredTags: ["Inner Peace", "Letting Go", "Calm", "Safety"], preferredPillars: ["Spirit", "Mind"] },
     night: { preferredTags: ["Sleep", "Calm", "Safety", "Inner Peace"], preferredPillars: ["Body", "Mind"] },
   },
-  grateful: {
-    morning: { preferredTags: ["Gratitude", "Joy", "Purpose", "Abundance"], preferredPillars: ["Spirit", "Achievement"] },
-    afternoon: { preferredTags: ["Gratitude", "Love", "Joy", "Belonging"], preferredPillars: ["Connection", "Spirit"] },
-    evening: { preferredTags: ["Gratitude", "Love", "Joy", "Family"], preferredPillars: ["Connection", "Spirit"] },
-    night: { preferredTags: ["Gratitude", "Inner Peace", "Calm", "Comfort"], preferredPillars: ["Spirit", "Home"] },
+  tired: {
+    morning: { preferredTags: ["Energy", "Drive", "Confidence", "Health"], preferredPillars: ["Body", "Achievement"] },
+    afternoon: { preferredTags: ["Energy", "Focus", "Drive", "Clarity"], preferredPillars: ["Body", "Achievement"] },
+    evening: { preferredTags: ["Sleep", "Calm", "Healing", "Comfort"], preferredPillars: ["Body", "Home"] },
+    night: { preferredTags: ["Sleep", "Healing", "Calm", "Comfort"], preferredPillars: ["Body", "Home"] },
+  },
+  sad: {
+    morning: { preferredTags: ["Joy", "Gratitude", "Confidence", "Purpose"], preferredPillars: ["Spirit", "Mind"] },
+    afternoon: { preferredTags: ["Joy", "Love", "Gratitude", "Presence"], preferredPillars: ["Connection", "Spirit"] },
+    evening: { preferredTags: ["Love", "Comfort", "Inner Peace", "Healing"], preferredPillars: ["Connection", "Home"] },
+    night: { preferredTags: ["Comfort", "Healing", "Sleep", "Inner Peace"], preferredPillars: ["Home", "Body"] },
+  },
+  overwhelmed: {
+    morning: { preferredTags: ["Clarity", "Calm", "Focus", "Resilience"], preferredPillars: ["Mind", "Body"] },
+    afternoon: { preferredTags: ["Letting Go", "Clarity", "Focus", "Calm"], preferredPillars: ["Mind", "Spirit"] },
+    evening: { preferredTags: ["Letting Go", "Inner Peace", "Comfort", "Calm"], preferredPillars: ["Spirit", "Home"] },
+    night: { preferredTags: ["Sleep", "Letting Go", "Comfort", "Calm"], preferredPillars: ["Body", "Home"] },
+  },
+  calm: {
+    morning: { preferredTags: ["Presence", "Gratitude", "Inner Peace", "Purpose"], preferredPillars: ["Spirit", "Mind"] },
+    afternoon: { preferredTags: ["Focus", "Clarity", "Inner Peace", "Presence"], preferredPillars: ["Mind", "Spirit"] },
+    evening: { preferredTags: ["Gratitude", "Joy", "Inner Peace", "Love"], preferredPillars: ["Spirit", "Connection"] },
+    night: { preferredTags: ["Sleep", "Inner Peace", "Calm", "Comfort"], preferredPillars: ["Body", "Spirit"] },
   },
 };
 

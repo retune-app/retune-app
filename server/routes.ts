@@ -2641,13 +2641,14 @@ Rules:
         return res.status(400).json({ error: "mood, targetMood, and timeOfDay are required" });
       }
 
-      const validMoods = ["calm", "stressed", "tired", "energized", "anxious", "grateful"];
+      const validStartingMoods = ["calm", "stressed", "tired", "anxious", "sad", "overwhelmed"];
+      const validTargetMoods = ["calm", "energized", "grateful", "confident", "focused", "joyful"];
       const validTimes = ["morning", "afternoon", "evening", "night"];
 
-      if (!validMoods.includes(mood)) {
+      if (!validStartingMoods.includes(mood)) {
         return res.status(400).json({ error: "Invalid mood value" });
       }
-      if (!validMoods.includes(targetMood)) {
+      if (!validTargetMoods.includes(targetMood)) {
         return res.status(400).json({ error: "Invalid targetMood value" });
       }
       if (!validTimes.includes(timeOfDay)) {
@@ -2721,12 +2722,12 @@ Rules:
 
       const suggestedCreationTheme = !matchedAffirmation ? (() => {
         const themeMap: Record<string, Record<string, string>> = {
-          tired: { morning: "gentle energy and vitality", afternoon: "renewed focus and stamina", evening: "restful sleep and deep recovery", night: "peaceful sleep and body restoration" },
           stressed: { morning: "calm clarity to start your day", afternoon: "releasing tension and finding ease", evening: "letting go of the day's weight", night: "peaceful surrender into rest" },
           anxious: { morning: "grounded confidence for the day ahead", afternoon: "calm resilience and inner safety", evening: "releasing worry and finding peace", night: "safe, calm sleep and letting go of fear" },
+          tired: { morning: "gentle energy and vitality", afternoon: "renewed focus and stamina", evening: "restful sleep and deep recovery", night: "peaceful sleep and body restoration" },
+          sad: { morning: "warmth and gentle hope for the day", afternoon: "finding light in the present moment", evening: "self-compassion and tender care", night: "comfort and knowing tomorrow is new" },
+          overwhelmed: { morning: "simplicity and one step at a time", afternoon: "clearing the noise and finding clarity", evening: "releasing what you can't control", night: "letting go and trusting the process" },
           calm: { morning: "deepening your morning serenity", afternoon: "sustaining your peaceful presence", evening: "gratitude and gentle reflection", night: "honoring your calm with restful sleep" },
-          energized: { morning: "channeling your energy into purpose", afternoon: "focused drive and achievement", evening: "grateful reflection on your vitality", night: "peaceful transition from energy to rest" },
-          grateful: { morning: "amplifying morning gratitude", afternoon: "sharing your grateful heart with others", evening: "savoring the day's blessings", night: "drifting to sleep wrapped in thankfulness" },
         };
         return themeMap[mood]?.[timeOfDay] || "your current emotional state";
       })() : null;
@@ -2734,23 +2735,48 @@ Rules:
       const moodPairBreathMap: Record<string, { name: string; id: string }> = {
         "stressed→calm": { name: "4-7-8 Relaxation", id: "478" },
         "stressed→energized": { name: "Box Breathing", id: "box" },
-        "tired→energized": { name: "Energizing Breath", id: "energizing" },
-        "tired→calm": { name: "Coherent Breathing", id: "coherent" },
+        "stressed→grateful": { name: "Coherent Breathing", id: "coherent" },
+        "stressed→confident": { name: "Box Breathing", id: "box" },
+        "stressed→focused": { name: "Box Breathing", id: "box" },
+        "stressed→joyful": { name: "Coherent Breathing", id: "coherent" },
         "anxious→calm": { name: "4-7-8 Relaxation", id: "478" },
         "anxious→grateful": { name: "Box Breathing", id: "box" },
-        "calm→grateful": { name: "Coherent Breathing", id: "coherent" },
+        "anxious→confident": { name: "Box Breathing", id: "box" },
+        "anxious→focused": { name: "4-7-8 Relaxation", id: "478" },
+        "anxious→energized": { name: "Box Breathing", id: "box" },
+        "anxious→joyful": { name: "Coherent Breathing", id: "coherent" },
+        "tired→energized": { name: "Energizing Breath", id: "energizing" },
+        "tired→calm": { name: "Coherent Breathing", id: "coherent" },
+        "tired→focused": { name: "Energizing Breath", id: "energizing" },
+        "tired→confident": { name: "Energizing Breath", id: "energizing" },
+        "tired→grateful": { name: "Coherent Breathing", id: "coherent" },
+        "tired→joyful": { name: "Energizing Breath", id: "energizing" },
+        "sad→calm": { name: "Coherent Breathing", id: "coherent" },
+        "sad→grateful": { name: "Coherent Breathing", id: "coherent" },
+        "sad→joyful": { name: "Energizing Breath", id: "energizing" },
+        "sad→confident": { name: "Box Breathing", id: "box" },
+        "sad→energized": { name: "Energizing Breath", id: "energizing" },
+        "sad→focused": { name: "Box Breathing", id: "box" },
+        "overwhelmed→calm": { name: "4-7-8 Relaxation", id: "478" },
+        "overwhelmed→focused": { name: "Box Breathing", id: "box" },
+        "overwhelmed→grateful": { name: "Coherent Breathing", id: "coherent" },
+        "overwhelmed→confident": { name: "Box Breathing", id: "box" },
+        "overwhelmed→energized": { name: "Box Breathing", id: "box" },
+        "overwhelmed→joyful": { name: "Coherent Breathing", id: "coherent" },
         "calm→energized": { name: "Energizing Breath", id: "energizing" },
-        "energized→calm": { name: "4-7-8 Relaxation", id: "478" },
-        "grateful→calm": { name: "Coherent Breathing", id: "coherent" },
+        "calm→grateful": { name: "Coherent Breathing", id: "coherent" },
+        "calm→confident": { name: "Energizing Breath", id: "energizing" },
+        "calm→focused": { name: "Box Breathing", id: "box" },
+        "calm→joyful": { name: "Coherent Breathing", id: "coherent" },
       };
 
       const moodOnlyBreathFallback: Record<string, { name: string; id: string }> = {
-        calm: { name: "Coherent Breathing", id: "coherent" },
         stressed: { name: "Box Breathing", id: "box" },
-        tired: { name: "Energizing Breath", id: "energizing" },
-        energized: { name: "Energizing Breath", id: "energizing" },
         anxious: { name: "4-7-8 Relaxation", id: "478" },
-        grateful: { name: "Coherent Breathing", id: "coherent" },
+        tired: { name: "Energizing Breath", id: "energizing" },
+        sad: { name: "Coherent Breathing", id: "coherent" },
+        overwhelmed: { name: "4-7-8 Relaxation", id: "478" },
+        calm: { name: "Coherent Breathing", id: "coherent" },
       };
 
       const pairKey = `${mood}→${targetMood}`;

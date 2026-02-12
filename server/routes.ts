@@ -2857,9 +2857,9 @@ Rules:
 
       const userName = userResult[0]?.name?.split(" ")[0] || "Friend";
 
-      const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-      const now = new Date();
-      const dayOfWeek = dayNames[now.getDay()];
+      const validDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+      const clientDayOfWeek = req.body.dayOfWeek;
+      const dayOfWeek = (clientDayOfWeek && validDays.includes(clientDayOfWeek)) ? clientDayOfWeek : validDays[new Date().getDay()];
 
       if (clientDisconnected) {
         console.log(`Client disconnected before script generation (${duration}min), aborting`);
@@ -3062,9 +3062,9 @@ Rules:
         }
       }
 
-      const dayNamesLegacy = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-      const nowLegacy = new Date();
-      const dayOfWeek = dayNamesLegacy[nowLegacy.getDay()];
+      const validDaysLegacy = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+      const clientDayOfWeekLegacy = req.body.dayOfWeek;
+      const dayOfWeek = (clientDayOfWeekLegacy && validDaysLegacy.includes(clientDayOfWeekLegacy)) ? clientDayOfWeekLegacy : validDaysLegacy[new Date().getDay()];
 
       if (clientDisconnected) {
         console.log(`Client disconnected before script generation (${duration}min), aborting`);

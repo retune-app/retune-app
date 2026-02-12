@@ -415,7 +415,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
       const result = await fetch(url, {
         method: "POST",
         headers,
-        body: JSON.stringify({ mood, timeOfDay, duration }),
+        body: JSON.stringify({ mood, timeOfDay, duration, dayOfWeek: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][new Date().getDay()] }),
         credentials: "include",
         signal,
       });

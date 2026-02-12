@@ -1165,8 +1165,8 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
                       style={[
                         styles.durationPill,
                         isSelected
-                          ? { backgroundColor: ACCENT_GOLD, borderColor: ACCENT_GOLD }
-                          : { backgroundColor: "transparent", borderColor: "rgba(255,255,255,0.3)" },
+                          ? { backgroundColor: "rgba(255,255,255,0.15)", borderColor: "rgba(255,255,255,0.5)" }
+                          : { backgroundColor: "rgba(0,0,0,0.3)", borderColor: "rgba(255,255,255,0.15)" },
                       ]}
                       testID={`button-duration-${opt.value}`}
                     >
@@ -1174,7 +1174,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
                         type="caption"
                         style={[
                           styles.durationPillText,
-                          { color: isSelected ? "#FFFFFF" : "rgba(255,255,255,0.8)" },
+                          { color: isSelected ? "#FFFFFF" : "rgba(255,255,255,0.6)" },
                         ]}
                       >
                         {opt.label}
@@ -1201,8 +1201,8 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
                     style={[
                       styles.durationPill,
                       isSelected
-                        ? { backgroundColor: ACCENT_GOLD, borderColor: ACCENT_GOLD }
-                        : { backgroundColor: "transparent", borderColor: "rgba(255,255,255,0.3)" },
+                        ? { backgroundColor: "rgba(255,255,255,0.15)", borderColor: "rgba(255,255,255,0.5)" }
+                        : { backgroundColor: "rgba(0,0,0,0.3)", borderColor: "rgba(255,255,255,0.15)" },
                     ]}
                     testID={`button-duration-${opt.value}`}
                   >
@@ -1210,7 +1210,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
                       type="caption"
                       style={[
                         styles.durationPillText,
-                        { color: isSelected ? "#FFFFFF" : "rgba(255,255,255,0.8)" },
+                        { color: isSelected ? "#FFFFFF" : "rgba(255,255,255,0.6)" },
                       ]}
                     >
                       {opt.label}

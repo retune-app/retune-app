@@ -123,10 +123,6 @@ export default function BreathingScreen() {
 
   const [showSoundSwitcher, setShowSoundSwitcher] = useState(false);
 
-  const [syncTextEnabled, setSyncTextEnabled] = useState(false);
-  const [currentBreathPhase, setCurrentBreathPhase] = useState<string>("inhale");
-  const [syncSentenceIndex, setSyncSentenceIndex] = useState(0);
-
   const categories = React.useMemo(() => {
     const byCategory = getSoundsByCategory();
     const order: Array<keyof ReturnType<typeof getSoundsByCategory>> = [
@@ -176,14 +172,6 @@ export default function BreathingScreen() {
     const categoryMatch = affirmations.find(a => a.category === targetCategory);
     return categoryMatch || affirmations[0];
   }, [affirmations, breathingAffirmation]);
-
-  const affirmationSentences = useMemo(() => {
-    if (!backgroundAffirmation?.script) return [];
-    return backgroundAffirmation.script
-      .split(/(?<=[.!?])\s+/)
-      .filter(s => s.trim().length > 0)
-      .map(s => s.trim());
-  }, [backgroundAffirmation?.script]);
 
   // Quick play handler for WelcomeSection
   const handleQuickPlay = async () => {
@@ -601,7 +589,6 @@ export default function BreathingScreen() {
     setIsPlaying(true);
     setElapsedTime(0);
     setCyclesCompleted(0);
-    setSyncSentenceIndex(0);
     if (hapticsEnabled) { try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {} }
     if (musicEnabledRef.current && voiceEnabledRef.current) {
       await setDucked(true);
@@ -667,16 +654,6 @@ export default function BreathingScreen() {
       }, 2500);
     }
   };
-
-  const handleBreathPhaseChange = useCallback((phase: string, countdown: number) => {
-    setCurrentBreathPhase(phase);
-    if (phase === "exhale" && countdown === 8) {
-      setSyncSentenceIndex(prev => {
-        if (affirmationSentences.length === 0) return 0;
-        return prev >= affirmationSentences.length - 1 ? 0 : prev + 1;
-      });
-    }
-  }, [affirmationSentences.length]);
 
   const handleCycleComplete = () => {
     setCyclesCompleted((prev) => prev + 1);
@@ -985,25 +962,12 @@ export default function BreathingScreen() {
                 <BreathingCircle
                   technique={selectedTechnique}
                   isPlaying={isPlaying}
-                  onPhaseChange={handleBreathPhaseChange}
                   onCycleComplete={handleCycleComplete}
                   hapticsEnabled={hapticsEnabled}
                   size={portraitCircleSize}
                   showContent={countdownValue === null}
                 />
                 {renderCountdownOverlay(48)}
-                {syncTextEnabled && selectedTechnique.id === "478" && isPlaying && currentBreathPhase === "exhale" && affirmationSentences.length > 0 ? (
-                  <Animated.View
-                    entering={FadeIn.duration(600)}
-                    exiting={FadeOut.duration(400)}
-                    key={`sync-${syncSentenceIndex}-${currentBreathPhase}`}
-                    style={styles.syncTextOverlay}
-                  >
-                    <Text style={styles.syncTextSentence}>
-                      {affirmationSentences[syncSentenceIndex % affirmationSentences.length]}
-                    </Text>
-                  </Animated.View>
-                ) : null}
               </View>
 
               <Animated.View style={[styles.fsBottomControls, controlsAnimatedStyle]} pointerEvents={controlsVisible ? 'auto' : 'none'} onStartShouldSetResponder={() => true}>
@@ -1085,25 +1049,12 @@ export default function BreathingScreen() {
               <BreathingCircle
                 technique={selectedTechnique}
                 isPlaying={isPlaying}
-                onPhaseChange={handleBreathPhaseChange}
                 onCycleComplete={handleCycleComplete}
                 hapticsEnabled={hapticsEnabled}
                 size={circleSize}
                 showContent={countdownValue === null}
               />
               {renderCountdownOverlay(48)}
-              {syncTextEnabled && selectedTechnique.id === "478" && isPlaying && currentBreathPhase === "exhale" && affirmationSentences.length > 0 ? (
-                <Animated.View
-                  entering={FadeIn.duration(600)}
-                  exiting={FadeOut.duration(400)}
-                  key={`sync-${syncSentenceIndex}-${currentBreathPhase}`}
-                  style={styles.syncTextOverlay}
-                >
-                  <Text style={styles.syncTextSentence}>
-                    {affirmationSentences[syncSentenceIndex % affirmationSentences.length]}
-                  </Text>
-                </Animated.View>
-              ) : null}
             </View>
 
             <Animated.View style={[styles.landscapeSidePanel, controlsAnimatedStyle]} pointerEvents={controlsVisible ? 'auto' : 'none'} onStartShouldSetResponder={() => true}>
@@ -1265,7 +1216,6 @@ export default function BreathingScreen() {
             <BreathingCircle
               technique={selectedTechnique}
               isPlaying={isPlaying}
-              onPhaseChange={handleBreathPhaseChange}
               onCycleComplete={handleCycleComplete}
               hapticsEnabled={hapticsEnabled}
               size={260}
@@ -1425,49 +1375,6 @@ export default function BreathingScreen() {
               </Pressable>
             </View>
           </View>
-
-          {selectedTechnique.id === "478" && backgroundAffirmation?.script ? (
-            <View style={styles.optionRow}>
-              <View style={styles.optionLabelContainer}>
-                <Feather name="type" size={16} color={selectedTechnique.color} />
-                <ThemedText type="caption" style={{ color: theme.textSecondary, marginLeft: 6 }}>Sync Text</ThemedText>
-              </View>
-              <View style={styles.optionPillsRow}>
-                <Pressable
-                  onPress={() => {
-                    setSyncTextEnabled(false);
-                    if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} }
-                  }}
-                  style={[
-                    styles.optionPillFixed,
-                    {
-                      backgroundColor: !syncTextEnabled ? selectedTechnique.color : 'transparent',
-                      borderColor: !syncTextEnabled ? selectedTechnique.color : `${ACCENT_GOLD}50`,
-                    },
-                  ]}
-                  testID="button-sync-text-off"
-                >
-                  <Text style={[styles.optionPillText, { color: !syncTextEnabled ? "#FFFFFF" : theme.text }]}>Off</Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => {
-                    setSyncTextEnabled(true);
-                    if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} }
-                  }}
-                  style={[
-                    styles.optionPillFixed,
-                    {
-                      backgroundColor: syncTextEnabled ? selectedTechnique.color : 'transparent',
-                      borderColor: syncTextEnabled ? selectedTechnique.color : `${ACCENT_GOLD}50`,
-                    },
-                  ]}
-                  testID="button-sync-text-on"
-                >
-                  <Text style={[styles.optionPillText, { color: syncTextEnabled ? "#FFFFFF" : theme.text }]}>On</Text>
-                </Pressable>
-              </View>
-            </View>
-          ) : null}
         </Animated.View>
 
       </View>
@@ -2060,21 +1967,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 16,
     marginBottom: 12,
-  },
-  syncTextOverlay: {
-    position: "absolute",
-    bottom: -60,
-    left: 0,
-    right: 0,
-    alignItems: "center",
-    paddingHorizontal: 32,
-  },
-  syncTextSentence: {
-    color: "rgba(255,255,255,0.85)",
-    fontSize: 16,
-    fontWeight: "500",
-    textAlign: "center",
-    lineHeight: 24,
-    letterSpacing: 0.3,
   },
 });

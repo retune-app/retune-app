@@ -185,69 +185,12 @@ const PILLAR_VOICE_CONFIG: Record<string, {
   },
 };
 
-const TIME_OF_DAY_CONFIG: Record<string, {
-  toneModifier: string;
-  humeSpeedAdjust: number; // multiplied with existing speed
-  pauseAdjust: number; // added to existing pause
-  elevenLabsStabilityAdjust: number; // added
-  elevenLabsStyleAdjust: number; // added
-}> = {
-  morning: {
-    toneModifier: "Use brighter, awakening language — words like 'rising', 'fresh', 'new'. The energy should feel like sunrise breaking through.",
-    humeSpeedAdjust: 1.05,
-    pauseAdjust: -0.1,
-    elevenLabsStabilityAdjust: -0.05,
-    elevenLabsStyleAdjust: 0.05,
-  },
-  afternoon: {
-    toneModifier: "Use grounded, sustaining language — words like 'steady', 'flowing', 'present'. The energy should feel like midday strength.",
-    humeSpeedAdjust: 1.0,
-    pauseAdjust: 0,
-    elevenLabsStabilityAdjust: 0,
-    elevenLabsStyleAdjust: 0,
-  },
-  evening: {
-    toneModifier: "Use warm, reflective language — words like 'settling', 'releasing', 'softening'. The energy should feel like golden hour light.",
-    humeSpeedAdjust: 0.95,
-    pauseAdjust: 0.15,
-    elevenLabsStabilityAdjust: 0.05,
-    elevenLabsStyleAdjust: -0.05,
-  },
-  night: {
-    toneModifier: "Use hushed, dreamy language — words like 'drifting', 'dissolving', 'resting'. The energy should feel like moonlight on still water.",
-    humeSpeedAdjust: 0.9,
-    pauseAdjust: 0.3,
-    elevenLabsStabilityAdjust: 0.1,
-    elevenLabsStyleAdjust: -0.1,
-  },
-};
-
-function getTimeOfDay(): string {
-  const hour = new Date().getHours();
-  if (hour >= 5 && hour < 12) return "morning";
-  if (hour >= 12 && hour < 17) return "afternoon";
-  if (hour >= 17 && hour < 21) return "evening";
-  return "night";
-}
-
 function getPillarVoiceConfig(pillar?: string | null): typeof MEDITATION_MOOD_CONFIG[string] | undefined {
   if (!pillar) return undefined;
   const key = pillar.toLowerCase();
   const config = PILLAR_VOICE_CONFIG[key];
   if (!config) return undefined;
   return { ...config, scriptTone: '' };
-}
-
-function applyTimeOfDayConfig(config?: { humeSpeed: number; pauseSeconds: number; elevenLabsStability: number; elevenLabsStyle: number; scriptTone: string }): typeof config {
-  if (!config) return config;
-  const timeConfig = TIME_OF_DAY_CONFIG[getTimeOfDay()] || TIME_OF_DAY_CONFIG.afternoon;
-  return {
-    ...config,
-    humeSpeed: Math.max(0.5, Math.min(1.5, config.humeSpeed * timeConfig.humeSpeedAdjust)),
-    pauseSeconds: Math.max(0.5, Math.min(3.0, config.pauseSeconds + timeConfig.pauseAdjust)),
-    elevenLabsStability: Math.max(0.1, Math.min(0.9, config.elevenLabsStability + timeConfig.elevenLabsStabilityAdjust)),
-    elevenLabsStyle: Math.max(0.1, Math.min(0.9, config.elevenLabsStyle + timeConfig.elevenLabsStyleAdjust)),
-  };
 }
 
 const dailyGreetingCache = new Map<string, { message: string; actionText?: string; actionType?: string }>();
@@ -408,15 +351,7 @@ SUBCONSCIOUS LANGUAGE RULES (apply ALL of these):
 
 FORMAT: No titles, no instructions, no numbering, no quotes. Just ${config.sentences} flowing sentences, each on its own line. Write as if speaking directly to the deepest part of someone's mind.
 
-TONE AND STYLE: ${toneInstruction}
-
-EMOTIONAL ARC: Structure the sentences as a deliberate emotional journey:
-- First ~20% of sentences: GROUNDING — start gentle, warm, and easily believable. Use simple present-tense observations. These should feel like a soft landing.
-- Middle ~50% of sentences: BUILDING — gradually increase emotional intensity and aspiration. Introduce identity-level statements and sensory-rich language. Build momentum.
-- ~20% PEAK — the most powerful, expansive statement(s). This is the emotional climax — bold, vivid, and deeply felt.
-- Final ~10%: SOFT LANDING — end with a warm, settled statement that integrates everything. It should feel like a deep exhale — complete and whole.
-
-TIME OF DAY: ${(TIME_OF_DAY_CONFIG[getTimeOfDay()] || TIME_OF_DAY_CONFIG.afternoon).toneModifier}`;
+TONE AND STYLE: ${toneInstruction}`;
 
   const pillarContext = pillar ? ` Life pillar: ${pillar}.` : "";
   const categoryContext = categories && categories.length > 0 
@@ -1093,7 +1028,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           script,
           voiceIdToUse,
           usedPersonalVoice,
-          applyTimeOfDayConfig(getPillarVoiceConfig(pillar))
+          getPillarVoiceConfig(pillar)
         );
       } catch (genError: any) {
         if (usedPersonalVoice && genError?.message?.includes("QUOTA_EXCEEDED")) {
@@ -1104,7 +1039,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             : (userWithPrefs?.preferredFemaleVoiceId || VOICE_OPTIONS.female[0].id);
           usedPersonalVoice = false;
           voiceIdToUse = fallbackVoiceId;
-          audioResult = await generateAudio(script, fallbackVoiceId, false, applyTimeOfDayConfig(getPillarVoiceConfig(pillar)));
+          audioResult = await generateAudio(script, fallbackVoiceId, false, getPillarVoiceConfig(pillar));
         } else if (usedPersonalVoice && (genError?.message?.includes("PERSONAL_VOICE_FAILED") || genError?.message?.includes("VOICE_EXPIRED"))) {
           console.log("Personal voice not found/expired, falling back to AI voice");
           const fallbackGender = usedGender || "female";
@@ -1113,7 +1048,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             : (userWithPrefs?.preferredFemaleVoiceId || VOICE_OPTIONS.female[0].id);
           usedPersonalVoice = false;
           voiceIdToUse = fallbackVoiceId;
-          audioResult = await generateAudio(script, fallbackVoiceId, false, applyTimeOfDayConfig(getPillarVoiceConfig(pillar)));
+          audioResult = await generateAudio(script, fallbackVoiceId, false, getPillarVoiceConfig(pillar));
         } else {
           throw genError;
         }
@@ -1824,7 +1759,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const isPersonalVoice = voiceType === "personal";
-      const audioResult = await generateAudio(affirmation.script, voiceIdToUse, isPersonalVoice, applyTimeOfDayConfig(getPillarVoiceConfig(affirmation.pillar)));
+      const audioResult = await generateAudio(affirmation.script, voiceIdToUse, isPersonalVoice, getPillarVoiceConfig(affirmation.pillar));
 
       if (isPersonalVoice) {
         await db
@@ -2884,7 +2819,7 @@ Rules:
     req.on("close", () => { clientDisconnected = true; });
 
     try {
-      const { mood, timeOfDay, duration: rawDuration, destinationMood } = req.body;
+      const { mood, timeOfDay, duration: rawDuration } = req.body;
 
       if (!mood || !timeOfDay) {
         return res.status(400).json({ error: "mood and timeOfDay are required" });
@@ -2896,9 +2831,6 @@ Rules:
 
       if (!validMoods.includes(mood)) {
         return res.status(400).json({ error: "Invalid mood value" });
-      }
-      if (destinationMood && !validMoods.includes(destinationMood)) {
-        return res.status(400).json({ error: "Invalid destinationMood value" });
       }
       if (!validTimes.includes(timeOfDay)) {
         return res.status(400).json({ error: "Invalid timeOfDay value" });
@@ -2937,16 +2869,6 @@ Rules:
       const moodConfig = MEDITATION_MOOD_CONFIG[mood] || MEDITATION_MOOD_CONFIG.calm;
       const paceDescription = mood === "energized" ? "at a lively, motivated pace" : "at a calm pace";
 
-      const isJourney = destinationMood && destinationMood !== mood;
-      const journeyStructure = isJourney ? [
-        `STRUCTURE (follow this order — this is a MOOD JOURNEY from ${mood} to ${destinationMood}):`,
-        `1. ACKNOWLEDGMENT (1-2 sentences): Warmly acknowledge where they ARE right now — feeling ${mood}. Validate it without judgment. Use the day and time naturally.`,
-        `2. BREATHING BRIDGE (2-3 sentences): Guide a brief breathing exercise that begins releasing ${mood} energy. The breath pattern should physically facilitate the shift — e.g., slow exhales to release stress, energizing inhales to lift from tiredness.`,
-        `3. TRANSITION VISUALIZATION (4-5 sentences): This is the heart of the journey. Paint a vivid scene that transforms — start in imagery matching ${mood} and gradually morph it into imagery matching ${destinationMood}. Use sensory details that bridge both states. Example: if going from stressed to calm, a storm gradually clearing to reveal still water and warm light.`,
-        `4. ARRIVAL AFFIRMATION (2-3 sentences): Anchor them in the destination mood of ${destinationMood}. Use "I am" and "I choose" statements that embody ${destinationMood}. Make them feel they've arrived somewhere new.`,
-        `5. INTEGRATION (2-3 sentences): Gently bring them back to their surroundings, carrying the ${destinationMood} feeling with them. Include a physical cue. End with warmth.`,
-      ].join("\n") : null;
-
       console.log(`Generating micro-meditation script (${duration}min) for user ${userId} (${userName}), mood: ${mood}, time: ${timeOfDay}, day: ${dayOfWeek}`);
 
       const scriptResponse = await openai.chat.completions.create({
@@ -2959,15 +2881,13 @@ Rules:
               ``,
               `CONTEXT: It is ${dayOfWeek} ${timeOfDay}. The person is feeling ${mood}. Use this context naturally.`,
               ``,
-              isJourney ? journeyStructure! : [
-                `STRUCTURE (follow this order):`,
-                `1. OPENING (1-2 sentences): Begin with a brief, natural acknowledgment of where they are in their week and day — weave the day and time of day into a warm, conversational greeting before the grounding cue. Examples: "It's ${dayOfWeek} ${timeOfDay} — let this be your moment of calm..." or "The middle of the week can feel long... right here, right now, you're choosing stillness." Keep it effortless, never forced. Then invite them to close their eyes, notice their breath, or feel their body.`,
-                `2. BREATHING GUIDANCE (2-3 sentences): Lead a brief breathing cycle tailored to their mood. For stressed/anxious: slow exhales for vagus nerve activation. For tired: energizing breath with counts. For calm/grateful: simple awareness breath.${mood === "energized" ? " For energized: strong rhythmic breathing that builds momentum and channels power." : ""}`,
-                `3. VISUALIZATION (3-4 sentences): Paint a vivid, sensory-rich scene using present tense. Include at least 2 senses (sight + touch, or sound + warmth, etc.). Match the imagery to their mood — calming scenes for stress, ${mood === "energized" ? "dynamic, expansive scenes with movement and light for energy" : "expansive scenes for energy"}, warm scenes for gratitude.`,
-                `4. AFFIRMATION ANCHORING (2-3 sentences): Weave in identity-level affirmations using "I am" or "I choose" language. Use embedded commands naturally. Connect the affirmation to the visualization scene.`,
-                `5. GENTLE RETURN (2-3 sentences): Slowly guide them back to their surroundings. Include a physical cue like "wiggle your fingers" or "notice the sounds around you." Then invite them to open their eyes when ready — never rush this transition. Add a pause ("...") before the final line.`,
-                `6. WARM SIGN-OFF (1-2 sentences): End with a genuine, heartfelt send-off that feels like a friend wishing them well. Match the time of day: morning→"carry this into your day," afternoon→"let this fuel your afternoon," evening→"take this peace into your night." Occasionally (~30% of the time), add a playful or tender touch like "and don't forget to breathe" or "you've already done something beautiful today." The closing should feel like a gentle landing, never abrupt — the listener should feel held until the very last word.`,
-              ].join("\n"),
+              `STRUCTURE (follow this order):`,
+              `1. OPENING (1-2 sentences): Begin with a brief, natural acknowledgment of where they are in their week and day — weave the day and time of day into a warm, conversational greeting before the grounding cue. Examples: "It's ${dayOfWeek} ${timeOfDay} — let this be your moment of calm..." or "The middle of the week can feel long... right here, right now, you're choosing stillness." Keep it effortless, never forced. Then invite them to close their eyes, notice their breath, or feel their body.`,
+              `2. BREATHING GUIDANCE (2-3 sentences): Lead a brief breathing cycle tailored to their mood. For stressed/anxious: slow exhales for vagus nerve activation. For tired: energizing breath with counts. For calm/grateful: simple awareness breath.${mood === "energized" ? " For energized: strong rhythmic breathing that builds momentum and channels power." : ""}`,
+              `3. VISUALIZATION (3-4 sentences): Paint a vivid, sensory-rich scene using present tense. Include at least 2 senses (sight + touch, or sound + warmth, etc.). Match the imagery to their mood — calming scenes for stress, ${mood === "energized" ? "dynamic, expansive scenes with movement and light for energy" : "expansive scenes for energy"}, warm scenes for gratitude.`,
+              `4. AFFIRMATION ANCHORING (2-3 sentences): Weave in identity-level affirmations using "I am" or "I choose" language. Use embedded commands naturally. Connect the affirmation to the visualization scene.`,
+              `5. GENTLE RETURN (2-3 sentences): Slowly guide them back to their surroundings. Include a physical cue like "wiggle your fingers" or "notice the sounds around you." Then invite them to open their eyes when ready — never rush this transition. Add a pause ("...") before the final line.`,
+              `6. WARM SIGN-OFF (1-2 sentences): End with a genuine, heartfelt send-off that feels like a friend wishing them well. Match the time of day: morning→"carry this into your day," afternoon→"let this fuel your afternoon," evening→"take this peace into your night." Occasionally (~30% of the time), add a playful or tender touch like "and don't forget to breathe" or "you've already done something beautiful today." The closing should feel like a gentle landing, never abrupt — the listener should feel held until the very last word.`,
               ``,
               `RULES:`,
               `- Total length: ${wordCount.min}-${wordCount.max} words (${durationLabel} ${paceDescription})`,
@@ -2980,7 +2900,6 @@ Rules:
               `- The ending must never feel rushed or cut short. The last 2-3 sentences should slow down in pacing and feel like a soft exhale.`,
               `- Reference accessible neuroscience concepts naturally (e.g., "your nervous system settles," "each breath sends a signal of safety")`,
               `- Mood-specific emphasis: stressed→release/safety, anxious→grounding/presence, tired→vitality/awakening, calm→deepening/peace, energized→channeling/focus, grateful→expansion/abundance`,
-              isJourney ? `- JOURNEY RULE: The meditation must feel like a genuine emotional transition. The listener should feel noticeably different at the end than the beginning. The ${mood} imagery at the start should be unmistakable, and the ${destinationMood} imagery at the end should feel earned, not forced.` : '',
               `- This is a mindfulness exercise, not medical advice`,
               ``,
               `Return ONLY the script text, no formatting or labels.`,
@@ -2988,7 +2907,7 @@ Rules:
           },
           {
             role: "user",
-            content: `Create a ${duration}-minute ${isJourney ? `mood journey meditation from ${mood} to ${destinationMood}` : 'micro-meditation'} for someone named ${userName} ${isJourney ? `currently feeling ${mood} who wants to feel ${destinationMood}` : `feeling ${mood}`} on ${dayOfWeek} ${timeOfDay}.`,
+            content: `Create a ${duration}-minute micro-meditation for someone named ${userName} feeling ${mood} on ${dayOfWeek} ${timeOfDay}.`,
           },
         ],
         temperature: 0.85,
@@ -3005,7 +2924,6 @@ Rules:
       res.json({
         script,
         mood,
-        destinationMood: destinationMood || null,
         disclaimer: "This is a mindfulness exercise for relaxation purposes. It is not a substitute for professional mental health care.",
       });
     } catch (error: any) {

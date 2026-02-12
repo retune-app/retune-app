@@ -777,19 +777,24 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
         style={StyleSheet.absoluteFillObject}
       />
 
-      <View style={[styles.header, { paddingTop: insets.top + Spacing.sm }]}>
-        {phase !== "intro" && phase !== "complete" && phase !== "breathing" ? (
-          <Pressable
-            onPress={handleEndJourney}
-            style={styles.closeButton}
-            testID="button-exit-journey"
-          >
-            <Feather name="x" size={20} color={theme.textSecondary} />
-          </Pressable>
-        ) : null}
-      </View>
+      {phase !== "breathing" ? (
+        <View style={[styles.header, { paddingTop: insets.top + Spacing.sm }]}>
+          {phase !== "intro" && phase !== "complete" ? (
+            <Pressable
+              onPress={handleEndJourney}
+              style={styles.closeButton}
+              testID="button-exit-journey"
+            >
+              <Feather name="x" size={20} color={theme.textSecondary} />
+            </Pressable>
+          ) : null}
+        </View>
+      ) : null}
 
-      <View style={[styles.content, { paddingBottom: insets.bottom + Spacing.xl }]}>
+      <View style={[
+        phase === "breathing" ? styles.breathingFullscreen : styles.content,
+        phase !== "breathing" ? { paddingBottom: insets.bottom + Spacing.xl } : undefined,
+      ]}>
         {phase === "intro" ? renderIntro() : null}
         {phase === "breathing" ? renderBreathing() : null}
         {phase === "transition" ? renderTransition() : null}
@@ -888,6 +893,9 @@ const styles = StyleSheet.create({
     width: 4,
     height: 4,
     borderRadius: 2,
+  },
+  breathingFullscreen: {
+    flex: 1,
   },
   breathingContainer: {
     flex: 1,

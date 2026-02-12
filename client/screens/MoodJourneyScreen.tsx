@@ -18,12 +18,12 @@ import Animated, {
   withTiming,
   withRepeat,
   withSequence,
-  withDelay,
   withSpring,
   Easing,
   SlideInRight,
   SlideOutLeft,
   interpolate,
+  Extrapolation,
 } from "react-native-reanimated";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -392,38 +392,45 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
     transform: [{ scale: pulseAnim.value }],
   }));
 
-  const flowDot0 = useSharedValue(0.2);
-  const flowDot1 = useSharedValue(0.2);
-  const flowDot2 = useSharedValue(0.2);
-  const flowDot3 = useSharedValue(0.2);
-  const flowDot4 = useSharedValue(0.2);
+  const flowClock = useSharedValue(0);
 
   useEffect(() => {
-    const dur = 500;
-    const ease = Easing.inOut(Easing.sin);
-    const totalCycle = 2000;
-    const makePulse = (delay: number) =>
-      withRepeat(
-        withSequence(
-          withTiming(0.2, { duration: delay }),
-          withTiming(1, { duration: dur, easing: ease }),
-          withTiming(0.2, { duration: dur, easing: ease }),
-          withTiming(0.2, { duration: Math.max(0, totalCycle - delay - dur * 2) })
-        ),
-        -1
-      );
-    flowDot0.value = makePulse(0);
-    flowDot1.value = makePulse(300);
-    flowDot2.value = makePulse(600);
-    flowDot3.value = makePulse(900);
-    flowDot4.value = makePulse(1200);
+    flowClock.value = withRepeat(
+      withTiming(5, { duration: 2500, easing: Easing.linear }),
+      -1
+    );
   }, []);
 
-  const flowDotStyle0 = useAnimatedStyle(() => ({ opacity: flowDot0.value }));
-  const flowDotStyle1 = useAnimatedStyle(() => ({ opacity: flowDot1.value }));
-  const flowDotStyle2 = useAnimatedStyle(() => ({ opacity: flowDot2.value }));
-  const flowDotStyle3 = useAnimatedStyle(() => ({ opacity: flowDot3.value }));
-  const flowDotStyle4 = useAnimatedStyle(() => ({ opacity: flowDot4.value }));
+  const flowDotStyle0 = useAnimatedStyle(() => {
+    'worklet';
+    const v = flowClock.value;
+    const dist = Math.min(Math.abs(v), Math.abs(v - 5), Math.abs(v + 5));
+    return { opacity: interpolate(dist, [0, 0.5, 1.2], [1, 0.55, 0.15], Extrapolation.CLAMP) };
+  });
+  const flowDotStyle1 = useAnimatedStyle(() => {
+    'worklet';
+    const v = flowClock.value;
+    const dist = Math.min(Math.abs(v - 1), Math.abs(v - 6), Math.abs(v + 4));
+    return { opacity: interpolate(dist, [0, 0.5, 1.2], [1, 0.55, 0.15], Extrapolation.CLAMP) };
+  });
+  const flowDotStyle2 = useAnimatedStyle(() => {
+    'worklet';
+    const v = flowClock.value;
+    const dist = Math.min(Math.abs(v - 2), Math.abs(v - 7), Math.abs(v + 3));
+    return { opacity: interpolate(dist, [0, 0.5, 1.2], [1, 0.55, 0.15], Extrapolation.CLAMP) };
+  });
+  const flowDotStyle3 = useAnimatedStyle(() => {
+    'worklet';
+    const v = flowClock.value;
+    const dist = Math.min(Math.abs(v - 3), Math.abs(v - 8), Math.abs(v + 2));
+    return { opacity: interpolate(dist, [0, 0.5, 1.2], [1, 0.55, 0.15], Extrapolation.CLAMP) };
+  });
+  const flowDotStyle4 = useAnimatedStyle(() => {
+    'worklet';
+    const v = flowClock.value;
+    const dist = Math.min(Math.abs(v - 4), Math.abs(v - 9), Math.abs(v + 1));
+    return { opacity: interpolate(dist, [0, 0.5, 1.2], [1, 0.55, 0.15], Extrapolation.CLAMP) };
+  });
 
   const flowDotStyles = [flowDotStyle0, flowDotStyle1, flowDotStyle2, flowDotStyle3, flowDotStyle4];
 

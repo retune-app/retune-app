@@ -534,13 +534,13 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
     }
     await cleanupVoice();
     await stopBackgroundMusic();
-    setPlayerState("idle");
     cachedScriptRef.current = null;
     scriptFetchingRef.current = false;
     if (journeyContext) {
       journeyNavigationRef.action = 'complete';
       navigation.goBack();
     } else {
+      setPlayerState("idle");
       navigation.navigate("Main", { screen: "BreatheTab" } as any);
     }
   }, [cleanupVoice, stopBackgroundMusic, navigation, journeyContext]);

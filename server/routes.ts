@@ -2775,8 +2775,8 @@ Rules:
       let journeyTitle = "Your Journey";
       let acknowledgment = `${userName}, let's take you from ${mood} to ${targetMood}.`;
       let stepTypes: string[] = ["breathe", "meditate"];
-      let breatheNote: string | null = `${breathing.name} can help settle your nervous system.`;
-      let meditateNote: string | null = "A guided moment to reconnect with yourself.";
+      let breatheNote: string | null = `Two minutes of ${breathing.name} can help settle your nervous system.`;
+      let meditateNote: string | null = "A 2-minute guided moment to reconnect with yourself.";
       let listenNote: string | null = matchedAffirmation
         ? `Your affirmation "${matchedAffirmation.title}" is waiting for you.`
         : suggestedCreationTheme ? `Create an affirmation about ${suggestedCreationTheme}.` : "Create an affirmation that speaks to how you feel.";
@@ -2810,9 +2810,9 @@ Respond as JSON with exactly these fields:
   "journeyTitle": "A creative 2-5 word title for this journey (like 'From Storm to Stillness', 'Finding Your Spark', 'Back to Center'). Should capture the mood transition. No emojis.",
   "acknowledgment": "1-2 sentences, max 25 words total. Use ${userName}'s name. Validate their current ${mood} feeling specifically (not generically), then create excitement about reaching ${targetMood}. Reference both moods. Be direct and real, not vague. Never use emojis. BAD examples (too generic): 'Looks like tonight is a bit tough for you' / 'Sounds like a tough night'. GOOD examples: '${userName}, that ${mood} feeling doesn't have to stay — let's move you toward ${targetMood}', '${userName}, going from ${mood} to ${targetMood} is totally doable right now'.",
   "stepTypes": ["breathe", "meditate", "listen"],
-  "breatheNote": "One punchy sentence (max 15 words) or null if breathe is not in stepTypes. Explain WHY ${breathing.name} specifically helps for the ${mood}→${targetMood} transition — reference a real physical effect but in plain everyday language. Make it feel like insider knowledge, not textbook.",
-  "meditateNote": "One punchy sentence (max 15 words) or null if meditate is not in stepTypes. Explain why a guided meditation uniquely helps shift from ${mood} to ${targetMood} at ${timeOfDay}. Connect it to something real about their transition.",
-  "listenNote": "One punchy sentence (max 15 words) or null if listen is not in stepTypes. ${matchedAffirmation ? `Reference '${matchedAffirmation.title}' specifically and explain why hearing it NOW during this ${mood}→${targetMood} transition would land differently than usual.` : hasAffirmations ? `Make them excited to play one of their existing affirmations right now — connect it to the ${mood}→${targetMood} journey.` : `Inspire them to create their first affirmation about ${suggestedCreationTheme}${!hasClonedVoice ? " — mention how hearing it in their own cloned voice makes it 10x more powerful" : ""}. Make creation feel exciting, not like homework.`}"
+  "breatheNote": "One punchy sentence (max 20 words) or null if breathe is not in stepTypes. Naturally mention that this is a 2-minute exercise. Explain WHY ${breathing.name} specifically helps for the ${mood}→${targetMood} transition — reference a real physical effect but in plain everyday language. Make it feel like insider knowledge, not textbook.",
+  "meditateNote": "One punchy sentence (max 20 words) or null if meditate is not in stepTypes. Naturally mention that this is a 2-minute guided meditation. Explain why it uniquely helps shift from ${mood} to ${targetMood} at ${timeOfDay}. Connect it to something real about their transition.",
+  "listenNote": "One or two sentences (max 30 words) or null if listen is not in stepTypes. ${matchedAffirmation ? `Reference '${matchedAffirmation.title}' specifically.${matchedAffirmation.description ? ` Use the affirmation's description — "${matchedAffirmation.description}" — to explain WHY this particular affirmation is the perfect fit for the ${mood}→${targetMood} transition right now.` : ` Explain why hearing it NOW during this ${mood}→${targetMood} transition would land differently than usual.`}` : hasAffirmations ? `Make them excited to play one of their existing affirmations right now — connect it to the ${mood}→${targetMood} journey.` : `Inspire them to create their first affirmation about ${suggestedCreationTheme}${!hasClonedVoice ? " — mention how hearing it in their own cloned voice makes it 10x more powerful" : ""}. Make creation feel exciting, not like homework.`}"
 }
 
 Rules for stepTypes:
@@ -2835,7 +2835,7 @@ Rules for tone:
             },
           ],
           temperature: 0.8,
-          max_tokens: 250,
+          max_tokens: 350,
           response_format: { type: "json_object" },
         });
 

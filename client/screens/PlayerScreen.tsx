@@ -378,6 +378,7 @@ export default function PlayerScreen() {
 
   useEffect(() => {
     mountedRef.current = true;
+    ScreenOrientation.unlockAsync();
     return () => {
       mountedRef.current = false;
       if (orientationLockTimeoutRef.current) {
@@ -435,15 +436,9 @@ export default function PlayerScreen() {
       orientationLockTimeoutRef.current = null;
     }
 
-    const shouldUnlock = isInFullscreenMode || (rsvpEnabled && isCurrentlyPlaying);
-
     orientationLockTimeoutRef.current = setTimeout(() => {
       if (!mountedRef.current) return;
-      if (shouldUnlock) {
-        ScreenOrientation.unlockAsync();
-      } else {
-        ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
-      }
+      ScreenOrientation.unlockAsync();
       orientationLockTimeoutRef.current = null;
     }, 100);
   }, [isLandscape, rsvpEnabled, isCurrentlyPlaying, isInFullscreenMode, showFocusModeTip, dismissFocusModeTip]);
@@ -675,7 +670,7 @@ export default function PlayerScreen() {
             onEndJourney={async () => { await stop(); journeyNavigationRef.action = 'complete'; (navigation as any).navigate("Main", { screen: "AffirmTab" }); }}
           />
         ) : (
-          <View style={{ paddingTop: insets.top + 8, paddingHorizontal: Spacing.lg, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: theme.background }}>
+          <View style={{ paddingTop: insets.top + 8, paddingHorizontal: Spacing.lg, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: theme.backgroundDefault }}>
             <Pressable
               onPress={() => {
                 if (isNew && !hasSaved) {

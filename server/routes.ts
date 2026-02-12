@@ -2574,6 +2574,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ============ Mood Check-in API ============
 
+  app.post("/api/mood-prompt", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { currentMood, timeOfDay } = req.body;
+      if (!currentMood || !timeOfDay) {
+        return res.status(400).json({ error: "currentMood and timeOfDay are required" });
+      }
+
+      const userId = req.userId!;
+      const userData = await db.select({ name: users.name }).from(users).where(eq(users.id, userId)).limit(1);
+      const userName = userData[0]?.name?.split(" ")[0] || "Friend";
+
+      try {
+        const response = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [
+            {
+              role: "system",
+              content: `You are the voice of Retuned, a personal wellness app. The user just told you they feel "${currentMood}" and it's ${timeOfDay}. Generate a compassionate, creative title and subtitle for the next screen where they'll choose where they want to be emotionally.
+
+Respond as JSON:
+{
+  "title": "A short, warm 3-6 word title that acknowledges their ${currentMood} feeling and hints at transformation. Use ${userName}'s name sometimes but not always. Examples for stressed: 'Let's lighten that load, ${userName}', 'You deserve some ease'. Examples for tired: 'Rest is calling you', 'Time to recharge, ${userName}'. Examples for anxious: 'Let's find your ground'. Examples for calm: 'Beautiful — let's build on this'. Examples for energized: 'Love that spark, ${userName}'. Examples for grateful: 'What a gift that is'. Never use emojis.",
+  "subtitle": "A short 5-10 word sentence about choosing their destination mood. Creative and warm, not clinical. Examples: 'Pick the feeling you want to carry', 'Where shall we take you?', 'Choose the version of you that's waiting'. Never use emojis."
+}
+
+Rules:
+- Be specific to the ${currentMood} mood, not generic
+- Sound like a wise, warm friend
+- Vary language dramatically each time
+- No exclamation marks, no emojis
+- Keep it concise and punchy`,
+            },
+            {
+              role: "user",
+              content: `I'm feeling ${currentMood} right now. It's ${timeOfDay}.`,
+            },
+          ],
+          temperature: 0.95,
+          max_tokens: 100,
+          response_format: { type: "json_object" },
+        });
+
+        const parsed = JSON.parse(response.choices[0]?.message?.content || "{}");
+        res.json({
+          title: parsed.title || "Where would you like to be?",
+          subtitle: parsed.subtitle || "Choose your destination",
+        });
+      } catch (aiError) {
+        res.json({
+          title: "Where would you like to be?",
+          subtitle: "Choose your destination",
+        });
+      }
+    } catch (error) {
+      console.error("Error generating mood prompt:", error);
+      res.status(500).json({ error: "Failed to generate prompt" });
+    }
+  });
+
   app.post("/api/mood-checkin", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { mood, targetMood, timeOfDay } = req.body;
@@ -2713,6 +2772,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ? "The user has set up their Inner Voice (personal cloned voice)."
         : "The user hasn't set up their Inner Voice yet — hearing affirmations in your own voice deepens subconscious impact.";
 
+      let journeyTitle = "Your Journey";
       let acknowledgment = `${userName}, let's take you from ${mood} to ${targetMood}.`;
       let stepTypes: string[] = ["breathe", "meditate"];
       let breatheNote: string | null = `${breathing.name} can help settle your nervous system.`;
@@ -2747,6 +2807,7 @@ User context:
 
 Respond as JSON with exactly these fields:
 {
+  "journeyTitle": "A creative 2-5 word title for this journey (like 'From Storm to Stillness', 'Finding Your Spark', 'Back to Center'). Should capture the mood transition. No emojis.",
   "acknowledgment": "1-2 sentences, max 25 words total. Use ${userName}'s name. Validate their current ${mood} feeling specifically (not generically), then create excitement about reaching ${targetMood}. Reference both moods. Be direct and real, not vague. Never use emojis. BAD examples (too generic): 'Looks like tonight is a bit tough for you' / 'Sounds like a tough night'. GOOD examples: '${userName}, that ${mood} feeling doesn't have to stay — let's move you toward ${targetMood}', '${userName}, going from ${mood} to ${targetMood} is totally doable right now'.",
   "stepTypes": ["breathe", "meditate", "listen"],
   "breatheNote": "One punchy sentence (max 15 words) or null if breathe is not in stepTypes. Explain WHY ${breathing.name} specifically helps for the ${mood}→${targetMood} transition — reference a real physical effect but in plain everyday language. Make it feel like insider knowledge, not textbook.",
@@ -2779,6 +2840,7 @@ Rules for tone:
         });
 
         const parsed = JSON.parse(response.choices[0]?.message?.content || "{}");
+        if (parsed.journeyTitle) journeyTitle = parsed.journeyTitle;
         if (parsed.acknowledgment) acknowledgment = parsed.acknowledgment;
         if (Array.isArray(parsed.stepTypes) && parsed.stepTypes.length >= 2 && parsed.stepTypes.length <= 3) {
           const validStepTypes = parsed.stepTypes.filter((s: string) => ["breathe", "meditate", "listen"].includes(s));
@@ -2829,6 +2891,7 @@ Rules for tone:
       }
 
       res.json({
+        journeyTitle,
         acknowledgment,
         currentMood: mood,
         targetMood,

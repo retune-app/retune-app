@@ -44,6 +44,25 @@ const MOOD_OPTIONS: MoodOption[] = [
   { id: "grateful", label: "Grateful", icon: "heart", color: "#C9A227" },
 ];
 
+const VALID_TARGET_MOODS: Record<string, string[]> = {
+  calm: ["grateful", "energized"],
+  stressed: ["calm", "grateful"],
+  tired: ["energized", "calm"],
+  energized: ["calm", "grateful"],
+  anxious: ["calm", "grateful"],
+  grateful: ["calm", "energized"],
+};
+
+const CHECKIN_PROMPTS = [
+  { title: "Let's tune in", subtitle: "How does your world feel right now?" },
+  { title: "A moment for you", subtitle: "What's your inner weather today?" },
+  { title: "Pause and feel", subtitle: "No right answers, just honesty" },
+  { title: "Check in with yourself", subtitle: "Where is your mind right now?" },
+  { title: "Right here, right now", subtitle: "Name what you're carrying today" },
+  { title: "Be honest with yourself", subtitle: "How are you really feeling?" },
+  { title: "Your starting point", subtitle: "Every journey begins with awareness" },
+];
+
 function getTimeOfDay(): string {
   const hour = new Date().getHours();
   if (hour >= 5 && hour < 12) return "morning";
@@ -68,6 +87,7 @@ interface JourneyStep {
 }
 
 interface JourneyResponse {
+  journeyTitle?: string;
   acknowledgment: string;
   currentMood: string;
   targetMood: string;
@@ -97,6 +117,9 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
   const [targetMood, setTargetMood] = useState<MoodOption | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [journeyResponse, setJourneyResponse] = useState<JourneyResponse | null>(null);
+  const [checkinPrompt] = useState(() => CHECKIN_PROMPTS[Math.floor(Math.random() * CHECKIN_PROMPTS.length)]);
+  const [targetPrompt, setTargetPrompt] = useState<{ title: string; subtitle: string } | null>(null);
+  const [isLoadingPrompt, setIsLoadingPrompt] = useState(false);
 
   const handleClose = useCallback(() => {
     onClose();
@@ -106,15 +129,30 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
       setTargetMood(null);
       setIsLoading(false);
       setJourneyResponse(null);
+      setTargetPrompt(null);
+      setIsLoadingPrompt(false);
     }, 300);
   }, [onClose]);
 
-  const handleCurrentMoodSelect = useCallback((mood: MoodOption) => {
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch (e) {}
+  const handleCurrentMoodSelect = useCallback(async (mood: MoodOption) => {
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
     setCurrentMood(mood);
     setPhase("target");
+    setIsLoadingPrompt(true);
+
+    try {
+      const url = new URL("/api/mood-prompt", getApiUrl());
+      const response = await apiRequest("POST", url.toString(), {
+        currentMood: mood.id,
+        timeOfDay: getTimeOfDay(),
+      });
+      const data = await response.json();
+      setTargetPrompt(data);
+    } catch (e) {
+      setTargetPrompt({ title: "Where would you like to be?", subtitle: "Choose your destination" });
+    } finally {
+      setIsLoadingPrompt(false);
+    }
   }, []);
 
   const handleTargetMoodSelect = useCallback(async (mood: MoodOption) => {
@@ -292,10 +330,10 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
             {phase === "current" ? (
               <Animated.View entering={FadeIn.duration(200)}>
                 <ThemedText type="h3" style={styles.modalTitle}>
-                  {"Where are you right now?"}
+                  {checkinPrompt.title}
                 </ThemedText>
                 <ThemedText type="body" style={[styles.modalSubtitle, { color: theme.textSecondary }]}>
-                  {"Take a moment to check in with yourself"}
+                  {checkinPrompt.subtitle}
                 </ThemedText>
 
                 <View style={styles.moodGrid}>
@@ -324,49 +362,46 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
                 {renderMoodIndicator()}
 
                 <ThemedText type="h3" style={styles.modalTitle}>
-                  {"Where would you like to be?"}
+                  {targetPrompt?.title || "Where would you like to be?"}
                 </ThemedText>
                 <ThemedText type="body" style={[styles.modalSubtitle, { color: theme.textSecondary }]}>
-                  {"Choose your destination"}
+                  {targetPrompt?.subtitle || "Choose your destination"}
                 </ThemedText>
 
                 <View style={styles.moodGrid}>
-                  {MOOD_OPTIONS.map((mood) => {
-                    const isDisabled = currentMood?.id === mood.id;
-                    return (
-                      <Pressable
-                        key={mood.id}
-                        onPress={() => !isDisabled ? handleTargetMoodSelect(mood) : undefined}
+                  {MOOD_OPTIONS.filter((mood) => {
+                    const validTargets = currentMood ? (VALID_TARGET_MOODS[currentMood.id] || []) : [];
+                    return validTargets.includes(mood.id);
+                  }).map((mood) => (
+                    <Pressable
+                      key={mood.id}
+                      onPress={() => handleTargetMoodSelect(mood)}
+                      style={[
+                        styles.moodCard,
+                        { backgroundColor: `${mood.color}10`, borderColor: `${mood.color}25` },
+                      ]}
+                      testID={`button-mood-target-${mood.id}`}
+                    >
+                      <View
                         style={[
-                          styles.moodCard,
-                          isDisabled
-                            ? { backgroundColor: `${theme.textSecondary}08`, borderColor: `${theme.textSecondary}15`, opacity: 0.4 }
-                            : { backgroundColor: `${mood.color}10`, borderColor: `${mood.color}25` },
+                          styles.moodIconCircle,
+                          { backgroundColor: `${mood.color}20` },
                         ]}
-                        testID={`button-mood-target-${mood.id}`}
-                        disabled={isDisabled}
                       >
-                        <View
-                          style={[
-                            styles.moodIconCircle,
-                            { backgroundColor: isDisabled ? `${theme.textSecondary}10` : `${mood.color}20` },
-                          ]}
-                        >
-                          <Feather
-                            name={mood.icon as any}
-                            size={28}
-                            color={isDisabled ? theme.textSecondary : mood.color}
-                          />
-                        </View>
-                        <ThemedText
-                          type="caption"
-                          style={[styles.moodLabel, { color: isDisabled ? theme.textSecondary : mood.color }]}
-                        >
-                          {mood.label}
-                        </ThemedText>
-                      </Pressable>
-                    );
-                  })}
+                        <Feather
+                          name={mood.icon as any}
+                          size={28}
+                          color={mood.color}
+                        />
+                      </View>
+                      <ThemedText
+                        type="caption"
+                        style={[styles.moodLabel, { color: mood.color }]}
+                      >
+                        {mood.label}
+                      </ThemedText>
+                    </Pressable>
+                  ))}
                 </View>
 
                 <Pressable onPress={handleBackToPhase1} style={styles.backButton}>
@@ -386,7 +421,7 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
             ) : journeyResponse ? (
               <Animated.View entering={FadeIn.duration(300)}>
                 <ThemedText type="h3" style={styles.modalTitle}>
-                  {"Your Journey"}
+                  {journeyResponse.journeyTitle || "Your Journey"}
                 </ThemedText>
 
                 {renderJourneyHeader()}

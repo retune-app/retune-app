@@ -134,18 +134,12 @@ export default function PlayerScreen() {
   const resetJourneyControlsTimer = useCallback(() => {
     if (journeyControlsTimerRef.current) clearTimeout(journeyControlsTimerRef.current);
     showJourneyControls();
-    if (isLastJourneyStep) return;
     journeyControlsTimerRef.current = setTimeout(() => {
       if (isCurrentlyPlaying) hideJourneyControls();
     }, 4000);
-  }, [isCurrentlyPlaying, isLastJourneyStep, showJourneyControls, hideJourneyControls]);
+  }, [isCurrentlyPlaying, showJourneyControls, hideJourneyControls]);
 
   useEffect(() => {
-    if (journeyContext && isLastJourneyStep) {
-      showJourneyControls();
-      if (journeyControlsTimerRef.current) clearTimeout(journeyControlsTimerRef.current);
-      return;
-    }
     if (journeyContext && isCurrentlyPlaying) {
       journeyControlsTimerRef.current = setTimeout(hideJourneyControls, 4000);
     } else if (journeyContext && !isCurrentlyPlaying) {
@@ -153,7 +147,7 @@ export default function PlayerScreen() {
       if (journeyControlsTimerRef.current) clearTimeout(journeyControlsTimerRef.current);
     }
     return () => { if (journeyControlsTimerRef.current) clearTimeout(journeyControlsTimerRef.current); };
-  }, [isCurrentlyPlaying, journeyContext, isLastJourneyStep]);
+  }, [isCurrentlyPlaying, journeyContext]);
 
   const deleteMutation = useMutation({
     mutationFn: async () => {

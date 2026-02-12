@@ -1,0 +1,358 @@
+import React from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  Dimensions,
+} from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  SharedValue,
+} from "react-native-reanimated";
+import { Feather } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from "expo-blur";
+
+import BreathingCircle from "@/components/BreathingCircle";
+import { Spacing } from "@/constants/theme";
+import type { BreathingTechnique } from "@shared/breathingTechniques";
+
+interface StatItem {
+  label: string;
+  value: string;
+  color?: string;
+}
+
+interface FullscreenBreathingLayoutProps {
+  technique: BreathingTechnique;
+  isPlaying: boolean;
+  onTogglePlay: () => void;
+  onClose: () => void;
+  onCycleComplete: () => void;
+  controlsOpacity: SharedValue<number>;
+  controlsVisible: boolean;
+  onToggleControls: () => void;
+  resetControlsTimer: () => void;
+  insets: { top: number; bottom: number; left: number; right: number };
+  stats: StatItem[];
+  backgroundColor?: string;
+  circleSize?: number;
+  showContent?: boolean;
+  renderCircleOverlay?: (size: number) => React.ReactNode;
+  renderProgressRing?: (size: number) => React.ReactNode;
+  renderTopRightExtra?: () => React.ReactNode;
+  renderBottomExtra?: () => React.ReactNode;
+  renderStopButton?: () => React.ReactNode;
+  hapticsEnabled?: boolean;
+}
+
+export default function FullscreenBreathingLayout({
+  technique,
+  isPlaying,
+  onTogglePlay,
+  onClose,
+  onCycleComplete,
+  controlsOpacity,
+  controlsVisible,
+  onToggleControls,
+  resetControlsTimer,
+  insets,
+  stats,
+  backgroundColor = "#0F1C3F",
+  circleSize: circleSizeOverride,
+  showContent = true,
+  renderCircleOverlay,
+  renderProgressRing,
+  renderTopRightExtra,
+  renderBottomExtra,
+  renderStopButton,
+  hapticsEnabled,
+}: FullscreenBreathingLayoutProps) {
+  const screenWidth = Dimensions.get("window").width;
+  const screenHeight = Dimensions.get("window").height;
+  const isLandscape = screenWidth > screenHeight;
+
+  const controlsAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: controlsOpacity.value,
+  }));
+
+  if (isLandscape) {
+    const circleSize = circleSizeOverride ?? Math.min(screenHeight - 80, 320);
+
+    return (
+      <Pressable style={[styles.landscapeContainer, { backgroundColor }]} onPress={onToggleControls}>
+        <Animated.View style={[styles.landscapeCloseButton, { top: insets.top + 4 }, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"}>
+          <Pressable onPress={() => { resetControlsTimer(); onClose(); }}>
+            <BlurView intensity={40} tint="dark" style={styles.blurButton}>
+              <Feather name="x" size={24} color="#FFFFFF" />
+            </BlurView>
+          </Pressable>
+        </Animated.View>
+
+        <View style={[styles.landscapeContent, { paddingLeft: Math.max(insets.left, 48), paddingRight: Math.max(insets.right, 48) }]}>
+          <Animated.View style={[styles.landscapeSidePanel, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"} onStartShouldSetResponder={() => true}>
+            <Text style={[styles.landscapeTechniqueName, { color: technique.color }]}>
+              {technique.name}
+            </Text>
+            <Text style={styles.landscapePhaseLabel}>
+              {technique.benefits}
+            </Text>
+          </Animated.View>
+
+          <View style={styles.landscapeCircleContainer}>
+            {renderProgressRing ? renderProgressRing(circleSize) : null}
+            <BreathingCircle
+              technique={technique}
+              isPlaying={isPlaying}
+              onCycleComplete={onCycleComplete}
+              hapticsEnabled={hapticsEnabled}
+              size={circleSize}
+              showContent={showContent}
+            />
+            {renderCircleOverlay ? renderCircleOverlay(circleSize) : null}
+          </View>
+
+          <Animated.View style={[styles.landscapeSidePanel, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"} onStartShouldSetResponder={() => true}>
+            {stats.map((stat, i) => (
+              <View key={i} style={styles.landscapeStats}>
+                <Text style={styles.landscapeStatLabel}>{stat.label}</Text>
+                <Text style={[styles.landscapeStatValue, stat.color ? { color: stat.color } : undefined]}>{stat.value}</Text>
+              </View>
+            ))}
+
+            <View style={styles.landscapeControlsRow}>
+              <Pressable onPress={() => { resetControlsTimer(); onTogglePlay(); }}>
+                <LinearGradient
+                  colors={[technique.color, `${technique.color}CC`]}
+                  style={styles.landscapePlayButton}
+                >
+                  <Feather name={isPlaying ? "pause" : "play"} size={24} color="#FFFFFF" />
+                </LinearGradient>
+              </Pressable>
+              {renderStopButton ? renderStopButton() : null}
+            </View>
+
+            {renderBottomExtra ? renderBottomExtra() : null}
+          </Animated.View>
+        </View>
+      </Pressable>
+    );
+  }
+
+  const portraitCircleSize = circleSizeOverride ?? Math.min((screenWidth - 48) / 1.15, screenHeight * 0.44);
+
+  return (
+    <Pressable style={[styles.landscapeContainer, { backgroundColor }]} onPress={onToggleControls}>
+      <View style={[styles.portraitFullscreenWrapper, { paddingTop: insets.top + Spacing.md, paddingBottom: insets.bottom + Spacing.lg }]}>
+        <Animated.View style={[styles.fsTopControls, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"} onStartShouldSetResponder={() => true}>
+          <View style={styles.fsTopLeft}>
+            <Text style={[styles.fsTechniqueBadge, { backgroundColor: `${technique.color}20`, color: technique.color }]}>
+              {technique.name}
+            </Text>
+          </View>
+          <View style={styles.fsTopRight}>
+            {renderTopRightExtra ? renderTopRightExtra() : null}
+            <Pressable onPress={() => { resetControlsTimer(); onClose(); }} style={styles.fsCloseBtn}>
+              <Feather name="x" size={22} color="rgba(255,255,255,0.7)" />
+            </Pressable>
+          </View>
+        </Animated.View>
+
+        <View style={styles.portraitCenterSection}>
+          {renderProgressRing ? renderProgressRing(portraitCircleSize) : null}
+          <BreathingCircle
+            technique={technique}
+            isPlaying={isPlaying}
+            onCycleComplete={onCycleComplete}
+            hapticsEnabled={hapticsEnabled}
+            size={portraitCircleSize}
+            showContent={showContent}
+          />
+          {renderCircleOverlay ? renderCircleOverlay(48) : null}
+        </View>
+
+        <Animated.View style={[styles.fsBottomControls, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"} onStartShouldSetResponder={() => true}>
+          <View style={styles.fsCenterControls}>
+            <Pressable onPress={() => { resetControlsTimer(); onTogglePlay(); }}>
+              <LinearGradient
+                colors={[technique.color, `${technique.color}CC`]}
+                style={styles.portraitPlayButton}
+              >
+                <Feather name={isPlaying ? "pause" : "play"} size={28} color="#FFFFFF" />
+              </LinearGradient>
+            </Pressable>
+            {renderStopButton ? renderStopButton() : null}
+          </View>
+
+          <View style={styles.portraitStatsRow}>
+            {stats.map((stat, i) => (
+              <View key={i} style={styles.portraitStatItem}>
+                <Text style={styles.portraitStatLabel}>{stat.label}</Text>
+                <Text style={[styles.portraitStatValue, stat.color ? { color: stat.color } : undefined]}>{stat.value}</Text>
+              </View>
+            ))}
+          </View>
+
+          {renderBottomExtra ? renderBottomExtra() : null}
+        </Animated.View>
+      </View>
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  landscapeContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  landscapeCloseButton: {
+    position: "absolute",
+    right: 24,
+    zIndex: 10,
+  },
+  blurButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  landscapeContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  landscapeSidePanel: {
+    width: 180,
+    alignItems: "center",
+  },
+  landscapeTechniqueName: {
+    fontSize: 20,
+    fontWeight: "700",
+    marginBottom: 8,
+  },
+  landscapePhaseLabel: {
+    fontSize: 14,
+    color: "rgba(255,255,255,0.7)",
+    textAlign: "center",
+  },
+  landscapeCircleContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  landscapeStats: {
+    alignItems: "center",
+    marginBottom: Spacing.lg,
+  },
+  landscapeStatLabel: {
+    fontSize: 12,
+    color: "rgba(255,255,255,0.6)",
+    marginBottom: 4,
+  },
+  landscapeStatValue: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
+  landscapeControlsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.md,
+    marginTop: Spacing.lg,
+  },
+  landscapePlayButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  portraitFullscreenWrapper: {
+    flex: 1,
+    flexDirection: "column",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: Spacing.xl,
+  },
+  portraitCenterSection: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1,
+  },
+  fsTopControls: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "100%",
+    zIndex: 10,
+  },
+  fsTopLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  fsTopRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  fsTechniqueBadge: {
+    fontSize: 12,
+    fontFamily: "Nunito_600SemiBold",
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    overflow: "hidden",
+    letterSpacing: 0.5,
+  },
+  fsCloseBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(255,255,255,0.1)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  fsCenterControls: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: Spacing.md,
+  },
+  fsBottomControls: {
+    alignItems: "center",
+    gap: Spacing.lg,
+  },
+  portraitPlayButton: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  portraitStatsRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: Spacing.xl * 3,
+  },
+  portraitStatItem: {
+    alignItems: "center",
+  },
+  portraitStatLabel: {
+    fontSize: 11,
+    color: "rgba(255,255,255,0.5)",
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+    marginBottom: 2,
+  },
+  portraitStatValue: {
+    fontSize: 18,
+    color: "#FFFFFF",
+    fontWeight: "600",
+  },
+});

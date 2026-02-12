@@ -9,6 +9,13 @@ import {
 } from "react-native";
 import Animated, {
   FadeIn,
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withSequence,
+  withTiming,
+  withDelay,
+  Easing,
 } from "react-native-reanimated";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -120,6 +127,31 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
   const [checkinPrompt] = useState(() => CHECKIN_PROMPTS[Math.floor(Math.random() * CHECKIN_PROMPTS.length)]);
   const [targetPrompt, setTargetPrompt] = useState<{ title: string; subtitle: string } | null>(null);
   const [isLoadingPrompt, setIsLoadingPrompt] = useState(false);
+
+  const connDot0 = useSharedValue(0.15);
+  const connDot1 = useSharedValue(0.15);
+  const connDot2 = useSharedValue(0.15);
+
+  React.useEffect(() => {
+    const dur = 500;
+    const ease = Easing.inOut(Easing.sin);
+    const pulse = withRepeat(
+      withSequence(
+        withTiming(0.7, { duration: dur, easing: ease }),
+        withTiming(0.15, { duration: dur, easing: ease }),
+        withTiming(0.15, { duration: 1000 })
+      ),
+      -1
+    );
+    connDot0.value = withDelay(0, pulse);
+    connDot1.value = withDelay(300, pulse);
+    connDot2.value = withDelay(600, pulse);
+  }, []);
+
+  const connDotStyle0 = useAnimatedStyle(() => ({ opacity: connDot0.value }));
+  const connDotStyle1 = useAnimatedStyle(() => ({ opacity: connDot1.value }));
+  const connDotStyle2 = useAnimatedStyle(() => ({ opacity: connDot2.value }));
+  const connDotStyles = [connDotStyle0, connDotStyle1, connDotStyle2];
 
   const handleClose = useCallback(() => {
     onClose();
@@ -442,7 +474,7 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
                         {index > 0 ? (
                           <View style={styles.stepConnector}>
                             {[0, 1, 2].map((d) => (
-                              <View key={d} style={[styles.connectorDot, { backgroundColor: `${theme.textSecondary}30` }]} />
+                              <Animated.View key={d} style={[styles.connectorDot, { backgroundColor: `${theme.textSecondary}30` }, connDotStyles[d]]} />
                             ))}
                           </View>
                         ) : null}

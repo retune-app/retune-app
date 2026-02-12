@@ -18,6 +18,7 @@ import Animated, {
   withTiming,
   withRepeat,
   withSequence,
+  withDelay,
   withSpring,
   Easing,
   SlideInRight,
@@ -391,6 +392,38 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
     transform: [{ scale: pulseAnim.value }],
   }));
 
+  const flowDot0 = useSharedValue(0.2);
+  const flowDot1 = useSharedValue(0.2);
+  const flowDot2 = useSharedValue(0.2);
+  const flowDot3 = useSharedValue(0.2);
+  const flowDot4 = useSharedValue(0.2);
+
+  useEffect(() => {
+    const dur = 600;
+    const ease = Easing.inOut(Easing.sin);
+    const pulse = withRepeat(
+      withSequence(
+        withTiming(0.9, { duration: dur, easing: ease }),
+        withTiming(0.2, { duration: dur, easing: ease }),
+        withTiming(0.2, { duration: 2000 - dur * 2 })
+      ),
+      -1
+    );
+    flowDot0.value = withDelay(0, pulse);
+    flowDot1.value = withDelay(300, pulse);
+    flowDot2.value = withDelay(600, pulse);
+    flowDot3.value = withDelay(900, pulse);
+    flowDot4.value = withDelay(1200, pulse);
+  }, []);
+
+  const flowDotStyle0 = useAnimatedStyle(() => ({ opacity: flowDot0.value }));
+  const flowDotStyle1 = useAnimatedStyle(() => ({ opacity: flowDot1.value }));
+  const flowDotStyle2 = useAnimatedStyle(() => ({ opacity: flowDot2.value }));
+  const flowDotStyle3 = useAnimatedStyle(() => ({ opacity: flowDot3.value }));
+  const flowDotStyle4 = useAnimatedStyle(() => ({ opacity: flowDot4.value }));
+
+  const flowDotStyles = [flowDotStyle0, flowDotStyle1, flowDotStyle2, flowDotStyle3, flowDotStyle4];
+
   const countdownAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: countdownScale.value }],
     opacity: countdownOpacityVal.value,
@@ -763,13 +796,26 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
           <Feather name={currentMoodInfo.icon as any} size={32} color={currentMoodInfo.color} />
         </View>
         <View style={styles.introDots}>
-          {[0, 1, 2].map((i) => (
-            <Animated.View
-              key={i}
-              entering={FadeIn.delay(400 + i * 200).duration(400)}
-              style={[styles.introConnectDot, { backgroundColor: `${ACCENT_GOLD}40` }]}
-            />
-          ))}
+          {[0, 1, 2, 3].map((i) => {
+            const t = i / 3;
+            const r1 = parseInt(currentMoodInfo.color.slice(1, 3), 16);
+            const g1 = parseInt(currentMoodInfo.color.slice(3, 5), 16);
+            const b1 = parseInt(currentMoodInfo.color.slice(5, 7), 16);
+            const r2 = parseInt(targetMoodInfo.color.slice(1, 3), 16);
+            const g2 = parseInt(targetMoodInfo.color.slice(3, 5), 16);
+            const b2 = parseInt(targetMoodInfo.color.slice(5, 7), 16);
+            const r = Math.round(r1 + (r2 - r1) * t);
+            const g = Math.round(g1 + (g2 - g1) * t);
+            const b = Math.round(b1 + (b2 - b1) * t);
+            const dotColor = `rgb(${r},${g},${b})`;
+            return (
+              <Animated.View
+                key={i}
+                entering={FadeIn.delay(400 + i * 200).duration(400)}
+                style={[styles.introConnectDot, { backgroundColor: dotColor }, flowDotStyles[i]]}
+              />
+            );
+          })}
         </View>
         <Animated.View entering={FadeIn.delay(1000).duration(600)}>
           <View style={[styles.introMoodCircle, { backgroundColor: `${targetMoodInfo.color}20` }]}>
@@ -954,7 +1000,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
             <Animated.View
               key={i}
               entering={FadeIn.delay(200 + i * 100).duration(400)}
-              style={[styles.arcDot, { backgroundColor: ACCENT_GOLD }]}
+              style={[styles.arcDot, { backgroundColor: ACCENT_GOLD }, flowDotStyles[i]]}
             />
           ))}
         </View>

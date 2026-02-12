@@ -388,81 +388,79 @@ export default function PlayerScreen() {
     await AsyncStorage.setItem(FOCUS_MODE_TIP_SHOWN_KEY, "true");
   }, []);
 
-  // Lock orientation to portrait on unmount only
+  const mountedRef = useRef(true);
+  const orientationLockTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
+    mountedRef.current = true;
     return () => {
+      mountedRef.current = false;
+      if (orientationLockTimeoutRef.current) {
+        clearTimeout(orientationLockTimeoutRef.current);
+        orientationLockTimeoutRef.current = null;
+      }
       ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
     };
   }, []);
 
-  // Control orientation - keep unlocked in fullscreen so user can tilt to exit
-  useEffect(() => {
-    if (isInFullscreenMode) {
-      // Keep orientation unlocked so user can tilt back to portrait to exit
-      ScreenOrientation.unlockAsync();
-    } else if (!isCurrentlyPlaying || !rsvpEnabled) {
-      // Lock to portrait when not playing or Focus Mode is off
-      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
-    }
-    // When playing with Focus Mode but not in fullscreen, leave unlocked (handled by other effect)
-  }, [isInFullscreenMode, isCurrentlyPlaying, rsvpEnabled]);
-
-  // Unlock orientation when Focus Mode is on and playing (to allow entering fullscreen)
-  useEffect(() => {
-    if (rsvpEnabled && isCurrentlyPlaying && !isInFullscreenMode) {
-      ScreenOrientation.unlockAsync();
-    }
-  }, [rsvpEnabled, isCurrentlyPlaying, isInFullscreenMode]);
-
-  // Listen for orientation changes
   useEffect(() => {
     const checkOrientation = async () => {
       const orientation = await ScreenOrientation.getOrientationAsync();
-      const landscape = 
+      const landscape =
         orientation === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
         orientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT;
-      setIsLandscape(landscape);
+      if (mountedRef.current) setIsLandscape(landscape);
     };
-    
+
     checkOrientation();
-    
+
     const subscription = ScreenOrientation.addOrientationChangeListener((event) => {
       const orientation = event.orientationInfo.orientation;
-      const landscape = 
+      const landscape =
         orientation === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
         orientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT;
-      setIsLandscape(landscape);
+      if (mountedRef.current) setIsLandscape(landscape);
     });
-    
+
     return () => {
       ScreenOrientation.removeOrientationChangeListener(subscription);
     };
   }, []);
 
-  // Handle orientation changes - enter/exit fullscreen based on rotation
   useEffect(() => {
+    if (!mountedRef.current) return;
+
     const wasLandscape = prevLandscapeRef.current;
     const justRotatedToLandscape = isLandscape && !wasLandscape;
     const justRotatedToPortrait = !isLandscape && wasLandscape;
-    
-    // Update prev ref for next run
     prevLandscapeRef.current = isLandscape;
-    
-    // Auto-dismiss focus mode tip when user rotates to landscape
+
     if (justRotatedToLandscape && showFocusModeTip) {
       dismissFocusModeTip();
     }
-    
-    // Exit fullscreen when rotating back to portrait
+
     if (justRotatedToPortrait && isInFullscreenMode) {
       setIsInFullscreenMode(false);
-      return;
-    }
-    
-    // Enter fullscreen if user just rotated TO landscape while playing
-    if (justRotatedToLandscape && rsvpEnabled && isCurrentlyPlaying && !isInFullscreenMode) {
+    } else if (justRotatedToLandscape && rsvpEnabled && isCurrentlyPlaying && !isInFullscreenMode) {
       setIsInFullscreenMode(true);
     }
+
+    if (orientationLockTimeoutRef.current) {
+      clearTimeout(orientationLockTimeoutRef.current);
+      orientationLockTimeoutRef.current = null;
+    }
+
+    const shouldUnlock = isInFullscreenMode || (rsvpEnabled && isCurrentlyPlaying);
+
+    orientationLockTimeoutRef.current = setTimeout(() => {
+      if (!mountedRef.current) return;
+      if (shouldUnlock) {
+        ScreenOrientation.unlockAsync();
+      } else {
+        ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+      }
+      orientationLockTimeoutRef.current = null;
+    }, 100);
   }, [isLandscape, rsvpEnabled, isCurrentlyPlaying, isInFullscreenMode, showFocusModeTip, dismissFocusModeTip]);
 
 

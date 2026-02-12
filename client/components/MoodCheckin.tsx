@@ -128,24 +128,27 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
   const [targetPrompt, setTargetPrompt] = useState<{ title: string; subtitle: string } | null>(null);
   const [isLoadingPrompt, setIsLoadingPrompt] = useState(false);
 
-  const connDot0 = useSharedValue(0.15);
-  const connDot1 = useSharedValue(0.15);
-  const connDot2 = useSharedValue(0.15);
+  const connDot0 = useSharedValue(0.3);
+  const connDot1 = useSharedValue(0.3);
+  const connDot2 = useSharedValue(0.3);
 
   React.useEffect(() => {
     const dur = 500;
     const ease = Easing.inOut(Easing.sin);
-    const pulse = withRepeat(
-      withSequence(
-        withTiming(0.7, { duration: dur, easing: ease }),
-        withTiming(0.15, { duration: dur, easing: ease }),
-        withTiming(0.15, { duration: 1000 })
-      ),
-      -1
-    );
-    connDot0.value = withDelay(0, pulse);
-    connDot1.value = withDelay(300, pulse);
-    connDot2.value = withDelay(600, pulse);
+    const totalCycle = 1800;
+    const makePulse = (delay: number) =>
+      withRepeat(
+        withSequence(
+          withTiming(0.3, { duration: delay }),
+          withTiming(1, { duration: dur, easing: ease }),
+          withTiming(0.3, { duration: dur, easing: ease }),
+          withTiming(0.3, { duration: Math.max(0, totalCycle - delay - dur * 2) })
+        ),
+        -1
+      );
+    connDot0.value = makePulse(0);
+    connDot1.value = makePulse(350);
+    connDot2.value = makePulse(700);
   }, []);
 
   const connDotStyle0 = useAnimatedStyle(() => ({ opacity: connDot0.value }));
@@ -474,7 +477,7 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
                         {index > 0 ? (
                           <View style={styles.stepConnector}>
                             {[0, 1, 2].map((d) => (
-                              <Animated.View key={d} style={[styles.connectorDot, { backgroundColor: `${theme.textSecondary}30` }, connDotStyles[d]]} />
+                              <Animated.View key={d} style={[styles.connectorDot, { backgroundColor: `${theme.textSecondary}90` }, connDotStyles[d]]} />
                             ))}
                           </View>
                         ) : null}

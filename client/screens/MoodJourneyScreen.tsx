@@ -399,21 +399,24 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
   const flowDot4 = useSharedValue(0.2);
 
   useEffect(() => {
-    const dur = 600;
+    const dur = 500;
     const ease = Easing.inOut(Easing.sin);
-    const pulse = withRepeat(
-      withSequence(
-        withTiming(0.9, { duration: dur, easing: ease }),
-        withTiming(0.2, { duration: dur, easing: ease }),
-        withTiming(0.2, { duration: 2000 - dur * 2 })
-      ),
-      -1
-    );
-    flowDot0.value = withDelay(0, pulse);
-    flowDot1.value = withDelay(300, pulse);
-    flowDot2.value = withDelay(600, pulse);
-    flowDot3.value = withDelay(900, pulse);
-    flowDot4.value = withDelay(1200, pulse);
+    const totalCycle = 2000;
+    const makePulse = (delay: number) =>
+      withRepeat(
+        withSequence(
+          withTiming(0.2, { duration: delay }),
+          withTiming(1, { duration: dur, easing: ease }),
+          withTiming(0.2, { duration: dur, easing: ease }),
+          withTiming(0.2, { duration: Math.max(0, totalCycle - delay - dur * 2) })
+        ),
+        -1
+      );
+    flowDot0.value = makePulse(0);
+    flowDot1.value = makePulse(300);
+    flowDot2.value = makePulse(600);
+    flowDot3.value = makePulse(900);
+    flowDot4.value = makePulse(1200);
   }, []);
 
   const flowDotStyle0 = useAnimatedStyle(() => ({ opacity: flowDot0.value }));

@@ -171,6 +171,28 @@ export default function PlayerScreen() {
     journeyControlsTimerRef.current = setTimeout(hideJourneyControls, 3000);
   }, [showJourneyControls, hideJourneyControls]);
 
+  const journeyTapStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+  const journeyScrolledRef = useRef(false);
+
+  const handleJourneyTouchStart = useCallback((e: any) => {
+    if (!journeyContext) return;
+    journeyScrolledRef.current = false;
+    const touch = e.nativeEvent;
+    journeyTapStartRef.current = { x: touch.pageX, y: touch.pageY, time: Date.now() };
+  }, [journeyContext]);
+
+  const handleJourneyTouchEnd = useCallback((e: any) => {
+    if (!journeyContext || !journeyTapStartRef.current || journeyScrolledRef.current) return;
+    const touch = e.nativeEvent;
+    const dx = Math.abs(touch.pageX - journeyTapStartRef.current.x);
+    const dy = Math.abs(touch.pageY - journeyTapStartRef.current.y);
+    const dt = Date.now() - journeyTapStartRef.current.time;
+    journeyTapStartRef.current = null;
+    if (dx < 10 && dy < 10 && dt < 300) {
+      toggleJourneyControls();
+    }
+  }, [journeyContext, toggleJourneyControls]);
+
   useEffect(() => {
     return () => { if (journeyControlsTimerRef.current) clearTimeout(journeyControlsTimerRef.current); };
   }, []);
@@ -711,9 +733,11 @@ export default function PlayerScreen() {
           { paddingTop: journeyContext ? (insets.top + 70) : (headerHeight + Spacing.lg), paddingBottom: insets.bottom + Spacing["2xl"] },
         ]}
         showsVerticalScrollIndicator={false}
-        onScrollBeginDrag={journeyContext ? resetJourneyControlsTimer : undefined}
+        onScrollBeginDrag={() => { if (journeyContext) { journeyScrolledRef.current = true; resetJourneyControlsTimer(); } }}
+        onTouchStart={handleJourneyTouchStart}
+        onTouchEnd={handleJourneyTouchEnd}
       >
-        <Pressable style={styles.visualizerContainer} onPress={journeyContext ? toggleJourneyControls : undefined}>
+        <View style={styles.visualizerContainer}>
           {rsvpEnabled ? (
             <RSVPDisplay
               wordTimings={wordTimings}
@@ -729,7 +753,7 @@ export default function PlayerScreen() {
               color={theme.primary}
             />
           )}
-        </Pressable>
+        </View>
 
         <View style={styles.infoContainer}>
           <ThemedText type="h2" style={styles.title} numberOfLines={2}>

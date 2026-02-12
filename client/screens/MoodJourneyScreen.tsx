@@ -289,6 +289,36 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
     advanceToNextStep();
   }, [advanceToNextStep]);
 
+  const handleGoBack = useCallback(() => {
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+    if (currentStepIndex <= 0) {
+      navigation.goBack();
+      return;
+    }
+    setBreathingPlaying(false);
+    if (breathingTimerRef.current) {
+      clearInterval(breathingTimerRef.current);
+      breathingTimerRef.current = null;
+    }
+    const prevIndex = currentStepIndex - 1;
+    setCurrentStepIndex(prevIndex);
+    setShowControls(false);
+    hasNavigatedRef.current = false;
+    startNextStep(prevIndex);
+  }, [currentStepIndex, navigation, startNextStep]);
+
+  const handleSkipStep = useCallback(() => {
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+    setBreathingPlaying(false);
+    if (breathingTimerRef.current) {
+      clearInterval(breathingTimerRef.current);
+      breathingTimerRef.current = null;
+    }
+    setShowControls(false);
+    hasNavigatedRef.current = false;
+    advanceToNextStep();
+  }, [advanceToNextStep]);
+
   const toggleControls = useCallback(() => {
     setShowControls((prev) => {
       const next = !prev;
@@ -503,6 +533,33 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
                   <Feather name="chevron-right" size={14} color={theme.textSecondary} />
                 </Pressable>
               </View>
+
+              {journey.steps.length > 1 ? (
+                <View style={styles.stepNavRow}>
+                  <Pressable
+                    onPress={handleGoBack}
+                    style={[styles.stepNavButton, { borderColor: `${theme.textSecondary}25` }]}
+                    testID="button-journey-back"
+                  >
+                    <Feather name="chevron-left" size={14} color={theme.textSecondary} />
+                    <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                      {currentStepIndex > 0 ? "Previous" : "Exit"}
+                    </ThemedText>
+                  </Pressable>
+                  {currentStepIndex < journey.steps.length - 1 ? (
+                    <Pressable
+                      onPress={handleSkipStep}
+                      style={[styles.stepNavButton, { borderColor: `${theme.textSecondary}25` }]}
+                      testID="button-journey-skip"
+                    >
+                      <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                        {"Next step"}
+                      </ThemedText>
+                      <Feather name="chevron-right" size={14} color={theme.textSecondary} />
+                    </Pressable>
+                  ) : null}
+                </View>
+              ) : null}
             </Animated.View>
           ) : null}
         </Pressable>
@@ -796,6 +853,22 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.lg,
+  },
+  stepNavRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.md,
+    marginTop: Spacing.lg,
+  },
+  stepNavButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
   },
   controlButton: {
     width: 48,

@@ -117,7 +117,7 @@ export function AmbientSoundMixer({ compact = false }: AmbientSoundMixerProps) {
         >
           <Animated.View style={pulseStyle}>
             <Feather
-              name={getIconForMusic(selectedMusic) as any}
+              name="music"
               size={20}
               color={selectedMusic === "none" ? theme.textSecondary : theme.gold}
             />

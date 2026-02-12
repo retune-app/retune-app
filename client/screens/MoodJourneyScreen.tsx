@@ -920,11 +920,6 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
       exiting={FadeOut.duration(400)}
       style={styles.centeredContent}
     >
-      <Animated.View style={pulseStyle}>
-        <View style={[styles.transitionCircle, { backgroundColor: `${ACCENT_GOLD}15` }]}>
-          <Feather name="arrow-right" size={28} color={ACCENT_GOLD} />
-        </View>
-      </Animated.View>
       <ThemedText type="h3" style={[styles.transitionText, { color: theme.text }]}>
         {getTransitionMessage()}
       </ThemedText>
@@ -938,19 +933,6 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
       exiting={FadeOut.duration(400)}
       style={styles.centeredContent}
     >
-      <Animated.View style={pulseStyle}>
-        <View style={[styles.transitionCircle, { backgroundColor: `${ACCENT_GOLD}15` }]}>
-          {phase === "navigating-meditation" ? (
-            <MeditationIcon size={28} color={ACCENT_GOLD} />
-          ) : (
-            <Feather
-              name={currentStep?.affirmationId ? "headphones" : "plus-circle"}
-              size={28}
-              color={ACCENT_GOLD}
-            />
-          )}
-        </View>
-      </Animated.View>
       <ThemedText type="h3" style={[styles.transitionText, { color: theme.text }]}>
         {getNavigatingMessage()}
       </ThemedText>

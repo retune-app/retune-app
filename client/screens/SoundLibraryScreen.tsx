@@ -1,7 +1,8 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { View, StyleSheet, Pressable, ScrollView, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
+import { useNavigation } from "@react-navigation/native";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Animated, {
@@ -466,6 +467,7 @@ const PREVIEW_DURATION = 5000;
 export default function SoundLibraryScreen() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
+  const navigation = useNavigation();
   const { theme } = useTheme();
   const { selectedMusic, setSelectedMusic, volume, setVolume } = useBackgroundMusic();
   
@@ -475,16 +477,50 @@ export default function SoundLibraryScreen() {
   const previewSoundRef = useRef<Audio.Sound | null>(null);
   const previewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const cleanupPreview = useCallback(async () => {
+    if (previewTimerRef.current) {
+      clearTimeout(previewTimerRef.current);
+      previewTimerRef.current = null;
+    }
+    if (previewSoundRef.current) {
+      try {
+        await previewSoundRef.current.stopAsync();
+      } catch (e) {}
+      try {
+        await previewSoundRef.current.unloadAsync();
+      } catch (e) {}
+      previewSoundRef.current = null;
+    }
+    setPreviewingId(null);
+  }, []);
+
   useEffect(() => {
     return () => {
       if (previewSoundRef.current) {
-        previewSoundRef.current.unloadAsync();
+        previewSoundRef.current.unloadAsync().catch(() => {});
+        previewSoundRef.current = null;
       }
       if (previewTimerRef.current) {
         clearTimeout(previewTimerRef.current);
+        previewTimerRef.current = null;
       }
     };
   }, []);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', () => {
+      if (previewTimerRef.current) {
+        clearTimeout(previewTimerRef.current);
+        previewTimerRef.current = null;
+      }
+      if (previewSoundRef.current) {
+        previewSoundRef.current.stopAsync().catch(() => {});
+        previewSoundRef.current.unloadAsync().catch(() => {});
+        previewSoundRef.current = null;
+      }
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   const handlePreviewMusic = async (id: BackgroundMusicType) => {
     if (previewingId === id) {
@@ -535,18 +571,14 @@ export default function SoundLibraryScreen() {
   };
 
   const handleSelectMusic = async (id: BackgroundMusicType) => {
-    if (previewSoundRef.current) {
-      await previewSoundRef.current.stopAsync();
-      await previewSoundRef.current.unloadAsync();
-      previewSoundRef.current = null;
-    }
-    if (previewTimerRef.current) {
-      clearTimeout(previewTimerRef.current);
-      previewTimerRef.current = null;
-    }
-    setPreviewingId(null);
-    
+    await cleanupPreview();
     await setSelectedMusic(id);
+  };
+
+  const handleSelectNoSound = async () => {
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
+    await cleanupPreview();
+    await setSelectedMusic("none" as BackgroundMusicType);
   };
 
   const currentSelection = [...rain, ...ocean, ...forest, ...meditation, ...solfeggio, ...binaural, ...noise].find(o => o.id === selectedMusic);
@@ -564,29 +596,29 @@ export default function SoundLibraryScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {currentSelection ? (
         <Animated.View entering={FadeIn.duration(400)}>
           <View style={[styles.currentCard, { backgroundColor: theme.cardBackground }, Shadows.medium]}>
             <View style={styles.currentHeader}>
-              <Feather name="volume-2" size={20} color={ACCENT_GOLD} />
+              <Feather name={selectedMusic === "none" ? "volume-x" : "volume-2"} size={20} color={ACCENT_GOLD} />
               <ThemedText type="caption" style={{ color: theme.textSecondary, marginLeft: Spacing.xs }}>
                 CURRENTLY SELECTED
               </ThemedText>
             </View>
             <View style={styles.currentContent}>
-              <View style={[styles.currentIconContainer, { backgroundColor: `${ACCENT_GOLD}20` }]}>
-                <Feather name={currentSelection.icon as any} size={24} color={ACCENT_GOLD} />
+              <View style={[styles.currentIconContainer, { backgroundColor: selectedMusic === "none" ? `${theme.textSecondary}20` : `${ACCENT_GOLD}20` }]}>
+                <Feather name={selectedMusic === "none" ? "volume-x" : (currentSelection?.icon as any) || "music"} size={24} color={selectedMusic === "none" ? theme.textSecondary : ACCENT_GOLD} />
               </View>
               <View style={styles.currentInfo}>
-                <ThemedText type="h4" style={{ color: ACCENT_GOLD }}>
-                  {currentSelection.name}
+                <ThemedText type="h4" style={{ color: selectedMusic === "none" ? theme.text : ACCENT_GOLD }}>
+                  {selectedMusic === "none" ? "No Sound" : (currentSelection?.name || "None")}
                 </ThemedText>
                 <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                  {currentSelection.description}
+                  {selectedMusic === "none" ? "Background sounds are off" : (currentSelection?.description || "")}
                 </ThemedText>
               </View>
             </View>
 
+            {selectedMusic !== "none" ? (
             <View style={styles.volumeSection}>
               <View style={styles.volumeRow}>
                 <Pressable onPress={() => setVolume(Math.max(0.05, volume - 0.15))}>
@@ -611,9 +643,47 @@ export default function SoundLibraryScreen() {
                 </ThemedText>
               </View>
             </View>
+            ) : null}
           </View>
         </Animated.View>
-        ) : null}
+
+        <Animated.View entering={FadeInDown.duration(400)}>
+          <Pressable
+            onPress={handleSelectNoSound}
+            style={[
+              styles.noSoundCard,
+              {
+                backgroundColor: selectedMusic === "none" ? `${ACCENT_GOLD}10` : theme.cardBackground,
+                borderColor: selectedMusic === "none" ? ACCENT_GOLD : theme.border,
+              },
+              Shadows.small,
+            ]}
+            testID="button-no-sound"
+          >
+            {selectedMusic === "none" ? <SelectedLeftBar color={ACCENT_GOLD} /> : null}
+            <View style={[styles.soundIconContainer, { backgroundColor: selectedMusic === "none" ? `${ACCENT_GOLD}20` : theme.backgroundSecondary }]}>
+              <Feather name="volume-x" size={22} color={selectedMusic === "none" ? ACCENT_GOLD : theme.textSecondary} />
+            </View>
+            <View style={styles.soundContent}>
+              <ThemedText type="body" style={[styles.soundName, selectedMusic === "none" && { color: ACCENT_GOLD, fontWeight: "600" }]}>
+                No Sound
+              </ThemedText>
+              <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                Turn off all background sounds
+              </ThemedText>
+            </View>
+            <View
+              style={[
+                styles.radioButton,
+                { borderColor: selectedMusic === "none" ? ACCENT_GOLD : theme.border },
+              ]}
+            >
+              {selectedMusic === "none" ? (
+                <View style={[styles.radioButtonInner, { backgroundColor: ACCENT_GOLD }]} />
+              ) : null}
+            </View>
+          </Pressable>
+        </Animated.View>
 
         <CategorySection
           category="rain"
@@ -804,6 +874,15 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     borderRadius: 8,
+  },
+  noSoundCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xl,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    overflow: "hidden",
   },
   headphonesNote: {
     flexDirection: "row",

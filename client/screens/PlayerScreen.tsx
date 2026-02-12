@@ -3,6 +3,7 @@ import { View, StyleSheet, Pressable, Alert, ScrollView, Modal } from "react-nat
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
+import { HeaderButton } from "@react-navigation/elements";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -283,15 +284,6 @@ export default function PlayerScreen() {
   useLayoutEffect(() => {
     const isInJourney = !!journeyContext;
 
-    const headerBtnStyle = {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
-      backgroundColor: "rgba(0,0,0,0.3)",
-      alignItems: "center" as const,
-      justifyContent: "center" as const,
-    };
-
     navigation.setOptions({
       headerTitle: () => (
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -304,38 +296,35 @@ export default function PlayerScreen() {
       headerShown: !isInJourney,
       headerLeft: () => (
         isNew && !hasSaved ? (
-          <Pressable
+          <HeaderButton
             onPress={handleSave}
-            style={headerBtnStyle}
             testID="button-save-affirmation"
           >
             <Feather 
               name="save" 
-              size={18} 
-              color={autoSaveMutation.isPending ? "rgba(255,255,255,0.4)" : "#FFFFFF"} 
+              size={22} 
+              color={autoSaveMutation.isPending ? theme.textSecondary : "#4CAF50"} 
             />
-          </Pressable>
+          </HeaderButton>
         ) : (
-          <Pressable
+          <HeaderButton
             onPress={() => navigation.goBack()}
-            style={headerBtnStyle}
             testID="button-back"
           >
-            <Feather name="arrow-left" size={18} color="#FFFFFF" />
-          </Pressable>
+            <Feather name="arrow-left" size={22} color={theme.text} />
+          </HeaderButton>
         )
       ),
       headerRight: () => (
-        <Pressable
-          onPress={() => navigation.goBack()}
-          style={headerBtnStyle}
-          testID="button-close-affirmation"
+        <HeaderButton
+          onPress={handleDelete}
+          testID="button-delete-affirmation"
         >
-          <Feather name="x" size={18} color="#FFFFFF" />
-        </Pressable>
+          <Feather name="trash-2" size={22} color="#E53935" />
+        </HeaderButton>
       ),
     });
-  }, [navigation, handleSave, autoSaveMutation.isPending, theme, isNew, hasSaved, journeyContext]);
+  }, [navigation, handleSave, handleDelete, autoSaveMutation.isPending, theme, isNew, hasSaved, journeyContext]);
 
   useEffect(() => {
     if (autoPlay && affirmation && !autoPlayedRef.current) {

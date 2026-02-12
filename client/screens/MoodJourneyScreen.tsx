@@ -1023,7 +1023,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
 
       {phase !== "breathing" ? (
         <View style={[styles.header, { paddingTop: insets.top + Spacing.sm }]}>
-          {phase !== "intro" && phase !== "complete" ? (
+          {phase !== "intro" && phase !== "complete" && phase !== "transition" && phase !== "navigating-meditation" && phase !== "navigating-listen" ? (
             <Pressable
               onPress={handleEndJourney}
               style={styles.closeButton}

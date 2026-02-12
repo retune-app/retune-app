@@ -8,6 +8,7 @@ import VoiceSetupScreen from "@/screens/VoiceSetupScreen";
 import VoiceSettingsScreen from "@/screens/VoiceSettingsScreen";
 import SoundLibraryScreen from "@/screens/SoundLibraryScreen";
 import GuidedMomentScreen from "@/screens/GuidedMomentScreen";
+import MoodJourneyScreen from "@/screens/MoodJourneyScreen";
 import CreateScreen from "@/screens/CreateScreen";
 import PlayerScreen from "@/screens/PlayerScreen";
 import AnalyticsScreen from "@/screens/AnalyticsScreen";
@@ -30,6 +31,7 @@ export type RootStackParamList = {
   Player: { affirmationId: number; isNew?: boolean; autoPlay?: boolean };
   Analytics: undefined;
   GuidedMoment: { mood: string; timeOfDay: string };
+  MoodJourney: { journey: any };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -203,6 +205,16 @@ export default function RootStackNavigator() {
         <Stack.Screen
           name="GuidedMoment"
           component={GuidedMomentScreen}
+          options={{
+            headerShown: false,
+            presentation: "card",
+            animation: "fade",
+            gestureEnabled: false,
+          }}
+        />
+        <Stack.Screen
+          name="MoodJourney"
+          component={MoodJourneyScreen}
           options={{
             headerShown: false,
             presentation: "card",

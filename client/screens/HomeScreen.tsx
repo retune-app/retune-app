@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { FlatList, View, StyleSheet, RefreshControl, TextInput, Modal, Pressable, Alert, ImageBackground, Platform } from "react-native";
-import Animated, { FadeInUp, FadeIn } from "react-native-reanimated";
+import Animated, { FadeInUp, FadeIn, useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming, Easing, interpolate } from "react-native-reanimated";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BlurView } from "expo-blur";
 
@@ -71,6 +71,25 @@ export default function HomeScreen() {
   const [firstPlayTriggered, setFirstPlayTriggered] = useState(false);
   const [showMoodCheckin, setShowMoodCheckin] = useState(false);
   const [hasBackfilled, setHasBackfilled] = useState(false);
+
+  const moodGlowPulse = useSharedValue(0);
+  useEffect(() => {
+    moodGlowPulse.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 1800, easing: Easing.inOut(Easing.sin) }),
+        withTiming(0, { duration: 1800, easing: Easing.inOut(Easing.sin) })
+      ),
+      -1
+    );
+  }, []);
+  const moodGlowStyle = useAnimatedStyle(() => ({
+    shadowColor: '#C9A227',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: interpolate(moodGlowPulse.value, [0, 1], [0.2, 0.6]),
+    shadowRadius: interpolate(moodGlowPulse.value, [0, 1], [4, 14]),
+    elevation: interpolate(moodGlowPulse.value, [0, 1], [3, 8]),
+    transform: [{ scale: interpolate(moodGlowPulse.value, [0, 1], [1, 1.05]) }],
+  }));
 
   useEffect(() => {
     AsyncStorage.getItem("@settings/hapticEnabled").then((value) => {
@@ -365,10 +384,11 @@ export default function HomeScreen() {
         <View style={styles.searchRow}>
           <Pressable
             onPress={() => setShowMoodCheckin(true)}
-            style={[styles.headerIconButton, { backgroundColor: `${theme.gold}18`, borderColor: `${theme.gold}40`, shadowColor: theme.gold, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.35, shadowRadius: 8, elevation: 6 }]}
             testID="button-header-mood-checkin"
           >
-            <Feather name="smile" size={26} color={theme.gold} />
+            <Animated.View style={[styles.headerIconButton, { backgroundColor: `${theme.gold}18`, borderColor: `${theme.gold}40` }, moodGlowStyle]}>
+              <Feather name="smile" size={26} color={theme.gold} />
+            </Animated.View>
           </Pressable>
           <View style={[styles.searchContainer, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder }]}>
             <Feather name="search" size={18} color={theme.placeholder} />

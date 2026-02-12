@@ -191,7 +191,7 @@ export default function FullscreenBreathingLayout({
               <Feather name={isPlaying ? "pause" : "play"} size={28} color="#FFFFFF" />
             </LinearGradient>
           </Pressable>
-          {renderStopButton ? renderStopButton() : null}
+          {renderStopButton ? <View style={styles.portraitStopButtonWrap}>{renderStopButton()}</View> : null}
         </View>
 
         <View style={styles.portraitStatsRow}>
@@ -340,9 +340,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   fsCenterControls: {
-    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+  },
+  portraitStopButtonWrap: {
+    position: "absolute" as const,
+    right: -60,
+    top: "50%" as any,
+    marginTop: -22,
   },
   portraitPlayButton: {
     width: 72,

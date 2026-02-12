@@ -289,7 +289,7 @@ export default function HomeScreen() {
     navigation.navigate("Main", { screen: "SettingsTab" } as any);
   };
 
-  const FIXED_HEADER_HEIGHT = 145;
+  const FIXED_HEADER_HEIGHT = 157;
 
   const [showVoiceNudge, setShowVoiceNudge] = useState(false);
   const [voiceNudgeDismissed, setVoiceNudgeDismissed] = useState(false);
@@ -369,7 +369,7 @@ export default function HomeScreen() {
   );
 
   const renderFixedHeader = () => (
-    <View style={[styles.fixedHeader, { paddingTop: insets.top + Spacing.sm }]}>
+    <View style={[styles.fixedHeader, { paddingTop: insets.top + Spacing.xl }]}>
       {Platform.OS === "ios" ? (
         <BlurView
           intensity={80}

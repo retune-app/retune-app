@@ -971,7 +971,7 @@ export default function BreathingScreen() {
         style={[
           styles.fixedContent,
           {
-            paddingTop: insets.top + Spacing.md,
+            paddingTop: insets.top + Spacing.xl,
             paddingBottom: insets.bottom + 90,
           },
         ]}

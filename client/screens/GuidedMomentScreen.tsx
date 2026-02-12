@@ -211,6 +211,7 @@ export type GuidedMomentScreenParams = {
 
 export default function GuidedMomentScreen({ route, navigation }: NativeStackScreenProps<any, "GuidedMoment">) {
   const { mood, timeOfDay, journeyContext, prefetchedMoment } = (route.params as GuidedMomentScreenParams) || { mood: "calm", timeOfDay: "morning" };
+  const moodColors = MOOD_RING_COLORS[mood] || { primary: ACCENT_GOLD, secondary: `${ACCENT_GOLD}99` };
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
@@ -1163,20 +1164,76 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
           />
         </Animated.View>
       ) : null}
-      <Pressable
-        style={styles.tapArea}
-        onPress={handleScreenTap}
-        testID="guided-moment-tap-area"
-      >
-        {playerState === "generating" ? (
-          <ThemedText type="caption" style={styles.aboveRingsStatusText}>
-            {"Preparing your meditation..."}
+      {!journeyContext && playerState === "generating" ? (
+        <Animated.View
+          entering={FadeIn.duration(600)}
+          style={styles.standaloneGeneratingContainer}
+        >
+          <Animated.View style={[styles.standaloneGeneratingPulse, generatingPulseStyle, { borderColor: moodColors.primary }]} />
+          <ThemedText type="h3" style={styles.standaloneGeneratingText}>
+            Crafting your micro-meditation...
           </ThemedText>
-        ) : null}
-        <View style={isLandscape ? styles.landscapeLayout : styles.portraitLayout}>
-          <View style={styles.ringsArea}>
-            {!journeyContext && (playerState === "idle" || playerState === "generating" || playerState === "ready") && isLandscape ? (
-              <View style={styles.durationRow}>
+          <View style={styles.standaloneGeneratingDots}>
+            {[0, 1, 2].map((i) => (
+              <Animated.View
+                key={i}
+                entering={FadeIn.delay(200 * i).duration(400)}
+                style={[styles.standaloneGeneratingDot, { backgroundColor: moodColors.primary }]}
+              />
+            ))}
+          </View>
+        </Animated.View>
+      ) : (
+        <Pressable
+          style={styles.tapArea}
+          onPress={handleScreenTap}
+          testID="guided-moment-tap-area"
+        >
+          {journeyContext && playerState === "generating" ? (
+            <ThemedText type="caption" style={styles.aboveRingsStatusText}>
+              {"Preparing your meditation..."}
+            </ThemedText>
+          ) : null}
+          <View style={isLandscape ? styles.landscapeLayout : styles.portraitLayout}>
+            <View style={styles.ringsArea}>
+              {!journeyContext && (playerState === "idle" || playerState === "ready") && isLandscape ? (
+                <View style={styles.durationRow}>
+                  {DURATION_OPTIONS.map((opt) => {
+                    const isSelected = selectedDuration === opt.value;
+                    return (
+                      <Pressable
+                        key={opt.value}
+                        onPress={() => {
+                          try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+                          setSelectedDuration(opt.value);
+                        }}
+                        style={[
+                          styles.durationPill,
+                          isSelected
+                            ? { backgroundColor: "rgba(255,255,255,0.15)", borderColor: "rgba(255,255,255,0.5)" }
+                            : { backgroundColor: "rgba(0,0,0,0.3)", borderColor: "rgba(255,255,255,0.15)" },
+                        ]}
+                        testID={`button-duration-${opt.value}`}
+                      >
+                        <ThemedText
+                          type="caption"
+                          style={[
+                            styles.durationPillText,
+                            { color: isSelected ? "#FFFFFF" : "rgba(255,255,255,0.6)" },
+                          ]}
+                        >
+                          {opt.label}
+                        </ThemedText>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              ) : null}
+              {renderBreathingRings()}
+            </View>
+
+            {!isLandscape && !journeyContext ? (
+              <View style={[styles.durationRowBelow, (playerState !== "idle" && playerState !== "ready") ? { opacity: 0 } : undefined]} pointerEvents={(playerState === "idle" || playerState === "ready") ? "auto" : "none"}>
                 {DURATION_OPTIONS.map((opt) => {
                   const isSelected = selectedDuration === opt.value;
                   return (
@@ -1208,45 +1265,10 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
                 })}
               </View>
             ) : null}
-            {renderBreathingRings()}
+
           </View>
-
-          {!isLandscape && !journeyContext ? (
-            <View style={[styles.durationRowBelow, (playerState !== "idle" && playerState !== "generating" && playerState !== "ready") ? { opacity: 0 } : undefined]} pointerEvents={(playerState === "idle" || playerState === "generating" || playerState === "ready") ? "auto" : "none"}>
-              {DURATION_OPTIONS.map((opt) => {
-                const isSelected = selectedDuration === opt.value;
-                return (
-                  <Pressable
-                    key={opt.value}
-                    onPress={() => {
-                      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
-                      setSelectedDuration(opt.value);
-                    }}
-                    style={[
-                      styles.durationPill,
-                      isSelected
-                        ? { backgroundColor: "rgba(255,255,255,0.15)", borderColor: "rgba(255,255,255,0.5)" }
-                        : { backgroundColor: "rgba(0,0,0,0.3)", borderColor: "rgba(255,255,255,0.15)" },
-                    ]}
-                    testID={`button-duration-${opt.value}`}
-                  >
-                    <ThemedText
-                      type="caption"
-                      style={[
-                        styles.durationPillText,
-                        { color: isSelected ? "#FFFFFF" : "rgba(255,255,255,0.6)" },
-                      ]}
-                    >
-                      {opt.label}
-                    </ThemedText>
-                  </Pressable>
-                );
-              })}
-            </View>
-          ) : null}
-
-        </View>
-      </Pressable>
+        </Pressable>
+      )}
 
       {renderControls()}
       {renderBottomStatus()}
@@ -1505,6 +1527,36 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     borderWidth: 2,
     backgroundColor: "rgba(255,255,255,0.05)",
+  },
+  standaloneGeneratingContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.xl,
+  },
+  standaloneGeneratingPulse: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    borderWidth: 2,
+    backgroundColor: "rgba(255,255,255,0.05)",
+  },
+  standaloneGeneratingText: {
+    textAlign: "center",
+    maxWidth: 260,
+    color: "#FFFFFF",
+  },
+  standaloneGeneratingDots: {
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  standaloneGeneratingDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    opacity: 0.6,
   },
   durationRowBelow: {
     flexDirection: "row",

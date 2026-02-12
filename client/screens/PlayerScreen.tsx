@@ -104,8 +104,7 @@ export default function PlayerScreen() {
   // Query for user's voice status (whether they have a personal voice set up)
   const { data: voiceStatus } = useQuery<{ hasPersonalVoice: boolean; hasClonedVoice: boolean }>({
     queryKey: ["/api/voice-samples/status"],
-    staleTime: 0,
-    refetchOnMount: "always",
+    staleTime: 30000,
   });
 
   // Voice regeneration state
@@ -346,56 +345,41 @@ export default function PlayerScreen() {
   }, [affirmation?.audioUrl, affirmation?.id, currentAffirmation?.id]);
 
   useEffect(() => {
-    const loadSettings = async () => {
-      // Check if we need to reset settings to new defaults
-      const storedVersion = await AsyncStorage.getItem(SETTINGS_VERSION_KEY);
+    const allKeys = [
+      SETTINGS_VERSION_KEY, RSVP_ENABLED_KEY, SHOW_SCRIPT_KEY,
+      RSVP_HIGHLIGHT_KEY, AUTO_REPLAY_KEY, RSVP_FONT_SIZE_KEY,
+      HAPTIC_ENABLED_KEY, FOCUS_MODE_TIP_SHOWN_KEY,
+    ];
+    AsyncStorage.multiGet(allKeys).then((results) => {
+      const map = new Map(results);
+      const storedVersion = map.get(SETTINGS_VERSION_KEY);
       if (storedVersion !== CURRENT_SETTINGS_VERSION) {
-        // Reset RSVP and Show Script to new defaults
-        await AsyncStorage.setItem(RSVP_ENABLED_KEY, "true");
-        await AsyncStorage.setItem(SHOW_SCRIPT_KEY, "true");
-        await AsyncStorage.setItem(RSVP_HIGHLIGHT_KEY, "true");
-        await AsyncStorage.setItem(SETTINGS_VERSION_KEY, CURRENT_SETTINGS_VERSION);
+        AsyncStorage.multiSet([
+          [RSVP_ENABLED_KEY, "true"],
+          [SHOW_SCRIPT_KEY, "true"],
+          [RSVP_HIGHLIGHT_KEY, "true"],
+          [SETTINGS_VERSION_KEY, CURRENT_SETTINGS_VERSION],
+        ]);
         setRsvpEnabled(true);
         setShowScript(true);
         setRsvpHighlight(true);
       } else {
-        // Load saved settings
-        const rsvpValue = await AsyncStorage.getItem(RSVP_ENABLED_KEY);
-        if (rsvpValue !== null) {
-          setRsvpEnabled(rsvpValue === "true");
-        }
-        const showScriptValue = await AsyncStorage.getItem(SHOW_SCRIPT_KEY);
-        if (showScriptValue !== null) {
-          setShowScript(showScriptValue === "true");
-        }
+        const rsvpValue = map.get(RSVP_ENABLED_KEY);
+        if (rsvpValue !== null && rsvpValue !== undefined) setRsvpEnabled(rsvpValue === "true");
+        const showScriptValue = map.get(SHOW_SCRIPT_KEY);
+        if (showScriptValue !== null && showScriptValue !== undefined) setShowScript(showScriptValue === "true");
+        const highlightValue = map.get(RSVP_HIGHLIGHT_KEY);
+        if (highlightValue !== null && highlightValue !== undefined) setRsvpHighlight(highlightValue === "true");
       }
-
-      // Load other settings normally
-      const autoReplayValue = await AsyncStorage.getItem(AUTO_REPLAY_KEY);
-      if (autoReplayValue !== null) {
-        setAutoReplay(autoReplayValue === "true");
-      }
-      const fontSizeValue = await AsyncStorage.getItem(RSVP_FONT_SIZE_KEY);
-      if (fontSizeValue !== null && ["S", "M", "L", "XL"].includes(fontSizeValue)) {
-        setRsvpFontSize(fontSizeValue as RSVPFontSize);
-      }
-      const highlightValue = await AsyncStorage.getItem(RSVP_HIGHLIGHT_KEY);
-      if (highlightValue !== null) {
-        setRsvpHighlight(highlightValue === "true");
-      }
-      const hapticValue = await AsyncStorage.getItem(HAPTIC_ENABLED_KEY);
-      if (hapticValue !== null) {
-        setHapticEnabled(hapticValue === "true");
-      }
-
-      // Check if focus mode tip should be shown (one-time only)
-      const tipShown = await AsyncStorage.getItem(FOCUS_MODE_TIP_SHOWN_KEY);
-      if (tipShown !== "true") {
-        setShowFocusModeTip(true);
-      }
-    };
-
-    loadSettings();
+      const autoReplayValue = map.get(AUTO_REPLAY_KEY);
+      if (autoReplayValue !== null && autoReplayValue !== undefined) setAutoReplay(autoReplayValue === "true");
+      const fontSizeValue = map.get(RSVP_FONT_SIZE_KEY);
+      if (fontSizeValue && ["S", "M", "L", "XL"].includes(fontSizeValue)) setRsvpFontSize(fontSizeValue as RSVPFontSize);
+      const hapticValue = map.get(HAPTIC_ENABLED_KEY);
+      if (hapticValue !== null && hapticValue !== undefined) setHapticEnabled(hapticValue === "true");
+      const tipShown = map.get(FOCUS_MODE_TIP_SHOWN_KEY);
+      if (tipShown !== "true") setShowFocusModeTip(true);
+    });
   }, []);
 
   // Dismiss focus mode tip and mark as shown

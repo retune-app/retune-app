@@ -959,7 +959,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
                   <Feather
                     name={playerState === "playing" ? "pause" : "play"}
                     size={18}
-                    color={ACCENT_GOLD}
+                    color="#FFFFFF"
                     style={playerState !== "playing" ? { marginLeft: 2 } : undefined}
                   />
                 </Pressable>
@@ -969,14 +969,14 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
                 style={styles.controlBtn}
                 testID="button-voice-selector"
               >
-                <Ionicons name={currentVoiceOption.icon} size={18} color={ACCENT_GOLD} />
+                <Ionicons name={currentVoiceOption.icon} size={18} color="#FFFFFF" />
               </Pressable>
               <Pressable
                 onPress={() => { setShowSoundSwitcher(true); resetControlsTimer(); }}
                 style={styles.controlBtn}
                 testID="button-sound-switcher"
               >
-                <Feather name="music" size={18} color={ACCENT_GOLD} />
+                <Feather name="music" size={18} color="#FFFFFF" />
               </Pressable>
             </>
           ) : null}
@@ -1071,8 +1071,8 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
                   style={styles.replayButton}
                   testID="button-replay-guided-moment"
                 >
-                  <Feather name="rotate-ccw" size={16} color={ACCENT_GOLD} />
-                  <ThemedText type="caption" style={{ color: ACCENT_GOLD, marginLeft: 6 }}>
+                  <Feather name="rotate-ccw" size={16} color="#FFFFFF" />
+                  <ThemedText type="caption" style={{ color: "#FFFFFF", marginLeft: 6 }}>
                     {"Replay"}
                   </ThemedText>
                 </Pressable>
@@ -1604,13 +1604,13 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   moodBadge: {
-    backgroundColor: `${ACCENT_GOLD}20`,
-    paddingVertical: 3,
-    paddingHorizontal: 10,
-    borderRadius: 10,
+    backgroundColor: "rgba(0,0,0,0.3)",
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    borderRadius: 12,
   },
   moodBadgeText: {
-    color: ACCENT_GOLD,
+    color: "rgba(255,255,255,0.85)",
     fontSize: 11,
     fontWeight: "600",
   },
@@ -1618,7 +1618,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: `${ACCENT_GOLD}15`,
+    backgroundColor: "rgba(0,0,0,0.3)",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1626,7 +1626,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "rgba(255,255,255,0.08)",
+    backgroundColor: "rgba(0,0,0,0.3)",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1636,9 +1636,9 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   bottomPlayBtn: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     borderWidth: 1.5,
     borderColor: `${ACCENT_GOLD}40`,
     alignItems: "center",
@@ -1657,16 +1657,16 @@ const styles = StyleSheet.create({
   replayButton: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 22,
-    borderRadius: BorderRadius.md,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: BorderRadius.full,
     borderWidth: 1,
-    borderColor: `${ACCENT_GOLD}30`,
+    borderColor: "rgba(255,255,255,0.2)",
   },
   doneButtonGradient: {
-    paddingVertical: 12,
-    paddingHorizontal: 28,
-    borderRadius: BorderRadius.md,
+    paddingVertical: 10,
+    paddingHorizontal: 26,
+    borderRadius: BorderRadius.full,
     alignItems: "center",
     justifyContent: "center",
   },

@@ -85,6 +85,8 @@ export default function PlayerScreen() {
   // Query for user's voice status (whether they have a personal voice set up)
   const { data: voiceStatus } = useQuery<{ hasPersonalVoice: boolean; hasClonedVoice: boolean }>({
     queryKey: ["/api/voice-samples/status"],
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 
   // Voice regeneration state

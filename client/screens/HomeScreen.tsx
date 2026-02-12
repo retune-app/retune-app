@@ -282,6 +282,8 @@ export default function HomeScreen() {
           setShowVoiceNudge(true);
         }
       });
+    } else if (user?.hasVoiceSample) {
+      setShowVoiceNudge(false);
     }
   }, [user, voiceNudgeDismissed]);
 

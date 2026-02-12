@@ -58,6 +58,8 @@ export default function VoiceSettingsScreen() {
 
   const { data: voicePreferences, isLoading: isLoadingVoicePrefs } = useQuery<VoicePreferences>({
     queryKey: ["/api/voice-preferences"],
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 
   const { data: voiceOptions } = useQuery<VoiceOptions>({
@@ -469,117 +471,124 @@ export default function VoiceSettingsScreen() {
         </View>
       ) : null}
 
-      {(voicePreferences?.preferredVoiceType === "ai" || !voicePreferences?.preferredVoiceType) ? (
-        <>
-          <View style={styles.section}>
-            <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-              VOICE GENDER
-            </ThemedText>
-            <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
-              <View style={styles.toggleContainer}>
-                <Pressable
-                  onPress={() => handleVoiceGenderChange("female")}
-                  style={[
-                    styles.genderButton,
-                    { 
-                      backgroundColor: currentGender === "female"
-                        ? ACCENT_GOLD 
-                        : theme.backgroundSecondary,
-                      borderColor: ACCENT_GOLD,
-                    },
-                  ]}
-                  testID="button-gender-female"
-                >
-                  <Text style={[
-                    styles.toggleText,
-                    { color: currentGender === "female" ? "#FFFFFF" : theme.text }
-                  ]}>Female</Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => handleVoiceGenderChange("male")}
-                  style={[
-                    styles.genderButton,
-                    { 
-                      backgroundColor: currentGender === "male" 
-                        ? ACCENT_GOLD 
-                        : theme.backgroundSecondary,
-                      borderColor: ACCENT_GOLD,
-                    },
-                  ]}
-                  testID="button-gender-male"
-                >
-                  <Text style={[
-                    styles.toggleText,
-                    { color: currentGender === "male" ? "#FFFFFF" : theme.text }
-                  ]}>Male</Text>
-                </Pressable>
-              </View>
-            </View>
-          </View>
+      <View style={styles.section}>
+        <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+          AI VOICE OPTIONS
+        </ThemedText>
+        <ThemedText type="small" style={[styles.hintText, { color: theme.textSecondary, marginBottom: Spacing.sm }]}>
+          {voicePreferences?.preferredVoiceType === "personal" 
+            ? "These voices are used as fallback when Inner Voice is unavailable"
+            : "Choose your preferred AI voice for affirmations"}
+        </ThemedText>
+      </View>
 
-          <View style={styles.section}>
-            <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-              SELECT VOICE
-            </ThemedText>
-            <ThemedText type="small" style={[styles.hintText, { color: theme.textSecondary }]}>
-              Tap a voice to select and preview it
-            </ThemedText>
-            <View style={styles.voiceCardsContainer}>
-              {voices?.map((voice) => {
-                const isSelected = selectedVoiceId === voice.id;
-                const isPlaying = previewingVoiceId === voice.id;
-                const isLoading = isPreviewLoading && previewingVoiceId === voice.id;
-                
-                return (
-                  <Pressable
-                    key={voice.id}
-                    onPress={() => {
-                      if (!isSelected) {
-                        if (currentGender === "male") {
-                          updateVoicePreferences.mutate({ preferredMaleVoiceId: voice.id });
-                        } else {
-                          updateVoicePreferences.mutate({ preferredFemaleVoiceId: voice.id });
-                        }
-                      }
-                      handleVoicePreview(voice.id);
-                    }}
-                    style={[
-                      styles.voiceCard,
-                      { 
-                        backgroundColor: isSelected ? ACCENT_GOLD + "20" : theme.cardBackground,
-                        borderColor: isSelected ? ACCENT_GOLD : theme.border,
-                        borderWidth: isSelected ? 2 : 1,
-                      },
-                    ]}
-                    testID={`voice-card-${voice.id}`}
-                  >
-                    <View style={styles.voiceCardContent}>
-                      <View style={styles.voiceCardNameRow}>
-                        <ThemedText type="body" style={[{ fontWeight: "600" }, isSelected ? { color: ACCENT_GOLD } : undefined]}>
-                          {voice.name}
-                        </ThemedText>
-                        {isLoading ? (
-                          <ActivityIndicator size="small" color={ACCENT_GOLD} style={{ marginLeft: Spacing.sm }} />
-                        ) : isPlaying ? (
-                          <Feather name="volume-2" size={16} color={ACCENT_GOLD} style={{ marginLeft: Spacing.sm }} />
-                        ) : null}
-                      </View>
-                      <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                        {voice.description}
-                      </ThemedText>
-                    </View>
-                    {isSelected ? (
-                      <View style={[styles.voiceCardCheck, { backgroundColor: ACCENT_GOLD }]}>
-                        <Feather name="check" size={14} color="#FFFFFF" />
-                      </View>
-                    ) : null}
-                  </Pressable>
-                );
-              })}
-            </View>
+      <View style={styles.section}>
+        <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+          VOICE GENDER
+        </ThemedText>
+        <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
+          <View style={styles.toggleContainer}>
+            <Pressable
+              onPress={() => handleVoiceGenderChange("female")}
+              style={[
+                styles.genderButton,
+                { 
+                  backgroundColor: currentGender === "female"
+                    ? ACCENT_GOLD 
+                    : theme.backgroundSecondary,
+                  borderColor: ACCENT_GOLD,
+                },
+              ]}
+              testID="button-gender-female"
+            >
+              <Text style={[
+                styles.toggleText,
+                { color: currentGender === "female" ? "#FFFFFF" : theme.text }
+              ]}>Female</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => handleVoiceGenderChange("male")}
+              style={[
+                styles.genderButton,
+                { 
+                  backgroundColor: currentGender === "male" 
+                    ? ACCENT_GOLD 
+                    : theme.backgroundSecondary,
+                  borderColor: ACCENT_GOLD,
+                },
+              ]}
+              testID="button-gender-male"
+            >
+              <Text style={[
+                styles.toggleText,
+                { color: currentGender === "male" ? "#FFFFFF" : theme.text }
+              ]}>Male</Text>
+            </Pressable>
           </View>
-        </>
-      ) : null}
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+          SELECT VOICE
+        </ThemedText>
+        <ThemedText type="small" style={[styles.hintText, { color: theme.textSecondary }]}>
+          Tap a voice to select and preview it
+        </ThemedText>
+        <View style={styles.voiceCardsContainer}>
+          {voices?.map((voice) => {
+            const isSelected = selectedVoiceId === voice.id;
+            const isPlaying = previewingVoiceId === voice.id;
+            const isLoading = isPreviewLoading && previewingVoiceId === voice.id;
+            
+            return (
+              <Pressable
+                key={voice.id}
+                onPress={() => {
+                  if (!isSelected) {
+                    if (currentGender === "male") {
+                      updateVoicePreferences.mutate({ preferredMaleVoiceId: voice.id });
+                    } else {
+                      updateVoicePreferences.mutate({ preferredFemaleVoiceId: voice.id });
+                    }
+                  }
+                  handleVoicePreview(voice.id);
+                }}
+                style={[
+                  styles.voiceCard,
+                  { 
+                    backgroundColor: isSelected ? ACCENT_GOLD + "20" : theme.cardBackground,
+                    borderColor: isSelected ? ACCENT_GOLD : theme.border,
+                    borderWidth: isSelected ? 2 : 1,
+                  },
+                ]}
+                testID={`voice-card-${voice.id}`}
+              >
+                <View style={styles.voiceCardContent}>
+                  <View style={styles.voiceCardNameRow}>
+                    <ThemedText type="body" style={[{ fontWeight: "600" }, isSelected ? { color: ACCENT_GOLD } : undefined]}>
+                      {voice.name}
+                    </ThemedText>
+                    {isLoading ? (
+                      <ActivityIndicator size="small" color={ACCENT_GOLD} style={{ marginLeft: Spacing.sm }} />
+                    ) : isPlaying ? (
+                      <Feather name="volume-2" size={16} color={ACCENT_GOLD} style={{ marginLeft: Spacing.sm }} />
+                    ) : null}
+                  </View>
+                  <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                    {voice.description}
+                  </ThemedText>
+                </View>
+                {isSelected ? (
+                  <View style={[styles.voiceCardCheck, { backgroundColor: ACCENT_GOLD }]}>
+                    <Feather name="check" size={14} color="#FFFFFF" />
+                  </View>
+                ) : null}
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
 
       <View style={styles.section}>
         <Pressable

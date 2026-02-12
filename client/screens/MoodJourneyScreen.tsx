@@ -146,6 +146,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
   const hasNavigatedRef = useRef(false);
   const returningFromStepRef = useRef(false);
   const prefetchedMeditationRef = useRef<{ script: string; audioBase64: string; duration: number; wordTimings: Array<{ word: string; startMs: number; endMs: number }>; disclaimer: string } | null>(null);
+  const prefetchPromiseRef = useRef<Promise<void> | null>(null);
   const [showControls, setShowControls] = useState(false);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const controlsOpacity = useSharedValue(0);
@@ -476,7 +477,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
     const moodForScript = nextMeditationStep.mood || journey.targetMood;
     const timeOfDayForScript = getTimeOfDay();
     prefetchedMeditationRef.current = null;
-    (async () => {
+    const promise = (async () => {
       try {
         const baseHeaders = (): Record<string, string> => {
           const h: Record<string, string> = { "Content-Type": "application/json" };
@@ -530,6 +531,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
         prefetchedMeditationRef.current = null;
       }
     })();
+    prefetchPromiseRef.current = promise;
   }, [journey]);
 
   const startCurrentStep = useCallback(() => {
@@ -563,7 +565,12 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
       })();
     } else if (currentStep.type === "meditate") {
       setPhase("navigating-meditation");
-      setTimeout(() => {
+      (async () => {
+        if (prefetchPromiseRef.current) {
+          await prefetchPromiseRef.current;
+          prefetchPromiseRef.current = null;
+        }
+        await new Promise(resolve => setTimeout(resolve, 800));
         if (!hasNavigatedRef.current) {
           hasNavigatedRef.current = true;
           returningFromStepRef.current = true;
@@ -574,7 +581,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
             prefetchedMoment: prefetchedMeditationRef.current,
           });
         }
-      }, 1500);
+      })();
     } else if (currentStep.type === "listen") {
       setPhase("navigating-listen");
       setTimeout(() => {
@@ -641,7 +648,12 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
       })();
     } else if (step.type === "meditate") {
       setPhase("navigating-meditation");
-      setTimeout(() => {
+      (async () => {
+        if (prefetchPromiseRef.current) {
+          await prefetchPromiseRef.current;
+          prefetchPromiseRef.current = null;
+        }
+        await new Promise(resolve => setTimeout(resolve, 800));
         if (!hasNavigatedRef.current) {
           hasNavigatedRef.current = true;
           returningFromStepRef.current = true;
@@ -652,7 +664,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
             prefetchedMoment: prefetchedMeditationRef.current,
           });
         }
-      }, 1500);
+      })();
     } else if (step.type === "listen") {
       setPhase("navigating-listen");
       setTimeout(() => {

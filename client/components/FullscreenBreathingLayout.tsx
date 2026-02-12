@@ -46,6 +46,7 @@ interface FullscreenBreathingLayoutProps {
   renderBelowCircle?: () => React.ReactNode;
   renderStopButton?: () => React.ReactNode;
   hapticsEnabled?: boolean;
+  hideTopControls?: boolean;
 }
 
 export default function FullscreenBreathingLayout({
@@ -70,6 +71,7 @@ export default function FullscreenBreathingLayout({
   renderBelowCircle,
   renderStopButton,
   hapticsEnabled,
+  hideTopControls = false,
 }: FullscreenBreathingLayoutProps) {
   const screenWidth = Dimensions.get("window").width;
   const screenHeight = Dimensions.get("window").height;
@@ -146,25 +148,27 @@ export default function FullscreenBreathingLayout({
 
   return (
     <Pressable style={[styles.landscapeContainer, { backgroundColor }]} onPress={onToggleControls}>
-      <Animated.View style={[styles.topGradientOverlay, { paddingTop: insets.top + Spacing.md }, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"} onStartShouldSetResponder={() => true}>
-        <LinearGradient
-          colors={["rgba(0,0,0,0.7)", "rgba(0,0,0,0.45)", "transparent"]}
-          style={StyleSheet.absoluteFill}
-        />
-        <View style={styles.fsTopControls}>
-          <View style={styles.fsTopLeft}>
-            <Text style={[styles.fsTechniqueBadge, { backgroundColor: "rgba(0,0,0,0.35)", color: "#FFFFFF" }]}>
-              {technique.name}
-            </Text>
+      {!hideTopControls ? (
+        <Animated.View style={[styles.topGradientOverlay, { paddingTop: insets.top + Spacing.md }, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"} onStartShouldSetResponder={() => true}>
+          <LinearGradient
+            colors={["rgba(0,0,0,0.7)", "rgba(0,0,0,0.45)", "transparent"]}
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={styles.fsTopControls}>
+            <View style={styles.fsTopLeft}>
+              <Text style={[styles.fsTechniqueBadge, { backgroundColor: "rgba(0,0,0,0.35)", color: "#FFFFFF" }]}>
+                {technique.name}
+              </Text>
+            </View>
+            <View style={styles.fsTopRight}>
+              {renderTopRightExtra ? renderTopRightExtra() : null}
+              <Pressable onPress={() => { resetControlsTimer(); onClose(); }} style={styles.fsCloseBtn}>
+                <Feather name="x" size={22} color="#FFFFFF" />
+              </Pressable>
+            </View>
           </View>
-          <View style={styles.fsTopRight}>
-            {renderTopRightExtra ? renderTopRightExtra() : null}
-            <Pressable onPress={() => { resetControlsTimer(); onClose(); }} style={styles.fsCloseBtn}>
-              <Feather name="x" size={22} color="#FFFFFF" />
-            </Pressable>
-          </View>
-        </View>
-      </Animated.View>
+        </Animated.View>
+      ) : null}
 
       <View style={styles.portraitCenterSection}>
         {renderProgressRing ? renderProgressRing(portraitCircleSize) : null}

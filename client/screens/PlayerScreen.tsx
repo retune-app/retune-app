@@ -234,24 +234,13 @@ export default function PlayerScreen() {
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <View style={{ width: 3, height: 14, borderRadius: 2, backgroundColor: theme.primary, marginRight: 8 }} />
           <ThemedText type="caption" style={{ color: theme.primary, textTransform: 'uppercase', letterSpacing: 2, fontWeight: '600', fontSize: 11 }}>
-            {isInJourney ? "Journey" : "My Affirmation"}
+            My Affirmation
           </ThemedText>
         </View>
       ),
+      headerShown: !isInJourney,
       headerLeft: () => (
-        isInJourney ? (
-          <HeaderButton
-            onPress={() => (navigation as any).navigate("Main")}
-            testID="button-end-journey"
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <Feather name="check-circle" size={18} color={theme.primary} />
-              <ThemedText type="caption" style={{ color: theme.primary, fontWeight: '700', fontSize: 12 }}>
-                End Journey
-              </ThemedText>
-            </View>
-          </HeaderButton>
-        ) : isNew && !hasSaved ? (
+        isNew && !hasSaved ? (
           <HeaderButton
             onPress={handleSave}
             testID="button-save-affirmation"
@@ -272,14 +261,12 @@ export default function PlayerScreen() {
         )
       ),
       headerRight: () => (
-        isInJourney ? null : (
-          <HeaderButton
-            onPress={handleDelete}
-            testID="button-delete-affirmation"
-          >
-            <Feather name="trash-2" size={22} color="#E53935" />
-          </HeaderButton>
-        )
+        <HeaderButton
+          onPress={handleDelete}
+          testID="button-delete-affirmation"
+        >
+          <Feather name="trash-2" size={22} color="#E53935" />
+        </HeaderButton>
       ),
     });
   }, [navigation, handleSave, handleDelete, autoSaveMutation.isPending, theme, isNew, hasSaved, journeyContext]);
@@ -661,7 +648,7 @@ export default function PlayerScreen() {
         style={styles.scrollView}
         contentContainerStyle={[
           styles.content,
-          { paddingTop: headerHeight + (journeyContext ? 40 : 0) + Spacing.lg, paddingBottom: insets.bottom + Spacing["2xl"] },
+          { paddingTop: journeyContext ? (insets.top + 70) : (headerHeight + Spacing.lg), paddingBottom: insets.bottom + Spacing["2xl"] },
         ]}
         showsVerticalScrollIndicator={false}
       >

@@ -30,6 +30,7 @@ import Svg, { Circle } from "react-native-svg";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import FullscreenBreathingLayout from "@/components/FullscreenBreathingLayout";
+import JourneyStepBar from "@/components/JourneyStepBar";
 import { MeditationIcon } from "@/components/MeditationIcon";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
@@ -609,6 +610,15 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
 
     return (
       <Animated.View entering={FadeIn.duration(600)} exiting={FadeOut.duration(400)} style={styles.breathingContainer}>
+        <JourneyStepBar
+          currentStep={currentStepIndex}
+          totalSteps={journey.steps.length}
+          stepLabels={journeyStepLabels}
+          onPrevious={handleGoBack}
+          onSkip={currentStepIndex < journey.steps.length - 1 ? handleSkipStep : undefined}
+          showSkip={currentStepIndex < journey.steps.length - 1}
+          showPrevious={true}
+        />
         <FullscreenBreathingLayout
           technique={technique}
           isPlaying={breathingPlaying}
@@ -626,6 +636,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
           backgroundColor={NAVY}
           showContent={countdownValue === null}
           hapticsEnabled={hapticsEnabled}
+          hideTopControls={true}
           stats={[
             { label: "Time Left", value: formatTime(breathingTimeLeft) },
             { label: "Progress", value: `${Math.round(((BREATHING_DURATION_SECONDS - breathingTimeLeft) / BREATHING_DURATION_SECONDS) * 100)}%`, color: technique.color || ACCENT_GOLD },
@@ -633,20 +644,6 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
           ]}
           renderProgressRing={(size) => renderProgressRing(size)}
           renderCircleOverlay={(size) => renderCountdownOverlay(size)}
-          renderBelowCircle={journey.steps.length > 1 ? () => (
-            <View style={styles.stepNavRow}>
-              <Pressable onPress={handleGoBack} style={[styles.stepNavButton, { borderColor: "rgba(255,255,255,0.35)" }]} testID="button-journey-back">
-                <Feather name="chevron-left" size={14} color="rgba(255,255,255,0.9)" />
-                <Text style={styles.stepNavLabel}>{currentStepIndex > 0 ? "Previous" : "Exit"}</Text>
-              </Pressable>
-              {currentStepIndex < journey.steps.length - 1 ? (
-                <Pressable onPress={handleSkipStep} style={[styles.stepNavButton, { borderColor: "rgba(255,255,255,0.35)" }]} testID="button-journey-skip">
-                  <Text style={styles.stepNavLabel}>Next step</Text>
-                  <Feather name="chevron-right" size={14} color="rgba(255,255,255,0.9)" />
-                </Pressable>
-              ) : null}
-            </View>
-          ) : undefined}
         />
       </Animated.View>
     );

@@ -55,15 +55,12 @@ export function AuthScreen() {
   const isAndroid = Platform.OS === "android";
   const isWeb = Platform.OS === "web";
   
-  const hasGoogleClientId = (isWeb || isAndroid) && !!process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+  const hasGoogleClientId = !!process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || (isIOS && !!process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID);
 
-  const [request, response, promptAsync] = Google.useAuthRequest(
-    (isWeb || isAndroid) ? {
-      webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-    } : {
-      clientId: "unused",
-    }
-  );
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+  });
 
   React.useEffect(() => {
     if (response?.type === "success") {

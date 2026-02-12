@@ -107,7 +107,7 @@ export default function JourneyStepBar({
         <View style={styles.rightSection}>
           {showEndJourney && onEndJourney ? (
             <Pressable onPress={onEndJourney} style={styles.endButton} hitSlop={8}>
-              <Feather name="check-circle" size={14} color={ACCENT_GOLD} />
+              <Feather name="check-circle" size={14} color="#1A1A2E" />
               <Text style={styles.endButtonText}>End</Text>
             </Pressable>
           ) : showSkip && onSkip ? (
@@ -223,16 +223,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
+    paddingVertical: 7,
+    paddingHorizontal: 12,
     borderRadius: 14,
-    backgroundColor: "rgba(201,162,39,0.2)",
-    borderWidth: 1,
-    borderColor: "rgba(201,162,39,0.4)",
+    backgroundColor: "#FFFFFF",
   },
   endButtonText: {
     fontSize: 12,
-    color: ACCENT_GOLD,
+    color: "#1A1A2E",
     fontWeight: "700",
   },
 });

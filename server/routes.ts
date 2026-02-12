@@ -145,6 +145,41 @@ const MEDITATION_MOOD_CONFIG: Record<string, {
     elevenLabsStability: 0.6,
     elevenLabsStyle: 0.2,
   },
+  energized: {
+    scriptTone: "bright, uplifting, and invigorating — like the first breath of fresh mountain air. Use dynamic, forward-moving language that celebrates vitality and momentum.",
+    humeSpeed: 1.0,
+    pauseSeconds: 1.3,
+    elevenLabsStability: 0.45,
+    elevenLabsStyle: 0.4,
+  },
+  grateful: {
+    scriptTone: "warm, reverent, and heart-centered — like sunlight pouring through a window onto your chest. Use rich, appreciative language that savors each moment and connection.",
+    humeSpeed: 0.9,
+    pauseSeconds: 1.6,
+    elevenLabsStability: 0.55,
+    elevenLabsStyle: 0.35,
+  },
+  confident: {
+    scriptTone: "strong, grounded, and empowering — like standing tall on solid ground with the wind at your back. Use affirming, bold language that reinforces inner strength and self-trust.",
+    humeSpeed: 0.95,
+    pauseSeconds: 1.4,
+    elevenLabsStability: 0.5,
+    elevenLabsStyle: 0.4,
+  },
+  focused: {
+    scriptTone: "clear, precise, and centering — like a laser beam of gentle attention cutting through noise. Use clean, purposeful language that sharpens awareness and quiets distraction.",
+    humeSpeed: 0.92,
+    pauseSeconds: 1.5,
+    elevenLabsStability: 0.55,
+    elevenLabsStyle: 0.3,
+  },
+  joyful: {
+    scriptTone: "light, playful, and radiant — like bubbles of laughter rising through warm water. Use buoyant, celebratory language that invites smiling from the inside out.",
+    humeSpeed: 0.95,
+    pauseSeconds: 1.4,
+    elevenLabsStability: 0.45,
+    elevenLabsStyle: 0.45,
+  },
 };
 
 const PILLAR_VOICE_CONFIG: Record<string, {
@@ -3016,7 +3051,7 @@ Rules for tone:
               `- The day/time reference should feel organic and conversational — never robotic or templated. Vary your approach each time.`,
               `- The ending must never feel rushed or cut short. The last 2-3 sentences should slow down in pacing and feel like a soft exhale.`,
               `- Reference accessible neuroscience concepts naturally (e.g., "your nervous system settles," "each breath sends a signal of safety")`,
-              `- Mood-specific emphasis: stressed→release/safety, anxious→grounding/presence, tired→vitality/awakening, sad→warmth/comfort, overwhelmed→simplicity/clarity, calm→deepening/peace`,
+              `- Mood-specific emphasis: stressed→release/safety, anxious→grounding/presence, tired→vitality/awakening, sad→warmth/comfort, overwhelmed→simplicity/clarity, calm→deepening/peace, energized→momentum/vitality, grateful→appreciation/connection, confident→strength/self-trust, focused→clarity/precision, joyful→celebration/lightness`,
               `- This is a mindfulness exercise, not medical advice`,
               ``,
               `Return ONLY the script text, no formatting or labels.`,
@@ -3055,7 +3090,7 @@ Rules for tone:
 
     try {
       const { script, usePersonalVoice, voiceId: rawVoiceId, mood } = req.body;
-      const moodConfig = mood ? MEDITATION_MOOD_CONFIG[mood] : undefined;
+      const moodConfig = mood ? (MEDITATION_MOOD_CONFIG[mood] || MEDITATION_MOOD_CONFIG.calm) : MEDITATION_MOOD_CONFIG.calm;
 
       if (!script || typeof script !== "string" || script.trim().length === 0) {
         return res.status(400).json({ error: "script is required and must be a non-empty string" });
@@ -3223,7 +3258,7 @@ Rules for tone:
               `- The day/time reference should feel organic and conversational — never robotic or templated. Vary your approach each time.`,
               `- The ending must never feel rushed or cut short. The last 2-3 sentences should slow down in pacing and feel like a soft exhale.`,
               `- Reference accessible neuroscience concepts naturally (e.g., "your nervous system settles," "each breath sends a signal of safety")`,
-              `- Mood-specific emphasis: stressed→release/safety, anxious→grounding/presence, tired→vitality/awakening, sad→warmth/comfort, overwhelmed→simplicity/clarity, calm→deepening/peace`,
+              `- Mood-specific emphasis: stressed→release/safety, anxious→grounding/presence, tired→vitality/awakening, sad→warmth/comfort, overwhelmed→simplicity/clarity, calm→deepening/peace, energized→momentum/vitality, grateful→appreciation/connection, confident→strength/self-trust, focused→clarity/precision, joyful→celebration/lightness`,
               `- This is a mindfulness exercise, not medical advice`,
               ``,
               `Return ONLY the script text, no formatting or labels.`,

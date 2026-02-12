@@ -573,9 +573,9 @@ export default function PlayerScreen() {
   const displayDuration = currentAffirmation?.id === affirmationId ? duration : 0;
   const progress = displayDuration > 0 ? displayPosition / displayDuration : 0;
   
-  const rsvpPositionOffset = 100 * playbackSpeed;
-  const rsvpPosition = displayDuration > 0 && (displayPosition + rsvpPositionOffset) >= displayDuration
-    ? displayPosition
+  const rsvpPositionOffset = 175 * playbackSpeed;
+  const rsvpPosition = displayDuration > 0
+    ? Math.min(displayPosition + rsvpPositionOffset, displayDuration - 1)
     : displayPosition + rsvpPositionOffset;
 
   return (

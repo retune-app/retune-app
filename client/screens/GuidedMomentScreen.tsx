@@ -247,6 +247,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
   const controlsTimerRef = useRef<NodeJS.Timeout | null>(null);
   const autoPlayRef = useRef(false);
   const playAudioRef = useRef<() => Promise<void>>(() => Promise.resolve());
+  const handleCloseRef = useRef<(() => void) | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const cachedScriptRef = useRef<{ script: string; disclaimer: string; duration: number } | null>(null);
   const scriptFetchingRef = useRef(false);
@@ -544,6 +545,8 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
     }
   }, [cleanupVoice, stopBackgroundMusic, navigation, journeyContext]);
 
+  handleCloseRef.current = handleClose;
+
   const handleSwitchSoundDuringPlayback = useCallback(async (soundId: BackgroundMusicType) => {
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
     setSelectedSound(soundId);
@@ -654,6 +657,11 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
               setPlayerState("finished");
               progressAnim.value = withTiming(1, { duration: 300 });
               try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
+              if (journeyContext) {
+                setTimeout(() => {
+                  handleCloseRef.current?.();
+                }, 1200);
+              }
             }
           }
         }

@@ -113,6 +113,8 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
   const breathingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const hasNavigatedRef = useRef(false);
   const returningFromStepRef = useRef(false);
+  const [showControls, setShowControls] = useState(false);
+  const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const currentMoodInfo = MOOD_MAP[journey.currentMood] || MOOD_MAP.calm;
   const targetMoodInfo = MOOD_MAP[journey.targetMood] || MOOD_MAP.grateful;
@@ -287,6 +289,31 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
     advanceToNextStep();
   }, [advanceToNextStep]);
 
+  const toggleControls = useCallback(() => {
+    setShowControls((prev) => {
+      const next = !prev;
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+        controlsTimeoutRef.current = null;
+      }
+      if (next) {
+        controlsTimeoutRef.current = setTimeout(() => {
+          setShowControls(false);
+          controlsTimeoutRef.current = null;
+        }, 4000);
+      }
+      return next;
+    });
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const handleEndJourney = useCallback(() => {
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
     navigation.navigate("Main" as any);
@@ -419,57 +446,66 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
         exiting={FadeOut.duration(400)}
         style={styles.breathingContainer}
       >
-        {renderStepProgress()}
+        <Pressable onPress={toggleControls} style={styles.breathingPressable}>
+          {showControls ? (
+            <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(200)}>
+              {renderStepProgress()}
+              <ThemedText type="caption" style={[styles.stepLabel, { color: ACCENT_GOLD, marginTop: Spacing.md }]}>
+                {`Step ${currentStepIndex + 1} of ${journey.steps.length}`}
+              </ThemedText>
+              <ThemedText type="h3" style={[styles.breathingTitle, { color: theme.text }]}>
+                {technique.name}
+              </ThemedText>
+              <ThemedText type="caption" style={[styles.breathingNote, { color: theme.textSecondary }]}>
+                {currentStep?.note || technique.description}
+              </ThemedText>
+            </Animated.View>
+          ) : null}
 
-        <ThemedText type="caption" style={[styles.stepLabel, { color: ACCENT_GOLD }]}>
-          {`Step ${currentStepIndex + 1} of ${journey.steps.length}`}
-        </ThemedText>
-        <ThemedText type="h3" style={[styles.breathingTitle, { color: theme.text }]}>
-          {technique.name}
-        </ThemedText>
-        <ThemedText type="caption" style={[styles.breathingNote, { color: theme.textSecondary }]}>
-          {currentStep?.note || technique.description}
-        </ThemedText>
-
-        <View style={styles.breathingCircleWrapper}>
-          <BreathingCircle
-            technique={technique}
-            isPlaying={breathingPlaying}
-            onCycleComplete={() => setCyclesCompleted((c) => c + 1)}
-            size={220}
-          />
-        </View>
-
-        <ThemedText type="h2" style={[styles.timerText, { color: theme.text }]}>
-          {formatTime(breathingTimeLeft)}
-        </ThemedText>
-
-        <View style={styles.breathingControls}>
-          <Pressable
-            onPress={() => {
-              try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
-              setBreathingPlaying(!breathingPlaying);
-            }}
-            style={[styles.controlButton, { backgroundColor: `${ACCENT_GOLD}15` }]}
-            testID="button-breathing-toggle"
-          >
-            <Feather
-              name={breathingPlaying ? "pause" : "play"}
-              size={20}
-              color={ACCENT_GOLD}
+          <View style={styles.breathingCircleWrapper}>
+            <BreathingCircle
+              technique={technique}
+              isPlaying={breathingPlaying}
+              onCycleComplete={() => setCyclesCompleted((c) => c + 1)}
+              size={220}
             />
-          </Pressable>
-          <Pressable
-            onPress={handleSkipBreathing}
-            style={[styles.skipButton, { borderColor: `${theme.textSecondary}30` }]}
-            testID="button-skip-breathing"
-          >
-            <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-              {breathingTimeLeft < BREATHING_DURATION_SECONDS ? "Done" : "Skip"}
-            </ThemedText>
-            <Feather name="chevron-right" size={14} color={theme.textSecondary} />
-          </Pressable>
-        </View>
+          </View>
+
+          {showControls ? (
+            <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(200)} style={styles.breathingBottomControls}>
+              <ThemedText type="h2" style={[styles.timerText, { color: theme.text }]}>
+                {formatTime(breathingTimeLeft)}
+              </ThemedText>
+
+              <View style={styles.breathingControls}>
+                <Pressable
+                  onPress={() => {
+                    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+                    setBreathingPlaying(!breathingPlaying);
+                  }}
+                  style={[styles.controlButton, { backgroundColor: `${ACCENT_GOLD}15` }]}
+                  testID="button-breathing-toggle"
+                >
+                  <Feather
+                    name={breathingPlaying ? "pause" : "play"}
+                    size={20}
+                    color={ACCENT_GOLD}
+                  />
+                </Pressable>
+                <Pressable
+                  onPress={handleSkipBreathing}
+                  style={[styles.skipButton, { borderColor: `${theme.textSecondary}30` }]}
+                  testID="button-skip-breathing"
+                >
+                  <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                    {breathingTimeLeft < BREATHING_DURATION_SECONDS ? "Done" : "Skip"}
+                  </ThemedText>
+                  <Feather name="chevron-right" size={14} color={theme.textSecondary} />
+                </Pressable>
+              </View>
+            </Animated.View>
+          ) : null}
+        </Pressable>
       </Animated.View>
     );
   };
@@ -600,7 +636,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
       />
 
       <View style={[styles.header, { paddingTop: insets.top + Spacing.sm }]}>
-        {phase !== "intro" && phase !== "complete" ? (
+        {phase !== "intro" && phase !== "complete" && (phase !== "breathing" || showControls) ? (
           <Pressable
             onPress={handleEndJourney}
             style={styles.closeButton}
@@ -724,9 +760,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  breathingPressable: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
+  },
+  breathingBottomControls: {
+    alignItems: "center",
+  },
   breathingTitle: {
     textAlign: "center",
-    marginBottom: Spacing.xs,
+    marginBottom: Spacing.sm,
   },
   breathingNote: {
     textAlign: "center",
@@ -738,14 +783,14 @@ const styles = StyleSheet.create({
   breathingCircleWrapper: {
     alignItems: "center",
     justifyContent: "center",
-    marginVertical: Spacing.md,
+    marginVertical: Spacing.xl,
   },
   timerText: {
     textAlign: "center",
     fontWeight: "300",
-    fontSize: 36,
+    fontSize: 22,
     fontVariant: ["tabular-nums"],
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.sm,
   },
   breathingControls: {
     flexDirection: "row",

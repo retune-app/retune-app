@@ -64,6 +64,7 @@ interface JourneyStep {
   techniqueId?: string;
   techniqueName?: string;
   note: string;
+  affirmationId?: number | null;
 }
 
 interface JourneyResponse {
@@ -179,6 +180,33 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
       (navigation as any).navigate("MoodJourney", { journey: journeyResponse });
     }
   }, [journeyResponse, navigation, handleClose]);
+
+  const handleSingleStep = useCallback((step: JourneyStep) => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (e) {}
+    handleClose();
+    if (step.type === "breathe") {
+      const singleJourney = {
+        acknowledgment: journeyResponse?.acknowledgment || "",
+        currentMood: journeyResponse?.currentMood || currentMood?.id || "calm",
+        targetMood: journeyResponse?.targetMood || targetMood?.id || "calm",
+        steps: [step],
+      };
+      (navigation as any).navigate("MoodJourney", { journey: singleJourney });
+    } else if (step.type === "meditate") {
+      navigation.navigate("GuidedMoment", {
+        mood: journeyResponse?.targetMood || targetMood?.id || "calm",
+        timeOfDay: getTimeOfDay(),
+      });
+    } else if (step.type === "listen") {
+      if (step.affirmationId) {
+        navigation.navigate("Player", { affirmationId: step.affirmationId, autoPlay: true });
+      } else {
+        navigation.navigate("Create");
+      }
+    }
+  }, [journeyResponse, currentMood, targetMood, navigation, handleClose]);
 
   const getMoodById = (id: string): MoodOption | undefined =>
     MOOD_OPTIONS.find((m) => m.id === id);
@@ -370,6 +398,10 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
                   </ThemedText>
                 </View>
 
+                <ThemedText type="small" style={[styles.stepsHint, { color: theme.textSecondary }]}>
+                  {"Tap any step to try it on its own"}
+                </ThemedText>
+
                 <View style={styles.stepsContainer}>
                   {journeyResponse.steps.map((step, index) => {
                     const stepColor = step.type === "breathe" ? "#50C9B0" : step.type === "meditate" ? "#7B68EE" : ACCENT_GOLD;
@@ -382,7 +414,14 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
                             ))}
                           </View>
                         ) : null}
-                        <View style={[styles.stepCard, { backgroundColor: `${stepColor}08`, borderColor: `${stepColor}20` }]}>
+                        <Pressable
+                          onPress={() => handleSingleStep(step)}
+                          style={({ pressed }) => [
+                            styles.stepCard,
+                            { backgroundColor: pressed ? `${stepColor}15` : `${stepColor}08`, borderColor: `${stepColor}20` },
+                          ]}
+                          testID={`button-step-${step.type}`}
+                        >
                           <View style={styles.stepHeader}>
                             <View style={[styles.stepNumberCircle, { backgroundColor: `${stepColor}20` }]}>
                               <ThemedText type="caption" style={{ color: stepColor, fontWeight: "700", fontSize: 12 }}>
@@ -395,11 +434,12 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
                             <ThemedText type="body" style={[styles.stepTypeLabel, { color: stepColor }]}>
                               {getStepTypeLabel(step.type)}
                             </ThemedText>
+                            <Feather name="chevron-right" size={16} color={`${stepColor}80`} style={styles.stepChevron} />
                           </View>
                           <ThemedText type="small" style={[styles.stepNote, { color: theme.textSecondary }]}>
                             {step.note}
                           </ThemedText>
-                        </View>
+                        </Pressable>
                       </View>
                     );
                   })}
@@ -417,11 +457,14 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
                     style={styles.beginButton}
                   >
                     <ThemedText type="body" style={styles.beginButtonText}>
-                      {"Begin Journey"}
+                      {"Begin Full Journey"}
                     </ThemedText>
                     <Feather name="arrow-right" size={18} color={NAVY} />
                   </LinearGradient>
                 </Pressable>
+                <ThemedText type="small" style={[styles.beginHint, { color: theme.textSecondary }]}>
+                  {"Experience all steps together, one after another"}
+                </ThemedText>
 
                 <Pressable onPress={handleClose} style={styles.dismissButton}>
                   <ThemedText type="caption" style={{ color: theme.textSecondary }}>
@@ -627,11 +670,25 @@ const styles = StyleSheet.create({
   stepTypeLabel: {
     fontWeight: "700",
     fontSize: 15,
+    flex: 1,
+  },
+  stepChevron: {
+    marginLeft: "auto",
   },
   stepNote: {
     fontSize: 13,
     lineHeight: 19,
     paddingLeft: 64,
+  },
+  stepsHint: {
+    textAlign: "center",
+    fontSize: 12,
+    marginBottom: Spacing.sm,
+  },
+  beginHint: {
+    textAlign: "center",
+    fontSize: 12,
+    marginBottom: Spacing.xs,
   },
   beginButtonWrapper: {
     borderRadius: BorderRadius.lg,

@@ -365,10 +365,10 @@ export default function HomeScreen() {
         <View style={styles.searchRow}>
           <Pressable
             onPress={() => setShowMoodCheckin(true)}
-            style={[styles.headerSettingsButton, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder }]}
+            style={[styles.headerIconButton, { backgroundColor: `${theme.gold}18`, borderColor: `${theme.gold}40`, shadowColor: theme.gold, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.35, shadowRadius: 8, elevation: 6 }]}
             testID="button-header-mood-checkin"
           >
-            <Feather name="smile" size={20} color={theme.gold} />
+            <Feather name="smile" size={26} color={theme.gold} />
           </Pressable>
           <View style={[styles.searchContainer, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder }]}>
             <Feather name="search" size={18} color={theme.placeholder} />
@@ -383,10 +383,10 @@ export default function HomeScreen() {
           </View>
           <Pressable
             onPress={handleSettingsPress}
-            style={[styles.headerSettingsButton, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder }]}
+            style={[styles.headerIconButton, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder }]}
             testID="button-header-settings"
           >
-            <Feather name="settings" size={20} color={theme.gold} />
+            <Feather name="settings" size={26} color={theme.gold} />
           </Pressable>
         </View>
         <View style={styles.badgeRow}>
@@ -722,6 +722,14 @@ const styles = StyleSheet.create({
   headerSettingsButton: {
     width: 44,
     height: 44,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  headerIconButton: {
+    width: 52,
+    height: 52,
     borderRadius: BorderRadius.full,
     borderWidth: 1,
     justifyContent: "center",

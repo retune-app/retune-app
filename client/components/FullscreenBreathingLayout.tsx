@@ -43,6 +43,7 @@ interface FullscreenBreathingLayoutProps {
   renderProgressRing?: (size: number) => React.ReactNode;
   renderTopRightExtra?: () => React.ReactNode;
   renderBottomExtra?: () => React.ReactNode;
+  renderBelowCircle?: () => React.ReactNode;
   renderStopButton?: () => React.ReactNode;
   hapticsEnabled?: boolean;
 }
@@ -66,6 +67,7 @@ export default function FullscreenBreathingLayout({
   renderProgressRing,
   renderTopRightExtra,
   renderBottomExtra,
+  renderBelowCircle,
   renderStopButton,
   hapticsEnabled,
 }: FullscreenBreathingLayoutProps) {
@@ -176,6 +178,12 @@ export default function FullscreenBreathingLayout({
         />
         {renderCircleOverlay ? renderCircleOverlay(48) : null}
       </View>
+
+      {renderBelowCircle ? (
+        <Animated.View style={[styles.belowCircleSection, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"} onStartShouldSetResponder={() => true}>
+          {renderBelowCircle()}
+        </Animated.View>
+      ) : null}
 
       <Animated.View style={[styles.bottomGradientOverlay, { paddingBottom: insets.bottom + Spacing.lg }, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"} onStartShouldSetResponder={() => true}>
         <LinearGradient
@@ -305,6 +313,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     zIndex: 1,
+  },
+  belowCircleSection: {
+    zIndex: 11,
+    alignItems: "center",
+    paddingHorizontal: Spacing.xl,
+    marginBottom: Spacing.sm,
   },
   fsTopControls: {
     flexDirection: "row",

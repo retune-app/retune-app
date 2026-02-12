@@ -633,7 +633,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
           ]}
           renderProgressRing={(size) => renderProgressRing(size)}
           renderCircleOverlay={(size) => renderCountdownOverlay(size)}
-          renderBottomExtra={journey.steps.length > 1 ? () => (
+          renderBelowCircle={journey.steps.length > 1 ? () => (
             <View style={styles.stepNavRow}>
               <Pressable onPress={handleGoBack} style={[styles.stepNavButton, { borderColor: "rgba(255,255,255,0.35)" }]} testID="button-journey-back">
                 <Feather name="chevron-left" size={14} color="rgba(255,255,255,0.9)" />

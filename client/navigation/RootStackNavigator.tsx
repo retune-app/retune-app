@@ -8,6 +8,7 @@ import VoiceSetupScreen from "@/screens/VoiceSetupScreen";
 import VoiceSettingsScreen from "@/screens/VoiceSettingsScreen";
 import SoundLibraryScreen from "@/screens/SoundLibraryScreen";
 import GuidedMomentScreen from "@/screens/GuidedMomentScreen";
+import type { GuidedMomentScreenParams } from "@/screens/GuidedMomentScreen";
 import MoodJourneyScreen from "@/screens/MoodJourneyScreen";
 import CreateScreen from "@/screens/CreateScreen";
 import PlayerScreen from "@/screens/PlayerScreen";
@@ -36,7 +37,7 @@ export type RootStackParamList = {
   Create: undefined;
   Player: { affirmationId: number; isNew?: boolean; autoPlay?: boolean; journeyContext?: JourneyContext };
   Analytics: undefined;
-  GuidedMoment: { mood: string; timeOfDay: string; journeyContext?: JourneyContext; prefetchedMoment?: { script: string; audioBase64: string; duration: number; wordTimings: Array<{ word: string; startMs: number; endMs: number }>; disclaimer: string } | null };
+  GuidedMoment: GuidedMomentScreenParams;
   MoodJourney: { journey: any };
 };
 

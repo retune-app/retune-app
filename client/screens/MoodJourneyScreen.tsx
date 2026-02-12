@@ -53,6 +53,7 @@ import {
   type BreathingTechnique,
 } from "@shared/breathingTechniques";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
+import type { GeneratedMoment } from "@/screens/GuidedMomentScreen";
 
 const ACCENT_GOLD = "#C9A227";
 const GOLD_LIGHT = "#E5C95C";
@@ -145,7 +146,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
   const breathingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const hasNavigatedRef = useRef(false);
   const returningFromStepRef = useRef(false);
-  const prefetchedMeditationRef = useRef<{ script: string; audioBase64: string; duration: number; wordTimings: Array<{ word: string; startMs: number; endMs: number }>; disclaimer: string } | null>(null);
+  const prefetchedMeditationRef = useRef<GeneratedMoment | null>(null);
   const prefetchPromiseRef = useRef<Promise<void> | null>(null);
   const [showControls, setShowControls] = useState(false);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -534,89 +535,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
     prefetchPromiseRef.current = promise;
   }, [journey]);
 
-  const startCurrentStep = useCallback(() => {
-    if (!currentStep) {
-      setPhase("complete");
-      return;
-    }
-
-    const jCtx = { currentStep: currentStepIndex, totalSteps: journey.steps.length, stepLabels: journeyStepLabels };
-
-    if (currentStep.type === "breathe") {
-      setPhase("breathing");
-      setBreathingTimeLeft(BREATHING_DURATION_SECONDS);
-      setCyclesCompleted(0);
-      prefetchMeditationScript(currentStepIndex);
-
-      (async () => {
-        await new Promise(resolve => setTimeout(resolve, 400));
-        for (let i = 3; i >= 1; i--) {
-          setCountdownValue(i);
-          countdownScale.value = 0.8;
-          countdownOpacityVal.value = 0;
-          countdownScale.value = withTiming(1, { duration: 700, easing: Easing.out(Easing.quad) });
-          countdownOpacityVal.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.ease) });
-          await new Promise(resolve => setTimeout(resolve, 700));
-          countdownOpacityVal.value = withTiming(0, { duration: 300, easing: Easing.in(Easing.ease) });
-          await new Promise(resolve => setTimeout(resolve, 300));
-        }
-        setCountdownValue(null);
-        setBreathingPlaying(true);
-      })();
-    } else if (currentStep.type === "meditate") {
-      setPhase("navigating-meditation");
-      (async () => {
-        if (prefetchPromiseRef.current) {
-          await prefetchPromiseRef.current;
-          prefetchPromiseRef.current = null;
-        }
-        await new Promise(resolve => setTimeout(resolve, 800));
-        if (!hasNavigatedRef.current) {
-          hasNavigatedRef.current = true;
-          returningFromStepRef.current = true;
-          navigation.navigate("GuidedMoment", {
-            mood: currentStep.mood || journey.targetMood,
-            timeOfDay: currentStep.timeOfDay || getTimeOfDay(),
-            journeyContext: jCtx,
-            prefetchedMoment: prefetchedMeditationRef.current,
-          });
-        }
-      })();
-    } else if (currentStep.type === "listen") {
-      setPhase("navigating-listen");
-      setTimeout(() => {
-        if (!hasNavigatedRef.current) {
-          hasNavigatedRef.current = true;
-          returningFromStepRef.current = true;
-          if (currentStep.affirmationId) {
-            navigation.navigate("Player", {
-              affirmationId: currentStep.affirmationId,
-              autoPlay: true,
-              journeyContext: jCtx,
-            });
-          } else {
-            navigation.navigate("Create");
-          }
-        }
-      }, 1500);
-    }
-  }, [currentStep, currentStepIndex, navigation, journey, journeyStepLabels]);
-
-  const advanceToNextStep = useCallback(() => {
-    const nextIndex = currentStepIndex + 1;
-    if (nextIndex >= journey.steps.length) {
-      try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
-      setPhase("complete");
-    } else {
-      setCurrentStepIndex(nextIndex);
-      setPhase("transition");
-      setTimeout(() => {
-        startNextStep(nextIndex);
-      }, 2500);
-    }
-  }, [currentStepIndex, journey.steps.length]);
-
-  const startNextStep = useCallback((stepIndex: number) => {
+  const launchStep = useCallback((stepIndex: number) => {
     const step = journey.steps[stepIndex];
     if (!step) {
       setPhase("complete");
@@ -683,7 +602,25 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
         }
       }, 1500);
     }
-  }, [journey, navigation, journeyStepLabels]);
+  }, [journey, navigation, journeyStepLabels, prefetchMeditationScript]);
+
+  const startCurrentStep = useCallback(() => {
+    launchStep(currentStepIndex);
+  }, [currentStepIndex, launchStep]);
+
+  const advanceToNextStep = useCallback(() => {
+    const nextIndex = currentStepIndex + 1;
+    if (nextIndex >= journey.steps.length) {
+      try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
+      setPhase("complete");
+    } else {
+      setCurrentStepIndex(nextIndex);
+      setPhase("transition");
+      setTimeout(() => {
+        launchStep(nextIndex);
+      }, 2500);
+    }
+  }, [currentStepIndex, journey.steps.length, launchStep]);
 
   useEffect(() => {
     if (phase === "breathing" && breathingPlaying) {
@@ -735,8 +672,8 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
     setCurrentStepIndex(prevIndex);
     setShowControls(false);
     hasNavigatedRef.current = false;
-    startNextStep(prevIndex);
-  }, [currentStepIndex, navigation, startNextStep]);
+    launchStep(prevIndex);
+  }, [currentStepIndex, navigation, launchStep]);
 
   const handleSkipStep = useCallback(() => {
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}

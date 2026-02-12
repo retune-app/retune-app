@@ -187,7 +187,7 @@ const CONTROLS_AUTO_HIDE_MS = 3000;
 
 type PlayerState = "idle" | "generating" | "ready" | "playing" | "paused" | "finished" | "error";
 
-interface GeneratedMoment {
+export interface GeneratedMoment {
   script: string;
   audioBase64: string;
   duration: number;
@@ -206,7 +206,7 @@ export type GuidedMomentScreenParams = {
   mood: string;
   timeOfDay: string;
   journeyContext?: { currentStep: number; totalSteps: number; stepLabels: string[] };
-  prefetchedMoment?: { script: string; audioBase64: string; duration: number; wordTimings: Array<{ word: string; startMs: number; endMs: number }>; disclaimer: string } | null;
+  prefetchedMoment?: GeneratedMoment | null;
 };
 
 export default function GuidedMomentScreen({ route, navigation }: NativeStackScreenProps<any, "GuidedMoment">) {

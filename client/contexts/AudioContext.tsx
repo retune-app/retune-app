@@ -134,19 +134,22 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const unloadCurrentSound = useCallback(async () => {
+  const unloadCurrentSound = useCallback(async (resetState = true) => {
     if (soundRef.current) {
+      const oldSound = soundRef.current;
+      soundRef.current = null;
       try {
-        await soundRef.current.stopAsync();
-        await soundRef.current.unloadAsync();
+        await oldSound.stopAsync();
+        await oldSound.unloadAsync();
       } catch (error) {
         console.error('Error unloading sound:', error);
       }
-      soundRef.current = null;
     }
-    setIsPlaying(false);
-    setPosition(0);
-    setDuration(0);
+    if (resetState) {
+      setIsPlaying(false);
+      setPosition(0);
+      setDuration(0);
+    }
   }, []);
 
   const playAffirmation = useCallback(async (affirmation: Affirmation) => {
@@ -177,8 +180,11 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
     isOperationInProgress.current = true;
     setIsLoading(true);
-    hasRecordedListenRef.current = false; // Reset listen tracking for new affirmation
-    await unloadCurrentSound();
+    setCurrentAffirmation(affirmation);
+    setPosition(0);
+    setDuration(0);
+    hasRecordedListenRef.current = false;
+    await unloadCurrentSound(false);
 
     try {
       const audioUri = `${getApiUrl()}${affirmation.audioUrl}`;
@@ -199,7 +205,6 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
               setDuration(status.durationMillis || 0);
               setIsPlaying(status.isPlaying);
               if (status.didJustFinish) {
-                // Record the listen (only once per playback session)
                 recordListen(affirmation.id);
                 if (!autoReplay) {
                   setIsPlaying(false);
@@ -216,7 +221,6 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       );
 
       soundRef.current = sound;
-      setCurrentAffirmation(affirmation);
       setIsPlaying(true);
       
       if (selectedMusic !== 'none') {

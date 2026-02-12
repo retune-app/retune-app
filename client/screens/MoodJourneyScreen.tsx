@@ -510,14 +510,14 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
           ]}
           renderBottomExtra={journey.steps.length > 1 ? () => (
             <View style={styles.stepNavRow}>
-              <Pressable onPress={handleGoBack} style={[styles.stepNavButton, { borderColor: "rgba(255,255,255,0.15)" }]} testID="button-journey-back">
-                <Feather name="chevron-left" size={14} color="rgba(255,255,255,0.6)" />
+              <Pressable onPress={handleGoBack} style={[styles.stepNavButton, { borderColor: "rgba(255,255,255,0.35)" }]} testID="button-journey-back">
+                <Feather name="chevron-left" size={14} color="rgba(255,255,255,0.9)" />
                 <Text style={styles.stepNavLabel}>{currentStepIndex > 0 ? "Previous" : "Exit"}</Text>
               </Pressable>
               {currentStepIndex < journey.steps.length - 1 ? (
-                <Pressable onPress={handleSkipStep} style={[styles.stepNavButton, { borderColor: "rgba(255,255,255,0.15)" }]} testID="button-journey-skip">
+                <Pressable onPress={handleSkipStep} style={[styles.stepNavButton, { borderColor: "rgba(255,255,255,0.35)" }]} testID="button-journey-skip">
                   <Text style={styles.stepNavLabel}>Next step</Text>
-                  <Feather name="chevron-right" size={14} color="rgba(255,255,255,0.6)" />
+                  <Feather name="chevron-right" size={14} color="rgba(255,255,255,0.9)" />
                 </Pressable>
               ) : null}
             </View>
@@ -769,7 +769,7 @@ const styles = StyleSheet.create({
   },
   stepNavLabel: {
     fontSize: 12,
-    color: "rgba(255,255,255,0.6)",
+    color: "rgba(255,255,255,0.9)",
   },
   stepNavRow: {
     flexDirection: "row",

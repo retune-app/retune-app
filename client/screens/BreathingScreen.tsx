@@ -929,9 +929,9 @@ export default function BreathingScreen() {
               <>
                 <Pressable
                   onPress={() => { resetControlsTimer(); setShowSoundSwitcher(true); }}
-                  style={[styles.fsControlBtn, { backgroundColor: `${selectedTechnique.color}20` }]}
+                  style={[styles.fsControlBtn, { backgroundColor: "rgba(0,0,0,0.3)" }]}
                 >
-                  <Feather name="music" size={18} color={selectedTechnique.color} />
+                  <Feather name="music" size={18} color="#FFFFFF" />
                 </Pressable>
                 <Pressable
                   onPress={async () => {
@@ -942,10 +942,10 @@ export default function BreathingScreen() {
                       try { await affirmationSoundRef.current.setVolumeAsync(newVol); } catch {}
                     }
                   }}
-                  style={[styles.fsControlBtn, { backgroundColor: `${selectedTechnique.color}20`, opacity: voiceEnabled ? 1 : 0.4 }]}
+                  style={[styles.fsControlBtn, { backgroundColor: "rgba(0,0,0,0.3)", opacity: voiceEnabled ? 1 : 0.4 }]}
                   disabled={!voiceEnabled}
                 >
-                  <Feather name={voiceEnabled && voiceVolume > 0.05 ? "mic" : "mic-off"} size={18} color={selectedTechnique.color} />
+                  <Feather name={voiceEnabled && voiceVolume > 0.05 ? "mic" : "mic-off"} size={18} color="#FFFFFF" />
                 </Pressable>
               </>
             )}
@@ -1590,7 +1590,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "rgba(255,255,255,0.2)",
+    backgroundColor: "rgba(0,0,0,0.3)",
     alignItems: "center",
     justifyContent: "center",
   },

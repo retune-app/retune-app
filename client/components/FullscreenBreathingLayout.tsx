@@ -144,59 +144,67 @@ export default function FullscreenBreathingLayout({
 
   return (
     <Pressable style={[styles.landscapeContainer, { backgroundColor }]} onPress={onToggleControls}>
-      <View style={[styles.portraitFullscreenWrapper, { paddingTop: insets.top + Spacing.md, paddingBottom: insets.bottom + Spacing.lg }]}>
-        <Animated.View style={[styles.fsTopControls, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"} onStartShouldSetResponder={() => true}>
+      <Animated.View style={[styles.topGradientOverlay, { paddingTop: insets.top + Spacing.md }, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"} onStartShouldSetResponder={() => true}>
+        <LinearGradient
+          colors={["rgba(0,0,0,0.7)", "rgba(0,0,0,0.45)", "transparent"]}
+          style={StyleSheet.absoluteFill}
+        />
+        <View style={styles.fsTopControls}>
           <View style={styles.fsTopLeft}>
-            <Text style={[styles.fsTechniqueBadge, { backgroundColor: `${technique.color}20`, color: technique.color }]}>
+            <Text style={[styles.fsTechniqueBadge, { backgroundColor: "rgba(0,0,0,0.35)", color: "#FFFFFF" }]}>
               {technique.name}
             </Text>
           </View>
           <View style={styles.fsTopRight}>
             {renderTopRightExtra ? renderTopRightExtra() : null}
             <Pressable onPress={() => { resetControlsTimer(); onClose(); }} style={styles.fsCloseBtn}>
-              <Feather name="x" size={22} color="rgba(255,255,255,0.7)" />
+              <Feather name="x" size={22} color="#FFFFFF" />
             </Pressable>
           </View>
-        </Animated.View>
+        </View>
+      </Animated.View>
 
-        <View style={styles.portraitCenterSection}>
-          {renderProgressRing ? renderProgressRing(portraitCircleSize) : null}
-          <BreathingCircle
-            technique={technique}
-            isPlaying={isPlaying}
-            onCycleComplete={onCycleComplete}
-            hapticsEnabled={hapticsEnabled}
-            size={portraitCircleSize}
-            showContent={showContent}
-          />
-          {renderCircleOverlay ? renderCircleOverlay(48) : null}
+      <View style={styles.portraitCenterSection}>
+        {renderProgressRing ? renderProgressRing(portraitCircleSize) : null}
+        <BreathingCircle
+          technique={technique}
+          isPlaying={isPlaying}
+          onCycleComplete={onCycleComplete}
+          hapticsEnabled={hapticsEnabled}
+          size={portraitCircleSize}
+          showContent={showContent}
+        />
+        {renderCircleOverlay ? renderCircleOverlay(48) : null}
+      </View>
+
+      <Animated.View style={[styles.bottomGradientOverlay, { paddingBottom: insets.bottom + Spacing.lg }, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"} onStartShouldSetResponder={() => true}>
+        <LinearGradient
+          colors={["transparent", "rgba(0,0,0,0.5)", "rgba(0,0,0,0.75)"]}
+          style={StyleSheet.absoluteFill}
+        />
+        <View style={styles.fsCenterControls}>
+          <Pressable onPress={() => { resetControlsTimer(); onTogglePlay(); }}>
+            <LinearGradient
+              colors={[technique.color, `${technique.color}CC`]}
+              style={styles.portraitPlayButton}
+            >
+              <Feather name={isPlaying ? "pause" : "play"} size={28} color="#FFFFFF" />
+            </LinearGradient>
+          </Pressable>
+          {renderStopButton ? renderStopButton() : null}
         </View>
 
-        <Animated.View style={[styles.fsBottomControls, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"} onStartShouldSetResponder={() => true}>
-          <View style={styles.fsCenterControls}>
-            <Pressable onPress={() => { resetControlsTimer(); onTogglePlay(); }}>
-              <LinearGradient
-                colors={[technique.color, `${technique.color}CC`]}
-                style={styles.portraitPlayButton}
-              >
-                <Feather name={isPlaying ? "pause" : "play"} size={28} color="#FFFFFF" />
-              </LinearGradient>
-            </Pressable>
-            {renderStopButton ? renderStopButton() : null}
-          </View>
+        <View style={styles.portraitStatsRow}>
+          {stats.map((stat, i) => (
+            <View key={i} style={styles.portraitStatItem}>
+              <Text style={styles.portraitStatLabel}>{stat.label}</Text>
+              <Text style={[styles.portraitStatValue, stat.color ? { color: stat.color } : undefined]}>{stat.value}</Text>
+            </View>
+          ))}
+        </View>
 
-          <View style={styles.portraitStatsRow}>
-            {stats.map((stat, i) => (
-              <View key={i} style={styles.portraitStatItem}>
-                <Text style={styles.portraitStatLabel}>{stat.label}</Text>
-                <Text style={[styles.portraitStatValue, stat.color ? { color: stat.color } : undefined]}>{stat.value}</Text>
-              </View>
-            ))}
-          </View>
-
-          {renderBottomExtra ? renderBottomExtra() : null}
-        </Animated.View>
-      </View>
+        {renderBottomExtra ? renderBottomExtra() : null}
+      </Animated.View>
     </Pressable>
   );
 }
@@ -272,12 +280,25 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  portraitFullscreenWrapper: {
-    flex: 1,
-    flexDirection: "column",
-    justifyContent: "space-between",
+  topGradientOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+    paddingHorizontal: Spacing.xl,
+    paddingBottom: Spacing.xl,
+  },
+  bottomGradientOverlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
     alignItems: "center",
     paddingHorizontal: Spacing.xl,
+    paddingTop: Spacing.xl * 2,
+    gap: Spacing.lg,
   },
   portraitCenterSection: {
     flex: 1,
@@ -314,7 +335,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "rgba(255,255,255,0.1)",
+    backgroundColor: "rgba(0,0,0,0.3)",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -322,11 +343,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: Spacing.md,
-  },
-  fsBottomControls: {
-    alignItems: "center",
-    gap: Spacing.lg,
   },
   portraitPlayButton: {
     width: 72,
@@ -345,7 +361,7 @@ const styles = StyleSheet.create({
   },
   portraitStatLabel: {
     fontSize: 11,
-    color: "rgba(255,255,255,0.5)",
+    color: "rgba(255,255,255,0.85)",
     letterSpacing: 0.5,
     textTransform: "uppercase",
     marginBottom: 2,

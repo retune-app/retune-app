@@ -1169,18 +1169,51 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
           entering={FadeIn.duration(600)}
           style={styles.standaloneGeneratingContainer}
         >
-          <Animated.View style={[styles.standaloneGeneratingPulse, generatingPulseStyle, { borderColor: moodColors.primary }]} />
-          <ThemedText type="h3" style={styles.standaloneGeneratingText}>
-            Crafting your micro-meditation...
-          </ThemedText>
-          <View style={styles.standaloneGeneratingDots}>
-            {[0, 1, 2].map((i) => (
-              <Animated.View
-                key={i}
-                entering={FadeIn.delay(200 * i).duration(400)}
-                style={[styles.standaloneGeneratingDot, { backgroundColor: moodColors.primary }]}
-              />
-            ))}
+          <View style={styles.standaloneGeneratingContent}>
+            <Animated.View style={[styles.standaloneGeneratingPulse, generatingPulseStyle, { borderColor: moodColors.primary }]} />
+            <ThemedText type="h3" style={styles.standaloneGeneratingText}>
+              Crafting your micro-meditation...
+            </ThemedText>
+            <View style={styles.standaloneGeneratingDots}>
+              {[0, 1, 2].map((i) => (
+                <Animated.View
+                  key={i}
+                  entering={FadeIn.delay(200 * i).duration(400)}
+                  style={[styles.standaloneGeneratingDot, { backgroundColor: moodColors.primary }]}
+                />
+              ))}
+            </View>
+          </View>
+          <View style={styles.standaloneGeneratingDuration}>
+            {DURATION_OPTIONS.map((opt) => {
+              const isSelected = selectedDuration === opt.value;
+              return (
+                <Pressable
+                  key={opt.value}
+                  onPress={() => {
+                    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+                    setSelectedDuration(opt.value);
+                  }}
+                  style={[
+                    styles.durationPill,
+                    isSelected
+                      ? { backgroundColor: "rgba(255,255,255,0.15)", borderColor: "rgba(255,255,255,0.5)" }
+                      : { backgroundColor: "rgba(0,0,0,0.3)", borderColor: "rgba(255,255,255,0.15)" },
+                  ]}
+                  testID={`button-duration-${opt.value}`}
+                >
+                  <ThemedText
+                    type="caption"
+                    style={[
+                      styles.durationPillText,
+                      { color: isSelected ? "#FFFFFF" : "rgba(255,255,255,0.6)" },
+                    ]}
+                  >
+                    {opt.label}
+                  </ThemedText>
+                </Pressable>
+              );
+            })}
           </View>
         </Animated.View>
       ) : (
@@ -1196,75 +1229,8 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
           ) : null}
           <View style={isLandscape ? styles.landscapeLayout : styles.portraitLayout}>
             <View style={styles.ringsArea}>
-              {!journeyContext && (playerState === "idle" || playerState === "ready") && isLandscape ? (
-                <View style={styles.durationRow}>
-                  {DURATION_OPTIONS.map((opt) => {
-                    const isSelected = selectedDuration === opt.value;
-                    return (
-                      <Pressable
-                        key={opt.value}
-                        onPress={() => {
-                          try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
-                          setSelectedDuration(opt.value);
-                        }}
-                        style={[
-                          styles.durationPill,
-                          isSelected
-                            ? { backgroundColor: "rgba(255,255,255,0.15)", borderColor: "rgba(255,255,255,0.5)" }
-                            : { backgroundColor: "rgba(0,0,0,0.3)", borderColor: "rgba(255,255,255,0.15)" },
-                        ]}
-                        testID={`button-duration-${opt.value}`}
-                      >
-                        <ThemedText
-                          type="caption"
-                          style={[
-                            styles.durationPillText,
-                            { color: isSelected ? "#FFFFFF" : "rgba(255,255,255,0.6)" },
-                          ]}
-                        >
-                          {opt.label}
-                        </ThemedText>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              ) : null}
               {renderBreathingRings()}
             </View>
-
-            {!isLandscape && !journeyContext ? (
-              <View style={[styles.durationRowBelow, (playerState !== "idle" && playerState !== "ready") ? { opacity: 0 } : undefined]} pointerEvents={(playerState === "idle" || playerState === "ready") ? "auto" : "none"}>
-                {DURATION_OPTIONS.map((opt) => {
-                  const isSelected = selectedDuration === opt.value;
-                  return (
-                    <Pressable
-                      key={opt.value}
-                      onPress={() => {
-                        try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
-                        setSelectedDuration(opt.value);
-                      }}
-                      style={[
-                        styles.durationPill,
-                        isSelected
-                          ? { backgroundColor: "rgba(255,255,255,0.15)", borderColor: "rgba(255,255,255,0.5)" }
-                          : { backgroundColor: "rgba(0,0,0,0.3)", borderColor: "rgba(255,255,255,0.15)" },
-                      ]}
-                      testID={`button-duration-${opt.value}`}
-                    >
-                      <ThemedText
-                        type="caption"
-                        style={[
-                          styles.durationPillText,
-                          { color: isSelected ? "#FFFFFF" : "rgba(255,255,255,0.6)" },
-                        ]}
-                      >
-                        {opt.label}
-                      </ThemedText>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            ) : null}
 
           </View>
         </Pressable>
@@ -1557,6 +1523,17 @@ const styles = StyleSheet.create({
     height: 6,
     borderRadius: 3,
     opacity: 0.6,
+  },
+  standaloneGeneratingContent: {
+    alignItems: "center",
+    gap: 24,
+  },
+  standaloneGeneratingDuration: {
+    flexDirection: "row",
+    gap: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 48,
   },
   durationRowBelow: {
     flexDirection: "row",

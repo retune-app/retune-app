@@ -185,12 +185,69 @@ const PILLAR_VOICE_CONFIG: Record<string, {
   },
 };
 
+const TIME_OF_DAY_CONFIG: Record<string, {
+  toneModifier: string;
+  humeSpeedAdjust: number; // multiplied with existing speed
+  pauseAdjust: number; // added to existing pause
+  elevenLabsStabilityAdjust: number; // added
+  elevenLabsStyleAdjust: number; // added
+}> = {
+  morning: {
+    toneModifier: "Use brighter, awakening language — words like 'rising', 'fresh', 'new'. The energy should feel like sunrise breaking through.",
+    humeSpeedAdjust: 1.05,
+    pauseAdjust: -0.1,
+    elevenLabsStabilityAdjust: -0.05,
+    elevenLabsStyleAdjust: 0.05,
+  },
+  afternoon: {
+    toneModifier: "Use grounded, sustaining language — words like 'steady', 'flowing', 'present'. The energy should feel like midday strength.",
+    humeSpeedAdjust: 1.0,
+    pauseAdjust: 0,
+    elevenLabsStabilityAdjust: 0,
+    elevenLabsStyleAdjust: 0,
+  },
+  evening: {
+    toneModifier: "Use warm, reflective language — words like 'settling', 'releasing', 'softening'. The energy should feel like golden hour light.",
+    humeSpeedAdjust: 0.95,
+    pauseAdjust: 0.15,
+    elevenLabsStabilityAdjust: 0.05,
+    elevenLabsStyleAdjust: -0.05,
+  },
+  night: {
+    toneModifier: "Use hushed, dreamy language — words like 'drifting', 'dissolving', 'resting'. The energy should feel like moonlight on still water.",
+    humeSpeedAdjust: 0.9,
+    pauseAdjust: 0.3,
+    elevenLabsStabilityAdjust: 0.1,
+    elevenLabsStyleAdjust: -0.1,
+  },
+};
+
+function getTimeOfDay(): string {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 12) return "morning";
+  if (hour >= 12 && hour < 17) return "afternoon";
+  if (hour >= 17 && hour < 21) return "evening";
+  return "night";
+}
+
 function getPillarVoiceConfig(pillar?: string | null): typeof MEDITATION_MOOD_CONFIG[string] | undefined {
   if (!pillar) return undefined;
   const key = pillar.toLowerCase();
   const config = PILLAR_VOICE_CONFIG[key];
   if (!config) return undefined;
   return { ...config, scriptTone: '' };
+}
+
+function applyTimeOfDayConfig(config?: { humeSpeed: number; pauseSeconds: number; elevenLabsStability: number; elevenLabsStyle: number; scriptTone: string }): typeof config {
+  if (!config) return config;
+  const timeConfig = TIME_OF_DAY_CONFIG[getTimeOfDay()] || TIME_OF_DAY_CONFIG.afternoon;
+  return {
+    ...config,
+    humeSpeed: Math.max(0.5, Math.min(1.5, config.humeSpeed * timeConfig.humeSpeedAdjust)),
+    pauseSeconds: Math.max(0.5, Math.min(3.0, config.pauseSeconds + timeConfig.pauseAdjust)),
+    elevenLabsStability: Math.max(0.1, Math.min(0.9, config.elevenLabsStability + timeConfig.elevenLabsStabilityAdjust)),
+    elevenLabsStyle: Math.max(0.1, Math.min(0.9, config.elevenLabsStyle + timeConfig.elevenLabsStyleAdjust)),
+  };
 }
 
 const dailyGreetingCache = new Map<string, { message: string; actionText?: string; actionType?: string }>();
@@ -351,7 +408,15 @@ SUBCONSCIOUS LANGUAGE RULES (apply ALL of these):
 
 FORMAT: No titles, no instructions, no numbering, no quotes. Just ${config.sentences} flowing sentences, each on its own line. Write as if speaking directly to the deepest part of someone's mind.
 
-TONE AND STYLE: ${toneInstruction}`;
+TONE AND STYLE: ${toneInstruction}
+
+EMOTIONAL ARC: Structure the sentences as a deliberate emotional journey:
+- First ~20% of sentences: GROUNDING — start gentle, warm, and easily believable. Use simple present-tense observations. These should feel like a soft landing.
+- Middle ~50% of sentences: BUILDING — gradually increase emotional intensity and aspiration. Introduce identity-level statements and sensory-rich language. Build momentum.
+- ~20% PEAK — the most powerful, expansive statement(s). This is the emotional climax — bold, vivid, and deeply felt.
+- Final ~10%: SOFT LANDING — end with a warm, settled statement that integrates everything. It should feel like a deep exhale — complete and whole.
+
+TIME OF DAY: ${(TIME_OF_DAY_CONFIG[getTimeOfDay()] || TIME_OF_DAY_CONFIG.afternoon).toneModifier}`;
 
   const pillarContext = pillar ? ` Life pillar: ${pillar}.` : "";
   const categoryContext = categories && categories.length > 0 
@@ -1028,7 +1093,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           script,
           voiceIdToUse,
           usedPersonalVoice,
-          getPillarVoiceConfig(pillar)
+          applyTimeOfDayConfig(getPillarVoiceConfig(pillar))
         );
       } catch (genError: any) {
         if (usedPersonalVoice && genError?.message?.includes("QUOTA_EXCEEDED")) {
@@ -1039,7 +1104,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             : (userWithPrefs?.preferredFemaleVoiceId || VOICE_OPTIONS.female[0].id);
           usedPersonalVoice = false;
           voiceIdToUse = fallbackVoiceId;
-          audioResult = await generateAudio(script, fallbackVoiceId, false, getPillarVoiceConfig(pillar));
+          audioResult = await generateAudio(script, fallbackVoiceId, false, applyTimeOfDayConfig(getPillarVoiceConfig(pillar)));
         } else if (usedPersonalVoice && (genError?.message?.includes("PERSONAL_VOICE_FAILED") || genError?.message?.includes("VOICE_EXPIRED"))) {
           console.log("Personal voice not found/expired, falling back to AI voice");
           const fallbackGender = usedGender || "female";
@@ -1048,7 +1113,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             : (userWithPrefs?.preferredFemaleVoiceId || VOICE_OPTIONS.female[0].id);
           usedPersonalVoice = false;
           voiceIdToUse = fallbackVoiceId;
-          audioResult = await generateAudio(script, fallbackVoiceId, false, getPillarVoiceConfig(pillar));
+          audioResult = await generateAudio(script, fallbackVoiceId, false, applyTimeOfDayConfig(getPillarVoiceConfig(pillar)));
         } else {
           throw genError;
         }
@@ -1759,7 +1824,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const isPersonalVoice = voiceType === "personal";
-      const audioResult = await generateAudio(affirmation.script, voiceIdToUse, isPersonalVoice, getPillarVoiceConfig(affirmation.pillar));
+      const audioResult = await generateAudio(affirmation.script, voiceIdToUse, isPersonalVoice, applyTimeOfDayConfig(getPillarVoiceConfig(affirmation.pillar)));
 
       if (isPersonalVoice) {
         await db

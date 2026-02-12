@@ -136,8 +136,8 @@ export default function PlayerScreen() {
 
   const isCurrentlyPlaying = currentAffirmation?.id === affirmationId && isPlaying;
 
-  const [journeyControlsVisible, setJourneyControlsVisible] = useState(true);
-  const journeyControlsOpacity = useSharedValue(1);
+  const [journeyControlsVisible, setJourneyControlsVisible] = useState(false);
+  const journeyControlsOpacity = useSharedValue(0);
   const journeyControlsTimerRef = useRef<NodeJS.Timeout | null>(null);
   const journeyControlsFadeStyle = useAnimatedStyle(() => ({
     opacity: journeyControlsOpacity.value,
@@ -155,23 +155,25 @@ export default function PlayerScreen() {
     journeyControlsOpacity.value = withTiming(1, { duration: 250 });
   }, []);
 
+  const toggleJourneyControls = useCallback(() => {
+    if (journeyControlsTimerRef.current) clearTimeout(journeyControlsTimerRef.current);
+    if (journeyControlsVisible) {
+      hideJourneyControls();
+    } else {
+      showJourneyControls();
+      journeyControlsTimerRef.current = setTimeout(hideJourneyControls, 5000);
+    }
+  }, [journeyControlsVisible, showJourneyControls, hideJourneyControls]);
+
   const resetJourneyControlsTimer = useCallback(() => {
     if (journeyControlsTimerRef.current) clearTimeout(journeyControlsTimerRef.current);
     showJourneyControls();
-    journeyControlsTimerRef.current = setTimeout(() => {
-      if (isCurrentlyPlaying) hideJourneyControls();
-    }, 4000);
-  }, [isCurrentlyPlaying, showJourneyControls, hideJourneyControls]);
+    journeyControlsTimerRef.current = setTimeout(hideJourneyControls, 5000);
+  }, [showJourneyControls, hideJourneyControls]);
 
   useEffect(() => {
-    if (journeyContext && isCurrentlyPlaying) {
-      journeyControlsTimerRef.current = setTimeout(hideJourneyControls, 4000);
-    } else if (journeyContext && !isCurrentlyPlaying) {
-      showJourneyControls();
-      if (journeyControlsTimerRef.current) clearTimeout(journeyControlsTimerRef.current);
-    }
     return () => { if (journeyControlsTimerRef.current) clearTimeout(journeyControlsTimerRef.current); };
-  }, [isCurrentlyPlaying, journeyContext]);
+  }, []);
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
@@ -711,7 +713,7 @@ export default function PlayerScreen() {
         showsVerticalScrollIndicator={false}
         onScrollBeginDrag={journeyContext ? resetJourneyControlsTimer : undefined}
       >
-        <Pressable style={styles.visualizerContainer} onPress={journeyContext ? resetJourneyControlsTimer : undefined}>
+        <Pressable style={styles.visualizerContainer} onPress={journeyContext ? toggleJourneyControls : undefined}>
           {rsvpEnabled ? (
             <RSVPDisplay
               wordTimings={wordTimings}

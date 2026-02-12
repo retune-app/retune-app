@@ -453,9 +453,12 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
     }
   }, []);
 
+  const scriptErrorRef = useRef<string | null>(null);
+
   const prefetchScript = useCallback(async (duration: number, signal?: AbortSignal) => {
     if (scriptFetchingRef.current) return;
     scriptFetchingRef.current = true;
+    scriptErrorRef.current = null;
     try {
       const url = new URL("/api/guided-moments/script", getApiUrl()).toString();
       const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -469,10 +472,14 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
         signal,
       });
       const data = await result.json();
-      if (data.error) return;
+      if (data.error) {
+        scriptErrorRef.current = data.error;
+        return;
+      }
       cachedScriptRef.current = { script: data.script, disclaimer: data.disclaimer, duration };
     } catch (e: any) {
       if (e?.name === 'AbortError') return;
+      scriptErrorRef.current = "Connection error. Please check your network and try again.";
     } finally {
       scriptFetchingRef.current = false;
     }
@@ -571,7 +578,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
         await prefetchScript(selectedDuration, controller.signal);
       }
       if (!cachedScriptRef.current) {
-        setErrorMessage("Could not generate meditation script. Please try again.");
+        setErrorMessage(scriptErrorRef.current || "Could not generate meditation script. Please try again.");
         setPlayerState("error");
         return;
       }
@@ -709,7 +716,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
         await prefetchScript(selectedDuration, controller.signal);
       }
       if (!cachedScriptRef.current) {
-        setErrorMessage("Could not generate meditation script. Please try again.");
+        setErrorMessage(scriptErrorRef.current || "Could not generate meditation script. Please try again.");
         setPlayerState("error");
         return;
       }

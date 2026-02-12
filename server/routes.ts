@@ -85,7 +85,7 @@ const dailyGreetingLimiter = rateLimit({
 
 const guidedMomentLimiter = rateLimit({
   windowMs: 24 * 60 * 60 * 1000,
-  max: 5,
+  max: 20,
   message: { error: "You've reached today's limit for micro-meditations. Come back tomorrow for a fresh session." },
   standardHeaders: true,
   legacyHeaders: false,

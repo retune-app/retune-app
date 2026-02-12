@@ -191,7 +191,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
   const [moment, setMoment] = useState<GeneratedMoment | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [currentPosition, setCurrentPosition] = useState(0);
-  const [selectedDuration, setSelectedDuration] = useState<number>(1);
+  const [selectedDuration, setSelectedDuration] = useState<number>(journeyContext ? 2 : 1);
   const [selectedSound, setSelectedSound] = useState<BackgroundMusicType>(
     MOOD_SOUND_MAP[mood]?.[timeOfDay] || MOOD_SOUND_MAP[mood]?.["morning"] || "ocean-waves-beach"
   );
@@ -1078,17 +1078,19 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
       style={styles.container}
     >
       {journeyContext ? (
-        <JourneyStepBar
-          currentStep={journeyContext.currentStep}
-          totalSteps={journeyContext.totalSteps}
-          stepLabels={journeyContext.stepLabels}
-          onPrevious={() => { journeyNavigationRef.action = 'back'; navigation.goBack(); }}
-          onSkip={() => { journeyNavigationRef.action = 'skip'; navigation.goBack(); }}
-          showSkip={journeyContext.currentStep < journeyContext.totalSteps - 1}
-          showEndJourney={journeyContext.currentStep >= journeyContext.totalSteps - 1}
-          onEndJourney={() => { journeyNavigationRef.action = 'complete'; (navigation as any).navigate("Main"); }}
-          showPrevious={true}
-        />
+        <Animated.View style={[{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 51 }, controlsFadeStyle]} pointerEvents={controlsVisible ? "box-none" : "none"}>
+          <JourneyStepBar
+            currentStep={journeyContext.currentStep}
+            totalSteps={journeyContext.totalSteps}
+            stepLabels={journeyContext.stepLabels}
+            onPrevious={() => { journeyNavigationRef.action = 'back'; navigation.goBack(); }}
+            onSkip={() => { journeyNavigationRef.action = 'skip'; navigation.goBack(); }}
+            showSkip={journeyContext.currentStep < journeyContext.totalSteps - 1}
+            showEndJourney={journeyContext.currentStep >= journeyContext.totalSteps - 1}
+            onEndJourney={() => { journeyNavigationRef.action = 'complete'; (navigation as any).navigate("Main"); }}
+            showPrevious={true}
+          />
+        </Animated.View>
       ) : null}
       <Pressable
         style={styles.tapArea}
@@ -1102,7 +1104,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
         ) : null}
         <View style={isLandscape ? styles.landscapeLayout : styles.portraitLayout}>
           <View style={styles.ringsArea}>
-            {(playerState === "idle" || playerState === "generating" || playerState === "ready") && isLandscape ? (
+            {!journeyContext && (playerState === "idle" || playerState === "generating" || playerState === "ready") && isLandscape ? (
               <View style={styles.durationRow}>
                 {DURATION_OPTIONS.map((opt) => {
                   const isSelected = selectedDuration === opt.value;
@@ -1138,7 +1140,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
             {renderBreathingRings()}
           </View>
 
-          {!isLandscape ? (
+          {!isLandscape && !journeyContext ? (
             <View style={[styles.durationRowBelow, (playerState !== "idle" && playerState !== "generating" && playerState !== "ready") ? { opacity: 0 } : undefined]} pointerEvents={(playerState === "idle" || playerState === "generating" || playerState === "ready") ? "auto" : "none"}>
               {DURATION_OPTIONS.map((opt) => {
                 const isSelected = selectedDuration === opt.value;

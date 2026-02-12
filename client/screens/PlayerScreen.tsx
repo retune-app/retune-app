@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useLayoutEffect, useMemo, useRef } from "react";
 import { View, StyleSheet, Pressable, Alert, ScrollView, Modal } from "react-native";
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { HeaderButton } from "@react-navigation/elements";
@@ -110,6 +111,41 @@ export default function PlayerScreen() {
   const [showVoiceSetupModal, setShowVoiceSetupModal] = useState(false);
 
   const isCurrentlyPlaying = currentAffirmation?.id === affirmationId && isPlaying;
+
+  const [journeyControlsVisible, setJourneyControlsVisible] = useState(true);
+  const journeyControlsOpacity = useSharedValue(1);
+  const journeyControlsTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const journeyControlsFadeStyle = useAnimatedStyle(() => ({
+    opacity: journeyControlsOpacity.value,
+  }));
+
+  const hideJourneyControls = useCallback(() => {
+    setJourneyControlsVisible(false);
+    journeyControlsOpacity.value = withTiming(0, { duration: 400 });
+  }, []);
+
+  const showJourneyControls = useCallback(() => {
+    setJourneyControlsVisible(true);
+    journeyControlsOpacity.value = withTiming(1, { duration: 250 });
+  }, []);
+
+  const resetJourneyControlsTimer = useCallback(() => {
+    if (journeyControlsTimerRef.current) clearTimeout(journeyControlsTimerRef.current);
+    showJourneyControls();
+    journeyControlsTimerRef.current = setTimeout(() => {
+      if (isCurrentlyPlaying) hideJourneyControls();
+    }, 4000);
+  }, [isCurrentlyPlaying, showJourneyControls, hideJourneyControls]);
+
+  useEffect(() => {
+    if (journeyContext && isCurrentlyPlaying) {
+      journeyControlsTimerRef.current = setTimeout(hideJourneyControls, 4000);
+    } else if (journeyContext && !isCurrentlyPlaying) {
+      showJourneyControls();
+      if (journeyControlsTimerRef.current) clearTimeout(journeyControlsTimerRef.current);
+    }
+    return () => { if (journeyControlsTimerRef.current) clearTimeout(journeyControlsTimerRef.current); };
+  }, [isCurrentlyPlaying, journeyContext]);
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
@@ -635,16 +671,18 @@ export default function PlayerScreen() {
       </Modal>
 
       {journeyContext ? (
-        <JourneyStepBar
-          currentStep={journeyContext.currentStep}
-          totalSteps={journeyContext.totalSteps}
-          stepLabels={journeyContext.stepLabels}
-          onPrevious={() => { journeyNavigationRef.action = 'back'; navigation.goBack(); }}
-          showSkip={false}
-          showPrevious={true}
-          showEndJourney={true}
-          onEndJourney={() => { journeyNavigationRef.action = 'complete'; (navigation as any).navigate("Main"); }}
-        />
+        <Animated.View style={[{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 51 }, journeyControlsFadeStyle]} pointerEvents={journeyControlsVisible ? "box-none" : "none"}>
+          <JourneyStepBar
+            currentStep={journeyContext.currentStep}
+            totalSteps={journeyContext.totalSteps}
+            stepLabels={journeyContext.stepLabels}
+            onPrevious={() => { journeyNavigationRef.action = 'back'; navigation.goBack(); }}
+            showSkip={false}
+            showPrevious={true}
+            showEndJourney={true}
+            onEndJourney={() => { journeyNavigationRef.action = 'complete'; (navigation as any).navigate("Main"); }}
+          />
+        </Animated.View>
       ) : null}
 
       <ScrollView
@@ -654,8 +692,9 @@ export default function PlayerScreen() {
           { paddingTop: journeyContext ? (insets.top + 70) : (headerHeight + Spacing.lg), paddingBottom: insets.bottom + Spacing["2xl"] },
         ]}
         showsVerticalScrollIndicator={false}
+        onScrollBeginDrag={journeyContext ? resetJourneyControlsTimer : undefined}
       >
-        <View style={styles.visualizerContainer}>
+        <Pressable style={styles.visualizerContainer} onPress={journeyContext ? resetJourneyControlsTimer : undefined}>
           {rsvpEnabled ? (
             <RSVPDisplay
               wordTimings={wordTimings}
@@ -671,7 +710,7 @@ export default function PlayerScreen() {
               color={theme.primary}
             />
           )}
-        </View>
+        </Pressable>
 
         <View style={styles.infoContainer}>
           <ThemedText type="h2" style={styles.title} numberOfLines={2}>

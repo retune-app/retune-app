@@ -112,7 +112,14 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
   const { journey } = route.params as { journey: JourneyData };
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
-  const { isPlaying: isMusicPlaying, togglePlayback: toggleMusic } = useBackgroundMusic();
+  const { isPlaying: isMusicPlaying, startBackgroundMusic, stopBackgroundMusic } = useBackgroundMusic();
+  const toggleMusic = useCallback(async () => {
+    if (isMusicPlaying) {
+      await stopBackgroundMusic();
+    } else {
+      await startBackgroundMusic();
+    }
+  }, [isMusicPlaying, startBackgroundMusic, stopBackgroundMusic]);
 
   const journeyStepLabels = journey.steps.map((s: any) => getStepLabel(s.type));
 
@@ -163,6 +170,10 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
   const countdownAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: countdownScale.value }],
     opacity: countdownOpacityVal.value,
+  }));
+
+  const controlsAnimStyle = useAnimatedStyle(() => ({
+    opacity: controlsOpacity.value,
   }));
 
   useEffect(() => {
@@ -619,24 +630,26 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
 
     return (
       <Animated.View entering={FadeIn.duration(600)} exiting={FadeOut.duration(400)} style={styles.breathingContainer}>
-        <JourneyStepBar
-          currentStep={currentStepIndex}
-          totalSteps={journey.steps.length}
-          stepLabels={journeyStepLabels}
-          onPrevious={handleGoBack}
-          onSkip={currentStepIndex < journey.steps.length - 1 ? handleSkipStep : undefined}
-          showSkip={currentStepIndex < journey.steps.length - 1}
-          showPrevious={true}
-        />
-        <View style={[styles.journeyMusicButton, { top: insets.top + 70 }]}>
-          <Pressable
-            onPress={toggleMusic}
-            style={[styles.musicToggleBtn, isMusicPlaying ? { backgroundColor: `${ACCENT_GOLD}30`, borderColor: `${ACCENT_GOLD}50` } : undefined]}
-            hitSlop={8}
-          >
-            <Feather name="music" size={16} color={isMusicPlaying ? ACCENT_GOLD : "rgba(255,255,255,0.6)"} />
-          </Pressable>
-        </View>
+        <Animated.View style={[{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 51 }, controlsAnimStyle]} pointerEvents={showControls ? "box-none" : "none"}>
+          <JourneyStepBar
+            currentStep={currentStepIndex}
+            totalSteps={journey.steps.length}
+            stepLabels={journeyStepLabels}
+            onPrevious={handleGoBack}
+            onSkip={currentStepIndex < journey.steps.length - 1 ? handleSkipStep : undefined}
+            showSkip={currentStepIndex < journey.steps.length - 1}
+            showPrevious={true}
+          />
+          <View style={[styles.journeyMusicButton, { top: insets.top + 70 }]}>
+            <Pressable
+              onPress={() => { resetControlsTimer(); toggleMusic(); }}
+              style={[styles.musicToggleBtn, isMusicPlaying ? { backgroundColor: `${ACCENT_GOLD}30`, borderColor: `${ACCENT_GOLD}50` } : undefined]}
+              hitSlop={8}
+            >
+              <Feather name="music" size={16} color={isMusicPlaying ? ACCENT_GOLD : "rgba(255,255,255,0.6)"} />
+            </Pressable>
+          </View>
+        </Animated.View>
         <FullscreenBreathingLayout
           technique={technique}
           isPlaying={breathingPlaying}

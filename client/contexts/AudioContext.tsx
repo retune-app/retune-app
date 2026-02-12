@@ -190,7 +190,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
           isLooping: autoReplay,
           rate: playbackSpeed,
           shouldCorrectPitch: true,
-          progressUpdateIntervalMillis: 50, // Update every 50ms for smoother RSVP sync
+          progressUpdateIntervalMillis: 25,
         },
         (status) => {
           try {

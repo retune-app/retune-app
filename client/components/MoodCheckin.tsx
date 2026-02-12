@@ -276,9 +276,9 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
       <View style={styles.journeyHeaderRow}>
         <View style={styles.journeyHeaderMood}>
           <View style={[styles.journeyHeaderCircle, { backgroundColor: `${currentMood.color}20` }]}>
-            <Feather name={currentMood.icon as any} size={20} color={currentMood.color} />
+            <Feather name={currentMood.icon as any} size={16} color={currentMood.color} />
           </View>
-          <ThemedText type="caption" style={{ color: currentMood.color, fontWeight: "600", marginTop: 4 }}>
+          <ThemedText type="caption" style={{ color: currentMood.color, fontWeight: "600", marginTop: 2, fontSize: 11 }}>
             {currentMood.label}
           </ThemedText>
         </View>
@@ -291,9 +291,9 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
 
         <View style={styles.journeyHeaderMood}>
           <View style={[styles.journeyHeaderCircle, { backgroundColor: `${target.color}20` }]}>
-            <Feather name={target.icon as any} size={20} color={target.color} />
+            <Feather name={target.icon as any} size={16} color={target.color} />
           </View>
-          <ThemedText type="caption" style={{ color: target.color, fontWeight: "600", marginTop: 4 }}>
+          <ThemedText type="caption" style={{ color: target.color, fontWeight: "600", marginTop: 2, fontSize: 11 }}>
             {target.label}
           </ThemedText>
         </View>
@@ -456,12 +456,12 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
                         >
                           <View style={styles.stepHeader}>
                             <View style={[styles.stepNumberCircle, { backgroundColor: `${stepColor}20` }]}>
-                              <ThemedText type="caption" style={{ color: stepColor, fontWeight: "700", fontSize: 12 }}>
+                              <ThemedText type="caption" style={{ color: stepColor, fontWeight: "700", fontSize: 11 }}>
                                 {String(index + 1)}
                               </ThemedText>
                             </View>
                             <View style={[styles.stepIconCircle, { backgroundColor: `${stepColor}15` }]}>
-                              <StepIconComponent type={step.type} size={16} color={stepColor} />
+                              <StepIconComponent type={step.type} size={14} color={stepColor} />
                             </View>
                             <ThemedText type="body" style={[styles.stepTypeLabel, { color: stepColor }]}>
                               {getStepTypeLabel(step.type)}
@@ -522,9 +522,9 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: Spacing.lg,
-    paddingBottom: 40,
+    paddingBottom: 24,
     paddingTop: Spacing.md,
-    maxHeight: "90%",
+    maxHeight: "92%",
   },
   modalScroll: {
     flexGrow: 0,
@@ -535,7 +535,7 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     backgroundColor: "rgba(255,255,255,0.2)",
     alignSelf: "center",
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.sm,
   },
   modalTitle: {
     textAlign: "center",
@@ -616,16 +616,16 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginVertical: Spacing.lg,
+    marginVertical: Spacing.sm,
     gap: Spacing.md,
   },
   journeyHeaderMood: {
     alignItems: "center",
   },
   journeyHeaderCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -647,27 +647,27 @@ const styles = StyleSheet.create({
     backgroundColor: `${ACCENT_GOLD}08`,
     borderWidth: 1,
     borderRadius: BorderRadius.lg,
-    padding: Spacing.md,
-    marginBottom: Spacing.lg,
-    gap: Spacing.sm,
+    padding: Spacing.sm,
+    marginBottom: Spacing.sm,
+    gap: Spacing.xs,
   },
   ackIcon: {
     marginTop: 2,
   },
   ackText: {
     flex: 1,
-    fontSize: 16,
-    lineHeight: 23,
+    fontSize: 14,
+    lineHeight: 20,
     fontStyle: "italic",
     fontWeight: "500",
   },
   stepsContainer: {
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.sm,
   },
   stepConnector: {
     alignItems: "center",
-    gap: 3,
-    paddingVertical: 6,
+    gap: 2,
+    paddingVertical: 3,
   },
   connectorDot: {
     width: 3,
@@ -677,71 +677,72 @@ const styles = StyleSheet.create({
   stepCard: {
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
-    padding: Spacing.md,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
   },
   stepHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.sm,
-    marginBottom: 6,
+    gap: Spacing.xs,
+    marginBottom: 2,
   },
   stepNumberCircle: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  stepIconCircle: {
     width: 24,
     height: 24,
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
   },
-  stepIconCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   stepTypeLabel: {
     fontWeight: "700",
-    fontSize: 15,
+    fontSize: 14,
     flex: 1,
   },
   stepChevron: {
     marginLeft: "auto",
   },
   stepNote: {
-    fontSize: 13,
-    lineHeight: 19,
-    paddingLeft: 64,
+    fontSize: 12,
+    lineHeight: 17,
+    paddingLeft: 52,
   },
   stepsHint: {
     textAlign: "center",
-    fontSize: 12,
-    marginBottom: Spacing.sm,
+    fontSize: 11,
+    marginBottom: Spacing.xs,
   },
   beginHint: {
     textAlign: "center",
-    fontSize: 12,
-    marginBottom: Spacing.xs,
+    fontSize: 11,
+    marginBottom: 2,
   },
   beginButtonWrapper: {
     borderRadius: BorderRadius.lg,
     overflow: "hidden",
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   beginButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 16,
+    paddingVertical: 12,
     borderRadius: BorderRadius.lg,
     gap: Spacing.sm,
   },
   beginButtonText: {
     fontWeight: "700",
-    fontSize: 17,
+    fontSize: 16,
     color: NAVY,
   },
   dismissButton: {
     alignItems: "center",
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.sm,
   },
 });

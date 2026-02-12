@@ -634,6 +634,7 @@ export default function PlayerScreen() {
     ? Math.min(displayPosition + rsvpPositionOffset, displayDuration - 1)
     : displayPosition + rsvpPositionOffset;
 
+
   return (
     <ThemedView style={styles.container}>
       <StatusBar style={showFullscreenFocus ? "light" : "auto"} hidden={showFullscreenFocus} />

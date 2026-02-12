@@ -192,17 +192,26 @@ export function AffirmationCard({
         ) : isBreathingAffirmation ? (
           <View style={[styles.pillarAccent, { backgroundColor: theme.gold }]} />
         ) : null}
-        <View style={[
-          styles.card,
-          Shadows.small,
-          { 
-            backgroundColor: theme.cardBackground,
-            borderColor: isDark ? 'transparent' : theme.border,
-            borderWidth: isDark ? 0 : 1,
-          },
-          isActive && { backgroundColor: theme.backgroundSecondary, borderColor: theme.primary, borderWidth: 2 },
-          (pillar || isBreathingAffirmation) && { borderLeftWidth: 0, borderTopLeftRadius: 0, borderBottomLeftRadius: 0 },
-        ]}>
+        <LinearGradient
+          colors={
+            isActive
+              ? [theme.backgroundSecondary, theme.backgroundSecondary]
+              : isDark
+                ? [`${theme.navyMid}CC`, theme.cardBackground]
+                : [`${theme.navy}18`, '#FFFFFF']
+          }
+          locations={[0, 0.45]}
+          style={[
+            styles.card,
+            Shadows.small,
+            { 
+              borderColor: isDark ? 'transparent' : theme.border,
+              borderWidth: isDark ? 0 : 1,
+            },
+            isActive && { borderColor: theme.primary, borderWidth: 2 },
+            (pillar || isBreathingAffirmation) && { borderLeftWidth: 0, borderTopLeftRadius: 0, borderBottomLeftRadius: 0 },
+          ]}
+        >
         <View style={[styles.cardHeader, { borderBottomColor: isDark ? 'rgba(255,255,255,0.08)' : theme.border }]}>
           <View style={styles.headerTopRow}>
             <View style={styles.headerLeft}>
@@ -320,7 +329,7 @@ export function AffirmationCard({
             </Animated.View>
           </View>
         </View>
-        </View>
+        </LinearGradient>
       </View>
     </AnimatedPressable>
   );

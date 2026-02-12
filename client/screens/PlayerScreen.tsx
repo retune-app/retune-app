@@ -27,6 +27,7 @@ import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { apiRequest } from "@/lib/query-client";
 import { getVoiceDisplayName } from "@shared/voiceMapping";
 import { breathingAutoStartRef } from "@/navigation/breathingAutoStart";
+import JourneyStepBar from "@/components/JourneyStepBar";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import type { Affirmation } from "@shared/schema";
 
@@ -51,7 +52,7 @@ export default function PlayerScreen() {
   const { theme } = useTheme();
   const queryClient = useQueryClient();
 
-  const { affirmationId, isNew = false, autoPlay = false } = route.params;
+  const { affirmationId, isNew = false, autoPlay = false, journeyContext } = route.params;
 
   const {
     currentAffirmation,
@@ -629,11 +630,22 @@ export default function PlayerScreen() {
         </View>
       </Modal>
 
+      {journeyContext ? (
+        <JourneyStepBar
+          currentStep={journeyContext.currentStep}
+          totalSteps={journeyContext.totalSteps}
+          stepLabels={journeyContext.stepLabels}
+          onPrevious={() => navigation.goBack()}
+          showSkip={false}
+          showPrevious={true}
+        />
+      ) : null}
+
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={[
           styles.content,
-          { paddingTop: headerHeight + Spacing.lg, paddingBottom: insets.bottom + Spacing["2xl"] },
+          { paddingTop: headerHeight + (journeyContext ? 40 : 0) + Spacing.lg, paddingBottom: insets.bottom + Spacing["2xl"] },
         ]}
         showsVerticalScrollIndicator={false}
       >

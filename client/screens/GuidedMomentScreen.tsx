@@ -27,6 +27,7 @@ import * as Haptics from "expo-haptics";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import JourneyStepBar from "@/components/JourneyStepBar";
 import Slider from "@react-native-community/slider";
 
 import { ThemedText } from "@/components/ThemedText";
@@ -163,10 +164,11 @@ interface CategorySection {
 export type GuidedMomentScreenParams = {
   mood: string;
   timeOfDay: string;
+  journeyContext?: { currentStep: number; totalSteps: number; stepLabels: string[] };
 };
 
 export default function GuidedMomentScreen({ route, navigation }: NativeStackScreenProps<any, "GuidedMoment">) {
-  const { mood, timeOfDay } = (route.params as GuidedMomentScreenParams) || { mood: "calm", timeOfDay: "morning" };
+  const { mood, timeOfDay, journeyContext } = (route.params as GuidedMomentScreenParams) || { mood: "calm", timeOfDay: "morning" };
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
@@ -1067,6 +1069,17 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
       colors={[NAVY, NAVY_MID] as [string, string]}
       style={styles.container}
     >
+      {journeyContext ? (
+        <JourneyStepBar
+          currentStep={journeyContext.currentStep}
+          totalSteps={journeyContext.totalSteps}
+          stepLabels={journeyContext.stepLabels}
+          onPrevious={() => navigation.goBack()}
+          onSkip={() => navigation.goBack()}
+          showSkip={journeyContext.currentStep < journeyContext.totalSteps - 1}
+          showPrevious={true}
+        />
+      ) : null}
       <Pressable
         style={styles.tapArea}
         onPress={handleScreenTap}

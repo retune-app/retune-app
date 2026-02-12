@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import {
   View,
   StyleSheet,
@@ -6,6 +6,9 @@ import {
   Dimensions,
   StatusBar,
   Text,
+  Modal,
+  ScrollView,
+  PanResponder,
 } from "react-native";
 import Animated, {
   FadeIn,
@@ -19,6 +22,7 @@ import Animated, {
   Easing,
   SlideInRight,
   SlideOutLeft,
+  interpolate,
 } from "react-native-reanimated";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -29,8 +33,9 @@ import { useFocusEffect } from "@react-navigation/native";
 import Svg, { Circle } from "react-native-svg";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+import Slider from "@react-native-community/slider";
 import { journeyNavigationRef } from "@/navigation/journeyNavigationRef";
-import { useBackgroundMusic } from "@/contexts/BackgroundMusicContext";
+import { useBackgroundMusic, getSoundsByCategory, type BackgroundMusicType, type BackgroundMusicOption } from "@/contexts/BackgroundMusicContext";
 import FullscreenBreathingLayout from "@/components/FullscreenBreathingLayout";
 import JourneyStepBar from "@/components/JourneyStepBar";
 import { MeditationIcon } from "@/components/MeditationIcon";
@@ -112,7 +117,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
   const { journey } = route.params as { journey: JourneyData };
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
-  const { isPlaying: isMusicPlaying, startBackgroundMusic, stopBackgroundMusic } = useBackgroundMusic();
+  const { isPlaying: isMusicPlaying, startBackgroundMusic, stopBackgroundMusic, selectedMusic, setSelectedMusic, volume, setVolume } = useBackgroundMusic();
   const toggleMusic = useCallback(async () => {
     if (isMusicPlaying) {
       await stopBackgroundMusic();
@@ -137,6 +142,8 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
 
   const [countdownValue, setCountdownValue] = useState<number | null>(null);
   const [hapticsEnabled, setHapticsEnabled] = useState(true);
+  const [showSoundSwitcher, setShowSoundSwitcher] = useState(false);
+  const [musicEnabled, setMusicEnabled] = useState(false);
   const countdownScale = useSharedValue(0.8);
   const countdownOpacityVal = useSharedValue(0);
 
@@ -145,6 +152,195 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
       if (val !== null) setHapticsEnabled(val === "true");
     });
   }, []);
+
+  useEffect(() => {
+    setMusicEnabled(isMusicPlaying);
+  }, [isMusicPlaying]);
+
+  const categories = React.useMemo(() => {
+    const byCategory = getSoundsByCategory();
+    const order: Array<keyof ReturnType<typeof getSoundsByCategory>> = [
+      "rain", "ocean", "forest", "meditation", "solfeggio", "binaural", "noise",
+    ];
+    return order.map((key) => ({
+      key,
+      label: { rain: "Rain", ocean: "Ocean", forest: "Forest & Birds", meditation: "Meditation", solfeggio: "Solfeggio", binaural: "Binaural", noise: "Noise" }[key] || key,
+      color: { rain: "#4FC3F7", ocean: "#29B6F6", forest: "#66BB6A", meditation: "#E040FB", solfeggio: "#C9A227", binaural: "#9C27B0", noise: "#78909C" }[key] || "#999",
+      sounds: byCategory[key],
+    }));
+  }, []);
+
+  const handleSwitchSound = useCallback(async (soundId: BackgroundMusicType) => {
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+    if (soundId === 'none') {
+      setMusicEnabled(false);
+      await stopBackgroundMusic();
+    } else {
+      setMusicEnabled(true);
+      await setSelectedMusic(soundId, breathingPlaying);
+    }
+  }, [setSelectedMusic, stopBackgroundMusic, breathingPlaying]);
+
+  const renderSoundTile = useCallback((
+    sound: BackgroundMusicOption,
+    isSelected: boolean,
+    onPress: (id: BackgroundMusicType) => void,
+  ) => {
+    const tileSize = 88;
+    return (
+      <Pressable
+        key={sound.id}
+        onPress={() => onPress(sound.id)}
+        style={{
+          width: tileSize, height: tileSize,
+          backgroundColor: isSelected ? `${ACCENT_GOLD}20` : "rgba(255,255,255,0.06)",
+          borderColor: isSelected ? ACCENT_GOLD : "rgba(255,255,255,0.1)",
+          borderWidth: 1.5, borderRadius: 14, alignItems: "center", justifyContent: "center", padding: 6,
+        }}
+      >
+        <Feather name={sound.icon as any} size={20} color={isSelected ? ACCENT_GOLD : "rgba(255,255,255,0.6)"} />
+        <Text style={{ color: isSelected ? ACCENT_GOLD : "rgba(255,255,255,0.7)", fontSize: 10, textAlign: "center", marginTop: 4 }}>
+          {sound.name}
+        </Text>
+      </Pressable>
+    );
+  }, []);
+
+  const renderNoSoundTile = useCallback((
+    onPress: (id: BackgroundMusicType) => void,
+  ) => {
+    const isSelected = !musicEnabled;
+    const tileSize = 88;
+    return (
+      <Pressable
+        onPress={() => onPress("none" as BackgroundMusicType)}
+        style={{
+          width: tileSize, height: tileSize,
+          backgroundColor: isSelected ? `${ACCENT_GOLD}20` : "rgba(255,255,255,0.06)",
+          borderColor: isSelected ? ACCENT_GOLD : "rgba(255,255,255,0.1)",
+          borderWidth: 1.5, borderRadius: 14, alignItems: "center", justifyContent: "center", padding: 6,
+        }}
+      >
+        <Feather name="volume-x" size={20} color={isSelected ? ACCENT_GOLD : "rgba(255,255,255,0.6)"} />
+        <Text style={{ color: isSelected ? ACCENT_GOLD : "rgba(255,255,255,0.7)", fontSize: 10, textAlign: "center", marginTop: 4 }}>
+          No sound
+        </Text>
+      </Pressable>
+    );
+  }, [musicEnabled]);
+
+  const soundSheetTranslateY = useSharedValue(0);
+
+  const soundSheetPanResponder = useMemo(() => PanResponder.create({
+    onStartShouldSetPanResponder: () => false,
+    onMoveShouldSetPanResponder: (_, gestureState) => {
+      return gestureState.dy > 8 && Math.abs(gestureState.dy) > Math.abs(gestureState.dx);
+    },
+    onPanResponderMove: (_, gestureState) => {
+      if (gestureState.dy > 0) {
+        soundSheetTranslateY.value = gestureState.dy;
+      }
+    },
+    onPanResponderRelease: (_, gestureState) => {
+      if (gestureState.dy > 80 || gestureState.vy > 0.5) {
+        soundSheetTranslateY.value = withTiming(500, { duration: 250 }, () => {});
+        setTimeout(() => {
+          setShowSoundSwitcher(false);
+          soundSheetTranslateY.value = 0;
+        }, 250);
+      } else {
+        soundSheetTranslateY.value = withTiming(0, { duration: 200 });
+      }
+    },
+  }), []);
+
+  const soundSheetAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: soundSheetTranslateY.value }],
+  }));
+
+  const renderSoundSwitcherModal = () => (
+    <Modal
+      visible={showSoundSwitcher}
+      animationType="slide"
+      transparent
+      onRequestClose={() => setShowSoundSwitcher(false)}
+    >
+      <Pressable
+        style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.5)" }}
+        onPress={() => setShowSoundSwitcher(false)}
+      >
+        <Animated.View
+          style={[{
+            backgroundColor: "#1A1A2E",
+            borderTopLeftRadius: 20,
+            borderTopRightRadius: 20,
+            paddingTop: 8,
+            maxHeight: "65%",
+          }, { paddingBottom: insets.bottom + Spacing.md }, soundSheetAnimatedStyle]}
+          {...soundSheetPanResponder.panHandlers}
+        >
+          <Pressable onPress={(e) => e.stopPropagation()} style={{ flex: 0 }}>
+          <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: "rgba(255,255,255,0.2)", alignSelf: "center", marginBottom: 12 }} />
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, marginBottom: 12 }}>
+            <ThemedText type="h4" style={{ color: "#fff", fontSize: 17 }}>
+              Switch Sound
+            </ThemedText>
+            <Pressable onPress={() => setShowSoundSwitcher(false)} hitSlop={12}>
+              <Feather name="x" size={20} color="rgba(255,255,255,0.6)" />
+            </Pressable>
+          </View>
+
+          <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, marginBottom: 12 }}>
+            <Feather name="volume-1" size={14} color="rgba(255,255,255,0.5)" />
+            <Slider
+              style={{ flex: 1, marginHorizontal: 8 }}
+              minimumValue={0}
+              maximumValue={1}
+              value={volume}
+              onValueChange={(val: number) => setVolume(val)}
+              minimumTrackTintColor={ACCENT_GOLD}
+              maximumTrackTintColor="rgba(255,255,255,0.15)"
+              thumbTintColor={ACCENT_GOLD}
+            />
+            <Feather name="volume-2" size={14} color="rgba(255,255,255,0.5)" />
+          </View>
+
+          <ScrollView
+            style={{ maxHeight: 340 }}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={{ paddingHorizontal: 16, marginBottom: 8 }}>
+              {renderNoSoundTile(handleSwitchSound)}
+            </View>
+            {categories.map((category) => (
+              <View key={category.key} style={{ paddingHorizontal: 16, marginBottom: 12 }}>
+                <ThemedText
+                  type="caption"
+                  style={{ color: category.color, fontSize: 11, fontWeight: "700", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}
+                >
+                  {category.label}
+                </ThemedText>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ gap: 8 }}
+                >
+                  {category.sounds.map((sound) =>
+                    renderSoundTile(
+                      sound,
+                      musicEnabled && selectedMusic === sound.id,
+                      handleSwitchSound,
+                    )
+                  )}
+                </ScrollView>
+              </View>
+            ))}
+          </ScrollView>
+          </Pressable>
+        </Animated.View>
+      </Pressable>
+    </Modal>
+  );
 
   const currentMoodInfo = MOOD_MAP[journey.currentMood] || MOOD_MAP.calm;
   const targetMoodInfo = MOOD_MAP[journey.targetMood] || MOOD_MAP.grateful;
@@ -642,7 +838,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
           />
           <View style={[styles.journeyMusicButton, { top: insets.top + 70 }]}>
             <Pressable
-              onPress={() => { resetControlsTimer(); toggleMusic(); }}
+              onPress={() => { resetControlsTimer(); setShowSoundSwitcher(true); }}
               style={[styles.musicToggleBtn, isMusicPlaying ? { backgroundColor: `${ACCENT_GOLD}30`, borderColor: `${ACCENT_GOLD}50` } : undefined]}
               hitSlop={8}
             >
@@ -831,6 +1027,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
           : null}
         {phase === "complete" ? renderComplete() : null}
       </View>
+      {renderSoundSwitcherModal()}
     </View>
   );
 }

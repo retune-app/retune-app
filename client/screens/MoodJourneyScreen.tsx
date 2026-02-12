@@ -512,7 +512,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
           onToggleControls={toggleControls}
           resetControlsTimer={resetControlsTimer}
           insets={insets}
-          backgroundColor="transparent"
+          backgroundColor={NAVY}
           stats={[
             { label: "Time Left", value: formatTime(breathingTimeLeft) },
             { label: "Step", value: `${currentStepIndex + 1}/${journey.steps.length}`, color: technique.color || ACCENT_GOLD },

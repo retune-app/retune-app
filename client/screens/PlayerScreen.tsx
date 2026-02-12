@@ -87,6 +87,15 @@ export default function PlayerScreen() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (!journeyContext) return;
+    const unsubscribe = navigation.addListener('beforeRemove', () => {
+      stop();
+    });
+    return unsubscribe;
+  }, [journeyContext, navigation, stop]);
+
   const [rsvpEnabled, setRsvpEnabled] = useState(true);
   const [rsvpFontSize, setRsvpFontSize] = useState<RSVPFontSize>("M");
   const [rsvpHighlight, setRsvpHighlight] = useState(true);
@@ -684,11 +693,11 @@ export default function PlayerScreen() {
             currentStep={journeyContext.currentStep}
             totalSteps={journeyContext.totalSteps}
             stepLabels={journeyContext.stepLabels}
-            onPrevious={() => { journeyNavigationRef.action = 'back'; navigation.goBack(); }}
+            onPrevious={async () => { await stop(); journeyNavigationRef.action = 'back'; navigation.goBack(); }}
             showSkip={false}
             showPrevious={true}
             showEndJourney={true}
-            onEndJourney={() => { journeyNavigationRef.action = 'complete'; (navigation as any).navigate("Main", { screen: "AffirmTab" }); }}
+            onEndJourney={async () => { await stop(); journeyNavigationRef.action = 'complete'; (navigation as any).navigate("Main", { screen: "AffirmTab" }); }}
           />
         </Animated.View>
       ) : null}

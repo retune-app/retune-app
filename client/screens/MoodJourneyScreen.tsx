@@ -567,7 +567,9 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
       })();
     } else if (step.type === "meditate") {
       setPhase("navigating-meditation");
+      setBreathingPlaying(false);
       (async () => {
+        await stopBackgroundMusic();
         if (prefetchPromiseRef.current) {
           await prefetchPromiseRef.current;
           prefetchPromiseRef.current = null;
@@ -586,6 +588,8 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
       })();
     } else if (step.type === "listen") {
       setPhase("navigating-listen");
+      setBreathingPlaying(false);
+      stopBackgroundMusic();
       setTimeout(() => {
         if (!hasNavigatedRef.current) {
           hasNavigatedRef.current = true;

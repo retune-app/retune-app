@@ -1154,11 +1154,11 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
             currentStep={journeyContext.currentStep}
             totalSteps={journeyContext.totalSteps}
             stepLabels={journeyContext.stepLabels}
-            onPrevious={() => { journeyNavigationRef.action = 'back'; navigation.goBack(); }}
-            onSkip={() => { journeyNavigationRef.action = 'skip'; navigation.goBack(); }}
+            onPrevious={async () => { await cleanupVoice(); await stopBackgroundMusic(); journeyNavigationRef.action = 'back'; navigation.goBack(); }}
+            onSkip={async () => { await cleanupVoice(); await stopBackgroundMusic(); journeyNavigationRef.action = 'skip'; navigation.goBack(); }}
             showSkip={journeyContext.currentStep < journeyContext.totalSteps - 1}
             showEndJourney={journeyContext.currentStep >= journeyContext.totalSteps - 1}
-            onEndJourney={() => { journeyNavigationRef.action = 'complete'; (navigation as any).navigate("Main"); }}
+            onEndJourney={async () => { await cleanupVoice(); await stopBackgroundMusic(); journeyNavigationRef.action = 'complete'; (navigation as any).navigate("Main"); }}
             showPrevious={true}
           />
         </Animated.View>

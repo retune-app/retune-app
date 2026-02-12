@@ -59,146 +59,193 @@ interface MoodCheckinProps {
   onClose: () => void;
 }
 
-interface BreatheRec {
-  techniqueId: string;
-  techniqueName: string;
+interface JourneyStep {
+  type: string;
+  techniqueId?: string;
+  techniqueName?: string;
   note: string;
 }
 
-interface MeditateRec {
-  note: string;
-}
-
-interface ListenRec {
-  hasAffirmation: boolean;
-  affirmationId: number | null;
-  affirmationTitle: string | null;
-  affirmationDescription: string | null;
-  isInnerVoice: boolean;
-  hasClonedVoice: boolean;
-  hasAnyAffirmations: boolean;
-  note: string;
-}
-
-interface MoodResponse {
+interface JourneyResponse {
   acknowledgment: string;
-  breathe: BreatheRec;
-  meditate: MeditateRec;
-  listen: ListenRec;
+  currentMood: string;
+  targetMood: string;
+  steps: JourneyStep[];
 }
 
-export function MoodCheckin({ onStartBreathing, onStartAffirmations, visible, onClose }: MoodCheckinProps) {
+type Phase = "current" | "target" | "journey";
+
+function getStepIcon(type: string): string {
+  if (type === "breathe") return "wind";
+  if (type === "listen") return "headphones";
+  return "wind";
+}
+
+function StepIconComponent({ type, size, color }: { type: string; size: number; color: string }) {
+  if (type === "meditate") {
+    return <MeditationIcon size={size} color={color} />;
+  }
+  return <Feather name={getStepIcon(type) as any} size={size} color={color} />;
+}
+
+export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
   const { theme } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const [selectedMood, setSelectedMood] = useState<string | null>(null);
+  const [phase, setPhase] = useState<Phase>("current");
+  const [currentMood, setCurrentMood] = useState<MoodOption | null>(null);
+  const [targetMood, setTargetMood] = useState<MoodOption | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [response, setResponse] = useState<MoodResponse | null>(null);
+  const [journeyResponse, setJourneyResponse] = useState<JourneyResponse | null>(null);
 
-  const handleMoodSelect = useCallback(async (mood: MoodOption) => {
+  const handleClose = useCallback(() => {
+    onClose();
+    setTimeout(() => {
+      setPhase("current");
+      setCurrentMood(null);
+      setTargetMood(null);
+      setIsLoading(false);
+      setJourneyResponse(null);
+    }, 300);
+  }, [onClose]);
+
+  const handleCurrentMoodSelect = useCallback((mood: MoodOption) => {
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch (e) {}
+    setCurrentMood(mood);
+    setPhase("target");
+  }, []);
 
-    setSelectedMood(mood.id);
+  const handleTargetMoodSelect = useCallback(async (mood: MoodOption) => {
+    if (!currentMood) return;
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (e) {}
+    setTargetMood(mood);
+    setPhase("journey");
     setIsLoading(true);
 
     try {
       const url = new URL("/api/mood-checkin", getApiUrl()).toString();
       const result = await apiRequest("POST", url, {
-        mood: mood.id,
+        mood: currentMood.id,
+        targetMood: mood.id,
         timeOfDay: getTimeOfDay(),
       });
       const data = await result.json();
-      setResponse(data);
+      setJourneyResponse(data);
     } catch (error) {
-      setResponse({
-        acknowledgment: "This moment is yours.",
-        breathe: {
-          techniqueId: "box",
-          techniqueName: "Box Breathing",
-          note: "Rhythmic breathing activates your vagus nerve, calming the body.",
-        },
-        meditate: {
-          note: "A guided meditation to settle into this moment.",
-        },
-        listen: {
-          hasAffirmation: false,
-          affirmationId: null,
-          affirmationTitle: null,
-          affirmationDescription: null,
-          isInnerVoice: false,
-          hasClonedVoice: false,
-          hasAnyAffirmations: false,
-          note: "Create a personal affirmation that speaks to how you feel.",
-        },
+      setJourneyResponse({
+        acknowledgment: "This moment is yours. Let's guide you gently.",
+        currentMood: currentMood.id,
+        targetMood: mood.id,
+        steps: [
+          {
+            type: "breathe",
+            techniqueId: "box",
+            techniqueName: "Box Breathing",
+            note: "Rhythmic breathing activates your vagus nerve, calming the body.",
+          },
+          {
+            type: "meditate",
+            note: "A guided meditation to settle into this moment.",
+          },
+          {
+            type: "listen",
+            note: "Create a personal affirmation that speaks to how you feel.",
+          },
+        ],
       });
     } finally {
       setIsLoading(false);
     }
+  }, [currentMood]);
+
+  const handleBackToPhase1 = useCallback(() => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (e) {}
+    setPhase("current");
+    setCurrentMood(null);
+    setTargetMood(null);
   }, []);
 
-  const handleBreathe = useCallback(() => {
-    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
-    if (response?.breathe?.techniqueId) {
-      onStartBreathing?.(response.breathe.techniqueId);
+  const handleBeginJourney = useCallback(() => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } catch (e) {}
+    if (journeyResponse) {
+      handleClose();
+      (navigation as any).navigate("MoodJourney", { journey: journeyResponse });
     }
-    handleClose();
-  }, [response, onStartBreathing]);
+  }, [journeyResponse, navigation, handleClose]);
 
-  const handleMeditate = useCallback(() => {
-    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
-    navigation.navigate("GuidedMoment", {
-      mood: selectedMood!,
-      timeOfDay: getTimeOfDay(),
-    });
-    handleClose();
-  }, [selectedMood, navigation]);
+  const getMoodById = (id: string): MoodOption | undefined =>
+    MOOD_OPTIONS.find((m) => m.id === id);
 
-  const handleListen = useCallback(() => {
-    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
-    handleClose();
-    if (response?.listen?.hasAffirmation && response.listen.affirmationId) {
-      navigation.navigate("Player", { affirmationId: response.listen.affirmationId, autoPlay: true });
-    } else if (response?.listen?.hasAnyAffirmations) {
-      onStartAffirmations?.();
-    } else {
-      navigation.navigate("Create");
-    }
-  }, [response, navigation, onStartAffirmations]);
-
-  const handleClose = useCallback(() => {
-    onClose();
-    setTimeout(() => {
-      setSelectedMood(null);
-      setResponse(null);
-    }, 300);
-  }, [onClose]);
-
-  const getListenLabel = () => {
-    if (!response?.listen) return "Listen";
-    if (response.listen.hasAffirmation) return "Listen";
-    if (response.listen.hasAnyAffirmations) return "Listen";
-    return "Create";
+  const renderMoodIndicator = () => {
+    if (!currentMood) return null;
+    return (
+      <Pressable onPress={handleBackToPhase1} style={styles.journeyIndicator}>
+        <View style={[styles.indicatorMoodCircle, { backgroundColor: `${currentMood.color}20` }]}>
+          <Feather name={currentMood.icon as any} size={16} color={currentMood.color} />
+        </View>
+        <ThemedText type="caption" style={{ color: currentMood.color, fontWeight: "600" }}>
+          {currentMood.label}
+        </ThemedText>
+        <Feather name="arrow-right" size={14} color={theme.textSecondary} style={styles.indicatorArrow} />
+        <View style={[styles.indicatorTargetCircle, { borderColor: theme.textSecondary }]}>
+          <ThemedText type="caption" style={{ color: theme.textSecondary, fontWeight: "700", fontSize: 11 }}>
+            {"?"}
+          </ThemedText>
+        </View>
+      </Pressable>
+    );
   };
 
-  const getListenSublabel = () => {
-    if (!response?.listen) return "Personal affirmation";
-    if (response.listen.hasAffirmation && response.listen.isInnerVoice) return "In your Inner Voice";
-    if (response.listen.hasAffirmation) return "Your affirmation";
-    if (!response.listen.hasAnyAffirmations && !response.listen.hasClonedVoice) return "With your Inner Voice";
-    return "Personal affirmation";
+  const renderJourneyHeader = () => {
+    if (!currentMood || !targetMood) return null;
+    const target = getMoodById(targetMood.id) || targetMood;
+    return (
+      <View style={styles.journeyHeaderRow}>
+        <View style={styles.journeyHeaderMood}>
+          <View style={[styles.journeyHeaderCircle, { backgroundColor: `${currentMood.color}20` }]}>
+            <Feather name={currentMood.icon as any} size={20} color={currentMood.color} />
+          </View>
+          <ThemedText type="caption" style={{ color: currentMood.color, fontWeight: "600", marginTop: 4 }}>
+            {currentMood.label}
+          </ThemedText>
+        </View>
+
+        <View style={styles.journeyDottedLine}>
+          {[0, 1, 2, 3, 4].map((i) => (
+            <View key={i} style={[styles.dot, { backgroundColor: ACCENT_GOLD }]} />
+          ))}
+        </View>
+
+        <View style={styles.journeyHeaderMood}>
+          <View style={[styles.journeyHeaderCircle, { backgroundColor: `${target.color}20` }]}>
+            <Feather name={target.icon as any} size={20} color={target.color} />
+          </View>
+          <ThemedText type="caption" style={{ color: target.color, fontWeight: "600", marginTop: 4 }}>
+            {target.label}
+          </ThemedText>
+        </View>
+      </View>
+    );
   };
 
-  const getListenIcon = (): string => {
-    if (!response?.listen) return "headphones";
-    if (response.listen.hasAffirmation) return "headphones";
-    return "plus-circle";
+  const getStepTypeLabel = (type: string): string => {
+    if (type === "breathe") return "Breathe";
+    if (type === "meditate") return "Meditate";
+    if (type === "listen") return "Listen";
+    return type;
   };
 
   return (
     <Modal
       visible={visible}
-      animationType="fade"
+      animationType="slide"
       transparent
       onRequestClose={handleClose}
     >
@@ -207,35 +254,34 @@ export function MoodCheckin({ onStartBreathing, onStartAffirmations, visible, on
           style={[styles.modalContent, { backgroundColor: theme.backgroundRoot }]}
           onPress={(e) => e.stopPropagation()}
         >
-            <View style={styles.modalHandle} />
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              bounces={false}
-              keyboardShouldPersistTaps="handled"
-              style={styles.modalScroll}
-            >
-
-            {!selectedMood ? (
+          <View style={styles.modalHandle} />
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            bounces={false}
+            keyboardShouldPersistTaps="handled"
+            style={styles.modalScroll}
+          >
+            {phase === "current" ? (
               <Animated.View entering={FadeIn.duration(200)}>
                 <ThemedText type="h3" style={styles.modalTitle}>
-                  Mindful Moment
+                  {"Where are you right now?"}
                 </ThemedText>
                 <ThemedText type="body" style={[styles.modalSubtitle, { color: theme.textSecondary }]}>
-                  How are you feeling right now?
+                  {"Take a moment to check in with yourself"}
                 </ThemedText>
 
                 <View style={styles.moodGrid}>
                   {MOOD_OPTIONS.map((mood) => (
                     <Pressable
                       key={mood.id}
-                      onPress={() => handleMoodSelect(mood)}
+                      onPress={() => handleCurrentMoodSelect(mood)}
                       style={[
-                        styles.moodOption,
-                        { backgroundColor: `${mood.color}12`, borderColor: `${mood.color}30` },
+                        styles.moodCard,
+                        { backgroundColor: `${mood.color}10`, borderColor: `${mood.color}25` },
                       ]}
-                      testID={`button-mood-${mood.id}`}
+                      testID={`button-mood-current-${mood.id}`}
                     >
-                      <View style={[styles.moodIconWrap, { backgroundColor: `${mood.color}20` }]}>
+                      <View style={[styles.moodIconCircle, { backgroundColor: `${mood.color}20` }]}>
                         <Feather name={mood.icon as any} size={28} color={mood.color} />
                       </View>
                       <ThemedText type="caption" style={[styles.moodLabel, { color: mood.color }]}>
@@ -245,126 +291,141 @@ export function MoodCheckin({ onStartBreathing, onStartAffirmations, visible, on
                   ))}
                 </View>
               </Animated.View>
+            ) : phase === "target" ? (
+              <Animated.View entering={FadeIn.duration(200)}>
+                {renderMoodIndicator()}
+
+                <ThemedText type="h3" style={styles.modalTitle}>
+                  {"Where would you like to be?"}
+                </ThemedText>
+                <ThemedText type="body" style={[styles.modalSubtitle, { color: theme.textSecondary }]}>
+                  {"Choose your destination"}
+                </ThemedText>
+
+                <View style={styles.moodGrid}>
+                  {MOOD_OPTIONS.map((mood) => {
+                    const isDisabled = currentMood?.id === mood.id;
+                    return (
+                      <Pressable
+                        key={mood.id}
+                        onPress={() => !isDisabled ? handleTargetMoodSelect(mood) : undefined}
+                        style={[
+                          styles.moodCard,
+                          isDisabled
+                            ? { backgroundColor: `${theme.textSecondary}08`, borderColor: `${theme.textSecondary}15`, opacity: 0.4 }
+                            : { backgroundColor: `${mood.color}10`, borderColor: `${mood.color}25` },
+                        ]}
+                        testID={`button-mood-target-${mood.id}`}
+                        disabled={isDisabled}
+                      >
+                        <View
+                          style={[
+                            styles.moodIconCircle,
+                            { backgroundColor: isDisabled ? `${theme.textSecondary}10` : `${mood.color}20` },
+                          ]}
+                        >
+                          <Feather
+                            name={mood.icon as any}
+                            size={28}
+                            color={isDisabled ? theme.textSecondary : mood.color}
+                          />
+                        </View>
+                        <ThemedText
+                          type="caption"
+                          style={[styles.moodLabel, { color: isDisabled ? theme.textSecondary : mood.color }]}
+                        >
+                          {mood.label}
+                        </ThemedText>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+
+                <Pressable onPress={handleBackToPhase1} style={styles.backButton}>
+                  <Feather name="arrow-left" size={14} color={theme.textSecondary} />
+                  <ThemedText type="caption" style={{ color: theme.textSecondary, marginLeft: 4 }}>
+                    {"Go back"}
+                  </ThemedText>
+                </Pressable>
+              </Animated.View>
             ) : isLoading ? (
               <Animated.View entering={FadeIn.duration(200)} style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={ACCENT_GOLD} />
                 <ThemedText type="body" style={[styles.loadingText, { color: theme.textSecondary }]}>
-                  Tuning in to you...
+                  {"Crafting your journey..."}
                 </ThemedText>
               </Animated.View>
-            ) : response ? (
+            ) : journeyResponse ? (
               <Animated.View entering={FadeIn.duration(300)}>
+                <ThemedText type="h3" style={styles.modalTitle}>
+                  {"Your Journey"}
+                </ThemedText>
+
+                {renderJourneyHeader()}
+
                 <View style={[styles.ackCard, { borderColor: `${ACCENT_GOLD}20` }]}>
                   <Feather name="message-circle" size={16} color={ACCENT_GOLD} style={styles.ackIcon} />
                   <ThemedText type="body" style={[styles.ackText, { color: theme.text }]}>
-                    {response.acknowledgment}
+                    {journeyResponse.acknowledgment}
                   </ThemedText>
                 </View>
 
-                <ThemedText type="caption" style={[styles.pathwayLabel, { color: theme.textSecondary }]}>
-                  {"Choose your path"}
-                </ThemedText>
-
-                <View style={styles.pathwayCards}>
-                  <Pressable
-                    onPress={handleBreathe}
-                    style={styles.pathwayCardWrapper}
-                    testID="button-pathway-breathe"
-                  >
-                    <LinearGradient
-                      colors={[ACCENT_GOLD, GOLD_LIGHT] as [string, string]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={styles.pathwayCard}
-                    >
-                      <View style={styles.pathwayCardHeader}>
-                        <View style={[styles.pathwayIconCircle, { backgroundColor: `${NAVY}20` }]}>
-                          <Feather name="wind" size={18} color={NAVY} />
-                        </View>
-                        <ThemedText type="body" style={styles.pathwayCardTitle}>
-                          {"Breathe"}
-                        </ThemedText>
-                      </View>
-                      <ThemedText type="caption" style={styles.pathwayCardNote}>
-                        {response.breathe.note}
-                      </ThemedText>
-                      <ThemedText type="caption" style={styles.pathwayCardTechnique}>
-                        {response.breathe.techniqueName}
-                      </ThemedText>
-                    </LinearGradient>
-                  </Pressable>
-
-                  <Pressable
-                    onPress={handleMeditate}
-                    style={styles.pathwayCardWrapper}
-                    testID="button-pathway-meditate"
-                  >
-                    <LinearGradient
-                      colors={["#50C9B0", "#3BA89A"] as [string, string]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={styles.pathwayCard}
-                    >
-                      <View style={styles.pathwayCardHeader}>
-                        <View style={[styles.pathwayIconCircle, { backgroundColor: "rgba(255,255,255,0.2)" }]}>
-                          <MeditationIcon size={18} color="#FFFFFF" />
-                        </View>
-                        <ThemedText type="body" style={styles.pathwayCardTitleLight}>
-                          {"Meditate"}
-                        </ThemedText>
-                      </View>
-                      <ThemedText type="caption" style={styles.pathwayCardNoteLight}>
-                        {response.meditate.note}
-                      </ThemedText>
-                      <ThemedText type="caption" style={styles.pathwayCardTechniqueLight}>
-                        {"AI Guided Moment"}
-                      </ThemedText>
-                    </LinearGradient>
-                  </Pressable>
-
-                  <Pressable
-                    onPress={handleListen}
-                    style={styles.pathwayCardWrapper}
-                    testID="button-pathway-listen"
-                  >
-                    <View style={[styles.pathwayCard, styles.listenCard, { borderColor: `${ACCENT_GOLD}25` }]}>
-                      <View style={styles.pathwayCardHeader}>
-                        <View style={[styles.pathwayIconCircle, { backgroundColor: `${ACCENT_GOLD}15` }]}>
-                          <Feather name={getListenIcon() as any} size={18} color={ACCENT_GOLD} />
-                        </View>
-                        <ThemedText type="body" style={[styles.pathwayCardTitle, { color: theme.text }]}>
-                          {getListenLabel()}
-                        </ThemedText>
-                      </View>
-                      <ThemedText type="caption" style={[styles.pathwayCardNote, { color: theme.textSecondary }]}>
-                        {response.listen.note}
-                      </ThemedText>
-                      {response.listen.hasAffirmation && response.listen.affirmationTitle ? (
-                        <View>
-                          <View style={styles.affirmationTag}>
-                            <Feather name="music" size={10} color={ACCENT_GOLD} />
-                            <ThemedText type="caption" style={styles.affirmationTagText} numberOfLines={1}>
-                              {response.listen.affirmationTitle}
+                <View style={styles.stepsContainer}>
+                  {journeyResponse.steps.map((step, index) => {
+                    const stepColor = step.type === "breathe" ? "#50C9B0" : step.type === "meditate" ? "#7B68EE" : ACCENT_GOLD;
+                    return (
+                      <View key={index}>
+                        {index > 0 ? (
+                          <View style={styles.stepConnector}>
+                            {[0, 1, 2].map((d) => (
+                              <View key={d} style={[styles.connectorDot, { backgroundColor: `${theme.textSecondary}30` }]} />
+                            ))}
+                          </View>
+                        ) : null}
+                        <View style={[styles.stepCard, { backgroundColor: `${stepColor}08`, borderColor: `${stepColor}20` }]}>
+                          <View style={styles.stepHeader}>
+                            <View style={[styles.stepNumberCircle, { backgroundColor: `${stepColor}20` }]}>
+                              <ThemedText type="caption" style={{ color: stepColor, fontWeight: "700", fontSize: 12 }}>
+                                {String(index + 1)}
+                              </ThemedText>
+                            </View>
+                            <View style={[styles.stepIconCircle, { backgroundColor: `${stepColor}15` }]}>
+                              <StepIconComponent type={step.type} size={16} color={stepColor} />
+                            </View>
+                            <ThemedText type="body" style={[styles.stepTypeLabel, { color: stepColor }]}>
+                              {getStepTypeLabel(step.type)}
                             </ThemedText>
                           </View>
-                          {response.listen.affirmationDescription ? (
-                            <ThemedText type="caption" style={[styles.affirmationDescriptionText, { color: theme.textSecondary }]} numberOfLines={2}>
-                              {response.listen.affirmationDescription}
-                            </ThemedText>
-                          ) : null}
+                          <ThemedText type="small" style={[styles.stepNote, { color: theme.textSecondary }]}>
+                            {step.note}
+                          </ThemedText>
                         </View>
-                      ) : (
-                        <ThemedText type="caption" style={[styles.pathwayCardTechnique, { color: `${ACCENT_GOLD}90` }]}>
-                          {getListenSublabel()}
-                        </ThemedText>
-                      )}
-                    </View>
-                  </Pressable>
+                      </View>
+                    );
+                  })}
                 </View>
+
+                <Pressable
+                  onPress={handleBeginJourney}
+                  style={styles.beginButtonWrapper}
+                  testID="button-begin-journey"
+                >
+                  <LinearGradient
+                    colors={[ACCENT_GOLD, GOLD_LIGHT] as [string, string]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.beginButton}
+                  >
+                    <ThemedText type="body" style={styles.beginButtonText}>
+                      {"Begin Journey"}
+                    </ThemedText>
+                    <Feather name="arrow-right" size={18} color={NAVY} />
+                  </LinearGradient>
+                </Pressable>
 
                 <Pressable onPress={handleClose} style={styles.dismissButton}>
                   <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                    Maybe later
+                    {"Maybe later"}
                   </ThemedText>
                 </Pressable>
               </Animated.View>
@@ -416,14 +477,14 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: Spacing.sm,
   },
-  moodOption: {
+  moodCard: {
     width: "30%",
     alignItems: "center",
     paddingVertical: Spacing.md,
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
   },
-  moodIconWrap: {
+  moodIconCircle: {
     width: 56,
     height: 56,
     borderRadius: 28,
@@ -435,6 +496,39 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     fontSize: 13,
   },
+  journeyIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: Spacing.lg,
+    gap: Spacing.sm,
+  },
+  indicatorMoodCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  indicatorArrow: {
+    marginHorizontal: 2,
+  },
+  indicatorTargetCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderStyle: "dashed",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  backButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: Spacing.lg,
+    paddingVertical: Spacing.sm,
+  },
   loadingContainer: {
     alignItems: "center",
     paddingVertical: 48,
@@ -442,6 +536,35 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: Spacing.md,
     fontSize: 14,
+  },
+  journeyHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginVertical: Spacing.lg,
+    gap: Spacing.md,
+  },
+  journeyHeaderMood: {
+    alignItems: "center",
+  },
+  journeyHeaderCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  journeyDottedLine: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: Spacing.sm,
+  },
+  dot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    opacity: 0.5,
   },
   ackCard: {
     flexDirection: "row",
@@ -463,100 +586,70 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
     fontWeight: "500",
   },
-  pathwayLabel: {
-    textAlign: "center",
-    fontSize: 11,
-    fontWeight: "700",
-    textTransform: "uppercase",
-    letterSpacing: 1.2,
-    marginBottom: Spacing.sm,
+  stepsContainer: {
+    marginBottom: Spacing.lg,
   },
-  pathwayCards: {
-    gap: Spacing.sm,
+  stepConnector: {
+    alignItems: "center",
+    gap: 3,
+    paddingVertical: 6,
   },
-  pathwayCardWrapper: {
+  connectorDot: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+  },
+  stepCard: {
     borderRadius: BorderRadius.lg,
-    overflow: "hidden",
-  },
-  pathwayCard: {
-    padding: Spacing.md,
-    borderRadius: BorderRadius.lg,
-    gap: 6,
-  },
-  listenCard: {
-    backgroundColor: `${ACCENT_GOLD}06`,
     borderWidth: 1,
+    padding: Spacing.md,
   },
-  pathwayCardHeader: {
+  stepHeader: {
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.sm,
-    marginBottom: 2,
+    marginBottom: 6,
   },
-  pathwayIconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  stepNumberCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
   },
-  pathwayCardTitle: {
+  stepIconCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  stepTypeLabel: {
     fontWeight: "700",
-    fontSize: 16,
-    color: NAVY,
+    fontSize: 15,
   },
-  pathwayCardTitleLight: {
-    fontWeight: "700",
-    fontSize: 16,
-    color: "#FFFFFF",
-  },
-  pathwayCardNote: {
+  stepNote: {
     fontSize: 13,
-    lineHeight: 18,
-    color: `${NAVY}B0`,
-    paddingLeft: 44,
+    lineHeight: 19,
+    paddingLeft: 64,
   },
-  pathwayCardNoteLight: {
-    fontSize: 13,
-    lineHeight: 18,
-    color: "rgba(255,255,255,0.85)",
-    paddingLeft: 44,
+  beginButtonWrapper: {
+    borderRadius: BorderRadius.lg,
+    overflow: "hidden",
+    marginBottom: Spacing.sm,
   },
-  pathwayCardTechnique: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: `${NAVY}70`,
-    paddingLeft: 44,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  pathwayCardTechniqueLight: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: "rgba(255,255,255,0.5)",
-    paddingLeft: 44,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  affirmationTag: {
+  beginButton: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    paddingLeft: 44,
-    marginTop: 2,
+    justifyContent: "center",
+    paddingVertical: 16,
+    borderRadius: BorderRadius.lg,
+    gap: Spacing.sm,
   },
-  affirmationTagText: {
-    color: ACCENT_GOLD,
-    fontSize: 12,
-    fontWeight: "600",
-    flex: 1,
-  },
-  affirmationDescriptionText: {
-    fontStyle: "italic",
-    fontSize: 11,
-    marginTop: 4,
-    paddingLeft: 44,
-    opacity: 0.8,
+  beginButtonText: {
+    fontWeight: "700",
+    fontSize: 17,
+    color: NAVY,
   },
   dismissButton: {
     alignItems: "center",

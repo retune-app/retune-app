@@ -99,7 +99,7 @@ type JourneyPhase =
 
 type Props = NativeStackScreenProps<RootStackParamList, "MoodJourney">;
 
-const BREATHING_DURATION_SECONDS = 180;
+const BREATHING_DURATION_SECONDS = 120;
 
 function getStepLabel(type: string): string {
   if (type === "breathe") return "Breathe";

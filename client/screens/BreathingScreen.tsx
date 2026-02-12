@@ -80,7 +80,7 @@ export default function BreathingScreen() {
   const { selectedMusic, setSelectedMusic, startBackgroundMusic, stopBackgroundMusic, isPlaying: isMusicPlaying, volume, setVolume, setDucked } = useBackgroundMusic();
 
   const [selectedTechnique, setSelectedTechnique] = useState<BreathingTechnique>(BREATHING_TECHNIQUES[0]);
-  const [selectedDuration, setSelectedDuration] = useState(60);
+  const [selectedDuration, setSelectedDuration] = useState(120);
   const [isPlaying, setIsPlaying] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [cyclesCompleted, setCyclesCompleted] = useState(0);

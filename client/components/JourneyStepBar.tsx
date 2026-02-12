@@ -15,6 +15,8 @@ interface JourneyStepBarProps {
   onSkip?: () => void;
   showSkip?: boolean;
   showPrevious?: boolean;
+  onEndJourney?: () => void;
+  showEndJourney?: boolean;
 }
 
 function getStepIcon(label: string): string {
@@ -33,6 +35,8 @@ export default function JourneyStepBar({
   onSkip,
   showSkip = true,
   showPrevious = true,
+  onEndJourney,
+  showEndJourney = false,
 }: JourneyStepBarProps) {
   const insets = useSafeAreaInsets();
 
@@ -101,7 +105,12 @@ export default function JourneyStepBar({
         </View>
 
         <View style={styles.rightSection}>
-          {showSkip && onSkip ? (
+          {showEndJourney && onEndJourney ? (
+            <Pressable onPress={onEndJourney} style={styles.endButton} hitSlop={8}>
+              <Feather name="check-circle" size={14} color={ACCENT_GOLD} />
+              <Text style={styles.endButtonText}>End</Text>
+            </Pressable>
+          ) : showSkip && onSkip ? (
             <Pressable onPress={onSkip} style={styles.navButton} hitSlop={8}>
               <Text style={styles.navButtonText}>Skip</Text>
               <Feather name="chevron-right" size={16} color="rgba(255,255,255,0.9)" />
@@ -209,5 +218,21 @@ const styles = StyleSheet.create({
   },
   navButtonPlaceholder: {
     width: 60,
+  },
+  endButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 14,
+    backgroundColor: "rgba(201,162,39,0.2)",
+    borderWidth: 1,
+    borderColor: "rgba(201,162,39,0.4)",
+  },
+  endButtonText: {
+    fontSize: 12,
+    color: ACCENT_GOLD,
+    fontWeight: "700",
   },
 });

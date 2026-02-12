@@ -29,6 +29,8 @@ import { useFocusEffect } from "@react-navigation/native";
 import Svg, { Circle } from "react-native-svg";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+import { journeyNavigationRef } from "@/navigation/journeyNavigationRef";
+import { useBackgroundMusic } from "@/contexts/BackgroundMusicContext";
 import FullscreenBreathingLayout from "@/components/FullscreenBreathingLayout";
 import JourneyStepBar from "@/components/JourneyStepBar";
 import { MeditationIcon } from "@/components/MeditationIcon";
@@ -110,6 +112,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
   const { journey } = route.params as { journey: JourneyData };
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
+  const { isPlaying: isMusicPlaying, togglePlayback: toggleMusic } = useBackgroundMusic();
 
   const journeyStepLabels = journey.steps.map((s: any) => getStepLabel(s.type));
 
@@ -175,7 +178,13 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
       if (returningFromStepRef.current) {
         returningFromStepRef.current = false;
         hasNavigatedRef.current = false;
-        advanceToNextStep();
+        const action = journeyNavigationRef.action;
+        journeyNavigationRef.action = 'complete';
+        if (action === 'back') {
+          handleGoBack();
+        } else {
+          advanceToNextStep();
+        }
       }
     }, [currentStepIndex])
   );
@@ -619,6 +628,15 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
           showSkip={currentStepIndex < journey.steps.length - 1}
           showPrevious={true}
         />
+        <View style={[styles.journeyMusicButton, { top: insets.top + 70 }]}>
+          <Pressable
+            onPress={toggleMusic}
+            style={[styles.musicToggleBtn, isMusicPlaying ? { backgroundColor: `${ACCENT_GOLD}30`, borderColor: `${ACCENT_GOLD}50` } : undefined]}
+            hitSlop={8}
+          >
+            <Feather name="music" size={16} color={isMusicPlaying ? ACCENT_GOLD : "rgba(255,255,255,0.6)"} />
+          </Pressable>
+        </View>
         <FullscreenBreathingLayout
           technique={technique}
           isPlaying={breathingPlaying}
@@ -896,6 +914,21 @@ const styles = StyleSheet.create({
   },
   breathingContainer: {
     flex: 1,
+  },
+  journeyMusicButton: {
+    position: "absolute",
+    right: Spacing.md,
+    zIndex: 51,
+  },
+  musicToggleBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(255,255,255,0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.2)",
+    alignItems: "center",
+    justifyContent: "center",
   },
   stepNavLabel: {
     fontSize: 12,

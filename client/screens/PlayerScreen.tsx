@@ -28,6 +28,7 @@ import { apiRequest } from "@/lib/query-client";
 import { getVoiceDisplayName } from "@shared/voiceMapping";
 import { breathingAutoStartRef } from "@/navigation/breathingAutoStart";
 import JourneyStepBar from "@/components/JourneyStepBar";
+import { journeyNavigationRef } from "@/navigation/journeyNavigationRef";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import type { Affirmation } from "@shared/schema";
 
@@ -638,9 +639,11 @@ export default function PlayerScreen() {
           currentStep={journeyContext.currentStep}
           totalSteps={journeyContext.totalSteps}
           stepLabels={journeyContext.stepLabels}
-          onPrevious={() => navigation.goBack()}
+          onPrevious={() => { journeyNavigationRef.action = 'back'; navigation.goBack(); }}
           showSkip={false}
           showPrevious={true}
+          showEndJourney={true}
+          onEndJourney={() => { journeyNavigationRef.action = 'complete'; (navigation as any).navigate("Main"); }}
         />
       ) : null}
 

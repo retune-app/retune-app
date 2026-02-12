@@ -28,6 +28,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import JourneyStepBar from "@/components/JourneyStepBar";
+import { journeyNavigationRef } from "@/navigation/journeyNavigationRef";
 import Slider from "@react-native-community/slider";
 
 import { ThemedText } from "@/components/ThemedText";
@@ -487,8 +488,13 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
     setPlayerState("idle");
     cachedScriptRef.current = null;
     scriptFetchingRef.current = false;
-    navigation.navigate("Main", { screen: "BreatheTab" } as any);
-  }, [cleanupVoice, stopBackgroundMusic, navigation]);
+    if (journeyContext) {
+      journeyNavigationRef.action = 'complete';
+      navigation.goBack();
+    } else {
+      navigation.navigate("Main", { screen: "BreatheTab" } as any);
+    }
+  }, [cleanupVoice, stopBackgroundMusic, navigation, journeyContext]);
 
   const handleSwitchSoundDuringPlayback = useCallback(async (soundId: BackgroundMusicType) => {
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
@@ -880,7 +886,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
         styles.controlsOverlay,
         controlsFadeStyle,
         {
-          paddingTop: insets.top + Spacing.sm,
+          paddingTop: journeyContext ? (insets.top + 70) : (insets.top + Spacing.sm),
           paddingBottom: insets.bottom + Spacing.sm,
         },
       ]}
@@ -927,14 +933,16 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
               </Pressable>
             </>
           ) : null}
-          <Pressable
-            onPress={handleClose}
-            hitSlop={12}
-            style={styles.closeButton}
-            testID="button-close-player"
-          >
-            <Feather name="x" size={22} color="rgba(255,255,255,0.7)" />
-          </Pressable>
+          {!journeyContext ? (
+            <Pressable
+              onPress={handleClose}
+              hitSlop={12}
+              style={styles.closeButton}
+              testID="button-close-player"
+            >
+              <Feather name="x" size={22} color="rgba(255,255,255,0.7)" />
+            </Pressable>
+          ) : null}
         </View>
       </View>
 
@@ -1074,9 +1082,11 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
           currentStep={journeyContext.currentStep}
           totalSteps={journeyContext.totalSteps}
           stepLabels={journeyContext.stepLabels}
-          onPrevious={() => navigation.goBack()}
-          onSkip={() => navigation.goBack()}
+          onPrevious={() => { journeyNavigationRef.action = 'back'; navigation.goBack(); }}
+          onSkip={() => { journeyNavigationRef.action = 'skip'; navigation.goBack(); }}
           showSkip={journeyContext.currentStep < journeyContext.totalSteps - 1}
+          showEndJourney={journeyContext.currentStep >= journeyContext.totalSteps - 1}
+          onEndJourney={() => { journeyNavigationRef.action = 'complete'; (navigation as any).navigate("Main"); }}
           showPrevious={true}
         />
       ) : null}

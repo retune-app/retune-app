@@ -1505,10 +1505,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   durationPill: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    borderWidth: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 22,
+    borderWidth: 1.5,
   },
   durationPillText: {
     fontSize: 12,
@@ -1550,17 +1550,17 @@ const styles = StyleSheet.create({
   progressFill: {
     height: "100%",
     borderRadius: 2,
-    backgroundColor: ACCENT_GOLD,
+    backgroundColor: "rgba(255,255,255,0.5)",
   },
   statusLabel: {
-    color: "rgba(255,255,255,0.5)",
+    color: "rgba(255,255,255,0.6)",
     marginTop: Spacing.md,
     fontSize: 13,
   },
   countdownLabel: {
     fontSize: 32,
     fontWeight: "700",
-    color: ACCENT_GOLD,
+    color: "#FFFFFF",
     marginTop: Spacing.md,
   },
   countdownInsideRings: {

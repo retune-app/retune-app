@@ -378,15 +378,16 @@ export default function PlayerScreen() {
       const hapticValue = map.get(HAPTIC_ENABLED_KEY);
       if (hapticValue !== null && hapticValue !== undefined) setHapticEnabled(hapticValue === "true");
       const tipShown = map.get(FOCUS_MODE_TIP_SHOWN_KEY);
-      if (tipShown !== "true") setShowFocusModeTip(true);
+      if (tipShown !== "true" || isLastJourneyStep) setShowFocusModeTip(true);
     });
   }, []);
 
-  // Dismiss focus mode tip and mark as shown
   const dismissFocusModeTip = useCallback(async () => {
     setShowFocusModeTip(false);
-    await AsyncStorage.setItem(FOCUS_MODE_TIP_SHOWN_KEY, "true");
-  }, []);
+    if (!journeyContext) {
+      await AsyncStorage.setItem(FOCUS_MODE_TIP_SHOWN_KEY, "true");
+    }
+  }, [journeyContext]);
 
   const mountedRef = useRef(true);
   const orientationLockTimeoutRef = useRef<NodeJS.Timeout | null>(null);

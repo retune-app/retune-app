@@ -35,23 +35,23 @@ interface MoodOption {
   color: string;
 }
 
-const MOOD_OPTIONS: MoodOption[] = [
-  { id: "calm", label: "Calm", icon: "sun", color: "#50C9B0" },
+const STARTING_MOODS: MoodOption[] = [
   { id: "stressed", label: "Stressed", icon: "cloud", color: "#E85D5D" },
-  { id: "tired", label: "Tired", icon: "moon", color: "#7B68EE" },
-  { id: "energized", label: "Energized", icon: "zap", color: "#F5A623" },
   { id: "anxious", label: "Anxious", icon: "wind", color: "#4FC3F7" },
-  { id: "grateful", label: "Grateful", icon: "heart", color: "#C9A227" },
+  { id: "tired", label: "Tired", icon: "moon", color: "#7B68EE" },
+  { id: "sad", label: "Sad", icon: "cloud-rain", color: "#7986CB" },
+  { id: "overwhelmed", label: "Overwhelmed", icon: "loader", color: "#FF7043" },
+  { id: "calm", label: "Calm", icon: "sun", color: "#50C9B0" },
 ];
 
-const VALID_TARGET_MOODS: Record<string, string[]> = {
-  calm: ["grateful", "energized"],
-  stressed: ["calm", "grateful"],
-  tired: ["energized", "calm"],
-  energized: ["calm", "grateful"],
-  anxious: ["calm", "grateful"],
-  grateful: ["calm", "energized"],
-};
+const TARGET_MOODS: MoodOption[] = [
+  { id: "calm", label: "Calm", icon: "sun", color: "#50C9B0" },
+  { id: "energized", label: "Energized", icon: "zap", color: "#F5A623" },
+  { id: "grateful", label: "Grateful", icon: "heart", color: "#C9A227" },
+  { id: "confident", label: "Confident", icon: "shield", color: "#FF6B6B" },
+  { id: "focused", label: "Focused", icon: "target", color: "#42A5F5" },
+  { id: "joyful", label: "Joyful", icon: "star", color: "#FFB74D" },
+];
 
 const CHECKIN_PROMPTS = [
   { title: "Let's tune in", subtitle: "How does your world feel right now?" },
@@ -247,7 +247,7 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
   }, [journeyResponse, currentMood, targetMood, navigation, handleClose]);
 
   const getMoodById = (id: string): MoodOption | undefined =>
-    MOOD_OPTIONS.find((m) => m.id === id);
+    STARTING_MOODS.find((m) => m.id === id) || TARGET_MOODS.find((m) => m.id === id);
 
   const renderMoodIndicator = () => {
     if (!currentMood) return null;
@@ -337,7 +337,7 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
                 </ThemedText>
 
                 <View style={styles.moodGrid}>
-                  {MOOD_OPTIONS.map((mood) => (
+                  {STARTING_MOODS.map((mood) => (
                     <Pressable
                       key={mood.id}
                       onPress={() => handleCurrentMoodSelect(mood)}
@@ -369,10 +369,7 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
                 </ThemedText>
 
                 <View style={styles.moodGrid}>
-                  {MOOD_OPTIONS.filter((mood) => {
-                    const validTargets = currentMood ? (VALID_TARGET_MOODS[currentMood.id] || []) : [];
-                    return validTargets.includes(mood.id);
-                  }).map((mood) => (
+                  {TARGET_MOODS.map((mood) => (
                     <Pressable
                       key={mood.id}
                       onPress={() => handleTargetMoodSelect(mood)}

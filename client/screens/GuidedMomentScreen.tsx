@@ -95,6 +95,36 @@ const MOOD_SOUND_MAP: Record<string, Record<string, BackgroundMusicType>> = {
     evening: "meditation-forest-melody",
     night: "forest-night",
   },
+  sad: {
+    morning: "rain-soft",
+    afternoon: "rain-calming",
+    evening: "meditation-singing-bowls",
+    night: "meditation-deep-drone",
+  },
+  overwhelmed: {
+    morning: "meditation-singing-bowls",
+    afternoon: "rain-soft",
+    evening: "meditation-gentle-chimes",
+    night: "binaural-delta",
+  },
+  confident: {
+    morning: "binaural-beta",
+    afternoon: "binaural-alpha",
+    evening: "meditation-forest-melody",
+    night: "meditation-gentle-chimes",
+  },
+  focused: {
+    morning: "binaural-beta",
+    afternoon: "binaural-alpha",
+    evening: "binaural-alpha",
+    night: "meditation-gentle-chimes",
+  },
+  joyful: {
+    morning: "forest-birds-morning",
+    afternoon: "forest-rain-birds",
+    evening: "meditation-forest-melody",
+    night: "forest-night",
+  },
 };
 
 const MOOD_LABELS: Record<string, string> = {
@@ -104,6 +134,11 @@ const MOOD_LABELS: Record<string, string> = {
   energized: "Energized",
   anxious: "Anxious",
   grateful: "Grateful",
+  sad: "Sad",
+  overwhelmed: "Overwhelmed",
+  confident: "Confident",
+  focused: "Focused",
+  joyful: "Joyful",
 };
 
 const MOOD_RING_COLORS: Record<string, { primary: string; secondary: string }> = {
@@ -113,6 +148,11 @@ const MOOD_RING_COLORS: Record<string, { primary: string; secondary: string }> =
   energized: { primary: "#F5A623", secondary: "#D4901F" },
   anxious: { primary: "#4FC3F7", secondary: "#3AADE0" },
   grateful: { primary: "#C9A227", secondary: "#A88920" },
+  sad: { primary: "#7986CB", secondary: "#5C6BC0" },
+  overwhelmed: { primary: "#FF7043", secondary: "#E64A19" },
+  confident: { primary: "#FF6B6B", secondary: "#E55555" },
+  focused: { primary: "#42A5F5", secondary: "#1E88E5" },
+  joyful: { primary: "#FFB74D", secondary: "#FFA726" },
 };
 
 const CATEGORY_COLORS: Record<string, string> = {

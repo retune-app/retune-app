@@ -64,12 +64,17 @@ interface MoodInfo {
 }
 
 const MOOD_MAP: Record<string, MoodInfo> = {
-  calm: { id: "calm", label: "Calm", icon: "sun", color: "#50C9B0" },
   stressed: { id: "stressed", label: "Stressed", icon: "cloud", color: "#E85D5D" },
-  tired: { id: "tired", label: "Tired", icon: "moon", color: "#7B68EE" },
-  energized: { id: "energized", label: "Energized", icon: "zap", color: "#F5A623" },
   anxious: { id: "anxious", label: "Anxious", icon: "wind", color: "#4FC3F7" },
+  tired: { id: "tired", label: "Tired", icon: "moon", color: "#7B68EE" },
+  sad: { id: "sad", label: "Sad", icon: "cloud-rain", color: "#7986CB" },
+  overwhelmed: { id: "overwhelmed", label: "Overwhelmed", icon: "loader", color: "#FF7043" },
+  calm: { id: "calm", label: "Calm", icon: "sun", color: "#50C9B0" },
+  energized: { id: "energized", label: "Energized", icon: "zap", color: "#F5A623" },
   grateful: { id: "grateful", label: "Grateful", icon: "heart", color: "#C9A227" },
+  confident: { id: "confident", label: "Confident", icon: "shield", color: "#FF6B6B" },
+  focused: { id: "focused", label: "Focused", icon: "target", color: "#42A5F5" },
+  joyful: { id: "joyful", label: "Joyful", icon: "star", color: "#FFB74D" },
 };
 
 interface JourneyStep {

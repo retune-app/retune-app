@@ -2791,8 +2791,14 @@ Rules for tone:
         if (parsed.listenNote) listenNote = parsed.listenNote;
       } catch (e) {}
 
+      if (!stepTypes.includes("listen")) {
+        stepTypes.push("listen");
+      }
+      const reordered = stepTypes.filter((s: string) => s !== "listen");
+      reordered.push("listen");
+
       const steps: any[] = [];
-      for (const stepType of stepTypes) {
+      for (const stepType of reordered) {
         if (stepType === "breathe") {
           steps.push({
             type: "breathe",

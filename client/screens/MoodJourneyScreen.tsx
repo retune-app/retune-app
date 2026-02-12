@@ -36,6 +36,8 @@ import Svg, { Circle } from "react-native-svg";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import Slider from "@react-native-community/slider";
+import { getApiUrl } from "@/lib/query-client";
+import { getAuthToken } from "@/lib/auth-token";
 import { journeyNavigationRef } from "@/navigation/journeyNavigationRef";
 import { useBackgroundMusic, getSoundsByCategory, type BackgroundMusicType, type BackgroundMusicOption } from "@/contexts/BackgroundMusicContext";
 import FullscreenBreathingLayout from "@/components/FullscreenBreathingLayout";
@@ -143,6 +145,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
   const breathingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const hasNavigatedRef = useRef(false);
   const returningFromStepRef = useRef(false);
+  const prefetchedMeditationRef = useRef<{ script: string; disclaimer: string; duration: number } | null>(null);
   const [showControls, setShowControls] = useState(false);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const controlsOpacity = useSharedValue(0);
@@ -467,6 +470,39 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
     }, [currentStepIndex])
   );
 
+  const prefetchMeditationScript = useCallback((stepIndex: number) => {
+    const nextMeditationStep = journey.steps.slice(stepIndex + 1).find((s: JourneyStep) => s.type === "meditate");
+    if (!nextMeditationStep) return;
+    const moodForScript = nextMeditationStep.mood || journey.targetMood;
+    const timeOfDayForScript = getTimeOfDay();
+    prefetchedMeditationRef.current = null;
+    (async () => {
+      try {
+        const url = new URL("/api/guided-moments/script", getApiUrl()).toString();
+        const headers: Record<string, string> = { "Content-Type": "application/json" };
+        const authToken = getAuthToken();
+        if (authToken) headers["X-Auth-Token"] = authToken;
+        const result = await fetch(url, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            mood: moodForScript,
+            timeOfDay: timeOfDayForScript,
+            duration: 2,
+            dayOfWeek: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][new Date().getDay()],
+          }),
+          credentials: "include",
+        });
+        const data = await result.json();
+        if (data.script) {
+          prefetchedMeditationRef.current = { script: data.script, disclaimer: data.disclaimer, duration: 2 };
+        }
+      } catch (e) {
+        prefetchedMeditationRef.current = null;
+      }
+    })();
+  }, [journey]);
+
   const startCurrentStep = useCallback(() => {
     if (!currentStep) {
       setPhase("complete");
@@ -479,6 +515,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
       setPhase("breathing");
       setBreathingTimeLeft(BREATHING_DURATION_SECONDS);
       setCyclesCompleted(0);
+      prefetchMeditationScript(currentStepIndex);
 
       (async () => {
         await new Promise(resolve => setTimeout(resolve, 400));
@@ -505,6 +542,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
             mood: currentStep.mood || journey.targetMood,
             timeOfDay: currentStep.timeOfDay || getTimeOfDay(),
             journeyContext: jCtx,
+            prefetchedScript: prefetchedMeditationRef.current,
           });
         }
       }, 1500);
@@ -555,6 +593,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
       setPhase("breathing");
       setBreathingTimeLeft(BREATHING_DURATION_SECONDS);
       setCyclesCompleted(0);
+      prefetchMeditationScript(stepIndex);
 
       (async () => {
         await new Promise(resolve => setTimeout(resolve, 400));
@@ -581,6 +620,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
             mood: step.mood || journey.targetMood,
             timeOfDay: step.timeOfDay || getTimeOfDay(),
             journeyContext: jCtx,
+            prefetchedScript: prefetchedMeditationRef.current,
           });
         }
       }, 1500);

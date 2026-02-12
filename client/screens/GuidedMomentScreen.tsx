@@ -206,10 +206,11 @@ export type GuidedMomentScreenParams = {
   mood: string;
   timeOfDay: string;
   journeyContext?: { currentStep: number; totalSteps: number; stepLabels: string[] };
+  prefetchedScript?: { script: string; disclaimer: string; duration: number } | null;
 };
 
 export default function GuidedMomentScreen({ route, navigation }: NativeStackScreenProps<any, "GuidedMoment">) {
-  const { mood, timeOfDay, journeyContext } = (route.params as GuidedMomentScreenParams) || { mood: "calm", timeOfDay: "morning" };
+  const { mood, timeOfDay, journeyContext, prefetchedScript } = (route.params as GuidedMomentScreenParams) || { mood: "calm", timeOfDay: "morning" };
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
@@ -574,7 +575,9 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
     }
 
     try {
-      if (!cachedScriptRef.current || cachedScriptRef.current.duration !== selectedDuration) {
+      if (prefetchedScript && !cachedScriptRef.current && selectedDuration === prefetchedScript.duration) {
+        cachedScriptRef.current = prefetchedScript;
+      } else if (!cachedScriptRef.current || cachedScriptRef.current.duration !== selectedDuration) {
         await prefetchScript(selectedDuration, controller.signal);
       }
       if (!cachedScriptRef.current) {

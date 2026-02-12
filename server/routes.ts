@@ -2977,7 +2977,7 @@ Rules for tone:
         return res.status(400).json({ error: "mood and timeOfDay are required" });
       }
 
-      const validMoods = ["calm", "stressed", "tired", "anxious", "sad", "overwhelmed"];
+      const validMoods = ["calm", "stressed", "tired", "anxious", "sad", "overwhelmed", "energized", "grateful", "confident", "focused", "joyful"];
       const validTimes = ["morning", "afternoon", "evening", "night"];
       const validDurations = [1, 2, 3];
 
@@ -3169,7 +3169,7 @@ Rules for tone:
         return res.status(400).json({ error: "mood and timeOfDay are required" });
       }
 
-      const validMoods = ["calm", "stressed", "tired", "anxious", "sad", "overwhelmed"];
+      const validMoods = ["calm", "stressed", "tired", "anxious", "sad", "overwhelmed", "energized", "grateful", "confident", "focused", "joyful"];
       const validTimes = ["morning", "afternoon", "evening", "night"];
       const validDurations = [1, 2, 3];
 

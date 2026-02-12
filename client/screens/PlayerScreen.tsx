@@ -24,6 +24,7 @@ import { FocusModeTip } from "@/components/FocusModeTip";
 import { ThemedModal } from "@/components/ThemedModal";
 import { useTheme } from "@/hooks/useTheme";
 import { useAudio, preloadAudioToCache } from "@/contexts/AudioContext";
+import { useBackgroundMusic } from "@/contexts/BackgroundMusicContext";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { apiRequest } from "@/lib/query-client";
 import { getVoiceDisplayName } from "@shared/voiceMapping";
@@ -71,6 +72,21 @@ export default function PlayerScreen() {
     breathingAffirmation,
     setBreathingAffirmation,
   } = useAudio();
+  const { selectedMusic, setSelectedMusic, stopBackgroundMusic } = useBackgroundMusic();
+  const previousMusicRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (journeyContext && selectedMusic !== 'none') {
+      previousMusicRef.current = selectedMusic;
+      stopBackgroundMusic();
+    }
+    return () => {
+      if (journeyContext && previousMusicRef.current) {
+        setSelectedMusic(previousMusicRef.current as any);
+        previousMusicRef.current = null;
+      }
+    };
+  }, []);
   const [rsvpEnabled, setRsvpEnabled] = useState(true);
   const [rsvpFontSize, setRsvpFontSize] = useState<RSVPFontSize>("M");
   const [rsvpHighlight, setRsvpHighlight] = useState(true);
@@ -682,7 +698,7 @@ export default function PlayerScreen() {
             showSkip={false}
             showPrevious={true}
             showEndJourney={true}
-            onEndJourney={() => { journeyNavigationRef.action = 'complete'; (navigation as any).navigate("Main"); }}
+            onEndJourney={() => { journeyNavigationRef.action = 'complete'; (navigation as any).navigate("Main", { screen: "AffirmTab" }); }}
           />
         </Animated.View>
       ) : null}

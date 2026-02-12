@@ -666,7 +666,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
 
   const handleEndJourney = useCallback(() => {
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
-    navigation.navigate("Main" as any);
+    (navigation as any).navigate("Main", { screen: "AffirmTab" });
   }, [navigation]);
 
   const formatTime = (seconds: number): string => {

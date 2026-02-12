@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
+import { Platform } from 'react-native';
 import { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
+import * as LegacyFS from 'expo-file-system/legacy';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Affirmation } from '@shared/schema';
 import { getApiUrl, apiRequest } from '@/lib/query-client';
@@ -8,6 +10,31 @@ import { useBackgroundMusic } from './BackgroundMusicContext';
 import { queryClient } from '@/lib/query-client';
 
 const BREATHING_AFFIRMATION_KEY = '@breathing/selectedAffirmation';
+const AUDIO_CACHE_DIR = `${LegacyFS.cacheDirectory}audio/`;
+
+const audioCacheReady = Platform.OS !== 'web'
+  ? LegacyFS.makeDirectoryAsync(AUDIO_CACHE_DIR, { intermediates: true }).catch(() => {})
+  : Promise.resolve();
+
+async function getCachedAudioUri(remoteUri: string, affirmationId: number): Promise<string> {
+  if (Platform.OS === 'web') return remoteUri;
+  try {
+    await audioCacheReady;
+    const ext = remoteUri.includes('.mp3') ? '.mp3' : '.wav';
+    const localPath = `${AUDIO_CACHE_DIR}affirmation_${affirmationId}${ext}`;
+    const info = await LegacyFS.getInfoAsync(localPath);
+    if (info.exists && (info.size ?? 0) > 0) {
+      return localPath;
+    }
+    const result = await LegacyFS.downloadAsync(remoteUri, localPath);
+    if (result.status === 200) {
+      return localPath;
+    }
+    return remoteUri;
+  } catch {
+    return remoteUri;
+  }
+}
 
 interface AudioState {
   currentAffirmation: Affirmation | null;
@@ -187,7 +214,8 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     await unloadCurrentSound(false);
 
     try {
-      const audioUri = `${getApiUrl()}${affirmation.audioUrl}`;
+      const remoteUri = `${getApiUrl()}${affirmation.audioUrl}`;
+      const audioUri = await getCachedAudioUri(remoteUri, affirmation.id);
 
       const { sound } = await Audio.Sound.createAsync(
         { uri: audioUri },

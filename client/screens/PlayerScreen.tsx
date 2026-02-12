@@ -573,26 +573,10 @@ export default function PlayerScreen() {
   const displayDuration = currentAffirmation?.id === affirmationId ? duration : 0;
   const progress = displayDuration > 0 ? displayPosition / displayDuration : 0;
   
-  const prevPositionRef = useRef(0);
-  const rsvpPosition = useMemo(() => {
-    const pos = displayPosition;
-    const dur = displayDuration;
-    const prevPos = prevPositionRef.current;
-    prevPositionRef.current = pos;
-
-    const OFFSET = 50;
-
-    if (dur <= 0) return pos + OFFSET;
-
-    const loopJustHappened = prevPos > dur * 0.8 && pos < dur * 0.2;
-
-    if (loopJustHappened) {
-      return pos;
-    }
-
-    const adjusted = pos + OFFSET;
-    return adjusted >= dur ? adjusted % dur : adjusted;
-  }, [displayPosition, displayDuration]);
+  const rsvpPositionOffset = 100 * playbackSpeed;
+  const rsvpPosition = displayDuration > 0 && (displayPosition + rsvpPositionOffset) >= displayDuration
+    ? displayPosition
+    : displayPosition + rsvpPositionOffset;
 
   return (
     <ThemedView style={styles.container}>

@@ -130,16 +130,8 @@ export function RSVPDisplay({
       }
     }
 
-    if (isPlaying && currentPositionMs >= 0 && currentPositionMs < (wordTimings[0]?.startMs || 0)) {
-      for (let i = 0; i < wordTimings.length; i++) {
-        if (!isStandalonePunctuation(wordTimings[i].word)) {
-          return wordTimings[i];
-        }
-      }
-    }
-
     return null;
-  }, [wordTimings, currentPositionMs, isPlaying]);
+  }, [wordTimings, currentPositionMs]);
 
   const displayWord = currentWord ? (stripPunctuation(currentWord.word) || currentWord.word) : null;
 

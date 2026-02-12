@@ -805,7 +805,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
         <View style={[styles.introMoodCircle, { backgroundColor: `${currentMoodInfo.color}20` }]}>
           <Feather name={currentMoodInfo.icon as any} size={32} color={currentMoodInfo.color} />
         </View>
-        <Animated.View entering={FadeIn.delay(400).duration(600)} style={styles.introDots}>
+        <View style={styles.introDots}>
           {[0, 1, 2, 3].map((i) => {
             const t = i / 3;
             const r1 = parseInt(currentMoodInfo.color.slice(1, 3), 16);
@@ -825,7 +825,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
               />
             );
           })}
-        </Animated.View>
+        </View>
         <Animated.View entering={FadeIn.delay(1000).duration(600)}>
           <View style={[styles.introMoodCircle, { backgroundColor: `${targetMoodInfo.color}20` }]}>
             <Feather name={targetMoodInfo.icon as any} size={32} color={targetMoodInfo.color} />
@@ -1004,14 +1004,14 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
         <View style={[styles.completeMoodCircle, { backgroundColor: `${currentMoodInfo.color}15` }]}>
           <Feather name={currentMoodInfo.icon as any} size={24} color={currentMoodInfo.color} />
         </View>
-        <Animated.View entering={FadeIn.delay(200).duration(600)} style={styles.completeArcLine}>
+        <View style={styles.completeArcLine}>
           {[0, 1, 2, 3, 4].map((i) => (
             <Animated.View
               key={i}
               style={[styles.arcDot, { backgroundColor: ACCENT_GOLD }, flowDotStyles[i]]}
             />
           ))}
-        </Animated.View>
+        </View>
         <View style={[styles.completeMoodCircle, { backgroundColor: `${targetMoodInfo.color}15`, borderColor: `${targetMoodInfo.color}40`, borderWidth: 2 }]}>
           <Feather name={targetMoodInfo.icon as any} size={24} color={targetMoodInfo.color} />
         </View>

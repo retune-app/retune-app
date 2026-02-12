@@ -596,29 +596,29 @@ export default function SoundLibraryScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
+        {selectedMusic !== "none" && currentSelection ? (
         <Animated.View entering={FadeIn.duration(400)}>
           <View style={[styles.currentCard, { backgroundColor: theme.cardBackground }, Shadows.medium]}>
             <View style={styles.currentHeader}>
-              <Feather name={selectedMusic === "none" ? "volume-x" : "volume-2"} size={20} color={ACCENT_GOLD} />
+              <Feather name="volume-2" size={20} color={ACCENT_GOLD} />
               <ThemedText type="caption" style={{ color: theme.textSecondary, marginLeft: Spacing.xs }}>
                 CURRENTLY SELECTED
               </ThemedText>
             </View>
             <View style={styles.currentContent}>
-              <View style={[styles.currentIconContainer, { backgroundColor: selectedMusic === "none" ? `${theme.textSecondary}20` : `${ACCENT_GOLD}20` }]}>
-                <Feather name={selectedMusic === "none" ? "volume-x" : (currentSelection?.icon as any) || "music"} size={24} color={selectedMusic === "none" ? theme.textSecondary : ACCENT_GOLD} />
+              <View style={[styles.currentIconContainer, { backgroundColor: `${ACCENT_GOLD}20` }]}>
+                <Feather name={(currentSelection.icon as any) || "music"} size={24} color={ACCENT_GOLD} />
               </View>
               <View style={styles.currentInfo}>
-                <ThemedText type="h4" style={{ color: selectedMusic === "none" ? theme.text : ACCENT_GOLD }}>
-                  {selectedMusic === "none" ? "No Sound" : (currentSelection?.name || "None")}
+                <ThemedText type="h4" style={{ color: ACCENT_GOLD }}>
+                  {currentSelection.name}
                 </ThemedText>
                 <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                  {selectedMusic === "none" ? "Background sounds are off" : (currentSelection?.description || "")}
+                  {currentSelection.description || ""}
                 </ThemedText>
               </View>
             </View>
 
-            {selectedMusic !== "none" ? (
             <View style={styles.volumeSection}>
               <View style={styles.volumeRow}>
                 <Pressable onPress={() => setVolume(Math.max(0.05, volume - 0.15))}>
@@ -643,9 +643,9 @@ export default function SoundLibraryScreen() {
                 </ThemedText>
               </View>
             </View>
-            ) : null}
           </View>
         </Animated.View>
+        ) : null}
 
         <Animated.View entering={FadeInDown.duration(400)}>
           <Pressable

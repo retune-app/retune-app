@@ -119,6 +119,8 @@ export default function PlayerScreen() {
     opacity: journeyControlsOpacity.value,
   }));
 
+  const isLastJourneyStep = journeyContext ? journeyContext.currentStep === journeyContext.totalSteps - 1 : false;
+
   const hideJourneyControls = useCallback(() => {
     setJourneyControlsVisible(false);
     journeyControlsOpacity.value = withTiming(0, { duration: 400 });
@@ -132,12 +134,18 @@ export default function PlayerScreen() {
   const resetJourneyControlsTimer = useCallback(() => {
     if (journeyControlsTimerRef.current) clearTimeout(journeyControlsTimerRef.current);
     showJourneyControls();
+    if (isLastJourneyStep) return;
     journeyControlsTimerRef.current = setTimeout(() => {
       if (isCurrentlyPlaying) hideJourneyControls();
     }, 4000);
-  }, [isCurrentlyPlaying, showJourneyControls, hideJourneyControls]);
+  }, [isCurrentlyPlaying, isLastJourneyStep, showJourneyControls, hideJourneyControls]);
 
   useEffect(() => {
+    if (journeyContext && isLastJourneyStep) {
+      showJourneyControls();
+      if (journeyControlsTimerRef.current) clearTimeout(journeyControlsTimerRef.current);
+      return;
+    }
     if (journeyContext && isCurrentlyPlaying) {
       journeyControlsTimerRef.current = setTimeout(hideJourneyControls, 4000);
     } else if (journeyContext && !isCurrentlyPlaying) {
@@ -145,7 +153,7 @@ export default function PlayerScreen() {
       if (journeyControlsTimerRef.current) clearTimeout(journeyControlsTimerRef.current);
     }
     return () => { if (journeyControlsTimerRef.current) clearTimeout(journeyControlsTimerRef.current); };
-  }, [isCurrentlyPlaying, journeyContext]);
+  }, [isCurrentlyPlaying, journeyContext, isLastJourneyStep]);
 
   const deleteMutation = useMutation({
     mutationFn: async () => {

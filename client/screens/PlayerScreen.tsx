@@ -1169,17 +1169,6 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
   },
-  fontSizeButtons: {
-    flexDirection: "row",
-    gap: Spacing.sm,
-  },
-  fontSizeButton: {
-    width: 36,
-    height: 28,
-    borderRadius: BorderRadius.xs,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   fullscreenContainer: {
     flex: 1,
     alignItems: "center",

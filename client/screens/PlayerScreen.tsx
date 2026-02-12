@@ -317,10 +317,10 @@ export default function PlayerScreen() {
       ),
       headerRight: () => (
         <HeaderButton
-          onPress={handleDelete}
-          testID="button-delete-affirmation"
+          onPress={() => (navigation as any).navigate("Main", { screen: "AffirmTab" })}
+          testID="button-close-affirmation"
         >
-          <Feather name="trash-2" size={22} color="#E53935" />
+          <Feather name="x" size={22} color={theme.text} />
         </HeaderButton>
       ),
     });

@@ -230,7 +230,11 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
     }));
   }, []);
 
-  const { data: voiceStatus } = useQuery<{ hasPersonalVoice: boolean }>({ queryKey: ["/api/voice-samples/status"] });
+  const { data: voiceStatus } = useQuery<{ hasPersonalVoice: boolean }>({
+    queryKey: ["/api/voice-samples/status"],
+    staleTime: 0,
+    refetchOnMount: "always",
+  });
   const hasPersonalVoice = user?.hasVoiceSample === true || voiceStatus?.hasPersonalVoice === true;
   const allVoiceOptions = useMemo(() => {
     const opts = [...VOICE_OPTIONS];
@@ -244,12 +248,14 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
     AsyncStorage.getItem(VOICE_STORAGE_KEY).then((stored) => {
       if (stored && allVoiceOptions.some((v) => v.id === stored)) {
         setSelectedVoice(stored);
+      } else if (hasPersonalVoice && !stored) {
+        setSelectedVoice("personal");
       }
       setVoicePreferenceLoaded(true);
     }).catch(() => {
       setVoicePreferenceLoaded(true);
     });
-  }, [allVoiceOptions]);
+  }, [allVoiceOptions, hasPersonalVoice]);
 
   useEffect(() => {
     AsyncStorage.getItem('@retuned_voice_volume').then((saved) => {

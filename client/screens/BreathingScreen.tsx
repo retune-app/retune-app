@@ -32,7 +32,6 @@ import Animated, {
   interpolate,
 } from "react-native-reanimated";
 import { useQuery } from "@tanstack/react-query";
-import { BlurView } from "expo-blur";
 import Slider from "@react-native-community/slider";
 import Svg, { Circle } from "react-native-svg";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -44,6 +43,7 @@ const DEFAULT_BREATHING_TECHNIQUE_KEY = "@breathing/defaultTechnique";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import BreathingCircle from "@/components/BreathingCircle";
+import FullscreenBreathingLayout from "@/components/FullscreenBreathingLayout";
 import { WelcomeSection } from "@/components/WelcomeSection";
 import { MoodCheckin } from "@/components/MoodCheckin";
 import { useTheme } from "@/hooks/useTheme";
@@ -893,127 +893,7 @@ export default function BreathingScreen() {
     };
   }, []);
 
-  // Fullscreen Mode - responsive to orientation
   if (showLandscapeMode) {
-    const screenWidth = Dimensions.get("window").width;
-    const screenHeight = Dimensions.get("window").height;
-    const isCurrentlyLandscape = screenWidth > screenHeight;
-    const circleSize = isCurrentlyLandscape 
-      ? Math.min(screenHeight - 80, 320)
-      : Math.min(screenWidth * 0.7, 260);
-
-    // Portrait fullscreen layout - max size with safe margin for outer ring (1.15x scale) + progress ring (24px)
-    const portraitCircleSize = Math.min((screenWidth - 48) / 1.15, screenHeight * 0.44);
-    
-    if (!isCurrentlyLandscape) {
-      return (
-        <Modal
-          visible={showLandscapeMode}
-          animationType="none"
-          statusBarTranslucent
-          supportedOrientations={["landscape-left", "landscape-right", "portrait"]}
-          presentationStyle="fullScreen"
-        >
-          <StatusBar hidden />
-          <Animated.View style={[{ flex: 1 }, fullscreenTransitionStyle]}>
-          <Pressable style={[styles.landscapeContainer, { backgroundColor: theme.navy }]} onPress={toggleControls}>
-            <View style={[
-              styles.portraitFullscreenWrapper,
-              { 
-                paddingTop: insets.top + Spacing.md,
-                paddingBottom: insets.bottom + Spacing.lg,
-              }
-            ]}>
-              <Animated.View style={[styles.fsTopControls, controlsAnimatedStyle]} pointerEvents={controlsVisible ? 'auto' : 'none'} onStartShouldSetResponder={() => true}>
-                <View style={styles.fsTopLeft}>
-                  <Text style={[styles.fsTechniqueBadge, { backgroundColor: `${selectedTechnique.color}20`, color: selectedTechnique.color }]}>
-                    {selectedTechnique.name}
-                  </Text>
-                </View>
-                <View style={styles.fsTopRight}>
-                  <Pressable
-                    onPress={() => { resetControlsTimer(); setShowSoundSwitcher(true); }}
-                    style={[styles.fsControlBtn, { backgroundColor: `${selectedTechnique.color}20` }]}
-                  >
-                    <Feather name="music" size={18} color={selectedTechnique.color} />
-                  </Pressable>
-                  <Pressable
-                    onPress={async () => {
-                      resetControlsTimer();
-                      const newVol = voiceVolume > 0.05 ? 0 : 0.7;
-                      setVoiceVolume(newVol);
-                      if (affirmationSoundRef.current) {
-                        try { await affirmationSoundRef.current.setVolumeAsync(newVol); } catch {}
-                      }
-                    }}
-                    style={[styles.fsControlBtn, { backgroundColor: `${selectedTechnique.color}20`, opacity: voiceEnabled ? 1 : 0.4 }]}
-                    disabled={!voiceEnabled}
-                  >
-                    <Feather name={voiceEnabled && voiceVolume > 0.05 ? "mic" : "mic-off"} size={18} color={selectedTechnique.color} />
-                  </Pressable>
-                  <Pressable onPress={() => { resetControlsTimer(); exitFullscreen(); }} style={styles.fsCloseBtn}>
-                    <Feather name="x" size={22} color="rgba(255,255,255,0.7)" />
-                  </Pressable>
-                </View>
-              </Animated.View>
-
-              <View style={styles.portraitCenterSection}>
-                {renderProgressRing(portraitCircleSize)}
-                <BreathingCircle
-                  technique={selectedTechnique}
-                  isPlaying={isPlaying}
-                  onCycleComplete={handleCycleComplete}
-                  hapticsEnabled={hapticsEnabled}
-                  size={portraitCircleSize}
-                  showContent={countdownValue === null}
-                />
-                {renderCountdownOverlay(48)}
-              </View>
-
-              <Animated.View style={[styles.fsBottomControls, controlsAnimatedStyle]} pointerEvents={controlsVisible ? 'auto' : 'none'} onStartShouldSetResponder={() => true}>
-                <View style={styles.fsCenterControls}>
-                  <Pressable
-                    onPress={() => { resetControlsTimer(); (isPlaying ? handlePause : handleResume)(); }}
-                  >
-                    <LinearGradient
-                      colors={[selectedTechnique.color, `${selectedTechnique.color}CC`]}
-                      style={styles.portraitPlayButton}
-                    >
-                      <Feather name={isPlaying ? "pause" : "play"} size={28} color="#FFFFFF" />
-                    </LinearGradient>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => { resetControlsTimer(); handleStop(); }}
-                    style={[styles.landscapeStopButton, { position: 'absolute', right: -60 }]}
-                  >
-                    <Feather name="square" size={20} color="#FFFFFF" />
-                  </Pressable>
-                </View>
-
-                <View style={styles.portraitStatsRow}>
-                  <View style={styles.portraitStatItem}>
-                    <Text style={styles.landscapeStatLabel}>Time Left</Text>
-                    <Text style={styles.landscapeStatValue}>{formatTime(remainingTime)}</Text>
-                  </View>
-                  <View style={styles.portraitStatItem}>
-                    <Text style={styles.landscapeStatLabel}>Progress</Text>
-                    <Text style={[styles.landscapeStatValue, { color: selectedTechnique.color }]}>{progressPercent}%</Text>
-                  </View>
-                  <View style={styles.portraitStatItem}>
-                    <Text style={styles.landscapeStatLabel}>Cycles</Text>
-                    <Text style={styles.landscapeStatValue}>{cyclesCompleted}/{totalCycles}</Text>
-                  </View>
-                </View>
-              </Animated.View>
-            </View>
-          </Pressable>
-          </Animated.View>
-          {renderSoundSwitcherModal()}
-        </Modal>
-      );
-    }
-
-    // Landscape fullscreen layout
     return (
       <Modal
         visible={showLandscapeMode}
@@ -1024,74 +904,60 @@ export default function BreathingScreen() {
       >
         <StatusBar hidden />
         <Animated.View style={[{ flex: 1 }, fullscreenTransitionStyle]}>
-        <Pressable style={[styles.landscapeContainer, { backgroundColor: theme.navy }]} onPress={toggleControls}>
-
-          <Animated.View style={[styles.landscapeCloseButton, { top: insets.top + 4 }, controlsAnimatedStyle]} pointerEvents={controlsVisible ? 'auto' : 'none'}>
-            <Pressable onPress={() => { resetControlsTimer(); exitFullscreen(); }}>
-              <BlurView intensity={40} tint="dark" style={styles.blurButton}>
-                <Feather name="x" size={24} color="#FFFFFF" />
-              </BlurView>
-            </Pressable>
-          </Animated.View>
-
-          <View style={[styles.landscapeContent, { paddingLeft: Math.max(insets.left, 48), paddingRight: Math.max(insets.right, 48) }]}>
-            <Animated.View style={[styles.landscapeSidePanel, controlsAnimatedStyle]} pointerEvents={controlsVisible ? 'auto' : 'none'} onStartShouldSetResponder={() => true}>
-              <Text style={[styles.landscapeTechniqueName, { color: selectedTechnique.color }]}>
-                {selectedTechnique.name}
-              </Text>
-              <Text style={styles.landscapePhaseLabel}>
-                {selectedTechnique.benefits}
-              </Text>
-            </Animated.View>
-
-            <View style={styles.landscapeCircleContainer}>
-              {renderProgressRing(circleSize)}
-              <BreathingCircle
-                technique={selectedTechnique}
-                isPlaying={isPlaying}
-                onCycleComplete={handleCycleComplete}
-                hapticsEnabled={hapticsEnabled}
-                size={circleSize}
-                showContent={countdownValue === null}
-              />
-              {renderCountdownOverlay(48)}
-            </View>
-
-            <Animated.View style={[styles.landscapeSidePanel, controlsAnimatedStyle]} pointerEvents={controlsVisible ? 'auto' : 'none'} onStartShouldSetResponder={() => true}>
-              <View style={styles.landscapeStats}>
-                <Text style={styles.landscapeStatLabel}>Time Left</Text>
-                <Text style={styles.landscapeStatValue}>{formatTime(remainingTime)}</Text>
-              </View>
-              <View style={styles.landscapeStats}>
-                <Text style={styles.landscapeStatLabel}>Progress</Text>
-                <Text style={[styles.landscapeStatValue, { color: selectedTechnique.color }]}>{progressPercent}%</Text>
-              </View>
-              <View style={styles.landscapeStats}>
-                <Text style={styles.landscapeStatLabel}>Cycles</Text>
-                <Text style={styles.landscapeStatValue}>{cyclesCompleted}/{totalCycles}</Text>
-              </View>
-              
-              <View style={styles.landscapeControlsRow}>
+          <FullscreenBreathingLayout
+            technique={selectedTechnique}
+            isPlaying={isPlaying}
+            onTogglePlay={() => { resetControlsTimer(); (isPlaying ? handlePause : handleResume)(); }}
+            onClose={() => { resetControlsTimer(); exitFullscreen(); }}
+            onCycleComplete={handleCycleComplete}
+            controlsOpacity={controlsOpacity}
+            controlsVisible={controlsVisible}
+            onToggleControls={toggleControls}
+            resetControlsTimer={resetControlsTimer}
+            insets={insets}
+            backgroundColor={theme.navy}
+            showContent={countdownValue === null}
+            hapticsEnabled={hapticsEnabled}
+            stats={[
+              { label: "Time Left", value: formatTime(remainingTime) },
+              { label: "Progress", value: `${progressPercent}%`, color: selectedTechnique.color },
+              { label: "Cycles", value: `${cyclesCompleted}/${totalCycles}` },
+            ]}
+            renderProgressRing={(size) => renderProgressRing(size)}
+            renderCircleOverlay={(size) => renderCountdownOverlay(size)}
+            renderTopRightExtra={() => (
+              <>
                 <Pressable
-                  onPress={() => { resetControlsTimer(); (isPlaying ? handlePause : handleResume)(); }}
+                  onPress={() => { resetControlsTimer(); setShowSoundSwitcher(true); }}
+                  style={[styles.fsControlBtn, { backgroundColor: `${selectedTechnique.color}20` }]}
                 >
-                  <LinearGradient
-                    colors={[selectedTechnique.color, `${selectedTechnique.color}CC`]}
-                    style={styles.landscapePlayButton}
-                  >
-                    <Feather name={isPlaying ? "pause" : "play"} size={24} color="#FFFFFF" />
-                  </LinearGradient>
+                  <Feather name="music" size={18} color={selectedTechnique.color} />
                 </Pressable>
                 <Pressable
-                  onPress={() => { resetControlsTimer(); handleStop(); }}
-                  style={styles.landscapeStopButton}
+                  onPress={async () => {
+                    resetControlsTimer();
+                    const newVol = voiceVolume > 0.05 ? 0 : 0.7;
+                    setVoiceVolume(newVol);
+                    if (affirmationSoundRef.current) {
+                      try { await affirmationSoundRef.current.setVolumeAsync(newVol); } catch {}
+                    }
+                  }}
+                  style={[styles.fsControlBtn, { backgroundColor: `${selectedTechnique.color}20`, opacity: voiceEnabled ? 1 : 0.4 }]}
+                  disabled={!voiceEnabled}
                 >
-                  <Feather name="square" size={20} color="#FFFFFF" />
+                  <Feather name={voiceEnabled && voiceVolume > 0.05 ? "mic" : "mic-off"} size={18} color={selectedTechnique.color} />
                 </Pressable>
-              </View>
-            </Animated.View>
-          </View>
-        </Pressable>
+              </>
+            )}
+            renderStopButton={() => (
+              <Pressable
+                onPress={() => { resetControlsTimer(); handleStop(); }}
+                style={styles.landscapeStopButton}
+              >
+                <Feather name="square" size={20} color="#FFFFFF" />
+              </Pressable>
+            )}
+          />
         </Animated.View>
         {renderSoundSwitcherModal()}
       </Modal>
@@ -1720,70 +1586,6 @@ const styles = StyleSheet.create({
     marginLeft: Spacing.md,
   },
 
-  // Landscape Mode
-  landscapeContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  landscapeCloseButton: {
-    position: "absolute",
-    right: 24,
-    zIndex: 10,
-  },
-  blurButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: "center",
-    justifyContent: "center",
-    overflow: "hidden",
-  },
-  landscapeContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    width: "100%",
-  },
-  landscapeSidePanel: {
-    width: 180,
-    alignItems: "center",
-  },
-  landscapeTechniqueName: {
-    fontSize: 20,
-    fontWeight: "700",
-    marginBottom: 8,
-  },
-  landscapePhaseLabel: {
-    fontSize: 14,
-    color: "rgba(255,255,255,0.7)",
-    textAlign: "center",
-  },
-  landscapeCircleContainer: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  landscapeStats: {
-    alignItems: "center",
-    marginBottom: Spacing.lg,
-  },
-  landscapeStatLabel: {
-    fontSize: 12,
-    color: "rgba(255,255,255,0.6)",
-    marginBottom: 4,
-  },
-  landscapeStatValue: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#FFFFFF",
-  },
-  landscapeControlsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.md,
-    marginTop: Spacing.lg,
-  },
   landscapeStopButton: {
     width: 44,
     height: 44,
@@ -1792,91 +1594,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  landscapePlayButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  portraitPlayButton: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  // Portrait fullscreen mode styles
-  portraitFullscreenWrapper: {
-    flex: 1,
-    flexDirection: "column",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: Spacing.xl,
-  },
-  portraitCenterSection: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 1,
-  },
-  fsTopControls: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    width: "100%",
-    zIndex: 10,
-  },
-  fsTopLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  fsTopRight: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.sm,
-  },
-  fsTechniqueBadge: {
-    fontSize: 12,
-    fontFamily: "Nunito_600SemiBold",
-    paddingVertical: 4,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    overflow: "hidden",
-    letterSpacing: 0.5,
-  },
   fsControlBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
-  },
-  fsCloseBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "rgba(255,255,255,0.1)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  fsCenterControls: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: Spacing.md,
-  },
-  fsBottomControls: {
-    alignItems: "center",
-    gap: Spacing.lg,
-  },
-  portraitStatsRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: Spacing.xl * 3,
-  },
-  portraitStatItem: {
-    alignItems: "center",
   },
   techniqueInfoButton: {
     alignSelf: "flex-start",

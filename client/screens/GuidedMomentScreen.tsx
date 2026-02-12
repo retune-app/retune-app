@@ -1535,28 +1535,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginTop: 48,
   },
-  durationRowBelow: {
-    flexDirection: "row",
-    gap: 8,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 24,
-  },
-  durationRowTop: {
-    flexDirection: "row",
-    gap: 8,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingTop: Spacing.sm,
-    paddingBottom: Spacing.sm,
-  },
-  durationRow: {
-    flexDirection: "row",
-    gap: 8,
-    marginBottom: 16,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   durationPill: {
     paddingVertical: 10,
     paddingHorizontal: 20,

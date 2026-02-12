@@ -21,6 +21,12 @@ import { useTheme } from "@/hooks/useTheme";
 
 const ONBOARDING_KEY = "@onboarding/completed";
 
+export type JourneyContext = {
+  currentStep: number;
+  totalSteps: number;
+  stepLabels: string[];
+};
+
 export type RootStackParamList = {
   Auth: undefined;
   Main: undefined;
@@ -28,9 +34,9 @@ export type RootStackParamList = {
   VoiceSettings: undefined;
   SoundLibrary: undefined;
   Create: undefined;
-  Player: { affirmationId: number; isNew?: boolean; autoPlay?: boolean };
+  Player: { affirmationId: number; isNew?: boolean; autoPlay?: boolean; journeyContext?: JourneyContext };
   Analytics: undefined;
-  GuidedMoment: { mood: string; timeOfDay: string };
+  GuidedMoment: { mood: string; timeOfDay: string; journeyContext?: JourneyContext };
   MoodJourney: { journey: any };
 };
 

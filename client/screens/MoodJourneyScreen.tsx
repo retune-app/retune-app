@@ -106,6 +106,8 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
 
+  const journeyStepLabels = journey.steps.map((s: any) => getStepLabel(s.type));
+
   const [phase, setPhase] = useState<JourneyPhase>("intro");
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [breathingPlaying, setBreathingPlaying] = useState(false);
@@ -163,6 +165,8 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
       return;
     }
 
+    const jCtx = { currentStep: currentStepIndex, totalSteps: journey.steps.length, stepLabels: journeyStepLabels };
+
     if (currentStep.type === "breathe") {
       setPhase("breathing");
       setBreathingTimeLeft(BREATHING_DURATION_SECONDS);
@@ -177,6 +181,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
           navigation.navigate("GuidedMoment", {
             mood: currentStep.mood || journey.targetMood,
             timeOfDay: currentStep.timeOfDay || getTimeOfDay(),
+            journeyContext: jCtx,
           });
         }
       }, 1500);
@@ -190,6 +195,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
             navigation.navigate("Player", {
               affirmationId: currentStep.affirmationId,
               autoPlay: true,
+              journeyContext: jCtx,
             });
           } else {
             navigation.navigate("Create");
@@ -197,7 +203,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
         }
       }, 1500);
     }
-  }, [currentStep, currentStepIndex, navigation, journey]);
+  }, [currentStep, currentStepIndex, navigation, journey, journeyStepLabels]);
 
   const advanceToNextStep = useCallback(() => {
     const nextIndex = currentStepIndex + 1;
@@ -220,6 +226,8 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
       return;
     }
 
+    const jCtx = { currentStep: stepIndex, totalSteps: journey.steps.length, stepLabels: journeyStepLabels };
+
     if (step.type === "breathe") {
       setPhase("breathing");
       setBreathingTimeLeft(BREATHING_DURATION_SECONDS);
@@ -234,6 +242,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
           navigation.navigate("GuidedMoment", {
             mood: step.mood || journey.targetMood,
             timeOfDay: step.timeOfDay || getTimeOfDay(),
+            journeyContext: jCtx,
           });
         }
       }, 1500);
@@ -247,6 +256,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
             navigation.navigate("Player", {
               affirmationId: step.affirmationId,
               autoPlay: true,
+              journeyContext: jCtx,
             });
           } else {
             navigation.navigate("Create");
@@ -254,7 +264,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
         }
       }, 1500);
     }
-  }, [journey, navigation]);
+  }, [journey, navigation, journeyStepLabels]);
 
   useEffect(() => {
     if (phase === "breathing" && breathingPlaying) {

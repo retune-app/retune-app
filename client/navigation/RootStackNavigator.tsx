@@ -36,7 +36,7 @@ export type RootStackParamList = {
   Create: undefined;
   Player: { affirmationId: number; isNew?: boolean; autoPlay?: boolean; journeyContext?: JourneyContext };
   Analytics: undefined;
-  GuidedMoment: { mood: string; timeOfDay: string; journeyContext?: JourneyContext; prefetchedScript?: { script: string; disclaimer: string; duration: number } | null };
+  GuidedMoment: { mood: string; timeOfDay: string; journeyContext?: JourneyContext; prefetchedMoment?: { script: string; audioBase64: string; duration: number; wordTimings: Array<{ word: string; startMs: number; endMs: number }>; disclaimer: string } | null };
   MoodJourney: { journey: any };
 };
 

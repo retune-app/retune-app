@@ -145,7 +145,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
   const breathingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const hasNavigatedRef = useRef(false);
   const returningFromStepRef = useRef(false);
-  const prefetchedMeditationRef = useRef<{ script: string; disclaimer: string; duration: number } | null>(null);
+  const prefetchedMeditationRef = useRef<{ script: string; audioBase64: string; duration: number; wordTimings: Array<{ word: string; startMs: number; endMs: number }>; disclaimer: string } | null>(null);
   const [showControls, setShowControls] = useState(false);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const controlsOpacity = useSharedValue(0);
@@ -478,13 +478,17 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
     prefetchedMeditationRef.current = null;
     (async () => {
       try {
-        const url = new URL("/api/guided-moments/script", getApiUrl()).toString();
-        const headers: Record<string, string> = { "Content-Type": "application/json" };
-        const authToken = getAuthToken();
-        if (authToken) headers["X-Auth-Token"] = authToken;
-        const result = await fetch(url, {
+        const baseHeaders = (): Record<string, string> => {
+          const h: Record<string, string> = { "Content-Type": "application/json" };
+          const t = getAuthToken();
+          if (t) h["X-Auth-Token"] = t;
+          return h;
+        };
+
+        const scriptUrl = new URL("/api/guided-moments/script", getApiUrl()).toString();
+        const scriptResult = await fetch(scriptUrl, {
           method: "POST",
-          headers,
+          headers: baseHeaders(),
           body: JSON.stringify({
             mood: moodForScript,
             timeOfDay: timeOfDayForScript,
@@ -493,10 +497,35 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
           }),
           credentials: "include",
         });
-        const data = await result.json();
-        if (data.script) {
-          prefetchedMeditationRef.current = { script: data.script, disclaimer: data.disclaimer, duration: 2 };
-        }
+        const scriptData = await scriptResult.json();
+        if (!scriptData.script) return;
+
+        const voicePref = await AsyncStorage.getItem("@retuned/guided-moment-voice").catch(() => null);
+        const voiceId = voicePref || "hume_lotus";
+        const isPersonal = voiceId === "personal";
+
+        const audioUrl = new URL("/api/guided-moments/audio", getApiUrl()).toString();
+        const audioResult = await fetch(audioUrl, {
+          method: "POST",
+          headers: baseHeaders(),
+          body: JSON.stringify({
+            script: scriptData.script,
+            usePersonalVoice: isPersonal,
+            voiceId: isPersonal ? undefined : voiceId,
+            mood: moodForScript,
+          }),
+          credentials: "include",
+        });
+        const audioData = await audioResult.json();
+        if (audioData.error) return;
+
+        prefetchedMeditationRef.current = {
+          script: scriptData.script,
+          disclaimer: scriptData.disclaimer,
+          duration: 2,
+          audioBase64: audioData.audioBase64,
+          wordTimings: audioData.wordTimings || [],
+        };
       } catch (e) {
         prefetchedMeditationRef.current = null;
       }
@@ -542,7 +571,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
             mood: currentStep.mood || journey.targetMood,
             timeOfDay: currentStep.timeOfDay || getTimeOfDay(),
             journeyContext: jCtx,
-            prefetchedScript: prefetchedMeditationRef.current,
+            prefetchedMoment: prefetchedMeditationRef.current,
           });
         }
       }, 1500);
@@ -620,7 +649,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
             mood: step.mood || journey.targetMood,
             timeOfDay: step.timeOfDay || getTimeOfDay(),
             journeyContext: jCtx,
-            prefetchedScript: prefetchedMeditationRef.current,
+            prefetchedMoment: prefetchedMeditationRef.current,
           });
         }
       }, 1500);

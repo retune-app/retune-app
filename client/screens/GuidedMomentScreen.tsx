@@ -206,11 +206,11 @@ export type GuidedMomentScreenParams = {
   mood: string;
   timeOfDay: string;
   journeyContext?: { currentStep: number; totalSteps: number; stepLabels: string[] };
-  prefetchedScript?: { script: string; disclaimer: string; duration: number } | null;
+  prefetchedMoment?: { script: string; audioBase64: string; duration: number; wordTimings: Array<{ word: string; startMs: number; endMs: number }>; disclaimer: string } | null;
 };
 
 export default function GuidedMomentScreen({ route, navigation }: NativeStackScreenProps<any, "GuidedMoment">) {
-  const { mood, timeOfDay, journeyContext, prefetchedScript } = (route.params as GuidedMomentScreenParams) || { mood: "calm", timeOfDay: "morning" };
+  const { mood, timeOfDay, journeyContext, prefetchedMoment } = (route.params as GuidedMomentScreenParams) || { mood: "calm", timeOfDay: "morning" };
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
@@ -575,9 +575,22 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
     }
 
     try {
-      if (prefetchedScript && !cachedScriptRef.current && selectedDuration === prefetchedScript.duration) {
-        cachedScriptRef.current = prefetchedScript;
-      } else if (!cachedScriptRef.current || cachedScriptRef.current.duration !== selectedDuration) {
+      if (prefetchedMoment && prefetchedMoment.audioBase64 && selectedDuration === prefetchedMoment.duration) {
+        setMoment({
+          script: prefetchedMoment.script,
+          audioBase64: prefetchedMoment.audioBase64,
+          duration: prefetchedMoment.duration,
+          wordTimings: prefetchedMoment.wordTimings,
+          disclaimer: prefetchedMoment.disclaimer,
+        });
+        setPlayerState("ready");
+        try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
+        autoPlayRef.current = true;
+        setCountdown(3);
+        return;
+      }
+
+      if (!cachedScriptRef.current || cachedScriptRef.current.duration !== selectedDuration) {
         await prefetchScript(selectedDuration, controller.signal);
       }
       if (!cachedScriptRef.current) {
@@ -601,7 +614,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
       setErrorMessage(error?.message || "Something went wrong. Please try again.");
       setPlayerState("error");
     }
-  }, [mood, timeOfDay, selectedVoice, selectedDuration, setSelectedMusic, startBackgroundMusic, prefetchScript, generateAudioFromScript]);
+  }, [mood, timeOfDay, selectedVoice, selectedDuration, setSelectedMusic, startBackgroundMusic, prefetchScript, generateAudioFromScript, prefetchedMoment]);
 
   const durationChangeRef = useRef(selectedDuration);
   useEffect(() => {

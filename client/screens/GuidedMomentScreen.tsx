@@ -163,10 +163,11 @@ interface CategorySection {
 export type GuidedMomentScreenParams = {
   mood: string;
   timeOfDay: string;
+  destinationMood?: string;
 };
 
 export default function GuidedMomentScreen({ route, navigation }: NativeStackScreenProps<any, "GuidedMoment">) {
-  const { mood, timeOfDay } = (route.params as GuidedMomentScreenParams) || { mood: "calm", timeOfDay: "morning" };
+  const { mood, timeOfDay, destinationMood: initialDestMood } = (route.params as GuidedMomentScreenParams) || { mood: "calm", timeOfDay: "morning" };
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
@@ -198,6 +199,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
   const [showVoiceSelector, setShowVoiceSelector] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(true);
   const [voiceVolume, setVoiceVolume] = useState(0.8);
+  const [destinationMood, setDestinationMood] = useState<string | null>(initialDestMood || null);
   const [countdown, setCountdown] = useState<number | null>(null);
   const soundRef = useRef<Audio.Sound | null>(null);
   const controlsTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -421,7 +423,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
       const result = await fetch(url, {
         method: "POST",
         headers,
-        body: JSON.stringify({ mood, timeOfDay, duration, dayOfWeek: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][new Date().getDay()] }),
+        body: JSON.stringify({ mood, timeOfDay, duration, dayOfWeek: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][new Date().getDay()], destinationMood }),
         credentials: "include",
         signal,
       });
@@ -433,7 +435,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
     } finally {
       scriptFetchingRef.current = false;
     }
-  }, [mood, timeOfDay]);
+  }, [mood, timeOfDay, destinationMood]);
 
   const generateAudioFromScript = useCallback(async (script: string, disclaimer: string, voiceId: string, signal?: AbortSignal) => {
     const isPersonal = voiceId === "personal";
@@ -543,7 +545,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
       setErrorMessage(error?.message || "Something went wrong. Please try again.");
       setPlayerState("error");
     }
-  }, [mood, timeOfDay, selectedVoice, selectedDuration, setSelectedMusic, startBackgroundMusic, prefetchScript, generateAudioFromScript]);
+  }, [mood, timeOfDay, selectedVoice, selectedDuration, setSelectedMusic, startBackgroundMusic, prefetchScript, generateAudioFromScript, destinationMood]);
 
   const durationChangeRef = useRef(selectedDuration);
   useEffect(() => {
@@ -888,7 +890,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
         <View style={styles.topLeft}>
           <View style={styles.moodBadge}>
             <ThemedText type="caption" style={styles.moodBadgeText}>
-              {MOOD_LABELS[mood] || mood}
+              {destinationMood ? `${MOOD_LABELS[mood] || mood} \u2192 ${MOOD_LABELS[destinationMood] || destinationMood}` : (MOOD_LABELS[mood] || mood)}
             </ThemedText>
           </View>
         </View>
@@ -958,7 +960,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
           </View>
           {playerState === "generating" ? (
             <ThemedText type="caption" style={styles.statusLabel}>
-              {"Crafting your micro-meditation..."}
+              {destinationMood ? "Crafting your mood journey..." : "Crafting your micro-meditation..."}
             </ThemedText>
           ) : playerState === "error" ? (
             <ThemedText type="caption" style={[styles.statusLabel, { color: "#E85D5D" }]}>
@@ -1074,7 +1076,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
       >
         {playerState === "generating" ? (
           <ThemedText type="caption" style={styles.aboveRingsStatusText}>
-            {"Preparing your meditation..."}
+            {destinationMood ? "Preparing your journey..." : "Preparing your meditation..."}
           </ThemedText>
         ) : null}
         <View style={isLandscape ? styles.landscapeLayout : styles.portraitLayout}>
@@ -1146,6 +1148,59 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
                   </Pressable>
                 );
               })}
+            </View>
+          ) : null}
+
+          {!isLandscape && (playerState === "idle" || playerState === "generating" || playerState === "ready") ? (
+            <View style={styles.destinationMoodRow}>
+              <ThemedText type="caption" style={styles.destinationMoodLabel}>
+                {"I want to feel"}
+              </ThemedText>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+                <Pressable
+                  onPress={() => {
+                    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+                    setDestinationMood(null);
+                    cachedScriptRef.current = null;
+                  }}
+                  style={[
+                    styles.destMoodPill,
+                    !destinationMood
+                      ? { backgroundColor: `${ACCENT_GOLD}30`, borderColor: ACCENT_GOLD }
+                      : { backgroundColor: "transparent", borderColor: "rgba(255,255,255,0.2)" },
+                  ]}
+                  testID="button-dest-mood-none"
+                >
+                  <ThemedText type="caption" style={{ color: !destinationMood ? ACCENT_GOLD : "rgba(255,255,255,0.6)", fontSize: 12, fontWeight: "600" }}>
+                    {"Open"}
+                  </ThemedText>
+                </Pressable>
+                {["calm", "energized", "grateful"].filter(m => m !== mood).map(m => {
+                  const isSelected = destinationMood === m;
+                  const moodColor = MOOD_RING_COLORS[m]?.primary || ACCENT_GOLD;
+                  return (
+                    <Pressable
+                      key={m}
+                      onPress={() => {
+                        try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+                        setDestinationMood(m);
+                        cachedScriptRef.current = null;
+                      }}
+                      style={[
+                        styles.destMoodPill,
+                        isSelected
+                          ? { backgroundColor: `${moodColor}30`, borderColor: moodColor }
+                          : { backgroundColor: "transparent", borderColor: "rgba(255,255,255,0.2)" },
+                      ]}
+                      testID={`button-dest-mood-${m}`}
+                    >
+                      <ThemedText type="caption" style={{ color: isSelected ? moodColor : "rgba(255,255,255,0.6)", fontSize: 12, fontWeight: "600" }}>
+                        {MOOD_LABELS[m] || m}
+                      </ThemedText>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
             </View>
           ) : null}
 
@@ -1727,5 +1782,24 @@ const styles = StyleSheet.create({
   volumeSlider: {
     flex: 1,
     height: 30,
+  },
+  destinationMoodRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Spacing.lg,
+    marginTop: Spacing.md,
+    gap: Spacing.sm,
+  },
+  destinationMoodLabel: {
+    color: "rgba(255,255,255,0.5)",
+    fontSize: 12,
+    fontWeight: "600",
+    letterSpacing: 0.5,
+  },
+  destMoodPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1.5,
   },
 });

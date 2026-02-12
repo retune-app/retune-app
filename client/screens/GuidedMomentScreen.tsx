@@ -1052,7 +1052,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
               <Feather
                 name={playerState === "playing" ? "pause" : "play"}
                 size={22}
-                color={ACCENT_GOLD}
+                color="#FFFFFF"
                 style={playerState !== "playing" ? { marginLeft: 2 } : undefined}
               />
             </Pressable>
@@ -1640,10 +1640,10 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 28,
     borderWidth: 1.5,
-    borderColor: `${ACCENT_GOLD}40`,
+    borderColor: "rgba(255,255,255,0.2)",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: `${NAVY}E0`,
+    backgroundColor: "rgba(0,0,0,0.3)",
   },
   finishedSection: {
     alignItems: "center",

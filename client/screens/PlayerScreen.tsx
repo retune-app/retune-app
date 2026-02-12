@@ -227,17 +227,31 @@ export default function PlayerScreen() {
   }, [hapticEnabled]);
 
   useLayoutEffect(() => {
+    const isInJourney = !!journeyContext;
+
     navigation.setOptions({
       headerTitle: () => (
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <View style={{ width: 3, height: 14, borderRadius: 2, backgroundColor: theme.primary, marginRight: 8 }} />
           <ThemedText type="caption" style={{ color: theme.primary, textTransform: 'uppercase', letterSpacing: 2, fontWeight: '600', fontSize: 11 }}>
-            My Affirmation
+            {isInJourney ? "Journey" : "My Affirmation"}
           </ThemedText>
         </View>
       ),
       headerLeft: () => (
-        isNew && !hasSaved ? (
+        isInJourney ? (
+          <HeaderButton
+            onPress={() => (navigation as any).navigate("Main")}
+            testID="button-end-journey"
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Feather name="check-circle" size={18} color={theme.primary} />
+              <ThemedText type="caption" style={{ color: theme.primary, fontWeight: '700', fontSize: 12 }}>
+                End Journey
+              </ThemedText>
+            </View>
+          </HeaderButton>
+        ) : isNew && !hasSaved ? (
           <HeaderButton
             onPress={handleSave}
             testID="button-save-affirmation"
@@ -258,15 +272,17 @@ export default function PlayerScreen() {
         )
       ),
       headerRight: () => (
-        <HeaderButton
-          onPress={handleDelete}
-          testID="button-delete-affirmation"
-        >
-          <Feather name="trash-2" size={22} color="#E53935" />
-        </HeaderButton>
+        isInJourney ? null : (
+          <HeaderButton
+            onPress={handleDelete}
+            testID="button-delete-affirmation"
+          >
+            <Feather name="trash-2" size={22} color="#E53935" />
+          </HeaderButton>
+        )
       ),
     });
-  }, [navigation, handleSave, handleDelete, autoSaveMutation.isPending, theme, isNew, hasSaved]);
+  }, [navigation, handleSave, handleDelete, autoSaveMutation.isPending, theme, isNew, hasSaved, journeyContext]);
 
   useEffect(() => {
     if (autoPlay && affirmation && !autoPlayedRef.current) {

@@ -2576,10 +2576,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/mood-checkin", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { mood, timeOfDay } = req.body;
+      const { mood, targetMood, timeOfDay } = req.body;
 
-      if (!mood || !timeOfDay) {
-        return res.status(400).json({ error: "mood and timeOfDay are required" });
+      if (!mood || !targetMood || !timeOfDay) {
+        return res.status(400).json({ error: "mood, targetMood, and timeOfDay are required" });
       }
 
       const validMoods = ["calm", "stressed", "tired", "energized", "anxious", "grateful"];
@@ -2587,6 +2587,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (!validMoods.includes(mood)) {
         return res.status(400).json({ error: "Invalid mood value" });
+      }
+      if (!validMoods.includes(targetMood)) {
+        return res.status(400).json({ error: "Invalid targetMood value" });
       }
       if (!validTimes.includes(timeOfDay)) {
         return res.status(400).json({ error: "Invalid timeOfDay value" });
@@ -2669,46 +2672,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return themeMap[mood]?.[timeOfDay] || "your current emotional state";
       })() : null;
 
-      const breatheMap: Record<string, Record<string, { name: string; id: string }>> = {
-        calm: {
-          morning: { name: "Coherent Breathing", id: "coherent" },
-          afternoon: { name: "Coherent Breathing", id: "coherent" },
-          evening: { name: "4-7-8 Relaxation", id: "478" },
-          night: { name: "4-7-8 Relaxation", id: "478" },
-        },
-        stressed: {
-          morning: { name: "Box Breathing", id: "box" },
-          afternoon: { name: "Box Breathing", id: "box" },
-          evening: { name: "4-7-8 Relaxation", id: "478" },
-          night: { name: "4-7-8 Relaxation", id: "478" },
-        },
-        tired: {
-          morning: { name: "Energizing Breath", id: "energizing" },
-          afternoon: { name: "Energizing Breath", id: "energizing" },
-          evening: { name: "Coherent Breathing", id: "coherent" },
-          night: { name: "4-7-8 Relaxation", id: "478" },
-        },
-        energized: {
-          morning: { name: "Energizing Breath", id: "energizing" },
-          afternoon: { name: "Energizing Breath", id: "energizing" },
-          evening: { name: "Coherent Breathing", id: "coherent" },
-          night: { name: "4-7-8 Relaxation", id: "478" },
-        },
-        anxious: {
-          morning: { name: "4-7-8 Relaxation", id: "478" },
-          afternoon: { name: "Box Breathing", id: "box" },
-          evening: { name: "4-7-8 Relaxation", id: "478" },
-          night: { name: "4-7-8 Relaxation", id: "478" },
-        },
-        grateful: {
-          morning: { name: "Coherent Breathing", id: "coherent" },
-          afternoon: { name: "Coherent Breathing", id: "coherent" },
-          evening: { name: "Coherent Breathing", id: "coherent" },
-          night: { name: "Coherent Breathing", id: "coherent" },
-        },
+      const moodPairBreathMap: Record<string, { name: string; id: string }> = {
+        "stressed→calm": { name: "4-7-8 Relaxation", id: "478" },
+        "stressed→energized": { name: "Box Breathing", id: "box" },
+        "tired→energized": { name: "Energizing Breath", id: "energizing" },
+        "tired→calm": { name: "Coherent Breathing", id: "coherent" },
+        "anxious→calm": { name: "4-7-8 Relaxation", id: "478" },
+        "anxious→grateful": { name: "Box Breathing", id: "box" },
+        "calm→grateful": { name: "Coherent Breathing", id: "coherent" },
+        "calm→energized": { name: "Energizing Breath", id: "energizing" },
+        "energized→calm": { name: "4-7-8 Relaxation", id: "478" },
+        "grateful→calm": { name: "Coherent Breathing", id: "coherent" },
       };
 
-      const breathing = breatheMap[mood]?.[timeOfDay] || { name: "Box Breathing", id: "box" };
+      const moodOnlyBreathFallback: Record<string, { name: string; id: string }> = {
+        calm: { name: "Coherent Breathing", id: "coherent" },
+        stressed: { name: "Box Breathing", id: "box" },
+        tired: { name: "Energizing Breath", id: "energizing" },
+        energized: { name: "Energizing Breath", id: "energizing" },
+        anxious: { name: "4-7-8 Relaxation", id: "478" },
+        grateful: { name: "Coherent Breathing", id: "coherent" },
+      };
+
+      const pairKey = `${mood}→${targetMood}`;
+      const breathing = moodPairBreathMap[pairKey] || moodOnlyBreathFallback[mood] || { name: "Box Breathing", id: "box" };
 
       let listenContext = "";
       if (matchedAffirmation) {
@@ -2726,31 +2713,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ? "The user has set up their Inner Voice (personal cloned voice)."
         : "The user hasn't set up their Inner Voice yet — hearing affirmations in your own voice deepens subconscious impact.";
 
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content: `You are the voice of Retuned, a personal wellness app. The user just checked in with their mood. Your job is to make them feel seen AND excited to use one of the three tools below. Think of yourself as a smart wellness coach who speaks like a real person — direct, warm, and genuinely insightful.
+      let acknowledgment = `${userName}, let's take you from ${mood} to ${targetMood}.`;
+      let stepTypes: string[] = ["breathe", "meditate"];
+      let breatheNote: string | null = `${breathing.name} can help settle your nervous system.`;
+      let meditateNote: string | null = "A guided moment to reconnect with yourself.";
+      let listenNote: string | null = matchedAffirmation
+        ? `Your affirmation "${matchedAffirmation.title}" is waiting for you.`
+        : suggestedCreationTheme ? `Create an affirmation about ${suggestedCreationTheme}.` : "Create an affirmation that speaks to how you feel.";
+
+      try {
+        const response = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [
+            {
+              role: "system",
+              content: `You are the voice of Retuned, a personal wellness app. The user wants to journey from feeling ${mood} to feeling ${targetMood}. Design a personalized wellness journey with 2-3 steps (minimum 2, maximum 3) from these tools: breathe, meditate, listen.
+
+Choose steps wisely — not every journey needs all three. Consider:
+- If user is already calm, they probably don't need breathing
+- If they want energy, meditation alone won't cut it
+- If they're anxious, breathing should almost always be first
+- Order matters: breathing first to settle the body, meditation to shift the mind, listening to reinforce
 
 User context:
 - Name: ${userName}
-- Mood: ${mood}
+- Current mood: ${mood}
+- Target mood: ${targetMood}
 - Time: ${timeOfDay}
 - ${listenContext}
 - ${voiceContext}
 - Total affirmations: ${userAffirmationsList.length}
-- Best breathing match: ${breathing.name}
+- Best breathing match for this transition: ${breathing.name}
 
 Respond as JSON with exactly these fields:
 {
-  "acknowledgment": "1-2 sentences, max 20 words total. Use ${userName}'s name. The first part validates their feeling specifically (not generically). The second part creates curiosity about the tools below — make them WANT to tap one. Be direct and real, not vague. Never use emojis. BAD examples (too generic): 'Looks like tonight is a bit tough for you' / 'Sounds like a tough night'. GOOD examples: '${userName}, anxious nights are the worst — let's get your body out of fight mode', 'Late-night stress hits different, ${userName}. Got just the thing', '${userName}, your mind's racing — let's slow it down together', '${userName}, that tired feeling at night? Your body's asking for a reset'.",
-  "breatheNote": "One punchy sentence (max 15 words). Explain WHY ${breathing.name} specifically helps when feeling ${mood} — reference a real physical effect (slowing heart rate, activating parasympathetic system, releasing muscle tension, lowering cortisol) but in plain everyday language. Make it feel like insider knowledge, not textbook. BAD: 'The 4-7-8 technique can help calm your nerves.' GOOD: '4-7-8 breathing literally tricks your nervous system into calm mode — works in 60 seconds.'",
-  "meditateNote": "One punchy sentence (max 15 words). Explain why a guided meditation is uniquely powerful for ${mood} at ${timeOfDay}. Connect it to something real about their current state. BAD: 'A quick meditation can help settle your mind before sleep.' GOOD: 'A 2-minute guided reset right now can break that ${mood} loop before bed.'",
-  "listenNote": "One punchy sentence (max 15 words). ${matchedAffirmation ? `Reference '${matchedAffirmation.title}' specifically and explain why hearing it NOW while feeling ${mood} at ${timeOfDay} would land differently than usual. Make them curious to listen. Night = frame around rest/processing/letting go. Morning = fresh start/energy.` : hasAffirmations ? `Make them excited to play one of their existing affirmations right now — connect it to how ${mood} at ${timeOfDay} makes it the perfect moment to hear their own words.` : `Inspire them to create their first affirmation about ${suggestedCreationTheme}${!hasClonedVoice ? " — mention how hearing it in their own cloned voice makes it 10x more powerful" : ""}. Make creation feel exciting, not like homework.`}"
+  "acknowledgment": "1-2 sentences, max 25 words total. Use ${userName}'s name. Validate their current ${mood} feeling specifically (not generically), then create excitement about reaching ${targetMood}. Reference both moods. Be direct and real, not vague. Never use emojis. BAD examples (too generic): 'Looks like tonight is a bit tough for you' / 'Sounds like a tough night'. GOOD examples: '${userName}, that ${mood} feeling doesn't have to stay — let's move you toward ${targetMood}', '${userName}, going from ${mood} to ${targetMood} is totally doable right now'.",
+  "stepTypes": ["breathe", "meditate", "listen"],
+  "breatheNote": "One punchy sentence (max 15 words) or null if breathe is not in stepTypes. Explain WHY ${breathing.name} specifically helps for the ${mood}→${targetMood} transition — reference a real physical effect but in plain everyday language. Make it feel like insider knowledge, not textbook.",
+  "meditateNote": "One punchy sentence (max 15 words) or null if meditate is not in stepTypes. Explain why a guided meditation uniquely helps shift from ${mood} to ${targetMood} at ${timeOfDay}. Connect it to something real about their transition.",
+  "listenNote": "One punchy sentence (max 15 words) or null if listen is not in stepTypes. ${matchedAffirmation ? `Reference '${matchedAffirmation.title}' specifically and explain why hearing it NOW during this ${mood}→${targetMood} transition would land differently than usual.` : hasAffirmations ? `Make them excited to play one of their existing affirmations right now — connect it to the ${mood}→${targetMood} journey.` : `Inspire them to create their first affirmation about ${suggestedCreationTheme}${!hasClonedVoice ? " — mention how hearing it in their own cloned voice makes it 10x more powerful" : ""}. Make creation feel exciting, not like homework.`}"
 }
 
-Rules:
+Rules for stepTypes:
+- Must be an array of 2-3 strings from: "breathe", "meditate", "listen"
+- Order them in the sequence the user should do them
+- Be smart about which steps to include for this specific ${mood}→${targetMood} transition
+
+Rules for tone:
 - Be specific and insightful, never generic
 - Sound like a smart friend who knows about wellness, not a greeting card
 - No flowery metaphors or poetic language
@@ -2758,53 +2767,66 @@ Rules:
 - No exclamation marks
 - Each note must teach them something or create curiosity — not just describe the feature
 - Vary your language dramatically between responses`,
-          },
-          {
-            role: "user",
-            content: `I'm feeling ${mood} and it's ${timeOfDay}.`,
-          },
-        ],
-        temperature: 0.8,
-        max_tokens: 200,
-        response_format: { type: "json_object" },
-      });
+            },
+            {
+              role: "user",
+              content: `I'm feeling ${mood} and I want to feel ${targetMood}. It's ${timeOfDay}.`,
+            },
+          ],
+          temperature: 0.8,
+          max_tokens: 250,
+          response_format: { type: "json_object" },
+        });
 
-      let acknowledgment = `${userName}, this moment is yours.`;
-      let breatheNote = `${breathing.name} can help settle your nervous system.`;
-      let meditateNote = "A guided moment to reconnect with yourself.";
-      let listenNote = matchedAffirmation
-        ? `Your affirmation "${matchedAffirmation.title}" is waiting for you.`
-        : suggestedCreationTheme ? `Create an affirmation about ${suggestedCreationTheme}.` : "Create an affirmation that speaks to how you feel.";
-
-      try {
         const parsed = JSON.parse(response.choices[0]?.message?.content || "{}");
         if (parsed.acknowledgment) acknowledgment = parsed.acknowledgment;
+        if (Array.isArray(parsed.stepTypes) && parsed.stepTypes.length >= 2 && parsed.stepTypes.length <= 3) {
+          const validStepTypes = parsed.stepTypes.filter((s: string) => ["breathe", "meditate", "listen"].includes(s));
+          if (validStepTypes.length >= 2) {
+            stepTypes = validStepTypes;
+          }
+        }
         if (parsed.breatheNote) breatheNote = parsed.breatheNote;
         if (parsed.meditateNote) meditateNote = parsed.meditateNote;
         if (parsed.listenNote) listenNote = parsed.listenNote;
       } catch (e) {}
 
+      const steps: any[] = [];
+      for (const stepType of stepTypes) {
+        if (stepType === "breathe") {
+          steps.push({
+            type: "breathe",
+            techniqueId: breathing.id,
+            techniqueName: breathing.name,
+            duration: 3,
+            note: breatheNote || `${breathing.name} can help settle your nervous system.`,
+          });
+        } else if (stepType === "meditate") {
+          steps.push({
+            type: "meditate",
+            note: meditateNote || "A guided moment to reconnect with yourself.",
+            mood: targetMood,
+            timeOfDay,
+          });
+        } else if (stepType === "listen") {
+          steps.push({
+            type: "listen",
+            affirmationId: matchedAffirmation?.id || null,
+            affirmationTitle: matchedAffirmation?.title || null,
+            isInnerVoice: matchedAffirmation?.voiceType === "personal" || false,
+            hasClonedVoice,
+            hasAnyAffirmations: hasAffirmations,
+            note: listenNote || "Create an affirmation that speaks to how you feel.",
+            suggestedTheme: suggestedCreationTheme,
+          });
+        }
+      }
+
       res.json({
         acknowledgment,
-        breathe: {
-          techniqueId: breathing.id,
-          techniqueName: breathing.name,
-          note: breatheNote,
-        },
-        meditate: {
-          note: meditateNote,
-        },
-        listen: {
-          hasAffirmation: !!matchedAffirmation,
-          affirmationId: matchedAffirmation?.id || null,
-          affirmationTitle: matchedAffirmation?.title || null,
-          affirmationDescription: matchedAffirmation?.description || null,
-          isInnerVoice: matchedAffirmation?.voiceType === "personal",
-          hasClonedVoice: hasClonedVoice,
-          hasAnyAffirmations: hasAffirmations,
-          note: listenNote,
-          suggestedTheme: suggestedCreationTheme,
-        },
+        currentMood: mood,
+        targetMood,
+        steps,
       });
     } catch (error) {
       console.error("Error in mood check-in:", error);

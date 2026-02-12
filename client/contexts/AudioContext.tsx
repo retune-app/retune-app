@@ -16,6 +16,14 @@ const audioCacheReady = Platform.OS !== 'web'
   ? LegacyFS.makeDirectoryAsync(AUDIO_CACHE_DIR, { intermediates: true }).catch(() => {})
   : Promise.resolve();
 
+export async function preloadAudioToCache(audioUrl: string, affirmationId: number): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    const remoteUri = `${getApiUrl()}${audioUrl}`;
+    await getCachedAudioUri(remoteUri, affirmationId);
+  } catch {}
+}
+
 async function getCachedAudioUri(remoteUri: string, affirmationId: number): Promise<string> {
   if (Platform.OS === 'web') return remoteUri;
   try {

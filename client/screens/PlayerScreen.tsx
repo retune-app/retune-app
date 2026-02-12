@@ -22,7 +22,7 @@ import { AmbientSoundMixer } from "@/components/AmbientSoundMixer";
 import { FocusModeTip } from "@/components/FocusModeTip";
 import { ThemedModal } from "@/components/ThemedModal";
 import { useTheme } from "@/hooks/useTheme";
-import { useAudio } from "@/contexts/AudioContext";
+import { useAudio, preloadAudioToCache } from "@/contexts/AudioContext";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { apiRequest } from "@/lib/query-client";
 import { getVoiceDisplayName } from "@shared/voiceMapping";
@@ -271,6 +271,12 @@ export default function PlayerScreen() {
       playAffirmation(affirmation);
     }
   }, [autoPlay, affirmation]);
+
+  useEffect(() => {
+    if (affirmation?.audioUrl && currentAffirmation?.id !== affirmation.id) {
+      preloadAudioToCache(affirmation.audioUrl, affirmation.id);
+    }
+  }, [affirmation?.audioUrl, affirmation?.id, currentAffirmation?.id]);
 
   useEffect(() => {
     const loadSettings = async () => {

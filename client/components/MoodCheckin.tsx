@@ -276,9 +276,9 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
       <View style={styles.journeyHeaderRow}>
         <View style={styles.journeyHeaderMood}>
           <View style={[styles.journeyHeaderCircle, { backgroundColor: `${currentMood.color}20` }]}>
-            <Feather name={currentMood.icon as any} size={16} color={currentMood.color} />
+            <Feather name={currentMood.icon as any} size={20} color={currentMood.color} />
           </View>
-          <ThemedText type="caption" style={{ color: currentMood.color, fontWeight: "600", marginTop: 2, fontSize: 11 }}>
+          <ThemedText type="caption" style={{ color: currentMood.color, fontWeight: "600", marginTop: 4 }}>
             {currentMood.label}
           </ThemedText>
         </View>
@@ -291,9 +291,9 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
 
         <View style={styles.journeyHeaderMood}>
           <View style={[styles.journeyHeaderCircle, { backgroundColor: `${target.color}20` }]}>
-            <Feather name={target.icon as any} size={16} color={target.color} />
+            <Feather name={target.icon as any} size={20} color={target.color} />
           </View>
-          <ThemedText type="caption" style={{ color: target.color, fontWeight: "600", marginTop: 2, fontSize: 11 }}>
+          <ThemedText type="caption" style={{ color: target.color, fontWeight: "600", marginTop: 4 }}>
             {target.label}
           </ThemedText>
         </View>
@@ -456,12 +456,12 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
                         >
                           <View style={styles.stepHeader}>
                             <View style={[styles.stepNumberCircle, { backgroundColor: `${stepColor}20` }]}>
-                              <ThemedText type="caption" style={{ color: stepColor, fontWeight: "700", fontSize: 11 }}>
+                              <ThemedText type="caption" style={{ color: stepColor, fontWeight: "700", fontSize: 12 }}>
                                 {String(index + 1)}
                               </ThemedText>
                             </View>
                             <View style={[styles.stepIconCircle, { backgroundColor: `${stepColor}15` }]}>
-                              <StepIconComponent type={step.type} size={14} color={stepColor} />
+                              <StepIconComponent type={step.type} size={16} color={stepColor} />
                             </View>
                             <ThemedText type="body" style={[styles.stepTypeLabel, { color: stepColor }]}>
                               {getStepTypeLabel(step.type)}
@@ -476,36 +476,36 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
                     );
                   })}
                 </View>
-
-                <Pressable
-                  onPress={handleBeginJourney}
-                  style={styles.beginButtonWrapper}
-                  testID="button-begin-journey"
-                >
-                  <LinearGradient
-                    colors={[ACCENT_GOLD, GOLD_LIGHT] as [string, string]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.beginButton}
-                  >
-                    <ThemedText type="body" style={styles.beginButtonText}>
-                      {"Begin Full Journey"}
-                    </ThemedText>
-                    <Feather name="arrow-right" size={18} color={NAVY} />
-                  </LinearGradient>
-                </Pressable>
-                <ThemedText type="small" style={[styles.beginHint, { color: theme.textSecondary }]}>
-                  {"Experience all steps together, one after another"}
-                </ThemedText>
-
-                <Pressable onPress={handleClose} style={styles.dismissButton}>
-                  <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                    {"Maybe later"}
-                  </ThemedText>
-                </Pressable>
               </Animated.View>
             ) : null}
           </ScrollView>
+
+          {journeyResponse && phase === "journey" ? (
+            <View style={[styles.stickyFooter, { backgroundColor: theme.backgroundRoot }]}>
+              <Pressable
+                onPress={handleBeginJourney}
+                style={styles.beginButtonWrapper}
+                testID="button-begin-journey"
+              >
+                <LinearGradient
+                  colors={[ACCENT_GOLD, GOLD_LIGHT] as [string, string]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.beginButton}
+                >
+                  <ThemedText type="body" style={styles.beginButtonText}>
+                    {"Begin Full Journey"}
+                  </ThemedText>
+                  <Feather name="arrow-right" size={20} color={NAVY} />
+                </LinearGradient>
+              </Pressable>
+              <Pressable onPress={handleClose} style={styles.dismissButton}>
+                <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                  {"Maybe later"}
+                </ThemedText>
+              </Pressable>
+            </View>
+          ) : null}
         </Pressable>
       </Pressable>
     </Modal>
@@ -535,7 +535,7 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     backgroundColor: "rgba(255,255,255,0.2)",
     alignSelf: "center",
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.lg,
   },
   modalTitle: {
     textAlign: "center",
@@ -623,9 +623,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   journeyHeaderCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -647,17 +647,17 @@ const styles = StyleSheet.create({
     backgroundColor: `${ACCENT_GOLD}08`,
     borderWidth: 1,
     borderRadius: BorderRadius.lg,
-    padding: Spacing.sm,
-    marginBottom: Spacing.sm,
-    gap: Spacing.xs,
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
+    gap: Spacing.sm,
   },
   ackIcon: {
     marginTop: 2,
   },
   ackText: {
     flex: 1,
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 15,
+    lineHeight: 22,
     fontStyle: "italic",
     fontWeight: "500",
   },
@@ -666,8 +666,8 @@ const styles = StyleSheet.create({
   },
   stepConnector: {
     alignItems: "center",
-    gap: 2,
-    paddingVertical: 3,
+    gap: 3,
+    paddingVertical: 6,
   },
   connectorDot: {
     width: 3,
@@ -677,51 +677,50 @@ const styles = StyleSheet.create({
   stepCard: {
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
+    padding: Spacing.md,
   },
   stepHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.xs,
-    marginBottom: 2,
+    gap: Spacing.sm,
+    marginBottom: 6,
   },
   stepNumberCircle: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  stepIconCircle: {
     width: 24,
     height: 24,
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
   },
+  stepIconCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   stepTypeLabel: {
     fontWeight: "700",
-    fontSize: 14,
+    fontSize: 15,
     flex: 1,
   },
   stepChevron: {
     marginLeft: "auto",
   },
   stepNote: {
-    fontSize: 12,
-    lineHeight: 17,
-    paddingLeft: 52,
+    fontSize: 13,
+    lineHeight: 19,
+    paddingLeft: 64,
   },
   stepsHint: {
     textAlign: "center",
-    fontSize: 11,
-    marginBottom: Spacing.xs,
+    fontSize: 12,
+    marginBottom: Spacing.sm,
   },
-  beginHint: {
-    textAlign: "center",
-    fontSize: 11,
-    marginBottom: 2,
+  stickyFooter: {
+    paddingTop: Spacing.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "rgba(255,255,255,0.1)",
   },
   beginButtonWrapper: {
     borderRadius: BorderRadius.lg,
@@ -732,13 +731,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 12,
+    paddingVertical: 16,
     borderRadius: BorderRadius.lg,
     gap: Spacing.sm,
   },
   beginButtonText: {
     fontWeight: "700",
-    fontSize: 16,
+    fontSize: 17,
     color: NAVY,
   },
   dismissButton: {

@@ -15,6 +15,7 @@ import Animated, {
   withTiming,
   withRepeat,
   withSequence,
+  withSpring,
   Easing,
   SlideInRight,
   SlideOutLeft,
@@ -25,6 +26,8 @@ import * as Haptics from "expo-haptics";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useFocusEffect } from "@react-navigation/native";
+import Svg, { Circle } from "react-native-svg";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import FullscreenBreathingLayout from "@/components/FullscreenBreathingLayout";
 import { MeditationIcon } from "@/components/MeditationIcon";
@@ -34,6 +37,7 @@ import { Spacing, BorderRadius } from "@/constants/theme";
 import {
   BREATHING_TECHNIQUES,
   getTotalCycleDuration,
+  getCyclesForDuration,
   type BreathingTechnique,
 } from "@shared/breathingTechniques";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
@@ -120,6 +124,17 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const controlsOpacity = useSharedValue(0);
 
+  const [countdownValue, setCountdownValue] = useState<number | null>(null);
+  const [hapticsEnabled, setHapticsEnabled] = useState(true);
+  const countdownScale = useSharedValue(0.8);
+  const countdownOpacityVal = useSharedValue(0);
+
+  useEffect(() => {
+    AsyncStorage.getItem("@settings/hapticsEnabled").then((val) => {
+      if (val !== null) setHapticsEnabled(val === "true");
+    });
+  }, []);
+
   const currentMoodInfo = MOOD_MAP[journey.currentMood] || MOOD_MAP.calm;
   const targetMoodInfo = MOOD_MAP[journey.targetMood] || MOOD_MAP.grateful;
   const currentStep = journey.steps[currentStepIndex];
@@ -139,6 +154,11 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
 
   const pulseStyle = useAnimatedStyle(() => ({
     transform: [{ scale: pulseAnim.value }],
+  }));
+
+  const countdownAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: countdownScale.value }],
+    opacity: countdownOpacityVal.value,
   }));
 
   useEffect(() => {
@@ -171,7 +191,22 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
       setPhase("breathing");
       setBreathingTimeLeft(BREATHING_DURATION_SECONDS);
       setCyclesCompleted(0);
-      setTimeout(() => setBreathingPlaying(true), 800);
+
+      (async () => {
+        await new Promise(resolve => setTimeout(resolve, 400));
+        for (let i = 3; i >= 1; i--) {
+          setCountdownValue(i);
+          countdownScale.value = 0.8;
+          countdownOpacityVal.value = 0;
+          countdownScale.value = withTiming(1, { duration: 700, easing: Easing.out(Easing.quad) });
+          countdownOpacityVal.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.ease) });
+          await new Promise(resolve => setTimeout(resolve, 700));
+          countdownOpacityVal.value = withTiming(0, { duration: 300, easing: Easing.in(Easing.ease) });
+          await new Promise(resolve => setTimeout(resolve, 300));
+        }
+        setCountdownValue(null);
+        setBreathingPlaying(true);
+      })();
     } else if (currentStep.type === "meditate") {
       setPhase("navigating-meditation");
       setTimeout(() => {
@@ -232,7 +267,22 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
       setPhase("breathing");
       setBreathingTimeLeft(BREATHING_DURATION_SECONDS);
       setCyclesCompleted(0);
-      setTimeout(() => setBreathingPlaying(true), 800);
+
+      (async () => {
+        await new Promise(resolve => setTimeout(resolve, 400));
+        for (let i = 3; i >= 1; i--) {
+          setCountdownValue(i);
+          countdownScale.value = 0.8;
+          countdownOpacityVal.value = 0;
+          countdownScale.value = withTiming(1, { duration: 700, easing: Easing.out(Easing.quad) });
+          countdownOpacityVal.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.ease) });
+          await new Promise(resolve => setTimeout(resolve, 700));
+          countdownOpacityVal.value = withTiming(0, { duration: 300, easing: Easing.in(Easing.ease) });
+          await new Promise(resolve => setTimeout(resolve, 300));
+        }
+        setCountdownValue(null);
+        setBreathingPlaying(true);
+      })();
     } else if (step.type === "meditate") {
       setPhase("navigating-meditation");
       setTimeout(() => {
@@ -493,6 +543,67 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
     </Animated.View>
   );
 
+  const renderCountdownOverlay = useCallback((fontSize: number = 48) => {
+    if (countdownValue === null) return null;
+    return (
+      <Animated.View
+        style={[
+          {
+            position: 'absolute',
+            justifyContent: 'center',
+            alignItems: 'center',
+          },
+          countdownAnimatedStyle,
+        ]}
+      >
+        <Text style={{
+          fontSize,
+          fontWeight: '700',
+          color: 'rgba(255,255,255,0.85)',
+          letterSpacing: 2,
+        }}>
+          {countdownValue}
+        </Text>
+      </Animated.View>
+    );
+  }, [countdownValue, countdownAnimatedStyle]);
+
+  const renderProgressRing = useCallback((ringSize: number) => {
+    const technique = getBreathingTechnique();
+    const progressPercent = Math.round(((BREATHING_DURATION_SECONDS - breathingTimeLeft) / BREATHING_DURATION_SECONDS) * 100);
+    const padding = 24;
+    const totalSize = ringSize + padding;
+    const radius = (ringSize + padding / 2) / 2;
+    const circumference = Math.PI * (ringSize + padding / 2);
+    return (
+      <View style={{ position: 'absolute', alignItems: 'center', justifyContent: 'center' }}>
+        <Svg width={totalSize} height={totalSize} style={{ position: 'absolute' }}>
+          <Circle
+            cx={totalSize / 2}
+            cy={totalSize / 2}
+            r={radius}
+            stroke={`${technique.color}15`}
+            strokeWidth={3}
+            fill="transparent"
+          />
+          <Circle
+            cx={totalSize / 2}
+            cy={totalSize / 2}
+            r={radius}
+            stroke={technique.color}
+            strokeWidth={3}
+            fill="transparent"
+            strokeDasharray={`${circumference}`}
+            strokeDashoffset={circumference * (1 - progressPercent / 100)}
+            strokeLinecap="round"
+            rotation="-90"
+            origin={`${totalSize / 2}, ${totalSize / 2}`}
+          />
+        </Svg>
+      </View>
+    );
+  }, [breathingTimeLeft, getBreathingTechnique]);
+
   const renderBreathing = () => {
     const technique = getBreathingTechnique();
 
@@ -513,11 +624,15 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
           resetControlsTimer={resetControlsTimer}
           insets={insets}
           backgroundColor={NAVY}
+          showContent={countdownValue === null}
+          hapticsEnabled={hapticsEnabled}
           stats={[
             { label: "Time Left", value: formatTime(breathingTimeLeft) },
-            { label: "Step", value: `${currentStepIndex + 1}/${journey.steps.length}`, color: technique.color || ACCENT_GOLD },
+            { label: "Progress", value: `${Math.round(((BREATHING_DURATION_SECONDS - breathingTimeLeft) / BREATHING_DURATION_SECONDS) * 100)}%`, color: technique.color || ACCENT_GOLD },
             { label: "Cycles", value: `${cyclesCompleted}` },
           ]}
+          renderProgressRing={(size) => renderProgressRing(size)}
+          renderCircleOverlay={(size) => renderCountdownOverlay(size)}
           renderBottomExtra={journey.steps.length > 1 ? () => (
             <View style={styles.stepNavRow}>
               <Pressable onPress={handleGoBack} style={[styles.stepNavButton, { borderColor: "rgba(255,255,255,0.35)" }]} testID="button-journey-back">

@@ -552,14 +552,16 @@ export default function BreathingScreen() {
     }
   }, [musicEnabled, voiceEnabled, setVolume]);
 
+  const selectedDurationRef = useRef(selectedDuration);
+  useEffect(() => { selectedDurationRef.current = selectedDuration; }, [selectedDuration]);
+
   useEffect(() => {
     if (isPlaying) {
       timerRef.current = setInterval(() => {
         setElapsedTime((prev) => {
-          if (prev >= selectedDuration - 1) {
+          if (prev >= selectedDurationRef.current - 1) {
             sessionCompletedNaturally.current = true;
-            handleStop();
-            return 0;
+            return prev;
           }
           return prev + 1;
         });
@@ -574,7 +576,13 @@ export default function BreathingScreen() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isPlaying, selectedDuration]);
+  }, [isPlaying]);
+
+  useEffect(() => {
+    if (sessionCompletedNaturally.current && isPlaying) {
+      handleStop();
+    }
+  }, [elapsedTime]);
 
   const handleStart = async () => {
     await stopAffirmationAudio();

@@ -140,11 +140,11 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   wisdomText: {
-    fontSize: 12,
+    fontSize: 15,
     fontFamily: "Nunito_400Regular",
     color: "rgba(255,255,255,0.45)",
     textAlign: "center",
-    lineHeight: 18,
+    lineHeight: 22,
     letterSpacing: 0.3,
     fontStyle: "italic",
   },

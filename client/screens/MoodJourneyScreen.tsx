@@ -452,7 +452,6 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setPhase("intro");
       startCurrentStep();
     }, 2500);
     return () => clearTimeout(timer);

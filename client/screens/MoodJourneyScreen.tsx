@@ -570,12 +570,8 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
     } else if (step.type === "meditate") {
       setPhase("navigating-meditation");
       setBreathingPlaying(false);
-      (async () => {
-        if (prefetchPromiseRef.current) {
-          await prefetchPromiseRef.current;
-          prefetchPromiseRef.current = null;
-        }
-        await new Promise(resolve => setTimeout(resolve, 800));
+      hasNavigatedRef.current = false;
+      const doNavigate = () => {
         if (!hasNavigatedRef.current) {
           hasNavigatedRef.current = true;
           returningFromStepRef.current = true;
@@ -586,10 +582,26 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
             prefetchedMoment: prefetchedMeditationRef.current,
           });
         }
+      };
+      const safetyTimeout = setTimeout(doNavigate, 10000);
+      (async () => {
+        if (prefetchPromiseRef.current) {
+          try {
+            await Promise.race([
+              prefetchPromiseRef.current,
+              new Promise(resolve => setTimeout(resolve, 8000)),
+            ]);
+          } catch (e) {}
+          prefetchPromiseRef.current = null;
+        }
+        await new Promise(resolve => setTimeout(resolve, 800));
+        clearTimeout(safetyTimeout);
+        doNavigate();
       })();
     } else if (step.type === "listen") {
       setPhase("navigating-listen");
       setBreathingPlaying(false);
+      hasNavigatedRef.current = false;
       setTimeout(() => {
         if (!hasNavigatedRef.current) {
           hasNavigatedRef.current = true;

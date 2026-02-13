@@ -2693,7 +2693,7 @@ Rules:
       const userId = req.userId!;
 
       const [userData, userAffirmationsList, latestVoiceSample] = await Promise.all([
-        db.select({ name: users.name, voiceId: users.voiceId }).from(users).where(eq(users.id, userId)).limit(1),
+        db.select({ name: users.name, voiceId: users.voiceId, preferredVoiceType: users.preferredVoiceType }).from(users).where(eq(users.id, userId)).limit(1),
         db.select({
           id: affirmations.id,
           title: affirmations.title,
@@ -2717,6 +2717,7 @@ Rules:
       const hasClonedVoice = !!(latestVoiceSample[0]?.status === "ready" && latestVoiceSample[0]?.voiceId) || !!user?.voiceId;
       const hasAffirmations = userAffirmationsList.length > 0;
       const hasAffirmationsWithAudio = userAffirmationsList.filter(a => a.audioUrl).length > 0;
+      const userPreferredVoiceType = user?.preferredVoiceType || "ai";
 
       const moodPrefs = MOOD_TAG_PREFERENCES[mood as MoodType]?.[timeOfDay as TimeOfDay];
       const preferredTags = moodPrefs?.preferredTags || [];
@@ -2737,6 +2738,7 @@ Rules:
             score += preferredPillars.indexOf(a.pillar) === 0 ? 2 : 1;
           }
           if (a.isFavorite) score += 1;
+          if (a.voiceType === userPreferredVoiceType) score += 2;
           return score;
         };
 

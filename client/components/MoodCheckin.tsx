@@ -184,7 +184,7 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
       const data = await response.json();
       setTargetPrompt(data);
     } catch (e) {
-      setTargetPrompt({ title: "Where would you like to be?", subtitle: "Choose your destination" });
+      setTargetPrompt({ title: "Now, choose your calm", subtitle: "Pick the feeling you want to move toward" });
     } finally {
       setIsLoadingPrompt(false);
     }
@@ -397,10 +397,10 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
                 {renderMoodIndicator()}
 
                 <ThemedText type="h3" style={styles.modalTitle}>
-                  {targetPrompt?.title || "Where would you like to be?"}
+                  {targetPrompt?.title || "Now, choose your calm"}
                 </ThemedText>
                 <ThemedText type="body" style={[styles.modalSubtitle, { color: theme.textSecondary }]}>
-                  {targetPrompt?.subtitle || "Choose your destination"}
+                  {targetPrompt?.subtitle || "Pick the feeling you want to move toward"}
                 </ThemedText>
 
                 <View style={styles.moodGrid}>

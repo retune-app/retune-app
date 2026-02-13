@@ -179,9 +179,11 @@ export function RSVPDisplay({
     };
   });
 
+  const containerBg = forceDarkMode ? theme.navy : theme.backgroundDefault;
+
   if (!wordTimings || wordTimings.length === 0) {
     return (
-      <View style={[styles.container, { backgroundColor: theme.backgroundSecondary }]}>
+      <View style={[styles.container, { backgroundColor: containerBg }]}>
         <Text style={[styles.placeholder, { color: theme.textSecondary }]}>
           No word timing data available
         </Text>
@@ -190,7 +192,7 @@ export function RSVPDisplay({
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: containerBg }]}>
 
       <Animated.View style={[styles.wordContainer, animatedStyle]}>
         {displayWord ?

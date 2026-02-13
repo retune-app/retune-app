@@ -6,7 +6,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { useScreenOptions } from "@/hooks/useScreenOptions";
 
 export type BreathingStackParamList = {
-  Breathing: undefined;
+  Breathing: { autoStart?: boolean } | undefined;
 };
 
 const Stack = createNativeStackNavigator<BreathingStackParamList>();

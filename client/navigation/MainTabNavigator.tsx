@@ -18,7 +18,7 @@ import { useAudio } from "@/contexts/AudioContext";
 const FIRST_TAB_VISIT_KEY = "@navigation/firstTabVisit";
 
 export type MainTabParamList = {
-  BreatheTab: undefined;
+  BreatheTab: { screen?: string; params?: { autoStart?: boolean } } | undefined;
   CreateTab: undefined;
   AffirmTab: undefined;
   SettingsTab: undefined;

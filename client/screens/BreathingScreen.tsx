@@ -12,7 +12,7 @@ import {
   PanResponder,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { useNavigation, useRoute, useFocusEffect, RouteProp } from "@react-navigation/native";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
@@ -69,9 +69,14 @@ interface Affirmation {
   audioUrl?: string;
 }
 
+type BreathingRouteProp = RouteProp<{ Breathing: { autoStart?: boolean } | undefined }, 'Breathing'>;
+
 export default function BreathingScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
+  const route = useRoute<BreathingRouteProp>();
+  const autoStart = route.params?.autoStart;
+  const autoStartTriggered = useRef(false);
   const [showLandscapeMode, setShowLandscapeMode] = useState(false);
   const { theme } = useTheme();
   const { user } = useAuth();
@@ -857,6 +862,17 @@ export default function BreathingScreen() {
     await handleStart();
   }, [handleStart, hapticsEnabled]);
 
+  useEffect(() => {
+    if (autoStart && breathingAffirmation && !autoStartTriggered.current) {
+      autoStartTriggered.current = true;
+      setVoiceEnabled(true);
+      voiceEnabledRef.current = true;
+      navigation.setParams({ autoStart: undefined });
+      setTimeout(() => {
+        handleStartWithCountdown();
+      }, 300);
+    }
+  }, [autoStart, breathingAffirmation, handleStartWithCountdown, navigation]);
 
   useEffect(() => {
     if (showLandscapeMode && isPlaying) {

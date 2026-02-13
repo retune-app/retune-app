@@ -1131,6 +1131,18 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
     );
   };
 
+  const renderEndJourneyFooter = () => (
+    <Animated.View entering={FadeIn.delay(800).duration(500)} style={[styles.endJourneyFooter, { paddingBottom: insets.bottom + Spacing.lg }]}>
+      <Pressable
+        onPress={handleEndJourney}
+        style={styles.endJourneyButton}
+        testID="button-end-journey-transition"
+      >
+        <ThemedText style={[styles.endJourneyText, { color: theme.textSecondary }]}>End Journey</ThemedText>
+      </Pressable>
+    </Animated.View>
+  );
+
   const renderTransition = () => (
     <Animated.View
       entering={FadeIn.duration(600)}
@@ -1141,6 +1153,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
         {getTransitionMessage()}
       </ThemedText>
       {renderStepProgress()}
+      {renderEndJourneyFooter()}
     </Animated.View>
   );
 
@@ -1154,6 +1167,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
         {getNavigatingMessage()}
       </ThemedText>
       {renderStepProgress()}
+      {renderEndJourneyFooter()}
     </Animated.View>
   );
 
@@ -1239,24 +1253,14 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
 
       {phase !== "breathing" ? (
         <View style={[styles.header, { paddingTop: insets.top + Spacing.sm }]}>
-          {phase !== "intro" && phase !== "complete" ? (
-            phase === "transition" || phase === "navigating-meditation" || phase === "navigating-listen" ? (
-              <Pressable
-                onPress={handleEndJourney}
-                style={styles.endJourneyButton}
-                testID="button-exit-journey"
-              >
-                <ThemedText style={[styles.endJourneyText, { color: theme.textSecondary }]}>End Journey</ThemedText>
-              </Pressable>
-            ) : (
-              <Pressable
-                onPress={handleEndJourney}
-                style={styles.closeButton}
-                testID="button-exit-journey"
-              >
-                <Feather name="x" size={20} color={theme.textSecondary} />
-              </Pressable>
-            )
+          {phase !== "intro" && phase !== "complete" && phase !== "transition" && phase !== "navigating-meditation" && phase !== "navigating-listen" ? (
+            <Pressable
+              onPress={handleEndJourney}
+              style={styles.closeButton}
+              testID="button-exit-journey"
+            >
+              <Feather name="x" size={20} color={theme.textSecondary} />
+            </Pressable>
           ) : null}
         </View>
       ) : null}
@@ -1305,16 +1309,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  endJourneyFooter: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+  },
   endJourneyButton: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.full,
     backgroundColor: "rgba(255,255,255,0.08)",
   },
   endJourneyText: {
     fontSize: 13,
     fontFamily: "Nunito_600SemiBold",
-    opacity: 0.7,
+    opacity: 0.6,
   },
   content: {
     flex: 1,

@@ -618,13 +618,18 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
       try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
       setPhase("complete");
     } else {
+      const nextStep = journey.steps[nextIndex];
       setCurrentStepIndex(nextIndex);
-      setPhase("transition");
-      setTimeout(() => {
+      if (nextStep?.type === "meditate" || nextStep?.type === "listen") {
         launchStep(nextIndex);
-      }, 2500);
+      } else {
+        setPhase("transition");
+        setTimeout(() => {
+          launchStep(nextIndex);
+        }, 2500);
+      }
     }
-  }, [currentStepIndex, journey.steps.length, launchStep]);
+  }, [currentStepIndex, journey.steps.length, journey.steps, launchStep]);
 
   useEffect(() => {
     if (phase === "breathing" && breathingPlaying) {

@@ -1082,13 +1082,13 @@ export default function BreathingScreen() {
             ) : null}
             <BreathingCircle
               technique={selectedTechnique}
-              isPlaying={isPlaying}
+              isPlaying={isPlaying && !showLandscapeMode}
               onCycleComplete={handleCycleComplete}
               hapticsEnabled={hapticsEnabled}
               size={260}
-              showContent={countdownValue === null}
+              showContent={countdownValue === null && !showLandscapeMode}
             />
-            {!isPlaying && countdownValue === null ? (
+            {!isPlaying && countdownValue === null && !showLandscapeMode ? (
               <Pressable
                 onPress={() => handleStartWithCountdown()}
                 testID="button-start-breathing"

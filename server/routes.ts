@@ -183,37 +183,43 @@ const MEDITATION_MOOD_CONFIG: Record<string, {
 };
 
 const PILLAR_VOICE_CONFIG: Record<string, {
+  scriptTone: string;
   humeSpeed: number;
   pauseSeconds: number;
   elevenLabsStability: number;
   elevenLabsStyle: number;
 }> = {
   mind: {
-    humeSpeed: 0.95,
-    pauseSeconds: 1.2,
-    elevenLabsStability: 0.5,
-    elevenLabsStyle: 0.35,
-  },
-  body: {
-    humeSpeed: 1.0,
-    pauseSeconds: 1.0,
-    elevenLabsStability: 0.45,
-    elevenLabsStyle: 0.4,
-  },
-  spirit: {
-    humeSpeed: 0.88,
-    pauseSeconds: 1.6,
+    scriptTone: "Clear, steady, and measured. Quiet certainty. Deliver each statement like a calm, focused thought landing with precision.",
+    humeSpeed: 0.92,
+    pauseSeconds: 1.3,
     elevenLabsStability: 0.55,
     elevenLabsStyle: 0.3,
   },
-  connection: {
+  body: {
+    scriptTone: "Warm, grounded, and physical. Connected to sensation. Speak as if you can feel each word in your body — rooted and present.",
     humeSpeed: 0.95,
+    pauseSeconds: 1.1,
+    elevenLabsStability: 0.5,
+    elevenLabsStyle: 0.4,
+  },
+  spirit: {
+    scriptTone: "Soft, contemplative, and spacious. Gentle and unhurried. Let each phrase breathe, as if the silence between words matters as much as the words themselves.",
+    humeSpeed: 0.85,
+    pauseSeconds: 1.8,
+    elevenLabsStability: 0.6,
+    elevenLabsStyle: 0.25,
+  },
+  connection: {
+    scriptTone: "Warm, open, and heartfelt. Inviting and sincere. Speak as if addressing someone you deeply care about — natural, genuine, emotionally present.",
+    humeSpeed: 0.93,
     pauseSeconds: 1.3,
     elevenLabsStability: 0.45,
     elevenLabsStyle: 0.45,
   },
   achievement: {
-    humeSpeed: 1.05,
+    scriptTone: "Confident, grounded, and forward-moving. Strong without being aggressive. Deliver like a coach who believes in you — direct, clear, empowering.",
+    humeSpeed: 1.0,
     pauseSeconds: 0.9,
     elevenLabsStability: 0.4,
     elevenLabsStyle: 0.5,
@@ -225,7 +231,7 @@ function getPillarVoiceConfig(pillar?: string | null): typeof MEDITATION_MOOD_CO
   const key = pillar.toLowerCase();
   const config = PILLAR_VOICE_CONFIG[key];
   if (!config) return undefined;
-  return { ...config, scriptTone: '' };
+  return config;
 }
 
 const dailyGreetingCache = new Map<string, { message: string; actionText?: string; actionType?: string }>();

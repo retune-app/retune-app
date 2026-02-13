@@ -2,52 +2,70 @@
 
 ## Version 1.6 (Build 1) — February 13, 2026
 
+### Breathing Wisdom
+- AI-generated science-based wisdom tips during breathing sessions (standalone and mood journey breathing steps).
+- Factual, encouraging tone (e.g. "Your cortisol is dropping right now") — no poetic/flowery language.
+- Tips appear after 10 seconds + 1 completed breathing cycle, display up to 3 lines, fade in/out subtly.
+- Positioned at bottom in portrait fullscreen, left side panel in landscape.
+- API: `GET /api/breathing-wisdom?techniqueId={id}` with 24-hour in-memory cache and hardcoded fallbacks.
+
+### Breathing Timer Fix
+- Moved `handleStop` to a separate useEffect watching `elapsedTime` (prevents stale closures).
+- Timer increments even at completion so useEffect triggers properly (fixes freeze at 1 second remaining).
+- Portrait breathing circle is now purely decorative (no functional breathing — `isPlaying=false`, `showContent=false`). All breathing happens in fullscreen only.
+- Duration defaults to 60 seconds on app load and resets to 60 seconds after every session completes.
+
 ### Journey Prompt Intelligence
 - Completely rewritten mood journey generation prompt with a neuroscience and spirituality knowledge base: references specific mechanisms like vagus nerve activation, amygdala regulation, neuroplasticity, theta brainwave states, and mirror neurons.
 - 4 rotating acknowledgment angles (neuroscience, mindfulness, body-first, direct) with anti-repetition guardrails to ensure each journey feels fresh.
 - Direct, factual tone — no metaphors, no flowery language. Temperature set to 0.95 for natural variance.
 
-### Skip Button Delay
-- Skip button on breathing and meditation journey steps now delays 10 seconds before becoming active, allowing audio and animations to fully load before skipping.
-- "Listen" step retains immediate skip availability.
-- `JourneyStepBar` component accepts a `skipDelay` prop with `skipDelayElapsed` state that resets per step.
+### Journey Breathing Wisdom
+- Breathing wisdom tips now appear during the breathing exercise step of mood journeys (both individual and full journey).
+- Uses the same `BreathingWisdom` component and API as standalone breathing sessions.
 
-### Breathing Fullscreen Fix
-- Fixed mini breathing circle appearing and animating on the home screen during fullscreen breathing sessions.
-- Added guards on `isPlaying && !showLandscapeMode` for the mini circle, `showContent` for the info panel, and start button visibility during fullscreen transitions.
+### Skip Button Delay
+- Skip button on breathing and meditation journey steps now delays 10 seconds before becoming active.
+- "Listen" step retains immediate skip availability.
 
 ### Audio Playback Improvements
 - Added "Preparing your affirmation..." loading message while audio generates.
 - Audio now stops completely when the player is closed (not just during journeys).
 - Affirmation switching uses a `playRequestId` counter pattern to cancel in-progress audio loads, preventing freezes when rapidly switching tracks.
+- Auto-play when tapping affirmation cards from the Believe library.
 
-### Auto-Play from Library
-- Tapping an affirmation card in the Believe library now auto-plays it immediately when the Player screen opens.
+### Breathing Fullscreen Fix
+- Fixed mini breathing circle appearing and animating on the home screen during fullscreen breathing sessions.
+- Added guards on `isPlaying && !showLandscapeMode` for the mini circle, `showContent` for the info panel, and start button visibility during fullscreen transitions.
 
 ### Performance Optimizations
-- Memoized filtered affirmations list on HomeScreen with `useMemo` — previously recomputed on every render.
-- Wrapped FlatList `renderItem` in `useCallback` on HomeScreen to prevent unnecessary re-renders of all list items.
+- Wrapped `BreathingCircle` component with `React.memo` — prevents unnecessary re-renders of animation-heavy component from parent state changes.
+- Wrapped HomeScreen event handlers (`handleAffirmationPress`, `handlePlayPress`, `handleRenamePress`) with `useCallback` — fixes `renderItem` useCallback dependency chain so FlatList items don't re-render unnecessarily.
+- Memoized `journeyStepLabels` in MoodJourneyScreen with `useMemo`.
+- Extracted `formatTime` utility and RSVP constants to module level in PlayerScreen.
+- Memoized filtered affirmations list on HomeScreen with `useMemo`.
+- Wrapped FlatList `renderItem` in `useCallback` on HomeScreen.
 - Extracted inline `ItemSeparatorComponent` to a stable module-level constant.
-- Memoized AudioContext provider value with `useMemo` — previously created a new object every render, causing all audio consumers to re-render unnecessarily.
+- Memoized AudioContext provider value with `useMemo`.
 
 ### Code Cleanup
-- Removed empty no-op `useEffect` from PlayerScreen.
-- Removed 9 unused imports across 6 files: `Alert`, `Dimensions`, `Platform`, `runOnJS`, `BACKGROUND_MUSIC_OPTIONS`, `withSpring`, `SlideInRight`, `SlideOutLeft`, `BorderRadius`, `moderateMultipleTexts`, `HUME_VOICE_OPTIONS`.
-- Verified `isOperationInProgress` ref in AudioContext is still actively used in `togglePlayPause`.
+- Removed 15+ debug `console.log` statements from server routes and unused timing variables.
+- Removed unused imports across multiple files.
+- Deleted all conversation screenshots from `attached_assets/`.
 
 ### Files Changed
-- `server/routes.ts` — Journey prompt rewrite, unused import cleanup
-- `client/screens/PlayerScreen.tsx` — Auto-play, loading message, dead useEffect removal, unused import cleanup
-- `client/screens/BreathingScreen.tsx` — Fullscreen mini circle fix, unused import cleanup
+- `server/routes.ts` — Journey prompt rewrite, breathing wisdom API, debug log cleanup
+- `client/screens/BreathingScreen.tsx` — Timer fix, wisdom tips, duration default, portrait circle decorative-only
+- `client/screens/PlayerScreen.tsx` — Auto-play, loading message, formatTime extraction, RSVP constants
+- `client/screens/MoodJourneyScreen.tsx` — Journey breathing wisdom, journeyStepLabels memoization
+- `client/screens/HomeScreen.tsx` — Auto-play navigation, useCallback handler fixes, FlatList optimization
 - `client/screens/GuidedMomentScreen.tsx` — Unused import cleanup
-- `client/screens/MoodJourneyScreen.tsx` — Unused import cleanup
-- `client/screens/HomeScreen.tsx` — Auto-play navigation, FlatList performance optimization
 - `client/contexts/AudioContext.tsx` — playRequestId pattern, stop on close, provider value memoization
+- `client/components/BreathingCircle.tsx` — React.memo wrapper
+- `client/components/BreathingWisdom.tsx` — New component for breathing wisdom tips
+- `client/components/FullscreenBreathingLayout.tsx` — renderWisdom prop support
 - `client/components/JourneyStepBar.tsx` — Skip delay feature
-- `client/components/RSVPDisplay.tsx` — Unused import cleanup
-- `app.json` — Version bump to 1.6
-- `CHANGELOG.md` — Comprehensive change documentation
-- `replit.md` — Updated documentation
+- `app.json` — Version 1.6 Build 1
 
 ---
 

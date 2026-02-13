@@ -561,7 +561,6 @@ export default function BreathingScreen() {
         setElapsedTime((prev) => {
           if (prev >= selectedDurationRef.current - 1) {
             sessionCompletedNaturally.current = true;
-            return prev;
           }
           return prev + 1;
         });

@@ -205,6 +205,23 @@ export const affirmationCollections = pgTable("affirmation_collections", {
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 
+// Journey completions for tracking mood journey patterns
+export const journeyCompletions = pgTable("journey_completions", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  currentMood: text("current_mood").notNull(),
+  targetMood: text("target_mood").notNull(),
+  stepsPlanned: integer("steps_planned").notNull(),
+  stepsCompleted: integer("steps_completed").notNull(),
+  stepsSkipped: integer("steps_skipped").default(0),
+  stepTypes: text("step_types").notNull(),
+  completedFully: boolean("completed_fully").default(false),
+  timeOfDay: text("time_of_day"),
+  durationSeconds: integer("duration_seconds"),
+  completedAt: timestamp("completed_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  dateKey: text("date_key").notNull(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many, one }) => ({
   affirmations: many(affirmations),
@@ -214,6 +231,7 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   notificationSettings: one(notificationSettings),
   reminders: many(reminders),
   listeningSessions: many(listeningSessions),
+  journeyCompletions: many(journeyCompletions),
 }));
 
 export const listeningSessionsRelations = relations(listeningSessions, ({ one }) => ({
@@ -259,6 +277,10 @@ export const voiceSamplesRelations = relations(voiceSamples, ({ one }) => ({
 export const affirmationCollectionsRelations = relations(affirmationCollections, ({ one }) => ({
   affirmation: one(affirmations, { fields: [affirmationCollections.affirmationId], references: [affirmations.id] }),
   collection: one(collections, { fields: [affirmationCollections.collectionId], references: [collections.id] }),
+}));
+
+export const journeyCompletionsRelations = relations(journeyCompletions, ({ one }) => ({
+  user: one(users, { fields: [journeyCompletions.userId], references: [users.id] }),
 }));
 
 // Insert schemas
@@ -350,3 +372,11 @@ export type SupportRequest = typeof supportRequests.$inferSelect;
 export type InsertSupportRequest = z.infer<typeof insertSupportRequestSchema>;
 export type Reminder = typeof reminders.$inferSelect;
 export type InsertReminder = z.infer<typeof insertReminderSchema>;
+
+export const insertJourneyCompletionSchema = createInsertSchema(journeyCompletions).omit({
+  id: true,
+  completedAt: true,
+});
+
+export type JourneyCompletion = typeof journeyCompletions.$inferSelect;
+export type InsertJourneyCompletion = z.infer<typeof insertJourneyCompletionSchema>;

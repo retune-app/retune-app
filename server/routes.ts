@@ -243,6 +243,53 @@ const dailyGreetingFallbacks: Record<string, string> = {
   night: "Let the stillness remind you how far you have already come",
 };
 
+// Breathing wisdom cache: techniqueId + date -> wisdom tips + timestamp
+const breathingWisdomCache = new Map<string, { wisdom: string[]; timestamp: number }>();
+
+// Breathing wisdom fallback tips per technique
+const breathingWisdomFallbacks: Record<string, string[]> = {
+  box: [
+    "Equal rhythm activates your body's calm response",
+    "Navy SEALs use this exact pattern before missions",
+    "Box breathing synchronizes left and right brain hemispheres",
+    "Your heart rate variability improves with each cycle",
+    "This pattern mirrors the rhythm of ocean waves",
+    "Four equal counts create neural symmetry",
+    "Ancient warriors used square breathing before battle",
+    "Each hold strengthens your diaphragm muscles"
+  ],
+  "478": [
+    "Dr. Weil calls this a natural tranquilizer for your nervous system",
+    "The long exhale mimics the body's natural sleep-onset breathing",
+    "This ratio triggers your rest-and-digest response",
+    "Monks have used similar ratios for centuries for deep meditation",
+    "The 7-second hold saturates your blood with calming oxygen",
+    "This pattern can lower blood pressure in minutes",
+    "Your brain waves shift from beta to alpha with each cycle",
+    "Ancient Ayurvedic texts describe this exact breathing ratio"
+  ],
+  coherent: [
+    "Five breaths per minute is your heart's favorite rhythm",
+    "This frequency creates measurable heart-brain synchronization",
+    "HeartMath research shows coherence builds emotional resilience",
+    "Your electromagnetic field becomes more ordered at this pace",
+    "This is the only breathing rate that synchronizes all body rhythms",
+    "Olympic athletes use coherent breathing for peak performance",
+    "Five-five rhythm activates your body's self-healing systems",
+    "Your heart generates the strongest electromagnetic field in your body"
+  ],
+  energizing: [
+    "Quick breathing floods your prefrontal cortex with oxygen",
+    "This rhythm mimics the breathing pattern of joyful laughter",
+    "Your mitochondria produce more energy with each fast breath",
+    "Tibetan monks use rapid breathing to generate inner heat",
+    "This pattern activates your sympathetic nervous system naturally",
+    "Fast breathing increases norepinephrine for sharper focus",
+    "Your brain uses 20% of your body's total oxygen supply",
+    "Ancient pranayama masters called this 'breath of fire'"
+  ]
+};
+
 const uploadDir = path.join(process.cwd(), "uploads");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -3906,6 +3953,123 @@ Respond with ONLY the notification message text.${avoidClause}`,
     } catch (error) {
       console.error("Error getting breathing streak:", error);
       res.status(500).json({ error: "Failed to get breathing streak" });
+    }
+  });
+
+  // Get breathing wisdom tips for a technique (cached daily)
+  app.get("/api/breathing-wisdom", async (req: Request, res: Response) => {
+    try {
+      const techniqueId = req.query.techniqueId as string;
+
+      // Validate technique ID
+      if (!techniqueId || !["box", "478", "coherent", "energizing"].includes(techniqueId)) {
+        return res.status(400).json({ error: "Invalid technique ID. Must be one of: box, 478, coherent, energizing" });
+      }
+
+      // Create cache key: techniqueId + today's date
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      const cacheKey = `${techniqueId}-${today}`;
+
+      // Check cache first
+      const cached = breathingWisdomCache.get(cacheKey);
+      if (cached) {
+        const cacheAge = Date.now() - cached.timestamp;
+        const twentyFourHours = 24 * 60 * 60 * 1000;
+        if (cacheAge < twentyFourHours) {
+          return res.json({ wisdom: cached.wisdom });
+        }
+      }
+
+      // Generate new wisdom tips using OpenAI
+      let wisdom: string[];
+
+      try {
+        // Technique descriptions for context
+        const techniqueDescriptions: Record<string, { name: string; pattern: string; focus: string }> = {
+          box: {
+            name: "Box Breathing",
+            pattern: "4-4-4-4 seconds (equal rhythm)",
+            focus: "Focus, calm, grounding. Used by Navy SEALs and military personnel."
+          },
+          "478": {
+            name: "4-7-8 Relaxation",
+            pattern: "4 second inhale, 7 second hold, 8 second exhale",
+            focus: "Sleep, anxiety relief, deep relaxation. Created by Dr. Andrew Weil."
+          },
+          coherent: {
+            name: "Coherent Breathing",
+            pattern: "5-5 seconds (balanced rhythm)",
+            focus: "Heart-brain coherence, HRV optimization, emotional balance."
+          },
+          energizing: {
+            name: "Energizing Breath",
+            pattern: "2-1 seconds (quick rhythm)",
+            focus: "Quick energy boost, alertness, oxygen flooding to brain."
+          }
+        };
+
+        const technique = techniqueDescriptions[techniqueId];
+
+        const systemPrompt = `You are a breathing wisdom guide. Generate 8 unique, fascinating tips about the ${technique.name} breathing technique. Each tip should be 8-15 words and feel like whispered knowledge rather than instructions.
+
+TODAY'S DATE: ${today}
+
+TECHNIQUE DETAILS:
+- Pattern: ${technique.pattern}
+- Focus: ${technique.focus}
+
+WISDOM STYLE:
+- Mix neuroscience facts, ancient wisdom traditions, body science, and practical insights
+- Examples of good tips:
+  * "Your vagus nerve is thanking you right now"
+  * "Ancient yogis called this rhythm 'prana flow'"
+  * "Each exhale lowers your cortisol by tiny amounts"
+- IMPORTANT: Do NOT give instructions like "try to..." or "make sure you..." — these are fascinating facts/insights about the technique and how it works
+- Make tips feel personal and poetic, not clinical
+
+RESPONSE FORMAT:
+Return ONLY the 8 tips, one per line. No numbering, no titles, no extra text. Just pure wisdom.`;
+
+        const userPrompt = `Generate 8 unique breathing wisdom tips for ${technique.name}. Today is ${today} — use this date to ensure tips feel fresh and varied each day.`;
+
+        const response = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt }
+          ],
+          temperature: 0.8,
+          max_tokens: 300
+        });
+
+        const content = response.choices[0]?.message?.content || "";
+        wisdom = content
+          .split('\n')
+          .map(line => line.trim())
+          .filter(line => line.length > 0 && !line.startsWith('*'))
+          .slice(0, 8); // Ensure exactly 8 tips
+
+        // If we didn't get 8 tips, pad with fallback
+        if (wisdom.length < 8) {
+          const fallback = breathingWisdomFallbacks[techniqueId] || [];
+          wisdom = [...wisdom, ...fallback].slice(0, 8);
+        }
+      } catch (aiError) {
+        console.error("OpenAI error generating breathing wisdom:", aiError);
+        // Fall back to hardcoded tips
+        wisdom = breathingWisdomFallbacks[techniqueId] || [];
+      }
+
+      // Cache the result
+      breathingWisdomCache.set(cacheKey, {
+        wisdom,
+        timestamp: Date.now()
+      });
+
+      res.json({ wisdom });
+    } catch (error) {
+      console.error("Error generating breathing wisdom:", error);
+      res.status(500).json({ error: "Failed to generate breathing wisdom" });
     }
   });
 

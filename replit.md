@@ -3,6 +3,15 @@
 ## Overview
 Retuned is an application designed to help users reprogram their subconscious minds through personalized audio affirmations. It leverages AI to generate affirmation scripts based on user goals, which can then be played in the user's cloned voice or a selection of curated AI voices. The project aims to provide a powerful tool for personal growth and mental well-being, focusing on subconscious language patterns to maximize effectiveness. Key features include voice cloning, guided breathing exercises, AI-powered mood check-ins with personalized wellness paths, micro-meditations, and a comprehensive ambient sound library.
 
+## Recent Changes (v1.6 Build 1 — February 13, 2026)
+- Journey generation prompt rewritten with neuroscience/spirituality knowledge base and 4 rotating acknowledgment angles
+- Skip button delays 10 seconds on breathing/meditation journey steps
+- Fixed mini breathing circle appearing on home screen during fullscreen mode
+- Audio stops completely on player close; affirmation switching uses playRequestId counter to prevent freezes
+- Auto-play when tapping affirmation cards from library
+- Performance: memoized filtered list, FlatList renderItem, AudioContext provider value
+- Code cleanup: removed empty useEffect, 9 unused imports across 6 files, 2 unused server imports
+
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 

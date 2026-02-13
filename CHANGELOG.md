@@ -1,5 +1,56 @@
 # RETUNED Changelog
 
+## Version 1.6 (Build 1) — February 13, 2026
+
+### Journey Prompt Intelligence
+- Completely rewritten mood journey generation prompt with a neuroscience and spirituality knowledge base: references specific mechanisms like vagus nerve activation, amygdala regulation, neuroplasticity, theta brainwave states, and mirror neurons.
+- 4 rotating acknowledgment angles (neuroscience, mindfulness, body-first, direct) with anti-repetition guardrails to ensure each journey feels fresh.
+- Direct, factual tone — no metaphors, no flowery language. Temperature set to 0.95 for natural variance.
+
+### Skip Button Delay
+- Skip button on breathing and meditation journey steps now delays 10 seconds before becoming active, allowing audio and animations to fully load before skipping.
+- "Listen" step retains immediate skip availability.
+- `JourneyStepBar` component accepts a `skipDelay` prop with `skipDelayElapsed` state that resets per step.
+
+### Breathing Fullscreen Fix
+- Fixed mini breathing circle appearing and animating on the home screen during fullscreen breathing sessions.
+- Added guards on `isPlaying && !showLandscapeMode` for the mini circle, `showContent` for the info panel, and start button visibility during fullscreen transitions.
+
+### Audio Playback Improvements
+- Added "Preparing your affirmation..." loading message while audio generates.
+- Audio now stops completely when the player is closed (not just during journeys).
+- Affirmation switching uses a `playRequestId` counter pattern to cancel in-progress audio loads, preventing freezes when rapidly switching tracks.
+
+### Auto-Play from Library
+- Tapping an affirmation card in the Believe library now auto-plays it immediately when the Player screen opens.
+
+### Performance Optimizations
+- Memoized filtered affirmations list on HomeScreen with `useMemo` — previously recomputed on every render.
+- Wrapped FlatList `renderItem` in `useCallback` on HomeScreen to prevent unnecessary re-renders of all list items.
+- Extracted inline `ItemSeparatorComponent` to a stable module-level constant.
+- Memoized AudioContext provider value with `useMemo` — previously created a new object every render, causing all audio consumers to re-render unnecessarily.
+
+### Code Cleanup
+- Removed empty no-op `useEffect` from PlayerScreen.
+- Removed 9 unused imports across 6 files: `Alert`, `Dimensions`, `Platform`, `runOnJS`, `BACKGROUND_MUSIC_OPTIONS`, `withSpring`, `SlideInRight`, `SlideOutLeft`, `BorderRadius`, `moderateMultipleTexts`, `HUME_VOICE_OPTIONS`.
+- Verified `isOperationInProgress` ref in AudioContext is still actively used in `togglePlayPause`.
+
+### Files Changed
+- `server/routes.ts` — Journey prompt rewrite, unused import cleanup
+- `client/screens/PlayerScreen.tsx` — Auto-play, loading message, dead useEffect removal, unused import cleanup
+- `client/screens/BreathingScreen.tsx` — Fullscreen mini circle fix, unused import cleanup
+- `client/screens/GuidedMomentScreen.tsx` — Unused import cleanup
+- `client/screens/MoodJourneyScreen.tsx` — Unused import cleanup
+- `client/screens/HomeScreen.tsx` — Auto-play navigation, FlatList performance optimization
+- `client/contexts/AudioContext.tsx` — playRequestId pattern, stop on close, provider value memoization
+- `client/components/JourneyStepBar.tsx` — Skip delay feature
+- `client/components/RSVPDisplay.tsx` — Unused import cleanup
+- `app.json` — Version bump to 1.6
+- `CHANGELOG.md` — Comprehensive change documentation
+- `replit.md` — Updated documentation
+
+---
+
 ## Version 1.5 (Build 2) — February 10, 2026
 
 ### Radiant Bloom Breathing Visualization

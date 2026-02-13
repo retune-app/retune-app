@@ -143,6 +143,8 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
   const [breathingPlaying, setBreathingPlaying] = useState(false);
   const [breathingTimeLeft, setBreathingTimeLeft] = useState(BREATHING_DURATION_SECONDS);
   const [cyclesCompleted, setCyclesCompleted] = useState(0);
+  const journeyStartRef = useRef<number>(Date.now());
+  const skippedStepsRef = useRef<number>(0);
   const breathingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const hasNavigatedRef = useRef(false);
   const returningFromStepRef = useRef(false);
@@ -651,6 +653,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
 
   const handleSkipBreathing = useCallback(() => {
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+    skippedStepsRef.current++;
     setBreathingPlaying(false);
     if (breathingTimerRef.current) {
       clearInterval(breathingTimerRef.current);
@@ -679,6 +682,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
 
   const handleSkipStep = useCallback(() => {
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+    skippedStepsRef.current++;
     setBreathingPlaying(false);
     if (breathingTimerRef.current) {
       clearInterval(breathingTimerRef.current);
@@ -730,10 +734,37 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
   const handleEndJourney = useCallback(() => {
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
     (async () => {
+      try {
+        const timeOfDay = new Date().getHours() < 12 ? "morning" : new Date().getHours() < 17 ? "afternoon" : new Date().getHours() < 21 ? "evening" : "night";
+        const durationSeconds = Math.round((Date.now() - journeyStartRef.current) / 1000);
+        const stepsPlanned = journey.steps.length;
+        const stepsCompleted = currentStepIndex + 1;
+        const completedFully = currentStepIndex >= journey.steps.length - 1;
+
+        await fetch(new URL("/api/journey-completions", getApiUrl()).toString(), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            currentMood: journey.currentMood || (route.params as any)?.mood,
+            targetMood: journey.targetMood || (route.params as any)?.targetMood,
+            stepsPlanned,
+            stepsCompleted,
+            stepsSkipped: skippedStepsRef.current,
+            stepTypes: journey.steps.map((s: any) => s.type),
+            completedFully,
+            timeOfDay,
+            durationSeconds,
+          }),
+        });
+      } catch (e) {
+        console.log("Failed to record journey completion:", e);
+      }
+
       await stopBackgroundMusic();
       (navigation as any).navigate("Main", { screen: "AffirmTab" });
     })();
-  }, [navigation, stopBackgroundMusic]);
+  }, [navigation, stopBackgroundMusic, currentStepIndex, journey, route.params]);
 
   const formatTime = (seconds: number): string => {
     const m = Math.floor(seconds / 60);
@@ -749,14 +780,17 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
 
   const getTransitionMessage = (): string => {
     const nextStep = journey.steps[currentStepIndex + 1];
-    if (!nextStep) return "Your journey is almost complete...";
-    if (nextStep.type === "meditate") return "Beautiful. Now let's settle your mind...";
-    if (nextStep.type === "listen") return "Time to hear words that resonate...";
-    if (nextStep.type === "breathe") return "Let's ground your body first...";
+    const currentMoodLabel = currentMoodInfo?.label || "here";
+    const targetMoodLabel = targetMoodInfo?.label || "there";
+    if (!nextStep) return `Almost ${targetMoodLabel} — one more step to go`;
+    if (nextStep.type === "meditate") return `Your body is settling. Time to quiet your mind toward ${targetMoodLabel}`;
+    if (nextStep.type === "listen") return `Your mind is open now — the right words will land deeper`;
+    if (nextStep.type === "breathe") return `Let's ground your body first before shifting toward ${targetMoodLabel}`;
     return "Moving to the next step...";
   };
 
   const getNavigatingMessage = (): string => {
+    const targetMoodLabel = targetMoodInfo?.label || "";
     if (phase === "navigating-meditation") return "Preparing your micro-meditation...";
     if (phase === "navigating-listen") {
       if (currentStep?.affirmationId) return "Preparing your affirmation...";

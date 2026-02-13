@@ -977,6 +977,9 @@ export default function BreathingScreen() {
                 case "meditate":
                   setShowMoodCheckin(true);
                   break;
+                case "journey":
+                  setShowMoodCheckin(true);
+                  break;
                 case "clone":
                   navigation.navigate("VoiceSetup");
                   break;

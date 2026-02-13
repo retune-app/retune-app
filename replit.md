@@ -3,8 +3,15 @@
 ## Overview
 Retuned is an application designed to help users reprogram their subconscious minds through personalized audio affirmations. It leverages AI to generate affirmation scripts based on user goals, which can then be played in the user's cloned voice or a selection of curated AI voices. The project aims to provide a powerful tool for personal growth and mental well-being, focusing on subconscious language patterns to maximize effectiveness. Key features include voice cloning, guided breathing exercises, AI-powered mood check-ins with personalized wellness paths, micro-meditations, and a comprehensive ambient sound library.
 
-## Recent Changes (v1.6 Build 2 — February 13, 2026)
-- **Breathing Wisdom**: AI-generated technique-specific wisdom tips ("whispering knowledge") that fade in/out subtly during breathing sessions. Appears every 2-3 cycles after a 15-second minimum delay. Tips are daily-fresh (date-seeded), mixing neuroscience, ancient traditions, and body science. Positioned at bottom in portrait fullscreen, left side panel in landscape. API: `GET /api/breathing-wisdom?techniqueId={id}` with 24h in-memory cache and hardcoded fallbacks.
+## Recent Changes (v1.6 Build 3 — February 13, 2026)
+- **Breathing Timer Fix**: Moved handleStop to separate useEffect watching elapsedTime (prevents stale closures). Timer increments even at completion so useEffect triggers properly (fixes freeze at 1 second remaining).
+- **Breathing Wisdom Tone**: Rewrote AI prompt and all fallback tips from poetic/flowery to factual science-based encouragement (e.g. "Your cortisol is dropping right now" instead of "your body whispers secrets"). Tips appear sooner (10s + 1 completed cycle, was 15s + 2 cycles), display 3 lines instead of 2, more compact width.
+- **Portrait Breathing Circle**: Now purely decorative (no functional breathing — isPlaying=false, showContent=false). All breathing happens in fullscreen only.
+- **Duration Default**: Defaults to 60s on app load and resets to 60s after every breathing session completes.
+- **Code Cleanup**: Removed debug console.log statements from server routes, unused imports, and attached screenshot assets.
+
+### Previous (v1.6 Build 2)
+- **Breathing Wisdom**: AI-generated technique-specific wisdom tips that fade in/out subtly during breathing sessions. Positioned at bottom in portrait fullscreen, left side panel in landscape. API: `GET /api/breathing-wisdom?techniqueId={id}` with 24h in-memory cache and hardcoded fallbacks.
 - Fixed breathing fullscreen transition: 150ms delay after `setShowLandscapeMode(true)` ensures Modal renders before countdown begins
 - Journey generation prompt rewritten with neuroscience/spirituality knowledge base and 4 rotating acknowledgment angles
 - Skip button delays 10 seconds on breathing/meditation journey steps

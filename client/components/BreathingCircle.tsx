@@ -75,10 +75,14 @@ export default function BreathingCircle({
     hapticsEnabledRef.current = hapticsEnabled;
   }, [hapticsEnabled]);
 
-  const triggerHaptic = () => {
+  const triggerHaptic = (phaseName?: string) => {
     if (hapticsEnabledRef.current) {
       try {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        Haptics.impactAsync(
+          phaseName === "inhale"
+            ? Haptics.ImpactFeedbackStyle.Heavy
+            : Haptics.ImpactFeedbackStyle.Light
+        );
       } catch (e) {}
     }
   };
@@ -119,7 +123,7 @@ export default function BreathingCircle({
       const phaseName = phase.phase;
 
       runOnJS(updatePhaseState)(phaseName, currentCountdownVal);
-      runOnJS(triggerHaptic)();
+      runOnJS(triggerHaptic)(phaseName);
 
       const targetProgress = phaseName === "inhale" || phaseName === "holdIn" ? 1 : 0;
 

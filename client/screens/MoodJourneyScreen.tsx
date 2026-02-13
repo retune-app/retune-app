@@ -1239,14 +1239,24 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
 
       {phase !== "breathing" ? (
         <View style={[styles.header, { paddingTop: insets.top + Spacing.sm }]}>
-          {phase !== "intro" && phase !== "complete" && phase !== "transition" && phase !== "navigating-meditation" && phase !== "navigating-listen" ? (
-            <Pressable
-              onPress={handleEndJourney}
-              style={styles.closeButton}
-              testID="button-exit-journey"
-            >
-              <Feather name="x" size={20} color={theme.textSecondary} />
-            </Pressable>
+          {phase !== "intro" && phase !== "complete" ? (
+            phase === "transition" || phase === "navigating-meditation" || phase === "navigating-listen" ? (
+              <Pressable
+                onPress={handleEndJourney}
+                style={styles.endJourneyButton}
+                testID="button-exit-journey"
+              >
+                <ThemedText style={[styles.endJourneyText, { color: theme.textSecondary }]}>End Journey</ThemedText>
+              </Pressable>
+            ) : (
+              <Pressable
+                onPress={handleEndJourney}
+                style={styles.closeButton}
+                testID="button-exit-journey"
+              >
+                <Feather name="x" size={20} color={theme.textSecondary} />
+              </Pressable>
+            )
           ) : null}
         </View>
       ) : null}
@@ -1294,6 +1304,17 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.1)",
     alignItems: "center",
     justifyContent: "center",
+  },
+  endJourneyButton: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.full,
+    backgroundColor: "rgba(255,255,255,0.08)",
+  },
+  endJourneyText: {
+    fontSize: 13,
+    fontFamily: "Nunito_600SemiBold",
+    opacity: 0.7,
   },
   content: {
     flex: 1,

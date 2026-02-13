@@ -17,6 +17,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import * as ScreenOrientation from "expo-screen-orientation";
 import { Audio } from "expo-av";
+import BreathingWisdom from "@/components/BreathingWisdom";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -956,6 +957,14 @@ export default function BreathingScreen() {
               >
                 <Feather name="square" size={20} color="#FFFFFF" />
               </Pressable>
+            )}
+            renderWisdom={() => (
+              <BreathingWisdom
+                techniqueId={selectedTechnique.id}
+                isPlaying={isPlaying}
+                cyclesCompleted={cyclesCompleted}
+                isLandscape={isLandscape}
+              />
             )}
           />
         </Animated.View>

@@ -45,6 +45,7 @@ interface FullscreenBreathingLayoutProps {
   renderBottomExtra?: () => React.ReactNode;
   renderBelowCircle?: () => React.ReactNode;
   renderStopButton?: () => React.ReactNode;
+  renderWisdom?: () => React.ReactNode;
   hapticsEnabled?: boolean;
   hideTopControls?: boolean;
   affirmationTitle?: string;
@@ -71,6 +72,7 @@ export default function FullscreenBreathingLayout({
   renderBottomExtra,
   renderBelowCircle,
   renderStopButton,
+  renderWisdom,
   hapticsEnabled,
   hideTopControls = false,
   affirmationTitle,
@@ -109,6 +111,7 @@ export default function FullscreenBreathingLayout({
                 {affirmationTitle}
               </Text>
             ) : null}
+            {renderWisdom ? renderWisdom() : null}
           </Animated.View>
 
           <View style={styles.landscapeCircleContainer}>
@@ -199,6 +202,12 @@ export default function FullscreenBreathingLayout({
         <Animated.View style={[styles.belowCircleSection, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"} onStartShouldSetResponder={() => true}>
           {renderBelowCircle()}
         </Animated.View>
+      ) : null}
+
+      {renderWisdom ? (
+        <View style={styles.portraitWisdomContainer} pointerEvents="none">
+          {renderWisdom()}
+        </View>
       ) : null}
 
       <Animated.View style={[styles.bottomGradientOverlay, { paddingBottom: insets.bottom + Spacing.lg }, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"} onStartShouldSetResponder={() => true}>
@@ -341,6 +350,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: Spacing.xl,
     marginBottom: Spacing.sm,
+  },
+  portraitWisdomContainer: {
+    position: "absolute",
+    bottom: 180,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+    zIndex: 6,
   },
   fsTopControls: {
     flexDirection: "row",

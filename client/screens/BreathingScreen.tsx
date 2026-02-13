@@ -843,6 +843,9 @@ export default function BreathingScreen() {
     
     fullscreenProgress.value = 0;
     setShowLandscapeMode(true);
+
+    await new Promise(resolve => setTimeout(resolve, 150));
+
     fullscreenProgress.value = withSpring(1, { damping: 20, stiffness: 60, mass: 1 });
     
     for (let i = 3; i >= 1; i--) {

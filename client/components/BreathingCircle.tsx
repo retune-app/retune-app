@@ -89,11 +89,17 @@ export default function BreathingCircle({
     if (!hapticsEnabledRef.current) return;
 
     if (phaseName === "inhale") {
-      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); } catch (e) {}
+      const doubleTap = () => {
+        try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); } catch (e) {}
+        setTimeout(() => {
+          try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); } catch (e) {}
+        }, 50);
+      };
+      doubleTap();
       hapticIntervalRef.current = setInterval(() => {
         if (!hapticsEnabledRef.current) return;
-        try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); } catch (e) {}
-      }, 300);
+        doubleTap();
+      }, 200);
     } else if (phaseName === "exhale") {
       try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
       hapticIntervalRef.current = setInterval(() => {

@@ -185,6 +185,12 @@ export default function FullscreenBreathingLayout({
         </Animated.View>
       ) : null}
 
+      {renderWisdom ? (
+        <View style={styles.portraitWisdomContainer} pointerEvents="none">
+          {renderWisdom()}
+        </View>
+      ) : null}
+
       <View style={styles.portraitCenterSection}>
         {renderProgressRing ? renderProgressRing(portraitCircleSize) : null}
         <BreathingCircle
@@ -202,12 +208,6 @@ export default function FullscreenBreathingLayout({
         <Animated.View style={[styles.belowCircleSection, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"} onStartShouldSetResponder={() => true}>
           {renderBelowCircle()}
         </Animated.View>
-      ) : null}
-
-      {renderWisdom ? (
-        <View style={styles.portraitWisdomContainer} pointerEvents="none">
-          {renderWisdom()}
-        </View>
       ) : null}
 
       <Animated.View style={[styles.bottomGradientOverlay, { paddingBottom: insets.bottom + Spacing.lg }, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"} onStartShouldSetResponder={() => true}>
@@ -352,11 +352,10 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   portraitWisdomContainer: {
-    position: "absolute",
-    bottom: 120,
-    left: 0,
-    right: 0,
     alignItems: "center",
+    paddingHorizontal: 40,
+    minHeight: 48,
+    justifyContent: "center",
     zIndex: 6,
   },
   fsTopControls: {

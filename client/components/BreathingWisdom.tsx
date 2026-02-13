@@ -111,27 +111,22 @@ export default function BreathingWisdom({
   if (isLandscape) {
     return (
       <Animated.View style={[styles.landscapeContainer, animatedStyle]}>
-        <Text style={styles.wisdomText}>{currentTip}</Text>
+        <Text style={styles.wisdomText} numberOfLines={2}>{currentTip}</Text>
       </Animated.View>
     );
   }
 
   return (
     <Animated.View style={[styles.portraitContainer, animatedStyle]}>
-      <Text style={styles.wisdomText}>{currentTip}</Text>
+      <Text style={styles.wisdomText} numberOfLines={2}>{currentTip}</Text>
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   portraitContainer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
     alignItems: "center",
-    paddingHorizontal: 32,
-    paddingBottom: 8,
+    paddingHorizontal: 24,
     zIndex: 5,
   },
   landscapeContainer: {

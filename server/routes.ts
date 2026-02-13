@@ -19,10 +19,10 @@ import {
   deleteVoice,
   type WordTiming,
 } from "./replit_integrations/elevenlabs/client";
-import { humeTextToSpeech, humeSimpleTTS, HUME_VOICE_OPTIONS, type WordTiming as HumeWordTiming } from "./hume-client";
+import { humeTextToSpeech, humeSimpleTTS, type WordTiming as HumeWordTiming } from "./hume-client";
 import { findInactiveVoices, runVoiceRotation, getVoiceSlotStats, checkVoiceSlotWarning } from "./voice-rotation";
 import { setupAuth, requireAuth, optionalAuth, AuthenticatedRequest } from "./auth";
-import { moderateContent, moderateMultipleTexts, validateAffirmationContent } from "./moderation";
+import { moderateContent, validateAffirmationContent } from "./moderation";
 import {
   postIssueComment,
   setIssueStatusLabel,

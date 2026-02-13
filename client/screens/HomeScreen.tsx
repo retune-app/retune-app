@@ -34,6 +34,8 @@ import { PILLAR_LIST, getPillarColor } from "@shared/pillars";
 
 const PILLAR_FILTERS = ["All", "Favorites", ...PILLAR_LIST];
 
+const SeparatorComponent = () => <View style={styles.separator} />;
+
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 type HomeScreenRouteParams = {
@@ -237,13 +239,12 @@ export default function HomeScreen() {
     setRefreshing(false);
   }, [refetch]);
 
-  // Filter by pillar, favorites, and search
-  const filteredAffirmations = affirmations.filter((item) => {
+  const filteredAffirmations = useMemo(() => affirmations.filter((item) => {
     const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesFavorites = selectedPillar === "Favorites" ? item.isFavorite : true;
     const matchesPillar = selectedPillar === "All" || selectedPillar === "Favorites" || item.pillar === selectedPillar;
     return matchesSearch && matchesFavorites && matchesPillar;
-  });
+  }), [affirmations, searchQuery, selectedPillar]);
 
   const handleAffirmationPress = (id: number) => {
     navigation.navigate("Player", { affirmationId: id, autoPlay: true });
@@ -529,7 +530,7 @@ export default function HomeScreen() {
     }
   }, [breathingAffirmation, affirmations, setBreathingAffirmation]);
 
-  const renderItem = ({ item, index }: { item: Affirmation; index: number }) => {
+  const renderItem = useCallback(({ item, index }: { item: Affirmation; index: number }) => {
     const isCurrentlyPlaying = currentAffirmation?.id === item.id && isPlaying;
     const isBreathingSelected = breathingAffirmation?.id === item.id;
     const isHighlighted = highlightedAffirmationId === item.id;
@@ -551,7 +552,7 @@ export default function HomeScreen() {
         </View>
       </Animated.View>
     );
-  };
+  }, [currentAffirmation?.id, isPlaying, breathingAffirmation?.id, highlightedAffirmationId, theme.gold, handleAffirmationPress, handlePlayPress, handleRenamePress, handleSetForBreathing, handleAfterDelete, hapticEnabled]);
 
   const edgeFadeColors = isDark 
     ? ["rgba(15, 28, 63, 0.95)", "rgba(15, 28, 63, 0)"] as const
@@ -582,7 +583,7 @@ export default function HomeScreen() {
             flatListRef.current?.scrollToIndex({ index: info.index, animated: true });
           }, 100);
         }}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
+        ItemSeparatorComponent={SeparatorComponent}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

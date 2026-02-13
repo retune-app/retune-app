@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { Platform } from 'react-native';
 import { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
@@ -381,29 +381,48 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const contextValue = useMemo<AudioContextType>(() => ({
+    currentAffirmation,
+    isPlaying,
+    position,
+    duration,
+    isLoading,
+    autoReplay,
+    playbackSpeed,
+    breathingAffirmation,
+    highlightAffirmationId,
+    playAffirmation,
+    togglePlayPause,
+    stop,
+    seek,
+    setAutoReplay,
+    setPlaybackSpeed,
+    setBreathingAffirmation,
+    requestHighlightAffirmation,
+    clearHighlightAffirmation,
+  }), [
+    currentAffirmation,
+    isPlaying,
+    position,
+    duration,
+    isLoading,
+    autoReplay,
+    playbackSpeed,
+    breathingAffirmation,
+    highlightAffirmationId,
+    playAffirmation,
+    togglePlayPause,
+    stop,
+    seek,
+    setAutoReplay,
+    setPlaybackSpeed,
+    setBreathingAffirmation,
+    requestHighlightAffirmation,
+    clearHighlightAffirmation,
+  ]);
+
   return (
-    <AudioContext.Provider
-      value={{
-        currentAffirmation,
-        isPlaying,
-        position,
-        duration,
-        isLoading,
-        autoReplay,
-        playbackSpeed,
-        breathingAffirmation,
-        highlightAffirmationId,
-        playAffirmation,
-        togglePlayPause,
-        stop,
-        seek,
-        setAutoReplay,
-        setPlaybackSpeed,
-        setBreathingAffirmation,
-        requestHighlightAffirmation,
-        clearHighlightAffirmation,
-      }}
-    >
+    <AudioContext.Provider value={contextValue}>
       {children}
     </AudioContext.Provider>
   );

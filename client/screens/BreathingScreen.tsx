@@ -1100,11 +1100,11 @@ export default function BreathingScreen() {
             ) : null}
             <BreathingCircle
               technique={selectedTechnique}
-              isPlaying={isPlaying && !showLandscapeMode}
-              onCycleComplete={handleCycleComplete}
-              hapticsEnabled={hapticsEnabled}
+              isPlaying={false}
+              onCycleComplete={() => {}}
+              hapticsEnabled={false}
               size={260}
-              showContent={countdownValue === null && !showLandscapeMode}
+              showContent={false}
             />
             {!isPlaying && countdownValue === null && !showLandscapeMode ? (
               <Pressable

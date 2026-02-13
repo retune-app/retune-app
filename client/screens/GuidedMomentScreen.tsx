@@ -260,6 +260,41 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
   const generatingPulse = useSharedValue(0);
   const centerContentOpacity = useSharedValue(1);
   const centerContentScale = useSharedValue(1);
+  const loadingDotClock = useSharedValue(0);
+
+  useEffect(() => {
+    loadingDotClock.value = 0;
+    loadingDotClock.value = withRepeat(
+      withTiming(3, { duration: 1800, easing: Easing.linear }),
+      -1
+    );
+  }, []);
+
+  const loadingDotStyle0 = useAnimatedStyle(() => {
+    'worklet';
+    const v = loadingDotClock.value;
+    const dist = Math.min(Math.abs(v), Math.abs(v - 3));
+    const opacity = interpolate(dist, [0, 0.5, 1.5], [1, 0.7, 0.2]);
+    const scale = interpolate(dist, [0, 0.5, 1.5], [1.3, 1, 0.8]);
+    return { opacity, transform: [{ scale }] };
+  });
+  const loadingDotStyle1 = useAnimatedStyle(() => {
+    'worklet';
+    const v = loadingDotClock.value;
+    const dist = Math.min(Math.abs(v - 1), Math.abs(v - 4));
+    const opacity = interpolate(dist, [0, 0.5, 1.5], [1, 0.7, 0.2]);
+    const scale = interpolate(dist, [0, 0.5, 1.5], [1.3, 1, 0.8]);
+    return { opacity, transform: [{ scale }] };
+  });
+  const loadingDotStyle2 = useAnimatedStyle(() => {
+    'worklet';
+    const v = loadingDotClock.value;
+    const dist = Math.min(Math.abs(v - 2), Math.abs(v - 5));
+    const opacity = interpolate(dist, [0, 0.5, 1.5], [1, 0.7, 0.2]);
+    const scale = interpolate(dist, [0, 0.5, 1.5], [1.3, 1, 0.8]);
+    return { opacity, transform: [{ scale }] };
+  });
+  const loadingDotStyles = [loadingDotStyle0, loadingDotStyle1, loadingDotStyle2];
 
   const ringSize = isLandscape ? Math.min(height * 0.75, width * 0.55) : Math.min(width - 64, height * 0.42);
 
@@ -1172,14 +1207,13 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
           <View style={styles.standaloneGeneratingContent}>
             <Animated.View style={[styles.standaloneGeneratingPulse, generatingPulseStyle, { borderColor: moodColors.primary }]} />
             <ThemedText type="h3" style={styles.standaloneGeneratingText}>
-              Crafting your micro-meditation...
+              {"Crafting your\nmicro-meditation..."}
             </ThemedText>
             <View style={styles.standaloneGeneratingDots}>
               {[0, 1, 2].map((i) => (
                 <Animated.View
                   key={i}
-                  entering={FadeIn.delay(200 * i).duration(400)}
-                  style={[styles.standaloneGeneratingDot, { backgroundColor: moodColors.primary }]}
+                  style={[styles.standaloneGeneratingDot, { backgroundColor: ACCENT_GOLD }, loadingDotStyles[i]]}
                 />
               ))}
             </View>
@@ -1519,10 +1553,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   standaloneGeneratingDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    opacity: 0.6,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    shadowColor: "#E5C95C",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 6,
+    elevation: 6,
   },
   standaloneGeneratingContent: {
     alignItems: "center",

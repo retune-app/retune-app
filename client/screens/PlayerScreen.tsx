@@ -648,7 +648,7 @@ export default function PlayerScreen() {
               currentPositionMs={rsvpPosition}
               isPlaying={isCurrentlyPlaying}
               fontSize={rsvpFontSize}
-              showHighlight={rsvpHighlight}
+              showHighlight={false}
             />
           ) : (
             <WaveformVisualizer

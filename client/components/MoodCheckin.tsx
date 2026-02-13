@@ -784,7 +784,7 @@ const styles = StyleSheet.create({
   stepNote: {
     fontSize: 13,
     lineHeight: 19,
-    marginTop: -20,
+    marginTop: -28,
     paddingLeft: 36,
   },
   stepsHint: {

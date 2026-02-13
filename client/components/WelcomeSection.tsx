@@ -137,8 +137,8 @@ export function WelcomeSection({
   }));
 
   const moodGlowStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(moodGlow.value, [0, 1], [0, 0.25]),
-    transform: [{ scale: interpolate(moodGlow.value, [0, 1], [0.9, 1.3]) }],
+    opacity: interpolate(moodGlow.value, [0, 1], [0.25, 0.7]),
+    transform: [{ scale: interpolate(moodGlow.value, [0, 1], [1, 1.1]) }],
   }));
 
   const pulseStyle = useAnimatedStyle(() => {
@@ -307,17 +307,18 @@ const styles = StyleSheet.create({
   },
   moodButtonWrapper: {
     position: "relative",
-    width: 40,
-    height: 40,
+    width: 48,
+    height: 48,
     justifyContent: "center",
     alignItems: "center",
   },
   moodGlowRing: {
     position: "absolute",
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(80,201,176,0.18)",
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 1.5,
+    borderColor: "#C9A227",
   },
   moodButton: {
     width: 40,

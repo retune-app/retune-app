@@ -627,18 +627,17 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
           });
         }
       };
-      const safetyTimeout = setTimeout(doNavigate, 10000);
+      const safetyTimeout = setTimeout(doNavigate, 8000);
       (async () => {
         if (prefetchPromiseRef.current) {
           try {
             await Promise.race([
               prefetchPromiseRef.current,
-              new Promise(resolve => setTimeout(resolve, 8000)),
+              new Promise(resolve => setTimeout(resolve, 5000)),
             ]);
           } catch (e) {}
           prefetchPromiseRef.current = null;
         }
-        await new Promise(resolve => setTimeout(resolve, 3000));
         clearTimeout(safetyTimeout);
         doNavigate();
       })();
@@ -660,7 +659,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
             navigation.navigate("Create");
           }
         }
-      }, 3000);
+      }, 1500);
     }
   }, [journey, navigation, journeyStepLabels, prefetchMeditationScript]);
 
@@ -674,18 +673,13 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
       try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
       setPhase("complete");
     } else {
-      const nextStep = journey.steps[nextIndex];
       setCurrentStepIndex(nextIndex);
-      if (nextStep?.type === "meditate" || nextStep?.type === "listen") {
+      setPhase("transition");
+      setTimeout(() => {
         launchStep(nextIndex);
-      } else {
-        setPhase("transition");
-        setTimeout(() => {
-          launchStep(nextIndex);
-        }, 3000);
-      }
+      }, 3000);
     }
-  }, [currentStepIndex, journey.steps.length, journey.steps, launchStep]);
+  }, [currentStepIndex, journey.steps.length, launchStep]);
 
   useEffect(() => {
     if (phase === "breathing" && breathingPlaying) {

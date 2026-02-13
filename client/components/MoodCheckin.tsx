@@ -520,17 +520,15 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
                               </View>
                             </View>
                             <View style={styles.stepRightContent}>
-                              <View style={styles.stepHeader}>
-                                <ThemedText type="body" style={[styles.stepTypeLabel, { color: stepColor }]}>
-                                  {getStepTypeLabel(step.type)}
-                                </ThemedText>
-                                <Feather name="chevron-right" size={16} color={`${stepColor}80`} style={styles.stepChevron} />
-                              </View>
-                              <ThemedText type="small" style={[styles.stepNote, { color: theme.text, opacity: 0.85 }]}>
-                                {step.note}
+                              <ThemedText type="body" style={[styles.stepTypeLabel, { color: stepColor }]}>
+                                {getStepTypeLabel(step.type)}
                               </ThemedText>
                             </View>
+                            <Feather name="chevron-right" size={16} color={`${stepColor}80`} style={styles.stepChevron} />
                           </View>
+                          <ThemedText type="small" style={[styles.stepNote, { color: theme.text, opacity: 0.85 }]}>
+                            {step.note}
+                          </ThemedText>
                         </Pressable>
                       </View>
                     );
@@ -761,11 +759,6 @@ const styles = StyleSheet.create({
   stepRightContent: {
     flex: 1,
   },
-  stepHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 4,
-  },
   stepNumberCircle: {
     width: 24,
     height: 24,
@@ -791,7 +784,8 @@ const styles = StyleSheet.create({
   stepNote: {
     fontSize: 13,
     lineHeight: 19,
-    paddingLeft: 64,
+    marginTop: 6,
+    paddingLeft: 36,
   },
   stepsHint: {
     textAlign: "center",

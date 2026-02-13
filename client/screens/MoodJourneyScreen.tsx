@@ -778,24 +778,66 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
     return BREATHING_TECHNIQUES.find((t) => t.id === id) || BREATHING_TECHNIQUES[0];
   };
 
+  const pickRandom = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
+
   const getTransitionMessage = (): string => {
     const nextStep = journey.steps[currentStepIndex + 1];
     const currentMoodLabel = currentMoodInfo?.label || "here";
     const targetMoodLabel = targetMoodInfo?.label || "there";
-    if (!nextStep) return `Almost ${targetMoodLabel} — one more step to go`;
-    if (nextStep.type === "meditate") return `Your body is settling. Time to quiet your mind toward ${targetMoodLabel}`;
-    if (nextStep.type === "listen") return `Your mind is open now — the right words will land deeper`;
-    if (nextStep.type === "breathe") return `Let's ground your body first before shifting toward ${targetMoodLabel}`;
+    if (!nextStep) return pickRandom([
+      `Almost ${targetMoodLabel} — one more step to go`,
+      `${targetMoodLabel} is within reach now`,
+      `You're closer to ${targetMoodLabel} than you think`,
+      `One last step on your path to ${targetMoodLabel}`,
+      `Nearly there — ${targetMoodLabel} is waiting`,
+    ]);
+    if (nextStep.type === "meditate") return pickRandom([
+      `Your body is settling. Time to quiet your mind toward ${targetMoodLabel}`,
+      `Breath done — now let's still the mind`,
+      `Your nervous system is ready. Let's go deeper`,
+      `Good. Now let's meet ${targetMoodLabel} with a clear mind`,
+      `The body is grounded. Time to shift the mind toward ${targetMoodLabel}`,
+      `That breathing opened space — let's fill it with stillness`,
+    ]);
+    if (nextStep.type === "listen") return pickRandom([
+      `Your mind is open now — the right words will land deeper`,
+      `You're in the perfect state to receive this`,
+      `Now let's anchor ${targetMoodLabel} with the right words`,
+      `Everything so far was preparation for this moment`,
+      `Open and receptive — time for words that stick`,
+      `Your mind is primed. These words will hit different now`,
+    ]);
+    if (nextStep.type === "breathe") return pickRandom([
+      `Let's ground your body first before shifting toward ${targetMoodLabel}`,
+      `Start with the body — breathe your way out of ${currentMoodLabel}`,
+      `A few breaths to create space for ${targetMoodLabel}`,
+      `Let's reset your nervous system first`,
+    ]);
     return "Moving to the next step...";
   };
 
   const getNavigatingMessage = (): string => {
     const targetMoodLabel = targetMoodInfo?.label || "";
     const currentMoodLabel = currentMoodInfo?.label || "";
-    if (phase === "navigating-meditation") return `Settling into stillness toward ${targetMoodLabel}...`;
+    if (phase === "navigating-meditation") return pickRandom([
+      `Settling into stillness toward ${targetMoodLabel}...`,
+      `Creating a quiet moment for you...`,
+      `Finding the right words for your ${currentMoodLabel} mind...`,
+      `Building your path to ${targetMoodLabel}...`,
+      `Tuning into what you need right now...`,
+    ]);
     if (phase === "navigating-listen") {
-      if (currentStep?.affirmationId) return `Words chosen for your ${currentMoodLabel} to ${targetMoodLabel} shift...`;
-      return "Let's create something meaningful...";
+      if (currentStep?.affirmationId) return pickRandom([
+        `Words chosen for your ${currentMoodLabel} to ${targetMoodLabel} shift...`,
+        `Queuing up something that fits this moment...`,
+        `The right affirmation for right now...`,
+        `Preparing words that will resonate with where you are...`,
+      ]);
+      return pickRandom([
+        `Let's create something meaningful...`,
+        `Time to give ${targetMoodLabel} a voice...`,
+        `Let's craft words worth hearing...`,
+      ]);
     }
     return "Preparing...";
   };

@@ -95,6 +95,21 @@ export default function PlayerScreen() {
     staleTime: 30000,
   });
 
+  const { data: voicePrefs } = useQuery<{
+    preferredFemaleVoiceId: string;
+    preferredMaleVoiceId: string;
+  }>({
+    queryKey: ["/api/voice-preferences"],
+    staleTime: 60000,
+  });
+
+  const femaleVoiceName = voicePrefs?.preferredFemaleVoiceId
+    ? (VOICE_ID_TO_NAME[voicePrefs.preferredFemaleVoiceId] || AI_VOICES.female[0].name)
+    : AI_VOICES.female[0].name;
+  const maleVoiceName = voicePrefs?.preferredMaleVoiceId
+    ? (VOICE_ID_TO_NAME[voicePrefs.preferredMaleVoiceId] || AI_VOICES.male[0].name)
+    : AI_VOICES.male[0].name;
+
   // Voice regeneration state
   const [isRegeneratingVoice, setIsRegeneratingVoice] = useState(false);
 
@@ -846,7 +861,7 @@ export default function PlayerScreen() {
                     fontWeight: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "female" ? '700' : '500',
                   }}
                 >
-                  Lotus
+                  {femaleVoiceName}
                 </ThemedText>
               </View>
             </Pressable>
@@ -877,7 +892,7 @@ export default function PlayerScreen() {
                     fontWeight: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "male" ? '700' : '500',
                   }}
                 >
-                  Sage
+                  {maleVoiceName}
                 </ThemedText>
               </View>
             </Pressable>

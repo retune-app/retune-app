@@ -15,6 +15,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { getAuthToken } from "@/lib/auth-token";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { getApiUrl, apiRequest } from "@/lib/query-client";
+import { VOICE_ID_TO_NAME, AI_VOICES } from "@shared/voiceMapping";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
 const ACCENT_GOLD = "#C9A227";
@@ -260,6 +261,13 @@ export default function VoiceSettingsScreen() {
   const selectedVoiceId = currentGender === "male" 
     ? voicePreferences?.preferredMaleVoiceId 
     : voicePreferences?.preferredFemaleVoiceId;
+
+  const femaleVoiceName = voicePreferences?.preferredFemaleVoiceId
+    ? (VOICE_ID_TO_NAME[voicePreferences.preferredFemaleVoiceId] || AI_VOICES.female[0].name)
+    : AI_VOICES.female[0].name;
+  const maleVoiceName = voicePreferences?.preferredMaleVoiceId
+    ? (VOICE_ID_TO_NAME[voicePreferences.preferredMaleVoiceId] || AI_VOICES.male[0].name)
+    : AI_VOICES.male[0].name;
 
   return (
     <ScrollView
@@ -510,7 +518,7 @@ export default function VoiceSettingsScreen() {
                 <Text style={[
                   styles.toggleText,
                   { color: currentGender === "female" ? "#FFFFFF" : theme.text }
-                ]}>Lotus</Text>
+                ]}>{femaleVoiceName}</Text>
               </View>
             </Pressable>
             <Pressable
@@ -535,7 +543,7 @@ export default function VoiceSettingsScreen() {
                 <Text style={[
                   styles.toggleText,
                   { color: currentGender === "male" ? "#FFFFFF" : theme.text }
-                ]}>Sage</Text>
+                ]}>{maleVoiceName}</Text>
               </View>
             </Pressable>
           </View>

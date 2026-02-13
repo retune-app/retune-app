@@ -477,7 +477,7 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
                         {index > 0 ? (
                           <View style={styles.stepConnector}>
                             {[0, 1, 2].map((d) => (
-                              <Animated.View key={d} style={[styles.connectorDot, { backgroundColor: `${theme.textSecondary}90` }, connDotStyles[d]]} />
+                              <Animated.View key={d} style={[styles.connectorDot, { backgroundColor: ACCENT_GOLD, shadowColor: "#E5C95C", shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.8, shadowRadius: 4, elevation: 6 }, connDotStyles[d]]} />
                             ))}
                           </View>
                         ) : null}
@@ -503,7 +503,7 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
                             </ThemedText>
                             <Feather name="chevron-right" size={16} color={`${stepColor}80`} style={styles.stepChevron} />
                           </View>
-                          <ThemedText type="small" style={[styles.stepNote, { color: theme.textSecondary }]}>
+                          <ThemedText type="small" style={[styles.stepNote, { color: theme.text, opacity: 0.85 }]}>
                             {step.note}
                           </ThemedText>
                         </Pressable>

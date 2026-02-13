@@ -22,7 +22,7 @@ The application follows a "Serene Empowerment" aesthetic, utilizing Primary Gold
 
 ### Technical Implementations
 - **Personalized Affirmations**: AI generates scripts incorporating Subconscious Language Patterns, organized by 5 Life Pillars (Mind, Body, Spirit, Connection, Achievement), each with distinct Text-to-Speech (TTS) treatments for optimal delivery.
-- **Voice Management**: A hybrid TTS system uses Hume AI for stock voices and ElevenLabs for cloned voices, with OpenAI as a fallback. An automated voice rotation system manages inactive cloned voices.
+- **Voice Management**: A hybrid TTS system uses Hume AI for stock voices and ElevenLabs for cloned voices, with OpenAI as a fallback. An automated voice rotation system manages inactive cloned voices. Journey voice consistency ensures a single voice is used across all journey steps (breathe, meditate, listen): defaults to Inner Voice if user has one, falls back to their AI voice preference from settings. The `JourneyContext` carries `journeyVoiceId` and `journeyVoiceType` to all steps. Server-side affirmation matching adds a +2 score bonus for affirmations matching the user's preferred voice type. PlayerScreen auto-regenerates voice if the affirmation's current voice doesn't match the journey voice preference.
 - **Global Audio Player**: Ensures consistent audio playback across the application.
 - **RSVP Mode**: Displays word-synced text for visual reinforcement during affirmations.
 - **Breathing Mode**: Offers science-backed techniques with animated visualizations, customizable durations, and ambient soundscapes. Includes mood-matched technique recommendations.

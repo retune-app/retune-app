@@ -185,6 +185,12 @@ export default function FullscreenBreathingLayout({
         </Animated.View>
       ) : null}
 
+      {renderWisdom ? (
+        <View style={[styles.portraitWisdomContainer, { top: insets.top + Math.max((screenHeight / 2 - portraitCircleSize / 2 - insets.top) / 2 - 22, 8) }]} pointerEvents="none">
+          {renderWisdom()}
+        </View>
+      ) : null}
+
       <View style={styles.portraitCenterSection}>
         {renderProgressRing ? renderProgressRing(portraitCircleSize) : null}
         <BreathingCircle
@@ -197,12 +203,6 @@ export default function FullscreenBreathingLayout({
         />
         {renderCircleOverlay ? renderCircleOverlay(48) : null}
       </View>
-
-      {renderWisdom ? (
-        <View style={styles.portraitWisdomContainer} pointerEvents="none">
-          {renderWisdom()}
-        </View>
-      ) : null}
 
       {renderBelowCircle ? (
         <Animated.View style={[styles.belowCircleSection, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"} onStartShouldSetResponder={() => true}>
@@ -352,10 +352,12 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   portraitWisdomContainer: {
+    position: "absolute",
+    left: 0,
+    right: 0,
     alignItems: "center",
     paddingHorizontal: 40,
     zIndex: 6,
-    marginTop: -4,
   },
   fsTopControls: {
     flexDirection: "row",

@@ -651,7 +651,6 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
     abortControllerRef.current = controller;
 
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
-    setPlayerState("generating");
     setErrorMessage("");
     progressAnim.value = 0;
 
@@ -678,6 +677,8 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
         setCountdown(3);
         return;
       }
+
+      setPlayerState("generating");
 
       if (!cachedScriptRef.current || cachedScriptRef.current.duration !== selectedDuration) {
         await prefetchScript(selectedDuration, controller.signal);

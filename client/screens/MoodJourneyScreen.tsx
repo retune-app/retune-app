@@ -756,7 +756,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
   };
 
   const getNavigatingMessage = (): string => {
-    if (phase === "navigating-meditation") return "Opening your guided moment...";
+    if (phase === "navigating-meditation") return "Preparing your micro-meditation...";
     if (phase === "navigating-listen") {
       if (currentStep?.affirmationId) return "Preparing your affirmation...";
       return "Let's create something meaningful...";

@@ -791,9 +791,10 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
 
   const getNavigatingMessage = (): string => {
     const targetMoodLabel = targetMoodInfo?.label || "";
-    if (phase === "navigating-meditation") return "Preparing your micro-meditation...";
+    const currentMoodLabel = currentMoodInfo?.label || "";
+    if (phase === "navigating-meditation") return `Settling into stillness toward ${targetMoodLabel}...`;
     if (phase === "navigating-listen") {
-      if (currentStep?.affirmationId) return "Preparing your affirmation...";
+      if (currentStep?.affirmationId) return `Words chosen for your ${currentMoodLabel} to ${targetMoodLabel} shift...`;
       return "Let's create something meaningful...";
     }
     return "Preparing...";

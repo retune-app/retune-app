@@ -762,43 +762,23 @@ export default function PlayerScreen() {
           <AmbientSoundMixer compact />
         </View>
 
-        <View style={[styles.rsvpSettings, { backgroundColor: theme.backgroundSecondary }]}>
-          <View style={styles.rsvpSettingsRow}>
-            <ThemedText type="small" style={{ color: theme.textSecondary }}>
-              Show Script
-            </ThemedText>
-            <Pressable
-              onPress={handleToggleScript}
-              style={[
-                styles.rsvpToggle,
-                { backgroundColor: showScript ? theme.primary : theme.backgroundTertiary },
-              ]}
-              testID="button-toggle-script"
-            >
-              <View
-                style={[
-                  styles.rsvpToggleKnob,
-                  { 
-                    backgroundColor: "#FFFFFF",
-                    transform: [{ translateX: showScript ? 20 : 2 }],
-                  },
-                ]}
-              />
-            </Pressable>
-          </View>
-        </View>
-
-        <View style={[styles.voiceSection, { backgroundColor: theme.backgroundSecondary }]}>
-          <View style={styles.voiceSectionHeader}>
-            <ThemedText type="small" style={{ color: theme.textSecondary }}>
-              Voice
-            </ThemedText>
-            {isRegeneratingVoice ? (
-              <ThemedText type="small" style={{ color: theme.gold }}>
-                Generating...
+        <View style={[styles.settingsCard, { backgroundColor: theme.backgroundSecondary }]}>
+          <View style={styles.settingsCardHeader}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Feather name="mic" size={14} color={theme.primary} />
+              <ThemedText type="small" style={{ color: theme.textSecondary, marginLeft: 6, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, fontSize: 11 }}>
+                Voice
               </ThemedText>
+            </View>
+            {isRegeneratingVoice ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Feather name="loader" size={12} color={theme.gold} />
+                <ThemedText type="small" style={{ color: theme.gold, marginLeft: 4, fontSize: 12 }}>
+                  Generating...
+                </ThemedText>
+              </View>
             ) : (
-              <ThemedText type="small" style={{ color: theme.gold, fontWeight: '600' }}>
+              <ThemedText type="small" style={{ color: theme.gold, fontWeight: '700', fontSize: 12 }}>
                 {getCurrentVoiceLabel()}
               </ThemedText>
             )}
@@ -812,6 +792,8 @@ export default function PlayerScreen() {
                 {
                   backgroundColor: affirmation?.voiceType === "personal" ? theme.primary : theme.backgroundTertiary,
                   opacity: isRegeneratingVoice ? 0.5 : 1,
+                  borderWidth: affirmation?.voiceType === "personal" ? 0 : 1,
+                  borderColor: theme.backgroundTertiary,
                 },
               ]}
               testID="button-voice-personal"
@@ -821,7 +803,8 @@ export default function PlayerScreen() {
                 type="small"
                 style={{
                   color: affirmation?.voiceType === "personal" ? "#FFFFFF" : theme.text,
-                  marginLeft: 4,
+                  marginLeft: 6,
+                  fontWeight: affirmation?.voiceType === "personal" ? '700' : '500',
                 }}
               >
                 Inner Voice
@@ -838,6 +821,8 @@ export default function PlayerScreen() {
                 {
                   backgroundColor: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "female" ? theme.primary : theme.backgroundTertiary,
                   opacity: isRegeneratingVoice ? 0.5 : 1,
+                  borderWidth: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "female" ? 0 : 1,
+                  borderColor: theme.backgroundTertiary,
                 },
               ]}
               testID="button-voice-ai-female"
@@ -846,6 +831,7 @@ export default function PlayerScreen() {
                 type="small"
                 style={{
                   color: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "female" ? "#FFFFFF" : theme.text,
+                  fontWeight: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "female" ? '700' : '500',
                 }}
               >
                 AI Female
@@ -859,6 +845,8 @@ export default function PlayerScreen() {
                 {
                   backgroundColor: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "male" ? theme.primary : theme.backgroundTertiary,
                   opacity: isRegeneratingVoice ? 0.5 : 1,
+                  borderWidth: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "male" ? 0 : 1,
+                  borderColor: theme.backgroundTertiary,
                 },
               ]}
               testID="button-voice-ai-male"
@@ -867,10 +855,40 @@ export default function PlayerScreen() {
                 type="small"
                 style={{
                   color: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "male" ? "#FFFFFF" : theme.text,
+                  fontWeight: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "male" ? '700' : '500',
                 }}
               >
                 AI Male
               </ThemedText>
+            </Pressable>
+          </View>
+        </View>
+
+        <View style={[styles.settingsCard, { backgroundColor: theme.backgroundSecondary }]}>
+          <View style={styles.settingsCardRow}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Feather name="file-text" size={14} color={theme.primary} />
+              <ThemedText type="small" style={{ color: theme.textSecondary, marginLeft: 6, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, fontSize: 11 }}>
+                Show Script
+              </ThemedText>
+            </View>
+            <Pressable
+              onPress={handleToggleScript}
+              style={[
+                styles.toggleTrack,
+                { backgroundColor: showScript ? theme.primary : theme.backgroundTertiary },
+              ]}
+              testID="button-toggle-script"
+            >
+              <View
+                style={[
+                  styles.toggleKnob,
+                  { 
+                    backgroundColor: "#FFFFFF",
+                    transform: [{ translateX: showScript ? 22 : 2 }],
+                  },
+                ]}
+              />
             </Pressable>
           </View>
         </View>
@@ -1123,17 +1141,22 @@ const styles = StyleSheet.create({
     width: "100%",
     marginBottom: Spacing.md,
   },
-  voiceSection: {
+  settingsCard: {
     width: "100%",
     padding: Spacing.lg,
     borderRadius: BorderRadius.lg,
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.sm,
   },
-  voiceSectionHeader: {
+  settingsCardHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: Spacing.md,
+  },
+  settingsCardRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   voiceOptions: {
     flexDirection: "row",
@@ -1144,32 +1167,20 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: Spacing.sm,
+    paddingVertical: 10,
     paddingHorizontal: Spacing.sm,
-    borderRadius: BorderRadius.md,
+    borderRadius: BorderRadius.full,
   },
-  rsvpSettings: {
-    width: "100%",
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.lg,
-    marginBottom: Spacing.lg,
-    gap: Spacing.md,
-  },
-  rsvpSettingsRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  rsvpToggle: {
-    width: 44,
-    height: 24,
-    borderRadius: 12,
+  toggleTrack: {
+    width: 48,
+    height: 28,
+    borderRadius: 14,
     justifyContent: "center",
   },
-  rsvpToggleKnob: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+  toggleKnob: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
   },
   fullscreenContainer: {
     flex: 1,

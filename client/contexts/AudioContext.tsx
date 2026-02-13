@@ -211,6 +211,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const playRequestId = useRef(0);
+  const activeSoundIdRef = useRef(0);
 
   const playAffirmation = useCallback(async (affirmation: Affirmation) => {
     if (!affirmation.audioUrl) {
@@ -218,7 +219,6 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // If same affirmation is already loaded, just resume playback
     if (currentAffirmation?.id === affirmation.id && soundRef.current) {
       try {
         const status = await soundRef.current.getStatusAsync();
@@ -250,6 +250,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
       if (thisRequestId !== playRequestId.current) return;
 
+      const soundId = thisRequestId;
       const { sound } = await Audio.Sound.createAsync(
         { uri: audioUri },
         { 
@@ -257,11 +258,11 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
           isLooping: autoReplay,
           rate: playbackSpeed,
           shouldCorrectPitch: true,
-          progressUpdateIntervalMillis: 25,
+          progressUpdateIntervalMillis: 50,
         },
         (status) => {
           try {
-            if (thisRequestId !== playRequestId.current) return;
+            if (activeSoundIdRef.current !== soundId) return;
             if (status.isLoaded) {
               setPosition(status.positionMillis || 0);
               setDuration(status.durationMillis || 0);
@@ -288,6 +289,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       }
 
       soundRef.current = sound;
+      activeSoundIdRef.current = soundId;
       setIsPlaying(true);
       
       if (selectedMusic !== 'none') {

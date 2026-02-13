@@ -106,9 +106,9 @@ export const BREATHING_TECHNIQUES: BreathingTechnique[] = [
 ];
 
 export const PHASE_LABELS: Record<BreathPhase, string> = {
-  inhale: "Breathe In",
+  inhale: "Inhale",
   holdIn: "Hold",
-  exhale: "Breathe Out",
+  exhale: "Exhale",
   holdOut: "Hold",
 };
 

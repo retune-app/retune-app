@@ -24,7 +24,7 @@ import { useAudio, preloadAudioToCache, clearCachedAudio } from "@/contexts/Audi
 import { useBackgroundMusic } from "@/contexts/BackgroundMusicContext";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { apiRequest } from "@/lib/query-client";
-import { getVoiceDisplayName } from "@shared/voiceMapping";
+import { getVoiceDisplayName, VOICE_ID_TO_NAME, AI_VOICES } from "@shared/voiceMapping";
 import JourneyStepBar from "@/components/JourneyStepBar";
 import { journeyNavigationRef } from "@/navigation/journeyNavigationRef";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";

@@ -28,11 +28,12 @@ export async function clearCachedAudio(affirmationId: number): Promise<void> {
   if (Platform.OS === 'web') return;
   try {
     await audioCacheReady;
-    for (const ext of ['.mp3', '.wav']) {
-      const localPath = `${AUDIO_CACHE_DIR}affirmation_${affirmationId}${ext}`;
-      const info = await LegacyFS.getInfoAsync(localPath);
-      if (info.exists) {
-        await LegacyFS.deleteAsync(localPath, { idempotent: true });
+    const dirContents = await LegacyFS.readDirectoryAsync(AUDIO_CACHE_DIR);
+    const pattern = `affirmation-${affirmationId}-`;
+    const legacyPattern = `affirmation_${affirmationId}.`;
+    for (const file of dirContents) {
+      if (file.startsWith(pattern) || file.startsWith(legacyPattern)) {
+        await LegacyFS.deleteAsync(`${AUDIO_CACHE_DIR}${file}`, { idempotent: true });
       }
     }
   } catch {}
@@ -42,12 +43,20 @@ async function getCachedAudioUri(remoteUri: string, affirmationId: number): Prom
   if (Platform.OS === 'web') return remoteUri;
   try {
     await audioCacheReady;
+    const urlFilename = remoteUri.split('/').pop() || '';
     const ext = remoteUri.includes('.mp3') ? '.mp3' : '.wav';
-    const localPath = `${AUDIO_CACHE_DIR}affirmation_${affirmationId}${ext}`;
+    const cacheKey = urlFilename.replace(/\.[^.]+$/, '') || `affirmation_${affirmationId}`;
+    const localPath = `${AUDIO_CACHE_DIR}${cacheKey}${ext}`;
     const info = await LegacyFS.getInfoAsync(localPath);
     if (info.exists && (info.size ?? 0) > 0) {
       return localPath;
     }
+    const oldPattern = `${AUDIO_CACHE_DIR}affirmation_${affirmationId}${ext}`;
+    const oldLegacy = `${AUDIO_CACHE_DIR}affirmation-${affirmationId}-`;
+    try {
+      const oldInfo = await LegacyFS.getInfoAsync(oldPattern);
+      if (oldInfo.exists) await LegacyFS.deleteAsync(oldPattern, { idempotent: true });
+    } catch {}
     const result = await LegacyFS.downloadAsync(remoteUri, localPath);
     if (result.status === 200) {
       return localPath;

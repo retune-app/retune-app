@@ -249,44 +249,44 @@ const breathingWisdomCache = new Map<string, { wisdom: string[]; timestamp: numb
 // Breathing wisdom fallback tips per technique
 const breathingWisdomFallbacks: Record<string, string[]> = {
   box: [
-    "Equal rhythm activates your body's calm response",
-    "Navy SEALs use this exact pattern before missions",
-    "Box breathing synchronizes left and right brain hemispheres",
-    "Your heart rate variability improves with each cycle",
-    "This pattern mirrors the rhythm of ocean waves",
-    "Four equal counts create neural symmetry",
-    "Ancient warriors used square breathing before battle",
-    "Each hold strengthens your diaphragm muscles"
+    "Navy SEALs use this exact pattern to stay sharp under pressure",
+    "Your cortisol is dropping with every cycle you complete",
+    "This is literally retraining your stress response right now",
+    "Box breathing has been shown to improve focus within 2 minutes",
+    "You're strengthening your vagus nerve — your body's calm switch",
+    "Each cycle improves your heart rate variability — that's real progress",
+    "Studies show this pattern reduces anxiety by up to 30%",
+    "You're building stress resilience that carries into your whole day"
   ],
   "478": [
-    "Dr. Weil calls this a natural tranquilizer for your nervous system",
-    "The long exhale mimics the body's natural sleep-onset breathing",
-    "This ratio triggers your rest-and-digest response",
-    "Monks have used similar ratios for centuries for deep meditation",
-    "The 7-second hold saturates your blood with calming oxygen",
-    "This pattern can lower blood pressure in minutes",
-    "Your brain waves shift from beta to alpha with each cycle",
-    "Ancient Ayurvedic texts describe this exact breathing ratio"
+    "That long exhale is activating your parasympathetic nervous system",
+    "This technique has been clinically shown to lower blood pressure",
+    "Your brain waves are shifting from stress mode to calm mode right now",
+    "The 7-second hold boosts oxygen absorption — your cells are thanking you",
+    "Researchers found this pattern helps people fall asleep 50% faster",
+    "You're doing something measurable for your nervous system right now",
+    "Each cycle is reducing your heart rate by a few beats per minute",
+    "This is one of the most evidence-backed breathing techniques that exists"
   ],
   coherent: [
-    "Five breaths per minute is your heart's favorite rhythm",
-    "This frequency creates measurable heart-brain synchronization",
-    "HeartMath research shows coherence builds emotional resilience",
-    "Your electromagnetic field becomes more ordered at this pace",
-    "This is the only breathing rate that synchronizes all body rhythms",
-    "Olympic athletes use coherent breathing for peak performance",
-    "Five-five rhythm activates your body's self-healing systems",
-    "Your heart generates the strongest electromagnetic field in your body"
+    "Five breaths per minute is the scientifically optimal calming rate",
+    "Your heart and brain are literally synchronizing right now",
+    "HeartMath research confirms this builds real emotional resilience",
+    "Olympic athletes use this exact rhythm for peak performance",
+    "This is the only breathing rate proven to sync all body rhythms",
+    "Your heart rate variability is improving with each breath you take",
+    "Consistent practice here compounds — you're investing in yourself",
+    "Studies show 10 minutes of this equals measurable stress reduction"
   ],
   energizing: [
-    "Quick breathing floods your prefrontal cortex with oxygen",
-    "This rhythm mimics the breathing pattern of joyful laughter",
-    "Your mitochondria produce more energy with each fast breath",
-    "Tibetan monks use rapid breathing to generate inner heat",
-    "This pattern activates your sympathetic nervous system naturally",
-    "Fast breathing increases norepinephrine for sharper focus",
-    "Your brain uses 20% of your body's total oxygen supply",
-    "Ancient pranayama masters called this 'breath of fire'"
+    "You're flooding your prefrontal cortex with oxygen right now",
+    "This pattern increases norepinephrine — your natural focus chemical",
+    "Your mitochondria are producing more energy with each fast breath",
+    "Research shows rapid breathing can boost alertness within 60 seconds",
+    "You're activating your body's natural energy system — no caffeine needed",
+    "Your brain uses 20% of your total oxygen — you're giving it a boost",
+    "This technique has been shown to improve reaction time measurably",
+    "Every round is sharpening your mental clarity for the hours ahead"
   ]
 };
 
@@ -4010,7 +4010,7 @@ Respond with ONLY the notification message text.${avoidClause}`,
 
         const technique = techniqueDescriptions[techniqueId];
 
-        const systemPrompt = `You are a breathing wisdom guide. Generate 8 unique, fascinating tips about the ${technique.name} breathing technique. Each tip should be 8-15 words and feel like whispered knowledge rather than instructions.
+        const systemPrompt = `Generate 8 short tips about the ${technique.name} breathing technique. Each tip should be 8-15 words.
 
 TODAY'S DATE: ${today}
 
@@ -4018,17 +4018,24 @@ TECHNIQUE DETAILS:
 - Pattern: ${technique.pattern}
 - Focus: ${technique.focus}
 
-WISDOM STYLE:
-- Mix neuroscience facts, ancient wisdom traditions, body science, and practical insights
-- Examples of good tips:
-  * "Your vagus nerve is thanking you right now"
-  * "Ancient yogis called this rhythm 'prana flow'"
-  * "Each exhale lowers your cortisol by tiny amounts"
-- IMPORTANT: Do NOT give instructions like "try to..." or "make sure you..." — these are fascinating facts/insights about the technique and how it works
-- Make tips feel personal and poetic, not clinical
+STYLE RULES:
+- Half should be concrete science facts about what this breathing does to their body right now
+- Half should be positive reinforcement — tell them they're doing something real and measurable for themselves
+- Examples of GOOD tips:
+  * "This is literally lowering your cortisol levels right now"
+  * "Your heart rate variability just improved — that's measurable progress"
+  * "Studies show this technique reduces anxiety by up to 40%"
+  * "Every cycle is training your nervous system to stay calm under pressure"
+  * "You're building real stress resilience that lasts beyond this session"
+- Examples of BAD tips (too flowery/poetic — avoid these):
+  * "Your body whispers secrets of tranquility"
+  * "Ancient rhythms dance through your being"
+  * "The universe breathes with you"
+- Do NOT give instructions like "try to..." or "make sure you..."
+- Keep it grounded, factual, and encouraging — like a coach, not a poet
 
 RESPONSE FORMAT:
-Return ONLY the 8 tips, one per line. No numbering, no titles, no extra text. Just pure wisdom.`;
+Return ONLY the 8 tips, one per line. No numbering, no titles, no extra text.`;
 
         const userPrompt = `Generate 8 unique breathing wisdom tips for ${technique.name}. Today is ${today} — use this date to ensure tips feel fresh and varied each day.`;
 

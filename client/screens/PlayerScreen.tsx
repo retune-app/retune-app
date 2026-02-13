@@ -127,40 +127,44 @@ export default function PlayerScreen() {
   }));
 
   const isLastJourneyStep = journeyContext ? journeyContext.currentStep === journeyContext.totalSteps - 1 : false;
-
-  useEffect(() => {
-    controlsTimerRef.current = setTimeout(() => {
-      setControlsVisible(false);
-      controlsOpacity.value = withTiming(0, { duration: 400 });
-    }, 3000);
-    return () => { if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current); };
-  }, []);
+  const controlsVisibleRef = useRef(true);
 
   const hideControls = useCallback(() => {
+    controlsVisibleRef.current = false;
     setControlsVisible(false);
     controlsOpacity.value = withTiming(0, { duration: 400 });
   }, []);
 
   const showControls = useCallback(() => {
+    controlsVisibleRef.current = true;
     setControlsVisible(true);
     controlsOpacity.value = withTiming(1, { duration: 250 });
   }, []);
 
+  const startAutoHideTimer = useCallback(() => {
+    if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
+    controlsTimerRef.current = setTimeout(hideControls, 3000);
+  }, [hideControls]);
+
+  useEffect(() => {
+    startAutoHideTimer();
+    return () => { if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current); };
+  }, [startAutoHideTimer]);
+
   const toggleControls = useCallback(() => {
     if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
-    if (controlsVisible) {
+    if (controlsVisibleRef.current) {
       hideControls();
     } else {
       showControls();
-      controlsTimerRef.current = setTimeout(hideControls, 3000);
+      startAutoHideTimer();
     }
-  }, [controlsVisible, showControls, hideControls]);
+  }, [showControls, hideControls, startAutoHideTimer]);
 
   const resetControlsTimer = useCallback(() => {
-    if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
     showControls();
-    controlsTimerRef.current = setTimeout(hideControls, 3000);
-  }, [showControls, hideControls]);
+    startAutoHideTimer();
+  }, [showControls, startAutoHideTimer]);
 
   const tapStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
   const scrolledRef = useRef(false);

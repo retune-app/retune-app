@@ -246,7 +246,7 @@ export default function HomeScreen() {
   });
 
   const handleAffirmationPress = (id: number) => {
-    navigation.navigate("Player", { affirmationId: id });
+    navigation.navigate("Player", { affirmationId: id, autoPlay: true });
   };
 
   const handlePlayPress = async (affirmation: Affirmation) => {

@@ -508,23 +508,29 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
                           ]}
                           testID={`button-step-${step.type}`}
                         >
-                          <View style={styles.stepHeader}>
-                            <View style={[styles.stepNumberCircle, { backgroundColor: `${stepColor}20` }]}>
-                              <ThemedText type="caption" style={{ color: stepColor, fontWeight: "700", fontSize: 12 }}>
-                                {String(index + 1)}
+                          <View style={styles.stepCardRow}>
+                            <View style={styles.stepLeftColumn}>
+                              <View style={[styles.stepNumberCircle, { backgroundColor: `${stepColor}20` }]}>
+                                <ThemedText type="caption" style={{ color: stepColor, fontWeight: "700", fontSize: 12 }}>
+                                  {String(index + 1)}
+                                </ThemedText>
+                              </View>
+                              <View style={[styles.stepIconCircle, { backgroundColor: `${stepColor}15` }]}>
+                                <StepIconComponent type={step.type} size={16} color={stepColor} />
+                              </View>
+                            </View>
+                            <View style={styles.stepRightContent}>
+                              <View style={styles.stepHeader}>
+                                <ThemedText type="body" style={[styles.stepTypeLabel, { color: stepColor }]}>
+                                  {getStepTypeLabel(step.type)}
+                                </ThemedText>
+                                <Feather name="chevron-right" size={16} color={`${stepColor}80`} style={styles.stepChevron} />
+                              </View>
+                              <ThemedText type="small" style={[styles.stepNote, { color: theme.text, opacity: 0.85 }]}>
+                                {step.note}
                               </ThemedText>
                             </View>
-                            <View style={[styles.stepIconCircle, { backgroundColor: `${stepColor}15` }]}>
-                              <StepIconComponent type={step.type} size={16} color={stepColor} />
-                            </View>
-                            <ThemedText type="body" style={[styles.stepTypeLabel, { color: stepColor }]}>
-                              {getStepTypeLabel(step.type)}
-                            </ThemedText>
-                            <Feather name="chevron-right" size={16} color={`${stepColor}80`} style={styles.stepChevron} />
                           </View>
-                          <ThemedText type="small" style={[styles.stepNote, { color: theme.text, opacity: 0.85 }]}>
-                            {step.note}
-                          </ThemedText>
                         </Pressable>
                       </View>
                     );
@@ -743,11 +749,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: Spacing.md,
   },
+  stepCardRow: {
+    flexDirection: "row",
+    gap: Spacing.md,
+  },
+  stepLeftColumn: {
+    alignItems: "center",
+    gap: 6,
+  },
+  stepRightContent: {
+    flex: 1,
+  },
   stepHeader: {
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.sm,
-    marginBottom: 6,
+    marginBottom: 4,
   },
   stepNumberCircle: {
     width: 24,

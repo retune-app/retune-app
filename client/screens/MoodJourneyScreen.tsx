@@ -157,7 +157,8 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
   const [countdownValue, setCountdownValue] = useState<number | null>(null);
   const [hapticsEnabled, setHapticsEnabled] = useState(true);
   const [showSoundSwitcher, setShowSoundSwitcher] = useState(false);
-  const [musicEnabled, setMusicEnabled] = useState(false);
+  const [musicEnabled, setMusicEnabled] = useState(true);
+  const journeyMusicInitRef = useRef(false);
   const [isLandscape, setIsLandscape] = useState(false);
   const countdownScale = useSharedValue(0.8);
   const countdownOpacityVal = useSharedValue(0);
@@ -451,6 +452,16 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
   }));
 
   useEffect(() => {
+    if (!journeyMusicInitRef.current) {
+      journeyMusicInitRef.current = true;
+      (async () => {
+        if (!isMusicPlaying) {
+          await setSelectedMusic('forest-rain-birds' as BackgroundMusicType, false);
+          await startBackgroundMusic();
+          setMusicEnabled(true);
+        }
+      })();
+    }
     const timer = setTimeout(() => {
       startCurrentStep();
     }, 2500);

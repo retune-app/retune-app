@@ -589,7 +589,9 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
         abortControllerRef.current.abort();
       }
       cleanupVoice();
-      stopBackgroundMusic();
+      if (!journeyContext) {
+        stopBackgroundMusic();
+      }
     };
   }, [voicePreferenceLoaded]);
 
@@ -603,13 +605,13 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
       controlsTimerRef.current = null;
     }
     await cleanupVoice();
-    await stopBackgroundMusic();
     cachedScriptRef.current = null;
     scriptFetchingRef.current = false;
     if (journeyContext) {
       journeyNavigationRef.action = 'complete';
       navigation.goBack();
     } else {
+      await stopBackgroundMusic();
       setPlayerState("idle");
       navigation.navigate("Main", { screen: "BreatheTab" } as any);
     }
@@ -641,10 +643,12 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
     setErrorMessage("");
     progressAnim.value = 0;
 
-    const autoSound = MOOD_SOUND_MAP[mood]?.[timeOfDay] || MOOD_SOUND_MAP[mood]?.["morning"] || "ocean-waves-beach";
-    setSelectedSound(autoSound);
-    if (autoSound !== "none") {
-      await setSelectedMusic(autoSound);
+    if (!journeyContext) {
+      const autoSound = MOOD_SOUND_MAP[mood]?.[timeOfDay] || MOOD_SOUND_MAP[mood]?.["morning"] || "ocean-waves-beach";
+      setSelectedSound(autoSound);
+      if (autoSound !== "none") {
+        await setSelectedMusic(autoSound);
+      }
     }
 
     try {
@@ -1224,8 +1228,8 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
             currentStep={journeyContext.currentStep}
             totalSteps={journeyContext.totalSteps}
             stepLabels={journeyContext.stepLabels}
-            onPrevious={async () => { await cleanupVoice(); await stopBackgroundMusic(); journeyNavigationRef.action = 'back'; navigation.goBack(); }}
-            onSkip={async () => { await cleanupVoice(); await stopBackgroundMusic(); journeyNavigationRef.action = 'skip'; navigation.goBack(); }}
+            onPrevious={async () => { await cleanupVoice(); journeyNavigationRef.action = 'back'; navigation.goBack(); }}
+            onSkip={async () => { await cleanupVoice(); journeyNavigationRef.action = 'skip'; navigation.goBack(); }}
             showSkip={journeyContext.currentStep < journeyContext.totalSteps - 1}
             showEndJourney={journeyContext.currentStep >= journeyContext.totalSteps - 1}
             onEndJourney={async () => { await cleanupVoice(); await stopBackgroundMusic(); journeyNavigationRef.action = 'complete'; (navigation as any).navigate("Main"); }}

@@ -25,7 +25,6 @@ import { useBackgroundMusic } from "@/contexts/BackgroundMusicContext";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { apiRequest } from "@/lib/query-client";
 import { getVoiceDisplayName } from "@shared/voiceMapping";
-import { breathingAutoStartRef } from "@/navigation/breathingAutoStart";
 import JourneyStepBar from "@/components/JourneyStepBar";
 import { journeyNavigationRef } from "@/navigation/journeyNavigationRef";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
@@ -747,7 +746,6 @@ export default function PlayerScreen() {
               if (affirmation) {
                 await stop();
                 await setBreathingAffirmation(affirmation);
-                breathingAutoStartRef.current = true;
                 navigation.navigate("Main" as any, { screen: "BreatheTab" });
               }
             }}

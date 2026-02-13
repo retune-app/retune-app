@@ -58,7 +58,6 @@ import {
   getCyclesForDuration,
   type BreathingTechnique,
 } from "@shared/breathingTechniques";
-import { breathingAutoStartRef } from "@/navigation/breathingAutoStart";
 
 const ACCENT_GOLD = "#C9A227";
 
@@ -200,18 +199,6 @@ export default function BreathingScreen() {
     }, [showLandscapeMode])
   );
 
-  const pendingAutoStartRef = useRef(false);
-
-  useFocusEffect(
-    useCallback(() => {
-      if (breathingAutoStartRef.current) {
-        breathingAutoStartRef.current = false;
-        pendingAutoStartRef.current = true;
-        setVoiceEnabled(true);
-        setMusicEnabled(true);
-      }
-    }, [])
-  );
 
   useEffect(() => {
     if (showLandscapeMode) {
@@ -870,12 +857,6 @@ export default function BreathingScreen() {
     await handleStart();
   }, [handleStart, hapticsEnabled]);
 
-  useEffect(() => {
-    if (pendingAutoStartRef.current && backgroundAffirmation?.audioUrl) {
-      pendingAutoStartRef.current = false;
-      setTimeout(() => handleStartWithCountdown(), 300);
-    }
-  }, [backgroundAffirmation, handleStartWithCountdown]);
 
   useEffect(() => {
     if (showLandscapeMode && isPlaying) {

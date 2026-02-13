@@ -14,7 +14,6 @@ import ProfileStackNavigator from "@/navigation/ProfileStackNavigator";
 import { useTheme } from "@/hooks/useTheme";
 import { Shadows } from "@/constants/theme";
 import { useAudio } from "@/contexts/AudioContext";
-import { breathingAutoStartRef } from "@/navigation/breathingAutoStart";
 
 const FIRST_TAB_VISIT_KEY = "@navigation/firstTabVisit";
 
@@ -124,11 +123,9 @@ export default function MainTabNavigator() {
         }}
         listeners={({ navigation }) => ({
           tabPress: () => {
-            const { currentAffirmation, isPlaying: isAffirmationPlaying, stop, setBreathingAffirmation } = audioContext;
+            const { currentAffirmation, isPlaying: isAffirmationPlaying, stop } = audioContext;
             if (currentAffirmation && isAffirmationPlaying) {
               stop();
-              setBreathingAffirmation(currentAffirmation as any);
-              breathingAutoStartRef.current = true;
             }
           },
         })}

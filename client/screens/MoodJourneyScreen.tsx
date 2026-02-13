@@ -134,7 +134,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
     }
   }, [isMusicPlaying, startBackgroundMusic, stopBackgroundMusic]);
 
-  const journeyStepLabels = journey.steps.map((s: any) => getStepLabel(s.type));
+  const journeyStepLabels = useMemo(() => journey.steps.map((s: any) => getStepLabel(s.type)), [journey.steps]);
 
   const [phase, setPhase] = useState<JourneyPhase>("intro");
   const [currentStepIndex, setCurrentStepIndex] = useState(0);

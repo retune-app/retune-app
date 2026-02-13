@@ -33,6 +33,17 @@ import type { Affirmation } from "@shared/schema";
 const AUTO_REPLAY_KEY = "@settings/autoReplay";
 const SHOW_SCRIPT_KEY = "@settings/showScript";
 
+const RSVP_ENABLED = true;
+const RSVP_FONT_SIZE: RSVPFontSize = "XL";
+const RSVP_HIGHLIGHT = true;
+
+function formatTime(millis: number) {
+  const totalSeconds = Math.floor(millis / 1000);
+  const mins = Math.floor(totalSeconds / 60);
+  const secs = totalSeconds % 60;
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
+}
+
 type PlayerRouteProp = RouteProp<RootStackParamList, "Player">;
 type PlayerNavigationProp = NativeStackNavigationProp<RootStackParamList, "Player">;
 
@@ -70,9 +81,9 @@ export default function PlayerScreen() {
     return unsubscribe;
   }, [navigation, stop]);
 
-  const rsvpEnabled = true;
-  const rsvpFontSize: RSVPFontSize = "XL";
-  const rsvpHighlight = true;
+  const rsvpEnabled = RSVP_ENABLED;
+  const rsvpFontSize = RSVP_FONT_SIZE;
+  const rsvpHighlight = RSVP_HIGHLIGHT;
   const [showRsvpSettings, setShowRsvpSettings] = useState(false);
   const [showScript, setShowScript] = useState(false);
   const [isLandscape, setIsLandscape] = useState(false);
@@ -542,13 +553,6 @@ export default function PlayerScreen() {
 
   const handleFavorite = () => {
     favoriteMutation.mutate();
-  };
-
-  const formatTime = (millis: number) => {
-    const totalSeconds = Math.floor(millis / 1000);
-    const mins = Math.floor(totalSeconds / 60);
-    const secs = totalSeconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
   const displayPosition = currentAffirmation?.id === affirmationId ? position : 0;

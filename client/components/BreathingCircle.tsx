@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useMemo } from "react";
+import React, { memo, useEffect, useRef, useMemo } from "react";
 import { View, StyleSheet, Text, Platform } from "react-native";
 import Animated, {
   useSharedValue,
@@ -56,7 +56,7 @@ function dimHex(hex: string, amount: number): string {
   return `rgb(${r}, ${g}, ${b})`;
 }
 
-export default function BreathingCircle({
+function BreathingCircle({
   technique,
   isPlaying,
   onPhaseChange,
@@ -425,3 +425,5 @@ const styles = StyleSheet.create({
     }),
   },
 });
+
+export default memo(BreathingCircle);

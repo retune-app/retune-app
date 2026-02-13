@@ -246,11 +246,11 @@ export default function HomeScreen() {
     return matchesSearch && matchesFavorites && matchesPillar;
   }), [affirmations, searchQuery, selectedPillar]);
 
-  const handleAffirmationPress = (id: number) => {
+  const handleAffirmationPress = useCallback((id: number) => {
     navigation.navigate("Player", { affirmationId: id, autoPlay: true });
-  };
+  }, [navigation]);
 
-  const handlePlayPress = async (affirmation: Affirmation) => {
+  const handlePlayPress = useCallback(async (affirmation: Affirmation) => {
     if (currentAffirmation?.id === affirmation.id) {
       await togglePlayPause();
     } else {
@@ -262,17 +262,17 @@ export default function HomeScreen() {
       }
       await playAffirmation(affirmation);
     }
-  };
+  }, [currentAffirmation?.id, togglePlayPause, isFirstPlay, firstPlayTriggered, playAffirmation]);
 
   const handleCreatePress = () => {
     navigation.navigate("Create");
   };
 
-  const handleRenamePress = (affirmation: Affirmation) => {
+  const handleRenamePress = useCallback((affirmation: Affirmation) => {
     setAffirmationToRename(affirmation);
     setNewTitle(affirmation.title);
     setRenameModalVisible(true);
-  };
+  }, []);
 
   const handleRenameSave = () => {
     if (affirmationToRename && newTitle.trim()) {

@@ -254,6 +254,23 @@ export default function PlayerScreen() {
     },
   });
 
+  const journeyVoiceCheckedRef = useRef(false);
+  useEffect(() => {
+    if (!journeyContext?.journeyVoiceId || !affirmation || journeyVoiceCheckedRef.current || isRegeneratingVoice) return;
+    journeyVoiceCheckedRef.current = true;
+    const jVoiceType = journeyContext.journeyVoiceType || "ai";
+    const jVoiceId = journeyContext.journeyVoiceId;
+    const affVoiceType = affirmation.voiceType || "ai";
+    const needsRegeneration =
+      (jVoiceType === "personal" && affVoiceType !== "personal") ||
+      (jVoiceType === "ai" && affVoiceType === "personal");
+    if (needsRegeneration) {
+      autoPlayedRef.current = true;
+      const gender = jVoiceId.includes("orion") || jVoiceId.includes("atlas") || jVoiceId.includes("sage") || jVoiceId.includes("summit") || jVoiceId.includes("bodhi") ? "male" : "female";
+      regenerateVoiceMutation.mutate({ voiceType: jVoiceType, voiceGender: jVoiceType === "ai" ? gender : undefined });
+    }
+  }, [affirmation, journeyContext, isRegeneratingVoice]);
+
   // Handle voice switch
   const handleVoiceSwitch = useCallback((voiceType: "personal" | "ai", voiceGender?: "male" | "female") => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);

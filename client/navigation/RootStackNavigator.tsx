@@ -26,6 +26,8 @@ export type JourneyContext = {
   currentStep: number;
   totalSteps: number;
   stepLabels: string[];
+  journeyVoiceId?: string;
+  journeyVoiceType?: "personal" | "ai";
 };
 
 export type RootStackParamList = {

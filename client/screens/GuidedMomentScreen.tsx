@@ -239,7 +239,7 @@ interface CategorySection {
 export type GuidedMomentScreenParams = {
   mood: string;
   timeOfDay: string;
-  journeyContext?: { currentStep: number; totalSteps: number; stepLabels: string[] };
+  journeyContext?: { currentStep: number; totalSteps: number; stepLabels: string[]; journeyVoiceId?: string; journeyVoiceType?: "personal" | "ai" };
   prefetchedMoment?: GeneratedMoment | null;
 };
 
@@ -360,6 +360,18 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
   }, [hasPersonalVoice]);
 
   useEffect(() => {
+    if (journeyContext?.journeyVoiceId) {
+      const jVoice = journeyContext.journeyVoiceId;
+      if (jVoice === "personal" && hasPersonalVoice) {
+        setSelectedVoice("personal");
+      } else if (jVoice !== "personal" && allVoiceOptions.some((v) => v.id === jVoice)) {
+        setSelectedVoice(jVoice);
+      } else if (jVoice !== "personal") {
+        setSelectedVoice(jVoice);
+      }
+      setVoicePreferenceLoaded(true);
+      return;
+    }
     AsyncStorage.getItem(VOICE_STORAGE_KEY).then((stored) => {
       if (stored && allVoiceOptions.some((v) => v.id === stored)) {
         setSelectedVoice(stored);

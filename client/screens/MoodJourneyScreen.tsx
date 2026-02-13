@@ -163,6 +163,35 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
   const countdownScale = useSharedValue(0.8);
   const countdownOpacityVal = useSharedValue(0);
 
+  const journeyVoiceRef = useRef<{ voiceId: string; voiceType: "personal" | "ai" }>({ voiceId: "hume_lotus", voiceType: "ai" });
+  const [journeyVoiceResolved, setJourneyVoiceResolved] = useState(false);
+
+  useEffect(() => {
+    const resolveVoice = async () => {
+      try {
+        const baseHeaders: Record<string, string> = { "Content-Type": "application/json" };
+        const t = getAuthToken();
+        if (t) baseHeaders["X-Auth-Token"] = t;
+        const url = new URL("/api/voice-preferences", getApiUrl()).toString();
+        const res = await fetch(url, { headers: baseHeaders, credentials: "include" });
+        if (res.ok) {
+          const prefs = await res.json();
+          if (prefs.preferredVoiceType === "personal" && prefs.hasPersonalVoice) {
+            journeyVoiceRef.current = { voiceId: "personal", voiceType: "personal" };
+          } else {
+            const gender = prefs.preferredAiGender || "female";
+            const voiceId = gender === "male"
+              ? (prefs.preferredMaleVoiceId || "hume_orion")
+              : (prefs.preferredFemaleVoiceId || "hume_lotus");
+            journeyVoiceRef.current = { voiceId, voiceType: "ai" };
+          }
+        }
+      } catch (e) {}
+      setJourneyVoiceResolved(true);
+    };
+    resolveVoice();
+  }, []);
+
   useEffect(() => {
     AsyncStorage.getItem("@settings/hapticsEnabled").then((val) => {
       if (val !== null) setHapticsEnabled(val === "true");
@@ -514,9 +543,8 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
         const scriptData = await scriptResult.json();
         if (!scriptData.script) return;
 
-        const voicePref = await AsyncStorage.getItem("@retuned/guided-moment-voice").catch(() => null);
-        const voiceId = voicePref || "hume_lotus";
-        const isPersonal = voiceId === "personal";
+        const voiceId = journeyVoiceRef.current.voiceId;
+        const isPersonal = journeyVoiceRef.current.voiceType === "personal";
 
         const audioUrl = new URL("/api/guided-moments/audio", getApiUrl()).toString();
         const audioResult = await fetch(audioUrl, {
@@ -554,7 +582,13 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
       return;
     }
 
-    const jCtx = { currentStep: stepIndex, totalSteps: journey.steps.length, stepLabels: journeyStepLabels };
+    const jCtx = {
+      currentStep: stepIndex,
+      totalSteps: journey.steps.length,
+      stepLabels: journeyStepLabels,
+      journeyVoiceId: journeyVoiceRef.current.voiceId,
+      journeyVoiceType: journeyVoiceRef.current.voiceType,
+    };
 
     if (step.type === "breathe") {
       setPhase("breathing");

@@ -20,7 +20,7 @@ import { IconButton } from "@/components/IconButton";
 import { AmbientSoundMixer } from "@/components/AmbientSoundMixer";
 import { ThemedModal } from "@/components/ThemedModal";
 import { useTheme } from "@/hooks/useTheme";
-import { useAudio, preloadAudioToCache } from "@/contexts/AudioContext";
+import { useAudio, preloadAudioToCache, clearCachedAudio } from "@/contexts/AudioContext";
 import { useBackgroundMusic } from "@/contexts/BackgroundMusicContext";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { apiRequest } from "@/lib/query-client";
@@ -238,11 +238,11 @@ export default function PlayerScreen() {
       return response.json();
     },
     onSuccess: async (updatedAffirmation) => {
+      await clearCachedAudio(affirmationId);
       queryClient.invalidateQueries({ queryKey: ["/api/affirmations"] });
       queryClient.invalidateQueries({ queryKey: ["/api/affirmations", affirmationId] });
       setIsRegeneratingVoice(false);
       try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
-      // Auto-play the new audio
       if (updatedAffirmation) {
         await playAffirmation(updatedAffirmation);
       }
@@ -253,6 +253,8 @@ export default function PlayerScreen() {
       const errStr = error?.message || "";
       if (errStr.includes("QUOTA_EXCEEDED") || errStr.includes("quota")) {
         setErrorMessage("Your voice cloning credits have been used up. Please switch to an AI voice or wait for credits to reset.");
+      } else if (errStr.includes("VOICE_ROTATED")) {
+        setErrorMessage("Your Inner Voice has expired. Please re-record your voice sample in Settings, or switch to an AI voice.");
       } else if (errStr.includes("PERSONAL_VOICE_FAILED")) {
         setErrorMessage("Could not generate audio with your Inner Voice. Try again or switch to an AI voice.");
       } else {

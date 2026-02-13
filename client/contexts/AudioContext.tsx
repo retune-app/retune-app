@@ -24,6 +24,20 @@ export async function preloadAudioToCache(audioUrl: string, affirmationId: numbe
   } catch {}
 }
 
+export async function clearCachedAudio(affirmationId: number): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    await audioCacheReady;
+    for (const ext of ['.mp3', '.wav']) {
+      const localPath = `${AUDIO_CACHE_DIR}affirmation_${affirmationId}${ext}`;
+      const info = await LegacyFS.getInfoAsync(localPath);
+      if (info.exists) {
+        await LegacyFS.deleteAsync(localPath, { idempotent: true });
+      }
+    }
+  } catch {}
+}
+
 async function getCachedAudioUri(remoteUri: string, affirmationId: number): Promise<string> {
   if (Platform.OS === 'web') return remoteUri;
   try {

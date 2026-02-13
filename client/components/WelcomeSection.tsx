@@ -197,18 +197,17 @@ export function WelcomeSection({
         testID="banner-greeting"
       >
         <View style={styles.greetingContent}>
-          <View style={styles.greetingHeader}>
-            <Pressable
-              onPress={handleToggleTheme}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 4 }}
-              testID="button-toggle-theme"
-            >
-              <Feather name={icon as any} size={16} color={theme.gold} />
-            </Pressable>
+          <Pressable
+            onPress={handleToggleTheme}
+            hitSlop={{ top: 8, bottom: 4, left: 8, right: 8 }}
+            testID="button-toggle-theme"
+            style={styles.greetingHeader}
+          >
+            <Feather name={icon as any} size={16} color={theme.gold} />
             <ThemedText type="body" style={[styles.greeting, { color: theme.text, fontSize: 16, fontWeight: "700" }]}>
               {greeting}, {displayName}
             </ThemedText>
-          </View>
+          </Pressable>
           <View style={styles.suggestionRow}>
             {actionText && actionType ? (
               <Text style={[styles.suggestion, { color: isDark ? theme.textSecondary : "#3A4A5E", fontSize: 13 }]}>

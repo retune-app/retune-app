@@ -869,7 +869,7 @@ export default function PlayerScreen() {
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Feather name="file-text" size={14} color={theme.primary} />
               <ThemedText type="small" style={{ color: theme.textSecondary, marginLeft: 6, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, fontSize: 11 }}>
-                Show Script
+                Read Along
               </ThemedText>
             </View>
             <Pressable

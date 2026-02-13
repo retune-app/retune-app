@@ -224,14 +224,6 @@ export function AffirmationCard({
                   </ThemedText>
                 </View>
               ) : null}
-              {isBreathingAffirmation ? (
-                <View style={[styles.breathingBadge, { backgroundColor: '#2E7D6E' }]}>
-                  <Feather name="wind" size={10} color="#fff" style={{ marginRight: 3 }} />
-                  <ThemedText type="caption" style={{ color: '#fff', fontWeight: '600' }}>
-                    Breathing
-                  </ThemedText>
-                </View>
-              ) : null}
               <Pressable 
                 onPress={(e) => {
                   e.stopPropagation?.();
@@ -288,6 +280,14 @@ export function AffirmationCard({
                       +{category.split(",").length - 3}
                     </ThemedText>
                   ) : null}
+                </View>
+              ) : null}
+              {isBreathingAffirmation ? (
+                <View style={[styles.breathingBadge, { backgroundColor: '#2E7D6E' }]}>
+                  <Feather name="wind" size={10} color="#fff" style={{ marginRight: 3 }} />
+                  <ThemedText type="caption" style={{ color: '#fff', fontWeight: '600' }}>
+                    Breathing
+                  </ThemedText>
                 </View>
               ) : null}
             </View>

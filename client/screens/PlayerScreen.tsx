@@ -898,8 +898,8 @@ export default function PlayerScreen() {
             <View style={styles.scriptHeaderRow}>
               <View style={styles.scriptTitleRow}>
                 <Feather name="file-text" size={16} color={theme.primary} />
-                <ThemedText type="h4" style={{ marginLeft: Spacing.xs }}>
-                  Your Script
+                <ThemedText type="h4" style={{ marginLeft: Spacing.xs }} numberOfLines={1}>
+                  {affirmation.title}
                 </ThemedText>
               </View>
               {(() => {

@@ -477,7 +477,7 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
                         {index > 0 ? (
                           <View style={styles.stepConnector}>
                             {[0, 1, 2].map((d) => (
-                              <Animated.View key={d} style={[styles.connectorDot, { backgroundColor: ACCENT_GOLD, shadowColor: "#E5C95C", shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.8, shadowRadius: 4, elevation: 6 }, connDotStyles[d]]} />
+                              <Animated.View key={d} style={[styles.connectorDot, connDotStyles[d]]} />
                             ))}
                           </View>
                         ) : null}
@@ -701,13 +701,19 @@ const styles = StyleSheet.create({
   },
   stepConnector: {
     alignItems: "center",
-    gap: 3,
-    paddingVertical: 6,
+    gap: 5,
+    paddingVertical: 8,
   },
   connectorDot: {
-    width: 3,
-    height: 3,
-    borderRadius: 1.5,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: ACCENT_GOLD,
+    shadowColor: "#E5C95C",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.9,
+    shadowRadius: 4,
+    elevation: 6,
   },
   stepCard: {
     borderRadius: BorderRadius.lg,

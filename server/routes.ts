@@ -2833,6 +2833,49 @@ Rules:
         ? "The user has set up their Inner Voice (personal cloned voice)."
         : "The user hasn't set up their Inner Voice yet — hearing affirmations in your own voice deepens subconscious impact.";
 
+      let journeyHistoryContext = "";
+      try {
+        const [journeyTotal, lastJourney, frequentPath] = await Promise.all([
+          db.select({ total: sql<number>`count(*)::int` })
+            .from(journeyCompletions)
+            .where(eq(journeyCompletions.userId, userId))
+            .then(r => r[0]),
+          db.select()
+            .from(journeyCompletions)
+            .where(eq(journeyCompletions.userId, userId))
+            .orderBy(desc(journeyCompletions.completedAt))
+            .limit(1)
+            .then(r => r[0]),
+          db.select({
+            currentMood: journeyCompletions.currentMood,
+            targetMood: journeyCompletions.targetMood,
+            count: sql<number>`count(*)::int`,
+          })
+            .from(journeyCompletions)
+            .where(eq(journeyCompletions.userId, userId))
+            .groupBy(journeyCompletions.currentMood, journeyCompletions.targetMood)
+            .orderBy(sql`count(*) desc`)
+            .limit(1)
+            .then(r => r[0]),
+        ]);
+
+        const totalJourneys = journeyTotal?.total || 0;
+        if (totalJourneys > 0) {
+          const parts: string[] = [`${totalJourneys} mood journey(s) completed`];
+          if (lastJourney) {
+            parts.push(`last journey was ${lastJourney.currentMood}→${lastJourney.targetMood}`);
+            if (lastJourney.completedFully) parts.push("(completed fully)");
+          }
+          if (frequentPath) {
+            parts.push(`most common path: ${frequentPath.currentMood}→${frequentPath.targetMood} (${frequentPath.count} times)`);
+          }
+          journeyHistoryContext = `\nJourney history: ${parts.join(", ")}.`;
+          if (lastJourney?.currentMood === mood && lastJourney?.targetMood === targetMood) {
+            journeyHistoryContext += " Note: this is the SAME mood path as their last journey — acknowledge the pattern subtly.";
+          }
+        }
+      } catch (e) {}
+
       let journeyTitle = "Your Journey";
       let acknowledgment = `${userName}, let's take you from ${mood} to ${targetMood}.`;
       let stepTypes: string[] = ["breathe", "meditate"];
@@ -2865,11 +2908,12 @@ User context:
 - ${voiceContext}
 - Total affirmations: ${userAffirmationsList.length}
 - Best breathing match for this transition: ${breathing.name}
+- ${journeyHistoryContext || "First mood journey"}
 
 Respond as JSON with exactly these fields:
 {
   "journeyTitle": "A creative 2-5 word title for this journey (like 'From Storm to Stillness', 'Finding Your Spark', 'Back to Center'). Should capture the mood transition. No emojis.",
-  "acknowledgment": "1-2 sentences, max 25 words total. Use ${userName}'s name. Validate their current ${mood} feeling specifically (not generically), then create excitement about reaching ${targetMood}. Reference both moods. Be direct and real, not vague. Never use emojis. BAD examples (too generic): 'Looks like tonight is a bit tough for you' / 'Sounds like a tough night'. GOOD examples: '${userName}, that ${mood} feeling doesn't have to stay — let's move you toward ${targetMood}', '${userName}, going from ${mood} to ${targetMood} is totally doable right now'.",
+  "acknowledgment": "1-2 sentences, max 25 words total. Use ${userName}'s name. Validate their current ${mood} feeling specifically (not generically), then create excitement about reaching ${targetMood}. Reference both moods. Be direct and real, not vague. Never use emojis. BAD examples (too generic): 'Looks like tonight is a bit tough for you' / 'Sounds like a tough night'. GOOD examples: '${userName}, that ${mood} feeling doesn't have to stay — let's move you toward ${targetMood}', '${userName}, going from ${mood} to ${targetMood} is totally doable right now'. If the user has journey history, you may subtly reference it — e.g., 'Back on the ${mood}→${targetMood} path' or 'You know this journey well'. Keep it brief and natural, never data-heavy.",
   "stepTypes": ["breathe", "meditate", "listen"],
   "breatheNote": "One punchy sentence (max 20 words) or null if breathe is not in stepTypes. Naturally mention that this is a 2-minute exercise. Explain WHY ${breathing.name} specifically helps for the ${mood}→${targetMood} transition — reference a real physical effect but in plain everyday language. Make it feel like insider knowledge, not textbook.",
   "meditateNote": "One punchy sentence (max 20 words) or null if meditate is not in stepTypes. Naturally mention that this is a 2-minute guided meditation. Explain why it uniquely helps shift from ${mood} to ${targetMood} at ${timeOfDay}. Connect it to something real about their transition.",
@@ -4490,7 +4534,7 @@ Respond with ONLY the notification message text.${avoidClause}`,
       const [user] = await db.select({ name: users.name }).from(users).where(eq(users.id, userId));
       const firstName = user?.name?.split(" ")[0] || "";
 
-      const [sessionStats, affirmationCount, voiceCloneStatus, listeningCount] = await Promise.all([
+      const [sessionStats, affirmationCount, voiceCloneStatus, listeningCount, journeyCount, topJourneyMood] = await Promise.all([
         db.select({ total: sql<number>`count(*)::int` })
           .from(breathingSessions)
           .where(eq(breathingSessions.userId, userId))
@@ -4508,12 +4552,27 @@ Respond with ONLY the notification message text.${avoidClause}`,
           .from(listeningSessions)
           .where(eq(listeningSessions.userId, userId))
           .then(r => r[0]),
+        db.select({ total: sql<number>`count(*)::int` })
+          .from(journeyCompletions)
+          .where(eq(journeyCompletions.userId, userId))
+          .then(r => r[0]),
+        db.select({
+          targetMood: journeyCompletions.targetMood,
+          count: sql<number>`count(*)::int`,
+        })
+          .from(journeyCompletions)
+          .where(and(eq(journeyCompletions.userId, userId), eq(journeyCompletions.completedFully, true)))
+          .groupBy(journeyCompletions.targetMood)
+          .orderBy(sql`count(*) desc`)
+          .limit(1)
+          .then(r => r[0]),
       ]);
 
       const totalBreathingSessions = sessionStats?.total || 0;
       const totalAffirmations = affirmationCount?.total || 0;
       const hasVoiceClone = !!voiceCloneStatus;
       const totalListens = listeningCount?.total || 0;
+      const totalJourneys = journeyCount?.total || 0;
 
       const [streakResult] = await db
         .select({ dateKey: breathingSessions.dateKey })
@@ -4569,9 +4628,10 @@ Respond with ONLY the notification message text.${avoidClause}`,
       if (!hasVoiceClone) nudgeOpportunities.push("NO_VOICE_CLONE: User hasn't set up voice cloning (Inner Voice) yet.");
       if (totalBreathingSessions === 0) nudgeOpportunities.push("NO_BREATHING: User hasn't tried any breathing exercises yet.");
       if (totalListens === 0 && totalAffirmations > 0) nudgeOpportunities.push("NO_LISTENS: User has affirmations but hasn't listened to any yet.");
+      if (totalJourneys === 0) nudgeOpportunities.push("NO_JOURNEYS: User has never tried a mood journey. These are guided wellness paths combining breathing, meditation, and affirmations.");
 
       let statsContext = "";
-      if (totalBreathingSessions > 0 || totalAffirmations > 0) {
+      if (totalBreathingSessions > 0 || totalAffirmations > 0 || totalJourneys > 0) {
         const parts = [];
         if (streak > 1) parts.push(`${streak}-day breathing streak`);
         if (totalBreathingSessions > 0) parts.push(`${totalBreathingSessions} breathing sessions`);
@@ -4579,6 +4639,8 @@ Respond with ONLY the notification message text.${avoidClause}`,
         if (totalListens > 0) parts.push(`${totalListens} listening sessions`);
         if (hasVoiceClone) parts.push("has cloned voice (Inner Voice)");
         if (topTechnique) parts.push(`favorite technique: ${topTechnique.techniqueId}`);
+        if (totalJourneys > 0) parts.push(`${totalJourneys} mood journey(s) completed`);
+        if (topJourneyMood) parts.push(`most-sought mood: ${topJourneyMood.targetMood}`);
         statsContext = `\nUser activity: ${parts.join(", ")}.`;
       }
 
@@ -4597,7 +4659,7 @@ Respond with ONLY the notification message text.${avoidClause}`,
               ``,
               `TONE: ${normalizedTime} mood. Warm, not cheery. Like a knowing friend. Be creative, witty, surprising — users should look forward to what it says next. No quotation marks, no exclamation marks.`,
               ``,
-              `THEMES to weave in (pick one per message): neural pathways strengthening, brain rewiring for confidence, neuroplasticity shaping beliefs, amygdala calming through breathwork, prefrontal cortex activation. Use accessible language — no jargon.`,
+              `THEMES to weave in (pick one per message): neural pathways strengthening, brain rewiring for confidence, neuroplasticity shaping beliefs, amygdala calming through breathwork, prefrontal cortex activation, mood journeys building emotional resilience pathways. Use accessible language — no jargon.`,
               `${statsContext}`,
               `${nudgeContext}`,
               ``,
@@ -4615,8 +4677,9 @@ Respond with ONLY the notification message text.${avoidClause}`,
               `  Example: { "message": "Imagine hearing these words in your voice —", "actionText": "try Inner Voice", "actionType": "clone" }`,
               `  Example: { "message": "A 60-second reset could change your day —", "actionText": "breathe now", "actionType": "breathe" }`,
               `  Example: { "message": "Let stillness find you —", "actionText": "start a guided moment", "actionType": "meditate" }`,
+              `  Example: { "message": "Your mind knows the path to ${topJourneyMood?.targetMood || 'calm'} now —", "actionText": "start a mood journey", "actionType": "journey" }`,
               `- If no nudge fits, just return { "message": "..." } with pure encouragement (max 10 words).`,
-              `- actionType mapping: "create" = create new affirmation, "breathe" = breathing exercise, "meditate" = guided meditation, "clone" = voice cloning setup.`,
+              `- actionType mapping: "create" = create new affirmation, "breathe" = breathing exercise, "meditate" = guided meditation, "clone" = voice cloning setup, "journey" = mood check-in/journey.`,
               `- About 60% of the time, include a nudge when opportunities exist. 40% pure encouragement.`,
               `- Never nag. Be curious, inviting, playful. Each message should feel fresh.`,
             ].join("\n"),
@@ -4639,7 +4702,7 @@ Respond with ONLY the notification message text.${avoidClause}`,
         if (parsed.actionText) {
           parsed.actionText = parsed.actionText.replace(/["""''!]/g, "");
         }
-        const validActions = ["create", "breathe", "meditate", "clone"];
+        const validActions = ["create", "breathe", "meditate", "clone", "journey"];
         if (parsed.actionType && !validActions.includes(parsed.actionType)) {
           delete parsed.actionText;
           delete parsed.actionType;

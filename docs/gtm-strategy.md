@@ -46,7 +46,7 @@ Retuned is positioned as a premium wellness app that combines AI-powered affirma
 |---|---|---|---|
 | Breathing exercises (all techniques) | Yes | Yes | Yes |
 | Ambient sound library (25 tracks) | Yes | Yes | Yes |
-| AI Mood Check-in (Mindful Moment) | Yes | Yes | Yes |
+| AI Mood Check-in (Micro-Meditation) | Yes | Yes | Yes |
 | Daily AI greeting | Yes | Yes | Yes |
 | AI Affirmations | 3/month, stock voices only | 5/week (~20/mo), stock voices only | 10/day, all voices |
 | Inner Voice (personal voice clone) | No | No | Yes |

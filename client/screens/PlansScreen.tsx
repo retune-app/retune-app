@@ -27,7 +27,7 @@ const FREE_ICONS: Record<string, string> = {
 };
 
 const PREMIUM_ICONS: Record<string, string> = {
-  "Mindful Moment - AI personalized wellness": "smile",
+  "Micro-Meditation - AI personalized wellness": "smile",
   "Micro-Meditations - AI meditation audio": "sun",
   "Inner Voice - personal voice cloning": "user",
   "Exclusive ambient tracks": "music",

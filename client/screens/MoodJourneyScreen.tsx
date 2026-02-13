@@ -594,7 +594,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
           } catch (e) {}
           prefetchPromiseRef.current = null;
         }
-        await new Promise(resolve => setTimeout(resolve, 800));
+        await new Promise(resolve => setTimeout(resolve, 3000));
         clearTimeout(safetyTimeout);
         doNavigate();
       })();
@@ -616,7 +616,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
             navigation.navigate("Create");
           }
         }
-      }, 1500);
+      }, 3000);
     }
   }, [journey, navigation, journeyStepLabels, prefetchMeditationScript]);
 
@@ -638,7 +638,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
         setPhase("transition");
         setTimeout(() => {
           launchStep(nextIndex);
-        }, 2500);
+        }, 3000);
       }
     }
   }, [currentStepIndex, journey.steps.length, journey.steps, launchStep]);

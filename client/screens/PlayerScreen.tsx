@@ -64,16 +64,7 @@ export default function PlayerScreen() {
   const previousMusicRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (journeyContext && selectedMusic !== 'none') {
-      previousMusicRef.current = selectedMusic;
-      stopBackgroundMusic();
-    }
-    return () => {
-      if (journeyContext && previousMusicRef.current) {
-        setSelectedMusic(previousMusicRef.current as any);
-        previousMusicRef.current = null;
-      }
-    };
+    return () => {};
   }, []);
 
   useEffect(() => {

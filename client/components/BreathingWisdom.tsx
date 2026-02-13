@@ -17,7 +17,7 @@ interface BreathingWisdomProps {
   isLandscape?: boolean;
 }
 
-const MIN_DELAY_MS = 15000;
+const MIN_DELAY_MS = 10000;
 const DISPLAY_DURATION_MS = 6000;
 const FADE_DURATION_MS = 1200;
 
@@ -87,7 +87,7 @@ export default function BreathingWisdom({
     const elapsed = startTimeRef.current ? Date.now() - startTimeRef.current : 0;
 
     if (!hasShownFirst.current) {
-      if (elapsed >= MIN_DELAY_MS && cyclesCompleted >= 2) {
+      if (elapsed >= MIN_DELAY_MS && cyclesCompleted >= 1) {
         hasShownFirst.current = true;
         lastShownCycle.current = cyclesCompleted;
         showNextTip();

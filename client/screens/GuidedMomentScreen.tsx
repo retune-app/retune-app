@@ -7,7 +7,6 @@ import {
   ScrollView,
   Modal,
   useWindowDimensions,
-  Platform,
 } from "react-native";
 import Animated, {
   FadeIn,
@@ -18,7 +17,6 @@ import Animated, {
   withSequence,
   Easing,
   interpolate,
-  runOnJS,
 } from "react-native-reanimated";
 import { Audio } from "expo-av";
 import { Feather, Ionicons } from "@expo/vector-icons";
@@ -40,7 +38,6 @@ import { getAuthToken } from "@/lib/auth-token";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   BackgroundMusicType,
-  BACKGROUND_MUSIC_OPTIONS,
   getSoundsByCategory,
   useBackgroundMusic,
   BackgroundMusicOption,

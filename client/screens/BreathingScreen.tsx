@@ -5,7 +5,6 @@ import {
   Pressable,
   ScrollView,
   Text,
-  Dimensions,
   Modal,
   StatusBar,
   Alert,

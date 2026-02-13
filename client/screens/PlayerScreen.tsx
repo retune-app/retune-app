@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useLayoutEffect, useMemo, useRef } from "react";
-import { View, StyleSheet, Pressable, Alert, ScrollView, Modal } from "react-native";
+import { View, StyleSheet, Pressable, ScrollView, Modal } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
@@ -62,10 +62,6 @@ export default function PlayerScreen() {
   } = useAudio();
   const { selectedMusic, setSelectedMusic, stopBackgroundMusic } = useBackgroundMusic();
   const previousMusicRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    return () => {};
-  }, []);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('beforeRemove', () => {

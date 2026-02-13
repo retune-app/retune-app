@@ -18,10 +18,7 @@ import Animated, {
   withTiming,
   withRepeat,
   withSequence,
-  withSpring,
   Easing,
-  SlideInRight,
-  SlideOutLeft,
   interpolate,
   Extrapolation,
 } from "react-native-reanimated";

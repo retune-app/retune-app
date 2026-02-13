@@ -111,14 +111,14 @@ export default function BreathingWisdom({
   if (isLandscape) {
     return (
       <Animated.View style={[styles.landscapeContainer, animatedStyle]}>
-        <Text style={styles.wisdomText} numberOfLines={2}>{currentTip}</Text>
+        <Text style={styles.wisdomText} numberOfLines={3}>{currentTip}</Text>
       </Animated.View>
     );
   }
 
   return (
     <Animated.View style={[styles.portraitContainer, animatedStyle]}>
-      <Text style={styles.wisdomText} numberOfLines={2}>{currentTip}</Text>
+      <Text style={styles.wisdomText} numberOfLines={3}>{currentTip}</Text>
     </Animated.View>
   );
 }
@@ -126,7 +126,9 @@ export default function BreathingWisdom({
 const styles = StyleSheet.create({
   portraitContainer: {
     alignItems: "center",
-    paddingHorizontal: 24,
+    paddingHorizontal: 32,
+    maxWidth: 320,
+    alignSelf: "center",
     zIndex: 5,
   },
   landscapeContainer: {
@@ -135,11 +137,11 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   wisdomText: {
-    fontSize: 15,
+    fontSize: 14,
     fontFamily: "Nunito_400Regular",
     color: "rgba(255,255,255,0.45)",
     textAlign: "center",
-    lineHeight: 22,
+    lineHeight: 20,
     letterSpacing: 0.3,
     fontStyle: "italic",
   },

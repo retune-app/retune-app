@@ -718,6 +718,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
   const handleGoBack = useCallback(() => {
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
     if (currentStepIndex <= 0) {
+      stopBackgroundMusic();
       navigation.goBack();
       return;
     }
@@ -731,7 +732,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
     setShowControls(false);
     hasNavigatedRef.current = false;
     launchStep(prevIndex);
-  }, [currentStepIndex, navigation, launchStep]);
+  }, [currentStepIndex, navigation, launchStep, stopBackgroundMusic]);
 
   const handleSkipStep = useCallback(() => {
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}

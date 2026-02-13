@@ -166,11 +166,6 @@ export default function FullscreenBreathingLayout({
               <Text style={[styles.fsTechniqueBadge, { backgroundColor: "rgba(0,0,0,0.35)", color: "#FFFFFF" }]}>
                 {technique.name}
               </Text>
-              {affirmationTitle ? (
-                <Text style={styles.fsAffirmationTitle} numberOfLines={2}>
-                  {affirmationTitle}
-                </Text>
-              ) : null}
             </View>
             <View style={styles.fsTopRight}>
               {renderTopRightExtra ? renderTopRightExtra() : null}
@@ -179,6 +174,11 @@ export default function FullscreenBreathingLayout({
               </Pressable>
             </View>
           </View>
+          {affirmationTitle ? (
+            <Text style={styles.fsAffirmationTitle} numberOfLines={2}>
+              {affirmationTitle}
+            </Text>
+          ) : null}
         </Animated.View>
       ) : null}
 
@@ -371,8 +371,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: "Nunito_600SemiBold",
     color: "rgba(255,255,255,0.85)",
-    marginTop: 6,
-    maxWidth: 220,
+    marginTop: Spacing.md,
+    textAlign: "center",
+    alignSelf: "center",
   },
   fsCloseBtn: {
     width: 36,

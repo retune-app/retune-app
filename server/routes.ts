@@ -5,7 +5,7 @@ import path from "path";
 import fs from "fs";
 import rateLimit from "express-rate-limit";
 import { db } from "./db";
-import { affirmations, voiceSamples, categories, users, collections, customCategories, notificationSettings, reminders, listeningSessions, breathingSessions, supportRequests } from "@shared/schema";
+import { affirmations, voiceSamples, categories, users, collections, customCategories, notificationSettings, reminders, listeningSessions, breathingSessions, supportRequests, journeyCompletions } from "@shared/schema";
 import { eq, desc, asc, and, sql, sum, isNull } from "drizzle-orm";
 import { openai } from "./replit_integrations/audio/client";
 import OpenAI from "openai";
@@ -2961,6 +2961,123 @@ Rules for tone:
     } catch (error) {
       console.error("Error in mood check-in:", error);
       res.status(500).json({ error: "Failed to process mood check-in" });
+    }
+  });
+
+  // ============ Journey Completions API ============
+
+  app.post("/api/journey-completions", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { currentMood, targetMood, stepsPlanned, stepsCompleted, stepsSkipped, stepTypes, completedFully, timeOfDay, durationSeconds } = req.body;
+      const userId = req.userId!;
+      
+      if (!currentMood || !targetMood || !stepTypes) {
+        return res.status(400).json({ error: "currentMood, targetMood, and stepTypes are required" });
+      }
+      
+      const dateKey = new Date().toISOString().slice(0, 10);
+      
+      const [completion] = await db.insert(journeyCompletions).values({
+        userId,
+        currentMood,
+        targetMood,
+        stepsPlanned: stepsPlanned || 0,
+        stepsCompleted: stepsCompleted || 0,
+        stepsSkipped: stepsSkipped || 0,
+        stepTypes: Array.isArray(stepTypes) ? stepTypes.join(",") : stepTypes,
+        completedFully: completedFully || false,
+        timeOfDay: timeOfDay || null,
+        durationSeconds: durationSeconds || null,
+        dateKey,
+      }).returning();
+      
+      res.json(completion);
+    } catch (error) {
+      console.error("Error recording journey completion:", error);
+      res.status(500).json({ error: "Failed to record journey completion" });
+    }
+  });
+
+  app.get("/api/journey-stats", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const userId = req.userId!;
+      
+      const [totalCount, completedCount, recentJourneys, moodFrequency, topTargetMood] = await Promise.all([
+        db.select({ total: sql<number>`count(*)::int` })
+          .from(journeyCompletions)
+          .where(eq(journeyCompletions.userId, userId))
+          .then(r => r[0]),
+        db.select({ total: sql<number>`count(*)::int` })
+          .from(journeyCompletions)
+          .where(and(eq(journeyCompletions.userId, userId), eq(journeyCompletions.completedFully, true)))
+          .then(r => r[0]),
+        db.select()
+          .from(journeyCompletions)
+          .where(eq(journeyCompletions.userId, userId))
+          .orderBy(desc(journeyCompletions.completedAt))
+          .limit(5),
+        db.select({
+          currentMood: journeyCompletions.currentMood,
+          targetMood: journeyCompletions.targetMood,
+          count: sql<number>`count(*)::int`,
+        })
+          .from(journeyCompletions)
+          .where(eq(journeyCompletions.userId, userId))
+          .groupBy(journeyCompletions.currentMood, journeyCompletions.targetMood)
+          .orderBy(sql`count(*) desc`)
+          .limit(3),
+        db.select({
+          targetMood: journeyCompletions.targetMood,
+          count: sql<number>`count(*)::int`,
+        })
+          .from(journeyCompletions)
+          .where(and(eq(journeyCompletions.userId, userId), eq(journeyCompletions.completedFully, true)))
+          .groupBy(journeyCompletions.targetMood)
+          .orderBy(sql`count(*) desc`)
+          .limit(1),
+      ]);
+      
+      let journeyStreak = 0;
+      if (recentJourneys.length > 0) {
+        let checkDate = new Date();
+        checkDate.setHours(0, 0, 0, 0);
+        const todayKey = checkDate.toISOString().slice(0, 10);
+        const yesterdayDate = new Date(checkDate);
+        yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+        const yesterdayKey = yesterdayDate.toISOString().slice(0, 10);
+        
+        const allDates = await db
+          .select({ dateKey: journeyCompletions.dateKey })
+          .from(journeyCompletions)
+          .where(eq(journeyCompletions.userId, userId))
+          .orderBy(desc(journeyCompletions.dateKey));
+        
+        const uniqueDates = [...new Set(allDates.map(d => d.dateKey))];
+        if (uniqueDates.length > 0 && (uniqueDates[0] === todayKey || uniqueDates[0] === yesterdayKey)) {
+          let current = new Date(uniqueDates[0]);
+          for (const d of uniqueDates) {
+            const expected = current.toISOString().slice(0, 10);
+            if (d === expected) {
+              journeyStreak++;
+              current.setDate(current.getDate() - 1);
+            } else {
+              break;
+            }
+          }
+        }
+      }
+      
+      res.json({
+        totalJourneys: totalCount?.total || 0,
+        completedJourneys: completedCount?.total || 0,
+        journeyStreak,
+        frequentMoodPaths: moodFrequency,
+        topTargetMood: topTargetMood[0] || null,
+        lastJourney: recentJourneys[0] || null,
+      });
+    } catch (error) {
+      console.error("Error fetching journey stats:", error);
+      res.status(500).json({ error: "Failed to fetch journey stats" });
     }
   });
 

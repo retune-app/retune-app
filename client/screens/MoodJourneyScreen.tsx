@@ -569,7 +569,6 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
       setPhase("navigating-meditation");
       setBreathingPlaying(false);
       (async () => {
-        await stopBackgroundMusic();
         if (prefetchPromiseRef.current) {
           await prefetchPromiseRef.current;
           prefetchPromiseRef.current = null;
@@ -589,7 +588,6 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
     } else if (step.type === "listen") {
       setPhase("navigating-listen");
       setBreathingPlaying(false);
-      stopBackgroundMusic();
       setTimeout(() => {
         if (!hasNavigatedRef.current) {
           hasNavigatedRef.current = true;
@@ -731,8 +729,11 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
 
   const handleEndJourney = useCallback(() => {
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
-    (navigation as any).navigate("Main", { screen: "AffirmTab" });
-  }, [navigation]);
+    (async () => {
+      await stopBackgroundMusic();
+      (navigation as any).navigate("Main", { screen: "AffirmTab" });
+    })();
+  }, [navigation, stopBackgroundMusic]);
 
   const formatTime = (seconds: number): string => {
     const m = Math.floor(seconds / 60);

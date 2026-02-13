@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   View,
   StyleSheet,
@@ -21,6 +21,7 @@ import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
@@ -34,6 +35,9 @@ import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 const ACCENT_GOLD = "#C9A227";
 const GOLD_LIGHT = "#E5C95C";
 const NAVY = "#0F1C3F";
+
+const LAST_MOOD_KEY = "@retuned/last-current-mood";
+const LAST_TARGET_KEY = "@retuned/last-target-mood";
 
 interface MoodOption {
   id: string;
@@ -127,6 +131,15 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
   const [checkinPrompt] = useState(() => CHECKIN_PROMPTS[Math.floor(Math.random() * CHECKIN_PROMPTS.length)]);
   const [targetPrompt, setTargetPrompt] = useState<{ title: string; subtitle: string } | null>(null);
   const [isLoadingPrompt, setIsLoadingPrompt] = useState(false);
+  const [lastCurrentMood, setLastCurrentMood] = useState<string | null>(null);
+  const [lastTargetMood, setLastTargetMood] = useState<string | null>(null);
+
+  useEffect(() => {
+    AsyncStorage.multiGet([LAST_MOOD_KEY, LAST_TARGET_KEY]).then(([[, current], [, target]]) => {
+      if (current) setLastCurrentMood(current);
+      if (target) setLastTargetMood(target);
+    }).catch(() => {});
+  }, []);
 
   const connDot0 = useSharedValue(0.3);
   const connDot1 = useSharedValue(0.3);
@@ -172,6 +185,8 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
   const handleCurrentMoodSelect = useCallback(async (mood: MoodOption) => {
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
     setCurrentMood(mood);
+    setLastCurrentMood(mood.id);
+    AsyncStorage.setItem(LAST_MOOD_KEY, mood.id).catch(() => {});
     setPhase("target");
     setIsLoadingPrompt(true);
 
@@ -196,6 +211,8 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch (e) {}
     setTargetMood(mood);
+    setLastTargetMood(mood.id);
+    AsyncStorage.setItem(LAST_TARGET_KEY, mood.id).catch(() => {});
     setPhase("journey");
     setIsLoading(true);
 
@@ -379,6 +396,7 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
                       style={[
                         styles.moodCard,
                         { backgroundColor: `${mood.color}10`, borderColor: `${mood.color}25` },
+                        mood.id === lastCurrentMood ? styles.lastUsedMoodCard : undefined,
                       ]}
                       testID={`button-mood-current-${mood.id}`}
                     >
@@ -411,6 +429,7 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
                       style={[
                         styles.moodCard,
                         { backgroundColor: `${mood.color}10`, borderColor: `${mood.color}25` },
+                        mood.id === lastTargetMood ? styles.lastUsedMoodCard : undefined,
                       ]}
                       testID={`button-mood-target-${mood.id}`}
                     >
@@ -593,6 +612,10 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
+  },
+  lastUsedMoodCard: {
+    borderColor: `${ACCENT_GOLD}50`,
+    borderWidth: 1.5,
   },
   moodIconCircle: {
     width: 56,

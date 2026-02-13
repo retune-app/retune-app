@@ -353,7 +353,7 @@ const styles = StyleSheet.create({
   },
   portraitWisdomContainer: {
     position: "absolute",
-    bottom: 180,
+    bottom: 120,
     left: 0,
     right: 0,
     alignItems: "center",

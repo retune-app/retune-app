@@ -75,15 +75,33 @@ export default function BreathingCircle({
     hapticsEnabledRef.current = hapticsEnabled;
   }, [hapticsEnabled]);
 
-  const triggerHaptic = (phaseName?: string) => {
-    if (hapticsEnabledRef.current) {
-      try {
-        Haptics.impactAsync(
-          phaseName === "inhale"
-            ? Haptics.ImpactFeedbackStyle.Heavy
-            : Haptics.ImpactFeedbackStyle.Light
-        );
-      } catch (e) {}
+  const hapticIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const stopHapticPulses = () => {
+    if (hapticIntervalRef.current) {
+      clearInterval(hapticIntervalRef.current);
+      hapticIntervalRef.current = null;
+    }
+  };
+
+  const startHapticPulses = (phaseName: string) => {
+    stopHapticPulses();
+    if (!hapticsEnabledRef.current) return;
+
+    if (phaseName === "inhale") {
+      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); } catch (e) {}
+      hapticIntervalRef.current = setInterval(() => {
+        if (!hapticsEnabledRef.current) return;
+        try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); } catch (e) {}
+      }, 300);
+    } else if (phaseName === "exhale") {
+      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+      hapticIntervalRef.current = setInterval(() => {
+        if (!hapticsEnabledRef.current) return;
+        try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+      }, 800);
+    } else {
+      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
     }
   };
 
@@ -110,6 +128,7 @@ export default function BreathingCircle({
 
   useEffect(() => {
     if (!isPlaying) {
+      stopHapticPulses();
       progress.value = withTiming(0, { duration: 600, easing: Easing.out(Easing.ease) });
       return;
     }
@@ -123,7 +142,7 @@ export default function BreathingCircle({
       const phaseName = phase.phase;
 
       runOnJS(updatePhaseState)(phaseName, currentCountdownVal);
-      runOnJS(triggerHaptic)(phaseName);
+      runOnJS(startHapticPulses)(phaseName);
 
       const targetProgress = phaseName === "inhale" || phaseName === "holdIn" ? 1 : 0;
 
@@ -155,6 +174,7 @@ export default function BreathingCircle({
 
     return () => {
       clearInterval(intervalId);
+      stopHapticPulses();
     };
   }, [isPlaying, technique]);
 

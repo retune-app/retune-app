@@ -501,10 +501,17 @@ export default function VoiceSettingsScreen() {
               ]}
               testID="button-gender-female"
             >
-              <Text style={[
-                styles.toggleText,
-                { color: currentGender === "female" ? "#FFFFFF" : theme.text }
-              ]}>Female</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Feather
+                  name="user"
+                  size={14}
+                  color={currentGender === "female" ? "#FFFFFF" : theme.text}
+                />
+                <Text style={[
+                  styles.toggleText,
+                  { color: currentGender === "female" ? "#FFFFFF" : theme.text }
+                ]}>Lotus</Text>
+              </View>
             </Pressable>
             <Pressable
               onPress={() => handleVoiceGenderChange("male")}
@@ -519,10 +526,17 @@ export default function VoiceSettingsScreen() {
               ]}
               testID="button-gender-male"
             >
-              <Text style={[
-                styles.toggleText,
-                { color: currentGender === "male" ? "#FFFFFF" : theme.text }
-              ]}>Male</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Feather
+                  name="user"
+                  size={14}
+                  color={currentGender === "male" ? "#FFFFFF" : theme.text}
+                />
+                <Text style={[
+                  styles.toggleText,
+                  { color: currentGender === "male" ? "#FFFFFF" : theme.text }
+                ]}>Sage</Text>
+              </View>
             </Pressable>
           </View>
         </View>

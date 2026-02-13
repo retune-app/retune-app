@@ -833,15 +833,22 @@ export default function PlayerScreen() {
               ]}
               testID="button-voice-ai-female"
             >
-              <ThemedText
-                type="small"
-                style={{
-                  color: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "female" ? "#FFFFFF" : theme.text,
-                  fontWeight: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "female" ? '700' : '500',
-                }}
-              >
-                AI Female
-              </ThemedText>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                <Feather
+                  name="user"
+                  size={13}
+                  color={affirmation?.voiceType === "ai" && affirmation?.voiceGender === "female" ? "#FFFFFF" : theme.text}
+                />
+                <ThemedText
+                  type="small"
+                  style={{
+                    color: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "female" ? "#FFFFFF" : theme.text,
+                    fontWeight: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "female" ? '700' : '500',
+                  }}
+                >
+                  Lotus
+                </ThemedText>
+              </View>
             </Pressable>
             <Pressable
               onPress={() => handleVoiceSwitch("ai", "male")}
@@ -857,15 +864,22 @@ export default function PlayerScreen() {
               ]}
               testID="button-voice-ai-male"
             >
-              <ThemedText
-                type="small"
-                style={{
-                  color: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "male" ? "#FFFFFF" : theme.text,
-                  fontWeight: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "male" ? '700' : '500',
-                }}
-              >
-                AI Male
-              </ThemedText>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                <Feather
+                  name="user"
+                  size={13}
+                  color={affirmation?.voiceType === "ai" && affirmation?.voiceGender === "male" ? "#FFFFFF" : theme.text}
+                />
+                <ThemedText
+                  type="small"
+                  style={{
+                    color: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "male" ? "#FFFFFF" : theme.text,
+                    fontWeight: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "male" ? '700' : '500',
+                  }}
+                >
+                  Sage
+                </ThemedText>
+              </View>
             </Pressable>
           </View>
         </View>

@@ -38,6 +38,7 @@ import { getAuthToken } from "@/lib/auth-token";
 import { journeyNavigationRef } from "@/navigation/journeyNavigationRef";
 import { useBackgroundMusic, getSoundsByCategory, type BackgroundMusicType, type BackgroundMusicOption } from "@/contexts/BackgroundMusicContext";
 import FullscreenBreathingLayout from "@/components/FullscreenBreathingLayout";
+import BreathingWisdom from "@/components/BreathingWisdom";
 import JourneyStepBar from "@/components/JourneyStepBar";
 import { MeditationIcon } from "@/components/MeditationIcon";
 import { ThemedText } from "@/components/ThemedText";
@@ -1117,6 +1118,13 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
           ]}
           renderProgressRing={(size) => renderProgressRing(size)}
           renderCircleOverlay={(size) => renderCountdownOverlay(size)}
+          renderWisdom={() => (
+            <BreathingWisdom
+              techniqueId={technique.id}
+              isPlaying={breathingPlaying}
+              cyclesCompleted={cyclesCompleted}
+            />
+          )}
         />
       </Animated.View>
     );

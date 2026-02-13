@@ -915,6 +915,7 @@ export default function BreathingScreen() {
             backgroundColor={theme.navy}
             showContent={countdownValue === null}
             hapticsEnabled={hapticsEnabled}
+            affirmationTitle={voiceEnabled && breathingAffirmation ? breathingAffirmation.title : undefined}
             stats={[
               { label: "Time Left", value: formatTime(remainingTime) },
               { label: "Progress", value: `${progressPercent}%`, color: selectedTechnique.color },

@@ -47,6 +47,7 @@ interface FullscreenBreathingLayoutProps {
   renderStopButton?: () => React.ReactNode;
   hapticsEnabled?: boolean;
   hideTopControls?: boolean;
+  affirmationTitle?: string;
 }
 
 export default function FullscreenBreathingLayout({
@@ -72,6 +73,7 @@ export default function FullscreenBreathingLayout({
   renderStopButton,
   hapticsEnabled,
   hideTopControls = false,
+  affirmationTitle,
 }: FullscreenBreathingLayoutProps) {
   const screenWidth = Dimensions.get("window").width;
   const screenHeight = Dimensions.get("window").height;
@@ -102,6 +104,11 @@ export default function FullscreenBreathingLayout({
             <Text style={styles.landscapePhaseLabel}>
               {technique.benefits}
             </Text>
+            {affirmationTitle ? (
+              <Text style={styles.landscapeAffirmationTitle} numberOfLines={2}>
+                {affirmationTitle}
+              </Text>
+            ) : null}
           </Animated.View>
 
           <View style={styles.landscapeCircleContainer}>
@@ -159,6 +166,11 @@ export default function FullscreenBreathingLayout({
               <Text style={[styles.fsTechniqueBadge, { backgroundColor: "rgba(0,0,0,0.35)", color: "#FFFFFF" }]}>
                 {technique.name}
               </Text>
+              {affirmationTitle ? (
+                <Text style={styles.fsAffirmationTitle} numberOfLines={2}>
+                  {affirmationTitle}
+                </Text>
+              ) : null}
             </View>
             <View style={styles.fsTopRight}>
               {renderTopRightExtra ? renderTopRightExtra() : null}
@@ -279,6 +291,12 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#FFFFFF",
   },
+  landscapeAffirmationTitle: {
+    fontSize: 13,
+    fontFamily: "Nunito_600SemiBold",
+    color: "rgba(255,255,255,0.75)",
+    marginTop: 8,
+  },
   landscapeControlsRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -348,6 +366,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: "hidden",
     letterSpacing: 0.5,
+  },
+  fsAffirmationTitle: {
+    fontSize: 14,
+    fontFamily: "Nunito_600SemiBold",
+    color: "rgba(255,255,255,0.85)",
+    marginTop: 6,
+    maxWidth: 220,
   },
   fsCloseBtn: {
     width: 36,

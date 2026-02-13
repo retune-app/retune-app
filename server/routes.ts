@@ -759,7 +759,6 @@ async function generateAudioSimple(text: string, voiceId: string, isPersonalVoic
   
   if (humeName) {
     try {
-      console.log(`Using Hume AI simple TTS for stock voice: ${humeName}`);
       return await humeSimpleTTS(text, humeName);
     } catch (humeError: any) {
       console.error("Hume AI simple TTS failed, trying OpenAI fallback:", humeError?.message || humeError);
@@ -820,7 +819,6 @@ async function generateAudio(
   
   if (humeName) {
     try {
-      console.log(`Using Hume AI TTS for stock voice: ${humeName}`);
       const result = await humeTextToSpeech(script, humeName, moodConfig?.humeSpeed, moodConfig?.pauseSeconds);
       return result;
     } catch (humeError: any) {
@@ -1120,7 +1118,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
       } catch (genError: any) {
         if (usedPersonalVoice && genError?.message?.includes("QUOTA_EXCEEDED")) {
-          console.log("Personal voice quota exceeded, falling back to AI voice");
           const fallbackGender = usedGender || "female";
           const fallbackVoiceId = fallbackGender === "male"
             ? (userWithPrefs?.preferredMaleVoiceId || VOICE_OPTIONS.male[0].id)
@@ -1129,7 +1126,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           voiceIdToUse = fallbackVoiceId;
           audioResult = await generateAudio(script, fallbackVoiceId, false, getPillarVoiceConfig(pillar));
         } else if (usedPersonalVoice && (genError?.message?.includes("PERSONAL_VOICE_FAILED") || genError?.message?.includes("VOICE_EXPIRED"))) {
-          console.log("Personal voice not found/expired, falling back to AI voice");
           const fallbackGender = usedGender || "female";
           const fallbackVoiceId = fallbackGender === "male"
             ? (userWithPrefs?.preferredMaleVoiceId || VOICE_OPTIONS.male[0].id)
@@ -1643,11 +1639,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid voice ID" });
       }
 
-      console.log(`Generating voice preview for: ${voiceId} (${validVoice.name})`);
       const audioBuffer = await generateAudioSimple(PREVIEW_PHRASE, voiceId);
 
       const base64Audio = Buffer.from(audioBuffer).toString("base64");
-      console.log(`Voice preview generated successfully for ${validVoice.name}, size: ${base64Audio.length} chars`);
       res.json({ 
         audio: base64Audio,
         voiceName: validVoice.name,
@@ -3257,8 +3251,6 @@ Rules for tone:
       const moodConfig = MEDITATION_MOOD_CONFIG[mood] || MEDITATION_MOOD_CONFIG.calm;
       const paceDescription = "at a calm pace";
 
-      console.log(`Generating micro-meditation script (${duration}min) for user ${userId} (${userName}), mood: ${mood}, time: ${timeOfDay}, day: ${dayOfWeek}`);
-
       const scriptResponse = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
@@ -3307,8 +3299,6 @@ Rules for tone:
         return res.status(500).json({ error: "Failed to generate meditation script" });
       }
 
-      console.log(`Script generated (${script.split(/\s+/).length} words): ${script.substring(0, 80)}...`);
-
       res.json({
         script,
         mood,
@@ -3341,7 +3331,6 @@ Rules for tone:
           .orderBy(desc(voiceSamples.createdAt)).limit(1);
         if (voiceResult[0]?.voiceId) {
           voiceId = voiceResult[0].voiceId;
-          console.log(`Resolved personal voice clone ID: ${voiceId} for user ${userId}`);
         } else {
           console.warn(`User ${userId} requested personal voice but no completed voice clone found`);
         }
@@ -3356,7 +3345,6 @@ Rules for tone:
       let wordTimings: WordTiming[] = [];
       let audioDuration = 0;
 
-      const ttsStartTime = Date.now();
       try {
         if (usePersonalVoice && voiceId) {
           const result = await generateAudio(script, voiceId, true, moodConfig);
@@ -3378,9 +3366,6 @@ Rules for tone:
                 ttsError?.message?.includes("VOICE_EXPIRED") ? "VOICE_EXPIRED" : "TTS_FAILED"
         });
       }
-      const ttsTime = Date.now() - ttsStartTime;
-      console.log(`TTS generated in ${ttsTime}ms`);
-
       const audioBase64 = Buffer.from(audioBuffer).toString("base64");
 
       res.json({
@@ -3430,7 +3415,6 @@ Rules for tone:
       const durationLabel = duration === 1 ? "60-90 seconds" : `${duration} minutes`;
 
       const userId = req.userId!;
-      const startTime = Date.now();
 
       const [userResult, voiceResult] = await Promise.all([
         db.select({ name: users.name }).from(users).where(eq(users.id, userId)).limit(1),
@@ -3446,7 +3430,6 @@ Rules for tone:
       if (usePersonalVoice && !voiceId) {
         if (voiceResult[0]?.voiceId) {
           voiceId = voiceResult[0].voiceId;
-          console.log(`Resolved personal voice clone ID: ${voiceId} for user ${userId}`);
         } else {
           console.warn(`User ${userId} requested personal voice but no completed voice clone found`);
         }
@@ -3463,8 +3446,6 @@ Rules for tone:
 
       const moodConfig = MEDITATION_MOOD_CONFIG[mood] || MEDITATION_MOOD_CONFIG.calm;
       const paceDescription = "at a calm pace";
-
-      console.log(`Generating micro-meditation (${duration}min) for user ${userId} (${userName}), mood: ${mood}, time: ${timeOfDay}, day: ${dayOfWeek}`);
 
       const scriptPromise = openai.chat.completions.create({
         model: "gpt-4o-mini",
@@ -3515,9 +3496,6 @@ Rules for tone:
         return res.status(500).json({ error: "Failed to generate meditation script" });
       }
 
-      const scriptTime = Date.now() - startTime;
-      console.log(`Script generated in ${scriptTime}ms (${script.split(/\s+/).length} words): ${script.substring(0, 80)}...`);
-
       if (clientDisconnected) {
         console.log(`Client disconnected after script generation (${duration}min), skipping TTS`);
         return;
@@ -3527,7 +3505,6 @@ Rules for tone:
       let wordTimings: WordTiming[] = [];
       let audioDuration = 0;
 
-      const ttsStartTime = Date.now();
       try {
         if (usePersonalVoice && voiceId) {
           const result = await generateAudio(script, voiceId, true, moodConfig);
@@ -3549,13 +3526,7 @@ Rules for tone:
                 ttsError?.message?.includes("VOICE_EXPIRED") ? "VOICE_EXPIRED" : "TTS_FAILED"
         });
       }
-      const ttsTime = Date.now() - ttsStartTime;
-      console.log(`TTS generated in ${ttsTime}ms`);
-
       const audioBase64 = Buffer.from(audioBuffer).toString("base64");
-
-      const totalTime = Date.now() - startTime;
-      console.log(`Micro-meditation (${duration}min) generated: ${audioDuration}s audio, ${audioBase64.length} base64 chars (script: ${scriptTime}ms, tts: ${ttsTime}ms, total: ${totalTime}ms)`);
 
       res.json({
         script,

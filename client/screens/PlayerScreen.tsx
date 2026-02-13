@@ -88,7 +88,7 @@ export default function PlayerScreen() {
   const rsvpFontSize: RSVPFontSize = "XL";
   const rsvpHighlight = true;
   const [showRsvpSettings, setShowRsvpSettings] = useState(false);
-  const [showScript, setShowScript] = useState(true);
+  const [showScript, setShowScript] = useState(false);
   const [isLandscape, setIsLandscape] = useState(false);
   const [isInFullscreenMode, setIsInFullscreenMode] = useState(false);
   const [hasSaved, setHasSaved] = useState(false);

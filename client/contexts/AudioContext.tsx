@@ -210,43 +210,45 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const playRequestId = useRef(0);
+
   const playAffirmation = useCallback(async (affirmation: Affirmation) => {
     if (!affirmation.audioUrl) {
       console.error('No audio URL for affirmation');
       return;
     }
 
-    // Prevent overlapping operations from rapid button presses
-    if (isOperationInProgress.current) {
-      return;
-    }
-
     // If same affirmation is already loaded, just resume playback
     if (currentAffirmation?.id === affirmation.id && soundRef.current) {
       try {
-        isOperationInProgress.current = true;
         const status = await soundRef.current.getStatusAsync();
         if (status.isLoaded) {
           await soundRef.current.playAsync();
           setIsPlaying(true);
           return;
         }
-      } finally {
-        isOperationInProgress.current = false;
+      } catch (e) {
+        // Fall through to full reload
       }
     }
 
-    isOperationInProgress.current = true;
+    const thisRequestId = ++playRequestId.current;
+
     setIsLoading(true);
     setCurrentAffirmation(affirmation);
     setPosition(0);
     setDuration(0);
+    setIsPlaying(false);
     hasRecordedListenRef.current = false;
     await unloadCurrentSound(false);
+
+    if (thisRequestId !== playRequestId.current) return;
 
     try {
       const remoteUri = `${getApiUrl()}${affirmation.audioUrl}`;
       const audioUri = await getCachedAudioUri(remoteUri, affirmation.id);
+
+      if (thisRequestId !== playRequestId.current) return;
 
       const { sound } = await Audio.Sound.createAsync(
         { uri: audioUri },
@@ -259,6 +261,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         },
         (status) => {
           try {
+            if (thisRequestId !== playRequestId.current) return;
             if (status.isLoaded) {
               setPosition(status.positionMillis || 0);
               setDuration(status.durationMillis || 0);
@@ -279,6 +282,11 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         }
       );
 
+      if (thisRequestId !== playRequestId.current) {
+        try { await sound.stopAsync(); await sound.unloadAsync(); } catch (e) {}
+        return;
+      }
+
       soundRef.current = sound;
       setIsPlaying(true);
       
@@ -286,10 +294,13 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         startBackgroundMusic();
       }
     } catch (error) {
-      console.error('Error loading audio:', error);
+      if (thisRequestId === playRequestId.current) {
+        console.error('Error loading audio:', error);
+      }
     } finally {
-      setIsLoading(false);
-      isOperationInProgress.current = false;
+      if (thisRequestId === playRequestId.current) {
+        setIsLoading(false);
+      }
     }
   }, [currentAffirmation?.id, autoReplay, playbackSpeed, unloadCurrentSound, recordListen, selectedMusic, startBackgroundMusic]);
 

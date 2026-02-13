@@ -68,12 +68,11 @@ export default function PlayerScreen() {
   }, []);
 
   useEffect(() => {
-    if (!journeyContext) return;
     const unsubscribe = navigation.addListener('beforeRemove', () => {
       stop();
     });
     return unsubscribe;
-  }, [journeyContext, navigation, stop]);
+  }, [navigation, stop]);
 
   const rsvpEnabled = true;
   const rsvpFontSize: RSVPFontSize = "XL";

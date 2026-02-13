@@ -183,7 +183,7 @@ export function RSVPDisplay({
     return (
       <View style={styles.container}>
         <Text style={[styles.placeholder, { color: theme.textSecondary }]}>
-          No word timing data available
+          Preparing your affirmation...
         </Text>
       </View>
     );

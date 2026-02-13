@@ -2966,25 +2966,30 @@ User context:
 Respond as JSON with exactly these fields:
 {
   "journeyTitle": "A creative 2-5 word title for this journey. Should capture the mood transition. No emojis. Can reference a neuroscience or mindfulness concept when it fits naturally (e.g., 'Vagal Reset', 'Rewiring the Signal', 'Back to Center', 'Finding Ventral'). Keep it punchy.",
-  "acknowledgment": "1-2 sentences, max 30 words total. Use ${userName}'s name. Validate their ${mood} state with a real insight — name what's actually happening in their brain or body or energy right now, then pivot to ${targetMood} with confidence. Never use emojis. Never use metaphors.
+  "acknowledgment": "1-2 sentences, max 30 words total. Use ${userName}'s name. Validate their ${mood} state with a real insight, then pivot to ${targetMood} with confidence. Never use emojis. Never use metaphors.
 
-VARIETY IS CRITICAL. Randomly choose ONE of these angles per response:
-A) Neuroscience angle — name a specific brain/body mechanism: '${userName}, your nervous system is stuck in fight-or-flight right now. This journey will activate your vagus nerve and bring you back to baseline.'
-B) Mindfulness angle — reference awareness or a tradition: '${userName}, in mindfulness they say feelings are visitors. That ${mood} feeling is passing through — let's open the door to ${targetMood}.'
-C) Body-first angle — focus on what they're physically feeling: '${userName}, ${mood} lives in your chest and shoulders right now. Three steps and your body will remember what ${targetMood} actually feels like.'
-D) Direct/confident angle — no science, just real talk: '${userName}, ${mood} to ${targetMood} — your brain already knows how to do this. Let's give it the right inputs.'
+VARIETY IS CRITICAL. Randomly choose ONE of these angles — and within that angle, pick a DIFFERENT mechanism each time:
+A) Neuroscience angle — pick ONE mechanism you haven't used recently: amygdala hijack, cortisol flooding, prefrontal cortex going offline, sympathetic overdrive, depleted serotonin, overactive default mode network, disrupted HRV, dopamine seeking loops, adrenaline surplus, or polyvagal dorsal shutdown. DO NOT default to 'fight-or-flight' or 'vagus nerve' — those are overused.
+B) Mindfulness angle — pick from: feelings as visitors, observer self, non-attachment, witness consciousness, present-moment anchoring, the space between stimulus and response, beginner's mind, radical acceptance, pranayama traditions, or the Buddhist concept of impermanence. Vary which tradition or concept you reference.
+C) Body-first angle — name where ${mood} shows up physically: jaw tension, shallow breathing, chest tightness, shoulder knots, stomach churning, heavy limbs, restless hands, constricted throat, tight forehead, or numb extremities. Be specific to ${mood}, not generic.
+D) Direct/confident angle — no science, just a grounded observation about what ${userName} needs right now. Vary your sentence structure — sometimes start with their name, sometimes end with it.
 
-BANNED PATTERNS (never write these):
-- 'that [mood] feeling doesn't have to stay'
-- 'let's move you toward [mood]'
-- 'going from X to Y is totally doable'
-- 'You can do this tonight/right now'
-- Any sentence that could apply to ANY mood transition without changes
+CRITICAL: Do NOT copy or closely paraphrase any example text. Generate completely original phrasing every time. Vary sentence structure, word choice, and rhythm.
 
-If the user has journey history, reference it naturally — e.g., 'Your nervous system is getting faster at this shift' or 'You've trained this pathway before'.",
+BANNED PHRASES (never write these exact words):
+- 'stuck in fight-or-flight'
+- 'activate your vagus nerve'
+- 'bring you back to baseline'
+- 'doesn't have to stay'
+- 'let's move you toward'
+- 'totally doable'
+- 'your brain already knows how'
+- 'open the door to'
+
+If the user has journey history, reference it naturally with fresh phrasing each time.",
   "stepTypes": ["breathe", "meditate", "listen"],
-  "breatheNote": "One punchy sentence (max 20 words) or null if breathe is not in stepTypes. Mention this is a 2-minute exercise. Explain WHY ${breathing.name} works for ${mood}→${targetMood} using one specific mechanism: vagus nerve stimulation, CO2 tolerance, HRV improvement, parasympathetic activation, or a pranayama principle. State it as fact, not textbook. Example: 'Two minutes of ${breathing.name} directly stimulates your vagus nerve — the fastest way to tell your brain the danger has passed.'",
-  "meditateNote": "One punchy sentence (max 20 words) or null if meditate is not in stepTypes. Mention this is a 2-minute guided meditation. Explain the shift it creates — reference default mode network quieting, theta state access, amygdala cooling, witness consciousness, or present-moment anchoring. Connect it to ${timeOfDay}. Example: 'A 2-minute meditation at ${timeOfDay} drops your brain into theta — the state where ${mood} loses its grip.'",
+  "breatheNote": "One punchy sentence (max 20 words) or null if breathe is not in stepTypes. Mention this is a 2-minute exercise. Pick a DIFFERENT mechanism each time from: vagus nerve stimulation, CO2 tolerance building, HRV improvement, parasympathetic activation, baroreceptor reset, diaphragm engagement, or a pranayama principle. State it as fact, not textbook. Do NOT reuse previous phrasing — generate fresh wording.",
+  "meditateNote": "One punchy sentence (max 20 words) or null if meditate is not in stepTypes. Mention this is a 2-minute guided meditation. Pick a DIFFERENT mechanism each time from: default mode network quieting, theta state access, amygdala cooling, witness consciousness, present-moment anchoring, prefrontal re-engagement, or interoceptive awareness. Connect it to ${timeOfDay}. Do NOT reuse previous phrasing — generate fresh wording.",
   "listenNote": "One or two sentences (max 30 words) or null if listen is not in stepTypes. ${matchedAffirmation ? `Reference '${matchedAffirmation.title}' specifically.${matchedAffirmation.description ? ` Use the affirmation's description — "${matchedAffirmation.description}" — to explain WHY this particular affirmation is the perfect fit for the ${mood}→${targetMood} transition right now. Reference neuroplasticity or subconscious reprogramming.` : ` Explain why hearing it NOW after breathing/meditation lands differently — reference neuroplasticity, subconscious receptivity, or how the brain is more open to new patterns after a nervous system reset.`}` : hasAffirmations ? `Connect one of their existing affirmations to the ${mood}→${targetMood} shift. Reference how repetition rewires neural pathways or how the subconscious is most receptive after breathwork/meditation.` : `Inspire them to create their first affirmation about ${suggestedCreationTheme}${!hasClonedVoice ? " — mention how hearing your own voice activates mirror neurons differently than any other voice" : ""}. Reference neuroplasticity or subconscious programming.`}"
 }
 

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -17,6 +17,7 @@ interface JourneyStepBarProps {
   showPrevious?: boolean;
   onEndJourney?: () => void;
   showEndJourney?: boolean;
+  skipDelay?: number;
 }
 
 function getStepIcon(label: string): string {
@@ -37,8 +38,20 @@ export default function JourneyStepBar({
   showPrevious = true,
   onEndJourney,
   showEndJourney = false,
+  skipDelay = 0,
 }: JourneyStepBarProps) {
   const insets = useSafeAreaInsets();
+  const [skipDelayElapsed, setSkipDelayElapsed] = useState(skipDelay <= 0);
+
+  useEffect(() => {
+    if (skipDelay <= 0) {
+      setSkipDelayElapsed(true);
+      return;
+    }
+    setSkipDelayElapsed(false);
+    const timer = setTimeout(() => setSkipDelayElapsed(true), skipDelay * 1000);
+    return () => clearTimeout(timer);
+  }, [currentStep, skipDelay]);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + 8 }]}>
@@ -110,7 +123,7 @@ export default function JourneyStepBar({
               <Feather name="check-circle" size={14} color="#1A1A2E" />
               <Text style={styles.endButtonText}>End</Text>
             </Pressable>
-          ) : showSkip && onSkip ? (
+          ) : showSkip && skipDelayElapsed && onSkip ? (
             <Pressable onPress={onSkip} style={styles.navButton} hitSlop={8}>
               <Text style={styles.navButtonText}>Skip</Text>
               <Feather name="chevron-right" size={16} color="rgba(255,255,255,0.9)" />

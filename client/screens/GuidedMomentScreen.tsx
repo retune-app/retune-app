@@ -1247,6 +1247,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
             showEndJourney={journeyContext.currentStep >= journeyContext.totalSteps - 1}
             onEndJourney={async () => { await cleanupVoice(); await stopBackgroundMusic(); journeyNavigationRef.action = 'complete'; (navigation as any).navigate("Main"); }}
             showPrevious={true}
+            skipDelay={10}
           />
         </Animated.View>
       ) : null}

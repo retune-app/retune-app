@@ -1074,6 +1074,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
               onSkip={currentStepIndex < journey.steps.length - 1 ? handleSkipStep : undefined}
               showSkip={currentStepIndex < journey.steps.length - 1}
               showPrevious={true}
+              skipDelay={10}
             />
             <View style={[styles.journeyMusicButton, { top: insets.top + 70 }]}>
               <Pressable

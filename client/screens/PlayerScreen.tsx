@@ -119,14 +119,22 @@ export default function PlayerScreen() {
 
   const isCurrentlyPlaying = currentAffirmation?.id === affirmationId && isPlaying;
 
-  const [controlsVisible, setControlsVisible] = useState(false);
-  const controlsOpacity = useSharedValue(0);
+  const [controlsVisible, setControlsVisible] = useState(true);
+  const controlsOpacity = useSharedValue(1);
   const controlsTimerRef = useRef<NodeJS.Timeout | null>(null);
   const controlsFadeStyle = useAnimatedStyle(() => ({
     opacity: controlsOpacity.value,
   }));
 
   const isLastJourneyStep = journeyContext ? journeyContext.currentStep === journeyContext.totalSteps - 1 : false;
+
+  useEffect(() => {
+    controlsTimerRef.current = setTimeout(() => {
+      setControlsVisible(false);
+      controlsOpacity.value = withTiming(0, { duration: 400 });
+    }, 3000);
+    return () => { if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current); };
+  }, []);
 
   const hideControls = useCallback(() => {
     setControlsVisible(false);

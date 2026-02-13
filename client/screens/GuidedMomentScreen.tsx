@@ -155,6 +155,40 @@ const MOOD_RING_COLORS: Record<string, { primary: string; secondary: string }> =
   joyful: { primary: "#FFB74D", secondary: "#FFA726" },
 };
 
+const pickRandom = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
+
+const getMeditationLoadingMessage = (mood: string, isJourney: boolean): string => {
+  const moodLabel = MOOD_LABELS[mood] || mood;
+  if (isJourney) {
+    return pickRandom([
+      `Preparing your meditation...`,
+      `Tuning into your ${moodLabel} state...`,
+      `Building a moment of stillness...`,
+      `Finding the right guidance for you...`,
+      `Creating space for your mind to shift...`,
+    ]);
+  }
+  return pickRandom([
+    `Crafting your\nmicro-meditation...`,
+    `Creating a moment\njust for you...`,
+    `Tuning into your\n${moodLabel} state...`,
+    `Building a guided\nmoment of stillness...`,
+    `Finding the right\nwords for you...`,
+    `Preparing something\ntailored to ${moodLabel}...`,
+  ]);
+};
+
+const getMeditationStatusMessage = (mood: string): string => {
+  const moodLabel = MOOD_LABELS[mood] || mood;
+  return pickRandom([
+    `Crafting your micro-meditation...`,
+    `Creating a moment just for ${moodLabel}...`,
+    `Tuning into what you need right now...`,
+    `Building your guided moment...`,
+    `Finding the right words for your ${moodLabel} state...`,
+  ]);
+};
+
 const CATEGORY_COLORS: Record<string, string> = {
   rain: "#4FC3F7",
   ocean: "#29B6F6",
@@ -1075,7 +1109,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
           </View>
           {playerState === "generating" ? (
             <ThemedText type="caption" style={styles.statusLabel}>
-              {"Crafting your micro-meditation..."}
+              {getMeditationStatusMessage(mood)}
             </ThemedText>
           ) : playerState === "error" ? (
             <ThemedText type="caption" style={[styles.statusLabel, { color: "#E85D5D" }]}>
@@ -1207,7 +1241,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
           <View style={styles.standaloneGeneratingContent}>
             <Animated.View style={[styles.standaloneGeneratingPulse, generatingPulseStyle, { borderColor: moodColors.primary }]} />
             <ThemedText type="h3" style={styles.standaloneGeneratingText}>
-              {"Crafting your\nmicro-meditation..."}
+              {getMeditationLoadingMessage(mood, false)}
             </ThemedText>
             <View style={styles.standaloneGeneratingDots}>
               {[0, 1, 2].map((i) => (
@@ -1258,7 +1292,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
         >
           {journeyContext && playerState === "generating" ? (
             <ThemedText type="caption" style={styles.aboveRingsStatusText}>
-              {"Preparing your meditation..."}
+              {getMeditationLoadingMessage(mood, true)}
             </ThemedText>
           ) : null}
           <View style={isLandscape ? styles.landscapeLayout : styles.portraitLayout}>

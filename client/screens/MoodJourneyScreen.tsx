@@ -1186,6 +1186,11 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
+    shadowColor: "#E5C95C",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.9,
+    shadowRadius: 4,
+    elevation: 6,
   },
   introTitle: {
     textAlign: "center",
@@ -1296,6 +1301,11 @@ const styles = StyleSheet.create({
     height: 5,
     borderRadius: 2.5,
     opacity: 0.6,
+    shadowColor: "#E5C95C",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.9,
+    shadowRadius: 4,
+    elevation: 6,
   },
   completeTitle: {
     textAlign: "center",

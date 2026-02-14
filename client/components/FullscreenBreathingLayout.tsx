@@ -166,7 +166,7 @@ export default function FullscreenBreathingLayout({
           />
           <View style={styles.fsTopControls}>
             <View style={styles.fsTopLeft}>
-              <Text style={[styles.fsTechniqueBadge, { backgroundColor: "rgba(0,0,0,0.35)", color: "#FFFFFF" }]}>
+              <Text style={[styles.fsTechniqueBadge, { backgroundColor: "rgba(0,0,0,0.35)", color: technique.color }]}>
                 {technique.name}
               </Text>
             </View>

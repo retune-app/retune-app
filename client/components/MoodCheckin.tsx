@@ -580,7 +580,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: Spacing.lg,
-    paddingBottom: 24,
+    paddingBottom: 48,
     paddingTop: Spacing.md,
     maxHeight: "92%",
   },

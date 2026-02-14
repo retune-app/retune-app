@@ -374,7 +374,7 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
         >
           <View style={styles.modalHandle} />
           <ScrollView
-            showsVerticalScrollIndicator={true}
+            showsVerticalScrollIndicator={false}
             bounces={true}
             keyboardShouldPersistTaps="handled"
             style={styles.modalScroll}

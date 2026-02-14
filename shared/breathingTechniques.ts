@@ -9,6 +9,7 @@ export interface BreathingTechnique {
   phases: {
     phase: BreathPhase;
     duration: number;
+    instruction?: string;
   }[];
   benefits: string;
   color: string;
@@ -101,6 +102,28 @@ export const BREATHING_TECHNIQUES: BreathingTechnique[] = [
       { icon: "eye", text: "Heightens alertness and awareness" },
       { icon: "cpu", text: "Increases oxygen to the brain" },
       { icon: "trending-up", text: "Elevates mood and motivation" },
+    ],
+  },
+  {
+    id: "alternate",
+    name: "Alternate Nostril",
+    description: "Nadi Shodhana — alternating sides for balance",
+    pattern: "4-4-4-4 seconds",
+    icon: "repeat",
+    phases: [
+      { phase: "inhale", duration: 4, instruction: "Close right nostril \u2014 inhale left" },
+      { phase: "exhale", duration: 4, instruction: "Close left nostril \u2014 exhale right" },
+      { phase: "inhale", duration: 4, instruction: "Keep left closed \u2014 inhale right" },
+      { phase: "exhale", duration: 4, instruction: "Close right nostril \u2014 exhale left" },
+    ],
+    benefits: "Balance & mental clarity",
+    color: "#5B9BD5",
+    scienceTip: "Alternating airflow activates both brain hemispheres, balancing your autonomic nervous system",
+    detailedBenefits: [
+      { icon: "git-merge", text: "Balances left and right brain hemispheres" },
+      { icon: "wind", text: "Calms the nervous system deeply" },
+      { icon: "sun", text: "Sharpens focus and mental clarity" },
+      { icon: "heart", text: "Improves emotional stability" },
     ],
   },
 ];

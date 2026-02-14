@@ -18,6 +18,7 @@ interface BreathingWisdomProps {
 }
 
 const MIN_DELAY_MS = 10000;
+const MIN_BETWEEN_TIPS_MS = 25000;
 const DISPLAY_DURATION_MS = 6000;
 const FADE_DURATION_MS = 1200;
 
@@ -31,6 +32,7 @@ export default function BreathingWisdom({
   const [currentTip, setCurrentTip] = useState<string | null>(null);
   const wisdomIndex = useRef(0);
   const startTimeRef = useRef<number | null>(null);
+  const lastTipTimeRef = useRef<number>(0);
   const lastShownCycle = useRef(-1);
   const hasShownFirst = useRef(false);
   const opacity = useSharedValue(0);
@@ -69,6 +71,7 @@ export default function BreathingWisdom({
     if (wisdom.length === 0) return;
     const tip = wisdom[wisdomIndex.current % wisdom.length];
     wisdomIndex.current += 1;
+    lastTipTimeRef.current = Date.now();
     setCurrentTip(tip);
 
     opacity.value = 0;
@@ -96,7 +99,8 @@ export default function BreathingWisdom({
     }
 
     const cyclesSinceLast = cyclesCompleted - lastShownCycle.current;
-    if (cyclesSinceLast >= 2 + Math.floor(Math.random() * 2)) {
+    const timeSinceLastTip = Date.now() - lastTipTimeRef.current;
+    if (cyclesSinceLast >= 2 && timeSinceLastTip >= MIN_BETWEEN_TIPS_MS) {
       lastShownCycle.current = cyclesCompleted;
       showNextTip();
     }

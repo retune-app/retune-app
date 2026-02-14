@@ -3,7 +3,11 @@
 ## Overview
 Retuned is an application designed to help users reprogram their subconscious minds through personalized audio affirmations. It leverages AI to generate affirmation scripts based on user goals, which can then be played in the user's cloned voice or a selection of curated AI voices. The project aims to provide a powerful tool for personal growth and mental well-being, focusing on subconscious language patterns to maximize effectiveness. Key features include voice cloning, guided breathing exercises, AI-powered mood check-ins with personalized wellness paths, micro-meditations, and a comprehensive ambient sound library.
 
-## Recent Changes (v1.6 Build 1 — February 13, 2026)
+## Recent Changes (v1.6 Build 2 — February 14, 2026)
+- **Return-to-App Welcome Back**: Tracks last app open via AsyncStorage. When user returns after 4+ hours, passes `hoursAway` to `/api/daily-greeting` which generates a time-gap-aware AI message (e.g., referencing their streak or encouraging their return). Cache key separates welcome-back from regular greetings. Query staleTime set to 0 for welcome-back to always fetch fresh. AppState listener invalidates greeting cache on foreground return.
+- **Library Hints Frequency**: Swipe tip and first-play hint auto-hide after 3 library visits (AsyncStorage view counts). Swipe tip moved to FlatList ListFooterComponent.
+
+## Previous Changes (v1.6 Build 1 — February 13, 2026)
 - **Breathing Wisdom**: AI-generated science-based wisdom tips during breathing sessions (standalone and mood journey). Factual, encouraging tone. Tips appear after 10s + 1 completed cycle, display 3 lines, fade in/out subtly. API: `GET /api/breathing-wisdom?techniqueId={id}` with 24h in-memory cache and hardcoded fallbacks.
 - **Breathing Timer Fix**: Moved handleStop to separate useEffect watching elapsedTime (prevents stale closures). Timer increments even at completion so useEffect triggers properly (fixes freeze at 1 second remaining).
 - **Portrait Breathing Circle**: Now purely decorative (no functional breathing). All breathing happens in fullscreen only.

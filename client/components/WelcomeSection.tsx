@@ -148,18 +148,10 @@ export function WelcomeSection({
 
   React.useEffect(() => {
     if (!moodTapped) {
-      moodPulse.value = withRepeat(
-        withSequence(
-          withTiming(1, { duration: 1800, easing: Easing.inOut(Easing.sin) }),
-          withTiming(0, { duration: 1800, easing: Easing.inOut(Easing.sin) })
-        ),
-        -1,
-        false
-      );
       moodGlow.value = withRepeat(
         withSequence(
-          withTiming(1, { duration: 1800, easing: Easing.inOut(Easing.sin) }),
-          withTiming(0, { duration: 1800, easing: Easing.inOut(Easing.sin) })
+          withTiming(1, { duration: 1200, easing: Easing.inOut(Easing.sin) }),
+          withTiming(0, { duration: 1200, easing: Easing.inOut(Easing.sin) })
         ),
         -1,
         false
@@ -176,12 +168,12 @@ export function WelcomeSection({
   }, []);
 
   const moodButtonStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: interpolate(moodPulse.value, [0, 1], [1, 1.05]) }],
+    transform: [{ scale: 1 }],
   }));
 
   const moodGlowStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(moodGlow.value, [0, 1], [0.15, 0.4]),
-    transform: [{ scale: interpolate(moodGlow.value, [0, 1], [1, 1.06]) }],
+    opacity: interpolate(moodGlow.value, [0, 1], [0.25, 0.8]),
+    transform: [{ scale: interpolate(moodGlow.value, [0, 1], [1, 1.22]) }],
   }));
 
   const pulseStyle = useAnimatedStyle(() => {
@@ -364,7 +356,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: "#C9A227",
   },
   moodButton: {

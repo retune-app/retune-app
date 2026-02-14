@@ -504,7 +504,7 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
                           onPress={() => handleSingleStep(step)}
                           style={({ pressed }) => [
                             styles.stepCard,
-                            { backgroundColor: pressed ? `${stepColor}15` : `${stepColor}08`, borderColor: `${stepColor}20` },
+                            { backgroundColor: pressed ? `${stepColor}15` : `${stepColor}08`, borderColor: `${stepColor}40` },
                           ]}
                           testID={`button-step-${step.type}`}
                         >
@@ -744,7 +744,7 @@ const styles = StyleSheet.create({
   },
   stepCard: {
     borderRadius: BorderRadius.lg,
-    borderWidth: 1,
+    borderWidth: 2,
     padding: Spacing.md,
   },
   stepCardRow: {

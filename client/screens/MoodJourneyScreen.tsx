@@ -167,6 +167,10 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
   const [journeyVoiceResolved, setJourneyVoiceResolved] = useState(false);
 
   useEffect(() => {
+    stopAffirmationAudio();
+  }, []);
+
+  useEffect(() => {
     const resolveVoice = async () => {
       try {
         const baseHeaders: Record<string, string> = { "Content-Type": "application/json" };

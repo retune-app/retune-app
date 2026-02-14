@@ -173,7 +173,7 @@ export function WelcomeSection({
 
   const moodGlowStyle = useAnimatedStyle(() => ({
     opacity: interpolate(moodGlow.value, [0, 1], [0.2, 0.55]),
-    transform: [{ scale: interpolate(moodGlow.value, [0, 1], [1, 1.12]) }],
+    transform: [{ scale: interpolate(moodGlow.value, [0, 1], [1, 1.06]) }],
   }));
 
   const pulseStyle = useAnimatedStyle(() => {

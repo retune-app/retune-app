@@ -4038,6 +4038,7 @@ STYLE RULES:
   * "up to X%" / any percentage claims
   * "can help" / "may reduce" / hedging language
 - Do NOT give instructions like "try to..." or "make sure you..."
+- NEVER use first-person "I" (e.g., "I know you can do it"). Always address the user directly with "you/your"
 - Keep it grounded, factual, and encouraging — like a confident coach who knows the science cold
 
 RESPONSE FORMAT:
@@ -4915,6 +4916,7 @@ Return ONLY the 8 tips, one per line. No numbering, no titles, no extra text.`;
               `- actionType mapping: "create" = create new affirmation, "breathe" = breathing exercise, "meditate" = guided meditation, "clone" = voice cloning setup, "journey" = mood check-in/journey, "listen" = play an affirmation.`,
               `- About 60% of the time, include a nudge when opportunities exist. 40% pure encouragement.`,
               `- Never nag. Be curious, inviting, playful. Each message should feel fresh.`,
+              `- NEVER use first-person "I" (e.g., "I know you can do it", "I believe in you"). Always address the user directly with "you/your".`,
             ].join("\n"),
           },
           {

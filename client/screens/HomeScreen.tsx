@@ -357,18 +357,13 @@ export default function HomeScreen() {
           </Pressable>
         </Animated.View>
       ) : null}
-      {filteredAffirmations.length > 0 ? (
-        <>
-          {isFirstPlay ? (
-            <Animated.View entering={FadeIn.delay(600).duration(400)} style={styles.tapToListenTip}>
-              <Feather name="play-circle" size={16} color={theme.primary} />
-              <ThemedText type="small" style={{ color: theme.textSecondary, marginLeft: Spacing.sm }}>
-                Tap the play button to hear your first affirmation
-              </ThemedText>
-            </Animated.View>
-          ) : null}
-          <LibraryTip visible={showSwipeTip} onDismiss={dismissSwipeTip} />
-        </>
+      {filteredAffirmations.length > 0 && isFirstPlay ? (
+        <Animated.View entering={FadeIn.delay(600).duration(400)} style={styles.tapToListenTip}>
+          <Feather name="play-circle" size={16} color={theme.primary} />
+          <ThemedText type="small" style={{ color: theme.textSecondary, marginLeft: Spacing.sm }}>
+            Tap the play button to hear your first affirmation
+          </ThemedText>
+        </Animated.View>
       ) : null}
     </View>
   );
@@ -558,6 +553,14 @@ export default function HomeScreen() {
     );
   }, [currentAffirmation?.id, isPlaying, breathingAffirmation?.id, highlightedAffirmationId, theme.gold, handleAffirmationPress, handlePlayPress, handleRenamePress, handleSetForBreathing, handleAfterDelete, hapticEnabled]);
 
+  const renderFooter = useCallback(() => (
+    showSwipeTip ? (
+      <View style={styles.footerTipContainer}>
+        <LibraryTip visible={showSwipeTip} onDismiss={dismissSwipeTip} />
+      </View>
+    ) : null
+  ), [showSwipeTip, dismissSwipeTip]);
+
   const edgeFadeColors = isDark 
     ? ["rgba(15, 28, 63, 0.95)", "rgba(15, 28, 63, 0)"] as const
     : ["rgba(255, 255, 255, 0.95)", "rgba(255, 255, 255, 0)"] as const;
@@ -580,6 +583,7 @@ export default function HomeScreen() {
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderItem}
         ListHeaderComponent={renderHeader}
+        ListFooterComponent={renderFooter}
         ListEmptyComponent={renderEmpty}
         onScrollToIndexFailed={(info) => {
           // Handle scroll failure gracefully
@@ -873,6 +877,10 @@ const styles = StyleSheet.create({
   voiceBadgeText: {
     fontSize: 12,
     fontWeight: "500",
+  },
+  footerTipContainer: {
+    marginTop: Spacing.lg,
+    paddingHorizontal: Spacing.xs,
   },
   tapToListenTip: {
     flexDirection: "row",

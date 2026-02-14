@@ -374,10 +374,11 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
         >
           <View style={styles.modalHandle} />
           <ScrollView
-            showsVerticalScrollIndicator={false}
-            bounces={false}
+            showsVerticalScrollIndicator={true}
+            bounces={true}
             keyboardShouldPersistTaps="handled"
             style={styles.modalScroll}
+            contentContainerStyle={{ paddingBottom: 16 }}
           >
             {phase === "current" ? (
               <Animated.View entering={FadeIn.duration(200)}>
@@ -582,7 +583,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingBottom: 48,
     paddingTop: Spacing.md,
-    maxHeight: "92%",
+    maxHeight: "95%",
   },
   modalScroll: {
     flexGrow: 0,

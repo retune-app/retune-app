@@ -445,6 +445,7 @@ const styles = StyleSheet.create({
   },
   pillarBadgeText: {
     fontSize: 9,
+    lineHeight: 13,
     fontWeight: "700",
     textTransform: "uppercase",
     letterSpacing: 0.3,
@@ -457,6 +458,7 @@ const styles = StyleSheet.create({
   },
   lengthText: {
     fontSize: 9,
+    lineHeight: 13,
     fontWeight: "700",
     textTransform: "uppercase",
     letterSpacing: 0.3,

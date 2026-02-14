@@ -144,11 +144,9 @@ export default function BreathingScreen() {
   const controlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const controlsOpacity = useSharedValue(1);
 
-  const fullscreenProgress = useSharedValue(0);
-  const fullscreenExiting = useSharedValue(0);
+  const fullscreenOpacity = useSharedValue(0);
   const fullscreenTransitionStyle = useAnimatedStyle(() => ({
-    opacity: fullscreenExiting.value > 0 ? 1 : interpolate(fullscreenProgress.value, [0, 0.4, 1], [0, 0.6, 1]),
-    transform: [{ scale: interpolate(fullscreenProgress.value, [0, 1], [0.97, 1]) }],
+    opacity: fullscreenOpacity.value,
   }));
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -707,17 +705,15 @@ export default function BreathingScreen() {
   };
 
   const exitFullscreen = () => {
-    fullscreenExiting.value = 1;
-    fullscreenProgress.value = withTiming(0, { duration: 350, easing: Easing.out(Easing.cubic) });
+    fullscreenOpacity.value = withTiming(0, { duration: 400, easing: Easing.out(Easing.cubic) });
     setTimeout(() => {
       setShowLandscapeMode(false);
       controlsOpacity.value = 1;
       setControlsVisible(true);
       if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
       handleStop();
-      fullscreenProgress.value = 0;
-      fullscreenExiting.value = 0;
-    }, 350);
+      fullscreenOpacity.value = 0;
+    }, 420);
   };
 
   const resetControlsTimer = useCallback(() => {
@@ -853,13 +849,12 @@ export default function BreathingScreen() {
   const handleStartWithCountdown = useCallback(async () => {
     if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); } catch (e) {} }
     
-    fullscreenProgress.value = 0;
-    fullscreenExiting.value = 0;
+    fullscreenOpacity.value = 0;
     setShowLandscapeMode(true);
 
-    await new Promise(resolve => setTimeout(resolve, 150));
+    await new Promise(resolve => setTimeout(resolve, 100));
 
-    fullscreenProgress.value = withSpring(1, { damping: 20, stiffness: 60, mass: 1 });
+    fullscreenOpacity.value = withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) });
     
     for (let i = 3; i >= 1; i--) {
       setCountdownValue(i);
@@ -915,6 +910,7 @@ export default function BreathingScreen() {
         presentationStyle="fullScreen"
       >
         <StatusBar hidden />
+        <View style={{ flex: 1, backgroundColor: '#000' }}>
         <Animated.View style={[{ flex: 1 }, fullscreenTransitionStyle]}>
           <FullscreenBreathingLayout
             technique={selectedTechnique}
@@ -980,6 +976,7 @@ export default function BreathingScreen() {
             )}
           />
         </Animated.View>
+        </View>
         {renderSoundSwitcherModal()}
       </Modal>
     );

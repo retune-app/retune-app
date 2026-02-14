@@ -253,40 +253,40 @@ const breathingWisdomFallbacks: Record<string, string[]> = {
     "Navy SEALs use this exact pattern to stay sharp under pressure",
     "Your cortisol is dropping with every cycle you complete",
     "This is literally retraining your stress response right now",
-    "Box breathing has been shown to improve focus within 2 minutes",
+    "Equal inhale-hold-exhale timing synchronizes your autonomic nervous system",
     "You're strengthening your vagus nerve — your body's calm switch",
     "Each cycle improves your heart rate variability — that's real progress",
-    "Studies show this pattern reduces anxiety by up to 30%",
+    "This rhythm is resetting your baroreceptors — your blood pressure is evening out",
     "You're building stress resilience that carries into your whole day"
   ],
   "478": [
     "That long exhale is activating your parasympathetic nervous system",
-    "This technique has been clinically shown to lower blood pressure",
+    "The extended exhale slows your heart rate — your body is downshifting right now",
     "Your brain waves are shifting from stress mode to calm mode right now",
     "The 7-second hold boosts oxygen absorption — your cells are thanking you",
-    "Researchers found this pattern helps people fall asleep 50% faster",
+    "Your prefrontal cortex is coming back online as your breathing slows",
     "You're doing something measurable for your nervous system right now",
     "Each cycle is reducing your heart rate by a few beats per minute",
-    "This is one of the most evidence-backed breathing techniques that exists"
+    "That 8-second exhale is twice as long as the inhale — the ratio is what calms you"
   ],
   coherent: [
-    "Five breaths per minute is the scientifically optimal calming rate",
+    "Five breaths per minute is the optimal rate for heart-brain coherence",
     "Your heart and brain are literally synchronizing right now",
-    "HeartMath research confirms this builds real emotional resilience",
+    "This balanced rhythm is the sweet spot for maximum HRV improvement",
     "Olympic athletes use this exact rhythm for peak performance",
-    "This is the only breathing rate proven to sync all body rhythms",
+    "At this pace your respiratory and cardiovascular rhythms lock together",
     "Your heart rate variability is improving with each breath you take",
     "Consistent practice here compounds — you're investing in yourself",
-    "Studies show 10 minutes of this equals measurable stress reduction"
+    "This rhythm brings your entire autonomic nervous system into balance"
   ],
   energizing: [
     "You're flooding your prefrontal cortex with oxygen right now",
     "This pattern increases norepinephrine — your natural focus chemical",
     "Your mitochondria are producing more energy with each fast breath",
-    "Research shows rapid breathing can boost alertness within 60 seconds",
+    "Rapid breathing drives your sympathetic nervous system — natural alertness kicking in",
     "You're activating your body's natural energy system — no caffeine needed",
     "Your brain uses 20% of your total oxygen — you're giving it a boost",
-    "This technique has been shown to improve reaction time measurably",
+    "This rhythm is spiking your adrenaline just enough to sharpen your focus",
     "Every round is sharpening your mental clarity for the hours ahead"
   ]
 };
@@ -2986,6 +2986,10 @@ BANNED PHRASES (never write these exact words):
 - 'totally doable'
 - 'your brain already knows how'
 - 'open the door to'
+- 'studies show' / 'research suggests' / 'research shows'
+- 'proven to' / 'has been proven' / 'science proves'
+- 'according to' / 'experts say' / 'scientists found'
+- 'can help' / 'may reduce' / any hedging language
 
 If the user has journey history, reference it naturally with fresh phrasing each time.",
   "stepTypes": ["breathe", "meditate", "listen"],
@@ -3000,14 +3004,15 @@ Rules for stepTypes:
 - Be smart about which steps to include for this specific ${mood}→${targetMood} transition
 
 Rules for tone:
-- Sound like a knowledgeable guide who understands both the science and the practice — not a textbook, not a greeting card
+- Sound like a confident coach who knows the science cold — not a textbook, not a greeting card
 - No metaphors, no flowery imagery, no poetic language
-- State neuroscience and spiritual concepts as direct facts in plain language
+- State neuroscience and spiritual concepts as direct facts — never hedge with "studies show" or "research suggests"
 - No "you should" — use "let's" or direct suggestions
 - No exclamation marks
 - Each note must teach them something specific or create genuine curiosity
 - NEVER repeat the same phrasing across responses — vary structure, angle, and vocabulary dramatically
-- Treat the user as intelligent — they can handle real concepts like "vagus nerve" or "amygdala" without dumbing down`,
+- Treat the user as intelligent — they can handle real concepts like "vagus nerve" or "amygdala" without dumbing down
+- Keep language accessible — explain the science in everyday words, not academic jargon`,
             },
             {
               role: "user",

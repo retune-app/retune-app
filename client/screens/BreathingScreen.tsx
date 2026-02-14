@@ -145,9 +145,10 @@ export default function BreathingScreen() {
   const controlsOpacity = useSharedValue(1);
 
   const fullscreenProgress = useSharedValue(0);
+  const fullscreenExiting = useSharedValue(0);
   const fullscreenTransitionStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(fullscreenProgress.value, [0, 0.4, 1], [0, 0.6, 1]),
-    transform: [{ scale: interpolate(fullscreenProgress.value, [0, 1], [0.92, 1]) }],
+    opacity: fullscreenExiting.value > 0 ? 1 : interpolate(fullscreenProgress.value, [0, 0.4, 1], [0, 0.6, 1]),
+    transform: [{ scale: interpolate(fullscreenProgress.value, [0, 1], [0.97, 1]) }],
   }));
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -706,7 +707,8 @@ export default function BreathingScreen() {
   };
 
   const exitFullscreen = () => {
-    fullscreenProgress.value = withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) });
+    fullscreenExiting.value = 1;
+    fullscreenProgress.value = withTiming(0, { duration: 350, easing: Easing.out(Easing.cubic) });
     setTimeout(() => {
       setShowLandscapeMode(false);
       controlsOpacity.value = 1;
@@ -714,7 +716,8 @@ export default function BreathingScreen() {
       if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
       handleStop();
       fullscreenProgress.value = 0;
-    }, 500);
+      fullscreenExiting.value = 0;
+    }, 350);
   };
 
   const resetControlsTimer = useCallback(() => {
@@ -851,6 +854,7 @@ export default function BreathingScreen() {
     if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); } catch (e) {} }
     
     fullscreenProgress.value = 0;
+    fullscreenExiting.value = 0;
     setShowLandscapeMode(true);
 
     await new Promise(resolve => setTimeout(resolve, 150));

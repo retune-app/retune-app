@@ -150,8 +150,8 @@ export function WelcomeSection({
     if (!moodTapped) {
       moodGlow.value = withRepeat(
         withSequence(
-          withTiming(1, { duration: 1200, easing: Easing.inOut(Easing.sin) }),
-          withTiming(0, { duration: 1200, easing: Easing.inOut(Easing.sin) })
+          withTiming(1, { duration: 1400, easing: Easing.inOut(Easing.sin) }),
+          withTiming(0, { duration: 1400, easing: Easing.inOut(Easing.sin) })
         ),
         -1,
         false
@@ -172,8 +172,8 @@ export function WelcomeSection({
   }));
 
   const moodGlowStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(moodGlow.value, [0, 1], [0.25, 0.8]),
-    transform: [{ scale: interpolate(moodGlow.value, [0, 1], [1, 1.22]) }],
+    opacity: interpolate(moodGlow.value, [0, 1], [0.2, 0.55]),
+    transform: [{ scale: interpolate(moodGlow.value, [0, 1], [1, 1.12]) }],
   }));
 
   const pulseStyle = useAnimatedStyle(() => {

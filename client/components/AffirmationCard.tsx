@@ -250,7 +250,7 @@ export function AffirmationCard({
         </View>
         <View style={styles.content}>
           <View style={styles.textContainer}>
-            <ThemedText type="h4" numberOfLines={2} style={styles.title}>
+            <ThemedText type="h4" numberOfLines={2} style={[styles.title, { fontSize: 15, lineHeight: 21 }]}>
               {title}
             </ThemedText>
             {description ? (
@@ -343,8 +343,8 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   cardHeader: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
     borderBottomWidth: 1,
   },
   headerTopRow: {
@@ -383,9 +383,9 @@ const styles = StyleSheet.create({
   content: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: Spacing.md,
     paddingTop: 4,
-    paddingBottom: Spacing.sm,
+    paddingBottom: Spacing.xs,
   },
   textContainer: {
     flex: 1,
@@ -399,7 +399,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexWrap: "wrap",
     gap: Spacing.xs,
-    marginTop: Spacing.sm,
+    marginTop: 4,
   },
   categoriesContainer: {
     flexDirection: "row",
@@ -410,7 +410,7 @@ const styles = StyleSheet.create({
   description: {
     fontStyle: "italic",
     fontSize: 11,
-    marginBottom: Spacing.xs,
+    marginBottom: 2,
     opacity: 0.7,
   },
   categoryBadge: {

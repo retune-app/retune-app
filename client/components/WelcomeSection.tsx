@@ -357,7 +357,7 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 24,
     borderWidth: 2,
-    borderColor: "#D4B96A",
+    borderColor: "#DECCA0",
   },
   moodButton: {
     width: 40,

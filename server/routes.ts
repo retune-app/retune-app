@@ -4696,9 +4696,11 @@ Return ONLY the 8 tips, one per line. No numbering, no titles, no extra text.`;
     const timeOfDay = (req.query.timeOfDay as string) || "morning";
     const validTimes = ["morning", "afternoon", "evening", "night"];
     const normalizedTime = validTimes.includes(timeOfDay) ? timeOfDay : "morning";
+    const hoursAway = req.query.hoursAway ? parseInt(req.query.hoursAway as string, 10) : null;
+    const isWelcomeBack = hoursAway !== null && hoursAway >= 4;
 
     const today = new Date().toISOString().slice(0, 10);
-    const cacheKey = `${userId}-${today}`;
+    const cacheKey = isWelcomeBack ? `${userId}-${today}-wb` : `${userId}-${today}`;
 
     const cached = dailyGreetingCache.get(cacheKey);
     if (cached) {
@@ -4819,6 +4821,14 @@ Return ONLY the 8 tips, one per line. No numbering, no titles, no extra text.`;
         statsContext = `\nUser activity: ${parts.join(", ")}.`;
       }
 
+      let welcomeBackContext = "";
+      if (isWelcomeBack && hoursAway) {
+        const awayLabel = hoursAway >= 24
+          ? `${Math.round(hoursAway / 24)} day(s)`
+          : `${hoursAway} hour(s)`;
+        welcomeBackContext = `\nWELCOME BACK: The user is returning after being away for ${awayLabel}. Acknowledge their return warmly but subtly — don't say "welcome back" literally. Instead, reference the time away naturally: "Your ${normalizedTime} reset awaits" or "picking up right where you left off" or weave their streak/stats into a return-flavored message. Make it feel like the app noticed them and is glad they're here.`;
+      }
+
       let nudgeContext = "";
       if (nudgeOpportunities.length > 0) {
         nudgeContext = `\nNudge opportunities (pick ONE randomly if you want to nudge, or skip if you prefer pure encouragement):\n${nudgeOpportunities.join("\n")}`;
@@ -4836,6 +4846,7 @@ Return ONLY the 8 tips, one per line. No numbering, no titles, no extra text.`;
               ``,
               `THEMES to weave in (pick one per message): neural pathways strengthening, brain rewiring for confidence, neuroplasticity shaping beliefs, amygdala calming through breathwork, prefrontal cortex activation, mood journeys building emotional resilience pathways. Use accessible language — no jargon.`,
               `${statsContext}`,
+              `${welcomeBackContext}`,
               `${nudgeContext}`,
               ``,
               `RESPONSE FORMAT: Return valid JSON only. No markdown, no code fences.`,
@@ -4861,7 +4872,9 @@ Return ONLY the 8 tips, one per line. No numbering, no titles, no extra text.`;
           },
           {
             role: "user",
-            content: `Generate a ${normalizedTime} sub-message.`,
+            content: isWelcomeBack
+              ? `Generate a ${normalizedTime} welcome-back sub-message for a user returning after ${hoursAway} hours.`
+              : `Generate a ${normalizedTime} sub-message.`,
           },
         ],
         temperature: 0.85,

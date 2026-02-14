@@ -1,5 +1,6 @@
-import React, { useMemo, useState, useCallback } from "react";
-import { View, StyleSheet, Pressable, Text } from "react-native";
+import React, { useMemo, useState, useCallback, useEffect, useRef } from "react";
+import { View, StyleSheet, Pressable, Text, AppState } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -13,7 +14,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { ThemedText } from "@/components/ThemedText";
 
@@ -70,6 +71,9 @@ interface GreetingResponse {
   cached: boolean;
 }
 
+const LAST_OPEN_KEY = "@retuned/lastAppOpen";
+const WELCOME_BACK_THRESHOLD_HOURS = 4;
+
 export function WelcomeSection({
   userName,
   lastPlayedAffirmation,
@@ -82,10 +86,49 @@ export function WelcomeSection({
   isPlaying = false,
 }: WelcomeSectionProps) {
   const { theme, isDark, setThemeMode } = useTheme();
+  const queryClient = useQueryClient();
   const pulseValue = useSharedValue(0);
   const moodPulse = useSharedValue(0);
   const moodGlow = useSharedValue(0);
   const [moodTapped, setMoodTapped] = useState(false);
+  const [hoursAway, setHoursAway] = useState<number | null>(null);
+  const appStateRef = useRef(AppState.currentState);
+
+  useEffect(() => {
+    const checkAndStoreTimestamp = async () => {
+      try {
+        const lastOpen = await AsyncStorage.getItem(LAST_OPEN_KEY);
+        if (lastOpen) {
+          const hoursSince = (Date.now() - parseInt(lastOpen, 10)) / (1000 * 60 * 60);
+          if (hoursSince >= WELCOME_BACK_THRESHOLD_HOURS) {
+            setHoursAway(Math.round(hoursSince));
+          }
+        }
+        await AsyncStorage.setItem(LAST_OPEN_KEY, Date.now().toString());
+      } catch {}
+    };
+
+    checkAndStoreTimestamp();
+
+    const subscription = AppState.addEventListener("change", async (nextState) => {
+      if (appStateRef.current.match(/inactive|background/) && nextState === "active") {
+        try {
+          const lastOpen = await AsyncStorage.getItem(LAST_OPEN_KEY);
+          if (lastOpen) {
+            const hoursSince = (Date.now() - parseInt(lastOpen, 10)) / (1000 * 60 * 60);
+            if (hoursSince >= WELCOME_BACK_THRESHOLD_HOURS) {
+              setHoursAway(Math.round(hoursSince));
+              queryClient.invalidateQueries({ queryKey: ["/api/daily-greeting"], exact: false });
+            }
+          }
+          await AsyncStorage.setItem(LAST_OPEN_KEY, Date.now().toString());
+        } catch {}
+      }
+      appStateRef.current = nextState;
+    });
+
+    return () => subscription.remove();
+  }, [queryClient]);
 
   const handleToggleTheme = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -158,9 +201,13 @@ export function WelcomeSection({
     return "night";
   }, []);
 
+  const greetingUrl = hoursAway
+    ? `/api/daily-greeting?timeOfDay=${timeOfDay}&hoursAway=${hoursAway}`
+    : `/api/daily-greeting?timeOfDay=${timeOfDay}`;
+
   const { data: aiGreeting } = useQuery<GreetingResponse>({
-    queryKey: [`/api/daily-greeting?timeOfDay=${timeOfDay}`],
-    staleTime: 1000 * 60 * 60,
+    queryKey: [greetingUrl],
+    staleTime: hoursAway ? 0 : 1000 * 60 * 60,
     retry: false,
   });
 

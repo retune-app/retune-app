@@ -4804,7 +4804,8 @@ Return ONLY the 8 tips, one per line. No numbering, no titles, no extra text.`;
       else if (totalAffirmations < 3) nudgeOpportunities.push(`FEW_AFFIRMATIONS: User has only ${totalAffirmations} affirmation(s). Encourage creating more.`);
       if (!hasVoiceClone) nudgeOpportunities.push("NO_VOICE_CLONE: User hasn't set up voice cloning (Inner Voice) yet.");
       if (totalBreathingSessions === 0) nudgeOpportunities.push("NO_BREATHING: User hasn't tried any breathing exercises yet.");
-      if (totalListens === 0 && totalAffirmations > 0) nudgeOpportunities.push("NO_LISTENS: User has affirmations but hasn't listened to any yet.");
+      if (totalListens === 0 && totalAffirmations > 0) nudgeOpportunities.push("NO_LISTENS: User has affirmations but hasn't listened to any yet. Use actionType 'listen'.");
+      if (totalListens > 0 && totalAffirmations > 0) nudgeOpportunities.push(`LISTEN_AGAIN: User has ${totalListens} listening sessions — encourage them to listen again. Repetition rewires neural pathways. Use actionType 'listen'.`);
       if (totalJourneys === 0) nudgeOpportunities.push("NO_JOURNEYS: User has never tried a mood journey. These are guided wellness paths combining breathing, meditation, and affirmations.");
 
       let statsContext = "";
@@ -4853,7 +4854,7 @@ Return ONLY the 8 tips, one per line. No numbering, no titles, no extra text.`;
               `{`,
               `  "message": "Your main message text here (max 12 words)",`,
               `  "actionText": "tappable link text (2-5 words, optional — omit key if no nudge)",`,
-              `  "actionType": "create | breathe | meditate | clone (only if actionText is provided)"`,
+              `  "actionType": "create | breathe | meditate | clone | listen (only if actionText is provided)"`,
               `}`,
               ``,
               `RULES:`,
@@ -4864,8 +4865,9 @@ Return ONLY the 8 tips, one per line. No numbering, no titles, no extra text.`;
               `  Example: { "message": "A 60-second reset could change your day —", "actionText": "breathe now", "actionType": "breathe" }`,
               `  Example: { "message": "Let stillness find you —", "actionText": "start a guided moment", "actionType": "meditate" }`,
               `  Example: { "message": "Your mind knows the path to ${topJourneyMood?.targetMood || 'calm'} now —", "actionText": "start a mood journey", "actionType": "journey" }`,
+              `  Example: { "message": "Your neural pathways are ready to absorb —", "actionText": "listen now", "actionType": "listen" }`,
               `- If no nudge fits, just return { "message": "..." } with pure encouragement (max 10 words).`,
-              `- actionType mapping: "create" = create new affirmation, "breathe" = breathing exercise, "meditate" = guided meditation, "clone" = voice cloning setup, "journey" = mood check-in/journey.`,
+              `- actionType mapping: "create" = create new affirmation, "breathe" = breathing exercise, "meditate" = guided meditation, "clone" = voice cloning setup, "journey" = mood check-in/journey, "listen" = play an affirmation.`,
               `- About 60% of the time, include a nudge when opportunities exist. 40% pure encouragement.`,
               `- Never nag. Be curious, inviting, playful. Each message should feel fresh.`,
             ].join("\n"),
@@ -4890,7 +4892,7 @@ Return ONLY the 8 tips, one per line. No numbering, no titles, no extra text.`;
         if (parsed.actionText) {
           parsed.actionText = parsed.actionText.replace(/["""''!]/g, "");
         }
-        const validActions = ["create", "breathe", "meditate", "clone", "journey"];
+        const validActions = ["create", "breathe", "meditate", "clone", "journey", "listen"];
         if (parsed.actionType && !validActions.includes(parsed.actionType)) {
           delete parsed.actionText;
           delete parsed.actionType;

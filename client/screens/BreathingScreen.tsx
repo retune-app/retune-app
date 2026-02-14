@@ -1019,6 +1019,9 @@ export default function BreathingScreen() {
                 case "clone":
                   navigation.navigate("VoiceSetup");
                   break;
+                case "listen":
+                  handleQuickPlay();
+                  break;
               }
             }}
             isPlaying={isAudioPlaying}

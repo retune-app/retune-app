@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
   View,
   StyleSheet,
@@ -6,6 +6,7 @@ import {
   Modal,
   ActivityIndicator,
   ScrollView,
+  PanResponder,
 } from "react-native";
 import Animated, {
   FadeIn,
@@ -16,6 +17,8 @@ import Animated, {
   withTiming,
   withDelay,
   Easing,
+  withSpring,
+  runOnJS,
 } from "react-native-reanimated";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -360,6 +363,37 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
     return type;
   };
 
+  const translateY = useSharedValue(0);
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => gestureState.dy > 8,
+      onPanResponderMove: (_, gestureState) => {
+        if (gestureState.dy > 0) {
+          translateY.value = gestureState.dy;
+        }
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dy > 80 || gestureState.vy > 0.5) {
+          translateY.value = withTiming(600, { duration: 250 });
+          runOnJS(handleClose)();
+        } else {
+          translateY.value = withSpring(0, { damping: 20, stiffness: 300 });
+        }
+      },
+    })
+  ).current;
+
+  const modalSlideStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+  }));
+
+  useEffect(() => {
+    if (visible) {
+      translateY.value = 0;
+    }
+  }, [visible]);
+
   return (
     <Modal
       visible={visible}
@@ -368,11 +402,14 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
       onRequestClose={handleClose}
     >
       <Pressable style={styles.modalOverlay} onPress={handleClose}>
-        <Pressable
-          style={[styles.modalContent, { backgroundColor: theme.backgroundRoot }]}
-          onPress={(e) => e.stopPropagation()}
+        <Animated.View
+          style={[styles.modalContent, { backgroundColor: theme.backgroundRoot }, modalSlideStyle]}
+          onStartShouldSetResponder={() => true}
+          onResponderRelease={() => {}}
         >
-          <View style={styles.modalHandle} />
+          <View {...panResponder.panHandlers} style={styles.handleZone}>
+            <View style={styles.modalHandle} />
+          </View>
           <ScrollView
             showsVerticalScrollIndicator={false}
             bounces={true}
@@ -565,7 +602,7 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
               </Pressable>
             </View>
           ) : null}
-        </Pressable>
+        </Animated.View>
       </Pressable>
     </Modal>
   );
@@ -587,6 +624,11 @@ const styles = StyleSheet.create({
   },
   modalScroll: {
     flexGrow: 0,
+  },
+  handleZone: {
+    paddingTop: 8,
+    paddingBottom: 4,
+    alignItems: "center",
   },
   modalHandle: {
     width: 40,

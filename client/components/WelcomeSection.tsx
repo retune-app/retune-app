@@ -269,7 +269,7 @@ export function WelcomeSection({
         <View style={styles.headerActions}>
           {onMoodPress ? (
             <Animated.View style={[styles.moodButtonWrapper, moodButtonStyle]}>
-              <Animated.View style={[styles.moodGlowRing, moodGlowStyle]} />
+              <Animated.View style={[styles.moodGlowRing, { borderColor: isDark ? '#4AAE8C' : '#A8E4CC' }, moodGlowStyle]} />
               <Pressable
                 onPress={(e) => {
                   e.stopPropagation();
@@ -357,7 +357,6 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 24,
     borderWidth: 2,
-    borderColor: "#A8E4CC",
   },
   moodButton: {
     width: 40,

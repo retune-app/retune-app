@@ -43,6 +43,7 @@ import {
   BackgroundMusicOption,
 } from "@/contexts/BackgroundMusicContext";
 import { RSVPDisplay, WordTiming } from "@/components/RSVPDisplay";
+import { useAudio } from "@/contexts/AudioContext";
 
 const ACCENT_GOLD = "#C9A227";
 const GOLD_LIGHT = "#E5C95C";
@@ -259,6 +260,11 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
     resumeBackgroundMusic,
     isPlaying: isBgPlaying,
   } = useBackgroundMusic();
+  const { stop: stopAffirmationAudio } = useAudio();
+
+  useEffect(() => {
+    stopAffirmationAudio();
+  }, []);
 
   const [playerState, setPlayerState] = useState<PlayerState>("idle");
   const [moment, setMoment] = useState<GeneratedMoment | null>(null);

@@ -3998,18 +3998,27 @@ TECHNIQUE DETAILS:
 STYLE RULES:
 - Half should be concrete science facts about what this breathing does to their body right now
 - Half should be positive reinforcement — tell them they're doing something real and measurable for themselves
+- State everything as direct fact. You KNOW the science — say it with confidence, no hedging
 - Examples of GOOD tips:
-  * "This is literally lowering your cortisol levels right now"
-  * "Your heart rate variability just improved — that's measurable progress"
-  * "Studies show this technique reduces anxiety by up to 40%"
-  * "Every cycle is training your nervous system to stay calm under pressure"
+  * "Your cortisol is dropping with every exhale right now"
+  * "That extended exhale just activated your parasympathetic nervous system"
+  * "Each cycle strengthens the connection between your prefrontal cortex and amygdala"
+  * "Your baroreceptors are syncing to this rhythm — that's your blood pressure calming down"
   * "You're building real stress resilience that lasts beyond this session"
-- Examples of BAD tips (too flowery/poetic — avoid these):
+  * "Right now your vagus nerve is sending slow-down signals to your heart"
+  * "This rhythm is shifting your brainwaves from beta toward alpha"
+- Examples of BAD tips (too flowery/poetic — NEVER write these):
   * "Your body whispers secrets of tranquility"
   * "Ancient rhythms dance through your being"
   * "The universe breathes with you"
+- BANNED PHRASES (never use these):
+  * "studies show" / "research suggests" / "research shows"
+  * "proven to" / "has been proven" / "science proves"
+  * "according to" / "experts say" / "scientists found"
+  * "up to X%" / any percentage claims
+  * "can help" / "may reduce" / hedging language
 - Do NOT give instructions like "try to..." or "make sure you..."
-- Keep it grounded, factual, and encouraging — like a coach, not a poet
+- Keep it grounded, factual, and encouraging — like a confident coach who knows the science cold
 
 RESPONSE FORMAT:
 Return ONLY the 8 tips, one per line. No numbering, no titles, no extra text.`;

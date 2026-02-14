@@ -109,7 +109,7 @@ export function CategoryChip({
 const styles = StyleSheet.create({
   chip: {
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.xs,
     borderRadius: BorderRadius.full,
     borderWidth: 1,
   },

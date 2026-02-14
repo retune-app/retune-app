@@ -146,6 +146,14 @@ export default function BreathingScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      setShowLandscapeMode(false);
+      setShowTechniqueSelector(false);
+      setShowTechniqueInfo(false);
+      setShowMoodCheckin(false);
+      setShowSoundSwitcher(false);
+      setShowCompletionAnimation(false);
+      setControlsVisible(true);
+
       return () => {
         setShowLandscapeMode(false);
         setShowTechniqueSelector(false);

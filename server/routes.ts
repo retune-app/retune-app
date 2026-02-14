@@ -288,6 +288,16 @@ const breathingWisdomFallbacks: Record<string, string[]> = {
     "Your brain uses 20% of your total oxygen — you're giving it a boost",
     "This rhythm is spiking your adrenaline just enough to sharpen your focus",
     "Every round is sharpening your mental clarity for the hours ahead"
+  ],
+  alternate: [
+    "Alternating nostrils balances your left and right brain hemispheres",
+    "Your nasal cycle naturally shifts every 90 minutes — you're harmonizing it",
+    "This technique lowers your heart rate and blood pressure simultaneously",
+    "Each nostril connects to opposite brain hemispheres — you're activating both",
+    "Yogic practitioners have used this for thousands of years to center the mind",
+    "Your autonomic nervous system is rebalancing with every switch",
+    "Right nostril breathing activates your sympathetic system, left calms it — you're doing both",
+    "This is one of the fastest ways to bring your nervous system into equilibrium"
   ]
 };
 
@@ -2827,7 +2837,7 @@ Rules:
         "anxious→calm": { name: "4-7-8 Relaxation", id: "478" },
         "anxious→grateful": { name: "Box Breathing", id: "box" },
         "anxious→confident": { name: "Box Breathing", id: "box" },
-        "anxious→focused": { name: "4-7-8 Relaxation", id: "478" },
+        "anxious→focused": { name: "Alternate Nostril", id: "alternate" },
         "anxious→energized": { name: "Box Breathing", id: "box" },
         "anxious→joyful": { name: "Coherent Breathing", id: "coherent" },
         "tired→energized": { name: "Energizing Breath", id: "energizing" },
@@ -2843,7 +2853,7 @@ Rules:
         "sad→energized": { name: "Energizing Breath", id: "energizing" },
         "sad→focused": { name: "Box Breathing", id: "box" },
         "overwhelmed→calm": { name: "4-7-8 Relaxation", id: "478" },
-        "overwhelmed→focused": { name: "Box Breathing", id: "box" },
+        "overwhelmed→focused": { name: "Alternate Nostril", id: "alternate" },
         "overwhelmed→grateful": { name: "Coherent Breathing", id: "coherent" },
         "overwhelmed→confident": { name: "Box Breathing", id: "box" },
         "overwhelmed→energized": { name: "Box Breathing", id: "box" },
@@ -3944,8 +3954,8 @@ Respond with ONLY the notification message text.${avoidClause}`,
       const techniqueId = req.query.techniqueId as string;
 
       // Validate technique ID
-      if (!techniqueId || !["box", "478", "coherent", "energizing"].includes(techniqueId)) {
-        return res.status(400).json({ error: "Invalid technique ID. Must be one of: box, 478, coherent, energizing" });
+      if (!techniqueId || !["box", "478", "coherent", "energizing", "alternate"].includes(techniqueId)) {
+        return res.status(400).json({ error: "Invalid technique ID. Must be one of: box, 478, coherent, energizing, alternate" });
       }
 
       // Create cache key: techniqueId + today's date
@@ -3987,6 +3997,11 @@ Respond with ONLY the notification message text.${avoidClause}`,
             name: "Energizing Breath",
             pattern: "2-1 seconds (quick rhythm)",
             focus: "Quick energy boost, alertness, oxygen flooding to brain."
+          },
+          alternate: {
+            name: "Alternate Nostril (Nadi Shodhana)",
+            pattern: "4-4-4-4 seconds alternating nostrils (inhale left, exhale right, inhale right, exhale left)",
+            focus: "Brain hemisphere balancing, nervous system equilibrium, deep focus and calm."
           }
         };
 

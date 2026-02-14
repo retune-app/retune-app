@@ -99,14 +99,18 @@ export default function HomeScreen() {
         setHapticEnabled(value === "true");
       }
     });
-    AsyncStorage.getItem("@tips/librarySwipe").then((value) => {
-      if (value === null) {
+    AsyncStorage.getItem("@tips/librarySwipeCount").then((value) => {
+      const count = value ? parseInt(value, 10) : 0;
+      if (count < 3) {
         setShowSwipeTip(true);
+        AsyncStorage.setItem("@tips/librarySwipeCount", String(count + 1));
       }
     });
-    AsyncStorage.getItem("@play/firstPlay").then((value) => {
-      if (value !== "done") {
+    AsyncStorage.getItem("@play/firstPlayCount").then((value) => {
+      const count = value ? parseInt(value, 10) : 0;
+      if (count < 3) {
         setIsFirstPlay(true);
+        AsyncStorage.setItem("@play/firstPlayCount", String(count + 1));
       }
     });
   }, []);
@@ -121,7 +125,7 @@ export default function HomeScreen() {
 
   const dismissSwipeTip = useCallback(() => {
     setShowSwipeTip(false);
-    AsyncStorage.setItem("@tips/librarySwipe", "seen");
+    AsyncStorage.setItem("@tips/librarySwipeCount", "99");
   }, []);
 
   const { data: affirmations = [], refetch, isLoading } = useQuery<Affirmation[]>({

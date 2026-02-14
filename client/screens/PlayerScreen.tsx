@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useLayoutEffect, useMemo, useRef } from "react";
 import { View, StyleSheet, Pressable, ScrollView, Modal } from "react-native";
-import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSequence, withDelay, Easing } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -90,6 +90,12 @@ export default function PlayerScreen() {
   const [isInFullscreenMode, setIsInFullscreenMode] = useState(false);
   const [hasSaved, setHasSaved] = useState(false);
   const prevLandscapeRef = useRef(false);
+
+  const tiltHintOpacity = useSharedValue(0);
+  const tiltHintShowCount = useRef(0);
+  const tiltHintDismissed = useRef(false);
+  const TILT_HINT_MAX_SHOWS = 4;
+  const TILT_HINT_INTERVAL_MS = 15000;
 
   const { data: affirmation, isLoading } = useQuery<Affirmation>({
     queryKey: ["/api/affirmations", affirmationId],
@@ -431,6 +437,32 @@ export default function PlayerScreen() {
     }, 100);
   }, [isLandscape, rsvpEnabled, isCurrentlyPlaying, isInFullscreenMode]);
 
+  useEffect(() => {
+    if (isLandscape || isInFullscreenMode) {
+      tiltHintDismissed.current = true;
+      tiltHintOpacity.value = withTiming(0, { duration: 300 });
+    }
+  }, [isLandscape, isInFullscreenMode]);
+
+  useEffect(() => {
+    if (!journeyContext || !rsvpEnabled || !isCurrentlyPlaying || isLandscape || isInFullscreenMode || tiltHintDismissed.current) return;
+
+    const showHint = () => {
+      if (tiltHintShowCount.current >= TILT_HINT_MAX_SHOWS || tiltHintDismissed.current) return;
+      tiltHintShowCount.current += 1;
+      tiltHintOpacity.value = withSequence(
+        withTiming(1, { duration: 600, easing: Easing.out(Easing.ease) }),
+        withDelay(3000, withTiming(0, { duration: 600, easing: Easing.in(Easing.ease) }))
+      );
+    };
+
+    const timeout = setTimeout(showHint, TILT_HINT_INTERVAL_MS);
+    return () => clearTimeout(timeout);
+  }, [journeyContext, rsvpEnabled, isCurrentlyPlaying, isLandscape, isInFullscreenMode, tiltHintOpacity]);
+
+  const tiltHintAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: tiltHintOpacity.value,
+  }));
 
   // Show fullscreen when in fullscreen mode (stays up even when paused)
   const showFullscreenFocus = isInFullscreenMode && rsvpEnabled;
@@ -692,6 +724,17 @@ export default function PlayerScreen() {
             />
           )}
         </View>
+
+        {journeyContext && !isLandscape && !isInFullscreenMode ? (
+          <Animated.View style={[tiltHintAnimatedStyle, { alignItems: 'center', marginTop: -4, marginBottom: 4 }]} pointerEvents="none">
+            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.08)', paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20 }}>
+              <Feather name="smartphone" size={14} color="rgba(255,255,255,0.55)" style={{ transform: [{ rotate: '90deg' }] }} />
+              <ThemedText type="caption" style={{ color: 'rgba(255,255,255,0.55)', marginLeft: 8, fontSize: 12, fontWeight: '500' }}>
+                Tilt for immersive mode
+              </ThemedText>
+            </View>
+          </Animated.View>
+        ) : null}
 
         <View style={styles.infoContainer}>
           <ThemedText type="h2" style={styles.title} numberOfLines={2}>

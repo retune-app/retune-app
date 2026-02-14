@@ -25,6 +25,104 @@ WebBrowser.maybeCompleteAuthSession();
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
+function useGoogleAuth() {
+  const googleWebClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || undefined;
+  const googleIosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || undefined;
+
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    webClientId: googleWebClientId,
+    iosClientId: googleIosClientId,
+    scopes: ["profile", "email"],
+  });
+
+  return { request, response, promptAsync, googleWebClientId, googleIosClientId };
+}
+
+class GoogleAuthErrorBoundary extends React.Component<
+  { children: React.ReactNode; fallback: React.ReactNode },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error: any) {
+    console.warn("Google auth setup error caught:", error);
+  }
+  render() {
+    if (this.state.hasError) return this.props.fallback;
+    return this.props.children;
+  }
+}
+
+function GoogleSignInButton({
+  onSuccess,
+  onError,
+  isLoading,
+  loadingProvider,
+  setLoadingProvider,
+  setIsLoading,
+}: {
+  onSuccess: (accessToken?: string) => void;
+  onError: (msg: string) => void;
+  isLoading: boolean;
+  loadingProvider: "google" | "apple" | null;
+  setLoadingProvider: (p: "google" | "apple" | null) => void;
+  setIsLoading: (v: boolean) => void;
+}) {
+  const { request, response, promptAsync, googleWebClientId, googleIosClientId } = useGoogleAuth();
+  const isIOS = Platform.OS === "ios";
+  const hasGoogleClientId = !!googleWebClientId || (isIOS && !!googleIosClientId);
+
+  React.useEffect(() => {
+    if (response?.type === "success") {
+      onSuccess(response.authentication?.accessToken);
+    } else if (response?.type === "error") {
+      onError("Google sign-in was cancelled or failed");
+      setIsLoading(false);
+      setLoadingProvider(null);
+    }
+  }, [response]);
+
+  if (!hasGoogleClientId) return null;
+
+  return (
+    <Pressable
+      style={[
+        buttonStyles.authButton,
+        buttonStyles.googleButton,
+        isLoading && buttonStyles.disabledButton,
+      ]}
+      onPress={async () => {
+        onError("");
+        setIsLoading(true);
+        setLoadingProvider("google");
+        try {
+          await promptAsync();
+        } catch (err) {
+          console.error("Google prompt error:", err);
+          onError("Failed to initiate Google sign-in");
+          setIsLoading(false);
+          setLoadingProvider(null);
+        }
+      }}
+      disabled={isLoading || !request}
+      testID="button-google-signin"
+    >
+      {loadingProvider === "google" ? (
+        <ActivityIndicator color={authColors.textPrimary} />
+      ) : (
+        <>
+          <Feather name="mail" size={20} color={authColors.google} />
+          <Text style={buttonStyles.googleButtonText}>
+            Continue with Google
+          </Text>
+        </>
+      )}
+    </Pressable>
+  );
+}
+
 // Dark theme color palette for contrast against dark meditation background
 const authColors = {
   // Brand colors
@@ -43,6 +141,33 @@ const authColors = {
   apple: "#FFFFFF",
 };
 
+const buttonStyles = StyleSheet.create({
+  authButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: BorderRadius.lg,
+    marginBottom: Spacing.xs,
+    gap: 10,
+  },
+  googleButton: {
+    backgroundColor: authColors.white,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.08)",
+  },
+  disabledButton: {
+    opacity: 0.6,
+  },
+  googleButtonText: {
+    fontFamily: "Nunito_600SemiBold",
+    fontSize: 16,
+    color: "#333333",
+    marginLeft: Spacing.sm,
+  },
+});
+
 export function AuthScreen() {
   const insets = useSafeAreaInsets();
   const { oauthLogin } = useAuth();
@@ -50,27 +175,6 @@ export function AuthScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingProvider, setLoadingProvider] = useState<"google" | "apple" | null>(null);
   const [error, setError] = useState("");
-
-  const isIOS = Platform.OS === "ios";
-  const isAndroid = Platform.OS === "android";
-  const isWeb = Platform.OS === "web";
-  
-  const hasGoogleClientId = !!process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || (isIOS && !!process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID);
-
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-  });
-
-  React.useEffect(() => {
-    if (response?.type === "success") {
-      handleGoogleSuccess(response.authentication?.accessToken);
-    } else if (response?.type === "error") {
-      setError("Google sign-in was cancelled or failed");
-      setIsLoading(false);
-      setLoadingProvider(null);
-    }
-  }, [response]);
 
   const handleGoogleSuccess = async (accessToken?: string) => {
     if (!accessToken) {
@@ -102,21 +206,6 @@ export function AuthScreen() {
       console.error("Google auth error:", err);
       setError("Failed to complete Google sign-in");
     } finally {
-      setIsLoading(false);
-      setLoadingProvider(null);
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    setError("");
-    setIsLoading(true);
-    setLoadingProvider("google");
-    
-    try {
-      await promptAsync();
-    } catch (err) {
-      console.error("Google prompt error:", err);
-      setError("Failed to initiate Google sign-in");
       setIsLoading(false);
       setLoadingProvider(null);
     }
@@ -257,30 +346,17 @@ export function AuthScreen() {
                 </Pressable>
               ) : null}
 
-              {/* Google Sign In */}
-              {hasGoogleClientId ? (
-                <Pressable
-                  style={[
-                    styles.authButton,
-                    styles.googleButton,
-                    isLoading && styles.disabledButton,
-                  ]}
-                  onPress={handleGoogleSignIn}
-                  disabled={isLoading || !request}
-                  testID="button-google-signin"
-                >
-                  {loadingProvider === "google" ? (
-                    <ActivityIndicator color={authColors.textPrimary} />
-                  ) : (
-                    <>
-                      <Feather name="mail" size={20} color={authColors.google} />
-                      <Text style={styles.googleButtonText}>
-                        Continue with Google
-                      </Text>
-                    </>
-                  )}
-                </Pressable>
-              ) : null}
+              {/* Google Sign In - isolated to prevent crashes */}
+              <GoogleAuthErrorBoundary fallback={null}>
+                <GoogleSignInButton
+                  onSuccess={handleGoogleSuccess}
+                  onError={setError}
+                  isLoading={isLoading}
+                  loadingProvider={loadingProvider}
+                  setLoadingProvider={setLoadingProvider}
+                  setIsLoading={setIsLoading}
+                />
+              </GoogleAuthErrorBoundary>
 
               <View style={styles.divider}>
                 <View style={styles.dividerLine} />
@@ -517,21 +593,10 @@ const styles = StyleSheet.create({
   appleButton: {
     backgroundColor: authColors.gold,
   },
-  googleButton: {
-    backgroundColor: authColors.white,
-    borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.08)",
-  },
   appleButtonText: {
     fontFamily: "Nunito_600SemiBold",
     fontSize: 16,
     color: "#0F1C3F",
-    marginLeft: Spacing.sm,
-  },
-  googleButtonText: {
-    fontFamily: "Nunito_600SemiBold",
-    fontSize: 16,
-    color: "#333333",
     marginLeft: Spacing.sm,
   },
   disabledButton: {

@@ -80,7 +80,7 @@ export default function BreathingScreen() {
   const [showLandscapeMode, setShowLandscapeMode] = useState(false);
   const { theme } = useTheme();
   const { user } = useAuth();
-  const { currentAffirmation, isPlaying: isAudioPlaying, playAffirmation, togglePlayPause, breathingAffirmation, requestHighlightAffirmation, stop: stopAffirmationAudio } = useAudio();
+  const { currentAffirmation, isPlaying: isAudioPlaying, playAffirmation, togglePlayPause, breathingAffirmation, requestHighlightAffirmation, requestRecommendedAffirmation, stop: stopAffirmationAudio } = useAudio();
   const { selectedMusic, setSelectedMusic, startBackgroundMusic, stopBackgroundMusic, isPlaying: isMusicPlaying, volume, setVolume, setDucked } = useBackgroundMusic();
 
   const [selectedTechnique, setSelectedTechnique] = useState<BreathingTechnique>(BREATHING_TECHNIQUES[0]);
@@ -1020,10 +1020,17 @@ export default function BreathingScreen() {
                   navigation.navigate("VoiceSetup");
                   break;
                 case "listen": {
-                  const affirmationToPlay = currentAffirmation || backgroundAffirmation;
-                  if (affirmationToPlay) {
-                    requestHighlightAffirmation(affirmationToPlay.id);
-                    playAffirmation(affirmationToPlay as any);
+                  const currentId = currentAffirmation?.id;
+                  const otherAffirmations = affirmations.filter(a => a.id !== currentId && a.audioUrl);
+                  const recommended = otherAffirmations.length > 0
+                    ? otherAffirmations[Math.floor(Math.random() * otherAffirmations.length)]
+                    : null;
+                  if (recommended) {
+                    requestRecommendedAffirmation(recommended.id);
+                    playAffirmation(recommended as any);
+                  } else if (currentAffirmation) {
+                    requestHighlightAffirmation(currentAffirmation.id);
+                    playAffirmation(currentAffirmation as any);
                   }
                   (navigation as any).navigate("Main", { screen: "AffirmTab" });
                   break;

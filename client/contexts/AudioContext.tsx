@@ -77,6 +77,7 @@ interface AudioState {
   playbackSpeed: number;
   breathingAffirmation: Affirmation | null;
   highlightAffirmationId: number | null;
+  recommendedAffirmationId: number | null;
 }
 
 interface AudioContextType extends AudioState {
@@ -89,6 +90,8 @@ interface AudioContextType extends AudioState {
   setBreathingAffirmation: (affirmation: Affirmation | null) => void;
   requestHighlightAffirmation: (id: number) => void;
   clearHighlightAffirmation: () => void;
+  requestRecommendedAffirmation: (id: number) => void;
+  clearRecommendedAffirmation: () => void;
 }
 
 const AudioContext = createContext<AudioContextType | null>(null);
@@ -111,6 +114,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const [playbackSpeed, setPlaybackSpeedState] = useState(1);
   const [breathingAffirmation, setBreathingAffirmationState] = useState<Affirmation | null>(null);
   const [highlightAffirmationId, setHighlightAffirmationId] = useState<number | null>(null);
+  const [recommendedAffirmationId, setRecommendedAffirmationId] = useState<number | null>(null);
   const soundRef = useRef<Audio.Sound | null>(null);
   const isOperationInProgress = useRef(false);
   const hasRecordedListenRef = useRef(false);
@@ -123,6 +127,14 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
   const clearHighlightAffirmation = useCallback(() => {
     setHighlightAffirmationId(null);
+  }, []);
+
+  const requestRecommendedAffirmation = useCallback((id: number) => {
+    setRecommendedAffirmationId(id);
+  }, []);
+
+  const clearRecommendedAffirmation = useCallback(() => {
+    setRecommendedAffirmationId(null);
   }, []);
 
   // Load saved breathing affirmation on mount
@@ -393,6 +405,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     playbackSpeed,
     breathingAffirmation,
     highlightAffirmationId,
+    recommendedAffirmationId,
     playAffirmation,
     togglePlayPause,
     stop,
@@ -402,6 +415,8 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     setBreathingAffirmation,
     requestHighlightAffirmation,
     clearHighlightAffirmation,
+    requestRecommendedAffirmation,
+    clearRecommendedAffirmation,
   }), [
     currentAffirmation,
     isPlaying,
@@ -412,6 +427,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     playbackSpeed,
     breathingAffirmation,
     highlightAffirmationId,
+    recommendedAffirmationId,
     playAffirmation,
     togglePlayPause,
     stop,
@@ -421,6 +437,8 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     setBreathingAffirmation,
     requestHighlightAffirmation,
     clearHighlightAffirmation,
+    requestRecommendedAffirmation,
+    clearRecommendedAffirmation,
   ]);
 
   return (

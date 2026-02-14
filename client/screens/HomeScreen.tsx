@@ -53,11 +53,12 @@ export default function HomeScreen() {
   const { data: voiceStatus } = useQuery<{ hasPersonalVoice: boolean; hasClonedVoice: boolean }>({ queryKey: ["/api/voice-samples/status"] });
   const { data: voicePrefs } = useQuery<{ preferredVoiceType: string; hasPersonalVoice: boolean }>({ queryKey: ["/api/voice-preferences"] });
   const route = useRoute<RouteProp<HomeScreenRouteParams, 'Home'>>();
-  const { playAffirmation, currentAffirmation, isPlaying, togglePlayPause, breathingAffirmation, setBreathingAffirmation, highlightAffirmationId, clearHighlightAffirmation } = useAudio();
+  const { playAffirmation, currentAffirmation, isPlaying, togglePlayPause, breathingAffirmation, setBreathingAffirmation, highlightAffirmationId, clearHighlightAffirmation, recommendedAffirmationId, clearRecommendedAffirmation } = useAudio();
   const { selectedMusic } = useBackgroundMusic();
   
   const flatListRef = useRef<FlatList<Affirmation>>(null);
   const [highlightedAffirmationId, setHighlightedAffirmationId] = useState<number | null>(null);
+  const [recommendedHighlightId, setRecommendedHighlightId] = useState<number | null>(null);
 
   const queryClient = useQueryClient();
   const [selectedPillar, setSelectedPillar] = useState("All");
@@ -193,6 +194,48 @@ export default function HomeScreen() {
         }, 2000);
       }
     }, [highlightAffirmationId, affirmations, highlightedAffirmationId, clearHighlightAffirmation])
+  );
+
+  useEffect(() => {
+    if (recommendedAffirmationId && affirmations.length > 0) {
+      setSelectedPillar("All");
+      setSearchQuery("");
+      setRecommendedHighlightId(recommendedAffirmationId);
+
+      const index = affirmations.findIndex(a => a.id === recommendedAffirmationId);
+      if (index !== -1 && flatListRef.current) {
+        setTimeout(() => {
+          flatListRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.3 });
+        }, 500);
+      }
+
+      setTimeout(() => {
+        setRecommendedHighlightId(null);
+        clearRecommendedAffirmation();
+      }, 2000);
+    }
+  }, [recommendedAffirmationId, affirmations, clearRecommendedAffirmation]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (recommendedAffirmationId && affirmations.length > 0 && !recommendedHighlightId) {
+        setSelectedPillar("All");
+        setSearchQuery("");
+        setRecommendedHighlightId(recommendedAffirmationId);
+
+        const index = affirmations.findIndex(a => a.id === recommendedAffirmationId);
+        if (index !== -1 && flatListRef.current) {
+          setTimeout(() => {
+            flatListRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.3 });
+          }, 300);
+        }
+
+        setTimeout(() => {
+          setRecommendedHighlightId(null);
+          clearRecommendedAffirmation();
+        }, 2000);
+      }
+    }, [recommendedAffirmationId, affirmations, recommendedHighlightId, clearRecommendedAffirmation])
   );
 
   const suggestedAffirmation = useMemo(() => {
@@ -533,9 +576,15 @@ export default function HomeScreen() {
     const isCurrentlyPlaying = currentAffirmation?.id === item.id && isPlaying;
     const isBreathingSelected = breathingAffirmation?.id === item.id;
     const isHighlighted = highlightedAffirmationId === item.id;
+    const isRecommended = recommendedHighlightId === item.id;
+    const cardGlowStyle = isRecommended
+      ? [styles.highlightedCard, { borderColor: '#4A9EDE', shadowColor: '#4A9EDE' }]
+      : isHighlighted
+        ? [styles.highlightedCard, { shadowColor: theme.gold }]
+        : undefined;
     return (
       <Animated.View entering={FadeInUp.delay(index * 50).duration(300).springify()}>
-        <View style={isHighlighted ? [styles.highlightedCard, { shadowColor: theme.gold }] : undefined}>
+        <View style={cardGlowStyle}>
           <SwipeableAffirmationCard
             affirmation={item}
             onPress={() => handleAffirmationPress(item.id)}
@@ -551,7 +600,7 @@ export default function HomeScreen() {
         </View>
       </Animated.View>
     );
-  }, [currentAffirmation?.id, isPlaying, breathingAffirmation?.id, highlightedAffirmationId, theme.gold, handleAffirmationPress, handlePlayPress, handleRenamePress, handleSetForBreathing, handleAfterDelete, hapticEnabled]);
+  }, [currentAffirmation?.id, isPlaying, breathingAffirmation?.id, highlightedAffirmationId, recommendedHighlightId, theme.gold, handleAffirmationPress, handlePlayPress, handleRenamePress, handleSetForBreathing, handleAfterDelete, hapticEnabled]);
 
   const renderFooter = useCallback(() => (
     showSwipeTip ? (

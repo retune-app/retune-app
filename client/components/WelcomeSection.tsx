@@ -150,8 +150,8 @@ export function WelcomeSection({
     if (!moodTapped) {
       moodGlow.value = withRepeat(
         withSequence(
-          withTiming(1, { duration: 1400, easing: Easing.inOut(Easing.sin) }),
-          withTiming(0, { duration: 1400, easing: Easing.inOut(Easing.sin) })
+          withTiming(1, { duration: 2000, easing: Easing.inOut(Easing.sin) }),
+          withTiming(0, { duration: 2000, easing: Easing.inOut(Easing.sin) })
         ),
         -1,
         false

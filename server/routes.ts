@@ -235,6 +235,7 @@ function getPillarVoiceConfig(pillar?: string | null): typeof MEDITATION_MOOD_CO
 }
 
 const dailyGreetingCache = new Map<string, { message: string; actionText?: string; actionType?: string }>();
+const lastNudgeTypeByUser = new Map<string, string>();
 
 const dailyGreetingFallbacks: Record<string, string> = {
   morning: "A new morning means a new chance to become who you are meant to be",
@@ -4830,9 +4831,24 @@ Return ONLY the 8 tips, one per line. No numbering, no titles, no extra text.`;
         welcomeBackContext = `\nWELCOME BACK: The user is returning after being away for ${awayLabel}. Acknowledge their return warmly but subtly — don't say "welcome back" literally. Instead, reference the time away naturally: "Your ${normalizedTime} reset awaits" or "picking up right where you left off" or weave their streak/stats into a return-flavored message. Make it feel like the app noticed them and is glad they're here.`;
       }
 
+      const lastNudge = lastNudgeTypeByUser.get(userId);
+      let filteredNudges = nudgeOpportunities;
+      if (lastNudge && nudgeOpportunities.length > 1) {
+        filteredNudges = nudgeOpportunities.filter(n => {
+          const tag = n.split(":")[0];
+          if (lastNudge === "listen" && (tag === "LISTEN_AGAIN" || tag === "NO_LISTENS")) return false;
+          if (lastNudge === "create" && (tag === "NO_AFFIRMATIONS" || tag === "FEW_AFFIRMATIONS")) return false;
+          if (lastNudge === "clone" && tag === "NO_VOICE_CLONE") return false;
+          if (lastNudge === "breathe" && tag === "NO_BREATHING") return false;
+          if (lastNudge === "journey" && tag === "NO_JOURNEYS") return false;
+          return true;
+        });
+        if (filteredNudges.length === 0) filteredNudges = nudgeOpportunities;
+      }
+
       let nudgeContext = "";
-      if (nudgeOpportunities.length > 0) {
-        nudgeContext = `\nNudge opportunities (pick ONE randomly if you want to nudge, or skip if you prefer pure encouragement):\n${nudgeOpportunities.join("\n")}`;
+      if (filteredNudges.length > 0) {
+        nudgeContext = `\nNudge opportunities (pick ONE randomly if you want to nudge, or skip if you prefer pure encouragement):\n${filteredNudges.join("\n")}`;
       }
 
       const response = await openai.chat.completions.create({
@@ -4902,6 +4918,9 @@ Return ONLY the 8 tips, one per line. No numbering, no titles, no extra text.`;
       }
 
       dailyGreetingCache.set(cacheKey, parsed);
+      if (parsed.actionType) {
+        lastNudgeTypeByUser.set(userId, parsed.actionType);
+      }
       res.json({ ...parsed, cached: false });
     } catch (error) {
       console.error("Daily greeting generation failed:", error);

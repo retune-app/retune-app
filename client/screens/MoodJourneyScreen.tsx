@@ -36,6 +36,7 @@ import Slider from "@react-native-community/slider";
 import { getApiUrl } from "@/lib/query-client";
 import { getAuthToken } from "@/lib/auth-token";
 import { journeyNavigationRef } from "@/navigation/journeyNavigationRef";
+import { useAudio } from "@/contexts/AudioContext";
 import { useBackgroundMusic, getSoundsByCategory, type BackgroundMusicType, type BackgroundMusicOption } from "@/contexts/BackgroundMusicContext";
 import FullscreenBreathingLayout from "@/components/FullscreenBreathingLayout";
 import BreathingWisdom from "@/components/BreathingWisdom";
@@ -125,6 +126,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
   const { journey } = route.params as { journey: JourneyData };
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
+  const { stop: stopAffirmationAudio } = useAudio();
   const { isPlaying: isMusicPlaying, startBackgroundMusic, stopBackgroundMusic, selectedMusic, setSelectedMusic, volume, setVolume } = useBackgroundMusic();
   const toggleMusic = useCallback(async () => {
     if (isMusicPlaying) {
@@ -816,9 +818,10 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
       }
 
       await stopBackgroundMusic();
-      (navigation as any).navigate("Main", { screen: "AffirmTab" });
+      await stopAffirmationAudio();
+      (navigation as any).navigate("Main", { screen: "BreatheTab" });
     })();
-  }, [navigation, stopBackgroundMusic, currentStepIndex, journey, route.params]);
+  }, [navigation, stopBackgroundMusic, stopAffirmationAudio, currentStepIndex, journey, route.params]);
 
   const formatTime = (seconds: number): string => {
     const m = Math.floor(seconds / 60);

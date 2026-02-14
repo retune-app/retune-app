@@ -144,6 +144,20 @@ export default function BreathingScreen() {
   const controlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const controlsOpacity = useSharedValue(1);
 
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        setShowLandscapeMode(false);
+        setShowTechniqueSelector(false);
+        setShowTechniqueInfo(false);
+        setShowMoodCheckin(false);
+        setShowSoundSwitcher(false);
+        setShowCompletionAnimation(false);
+        setControlsVisible(true);
+      };
+    }, [])
+  );
+
   const fullscreenOpacity = useSharedValue(0);
   const fullscreenTransitionStyle = useAnimatedStyle(() => ({
     opacity: fullscreenOpacity.value,

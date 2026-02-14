@@ -1053,7 +1053,7 @@ export default function BreathingScreen() {
                 <Feather name={selectedTechnique.icon as any} size={22} color={selectedTechnique.color} />
               </View>
               <View style={styles.techniqueCardInfo}>
-                <ThemedText type="body" style={{ fontWeight: "600" }}>
+                <ThemedText type="body" style={{ fontWeight: "600", color: selectedTechnique.color }}>
                   {selectedTechnique.name}
                 </ThemedText>
                 <ThemedText type="caption" style={{ color: theme.textSecondary }}>

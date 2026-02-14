@@ -69,6 +69,7 @@ function BreathingCircle({
   const idlePulse = useSharedValue(1);
   const [currentPhase, setCurrentPhase] = React.useState<BreathPhase>("inhale");
   const [currentCountdown, setCurrentCountdown] = React.useState(0);
+  const [currentPhaseIdx, setCurrentPhaseIdx] = React.useState(0);
   const hapticsEnabledRef = useRef(hapticsEnabled);
 
   useEffect(() => {
@@ -111,9 +112,10 @@ function BreathingCircle({
     }
   };
 
-  const updatePhaseState = (phase: BreathPhase, count: number) => {
+  const updatePhaseState = (phase: BreathPhase, count: number, phaseIdx?: number) => {
     setCurrentPhase(phase);
     setCurrentCountdown(count);
+    if (phaseIdx !== undefined) setCurrentPhaseIdx(phaseIdx);
     onPhaseChange?.(phase, count);
   };
 
@@ -147,7 +149,7 @@ function BreathingCircle({
       const phase = technique.phases[currentPhaseIdx];
       const phaseName = phase.phase;
 
-      runOnJS(updatePhaseState)(phaseName, currentCountdownVal);
+      runOnJS(updatePhaseState)(phaseName, currentCountdownVal, currentPhaseIdx);
       runOnJS(startHapticPulses)(phaseName);
 
       const targetProgress = phaseName === "inhale" || phaseName === "holdIn" ? 1 : 0;
@@ -174,7 +176,7 @@ function BreathingCircle({
         currentCountdownVal = technique.phases[currentPhaseIdx].duration;
         runBreathCycle();
       } else {
-        runOnJS(updatePhaseState)(technique.phases[currentPhaseIdx].phase, currentCountdownVal);
+        runOnJS(updatePhaseState)(technique.phases[currentPhaseIdx].phase, currentCountdownVal, currentPhaseIdx);
       }
     }, 1000);
 
@@ -360,19 +362,45 @@ function BreathingCircle({
 
       {showContent && isPlaying ? (
         <View style={styles.textOverlay} pointerEvents="none">
-          <Animated.Text
-            style={[
-              styles.phaseLabel,
-              {
-                fontSize: phaseFontSize,
-                letterSpacing: phaseFontSize * 0.18,
-              },
-              (currentPhase === "holdIn" || currentPhase === "holdOut") ? styles.phaseLabelBold : undefined,
-              phaseTextStyle,
-            ]}
-          >
-            {PHASE_LABELS[currentPhase].toUpperCase()}
-          </Animated.Text>
+          {technique.phases[currentPhaseIdx]?.instruction ? (
+            <Animated.View style={phaseTextStyle}>
+              <Text
+                style={[
+                  styles.phaseLabel,
+                  {
+                    fontSize: phaseFontSize,
+                    letterSpacing: phaseFontSize * 0.18,
+                  },
+                  (currentPhase === "holdIn" || currentPhase === "holdOut") ? styles.phaseLabelBold : undefined,
+                ]}
+              >
+                {PHASE_LABELS[currentPhase].toUpperCase()}
+              </Text>
+              <Text
+                style={[
+                  styles.instructionText,
+                  { fontSize: Math.round(size * 0.038) },
+                ]}
+                numberOfLines={2}
+              >
+                {technique.phases[currentPhaseIdx].instruction}
+              </Text>
+            </Animated.View>
+          ) : (
+            <Animated.Text
+              style={[
+                styles.phaseLabel,
+                {
+                  fontSize: phaseFontSize,
+                  letterSpacing: phaseFontSize * 0.18,
+                },
+                (currentPhase === "holdIn" || currentPhase === "holdOut") ? styles.phaseLabelBold : undefined,
+                phaseTextStyle,
+              ]}
+            >
+              {PHASE_LABELS[currentPhase].toUpperCase()}
+            </Animated.Text>
+          )}
           <Text
             style={[
               styles.countdownNumber,
@@ -414,6 +442,13 @@ const styles = StyleSheet.create({
   },
   phaseLabelBold: {
     fontWeight: "700",
+  },
+  instructionText: {
+    color: "rgba(255, 255, 255, 0.75)",
+    fontWeight: "400",
+    textAlign: "center",
+    marginTop: 2,
+    paddingHorizontal: 8,
   },
   countdownNumber: {
     color: "#FFFFFF",

@@ -1019,9 +1019,15 @@ export default function BreathingScreen() {
                 case "clone":
                   navigation.navigate("VoiceSetup");
                   break;
-                case "listen":
-                  handleQuickPlay();
+                case "listen": {
+                  const affirmationToPlay = currentAffirmation || backgroundAffirmation;
+                  if (affirmationToPlay) {
+                    requestHighlightAffirmation(affirmationToPlay.id);
+                    playAffirmation(affirmationToPlay as any);
+                  }
+                  (navigation as any).navigate("Main", { screen: "AffirmTab" });
                   break;
+                }
               }
             }}
             isPlaying={isAudioPlaying}

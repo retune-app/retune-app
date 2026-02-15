@@ -1,11 +1,11 @@
 {
-  "id": "5ffcfaad-2af3-4ed2-8d7d-48588b00ba2a",
-  "createdAt": "2026-02-15T20:38:43.861Z",
+  "id": "8c22d9c3-6f09-42a7-96ad-207a402afa15",
+  "createdAt": "2026-02-15T20:52:16.611Z",
   "runtimeVersion": "exposdk:54.0.0",
   "launchAsset": {
-    "key": "bundle-1771187923861-6419",
+    "key": "bundle-1771188736611-7782",
     "contentType": "application/javascript",
-    "url": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev:5000/1771187923861-6419/_expo/static/js/ios/bundle.js"
+    "url": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev:5000/1771188736611-7782/_expo/static/js/ios/bundle.js"
   },
   "assets": [],
   "metadata": {},
@@ -15,11 +15,18 @@
       "name": "Retuned",
       "slug": "subconscious-rewire",
       "version": "1.7",
+      "runtimeVersion": "exposdk:54.0.0",
       "orientation": "default",
       "icon": "./assets/images/rewired-logo.png",
       "scheme": "subconsciousrewire",
       "userInterfaceStyle": "automatic",
       "newArchEnabled": true,
+      "updates": {
+        "url": "https://retuned.app/manifest",
+        "enabled": true,
+        "checkAutomatically": "ON_LOAD",
+        "fallbackToCacheTimeout": 5000
+      },
       "ios": {
         "supportsTablet": true,
         "bundleIdentifier": "com.subconsciousrewire.app",

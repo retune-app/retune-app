@@ -3,11 +3,18 @@
     "name": "Retuned",
     "slug": "subconscious-rewire",
     "version": "1.7",
+    "runtimeVersion": "exposdk:54.0.0",
     "orientation": "default",
     "icon": "./assets/images/rewired-logo.png",
     "scheme": "subconsciousrewire",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "updates": {
+      "url": "https://retuned.app/manifest",
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 5000
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.subconsciousrewire.app",

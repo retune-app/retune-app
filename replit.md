@@ -5,7 +5,8 @@ Retuned is an application designed to help users reprogram their subconscious mi
 
 ## Recent Changes (v1.7 Build 2 — February 15, 2026)
 - **Google Sign-In Standalone Fix**: Error boundary now renders a `GoogleSignInFallback` component (browser-based OAuth via `WebBrowser.openAuthSessionAsync`) instead of `null` when the hook-based `GoogleSignInButton` crashes in standalone/production builds. OAuth callback handled by landing page JS that extracts the access token from URL hash and redirects to the app via custom scheme (`subconsciousrewire://auth?access_token=xxx`).
-- **Production Static Bundle Rebuild**: New production bundle (build `1771186082713-3536`) deployed with Google Sign-In fix.
+- **Google Sign-In iOS Direct Rendering**: Removed error boundary wrapping on iOS/Android entirely — the `GoogleSignInFallback` (browser-based OAuth) renders directly without depending on the `useAuthRequest` hook. The hook-based `GoogleSignInButton` with error boundary is only used on web. This ensures the Google button always appears on native devices.
+- **Production Static Bundle Rebuild**: New production bundle (build `1771187215433-4901`) deployed with direct iOS Google Sign-In rendering.
 
 ## Previous Changes (v1.7 Build 1 — February 14, 2026)
 - **Google Auth Crash Fix**: Isolated Google Sign-In into its own error boundary (`GoogleAuthErrorBoundary` + `GoogleSignInButton` components) to prevent iOS crashes when users sign out or when Google auth setup fails. The `useAuthRequest` hook from `expo-auth-session` can throw during initialization on certain platforms; wrapping it in a dedicated error boundary ensures auth screen remains functional even if Google Sign-In is unavailable.

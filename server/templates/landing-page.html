@@ -559,12 +559,11 @@
     .mock-clean {
       background: var(--white);
       border-radius: 16px;
-      padding: 20px;
+      padding: 24px 20px;
       border: 2px solid var(--believe);
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
       text-align: center;
     }
 
@@ -575,25 +574,100 @@
       color: var(--believe);
       text-transform: uppercase;
       letter-spacing: 1px;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
     }
 
-    .mock-clean-action {
-      font-family: 'Inter', sans-serif;
+    .mock-mood-prompt {
+      font-family: 'Nunito', sans-serif;
       font-size: 14px;
       font-weight: 600;
       color: var(--text);
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
 
-    .mock-clean-sub {
+    .mock-mood-pill {
+      display: inline-block;
+      padding: 5px 14px;
+      background: var(--believe-bg);
+      border: 1.5px solid var(--believe);
+      border-radius: 20px;
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--believe);
+      margin-bottom: 16px;
+    }
+
+    .mock-journey-path {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .mock-journey-step {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 8px 12px;
+      border-radius: 10px;
+      text-align: left;
+    }
+
+    .mock-step-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .mock-step-dot.breathe { background: var(--breathe); box-shadow: 0 0 6px var(--breathe); }
+    .mock-step-dot.believe { background: var(--believe); box-shadow: 0 0 6px var(--believe); }
+    .mock-step-dot.meditate { background: var(--meditate); box-shadow: 0 0 6px var(--meditate); }
+
+    .mock-step-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .mock-step-name {
+      font-family: 'Inter', sans-serif;
       font-size: 12px;
-      color: var(--text-muted);
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .mock-step-name.breathe { color: var(--breathe); }
+    .mock-step-name.believe { color: var(--believe); }
+    .mock-step-name.meditate { color: var(--meditate); }
+
+    .mock-step-desc {
+      font-family: 'Nunito', sans-serif;
+      font-size: 10px;
+      color: var(--text-light);
+      line-height: 1.3;
+    }
+
+    .mock-step-dur {
+      font-family: 'Inter', sans-serif;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-light);
+      flex-shrink: 0;
+    }
+
+    .mock-journey-connector {
+      width: 1px;
+      height: 8px;
+      background: var(--border);
+      margin-left: 16px;
     }
 
     .mock-clean-btn {
-      margin-top: 14px;
-      padding: 8px 20px;
+      padding: 9px 24px;
       background: var(--believe);
       color: var(--white);
       border-radius: 20px;
@@ -1695,9 +1769,37 @@
           </div>
           <div class="mock-clean">
             <div class="mock-clean-label">RETUNED</div>
-            <div class="mock-clean-action">Continue with your affirmation</div>
-            <div class="mock-clean-sub">Then flow into breathwork</div>
-            <div class="mock-clean-btn">Begin Your Session</div>
+            <div class="mock-mood-prompt">How are you feeling?</div>
+            <div class="mock-mood-pill">Anxious</div>
+            <div class="mock-journey-path">
+              <div class="mock-journey-step">
+                <div class="mock-step-dot breathe"></div>
+                <div class="mock-step-info">
+                  <div class="mock-step-name breathe">Breathe</div>
+                  <div class="mock-step-desc">Calming box breathing</div>
+                </div>
+                <div class="mock-step-dur">4 min</div>
+              </div>
+              <div class="mock-journey-connector"></div>
+              <div class="mock-journey-step">
+                <div class="mock-step-dot believe"></div>
+                <div class="mock-step-info">
+                  <div class="mock-step-name believe">Believe</div>
+                  <div class="mock-step-desc">Affirmations for inner peace</div>
+                </div>
+                <div class="mock-step-dur">5 min</div>
+              </div>
+              <div class="mock-journey-connector"></div>
+              <div class="mock-journey-step">
+                <div class="mock-step-dot meditate"></div>
+                <div class="mock-step-info">
+                  <div class="mock-step-name meditate">Meditate</div>
+                  <div class="mock-step-desc">Guided integration</div>
+                </div>
+                <div class="mock-step-dur">3 min</div>
+              </div>
+            </div>
+            <div class="mock-clean-btn">Begin Your Journey</div>
           </div>
         </div>
       </div>

@@ -584,6 +584,46 @@
       font-family: 'Inter', sans-serif;
     }
 
+    /* ===== FEEDBACK LOOP CALLOUT ===== */
+    .feedback-loop-callout {
+      max-width: 640px;
+      margin: 0 auto 60px;
+      text-align: center;
+      padding: 36px 40px;
+      background: var(--white);
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      box-shadow: var(--card-shadow);
+      position: relative;
+    }
+
+    .feedback-loop-callout::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 3px;
+      background: linear-gradient(90deg, var(--breathe), var(--believe), var(--meditate));
+      border-radius: 0 0 3px 3px;
+    }
+
+    .feedback-loop-callout h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(18px, 2.5vw, 22px);
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+
+    .feedback-loop-callout p {
+      font-size: 16px;
+      color: var(--text-muted);
+      line-height: 1.75;
+      font-style: italic;
+    }
+
     /* ===== FLYWHEEL SECTION ===== */
     .flywheel-section {
       padding: 120px 0;
@@ -1641,6 +1681,11 @@
       <div class="section-header fade-in">
         <h2>How the Breathe-Believe-Meditate Flywheel Works</h2>
         <p>Three modes. One continuous journey. Each experience makes the next one more powerful.</p>
+      </div>
+
+      <div class="feedback-loop-callout fade-in">
+        <h3>A positive feedback loop &mdash; in every sense.</h3>
+        <p>Each step strengthens the next: breathing calms your mind, affirmations reshape your beliefs, meditation locks it in. The more you practice, the deeper it works &mdash; and every word along the way is designed to lift you up.</p>
       </div>
 
       <div class="flywheel-diagram fade-in" id="flywheel-diagram">

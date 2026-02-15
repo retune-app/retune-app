@@ -3,7 +3,11 @@
 ## Overview
 Retuned is an application designed to help users reprogram their subconscious minds through personalized audio affirmations. It leverages AI to generate affirmation scripts based on user goals, which can then be played in the user's cloned voice or a selection of curated AI voices. The project aims to provide a powerful tool for personal growth and mental well-being, focusing on subconscious language patterns to maximize effectiveness. Key features include voice cloning, guided breathing exercises, AI-powered mood check-ins with personalized wellness paths, micro-meditations, and a comprehensive ambient sound library.
 
-## Recent Changes (v1.7 Build 1 — February 14, 2026)
+## Recent Changes (v1.7 Build 2 — February 15, 2026)
+- **Google Sign-In Standalone Fix**: Error boundary now renders a `GoogleSignInFallback` component (browser-based OAuth via `WebBrowser.openAuthSessionAsync`) instead of `null` when the hook-based `GoogleSignInButton` crashes in standalone/production builds. OAuth callback handled by landing page JS that extracts the access token from URL hash and redirects to the app via custom scheme (`subconsciousrewire://auth?access_token=xxx`).
+- **Production Static Bundle Rebuild**: New production bundle (build `1771186082713-3536`) deployed with Google Sign-In fix.
+
+## Previous Changes (v1.7 Build 1 — February 14, 2026)
 - **Google Auth Crash Fix**: Isolated Google Sign-In into its own error boundary (`GoogleAuthErrorBoundary` + `GoogleSignInButton` components) to prevent iOS crashes when users sign out or when Google auth setup fails. The `useAuthRequest` hook from `expo-auth-session` can throw during initialization on certain platforms; wrapping it in a dedicated error boundary ensures auth screen remains functional even if Google Sign-In is unavailable.
 - **Badge Height Refinement**: Tightened affirmation card badge heights with inline `lineHeight: 13` override for a cleaner, more compact visual appearance across the library.
 - **Production Static Bundle Rebuild**: New production bundle (build `1771107102341-13964`) deployed with all crash fixes, ensuring iOS and Android users receive the update automatically without an App Store resubmission.

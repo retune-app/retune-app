@@ -265,6 +265,17 @@ function configureExpoAndLanding(app: express.Application) {
     }
   });
 
+  // Serve Science page
+  app.get("/science", (_req: Request, res: Response) => {
+    const sciencePath = path.resolve(process.cwd(), "server", "templates", "science.html");
+    if (fs.existsSync(sciencePath)) {
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      res.sendFile(sciencePath);
+    } else {
+      res.status(404).send("Science page not found");
+    }
+  });
+
   // Serve Support page
   app.get("/support", (_req: Request, res: Response) => {
     const supportPath = path.resolve(process.cwd(), "server", "templates", "support.html");

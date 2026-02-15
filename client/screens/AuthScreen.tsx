@@ -26,9 +26,12 @@ WebBrowser.maybeCompleteAuthSession();
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
+const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || "";
+const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || "";
+
 function useGoogleAuth() {
-  const googleWebClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || undefined;
-  const googleIosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || undefined;
+  const googleWebClientId = GOOGLE_WEB_CLIENT_ID || undefined;
+  const googleIosClientId = GOOGLE_IOS_CLIENT_ID || undefined;
 
   const [request, response, promptAsync] = Google.useAuthRequest({
     webClientId: googleWebClientId,
@@ -73,13 +76,6 @@ function GoogleSignInFallback({
   setLoadingProvider,
   setIsLoading,
 }: GoogleSignInProps) {
-  const googleWebClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
-  const googleIosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
-  const isIOS = Platform.OS === "ios";
-  const hasGoogleClientId = !!googleWebClientId || (isIOS && !!googleIosClientId);
-
-  if (!hasGoogleClientId) return null;
-
   const handlePress = async () => {
     onError("");
     setIsLoading(true);
@@ -87,7 +83,7 @@ function GoogleSignInFallback({
 
     try {
       const redirectUri = getApiUrl();
-      const clientId = googleWebClientId;
+      const clientId = GOOGLE_WEB_CLIENT_ID || GOOGLE_IOS_CLIENT_ID;
 
       const authUrl =
         `https://accounts.google.com/o/oauth2/v2/auth?` +

@@ -182,24 +182,6 @@
       border-radius: 2px;
     }
 
-    .nav-right {
-      display: flex;
-      align-items: center;
-      gap: 24px;
-    }
-
-    .nav-link {
-      font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text-muted);
-      transition: color 0.3s ease;
-    }
-
-    .nav-link:hover {
-      color: var(--believe);
-    }
-
     .nav-cta {
       display: inline-flex;
       align-items: center;
@@ -381,6 +363,10 @@
       border-radius: 4px;
     }
 
+    .hero-link-science {
+      font-size: 13px;
+      color: var(--text-light);
+    }
 
     .flywheel-circle-path {
       fill: none;
@@ -1626,14 +1612,6 @@
         padding: 8px 16px;
       }
 
-      .nav-link {
-        font-size: 12px;
-      }
-
-      .nav-right {
-        gap: 14px;
-      }
-
       .flywheel-diagram {
         max-width: 320px;
         margin-bottom: 50px;
@@ -1719,10 +1697,7 @@
         <img src="/landing-assets/logo.png" alt="RETUNED logo" width="38" height="38">
         <span class="logo-text">RE<span class="tu">TU</span>NED</span>
       </a>
-      <div class="nav-right">
-        <a href="/science" class="nav-link">The Science</a>
-        <a href="https://apps.apple.com/app/retuned/id6758591982" class="nav-cta" target="_blank" rel="noopener noreferrer">Experience the Flywheel</a>
-      </div>
+      <a href="https://apps.apple.com/app/retuned/id6758591982" class="nav-cta" target="_blank" rel="noopener noreferrer">Experience the Flywheel</a>
     </div>
   </nav>
 
@@ -1736,6 +1711,7 @@
         <div class="hero-actions">
           <a href="#flywheel" class="btn-primary">Experience the Wellness Flywheel &#8594;</a>
           <a href="#flywheel" class="hero-link">See How It Works</a>
+          <a href="/science" class="hero-link hero-link-science">The Science Behind It &#8594;</a>
         </div>
       </div>
     </div>

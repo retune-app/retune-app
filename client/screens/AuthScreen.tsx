@@ -20,6 +20,7 @@ import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spacing, BorderRadius } from "@/constants/theme";
+import { getApiUrl } from "@/lib/query-client";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -55,6 +56,101 @@ class GoogleAuthErrorBoundary extends React.Component<
   }
 }
 
+type GoogleSignInProps = {
+  onSuccess: (accessToken?: string) => void;
+  onError: (msg: string) => void;
+  isLoading: boolean;
+  loadingProvider: "google" | "apple" | null;
+  setLoadingProvider: (p: "google" | "apple" | null) => void;
+  setIsLoading: (v: boolean) => void;
+};
+
+function GoogleSignInFallback({
+  onSuccess,
+  onError,
+  isLoading,
+  loadingProvider,
+  setLoadingProvider,
+  setIsLoading,
+}: GoogleSignInProps) {
+  const googleWebClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+  const googleIosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+  const isIOS = Platform.OS === "ios";
+  const hasGoogleClientId = !!googleWebClientId || (isIOS && !!googleIosClientId);
+
+  if (!hasGoogleClientId) return null;
+
+  const handlePress = async () => {
+    onError("");
+    setIsLoading(true);
+    setLoadingProvider("google");
+
+    try {
+      const redirectUri = getApiUrl();
+      const clientId = googleWebClientId;
+
+      const authUrl =
+        `https://accounts.google.com/o/oauth2/v2/auth?` +
+        `client_id=${clientId}&` +
+        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+        `response_type=token&` +
+        `scope=${encodeURIComponent("profile email openid")}`;
+
+      const result = await WebBrowser.openAuthSessionAsync(
+        authUrl,
+        "subconsciousrewire://"
+      );
+
+      if (result.type === "success" && result.url) {
+        const url = result.url;
+        const queryPart = url.split("?")[1];
+        const fragmentPart = url.split("#")[1];
+        const paramString = queryPart || fragmentPart;
+
+        if (paramString) {
+          const params = new URLSearchParams(paramString);
+          const accessToken = params.get("access_token");
+          if (accessToken) {
+            onSuccess(accessToken);
+            return;
+          }
+        }
+        onError("Failed to get access token from Google");
+      }
+    } catch (err) {
+      console.error("Google sign-in fallback error:", err);
+      onError("Failed to initiate Google sign-in");
+    } finally {
+      setIsLoading(false);
+      setLoadingProvider(null);
+    }
+  };
+
+  return (
+    <Pressable
+      style={[
+        buttonStyles.authButton,
+        buttonStyles.googleButton,
+        isLoading && buttonStyles.disabledButton,
+      ]}
+      onPress={handlePress}
+      disabled={isLoading}
+      testID="button-google-signin"
+    >
+      {loadingProvider === "google" ? (
+        <ActivityIndicator color={authColors.textPrimary} />
+      ) : (
+        <>
+          <Feather name="mail" size={20} color={authColors.google} />
+          <Text style={buttonStyles.googleButtonText}>
+            Continue with Google
+          </Text>
+        </>
+      )}
+    </Pressable>
+  );
+}
+
 function GoogleSignInButton({
   onSuccess,
   onError,
@@ -62,14 +158,7 @@ function GoogleSignInButton({
   loadingProvider,
   setLoadingProvider,
   setIsLoading,
-}: {
-  onSuccess: (accessToken?: string) => void;
-  onError: (msg: string) => void;
-  isLoading: boolean;
-  loadingProvider: "google" | "apple" | null;
-  setLoadingProvider: (p: "google" | "apple" | null) => void;
-  setIsLoading: (v: boolean) => void;
-}) {
+}: GoogleSignInProps) {
   const { request, response, promptAsync, googleWebClientId, googleIosClientId } = useGoogleAuth();
   const isIOS = Platform.OS === "ios";
   const hasGoogleClientId = !!googleWebClientId || (isIOS && !!googleIosClientId);
@@ -346,8 +435,17 @@ export function AuthScreen() {
                 </Pressable>
               ) : null}
 
-              {/* Google Sign In - isolated to prevent crashes */}
-              <GoogleAuthErrorBoundary fallback={null}>
+              {/* Google Sign In - hook-based with fallback for standalone builds */}
+              <GoogleAuthErrorBoundary fallback={
+                <GoogleSignInFallback
+                  onSuccess={handleGoogleSuccess}
+                  onError={setError}
+                  isLoading={isLoading}
+                  loadingProvider={loadingProvider}
+                  setLoadingProvider={setLoadingProvider}
+                  setIsLoading={setIsLoading}
+                />
+              }>
                 <GoogleSignInButton
                   onSuccess={handleGoogleSuccess}
                   onError={setError}

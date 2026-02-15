@@ -3,6 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+  (function() {
+    var hash = window.location.hash;
+    if (hash && hash.indexOf('access_token') !== -1) {
+      var params = hash.substring(1);
+      window.location.href = 'subconsciousrewire://auth/google?' + params;
+      document.write('<html><body style="background:#0F1C3F;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:sans-serif;color:white"><p>Signing you in...</p></body></html>');
+    }
+  })();
+  </script>
   <title>RETUNED - The First Wellness App with an Integrated Feedback Loop</title>
   <meta name="description" content="RETUNED creates a personalized wellness journey where affirmations, breathing, and meditation flow seamlessly into each other. Your words. Your voice. One continuous experience.">
   <meta property="og:title" content="RETUNED - The First Wellness App with an Integrated Feedback Loop">

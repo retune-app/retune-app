@@ -1,11 +1,11 @@
 {
-  "id": "698bfc8c-c3da-43f0-9005-1b3ac50da0cd",
-  "createdAt": "2026-02-14T22:11:42.341Z",
+  "id": "ac27acc1-b3a2-4ed7-a671-33ec555e3e1b",
+  "createdAt": "2026-02-15T20:08:02.713Z",
   "runtimeVersion": "exposdk:54.0.0",
   "launchAsset": {
-    "key": "bundle-1771107102341-13964",
+    "key": "bundle-1771186082713-3536",
     "contentType": "application/javascript",
-    "url": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev:5000/1771107102341-13964/_expo/static/js/ios/bundle.js"
+    "url": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev:5000/1771186082713-3536/_expo/static/js/ios/bundle.js"
   },
   "assets": [],
   "metadata": {},
@@ -14,7 +14,7 @@
     "expoClient": {
       "name": "Retuned",
       "slug": "subconscious-rewire",
-      "version": "1.6",
+      "version": "1.7",
       "orientation": "default",
       "icon": "./assets/images/rewired-logo.png",
       "scheme": "subconsciousrewire",
@@ -136,6 +136,6 @@
       },
       "mainModuleName": "client/index"
     },
-    "scopeKey": "@anonymous/subconscious-rewire-e898de0d-c3af-4a52-9339-1651e7d1e56d"
+    "scopeKey": "@anonymous/subconscious-rewire-74758cdf-0ab9-4c20-886f-0360259d9e8c"
   }
 }

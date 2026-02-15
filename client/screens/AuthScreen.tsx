@@ -435,8 +435,28 @@ export function AuthScreen() {
                 </Pressable>
               ) : null}
 
-              {/* Google Sign In - hook-based with fallback for standalone builds */}
-              <GoogleAuthErrorBoundary fallback={
+              {/* Google Sign In - browser-based on iOS/Android, hook-based on web */}
+              {Platform.OS === "web" ? (
+                <GoogleAuthErrorBoundary fallback={
+                  <GoogleSignInFallback
+                    onSuccess={handleGoogleSuccess}
+                    onError={setError}
+                    isLoading={isLoading}
+                    loadingProvider={loadingProvider}
+                    setLoadingProvider={setLoadingProvider}
+                    setIsLoading={setIsLoading}
+                  />
+                }>
+                  <GoogleSignInButton
+                    onSuccess={handleGoogleSuccess}
+                    onError={setError}
+                    isLoading={isLoading}
+                    loadingProvider={loadingProvider}
+                    setLoadingProvider={setLoadingProvider}
+                    setIsLoading={setIsLoading}
+                  />
+                </GoogleAuthErrorBoundary>
+              ) : (
                 <GoogleSignInFallback
                   onSuccess={handleGoogleSuccess}
                   onError={setError}
@@ -445,16 +465,7 @@ export function AuthScreen() {
                   setLoadingProvider={setLoadingProvider}
                   setIsLoading={setIsLoading}
                 />
-              }>
-                <GoogleSignInButton
-                  onSuccess={handleGoogleSuccess}
-                  onError={setError}
-                  isLoading={isLoading}
-                  loadingProvider={loadingProvider}
-                  setLoadingProvider={setLoadingProvider}
-                  setIsLoading={setIsLoading}
-                />
-              </GoogleAuthErrorBoundary>
+              )}
 
               <View style={styles.divider}>
                 <View style={styles.dividerLine} />

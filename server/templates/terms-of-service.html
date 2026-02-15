@@ -3,205 +3,650 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Terms of Service - Retuned</title>
+    <title>Terms of Service - RETUNED</title>
+    <link rel="icon" type="image/png" href="/landing-assets/logo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        * {
+        *, *::before, *::after {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
+        :root {
+            --bg: #FAFAFA;
+            --bg-warm: #F7F4EF;
+            --text: #2C2C2C;
+            --text-muted: #6B6B6B;
+            --text-light: #8A8A8A;
+            --believe: #C9A227;
+            --believe-light: #D4B545;
+            --believe-glow: rgba(201, 162, 39, 0.15);
+            --believe-bg: rgba(201, 162, 39, 0.08);
+            --breathe: #2EC4B6;
+            --meditate: #7C3AED;
+            --white: #FFFFFF;
+            --border: rgba(44, 44, 44, 0.1);
+            --card-shadow: 0 2px 20px rgba(0,0,0,0.06);
+            --nav-bg: rgba(250, 250, 250, 0.92);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
             line-height: 1.7;
-            color: #333;
-            background: linear-gradient(135deg, #0F1C3F 0%, #1A2D4F 100%);
-            min-height: 100vh;
-            padding: 40px 20px;
+            -webkit-font-smoothing: antialiased;
         }
-        
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 16px;
-            padding: 48px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+
+        h1, h2, h3, h4 {
+            font-family: 'Space Grotesk', 'Inter', sans-serif;
+            line-height: 1.2;
         }
-        
-        .logo {
-            text-align: center;
-            margin-bottom: 32px;
-        }
-        
-        .logo h1 {
-            font-size: 32px;
-            color: #C9A227;
-            font-weight: 600;
-        }
-        
-        h1.title {
-            font-size: 28px;
-            color: #0F1C3F;
-            margin-bottom: 8px;
-            text-align: center;
-        }
-        
-        .effective-date {
-            text-align: center;
-            color: #666;
-            margin-bottom: 40px;
-            font-size: 14px;
-        }
-        
-        h2 {
-            font-size: 20px;
-            color: #0F1C3F;
-            margin-top: 32px;
-            margin-bottom: 16px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid #C9A227;
-        }
-        
-        p {
-            margin-bottom: 16px;
-            color: #444;
-        }
-        
-        ul {
-            margin-bottom: 16px;
-            padding-left: 24px;
-        }
-        
-        li {
-            margin-bottom: 8px;
-            color: #444;
-        }
-        
-        .highlight {
-            background: #FFF9E6;
-            border-left: 4px solid #C9A227;
-            padding: 16px;
-            margin: 24px 0;
-            border-radius: 0 8px 8px 0;
-        }
-        
-        .contact {
-            background: #F5F7FA;
-            padding: 24px;
-            border-radius: 12px;
-            margin-top: 32px;
-        }
-        
-        .contact h2 {
-            margin-top: 0;
-            border-bottom: none;
-        }
-        
+
         a {
-            color: #C9A227;
+            color: var(--believe);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        a:hover {
+            color: var(--believe-light);
+        }
+
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.7s ease, transform 0.7s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 16px 0;
+            background: var(--nav-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            box-shadow: 0 1px 10px rgba(0,0,0,0.04);
+        }
+
+        nav .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 clamp(20px, 5vw, 80px);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
             text-decoration: none;
         }
-        
-        a:hover {
-            text-decoration: underline;
+
+        .logo img {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
         }
-        
-        footer {
-            text-align: center;
-            margin-top: 40px;
-            padding-top: 24px;
-            border-top: 1px solid #eee;
-            color: #888;
+
+        .logo-text {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: 3px;
+        }
+
+        .logo-text .tu {
+            position: relative;
+        }
+
+        .logo-text .tu::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            right: 0;
+            height: 2.5px;
+            background: var(--believe);
+            border-radius: 2px;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'Inter', sans-serif;
             font-size: 14px;
+            font-weight: 600;
+            color: var(--text-muted);
+            transition: color 0.3s ease;
+        }
+
+        .back-link:hover {
+            color: var(--believe);
+        }
+
+        .hero {
+            padding: 140px 0 80px;
+            background: linear-gradient(180deg, var(--bg) 0%, var(--bg-warm) 60%, var(--bg) 100%);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 20%;
+            right: -10%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, var(--believe-glow) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            background: var(--believe-bg);
+            border: 1px solid rgba(201, 162, 39, 0.2);
+            border-radius: 30px;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--believe);
+            margin-bottom: 24px;
+            letter-spacing: 0.5px;
+        }
+
+        .hero h1 {
+            font-size: clamp(32px, 5vw, 48px);
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 16px;
+        }
+
+        .hero .effective-date {
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            color: var(--text-muted);
+        }
+
+        .content {
+            padding: 60px 0 100px;
+        }
+
+        .intro-text {
+            font-size: 17px;
+            color: var(--text-muted);
+            line-height: 1.8;
+            margin-bottom: 40px;
+            text-align: center;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .section-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 24px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .section-card h2 {
+            font-size: 22px;
+            color: var(--text);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--believe);
+            color: var(--white);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .section-card p {
+            font-size: 15px;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            line-height: 1.75;
+        }
+
+        .section-card p:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-card ul {
+            margin-bottom: 16px;
+            padding-left: 0;
+            list-style: none;
+        }
+
+        .section-card ul li {
+            font-size: 15px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            padding-left: 24px;
+            position: relative;
+            line-height: 1.65;
+        }
+
+        .section-card ul li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 9px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--believe);
+            opacity: 0.5;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(201, 162, 39, 0.04), rgba(201, 162, 39, 0.08));
+            border: 2px solid rgba(201, 162, 39, 0.25);
+            border-radius: 16px;
+            padding: 28px;
+            margin: 20px 0;
+        }
+
+        .highlight-box p {
+            color: var(--text);
+        }
+
+        .highlight-box ul li {
+            color: var(--text);
+        }
+
+        .highlight-box ul li::before {
+            background: var(--believe);
+            opacity: 0.8;
+        }
+
+        .highlight-box .highlight-label {
+            display: inline-block;
+            font-family: 'Inter', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--believe);
+            margin-bottom: 12px;
+        }
+
+        .ai-notice {
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.04), rgba(124, 58, 237, 0.08));
+            border: 2px solid rgba(124, 58, 237, 0.2);
+            border-radius: 16px;
+            padding: 28px;
+            margin: 20px 0;
+        }
+
+        .ai-notice .highlight-label {
+            color: var(--meditate);
+        }
+
+        .ai-notice ul li::before {
+            background: var(--meditate);
+            opacity: 0.6;
+        }
+
+        .wellness-notice {
+            background: linear-gradient(135deg, rgba(46, 196, 182, 0.04), rgba(46, 196, 182, 0.08));
+            border: 2px solid rgba(46, 196, 182, 0.2);
+            border-radius: 16px;
+            padding: 28px;
+            margin: 20px 0;
+        }
+
+        .wellness-notice .highlight-label {
+            color: var(--breathe);
+        }
+
+        .contact-card {
+            background: var(--bg-warm);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .contact-card h2 {
+            justify-content: center;
+            font-size: 22px;
+            color: var(--text);
+            margin-bottom: 16px;
+        }
+
+        .contact-card p {
+            font-size: 15px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .contact-card a {
+            font-weight: 600;
+        }
+
+        footer {
+            padding: 40px 0;
+            text-align: center;
+            border-top: 1px solid var(--border);
+        }
+
+        footer p {
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            color: var(--text-light);
+            margin-bottom: 8px;
+        }
+
+        footer .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 8px;
+        }
+
+        footer .footer-links a {
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            color: var(--text-muted);
+            transition: color 0.3s ease;
+        }
+
+        footer .footer-links a:hover {
+            color: var(--believe);
+        }
+
+        .gold-divider {
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--believe), var(--believe-light));
+            border-radius: 2px;
+            margin: 0 auto 40px;
+        }
+
+        @media (max-width: 768px) {
+            .section-card {
+                padding: 28px 24px;
+            }
+
+            .highlight-box,
+            .ai-notice,
+            .wellness-notice {
+                padding: 20px;
+            }
+
+            .contact-card {
+                padding: 28px 24px;
+            }
+
+            .hero {
+                padding: 120px 0 60px;
+            }
+
+            .hero h1 {
+                font-size: 28px;
+            }
+
+            .section-card h2 {
+                font-size: 18px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .section-card {
+                padding: 24px 20px;
+            }
+
+            .section-card h2 {
+                font-size: 17px;
+                gap: 10px;
+            }
+
+            .section-number {
+                width: 28px;
+                height: 28px;
+                font-size: 12px;
+            }
+
+            .container {
+                padding: 0 16px;
+            }
+
+            .logo-text {
+                font-size: 18px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="logo">
-            <h1>Retuned</h1>
-        </div>
-        
-        <h1 class="title">Terms of Service</h1>
-        <p class="effective-date">Effective Date: February 2026</p>
-        
-        <p>Welcome to Retuned! These Terms of Service ("Terms") govern your use of the Retuned mobile application and related services. By using Retuned, you agree to these Terms.</p>
-        
-        <h2>1. Acceptance of Terms</h2>
-        <p>By accessing or using Retuned, you agree to be bound by these Terms. If you do not agree, please do not use the app.</p>
-        
-        <h2>2. Description of Service</h2>
-        <p>Retuned is a personal wellness application that provides:</p>
-        <ul>
-            <li>AI-generated personalized affirmations</li>
-            <li>Voice cloning technology for audio playback</li>
-            <li>Guided breathing exercises</li>
-            <li>Ambient sounds and meditation tools</li>
-            <li>Progress tracking and analytics</li>
-        </ul>
-        
-        <h2>3. Account Registration</h2>
-        <p>To use Retuned, you must:</p>
-        <ul>
-            <li>Create an account using Apple Sign In or Google Sign In</li>
-            <li>Be at least 13 years of age</li>
-            <li>Provide accurate information</li>
-            <li>Keep your account credentials secure</li>
-        </ul>
-        
-        <h2>4. Voice Cloning Consent</h2>
-        <div class="highlight">
-            <p>By submitting a voice sample, you consent to:</p>
-            <ul>
-                <li>Having your voice cloned for personal affirmation playback</li>
-                <li>Processing by our third-party provider (ElevenLabs)</li>
-                <li>Storage of your voice model within your account</li>
-            </ul>
-            <p>Your cloned voice is used solely for your personal affirmation experience and is never shared with others.</p>
-        </div>
-        
-        <h2>5. Acceptable Use</h2>
-        <p>You agree not to:</p>
-        <ul>
-            <li>Use the service for any illegal purpose</li>
-            <li>Attempt to gain unauthorized access to the service</li>
-            <li>Upload harmful or malicious content</li>
-            <li>Interfere with the proper functioning of the app</li>
-            <li>Use voice cloning features to impersonate others</li>
-        </ul>
-        
-        <h2>6. Intellectual Property</h2>
-        <p>The Retuned app, including its design, features, and content, is protected by intellectual property laws. You retain ownership of your personal content (affirmations, voice samples) but grant us a license to process and store it for service delivery.</p>
-        
-        <h2>7. Disclaimer</h2>
-        <p>Retuned is a wellness tool and is not a substitute for professional medical or mental health treatment. If you are experiencing mental health difficulties, please consult a qualified healthcare provider.</p>
-        <p>The service is provided "as is" without warranties of any kind, either express or implied.</p>
-        
-        <h2>8. Limitation of Liability</h2>
-        <p>To the maximum extent permitted by law, Retuned shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the service.</p>
-        
-        <h2>9. Modifications to Service</h2>
-        <p>We reserve the right to modify, suspend, or discontinue any part of the service at any time. We will provide reasonable notice of significant changes.</p>
-        
-        <h2>10. Termination</h2>
-        <p>You may delete your account at any time through the app settings. We may terminate or suspend your account for violations of these Terms.</p>
-        
-        <h2>11. Changes to Terms</h2>
-        <p>We may update these Terms from time to time. Continued use of the app after changes constitutes acceptance of the new Terms.</p>
-        
-        <h2>12. Governing Law</h2>
-        <p>These Terms are governed by applicable laws. Any disputes shall be resolved in accordance with these laws.</p>
-        
-        <div class="contact">
-            <h2>13. Contact</h2>
-            <p>For questions about these Terms, please contact us:</p>
-            <p><strong>Email:</strong> <a href="mailto:support@retuned.app">support@retuned.app</a></p>
-        </div>
-        
-        <footer>
-            <p>&copy; 2026 Retuned. All rights reserved.</p>
-        </footer>
+
+<nav>
+    <div class="container" style="max-width: 1200px;">
+        <a href="/" class="logo">
+            <img src="/landing-assets/logo.png" width="38" height="38" style="border-radius: 10px;" alt="Retuned Logo">
+            <span class="logo-text">RE<span class="tu">TU</span>NED</span>
+        </a>
+        <a href="/" class="back-link">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 12L6 8l4-4"/></svg>
+            Back to Home
+        </a>
     </div>
+</nav>
+
+<section class="hero">
+    <div class="container">
+        <div class="fade-in">
+            <span class="hero-badge">Legal</span>
+            <h1>Terms of Service</h1>
+            <p class="effective-date">Effective Date: February 2026</p>
+        </div>
+    </div>
+</section>
+
+<section class="content">
+    <div class="container">
+        <p class="intro-text fade-in">Welcome to Retuned! These Terms of Service ("Terms") govern your use of the Retuned mobile application and related services. By using Retuned, you agree to these Terms.</p>
+
+        <div class="gold-divider fade-in"></div>
+
+        <div class="section-card fade-in">
+            <h2><span class="section-number">1</span> Acceptance of Terms</h2>
+            <p>By accessing or using Retuned, you agree to be bound by these Terms. If you do not agree, please do not use the app.</p>
+        </div>
+
+        <div class="section-card fade-in">
+            <h2><span class="section-number">2</span> Description of Service</h2>
+            <p>Retuned is a personal wellness application that provides:</p>
+            <ul>
+                <li>AI-generated personalized affirmations across 5 Life Pillars (Mind, Body, Spirit, Connection, Achievement)</li>
+                <li>Voice cloning technology for hearing affirmations in your own voice</li>
+                <li>Curated AI stock voices powered by Hume AI</li>
+                <li>Science-backed guided breathing exercises (Box Breathing, 4-7-8, Coherent Breathing, 2-1 Energizing, Alternate Nostril/Nadi Shodhana) with AI-generated wisdom tips</li>
+                <li>AI-powered mood check-ins with personalized wellness paths</li>
+                <li>Micro-meditations tailored to your current emotional state</li>
+                <li>Ambient sound library with 25+ seamless loops across 7 categories</li>
+                <li>RSVP (Rapid Serial Visual Presentation) mode for deep focus</li>
+                <li>Progress tracking, streaks, and listening analytics</li>
+                <li>Personalized AI daily greetings</li>
+                <li>Daily reminder notifications</li>
+            </ul>
+        </div>
+
+        <div class="section-card fade-in">
+            <h2><span class="section-number">3</span> Account Registration</h2>
+            <p>To use Retuned, you must:</p>
+            <ul>
+                <li>Create an account using Apple Sign In or Google Sign In</li>
+                <li>Be at least 13 years of age</li>
+                <li>Provide accurate information</li>
+                <li>Keep your account credentials secure</li>
+            </ul>
+        </div>
+
+        <div class="section-card fade-in">
+            <h2><span class="section-number">4</span> Voice Cloning Consent</h2>
+            <div class="highlight-box">
+                <span class="highlight-label">Important - Voice Data</span>
+                <p>By submitting a voice sample, you consent to the following:</p>
+                <ul>
+                    <li>Your voice will be cloned for personal affirmation playback using our third-party provider, ElevenLabs</li>
+                    <li>Explicit consent is required before any voice recording begins</li>
+                    <li>Original voice recordings are deleted immediately after the cloning process is complete</li>
+                    <li>Your voice model is stored securely with ElevenLabs and is associated with your account</li>
+                    <li>You may delete your cloned voice at any time from the app settings</li>
+                </ul>
+                <p>Your cloned voice is used solely for your personal affirmation experience and is never shared with others or used for any purpose beyond your individual wellness journey.</p>
+            </div>
+        </div>
+
+        <div class="section-card fade-in">
+            <h2><span class="section-number">5</span> AI-Generated Content</h2>
+            <div class="ai-notice">
+                <span class="highlight-label">AI Disclosure</span>
+                <p>Retuned uses artificial intelligence to generate various types of content within the app. By using the service, you acknowledge and understand that:</p>
+                <ul>
+                    <li>Affirmation scripts are generated by AI and may not be suitable for all situations or individuals</li>
+                    <li>Micro-meditations are AI-generated guided experiences tailored to your emotional state</li>
+                    <li>Daily greetings and mood check-in responses are generated by AI</li>
+                    <li>Breathing exercise wisdom tips are AI-generated and based on science-backed wellness information</li>
+                </ul>
+                <p>AI-generated content is intended for general wellness purposes only and should not replace professional medical, psychological, or therapeutic advice. Always consult a qualified healthcare provider for specific health concerns.</p>
+            </div>
+        </div>
+
+        <div class="section-card fade-in">
+            <h2><span class="section-number">6</span> Acceptable Use</h2>
+            <p>You agree not to:</p>
+            <ul>
+                <li>Use the service for any illegal purpose</li>
+                <li>Attempt to gain unauthorized access to the service</li>
+                <li>Upload harmful or malicious content</li>
+                <li>Interfere with the proper functioning of the app</li>
+                <li>Use voice cloning features to impersonate others</li>
+                <li>Use AI-generated content for purposes other than personal wellness</li>
+            </ul>
+        </div>
+
+        <div class="section-card fade-in">
+            <h2><span class="section-number">7</span> Intellectual Property</h2>
+            <p>The Retuned app, including its design, features, and content, is protected by intellectual property laws. You retain ownership of your personal content (affirmations, voice samples) but grant us a license to process and store it for service delivery.</p>
+        </div>
+
+        <div class="section-card fade-in">
+            <h2><span class="section-number">8</span> Disclaimer</h2>
+            <div class="wellness-notice">
+                <span class="highlight-label">Wellness Disclaimer</span>
+                <p>Retuned is a wellness tool designed to support your personal well-being. It is not a medical device, nor is it intended to diagnose, treat, cure, or prevent any disease or medical condition.</p>
+                <p>Breathing exercises (including Box Breathing, 4-7-8, Coherent Breathing, 2-1 Energizing, and Alternate Nostril/Nadi Shodhana), mood check-ins, micro-meditations, and all other features are provided for general wellness purposes only. They are not substitutes for professional medical or mental health treatment.</p>
+                <p>If you are experiencing mental health difficulties or any medical condition, please consult a qualified healthcare provider. In case of emergency, contact your local emergency services immediately.</p>
+            </div>
+            <p>The service is provided "as is" without warranties of any kind, either express or implied, including but not limited to implied warranties of merchantability, fitness for a particular purpose, or non-infringement.</p>
+        </div>
+
+        <div class="section-card fade-in">
+            <h2><span class="section-number">9</span> Limitation of Liability</h2>
+            <p>To the maximum extent permitted by law, Retuned shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the service, including but not limited to damages related to AI-generated content, voice cloning, or wellness guidance provided within the app.</p>
+        </div>
+
+        <div class="section-card fade-in">
+            <h2><span class="section-number">10</span> Modifications to Service</h2>
+            <p>We reserve the right to modify, suspend, or discontinue any part of the service at any time. We will provide reasonable notice of significant changes.</p>
+        </div>
+
+        <div class="section-card fade-in">
+            <h2><span class="section-number">11</span> Termination</h2>
+            <p>You may delete your account at any time through the app settings. Upon account deletion, your voice model and personal data will be removed in accordance with our Privacy Policy. We may terminate or suspend your account for violations of these Terms.</p>
+        </div>
+
+        <div class="section-card fade-in">
+            <h2><span class="section-number">12</span> Changes to Terms</h2>
+            <p>We may update these Terms from time to time. Continued use of the app after changes constitutes acceptance of the new Terms. We will notify you of material changes through the app or via email.</p>
+        </div>
+
+        <div class="section-card fade-in">
+            <h2><span class="section-number">13</span> Governing Law</h2>
+            <p>These Terms are governed by applicable laws. Any disputes shall be resolved in accordance with these laws.</p>
+        </div>
+
+        <div class="contact-card fade-in">
+            <h2>Contact Us</h2>
+            <p>For questions about these Terms, please contact us:</p>
+            <p><a href="mailto:support@retuned.app">support@retuned.app</a></p>
+        </div>
+    </div>
+</section>
+
+<footer>
+    <div class="container">
+        <p>&copy; 2026 Retuned. All rights reserved.</p>
+        <div class="footer-links">
+            <a href="/privacy">Privacy Policy</a>
+            <a href="/support">Support</a>
+            <a href="/">Home</a>
+        </div>
+    </div>
+</footer>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, {
+            threshold: 0.1,
+            rootMargin: '0px 0px -40px 0px'
+        });
+
+        document.querySelectorAll('.fade-in').forEach(function(el) {
+            observer.observe(el);
+        });
+    });
+</script>
+
 </body>
 </html>

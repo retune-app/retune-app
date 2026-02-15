@@ -1,183 +1,971 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Retuned - Support</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Space Grotesk', sans-serif;
-            background: linear-gradient(180deg, #0F1C3F 0%, #1A2D4F 50%, #243656 100%);
-            min-height: 100vh;
-            color: #fff;
-            padding: 40px 20px;
-        }
-        
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        
-        .header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-        
-        .logo {
-            width: 80px;
-            height: 80px;
-            margin-bottom: 20px;
-        }
-        
-        h1 {
-            font-size: 2rem;
-            color: #C9A227;
-            margin-bottom: 8px;
-        }
-        
-        .tagline {
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 1rem;
-        }
-        
-        .card {
-            background: rgba(255, 255, 255, 0.08);
-            border-radius: 16px;
-            padding: 32px;
-            margin-bottom: 24px;
-            border: 1px solid rgba(201, 162, 39, 0.2);
-        }
-        
-        .card h2 {
-            color: #C9A227;
-            font-size: 1.25rem;
-            margin-bottom: 16px;
-        }
-        
-        .card p {
-            color: rgba(255, 255, 255, 0.85);
-            line-height: 1.6;
-            margin-bottom: 16px;
-        }
-        
-        .contact-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 16px;
-            background: rgba(201, 162, 39, 0.1);
-            border-radius: 12px;
-            margin-bottom: 12px;
-            text-decoration: none;
-            color: #fff;
-            transition: background 0.2s;
-        }
-        
-        .contact-item:hover {
-            background: rgba(201, 162, 39, 0.2);
-        }
-        
-        .contact-icon {
-            width: 24px;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #C9A227;
-        }
-        
-        .faq-item {
-            margin-bottom: 20px;
-        }
-        
-        .faq-item h3 {
-            color: #fff;
-            font-size: 1rem;
-            margin-bottom: 8px;
-        }
-        
-        .faq-item p {
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 0.95rem;
-            margin-bottom: 0;
-        }
-        
-        .footer {
-            text-align: center;
-            margin-top: 40px;
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 0.875rem;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RETUNED - Support & FAQ</title>
+  <meta name="description" content="Get help with RETUNED. Find answers to common questions about affirmations, breathing, voice cloning, mood journeys, and more.">
+  <link rel="icon" type="image/png" href="/landing-assets/logo.png">
+  <link rel="apple-touch-icon" href="/landing-assets/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #FAFAFA;
+      --bg-warm: #F7F4EF;
+      --text: #2C2C2C;
+      --text-muted: #6B6B6B;
+      --text-light: #8A8A8A;
+      --believe: #C9A227;
+      --believe-light: #D4B545;
+      --believe-glow: rgba(201, 162, 39, 0.15);
+      --believe-bg: rgba(201, 162, 39, 0.08);
+      --breathe: #2EC4B6;
+      --breathe-glow: rgba(46, 196, 182, 0.15);
+      --breathe-bg: rgba(46, 196, 182, 0.08);
+      --meditate: #7C3AED;
+      --meditate-glow: rgba(124, 58, 237, 0.15);
+      --meditate-bg: rgba(124, 58, 237, 0.08);
+      --white: #FFFFFF;
+      --border: rgba(44, 44, 44, 0.1);
+      --card-bg: #FFFFFF;
+      --card-shadow: 0 2px 20px rgba(0,0,0,0.06);
+      --nav-bg: rgba(250, 250, 250, 0.92);
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    h1, h2, h3, h4 {
+      font-family: 'Space Grotesk', 'Inter', sans-serif;
+      line-height: 1.2;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .fade-in {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+
+    .fade-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ===== NAVIGATION ===== */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      padding: 16px 0;
+      background: var(--nav-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 1px 10px rgba(0,0,0,0.04);
+    }
+
+    nav .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 clamp(20px, 5vw, 80px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+
+    .logo img {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+    }
+
+    .logo-text {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: 3px;
+    }
+
+    .logo-text .tu {
+      position: relative;
+    }
+
+    .logo-text .tu::after {
+      content: '';
+      position: absolute;
+      bottom: -3px;
+      left: 0;
+      right: 0;
+      height: 2.5px;
+      background: var(--believe);
+      border-radius: 2px;
+    }
+
+    .nav-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 22px;
+      background: transparent;
+      color: var(--text-muted);
+      border-radius: 24px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      border: 1px solid var(--border);
+    }
+
+    .nav-back:hover {
+      color: var(--believe);
+      border-color: var(--believe);
+      background: var(--believe-bg);
+    }
+
+    .nav-back svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* ===== CONTAINER ===== */
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 clamp(20px, 5vw, 60px);
+    }
+
+    /* ===== HERO ===== */
+    .hero {
+      padding: 140px 0 60px;
+      background: linear-gradient(180deg, var(--bg) 0%, var(--bg-warm) 60%, var(--bg) 100%);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 20%;
+      right: -10%;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, var(--believe-glow) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: 10%;
+      left: -5%;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, var(--breathe-glow) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero h1 {
+      font-size: clamp(32px, 5vw, 48px);
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 16px;
+    }
+
+    .hero-tagline {
+      font-size: 18px;
+      color: var(--text-muted);
+      margin-bottom: 36px;
+      font-style: italic;
+    }
+
+    .search-box {
+      max-width: 520px;
+      margin: 0 auto 40px;
+      position: relative;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 16px 24px 16px 52px;
+      border-radius: 30px;
+      border: 1px solid var(--border);
+      background: var(--white);
+      font-family: 'Nunito', sans-serif;
+      font-size: 16px;
+      color: var(--text);
+      box-shadow: var(--card-shadow);
+      outline: none;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .search-box input::placeholder {
+      color: var(--text-light);
+    }
+
+    .search-box input:focus {
+      border-color: var(--believe);
+      box-shadow: 0 4px 24px var(--believe-glow);
+    }
+
+    .search-box .search-icon {
+      position: absolute;
+      left: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-light);
+    }
+
+    /* ===== QUICK LINKS ===== */
+    .quick-links {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .quick-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 20px;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      transition: all 0.3s ease;
+    }
+
+    .quick-link:hover {
+      color: var(--believe);
+      border-color: var(--believe);
+      background: var(--believe-bg);
+      transform: translateY(-1px);
+    }
+
+    .quick-link svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* ===== CONTACT CARD ===== */
+    .contact-section {
+      padding: 60px 0;
+    }
+
+    .contact-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: var(--card-shadow);
+      padding: 48px;
+      text-align: center;
+    }
+
+    .contact-card .mail-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      background: var(--believe-bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      color: var(--believe);
+    }
+
+    .contact-card h2 {
+      font-size: 24px;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .contact-card .contact-tagline {
+      font-size: 15px;
+      color: var(--text-light);
+      margin-bottom: 24px;
+      font-style: italic;
+    }
+
+    .contact-card p {
+      font-size: 16px;
+      color: var(--text-muted);
+      margin-bottom: 28px;
+      max-width: 480px;
+      margin-left: auto;
+      margin-right: auto;
+      line-height: 1.7;
+    }
+
+    .contact-email-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 32px;
+      background: var(--believe);
+      color: var(--white);
+      border-radius: 30px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 15px;
+      transition: all 0.3s ease;
+    }
+
+    .contact-email-btn:hover {
+      background: var(--believe-light);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px var(--believe-glow);
+    }
+
+    .contact-email-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* ===== FAQ SECTION ===== */
+    .faq-section {
+      padding: 40px 0 80px;
+    }
+
+    .faq-section-title {
+      text-align: center;
+      font-size: clamp(28px, 4vw, 36px);
+      color: var(--text);
+      margin-bottom: 48px;
+    }
+
+    .faq-group {
+      margin-bottom: 40px;
+    }
+
+    .faq-group-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .faq-tag {
+      display: inline-block;
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .faq-tag.getting-started {
+      background: rgba(44, 44, 44, 0.06);
+      color: var(--text-muted);
+    }
+
+    .faq-tag.believe {
+      background: var(--believe-bg);
+      color: var(--believe);
+    }
+
+    .faq-tag.breathe {
+      background: var(--breathe-bg);
+      color: var(--breathe);
+    }
+
+    .faq-tag.meditate {
+      background: var(--meditate-bg);
+      color: var(--meditate);
+    }
+
+    .faq-tag.voice {
+      background: linear-gradient(135deg, var(--believe-bg), var(--meditate-bg));
+      color: var(--believe);
+    }
+
+    .faq-tag.daily {
+      background: linear-gradient(135deg, var(--breathe-bg), var(--believe-bg));
+      color: var(--breathe);
+    }
+
+    .faq-tag.privacy {
+      background: rgba(44, 44, 44, 0.06);
+      color: var(--text-muted);
+    }
+
+    .faq-group-title {
+      font-size: 18px;
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .faq-item {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      margin-bottom: 12px;
+      overflow: hidden;
+      transition: box-shadow 0.3s ease;
+    }
+
+    .faq-item:hover {
+      box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+    }
+
+    .faq-question {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 20px 24px;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.2s ease;
+    }
+
+    .faq-question:hover {
+      background: rgba(0,0,0,0.015);
+    }
+
+    .faq-question-border {
+      width: 3px;
+      height: 20px;
+      border-radius: 2px;
+      background: var(--believe);
+      flex-shrink: 0;
+    }
+
+    .faq-question-border.breathe {
+      background: var(--breathe);
+    }
+
+    .faq-question-border.meditate {
+      background: var(--meditate);
+    }
+
+    .faq-question h3 {
+      flex: 1;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      font-family: 'Nunito', sans-serif;
+    }
+
+    .faq-chevron {
+      width: 20px;
+      height: 20px;
+      color: var(--text-light);
+      transition: transform 0.3s ease;
+      flex-shrink: 0;
+    }
+
+    .faq-item.open .faq-chevron {
+      transform: rotate(180deg);
+    }
+
+    .faq-answer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease;
+    }
+
+    .faq-answer-inner {
+      padding: 0 24px 20px 41px;
+      font-size: 15px;
+      color: var(--text-muted);
+      line-height: 1.75;
+    }
+
+    /* ===== FOOTER ===== */
+    footer {
+      padding: 40px 0;
+      text-align: center;
+      border-top: 1px solid var(--border);
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .footer-links a {
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      transition: color 0.3s ease;
+    }
+
+    .footer-links a:hover {
+      color: var(--believe);
+    }
+
+    .footer-copy {
+      font-size: 13px;
+      color: var(--text-light);
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+      nav .container {
+        padding: 0 20px;
+      }
+
+      .logo-text {
+        font-size: 18px;
+        letter-spacing: 2px;
+      }
+
+      .nav-back {
+        padding: 8px 16px;
+        font-size: 13px;
+      }
+
+      .hero {
+        padding: 120px 0 40px;
+      }
+
+      .contact-card {
+        padding: 32px 24px;
+      }
+
+      .faq-question {
+        padding: 16px 18px;
+      }
+
+      .faq-answer-inner {
+        padding: 0 18px 16px 35px;
+      }
+
+      .quick-links {
+        gap: 10px;
+      }
+
+      .quick-link {
+        padding: 8px 14px;
+        font-size: 12px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .logo-text {
+        font-size: 16px;
+      }
+
+      .nav-back span {
+        display: none;
+      }
+
+      .contact-email-btn {
+        padding: 12px 24px;
+        font-size: 14px;
+      }
+
+      .search-box input {
+        padding: 14px 20px 14px 46px;
+        font-size: 15px;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Retuned Support</h1>
-            <p class="tagline">Breathe, Believe, Become</p>
-        </div>
-        
-        <div class="card">
-            <h2>Contact Us</h2>
-            <p>We're here to help you on your journey to personal growth. Reach out with any questions or feedback.</p>
-            
-            <a href="mailto:support@retuned.app" class="contact-item">
-                <span class="contact-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                        <polyline points="22,6 12,13 2,6"></polyline>
-                    </svg>
-                </span>
-                <span>support@retuned.app</span>
-            </a>
-        </div>
-        
-        <div class="card">
-            <h2>Frequently Asked Questions</h2>
-            
-            <div class="faq-item">
-                <h3>How do I record my voice sample?</h3>
-                <p>Tap the microphone icon on the home screen and read the provided script clearly. This creates your personalized voice clone for affirmations.</p>
-            </div>
-            
-            <div class="faq-item">
-                <h3>How do I create a new affirmation?</h3>
-                <p>Tap the gold "+" button at the bottom of the screen. Enter your goal, select a life pillar, and our AI will generate personalized affirmations for you.</p>
-            </div>
-            
-            <div class="faq-item">
-                <h3>What are the breathing techniques?</h3>
-                <p>We offer Box Breathing (4-4-4-4), 4-7-8 Relaxation, and Coherent Breathing. Each technique is designed to help you relax and focus.</p>
-            </div>
-            
-            <div class="faq-item">
-                <h3>How do I mark affirmations as favorites?</h3>
-                <p>Tap the heart icon on any affirmation card to add it to your favorites. Use the filter button to view only your favorites.</p>
-            </div>
-            
-            <div class="faq-item">
-                <h3>What is RSVP mode?</h3>
-                <p>Rapid Serial Visual Presentation displays affirmation words one at a time in sync with audio, creating a deep focus experience.</p>
-            </div>
-        </div>
-        
-        <div class="card">
-            <h2>Privacy & Data</h2>
-            <p>Your privacy is important to us. Voice samples and affirmations are stored securely and never shared with third parties. You can delete your data at any time from the Settings menu.</p>
-        </div>
-        
-        <div class="footer">
-            <p>&copy; 2024 Retuned. All rights reserved.</p>
-        </div>
+  <nav>
+    <div class="container" style="max-width: 1200px;">
+      <a href="/" class="logo">
+        <img src="/landing-assets/logo.png" width="38" height="38" alt="RETUNED" style="border-radius: 10px;">
+        <span class="logo-text">RE<span class="tu">TU</span>NED</span>
+      </a>
+      <a href="/" class="nav-back">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        <span>Back to Home</span>
+      </a>
     </div>
+  </nav>
+
+  <section class="hero">
+    <div class="container">
+      <h1 class="fade-in">How can we help?</h1>
+      <p class="hero-tagline fade-in">Breathe. Believe. Become.</p>
+
+      <div class="search-box fade-in">
+        <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input type="text" placeholder="Search for answers..." readonly>
+      </div>
+
+      <div class="quick-links fade-in">
+        <a href="/privacy" class="quick-link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          Privacy Policy
+        </a>
+        <a href="/terms" class="quick-link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          Terms of Service
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="contact-section">
+    <div class="container">
+      <div class="contact-card fade-in">
+        <div class="mail-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+        </div>
+        <h2>Get in Touch</h2>
+        <p class="contact-tagline">Breathe. Believe. Become.</p>
+        <p>We're here to support your wellness journey. Have a question, suggestion, or need help? We'd love to hear from you.</p>
+        <a href="mailto:support@retuned.app" class="contact-email-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+          support@retuned.app
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="faq-section">
+    <div class="container">
+      <h2 class="faq-section-title fade-in">Frequently Asked Questions</h2>
+
+      <div class="faq-group fade-in">
+        <div class="faq-group-header">
+          <span class="faq-tag getting-started">Getting Started</span>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <div class="faq-question-border"></div>
+            <h3>How do I create an account?</h3>
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">Sign up instantly using Apple Sign-In or Google Sign-In. No passwords to remember, no forms to fill out. Just tap and you're in.</div>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <div class="faq-question-border"></div>
+            <h3>What is the Breathe-Believe-Become loop?</h3>
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">RETUNED is built on an integrated wellness approach. Breathing prepares your mind for change, affirmations reprogram your beliefs, and meditation reinforces the transformation. These three practices flow into each other, creating a continuous feedback loop for personal growth.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-group fade-in">
+        <div class="faq-group-header">
+          <span class="faq-tag believe">Believe</span>
+          <span class="faq-group-title">Affirmations</span>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <div class="faq-question-border"></div>
+            <h3>How do I create a new affirmation?</h3>
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">Tap the gold "+" button, enter your personal goal, and select a Life Pillar &mdash; Mind, Body, Spirit, Connection, or Achievement. Our AI will then generate personalized affirmations tailored specifically to your intention.</div>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <div class="faq-question-border"></div>
+            <h3>What are Life Pillars?</h3>
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">Life Pillars are five categories &mdash; Mind, Body, Spirit, Connection, and Achievement &mdash; that organize your affirmations for balanced personal growth. They help ensure you're nurturing every dimension of your well-being.</div>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <div class="faq-question-border"></div>
+            <h3>What is RSVP mode?</h3>
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">Rapid Serial Visual Presentation (RSVP) displays affirmation words one at a time, synced with audio playback, for a deep focus experience. Tilt your phone to landscape for an immersive fullscreen presentation that helps you absorb every word.</div>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <div class="faq-question-border"></div>
+            <h3>How do I favorite affirmations?</h3>
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">Tap the heart icon on any affirmation card to mark it as a favorite. You can then use the filter options to view only your favorited affirmations for quick access.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-group fade-in">
+        <div class="faq-group-header">
+          <span class="faq-tag voice">Voice & Audio</span>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <div class="faq-question-border"></div>
+            <h3>How do I clone my voice?</h3>
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">Tap the microphone icon and read the provided script clearly. Your original recording is deleted immediately after cloning for complete privacy. Once cloned, you'll hear your affirmations spoken back to you in your own voice &mdash; your Inner Voice.</div>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <div class="faq-question-border"></div>
+            <h3>What voices are available?</h3>
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">You have access to your cloned Inner Voice plus a selection of curated AI stock voices. You can set your preferred voice in Settings and switch between them at any time.</div>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <div class="faq-question-border"></div>
+            <h3>Can I change the voice for playback?</h3>
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">Yes! Go to Settings to choose between your Inner Voice and any of the available AI stock voices. Your preference will be applied to all future affirmation playback.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-group fade-in">
+        <div class="faq-group-header">
+          <span class="faq-tag breathe">Breathe</span>
+          <span class="faq-group-title">Breathing</span>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <div class="faq-question-border breathe"></div>
+            <h3>What breathing techniques are available?</h3>
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">We offer five techniques: Box Breathing (4-4-4-4), 4-7-8 Relaxation, Coherent Breathing, 2-1 Energizing Breath, and Alternate Nostril Breathing (Nadi Shodhana). Each technique comes with customizable durations so you can tailor your practice.</div>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <div class="faq-question-border breathe"></div>
+            <h3>What are breathing wisdom tips?</h3>
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">During your breathing session, you'll see AI-generated, science-based tips explaining the benefits of the technique you're practicing. These insights help you understand the "why" behind each breath.</div>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <div class="faq-question-border breathe"></div>
+            <h3>How do ambient sounds work with breathing?</h3>
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">Choose from 25+ ambient sound loops across 7 categories &mdash; including ocean waves, rain, forest, and more &mdash; to enhance your breathing practice. Sounds persist seamlessly across session transitions, creating an uninterrupted atmosphere.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-group fade-in">
+        <div class="faq-group-header">
+          <span class="faq-tag meditate">Meditate</span>
+          <span class="faq-group-title">Mood & Wellness Journeys</span>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <div class="faq-question-border meditate"></div>
+            <h3>What is a mood check-in?</h3>
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">A mood check-in is an AI-powered assessment of how you're feeling right now. Based on your response, it recommends a personalized wellness path &mdash; breathing, meditation, or affirmation listening &mdash; to match your current emotional state.</div>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <div class="faq-question-border meditate"></div>
+            <h3>What are mood journeys?</h3>
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">Mood journeys are guided multi-step wellness experiences that flow from breathing to meditation to affirmations, all tailored to your current emotional state. They provide a structured path through the Breathe-Believe-Become loop.</div>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <div class="faq-question-border meditate"></div>
+            <h3>What are micro-meditations?</h3>
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">Micro-meditations are short, AI-generated guided meditations tailored to your mood. They come in varying durations and feature a word-by-word visual display so you can follow along with focused attention.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-group fade-in">
+        <div class="faq-group-header">
+          <span class="faq-tag daily">Daily Features</span>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <div class="faq-question-border"></div>
+            <h3>What are daily greetings?</h3>
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">Personalized AI messages greet you when you open the app, based on your activity, streaks, and recent journey history. If you've been away for a while, you'll receive a special welcome-back message to ease you back in.</div>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <div class="faq-question-border"></div>
+            <h3>How do daily reminders work?</h3>
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">Set up notifications for breathing or affirmation sessions at your preferred time. Each reminder includes an AI-generated motivational message to inspire you to begin your practice.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-group fade-in">
+        <div class="faq-group-header">
+          <span class="faq-tag privacy">Privacy & Data</span>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <div class="faq-question-border"></div>
+            <h3>Is my voice data secure?</h3>
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">Absolutely. Your original voice recordings are deleted immediately after cloning. Your voice model is stored securely and can be deleted anytime from Settings. We take your privacy seriously.</div>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <div class="faq-question-border"></div>
+            <h3>Can I delete my data?</h3>
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">Yes. Go to Settings to delete your account and all associated data, including voice models, affirmations, and listening history. This action is permanent and fully GDPR-compliant.</div>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <div class="faq-question-border"></div>
+            <h3>What data do you collect?</h3>
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">We collect account information, affirmations, voice models, listening statistics, and mood journey data. Mood check-in responses are ephemeral and not stored long-term. We never sell your data. For full details, see our <a href="/privacy" style="color: var(--believe); text-decoration: underline;">Privacy Policy</a>.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <div class="footer-links">
+        <a href="/privacy">Privacy Policy</a>
+        <a href="/terms">Terms of Service</a>
+        <a href="mailto:support@retuned.app">Contact</a>
+      </div>
+      <p class="footer-copy">&copy; 2026 RETUNED. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    function toggleFaq(el) {
+      var item = el.parentElement;
+      var answer = item.querySelector('.faq-answer');
+      var isOpen = item.classList.contains('open');
+
+      if (isOpen) {
+        answer.style.maxHeight = '0';
+        item.classList.remove('open');
+      } else {
+        answer.style.maxHeight = answer.scrollHeight + 'px';
+        item.classList.add('open');
+      }
+    }
+
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.fade-in').forEach(function(el) {
+      observer.observe(el);
+    });
+  </script>
 </body>
 </html>

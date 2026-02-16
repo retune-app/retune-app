@@ -20,7 +20,7 @@ import {
   type WordTiming,
 } from "./replit_integrations/elevenlabs/client";
 import { humeTextToSpeech, humeSimpleTTS, type WordTiming as HumeWordTiming } from "./hume-client";
-import { findInactiveVoices, runVoiceRotation, getVoiceSlotStats, checkVoiceSlotWarning } from "./voice-rotation";
+import { findInactiveVoices, runVoiceRotation, getVoiceSlotStats, checkVoiceSlotWarning, freeVoiceSlotForNewClone } from "./voice-rotation";
 import { setupAuth, requireAuth, optionalAuth, AuthenticatedRequest } from "./auth";
 import { moderateContent, validateAffirmationContent } from "./moderation";
 import {
@@ -1555,7 +1555,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
           let userMessage = "Voice cloning failed. Please try again.";
 
           if (elevenLabsDetail.toLowerCase().includes("maximum") || elevenLabsDetail.toLowerCase().includes("custom voices") || elevenLabsDetail.toLowerCase().includes("voice limit")) {
-            console.error("[Voice Slots] ElevenLabs voice slot limit reached! Attempting auto-cleanup...");
+            console.warn("[Voice Slots] ElevenLabs quota hit. Attempting queue-based slot recovery...");
+            
+            try {
+              const slotResult = await freeVoiceSlotForNewClone(req.userId!);
+              if (slotResult.freed) {
+                console.log(`[Voice Slots] Freed slot (rotated user=${slotResult.rotatedUserId}). Retrying clone...`);
+                
+                const retryVoiceId = await cloneVoice(file.path, "My Affirmation Voice");
+                fs.unlink(file.path, () => {});
+                
+                const [retryUpdatedSample] = await db
+                  .update(voiceSamples)
+                  .set({ voiceId: retryVoiceId, status: "ready", audioUrl: null })
+                  .where(eq(voiceSamples.id, sample.id))
+                  .returning();
+                
+                await db
+                  .update(users)
+                  .set({ 
+                    voiceId: retryVoiceId, 
+                    hasVoiceSample: true, 
+                    preferredVoiceType: "personal",
+                    voiceClonesUsed: (clonesUsed + 1)
+                  })
+                  .where(eq(users.id, req.userId!));
+                
+                return res.json({
+                  ...retryUpdatedSample,
+                  clonesRemaining: MAX_VOICE_CLONES - (clonesUsed + 1)
+                });
+              }
+            } catch (retryError: any) {
+              console.error("[Voice Slots] Retry after slot recovery failed:", retryError?.message);
+            }
+            
             userMessage = "Voice cloning is temporarily unavailable. Please try again in a few minutes.";
           } else if (statusCode === 401 || statusCode === 403) {
             userMessage = "Voice cloning service is temporarily unavailable. Please try again later.";

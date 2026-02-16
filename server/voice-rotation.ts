@@ -131,6 +131,53 @@ export async function getVoiceSlotStats() {
   };
 }
 
+export async function freeVoiceSlotForNewClone(requestingUserId: string): Promise<{ freed: boolean; rotatedUserId?: string; rotatedVoiceId?: string; error?: string }> {
+  try {
+    const allVoices = await listVoices();
+    const clonedVoices = allVoices.filter((v: any) => v.category === "cloned");
+    
+    if (clonedVoices.length < ELEVENLABS_PLAN_VOICE_LIMIT) {
+      return { freed: true };
+    }
+
+    console.warn(`[Voice Slots] All ${ELEVENLABS_PLAN_VOICE_LIMIT} slots full. Finding least recently used voice to rotate...`);
+
+    const usersWithVoices = await db
+      .select({
+        id: users.id,
+        voiceId: users.voiceId,
+        voiceLastUsedAt: users.voiceLastUsedAt,
+        createdAt: users.createdAt,
+      })
+      .from(users)
+      .where(
+        and(
+          isNotNull(users.voiceId),
+          sql`${users.id} != ${requestingUserId}`
+        )
+      )
+      .orderBy(sql`COALESCE(${users.voiceLastUsedAt}, ${users.createdAt}) ASC`)
+      .limit(1);
+
+    if (usersWithVoices.length === 0) {
+      return { freed: false, error: "No eligible voices to rotate" };
+    }
+
+    const lruUser = usersWithVoices[0];
+    if (!lruUser.voiceId) {
+      return { freed: false, error: "LRU user has no voice ID" };
+    }
+
+    console.log(`[Voice Slots] Rotating LRU voice: user=${lruUser.id}, voiceId=${lruUser.voiceId}, lastUsed=${lruUser.voiceLastUsedAt || lruUser.createdAt}`);
+    await rotateUserVoice(lruUser.id, lruUser.voiceId);
+
+    return { freed: true, rotatedUserId: lruUser.id, rotatedVoiceId: lruUser.voiceId };
+  } catch (error: any) {
+    console.error("[Voice Slots] Failed to free slot:", error?.message);
+    return { freed: false, error: error?.message || "Unknown error" };
+  }
+}
+
 export async function checkVoiceSlotWarning(): Promise<string | null> {
   try {
     const allVoices = await listVoices();

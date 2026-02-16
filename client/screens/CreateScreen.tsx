@@ -724,15 +724,15 @@ export default function CreateScreen() {
       >
         <LinearGradient
           colors={isDark
-            ? ["rgba(201,162,39,0.15)", "rgba(201,162,39,0.05)"]
-            : ["rgba(201,162,39,0.12)", "rgba(201,162,39,0.03)"]}
+            ? ["#C9A227", "#8A6D1A"]
+            : ["#E5C95C", "#C9A227"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.heroCard}
         >
           <View style={styles.heroCardInner}>
-            <Feather name="edit-3" size={18} color="#C9A227" style={{ marginRight: Spacing.sm }} />
-            <ThemedText type="body" style={styles.heroCardTitle}>
+            <Feather name="edit-3" size={18} color={isDark ? "#FFFFFF" : "#0F1C3F"} style={{ marginRight: Spacing.sm }} />
+            <ThemedText type="body" style={[styles.heroCardTitle, { color: isDark ? "#FFFFFF" : "#0F1C3F" }]}>
               {mode === "ai" ? "Let AI craft your affirmation" : "Write from the heart"}
             </ThemedText>
           </View>
@@ -741,9 +741,9 @@ export default function CreateScreen() {
               variant={mode === "ai" ? "primary" : "ghost"}
               size="small"
               onPress={() => setMode("ai")}
-              style={styles.modeButton}
+              style={[styles.modeButton, mode !== "ai" && { backgroundColor: "rgba(0,0,0,0.05)" }]}
               testID="button-mode-ai"
-              icon={<Feather name="zap" size={16} color={mode === "ai" ? "#001A33" : "#C9A227"} />}
+              icon={<Feather name="zap" size={16} color={mode === "ai" ? "#0F1C3F" : (isDark ? "#FFFFFF" : "#0F1C3F")} />}
             >
               AI-Powered
             </Button>
@@ -751,9 +751,9 @@ export default function CreateScreen() {
               variant={mode === "manual" ? "primary" : "ghost"}
               size="small"
               onPress={() => setMode("manual")}
-              style={styles.modeButton}
+              style={[styles.modeButton, mode !== "manual" && { backgroundColor: "rgba(0,0,0,0.05)" }]}
               testID="button-mode-manual"
-              icon={<Feather name="edit-2" size={16} color={mode === "manual" ? "#001A33" : "#C9A227"} />}
+              icon={<Feather name="edit-2" size={16} color={mode === "manual" ? "#0F1C3F" : (isDark ? "#FFFFFF" : "#0F1C3F")} />}
             >
               Write Your Own
             </Button>

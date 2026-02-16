@@ -982,7 +982,7 @@ export default function CreateScreen() {
               <View style={styles.stepHeader}>
                 <View style={[styles.stepAccent, { backgroundColor: accentColor }]} />
                 <ThemedText type="h3" style={styles.stepTitle}>
-                  {mode === "ai" ? "What do you want to achieve?" : "Write your affirmation"}
+                  {mode === "ai" ? "Set your intention" : "Write your affirmation"}
                 </ThemedText>
               </View>
 
@@ -1047,7 +1047,7 @@ export default function CreateScreen() {
                   style={[styles.generateButton, !selectedPillar ? { opacity: 0.5 } : undefined]}
                   testID="button-generate"
                 >
-                  Generate Script
+                  Write My Affirmation
                 </Button>
               ) : null}
 

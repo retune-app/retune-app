@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { View, StyleSheet, Pressable, Switch, Text, Modal, ActivityIndicator, ImageBackground, TextInput, Alert, Platform, ScrollView } from "react-native";
+import { View, StyleSheet, Pressable, Switch, Text, Modal, ActivityIndicator, ImageBackground, TextInput, Alert, Platform, ScrollView, Linking } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 
 const profileBackgroundDark = require("../../assets/images/library-background.png");
@@ -776,8 +776,12 @@ export default function ProfileScreen() {
               try {
                 if (await StoreReview.hasAction()) {
                   await StoreReview.requestReview();
+                } else {
+                  Linking.openURL('https://apps.apple.com/app/id6742468498?action=write-review');
                 }
-              } catch (e) {}
+              } catch (e) {
+                Linking.openURL('https://apps.apple.com/app/id6742468498?action=write-review');
+              }
             }}
             testID="button-rate-app"
           />

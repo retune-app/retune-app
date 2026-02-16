@@ -11,19 +11,20 @@ export const PREMIUM_FEATURES = {
 
 export const FREE_FEATURES = [
   "Breathing exercises (4 techniques)",
-  "RSVP Focus Mode",
+  "Focus Reading Mode",
   "Up to 20 AI affirmations per month",
-  "Stock AI voices (Lotus & Sage)",
+  "2 AI voices (Lotus & Sage)",
   "Ambient sound library",
   "Daily reminders (up to 5)",
   "Basic listening analytics",
 ];
 
 export const PREMIUM_FEATURES_LIST = [
-  "Micro-Meditation - AI personalized wellness",
-  "Micro-Meditations - AI meditation audio",
+  "Affirmations — AI personalized voice",
+  "Micro-Meditations — AI personalized voice",
+  "Mood Journey — personalized wellness paths",
   "Inner Voice - personal voice cloning",
-  "Exclusive ambient tracks",
+  "25+ ambient soundscapes",
   "Unlimited AI affirmations",
   "Advanced analytics & insights",
   "Priority support",

@@ -28,8 +28,7 @@ export const PREMIUM_FEATURES_LIST = [
   "Unlimited AI affirmations",
   "Advanced analytics & insights",
   "Priority support",
-  "Bedtime Stories — coming soon",
-  "Sleep Timer — coming soon",
+  "Early access to new features",
 ];
 
 const BETA_MODE = true;

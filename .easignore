@@ -1,0 +1,13 @@
+node_modules/
+.cache/
+.expo/
+static-build/
+uploads/
+.git/
+.local/
+.upm/
+.config/
+docs/
+*.md
+!README.md
+/tmp/

@@ -722,58 +722,41 @@ export default function CreateScreen() {
         keyboardShouldPersistTaps="handled"
         extraKeyboardSpace={120}
       >
-        <View style={styles.modeToggle}>
-          <Button
-            variant={mode === "ai" ? "primary" : "ghost"}
-            size="small"
-            onPress={() => setMode("ai")}
-            style={styles.modeButton}
-            testID="button-mode-ai"
-          >
-            Auto
-          </Button>
-          <Button
-            variant={mode === "manual" ? "primary" : "ghost"}
-            size="small"
-            onPress={() => setMode("manual")}
-            style={styles.modeButton}
-            testID="button-mode-manual"
-          >
-            Manual
-          </Button>
-        </View>
-
-        {mode === "ai" && userLimits?.aiAffirmations ? (
-          <View style={[styles.limitsRow, { backgroundColor: theme.cardBackground }]}>
-            <Feather
-              name={userLimits.aiAffirmations.remaining === 0 ? "alert-circle" : "zap"}
-              size={14}
-              color={
-                userLimits.aiAffirmations.remaining === 0
-                  ? theme.error
-                  : userLimits.aiAffirmations.remaining <= 5
-                    ? theme.warning
-                    : theme.textSecondary
-              }
-            />
-            <ThemedText
-              type="caption"
-              style={{
-                color:
-                  userLimits.aiAffirmations.remaining === 0
-                    ? theme.error
-                    : userLimits.aiAffirmations.remaining <= 5
-                      ? theme.warning
-                      : theme.textSecondary,
-                marginLeft: Spacing.xs,
-              }}
-            >
-              {userLimits.aiAffirmations.remaining === 0
-                ? "Limit reached"
-                : `${userLimits.aiAffirmations.remaining} of ${userLimits.aiAffirmations.limit} remaining this month`}
+        <LinearGradient
+          colors={isDark
+            ? ["rgba(201,162,39,0.15)", "rgba(201,162,39,0.05)"]
+            : ["rgba(201,162,39,0.12)", "rgba(201,162,39,0.03)"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.heroCard}
+        >
+          <View style={styles.heroCardInner}>
+            <Feather name="edit-3" size={18} color="#C9A227" style={{ marginRight: Spacing.sm }} />
+            <ThemedText type="body" style={styles.heroCardTitle}>
+              {mode === "ai" ? "Let AI craft your affirmation" : "Write from the heart"}
             </ThemedText>
           </View>
-        ) : null}
+          <View style={styles.modeToggle}>
+            <Button
+              variant={mode === "ai" ? "primary" : "ghost"}
+              size="small"
+              onPress={() => setMode("ai")}
+              style={styles.modeButton}
+              testID="button-mode-ai"
+            >
+              AI-Powered
+            </Button>
+            <Button
+              variant={mode === "manual" ? "primary" : "ghost"}
+              size="small"
+              onPress={() => setMode("manual")}
+              style={styles.modeButton}
+              testID="button-mode-manual"
+            >
+              Write Your Own
+            </Button>
+          </View>
+        </LinearGradient>
 
         {currentStep === 1 ? (
           <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(150)}>
@@ -1329,10 +1312,23 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: Spacing.lg,
   },
+  heroCard: {
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    marginBottom: Spacing.lg,
+  },
+  heroCardInner: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Spacing.md,
+  },
+  heroCardTitle: {
+    fontFamily: "Nunito_600SemiBold",
+    flex: 1,
+  },
   modeToggle: {
     flexDirection: "row",
     gap: Spacing.sm,
-    marginBottom: Spacing["2xl"],
   },
   modeButton: {
     flex: 1,
@@ -1599,16 +1595,6 @@ const styles = StyleSheet.create({
   customTagHint: {
     marginTop: Spacing.sm,
     marginBottom: Spacing.sm,
-  },
-  limitsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    borderRadius: BorderRadius.sm,
-    marginBottom: Spacing.md,
-    opacity: 0.85,
   },
   stepHeaderContent: {
     flex: 1,

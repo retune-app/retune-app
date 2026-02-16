@@ -1,0 +1,32 @@
+Add a new breathing technique called "Alternate Nostril Breathing" (also known as Nadi Shodhana) to my existing breathing app. The app currently has these techniques in a selection screen with dark blue theme cards:
+
+- Box Breathing: 4-4-4-4 seconds, Focus & grounding, square icon
+- 4-7-8 Relaxation: 4-7-8 seconds, Sleep & relaxation, moon/crescent icon
+- Coherent Breathing: 5-5 seconds, Heart coherence, heart icon
+- Energizing Breath: 2-1 seconds, Energy & alertness, lightning bolt icon
+
+Follow the same style exactly:
+- Add a new card/button in the "Choose Your Breathing Technique" screen.
+- Card title: Alternate Nostril Breathing
+- Description line 1: Inhale/exhale alternating nostrils (4-4 seconds per side)
+- Description line 2: Balance & mental clarity
+- Icon: Use a simple yin-yang style symbol or two nostrils/arrows alternating (keep it clean, emoji-like or vector if possible; suggest something balanced like a balanced scale or nostril graphic if no exact match)
+- Checkmark (✓) when selected, same as others.
+
+When the user selects this technique and starts the session:
+- Guide them through 5–10 full cycles (one cycle = inhale left → exhale right → inhale right → exhale left).
+- Use timed phases: Inhale 4 seconds, Exhale 4 seconds (no hold for simplicity; match the basic pattern of other techniques).
+- Provide clear, step-by-step on-screen visual instructions for each phase, e.g.:
+  1. "Close right nostril with thumb → Inhale slowly through left nostril (4s)"
+  2. "Close left nostril → Exhale through right nostril (4s)"
+  3. "Inhale through right nostril (4s)"
+  4. "Close right nostril → Exhale through left nostril (4s)"
+  5. Repeat cycle (show progress counter: Cycle 1/8, etc.)
+- Include a visual timer/animation that fills or pulses during inhale (e.g., expanding circle or progress bar colored calm blue/green) and exhales (contracting).
+- Optional advanced toggle: Add a 4-4-4-4 version with brief holds if user enables it in settings.
+- Show benefits tooltip or small text block on selection screen: "Promotes balance between brain hemispheres, reduces stress, improves focus and emotional stability. Activates parasympathetic system."
+- Keep the overall dark navy theme, rounded cards, minimal animations, and smooth transitions consistent with existing techniques.
+- Ensure accessibility: Large readable text, voice-over friendly instructions, optional audio cues (soft chime or voice guide if feasible in current stack).
+- After session ends, return to main selection screen or show completion summary (e.g., "Session complete: 8 cycles • Balanced & clear").
+
+Implement this as a new feature without breaking existing techniques. Use the same tech stack and patterns as the current app (timer logic, UI components, etc.). If needed, create a reusable guided breathing component that can handle nostril-alternating instructions.

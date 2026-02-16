@@ -813,6 +813,11 @@ export default function ProfileScreen() {
             </View>
             <View style={styles.settingContent}>
               <ThemedText type="body">Sign Out</ThemedText>
+              {user?.email ? (
+                <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: 2 }}>
+                  {user.email}
+                </ThemedText>
+              ) : null}
             </View>
             <Feather name="chevron-right" size={20} color={theme.textSecondary} />
           </Pressable>

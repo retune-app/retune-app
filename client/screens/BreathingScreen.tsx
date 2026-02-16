@@ -1535,15 +1535,16 @@ const styles = StyleSheet.create({
 
   // Bottom Options Panel
   bottomPanel: {
-    gap: Spacing.md,
-    padding: Spacing.lg,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm + 2,
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
+    gap: Spacing.sm,
   },
   optionRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.md,
+    gap: Spacing.sm,
   },
   optionLabelContainer: {
     flexDirection: "row",

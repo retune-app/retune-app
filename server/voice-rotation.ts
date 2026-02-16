@@ -4,7 +4,7 @@ import { eq, and, isNotNull, sql } from "drizzle-orm";
 import { deleteVoice, listVoices } from "./replit_integrations/elevenlabs/client";
 
 const VOICE_SLOT_WARNING_THRESHOLD = 0.83;
-const ELEVENLABS_PLAN_VOICE_LIMIT = 30;
+const ELEVENLABS_PLAN_VOICE_LIMIT = 160;
 
 export async function findInactiveVoices(inactiveDays: number = 60) {
   const cutoffDate = new Date();

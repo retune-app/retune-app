@@ -123,13 +123,7 @@ export default function ProfileScreen() {
   const [showResetModal, setShowResetModal] = useState(false);
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
   const [showClearAffirmationsModal, setShowClearAffirmationsModal] = useState(false);
-  const [showSupportModal, setShowSupportModal] = useState(false);
   const [isClearingAffirmations, setIsClearingAffirmations] = useState(false);
-  const [supportSubject, setSupportSubject] = useState("");
-  const [supportMessage, setSupportMessage] = useState("");
-  const [supportEmail, setSupportEmail] = useState("");
-  const [isSubmittingSupport, setIsSubmittingSupport] = useState(false);
-  const [supportSuccess, setSupportSuccess] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -379,54 +373,6 @@ export default function ProfileScreen() {
     }
   };
 
-  const handleOpenSupportModal = () => {
-    setSupportEmail(user?.email || "");
-    setSupportSubject("");
-    setSupportMessage("");
-    setSupportSuccess(false);
-    setShowSupportModal(true);
-  };
-
-  const handleSubmitSupport = async () => {
-    if (!supportEmail || !supportSubject || !supportMessage) {
-      return;
-    }
-    
-    setIsSubmittingSupport(true);
-    try {
-      const url = new URL("/api/support", getApiUrl()).toString();
-      const authToken = getAuthToken();
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-      };
-      if (authToken) {
-        headers["X-Auth-Token"] = authToken;
-      }
-      
-      const response = await fetch(url, {
-        method: "POST",
-        credentials: "include",
-        headers,
-        body: JSON.stringify({
-          email: supportEmail,
-          subject: supportSubject,
-          message: supportMessage,
-          appVersion: Constants.expoConfig?.version || "unknown",
-        }),
-      });
-      
-      if (response.ok) {
-        try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
-        setSupportSuccess(true);
-      } else {
-        console.error("Support request failed");
-      }
-    } catch (error) {
-      console.error("Support request error:", error);
-    } finally {
-      setIsSubmittingSupport(false);
-    }
-  };
 
   const getCurrentVoiceLabel = () => {
     if (voicePreferences?.preferredVoiceType === "personal" && voicePreferences?.hasPersonalVoice) {
@@ -753,15 +699,9 @@ export default function ProfileScreen() {
             onPress={() => navigation.navigate("SecurityPrivacy" as never)}
           />
           <SettingItem
-            icon="help-circle"
-            label="Help & Support"
-            value="Get assistance"
-            onPress={handleOpenSupportModal}
-          />
-          <SettingItem
             icon="message-square"
-            label="Feedback & Ideas"
-            value="Share your thoughts"
+            label="Get in Touch"
+            value="Questions, ideas, or just say hi"
             onPress={() => navigation.navigate("Feedback" as never)}
             testID="button-feedback"
           />
@@ -1043,145 +983,6 @@ export default function ProfileScreen() {
         </View>
       </Modal>
 
-      {/* Help & Support Modal */}
-      <Modal
-        visible={showSupportModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowSupportModal(false)}
-      >
-        <KeyboardAvoidingView 
-          style={styles.modalOverlay} 
-          behavior="padding"
-          keyboardVerticalOffset={0}
-        >
-          <Pressable 
-            style={StyleSheet.absoluteFill} 
-            onPress={() => setShowSupportModal(false)} 
-          />
-          <View style={[styles.supportModalContent, { backgroundColor: theme.cardBackground }]}>
-            {supportSuccess ? (
-              <>
-                <View style={styles.supportHeader}>
-                  <View style={[styles.modalIconContainer, { backgroundColor: "#50C9B020" }]}>
-                    <Text style={{ fontSize: 32 }}>✅</Text>
-                  </View>
-                  <ThemedText type="h4" style={styles.modalTitle}>Request Submitted!</ThemedText>
-                  <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "center", marginTop: Spacing.sm }}>
-                    Thank you for reaching out. Our support team at support@retuned.app will get back to you as soon as possible.
-                  </ThemedText>
-                </View>
-                <Pressable
-                  onPress={() => setShowSupportModal(false)}
-                  style={[styles.supportSuccessButton, { backgroundColor: theme.primary }]}
-                  testID="button-close-support-success"
-                >
-                  <Text style={styles.confirmLogoutText}>Done</Text>
-                </Pressable>
-              </>
-            ) : (
-              <>
-                <View style={styles.supportHeader}>
-                  <View style={[styles.modalIconContainer, { backgroundColor: theme.primary + "20" }]}>
-                    <Feather name="help-circle" size={32} color={theme.primary} />
-                  </View>
-                  <ThemedText type="h4" style={styles.modalTitle}>Help & Support</ThemedText>
-                  <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "center", marginTop: Spacing.xs }}>
-                    Send us a message at support@retuned.app
-                  </ThemedText>
-                </View>
-
-                <View style={styles.supportFormField}>
-                  <ThemedText type="small" style={[styles.supportLabel, { color: theme.textSecondary }]}>
-                    📧 Email Address
-                  </ThemedText>
-                  <TextInput
-                    style={[styles.supportInput, { 
-                      backgroundColor: theme.backgroundSecondary,
-                      color: theme.text,
-                      borderColor: theme.border,
-                    }]}
-                    value={supportEmail}
-                    onChangeText={setSupportEmail}
-                    placeholder="your@email.com"
-                    placeholderTextColor={theme.textSecondary}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    testID="input-support-email"
-                  />
-                </View>
-
-                <View style={styles.supportFormField}>
-                  <ThemedText type="small" style={[styles.supportLabel, { color: theme.textSecondary }]}>
-                    📝 Subject
-                  </ThemedText>
-                  <TextInput
-                    style={[styles.supportInput, { 
-                      backgroundColor: theme.backgroundSecondary,
-                      color: theme.text,
-                      borderColor: theme.border,
-                    }]}
-                    value={supportSubject}
-                    onChangeText={setSupportSubject}
-                    placeholder="What can we help with?"
-                    placeholderTextColor={theme.textSecondary}
-                    testID="input-support-subject"
-                  />
-                </View>
-
-                <View style={styles.supportFormField}>
-                  <ThemedText type="small" style={[styles.supportLabel, { color: theme.textSecondary }]}>
-                    💬 Message
-                  </ThemedText>
-                  <TextInput
-                    style={[styles.supportInput, styles.supportTextArea, { 
-                      backgroundColor: theme.backgroundSecondary,
-                      color: theme.text,
-                      borderColor: theme.border,
-                    }]}
-                    value={supportMessage}
-                    onChangeText={setSupportMessage}
-                    placeholder="Describe your question or issue..."
-                    placeholderTextColor={theme.textSecondary}
-                    multiline
-                    numberOfLines={4}
-                    textAlignVertical="top"
-                    testID="input-support-message"
-                  />
-                </View>
-
-                <View style={styles.supportButtonRow}>
-                  <Pressable
-                    onPress={() => setShowSupportModal(false)}
-                    style={[styles.supportCancelButton, { borderColor: theme.border }]}
-                    testID="button-cancel-support"
-                  >
-                    <ThemedText type="body">Cancel</ThemedText>
-                  </Pressable>
-                  <Pressable
-                    onPress={handleSubmitSupport}
-                    disabled={isSubmittingSupport || !supportEmail || !supportSubject || !supportMessage}
-                    style={[
-                      styles.supportSubmitButton, 
-                      { 
-                        backgroundColor: theme.primary,
-                        opacity: (!supportEmail || !supportSubject || !supportMessage) ? 0.5 : 1,
-                      }
-                    ]}
-                    testID="button-submit-support"
-                  >
-                    {isSubmittingSupport ? (
-                      <ActivityIndicator color="#FFFFFF" size="small" />
-                    ) : (
-                      <Text style={styles.confirmLogoutText}>Send Message</Text>
-                    )}
-                  </Pressable>
-                </View>
-              </>
-            )}
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
       </KeyboardAwareScrollViewCompat>
 
       {/* Top edge fade gradient */}
@@ -1435,62 +1236,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginBottom: Spacing.md,
-  },
-  supportModalContent: {
-    width: "100%",
-    maxWidth: 360,
-    borderRadius: BorderRadius.xl,
-    padding: Spacing.xl,
-  },
-  supportHeader: {
-    alignItems: "center",
-    marginBottom: Spacing.lg,
-  },
-  supportFormField: {
-    marginBottom: Spacing.md,
-  },
-  supportLabel: {
-    marginBottom: Spacing.xs,
-    fontFamily: "Nunito_600SemiBold",
-  },
-  supportInput: {
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    fontFamily: "Nunito_400Regular",
-    fontSize: 16,
-  },
-  supportTextArea: {
-    minHeight: 100,
-    paddingTop: Spacing.sm,
-  },
-  supportButtonRow: {
-    flexDirection: "row",
-    gap: Spacing.md,
-    marginTop: Spacing.md,
-  },
-  supportCancelButton: {
-    flex: 1,
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.lg,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-  },
-  supportSubmitButton: {
-    flex: 1,
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.lg,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  supportSuccessButton: {
-    width: "100%",
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.lg,
-    alignItems: "center",
-    justifyContent: "center",
   },
   settingItemBorder: {
     borderBottomWidth: 1,

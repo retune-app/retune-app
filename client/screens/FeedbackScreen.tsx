@@ -1,16 +1,15 @@
 import React, { useState } from "react";
-import { View, StyleSheet, ScrollView, Pressable, TextInput, ActivityIndicator } from "react-native";
+import { View, StyleSheet, Pressable, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform } from "react-native";
 import Constants from "expo-constants";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
-import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
+import { Spacing, BorderRadius } from "@/constants/theme";
 import { getApiUrl } from "@/lib/query-client";
 import { getAuthToken } from "@/lib/auth-token";
 
@@ -18,17 +17,16 @@ const GOLD = "#C9A227";
 
 type FeedbackType = "feedback" | "feature" | "bug";
 
-const FEEDBACK_TYPES: { id: FeedbackType; label: string; icon: keyof typeof Feather.glyphMap; description: string }[] = [
-  { id: "feedback", label: "General Feedback", icon: "message-circle", description: "Share your experience" },
-  { id: "feature", label: "Feature Request", icon: "zap", description: "Suggest something new" },
-  { id: "bug", label: "Report an Issue", icon: "alert-circle", description: "Something not working?" },
+const FEEDBACK_TYPES: { id: FeedbackType; label: string; icon: keyof typeof Feather.glyphMap; description: string; accent: string }[] = [
+  { id: "feedback", label: "Feedback", icon: "message-circle", description: "Share your experience", accent: "#C9A227" },
+  { id: "feature", label: "Feature Idea", icon: "zap", description: "Suggest something new", accent: "#7C3AED" },
+  { id: "bug", label: "Report Issue", icon: "alert-circle", description: "Something not working?", accent: "#EF4444" },
 ];
 
 export default function FeedbackScreen() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
-  const tabBarHeight = useBottomTabBarHeight();
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const { user } = useAuth();
 
   const [selectedType, setSelectedType] = useState<FeedbackType>("feedback");
@@ -95,7 +93,7 @@ export default function FeedbackScreen() {
             Thank You!
           </ThemedText>
           <ThemedText type="body" style={[styles.successMessage, { color: theme.textSecondary }]}>
-            Your {selectedType === "feature" ? "feature request" : selectedType === "bug" ? "bug report" : "feedback"} has been sent to team@retuned.app. We appreciate you helping make Retuned better.
+            Your {selectedType === "feature" ? "feature idea" : selectedType === "bug" ? "issue report" : "feedback"} has been sent to team@retuned.app. We appreciate you helping make Retuned better.
           </ThemedText>
           <Pressable
             onPress={handleReset}
@@ -111,21 +109,17 @@ export default function FeedbackScreen() {
     );
   }
 
+  const selectedAccent = FEEDBACK_TYPES.find(t => t.id === selectedType)?.accent || GOLD;
+
   return (
-    <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]} testID="screen-feedback">
-      <ScrollView
-        contentContainerStyle={[
-          styles.scrollContent,
-          {
-            paddingTop: headerHeight + Spacing.lg,
-            paddingBottom: tabBarHeight + Spacing.lg,
-          },
-        ]}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        <ThemedText type="body" style={[styles.intro, { color: theme.textSecondary }]}>
-          Your voice shapes the future of Retuned. Share your thoughts with team@retuned.app -- we read every message.
+    <KeyboardAvoidingView
+      style={[styles.container, { backgroundColor: theme.backgroundRoot }]}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      keyboardVerticalOffset={headerHeight}
+    >
+      <View style={[styles.mainContent, { paddingTop: headerHeight + Spacing.md }]} testID="screen-feedback">
+        <ThemedText type="small" style={[styles.intro, { color: theme.textSecondary }]}>
+          Questions, ideas, or issues — we read every message at team@retuned.app
         </ThemedText>
 
         <View style={styles.typeSelector}>
@@ -141,18 +135,47 @@ export default function FeedbackScreen() {
                 style={[
                   styles.typeCard,
                   {
-                    backgroundColor: isSelected ? GOLD + "15" : theme.cardBackground,
-                    borderColor: isSelected ? GOLD : theme.border,
+                    backgroundColor: isSelected
+                      ? type.accent + (isDark ? "25" : "12")
+                      : theme.cardBackground,
+                    borderColor: isSelected ? type.accent : theme.border,
+                    borderWidth: isSelected ? 2 : 1,
                   },
-                  Shadows.small,
                 ]}
                 testID={`button-type-${type.id}`}
               >
-                <View style={[styles.typeIcon, { backgroundColor: isSelected ? GOLD + "20" : theme.backgroundSecondary }]}>
-                  <Feather name={type.icon} size={18} color={isSelected ? GOLD : theme.textSecondary} />
+                <View style={[
+                  styles.typeIcon,
+                  {
+                    backgroundColor: isSelected
+                      ? type.accent + (isDark ? "35" : "20")
+                      : isDark ? theme.backgroundSecondary : type.accent + "10",
+                  },
+                ]}>
+                  <Feather
+                    name={type.icon}
+                    size={20}
+                    color={isSelected ? type.accent : isDark ? theme.textSecondary : type.accent + "BB"}
+                  />
                 </View>
-                <ThemedText type="small" style={[styles.typeLabel, { color: isSelected ? GOLD : theme.text }]}>
+                <ThemedText
+                  type="small"
+                  style={[
+                    styles.typeLabel,
+                    { color: isSelected ? type.accent : theme.text },
+                  ]}
+                >
                   {type.label}
+                </ThemedText>
+                <ThemedText
+                  type="caption"
+                  style={[
+                    styles.typeDescription,
+                    { color: isSelected ? type.accent + "CC" : theme.textSecondary },
+                  ]}
+                  numberOfLines={1}
+                >
+                  {type.description}
                 </ThemedText>
               </Pressable>
             );
@@ -186,7 +209,7 @@ export default function FeedbackScreen() {
           <TextInput
             value={message}
             onChangeText={setMessage}
-            placeholder={selectedType === "feature" ? "Describe the feature you'd like to see and how it would help your practice..." : selectedType === "bug" ? "What happened? What did you expect to happen?..." : "Tell us more about your experience..."}
+            placeholder={selectedType === "feature" ? "Describe the feature you'd like to see..." : selectedType === "bug" ? "What happened? What did you expect?..." : "Tell us more about your experience..."}
             placeholderTextColor={theme.textSecondary + "80"}
             style={[
               styles.textArea,
@@ -197,7 +220,6 @@ export default function FeedbackScreen() {
               },
             ]}
             multiline
-            numberOfLines={6}
             textAlignVertical="top"
             maxLength={1000}
             testID="input-feedback-message"
@@ -206,35 +228,37 @@ export default function FeedbackScreen() {
             {message.length}/1000
           </ThemedText>
         </View>
+      </View>
 
+      <View style={[styles.bottomSection, { paddingBottom: insets.bottom + Spacing.md }]}>
         <Pressable
           onPress={handleSubmit}
           disabled={!canSubmit || isSubmitting}
           style={[
             styles.submitButton,
             {
-              backgroundColor: canSubmit ? GOLD : theme.border,
+              backgroundColor: canSubmit ? selectedAccent : theme.border,
               opacity: isSubmitting ? 0.7 : 1,
             },
           ]}
           testID="button-submit-feedback"
         >
           {isSubmitting ? (
-            <ActivityIndicator size="small" color="#0F1C3F" />
+            <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
             <>
-              <Feather name="send" size={16} color={canSubmit ? "#0F1C3F" : theme.textSecondary} />
+              <Feather name="send" size={16} color={canSubmit ? "#FFFFFF" : theme.textSecondary} />
               <ThemedText
                 type="body"
-                style={[styles.submitText, { color: canSubmit ? "#0F1C3F" : theme.textSecondary }]}
+                style={[styles.submitText, { color: canSubmit ? "#FFFFFF" : theme.textSecondary }]}
               >
-                Submit {selectedType === "feature" ? "Request" : selectedType === "bug" ? "Report" : "Feedback"}
+                Submit {selectedType === "feature" ? "Idea" : selectedType === "bug" ? "Report" : "Feedback"}
               </ThemedText>
             </>
           )}
         </Pressable>
-      </ScrollView>
-    </View>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -242,42 +266,47 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  scrollContent: {
+  mainContent: {
+    flex: 1,
     paddingHorizontal: Spacing.lg,
   },
   intro: {
     textAlign: "center",
-    lineHeight: 22,
-    marginBottom: Spacing.xl,
+    lineHeight: 20,
+    marginBottom: Spacing.lg,
   },
   typeSelector: {
     flexDirection: "row",
     gap: Spacing.sm,
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.lg,
   },
   typeCard: {
     flex: 1,
     alignItems: "center",
     paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.sm,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1.5,
+    paddingHorizontal: Spacing.xs,
+    borderRadius: BorderRadius.lg,
   },
   typeIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   typeLabel: {
-    fontFamily: "Nunito_600SemiBold",
-    fontSize: 12,
+    fontFamily: "Nunito_700Bold",
+    fontSize: 13,
     textAlign: "center",
   },
+  typeDescription: {
+    fontSize: 10,
+    textAlign: "center",
+    marginTop: 2,
+  },
   formSection: {
-    marginBottom: Spacing.lg,
+    flex: 1,
   },
   fieldLabel: {
     fontFamily: "Nunito_600SemiBold",
@@ -288,23 +317,28 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: BorderRadius.md,
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm + 4,
+    paddingVertical: Spacing.sm + 2,
     fontSize: 15,
     fontFamily: "Nunito_400Regular",
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   textArea: {
     borderWidth: 1,
     borderRadius: BorderRadius.md,
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm + 4,
+    paddingVertical: Spacing.sm + 2,
     fontSize: 15,
     fontFamily: "Nunito_400Regular",
-    minHeight: 140,
+    flex: 1,
+    minHeight: 80,
   },
   charCount: {
     textAlign: "right",
     marginTop: Spacing.xs,
+  },
+  bottomSection: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.sm,
   },
   submitButton: {
     flexDirection: "row",

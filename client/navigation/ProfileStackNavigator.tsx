@@ -89,7 +89,7 @@ export default function ProfileStackNavigator() {
         name="Feedback"
         component={FeedbackScreen}
         options={{
-          title: "Feedback & Ideas",
+          title: "Get in Touch",
         }}
       />
     </Stack.Navigator>

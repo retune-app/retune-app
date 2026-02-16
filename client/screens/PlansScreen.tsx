@@ -18,19 +18,20 @@ const NAVY = "#0F1C3F";
 
 const FREE_ICONS: Record<string, string> = {
   "Breathing exercises (4 techniques)": "wind",
-  "RSVP Focus Mode": "type",
+  "Focus Reading Mode": "type",
   "Up to 20 AI affirmations per month": "mic",
-  "Stock AI voices (Lotus & Sage)": "volume-2",
+  "2 AI voices (Lotus & Sage)": "volume-2",
   "Ambient sound library": "headphones",
   "Daily reminders (up to 5)": "bell",
   "Basic listening analytics": "bar-chart-2",
 };
 
 const PREMIUM_ICONS: Record<string, string> = {
-  "Micro-Meditation - AI personalized wellness": "smile",
-  "Micro-Meditations - AI meditation audio": "sun",
+  "Affirmations — AI personalized voice": "mic",
+  "Micro-Meditations — AI personalized voice": "sun",
+  "Mood Journey — personalized wellness paths": "smile",
   "Inner Voice - personal voice cloning": "user",
-  "Exclusive ambient tracks": "music",
+  "25+ ambient soundscapes": "music",
   "Unlimited AI affirmations": "zap",
   "Advanced analytics & insights": "trending-up",
   "Priority support": "shield",

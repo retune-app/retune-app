@@ -82,7 +82,7 @@ function GoogleSignInFallback({
     setLoadingProvider("google");
 
     try {
-      const redirectUri = getApiUrl();
+      const redirectUri = "https://retuned.app";
       const clientId = GOOGLE_WEB_CLIENT_ID || GOOGLE_IOS_CLIENT_ID;
 
       const authUrl =

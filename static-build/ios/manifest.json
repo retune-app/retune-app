@@ -1,11 +1,11 @@
 {
-  "id": "03749bf4-0c5e-47a9-940e-7ec3fe414b2b",
-  "createdAt": "2026-02-16T02:53:45.242Z",
+  "id": "0a2fe8e5-c202-4de7-98d5-31a95ce80de6",
+  "createdAt": "2026-02-16T04:09:05.897Z",
   "runtimeVersion": "exposdk:54.0.0",
   "launchAsset": {
-    "key": "bundle-1771210425242-27479",
+    "key": "bundle-1771214945897-31740",
     "contentType": "application/javascript",
-    "url": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev:5000/1771210425242-27479/_expo/static/js/ios/bundle.js"
+    "url": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev:5000/1771214945897-31740/_expo/static/js/ios/bundle.js"
   },
   "assets": [],
   "metadata": {},
@@ -30,7 +30,7 @@
       "ios": {
         "supportsTablet": true,
         "bundleIdentifier": "com.subconsciousrewire.app",
-        "buildNumber": "1",
+        "buildNumber": "3",
         "usesAppleSignIn": true,
         "infoPlist": {
           "NSMicrophoneUsageDescription": "This app needs access to your microphone to record your voice for personalized affirmations.",
@@ -60,7 +60,7 @@
         "adaptiveIcon": {
           "backgroundColor": "#0F1C3F",
           "foregroundImage": "./assets/images/rewired-logo.png",
-          "foregroundImageUrl": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev/assets/./assets/images/rewired-logo.png"
+          "foregroundImageUrl": "http://127.0.0.1:8081/assets/./assets/images/rewired-logo.png"
         },
         "edgeToEdgeEnabled": true,
         "predictiveBackGestureEnabled": false,
@@ -129,7 +129,7 @@
       "androidStatusBar": {
         "backgroundColor": "#E8EDF2"
       },
-      "iconUrl": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev/assets/./assets/images/rewired-logo.png",
+      "iconUrl": "http://127.0.0.1:8081/assets/./assets/images/rewired-logo.png",
       "hostUri": "ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev:5000/ios"
     },
     "expoGo": {

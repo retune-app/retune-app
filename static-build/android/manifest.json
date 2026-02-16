@@ -1,11 +1,11 @@
 {
-  "id": "53310839-495e-42ef-b740-ea15a32c4b14",
-  "createdAt": "2026-02-16T02:53:45.242Z",
+  "id": "80d9ed1a-b501-40de-98ee-fcae9971ecc5",
+  "createdAt": "2026-02-16T04:09:05.897Z",
   "runtimeVersion": "exposdk:54.0.0",
   "launchAsset": {
-    "key": "bundle-1771210425242-27479",
+    "key": "bundle-1771214945897-31740",
     "contentType": "application/javascript",
-    "url": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev:5000/1771210425242-27479/_expo/static/js/android/bundle.js"
+    "url": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev:5000/1771214945897-31740/_expo/static/js/android/bundle.js"
   },
   "assets": [],
   "metadata": {},
@@ -30,7 +30,7 @@
       "ios": {
         "supportsTablet": true,
         "bundleIdentifier": "com.subconsciousrewire.app",
-        "buildNumber": "1",
+        "buildNumber": "3",
         "usesAppleSignIn": true,
         "infoPlist": {
           "NSMicrophoneUsageDescription": "This app needs access to your microphone to record your voice for personalized affirmations.",
@@ -60,7 +60,7 @@
         "adaptiveIcon": {
           "backgroundColor": "#0F1C3F",
           "foregroundImage": "./assets/images/rewired-logo.png",
-          "foregroundImageUrl": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev/assets/./assets/images/rewired-logo.png"
+          "foregroundImageUrl": "http://127.0.0.1:8081/assets/./assets/images/rewired-logo.png"
         },
         "edgeToEdgeEnabled": true,
         "predictiveBackGestureEnabled": false,
@@ -129,7 +129,7 @@
       "androidStatusBar": {
         "backgroundColor": "#E8EDF2"
       },
-      "iconUrl": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev/assets/./assets/images/rewired-logo.png",
+      "iconUrl": "http://127.0.0.1:8081/assets/./assets/images/rewired-logo.png",
       "hostUri": "ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev:5000/android"
     },
     "expoGo": {

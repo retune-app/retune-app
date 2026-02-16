@@ -1,5 +1,60 @@
 # RETUNED Changelog
 
+## Version 1.7.2 (Build 1) — February 16, 2026
+
+### Create Screen Redesign
+- New gold gradient hero card with contextual messaging: "Let AI craft your affirmation" (AI mode) or "Write from the heart" (manual mode).
+- Mode toggle with haptic feedback: "AI-Powered" (zap icon) and "Write Your Own" (edit icon) pill buttons with frosted glass inactive state.
+- Section renamed to "Set your intention" with streamlined prompt input.
+- "Write My Affirmation" and "Bring It to Life" button labels for manual mode CTA.
+
+### Breathing Screen Controls Card
+- Duration and Audio option rows grouped into a styled card with rounded corners, themed border, and subtle shadow.
+- Card border color dynamically matches the selected breathing technique's theme color.
+- Label width reduced to give more room for option buttons.
+
+### Pill Button Standardization
+- All pillar and category pill buttons standardized to a consistent 36px fixed height across the app via `CategoryChip` component.
+
+### Voice Settings Reorganization
+- "Record Inner Voice" button promoted to the top of the screen for quick access.
+- Sections reordered: Default Voice toggle → AI Voice Options (gender) → Select Voice → Compare Voices (conditional).
+- Compare Voices section only appears when the user has a personal voice set up.
+
+### Security & Privacy Rewrite
+- Complete content rewrite with clear, non-technical language organized into: Voice Privacy, Data Security, Your Control, and an "Our Commitment" assurance card.
+- New "Delete All My Data" section with a confirmation modal requiring the user to type "delete" before proceeding.
+- GDPR-compliant full data deletion via `DELETE /api/user/data`.
+
+### Feedback Screen Fix
+- Fixed layout and submission flow issues on the Feedback screen.
+
+### Settings Refinements
+- Refined Settings screen section grouping and visual consistency.
+
+### Server Resilience (v1.7.2)
+- Structured JSON logging with level, timestamp, and component fields.
+- Process-level crash handlers for `uncaughtException` and `unhandledRejection`.
+- Try/catch isolation around each startup subsystem so partial failures don't crash the server.
+- `/api/health` endpoint for monitoring (checks server + DB connectivity).
+- Client-side API error logging with HTML-detection for misconfiguration alerts.
+- API catch-all for unknown endpoints returning proper JSON errors.
+
+### Code Cleanup
+- Deleted all conversation screenshots from `attached_assets/`.
+
+### Files Changed
+- `client/screens/CreateScreen.tsx` — Gold gradient hero, mode toggle redesign, button label updates
+- `client/screens/BreathingScreen.tsx` — Controls card grouping, technique-colored border, shadow, compact layout
+- `client/components/CategoryChip.tsx` — Fixed 36px pill height
+- `client/screens/VoiceSettingsScreen.tsx` — Section reorganization, Record Inner Voice promotion
+- `client/screens/SecurityPrivacyScreen.tsx` — Full rewrite with deletion modal
+- `client/screens/FeedbackScreen.tsx` — Layout and submission fixes
+- `server/index.ts` — Structured logging, crash handlers, health endpoint, startup isolation
+- `app.json` — Version 1.7.2 Build 1
+
+---
+
 ## Version 1.6 (Build 1) — February 13, 2026
 
 ### Breathing Wisdom

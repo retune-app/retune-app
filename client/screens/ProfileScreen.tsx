@@ -746,11 +746,13 @@ export default function ProfileScreen() {
           <SettingItem
             icon="heart"
             label="Benefits for Wellbeing"
+            value="How Retuned helps you grow"
             onPress={() => navigation.navigate("Benefits" as never)}
           />
           <SettingItem
             icon="shield"
             label="Security & Privacy"
+            value="How we protect your data"
             onPress={() => navigation.navigate("SecurityPrivacy" as never)}
           />
           <SettingItem

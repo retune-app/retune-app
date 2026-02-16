@@ -4,14 +4,18 @@ import {
   StyleSheet,
   ScrollView,
   Pressable,
+  Linking,
+  Platform,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import * as WebBrowser from "expo-web-browser";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
+import { getApiUrl } from "@/lib/query-client";
 
 interface BenefitSectionProps {
   icon: string;
@@ -30,7 +34,7 @@ function BenefitSection({ icon, iconColor, iconBgColor, title, subtitle, descrip
     <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground, borderColor: isDark ? "#C9A22770" : "#C9A22740" }]}>
       <View style={styles.sectionHeader}>
         <View style={[styles.sectionIcon, { backgroundColor: iconBgColor }]}>
-          <Feather name={icon as any} size={24} color={iconColor} />
+          <Feather name={icon as any} size={22} color={iconColor} />
         </View>
         <View style={styles.sectionTitleContainer}>
           <ThemedText type="body" style={styles.sectionTitle}>{title}</ThemedText>
@@ -63,6 +67,20 @@ export default function BenefitsScreen() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
 
+  const handleOpenScience = async () => {
+    const baseUrl = getApiUrl();
+    const scienceUrl = `${baseUrl}/science`;
+    try {
+      if (Platform.OS === "web") {
+        Linking.openURL(scienceUrl);
+      } else {
+        await WebBrowser.openBrowserAsync(scienceUrl);
+      }
+    } catch {
+      Linking.openURL(scienceUrl);
+    }
+  };
+
   const sections: BenefitSectionProps[] = [
     {
       icon: "mic",
@@ -70,61 +88,65 @@ export default function BenefitsScreen() {
       iconBgColor: "#6366F120",
       title: "Your Voice, Your Power",
       subtitle: "personalized voice cloning",
-      description: "When you hear affirmations in your own voice, your brain processes them differently. Research shows we're more receptive to messages that sound like our inner voice. Retuned uses advanced AI to clone your voice, so every affirmation feels like it's coming from within—making positive self-talk feel natural and believable.",
+      description: "Your brain trusts your own voice more than anyone else's. Retuned clones your voice with AI so every affirmation sounds like your inner dialogue — making new beliefs feel natural, not forced.",
     },
     {
       icon: "cpu",
       iconColor: "#C9A227",
       iconBgColor: "#C9A22720",
-      title: "AI-Generated Affirmations",
-      subtitle: "fresh perspectives for growth",
-      description: "Our AI creates personalized affirmation scripts tailored to your specific goals. Whether you're working on confidence, abundance, health, or relationships, the AI crafts fresh perspectives and empowering statements you might not have thought of yourself—opening new pathways for manifesting your desires.",
+      title: "AI-Crafted Affirmations",
+      subtitle: "tailored to your goals",
+      description: "Tell us what you're working on — confidence, abundance, health, relationships — and our AI writes affirmations using subconscious language patterns designed to bypass your inner critic and land deeper.",
+    },
+    {
+      icon: "wind",
+      iconColor: "#2EC4B6",
+      iconBgColor: "#2EC4B620",
+      title: "Breathing That Rewires",
+      subtitle: "5 science-backed techniques",
+      description: "Deep breathing isn't just calming — it physically shifts your nervous system from fight-or-flight to rest-and-receive. This primes your brain to absorb affirmations more effectively.",
+      bullets: [
+        "Activates the vagus nerve within 60 seconds",
+        "Box Breathing, 4-7-8, Coherent, and more",
+        "Ambient soundscapes for deeper immersion",
+      ],
+    },
+    {
+      icon: "sunrise",
+      iconColor: "#7C3AED",
+      iconBgColor: "#7C3AED20",
+      title: "Guided Micro-Meditations",
+      subtitle: "AI-generated, mood-aware",
+      description: "Short guided meditations crafted by AI based on how you're feeling right now. After affirmations, meditation consolidates new thought patterns — turning fresh ideas into lasting neural pathways.",
+      bullets: [
+        "Tailored to your current mood and energy",
+        "3, 5, or 10 minute sessions",
+        "Locks in affirmations through focused reflection",
+      ],
     },
     {
       icon: "eye",
       iconColor: "#10B981",
       iconBgColor: "#10B98120",
-      title: "RSVP: Deep Focus Mode",
-      subtitle: "rapid serial visual presentation",
-      description: "RSVP displays one word at a time, synchronized with audio playback. This powerful technique enhances your absorption of affirmations:",
-      bullets: [
-        "Eliminates distractions by removing peripheral text",
-        "Enhances absorption by engaging both visual and auditory senses",
-        "Improves focus by guiding attention to each word as it's spoken",
-        "Deepens the experience by creating present-moment awareness",
-      ],
+      title: "Focus Reading Mode",
+      subtitle: "visual reinforcement",
+      description: "Words appear one at a time, perfectly synced with the audio. This dual-channel approach — hearing and seeing simultaneously — doubles your brain's engagement and helps affirmations stick.",
     },
     {
-      icon: "wind",
-      iconColor: "#3B82F6",
-      iconBgColor: "#3B82F620",
-      title: "Guided Breathing",
-      subtitle: "activate your calm",
-      description: "Controlled breathing activates your parasympathetic nervous system, reducing stress and anxiety. Retuned offers guided techniques like Box Breathing, 4-7-8, and Coherent Breathing—each designed to calm your mind and prepare you for deeper reflection.",
+      icon: "compass",
+      iconColor: "#F59E0B",
+      iconBgColor: "#F59E0B20",
+      title: "Mood Journeys",
+      subtitle: "personalized wellness paths",
+      description: "Tell us how you're feeling and Retuned creates a custom wellness path — combining breathing, affirmations, and meditation in the right sequence for your emotional state. Each journey adapts to you.",
     },
     {
       icon: "repeat",
       iconColor: "#8B5CF6",
       iconBgColor: "#8B5CF620",
-      title: "The Science of Repetition",
+      title: "The Power of Repetition",
       subtitle: "neuroplasticity in action",
-      description: "Neuroplasticity—your brain's ability to rewire itself—is activated through consistent repetition. By listening to affirmations regularly, you're literally building new neural pathways that support positive thinking and emotional resilience.",
-    },
-    {
-      icon: "sun",
-      iconColor: "#F59E0B",
-      iconBgColor: "#F59E0B20",
-      title: "Visual Design for Wellbeing",
-      subtitle: "calming aesthetics",
-      description: "Every visual element in Retuned is crafted to support your mental wellbeing:",
-      bullets: [
-        "Soothing navy and gold palette reduces visual stress",
-        "Gentle animations create a sense of calm flow",
-        "Breathing visualizations guide natural rhythm",
-        "Dark mode protects your eyes during evening sessions",
-        "Minimal, clutter-free interfaces reduce cognitive load",
-        "Ethereal gradients evoke serenity and possibility",
-      ],
+      description: "Your brain rewires through repetition. Consistent daily listening builds stronger neural pathways for positive thinking — like a mental workout that compounds over time.",
     },
   ];
 
@@ -156,11 +178,11 @@ export default function BenefitsScreen() {
       >
         <View style={[styles.heroSection, { backgroundColor: theme.primary + "15" }]}>
           <View style={[styles.heroIcon, { backgroundColor: theme.primary + "30" }]}>
-            <Feather name="heart" size={40} color={theme.primary} />
+            <Feather name="heart" size={36} color={theme.primary} />
           </View>
           <ThemedText type="h4" style={styles.heroTitle}>Why Retuned Works</ThemedText>
           <ThemedText type="small" style={[styles.heroSubtitle, { color: theme.textSecondary }]}>
-            Combining proven techniques from psychology, meditation, and neuroscience to help reshape your thinking patterns
+            Breathe, believe, become. Science-backed tools that work together to reshape how you think and feel.
           </ThemedText>
         </View>
 
@@ -170,12 +192,29 @@ export default function BenefitsScreen() {
           ))}
         </View>
 
+        <Pressable
+          onPress={handleOpenScience}
+          style={[styles.scienceLink, { backgroundColor: theme.cardBackground, borderColor: isDark ? "#C9A22770" : "#C9A22740" }]}
+          testID="button-read-science"
+        >
+          <View style={[styles.scienceLinkIcon, { backgroundColor: "#3B82F620" }]}>
+            <Feather name="book-open" size={20} color="#3B82F6" />
+          </View>
+          <View style={styles.scienceLinkText}>
+            <ThemedText type="body" style={styles.sectionTitle}>Read the Full Science</ThemedText>
+            <ThemedText type="small" style={{ color: theme.textSecondary }}>
+              Deep dive into the research behind every feature
+            </ThemedText>
+          </View>
+          <Feather name="external-link" size={18} color={theme.textSecondary} />
+        </Pressable>
+
         <View style={[styles.footerCard, { backgroundColor: theme.cardBackground }]}>
           <ThemedText type="body" style={[styles.footerTitle, { color: theme.text }]}>
-            Your Journey to a Better You
+            Your Journey, Your Pace
           </ThemedText>
           <ThemedText type="small" style={[styles.footerText, { color: theme.textSecondary }]}>
-            With consistent practice, you'll notice shifts in your thinking patterns, improved emotional resilience, and a stronger sense of self. Retuned is your companion on this transformative journey.
+            Each session strengthens the last. Breathing calms your mind, affirmations plant new patterns, and meditation locks them in. The more you practice, the deeper the change.
           </ThemedText>
         </View>
       </ScrollView>
@@ -220,9 +259,9 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xl,
   },
   heroIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: Spacing.md,
@@ -237,7 +276,7 @@ const styles = StyleSheet.create({
   },
   sectionsContainer: {
     gap: Spacing.md,
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.lg,
   },
   sectionCard: {
     borderRadius: BorderRadius.lg,
@@ -248,12 +287,12 @@ const styles = StyleSheet.create({
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
   },
   sectionIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
     marginRight: Spacing.md,
@@ -265,7 +304,7 @@ const styles = StyleSheet.create({
     fontFamily: "Nunito_700Bold",
   },
   sectionBody: {
-    paddingLeft: 48 + Spacing.md,
+    paddingLeft: 44 + Spacing.md,
   },
   descriptionText: {
     lineHeight: 20,
@@ -284,6 +323,25 @@ const styles = StyleSheet.create({
     height: 6,
     borderRadius: 3,
     marginTop: 6,
+  },
+  scienceLink: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    borderWidth: 1,
+    marginBottom: Spacing.lg,
+    gap: Spacing.md,
+  },
+  scienceLinkIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  scienceLinkText: {
+    flex: 1,
   },
   footerCard: {
     borderRadius: BorderRadius.lg,

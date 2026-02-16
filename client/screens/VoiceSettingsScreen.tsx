@@ -6,7 +6,7 @@ import { useHeaderHeight } from "@react-navigation/elements";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { Feather } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 
 import { ThemedText } from "@/components/ThemedText";
@@ -510,9 +510,9 @@ export default function VoiceSettingsScreen() {
               testID="button-gender-female"
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Feather
-                  name="user"
-                  size={14}
+                <Ionicons
+                  name="female"
+                  size={16}
                   color={currentGender === "female" ? "#FFFFFF" : theme.text}
                 />
                 <Text style={[
@@ -535,9 +535,9 @@ export default function VoiceSettingsScreen() {
               testID="button-gender-male"
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Feather
-                  name="user"
-                  size={14}
+                <Ionicons
+                  name="male"
+                  size={16}
                   color={currentGender === "male" ? "#FFFFFF" : theme.text}
                 />
                 <Text style={[

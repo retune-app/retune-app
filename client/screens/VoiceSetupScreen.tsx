@@ -713,16 +713,8 @@ export default function VoiceSetupScreen() {
 
   if (showPrivacyNotice) {
     return (
-      <ThemedView style={styles.container}>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={[
-            styles.content,
-            styles.privacyContent,
-            { paddingTop: insets.top + Spacing["2xl"], paddingBottom: insets.bottom + Spacing["2xl"] },
-          ]}
-          showsVerticalScrollIndicator={false}
-        >
+      <ThemedView style={[styles.container, { paddingTop: insets.top + Spacing.lg, paddingBottom: insets.bottom + Spacing.lg, paddingHorizontal: Spacing.xl }]}>
+        <View style={styles.privacyCenterSection}>
           <Animated.View
             entering={FadeInUp.duration(500).delay(100)}
             style={[styles.privacyIconContainer, { backgroundColor: `${theme.primary}18` }]}
@@ -754,8 +746,8 @@ export default function VoiceSetupScreen() {
                 <ThemedText type="body" style={styles.privacyItemTitle}>
                   Recording Erased Instantly
                 </ThemedText>
-                <ThemedText type="caption" style={{ color: theme.textSecondary, lineHeight: 16, fontSize: 12 }}>
-                  Deleted the moment your voice clone is created
+                <ThemedText type="caption" style={{ color: theme.textSecondary, lineHeight: 17, fontSize: 12 }} numberOfLines={2}>
+                  Your original voice recording is permanently deleted right after your clone is created
                 </ThemedText>
               </View>
             </View>
@@ -770,8 +762,8 @@ export default function VoiceSetupScreen() {
                 <ThemedText type="body" style={styles.privacyItemTitle}>
                   Private to You
                 </ThemedText>
-                <ThemedText type="caption" style={{ color: theme.textSecondary, lineHeight: 16, fontSize: 12 }}>
-                  Encrypted and only accessible within your account
+                <ThemedText type="caption" style={{ color: theme.textSecondary, lineHeight: 17, fontSize: 12 }} numberOfLines={2}>
+                  Your voice clone is fully encrypted and only accessible within your personal account
                 </ThemedText>
               </View>
             </View>
@@ -786,8 +778,8 @@ export default function VoiceSetupScreen() {
                 <ThemedText type="body" style={styles.privacyItemTitle}>
                   Affirmations & Meditations
                 </ThemedText>
-                <ThemedText type="caption" style={{ color: theme.textSecondary, lineHeight: 16, fontSize: 12 }}>
-                  Powers your personalized audio experiences
+                <ThemedText type="caption" style={{ color: theme.textSecondary, lineHeight: 17, fontSize: 12 }} numberOfLines={2}>
+                  Used solely to power your personalized affirmation and guided meditation experiences
                 </ThemedText>
               </View>
             </View>
@@ -802,35 +794,35 @@ export default function VoiceSetupScreen() {
                 <ThemedText type="body" style={styles.privacyItemTitle}>
                   Full Control, Always
                 </ThemedText>
-                <ThemedText type="caption" style={{ color: theme.textSecondary, lineHeight: 16, fontSize: 12 }}>
-                  Delete your voice data from Settings anytime
+                <ThemedText type="caption" style={{ color: theme.textSecondary, lineHeight: 17, fontSize: 12 }} numberOfLines={2}>
+                  Delete your voice clone and all associated data from Settings whenever you choose
                 </ThemedText>
               </View>
             </View>
           </Animated.View>
+        </View>
 
-          <Animated.View entering={FadeInUp.duration(500).delay(500)} style={styles.buttonsContainer}>
-            <Button
-              variant="gradient"
-              onPress={handlePrivacyAcknowledge}
-              loading={consentMutation.isPending}
-              style={styles.continueButton}
-              testID="button-privacy-continue"
-            >
-              I Consent to Voice Cloning
-            </Button>
+        <Animated.View entering={FadeInUp.duration(500).delay(500)} style={styles.privacyBottomButtons}>
+          <Button
+            variant="gradient"
+            onPress={handlePrivacyAcknowledge}
+            loading={consentMutation.isPending}
+            style={styles.continueButton}
+            testID="button-privacy-continue"
+          >
+            I Consent to Voice Cloning
+          </Button>
 
-            <Button
-              variant="ghost"
-              onPress={handleSkip}
-              loading={skipMutation.isPending}
-              style={styles.skipButton}
-              testID="button-privacy-skip"
-            >
-              Skip for now
-            </Button>
-          </Animated.View>
-        </ScrollView>
+          <Button
+            variant="ghost"
+            onPress={handleSkip}
+            loading={skipMutation.isPending}
+            style={styles.skipButton}
+            testID="button-privacy-skip"
+          >
+            Skip for now
+          </Button>
+        </Animated.View>
       </ThemedView>
     );
   }
@@ -1161,6 +1153,15 @@ const styles = StyleSheet.create({
   privacyContent: {
     justifyContent: "center",
     minHeight: "100%",
+  },
+  privacyCenterSection: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  privacyBottomButtons: {
+    width: "100%",
+    gap: Spacing.sm,
   },
   privacyIconContainer: {
     width: 72,

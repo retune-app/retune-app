@@ -39,6 +39,7 @@ The application follows a "Serene Empowerment" aesthetic, utilizing Primary Gold
 - **Sound Library**: A collection of 25 seamless ambient sound loops across 7 categories.
 - **Authentication**: Session-based for web, token-based for mobile.
 - **Daily Reminders**: A flexible notification system for breathing or affirmation sessions, with AI-generated messages.
+- **Voice Clone Expiry Warnings**: Server-side push notifications warn users at ~53 and ~58 days of voice inactivity before the 60-day rotation. Users can tap to keep their voice active via a lightweight `/api/voice/keep-active` endpoint. Push tokens stored in `push_tokens` table, sent via Expo push notification service (`expo-server-sdk`).
 - **Security & Privacy**: Features explicit voice consent, immediate deletion of voice recordings post-cloning, usage limits, rate limiting, and GDPR-compliant data deletion.
 - **First-Time User Experience (FTUE)**: Includes onboarding, deferred voice setup, first-play celebrations, and contextual hints.
 - **Server Resilience (v1.7.2)**: Structured JSON logging (level/timestamp/component), process-level crash handlers (uncaughtException/unhandledRejection), try/catch isolation around each startup subsystem so partial failures don't crash the server, `/api/health` endpoint for monitoring (checks server + DB), client-side API error logging with HTML-detection for misconfiguration alerts, and API catch-all for unknown endpoints returning proper JSON.

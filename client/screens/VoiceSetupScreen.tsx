@@ -723,77 +723,93 @@ export default function VoiceSetupScreen() {
           ]}
           showsVerticalScrollIndicator={false}
         >
-          <View style={[styles.privacyIconContainer, { backgroundColor: theme.backgroundSecondary }]}>
-            <Feather name="shield" size={48} color={theme.primary} />
-          </View>
+          <Animated.View
+            entering={FadeInUp.duration(500).delay(100)}
+            style={[styles.privacyIconContainer, { backgroundColor: `${theme.primary}18` }]}
+          >
+            <View style={[styles.privacyIconInner, { backgroundColor: `${theme.primary}30` }]}>
+              <Feather name="shield" size={40} color={theme.primary} />
+            </View>
+          </Animated.View>
 
-          <ThemedText type="h1" style={styles.title}>
-            Your Voice is Protected
-          </ThemedText>
+          <Animated.View entering={FadeInUp.duration(500).delay(200)} style={styles.privacyTitleBlock}>
+            <ThemedText type="h1" style={styles.title}>
+              Your Voice, Your Way
+            </ThemedText>
 
-          <ThemedText type="body" style={[styles.privacyDescription, { color: theme.textSecondary }]}>
-            We take your privacy seriously. Here's how we protect your voice recording:
-          </ThemedText>
+            <ThemedText type="body" style={[styles.privacyDescription, { color: theme.textSecondary }]}>
+              Clone your voice to hear affirmations and meditations in a voice that feels like you. Your privacy is our promise.
+            </ThemedText>
+          </Animated.View>
 
-          <View style={[styles.privacyCard, { backgroundColor: theme.backgroundSecondary }]}>
+          <Animated.View
+            entering={FadeInUp.duration(500).delay(350)}
+            style={[styles.privacyCard, { backgroundColor: theme.backgroundSecondary, borderColor: `${theme.primary}15`, borderWidth: 1 }]}
+          >
             <View style={styles.privacyItem}>
-              <View style={[styles.privacyBullet, { backgroundColor: theme.primary }]}>
-                <Feather name="trash-2" size={16} color="#FFFFFF" />
+              <View style={[styles.privacyBullet, { backgroundColor: `${theme.primary}20` }]}>
+                <Feather name="trash-2" size={16} color={theme.primary} />
               </View>
               <View style={styles.privacyItemText}>
                 <ThemedText type="body" style={styles.privacyItemTitle}>
-                  Immediately Deleted
+                  Recording Erased Instantly
                 </ThemedText>
-                <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                  Your voice recording is deleted from our servers immediately after creating your voice clone
+                <ThemedText type="caption" style={{ color: theme.textSecondary, lineHeight: 18 }}>
+                  Your original recording is permanently deleted the moment your voice clone is created
                 </ThemedText>
               </View>
             </View>
 
+            <View style={[styles.privacyDivider, { backgroundColor: `${theme.primary}10` }]} />
+
             <View style={styles.privacyItem}>
-              <View style={[styles.privacyBullet, { backgroundColor: theme.primary }]}>
-                <Feather name="user" size={16} color="#FFFFFF" />
+              <View style={[styles.privacyBullet, { backgroundColor: `${theme.primary}20` }]}>
+                <Feather name="lock" size={16} color={theme.primary} />
               </View>
               <View style={styles.privacyItemText}>
                 <ThemedText type="body" style={styles.privacyItemTitle}>
-                  Only You Have Access
+                  Private to You
                 </ThemedText>
-                <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                  Your voice clone is private and only used for your affirmations
+                <ThemedText type="caption" style={{ color: theme.textSecondary, lineHeight: 18 }}>
+                  Your voice clone is encrypted and only accessible within your account
                 </ThemedText>
               </View>
             </View>
 
+            <View style={[styles.privacyDivider, { backgroundColor: `${theme.primary}10` }]} />
+
             <View style={styles.privacyItem}>
-              <View style={[styles.privacyBullet, { backgroundColor: theme.primary }]}>
-                <Feather name="headphones" size={16} color="#FFFFFF" />
+              <View style={[styles.privacyBullet, { backgroundColor: `${theme.primary}20` }]}>
+                <Feather name="headphones" size={16} color={theme.primary} />
               </View>
               <View style={styles.privacyItemText}>
                 <ThemedText type="body" style={styles.privacyItemTitle}>
-                  Personal Use Only
+                  Affirmations & Meditations
                 </ThemedText>
-                <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                  Used solely to create your personalized affirmations
+                <ThemedText type="caption" style={{ color: theme.textSecondary, lineHeight: 18 }}>
+                  Used solely to deliver your personalized affirmations and guided meditations in your own voice
                 </ThemedText>
               </View>
             </View>
 
+            <View style={[styles.privacyDivider, { backgroundColor: `${theme.primary}10` }]} />
+
             <View style={styles.privacyItem}>
-              <View style={[styles.privacyBullet, { backgroundColor: theme.primary }]}>
-                <Feather name="shield" size={16} color="#FFFFFF" />
+              <View style={[styles.privacyBullet, { backgroundColor: `${theme.primary}20` }]}>
+                <Feather name="x-circle" size={16} color={theme.primary} />
               </View>
               <View style={styles.privacyItemText}>
                 <ThemedText type="body" style={styles.privacyItemTitle}>
-                  Delete All Data Anytime
+                  Full Control, Always
                 </ThemedText>
-                <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                  You can permanently delete all your data from Settings at any time
+                <ThemedText type="caption" style={{ color: theme.textSecondary, lineHeight: 18 }}>
+                  Delete your voice clone and all associated data from Settings whenever you choose
                 </ThemedText>
               </View>
             </View>
-          </View>
+          </Animated.View>
 
-          <View style={styles.buttonsContainer}>
+          <Animated.View entering={FadeInUp.duration(500).delay(500)} style={styles.buttonsContainer}>
             <Button
               variant="gradient"
               onPress={handlePrivacyAcknowledge}
@@ -813,7 +829,7 @@ export default function VoiceSetupScreen() {
             >
               Skip for now
             </Button>
-          </View>
+          </Animated.View>
         </ScrollView>
       </ThemedView>
     );
@@ -1147,23 +1163,34 @@ const styles = StyleSheet.create({
     minHeight: "100%",
   },
   privacyIconContainer: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     alignItems: "center",
     justifyContent: "center",
+    marginBottom: Spacing.lg,
+  },
+  privacyIconInner: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  privacyTitleBlock: {
+    alignItems: "center",
     marginBottom: Spacing.xl,
   },
   privacyDescription: {
     textAlign: "center",
-    marginBottom: Spacing.xl,
     maxWidth: 320,
     lineHeight: 24,
+    marginTop: Spacing.sm,
   },
   privacyCard: {
     width: "100%",
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.lg,
+    padding: Spacing.xl,
+    borderRadius: BorderRadius.xl,
     marginBottom: Spacing.xl,
     gap: Spacing.lg,
   },
@@ -1173,9 +1200,9 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   privacyBullet: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
     marginTop: 2,
@@ -1185,7 +1212,13 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   privacyItemTitle: {
-    fontWeight: "600",
+    fontWeight: "700",
+    fontSize: 15,
+  },
+  privacyDivider: {
+    height: 1,
+    width: "100%",
+    marginVertical: 2,
   },
   successContainer: {
     flex: 1,

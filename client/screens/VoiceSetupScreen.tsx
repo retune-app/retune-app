@@ -746,7 +746,7 @@ export default function VoiceSetupScreen() {
                 <ThemedText type="body" style={styles.privacyItemTitle}>
                   Recording Erased Instantly
                 </ThemedText>
-                <ThemedText type="caption" style={{ color: theme.textSecondary, lineHeight: 17, fontSize: 12 }} numberOfLines={2}>
+                <ThemedText type="caption" style={{ color: theme.textSecondary, lineHeight: 18, fontSize: 13 }} numberOfLines={2}>
                   Your original voice recording is permanently deleted right after your clone is created
                 </ThemedText>
               </View>
@@ -762,7 +762,7 @@ export default function VoiceSetupScreen() {
                 <ThemedText type="body" style={styles.privacyItemTitle}>
                   Private to You
                 </ThemedText>
-                <ThemedText type="caption" style={{ color: theme.textSecondary, lineHeight: 17, fontSize: 12 }} numberOfLines={2}>
+                <ThemedText type="caption" style={{ color: theme.textSecondary, lineHeight: 18, fontSize: 13 }} numberOfLines={2}>
                   Your voice clone is fully encrypted and only accessible within your personal account
                 </ThemedText>
               </View>
@@ -778,7 +778,7 @@ export default function VoiceSetupScreen() {
                 <ThemedText type="body" style={styles.privacyItemTitle}>
                   Affirmations & Meditations
                 </ThemedText>
-                <ThemedText type="caption" style={{ color: theme.textSecondary, lineHeight: 17, fontSize: 12 }} numberOfLines={2}>
+                <ThemedText type="caption" style={{ color: theme.textSecondary, lineHeight: 18, fontSize: 13 }} numberOfLines={2}>
                   Used solely to power your personalized affirmation and guided meditation experiences
                 </ThemedText>
               </View>
@@ -794,7 +794,7 @@ export default function VoiceSetupScreen() {
                 <ThemedText type="body" style={styles.privacyItemTitle}>
                   Full Control, Always
                 </ThemedText>
-                <ThemedText type="caption" style={{ color: theme.textSecondary, lineHeight: 17, fontSize: 12 }} numberOfLines={2}>
+                <ThemedText type="caption" style={{ color: theme.textSecondary, lineHeight: 18, fontSize: 13 }} numberOfLines={2}>
                   Delete your voice clone and all associated data from Settings whenever you choose
                 </ThemedText>
               </View>
@@ -1190,10 +1190,10 @@ const styles = StyleSheet.create({
   },
   privacyCard: {
     width: "100%",
-    padding: Spacing.lg,
+    padding: Spacing.xl,
     borderRadius: BorderRadius.xl,
     marginBottom: Spacing.md,
-    gap: Spacing.md,
+    gap: Spacing.lg,
   },
   privacyItem: {
     flexDirection: "row",
@@ -1201,9 +1201,9 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   privacyBullet: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     alignItems: "center",
     justifyContent: "center",
     marginTop: 1,
@@ -1214,7 +1214,7 @@ const styles = StyleSheet.create({
   },
   privacyItemTitle: {
     fontWeight: "700",
-    fontSize: 14,
+    fontSize: 15,
   },
   privacyDivider: {
     height: 1,

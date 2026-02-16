@@ -12,7 +12,9 @@
     },
     "production": {
       "env": {
-        "EXPO_PUBLIC_DOMAIN": "ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev"
+        "EXPO_PUBLIC_DOMAIN": "ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "29494814124-660lsfgfnb63elm4i7fjds94c7mrj7rl.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "29494814124-61rkp5g72l9b9bct4d34437vqn36of5e.apps.googleusercontent.com"
       }
     }
   },

@@ -3,10 +3,12 @@
 ## Overview
 Retuned is an application designed to help users reprogram their subconscious minds through personalized audio affirmations. It leverages AI to generate affirmation scripts based on user goals, which can then be played in the user's cloned voice or a selection of curated AI voices. The project aims to provide a powerful tool for personal growth and mental well-being, focusing on subconscious language patterns to maximize effectiveness. Key features include voice cloning, guided breathing exercises, AI-powered mood check-ins with personalized wellness paths, micro-meditations, and a comprehensive ambient sound library.
 
-## Recent Changes (v1.7.1 Build 2 — February 16, 2026)
+## Recent Changes (v1.7.1 Build 3 — February 16, 2026)
+- **Google OAuth EAS Fix**: Added `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` and `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` to `eas.json` production env block so Google client IDs are baked into the native bundle at EAS build time. Previous builds failed with "Missing required parameter: client_id" because the env vars only existed in Replit, not in the EAS build environment.
 - **Landing Page Refinements**: Consolidated capability cards — merged redundant voice cards into "Your Voice, Everywhere", combined mood AI with daily greetings into "Mood-Responsive AI", replaced RSVP duplicate with "Progress You Can See" analytics feature. Final 6 cards: Context-Aware Transitions, Mood-Responsive AI, Smart Affirmation Matching, Your Voice Everywhere, Progress You Can See, 25 Ambient Soundscapes.
 - **Production Bundle Rebuild**: New production bundle (build `1771210425242-27479`) deployed with confirmed Google OAuth credentials and landing page updates.
-- **Build Number Bump**: iOS `buildNumber` set to "2" in `app.json` for new EAS build + App Store submission to enable OTA updates.
+- **Build Number Bump**: iOS `buildNumber` set to "3" in `app.json` for new EAS build + App Store submission.
+- **EAS Ignore File**: Created `.easignore` to exclude `node_modules/`, `.cache/`, `static-build/`, `uploads/`, and other non-essential directories from the EAS upload zip.
 - **Temp File Cleanup**: Removed `attached_assets/` directory (old chat session screenshots) to keep repository lean for EAS builds.
 
 ## Previous Changes (v1.7.1 Build 1 — February 15, 2026)

@@ -883,7 +883,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
-    marginRight: Spacing.md,
+    marginRight: Spacing.lg,
   },
   usageLimitContent: {
     flex: 1,
@@ -895,7 +895,7 @@ const styles = StyleSheet.create({
   },
   usageBarContainer: {
     marginTop: Spacing.xs,
-    paddingLeft: 52,
+    paddingLeft: 56,
   },
   usageBarTrack: {
     height: 4,

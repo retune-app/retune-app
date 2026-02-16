@@ -1187,7 +1187,7 @@ export default function BreathingScreen() {
         </Animated.View>
 
         {/* Bottom Options Panel */}
-        <Animated.View entering={FadeIn.delay(400).duration(600)} style={[styles.bottomPanel, { backgroundColor: isDark ? theme.backgroundSecondary : theme.cardBackground, borderColor: isDark ? theme.border : `${ACCENT_GOLD}25` }]}>
+        <Animated.View entering={FadeIn.delay(400).duration(600)} style={[styles.bottomPanel, { backgroundColor: isDark ? theme.backgroundSecondary : theme.cardBackground, borderColor: `${selectedTechnique.color}30` }]}>
           {/* Duration Row */}
           <View style={styles.optionRow}>
             <View style={styles.optionLabelContainer}>
@@ -1548,7 +1548,7 @@ const styles = StyleSheet.create({
   optionLabelContainer: {
     flexDirection: "row",
     alignItems: "center",
-    width: 90,
+    width: 72,
   },
   optionPillsRow: {
     flex: 1,

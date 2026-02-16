@@ -738,7 +738,7 @@ export default function CreateScreen() {
           </View>
           <View style={styles.modeToggle}>
             <Pressable
-              onPress={() => setMode("ai")}
+              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setMode("ai"); }}
               style={[
                 styles.modeButton,
                 styles.heroModeBtn,
@@ -755,7 +755,7 @@ export default function CreateScreen() {
               </ThemedText>
             </Pressable>
             <Pressable
-              onPress={() => setMode("manual")}
+              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setMode("manual"); }}
               style={[
                 styles.modeButton,
                 styles.heroModeBtn,

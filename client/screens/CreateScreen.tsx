@@ -743,6 +743,7 @@ export default function CreateScreen() {
               onPress={() => setMode("ai")}
               style={styles.modeButton}
               testID="button-mode-ai"
+              icon={<Feather name="zap" size={16} color={mode === "ai" ? "#001A33" : "#C9A227"} />}
             >
               AI-Powered
             </Button>
@@ -752,6 +753,7 @@ export default function CreateScreen() {
               onPress={() => setMode("manual")}
               style={styles.modeButton}
               testID="button-mode-manual"
+              icon={<Feather name="edit-2" size={16} color={mode === "manual" ? "#001A33" : "#C9A227"} />}
             >
               Write Your Own
             </Button>

@@ -1187,7 +1187,7 @@ export default function BreathingScreen() {
         </Animated.View>
 
         {/* Bottom Options Panel */}
-        <Animated.View entering={FadeIn.delay(400).duration(600)} style={[styles.bottomPanel, { backgroundColor: isDark ? theme.backgroundSecondary : theme.cardBackground, borderColor: `${selectedTechnique.color}30` }]}>
+        <Animated.View entering={FadeIn.delay(400).duration(600)} style={[styles.bottomPanel, { backgroundColor: isDark ? theme.backgroundSecondary : theme.cardBackground, borderColor: `${selectedTechnique.color}30` }, Shadows.small]}>
           {/* Duration Row */}
           <View style={styles.optionRow}>
             <View style={styles.optionLabelContainer}>

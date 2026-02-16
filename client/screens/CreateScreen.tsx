@@ -737,26 +737,40 @@ export default function CreateScreen() {
             </ThemedText>
           </View>
           <View style={styles.modeToggle}>
-            <Button
-              variant={mode === "ai" ? "primary" : "ghost"}
-              size="small"
+            <Pressable
               onPress={() => setMode("ai")}
-              style={[styles.modeButton, mode !== "ai" && { backgroundColor: "rgba(0,0,0,0.05)" }]}
+              style={[
+                styles.modeButton,
+                styles.heroModeBtn,
+                mode === "ai" ? styles.heroModeBtnActive : styles.heroModeBtnInactive,
+              ]}
               testID="button-mode-ai"
-              icon={<Feather name="zap" size={16} color={mode === "ai" ? "#0F1C3F" : (isDark ? "#FFFFFF" : "#0F1C3F")} />}
             >
-              AI-Powered
-            </Button>
-            <Button
-              variant={mode === "manual" ? "primary" : "ghost"}
-              size="small"
+              <Feather name="zap" size={15} color={mode === "ai" ? "#0F1C3F" : "#FFFFFF"} />
+              <ThemedText
+                type="small"
+                style={[styles.heroModeBtnText, { color: mode === "ai" ? "#0F1C3F" : "#FFFFFF" }]}
+              >
+                AI-Powered
+              </ThemedText>
+            </Pressable>
+            <Pressable
               onPress={() => setMode("manual")}
-              style={[styles.modeButton, mode !== "manual" && { backgroundColor: "rgba(0,0,0,0.05)" }]}
+              style={[
+                styles.modeButton,
+                styles.heroModeBtn,
+                mode === "manual" ? styles.heroModeBtnActive : styles.heroModeBtnInactive,
+              ]}
               testID="button-mode-manual"
-              icon={<Feather name="edit-2" size={16} color={mode === "manual" ? "#0F1C3F" : (isDark ? "#FFFFFF" : "#0F1C3F")} />}
             >
-              Write Your Own
-            </Button>
+              <Feather name="edit-2" size={15} color={mode === "manual" ? "#0F1C3F" : "#FFFFFF"} />
+              <ThemedText
+                type="small"
+                style={[styles.heroModeBtnText, { color: mode === "manual" ? "#0F1C3F" : "#FFFFFF" }]}
+              >
+                Write Your Own
+              </ThemedText>
+            </Pressable>
           </View>
         </LinearGradient>
 
@@ -1334,6 +1348,23 @@ const styles = StyleSheet.create({
   },
   modeButton: {
     flex: 1,
+  },
+  heroModeBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.xs,
+    height: 40,
+    borderRadius: BorderRadius.full,
+  },
+  heroModeBtnActive: {
+    backgroundColor: "rgba(255,255,255,0.85)",
+  },
+  heroModeBtnInactive: {
+    backgroundColor: "rgba(255,255,255,0.2)",
+  },
+  heroModeBtnText: {
+    fontWeight: "600",
   },
   stepHeader: {
     flexDirection: "row",

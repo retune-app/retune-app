@@ -471,9 +471,9 @@ export function AuthScreen() {
 
               <Text style={styles.termsText}>
                 By continuing, you agree to our{" "}
-                <Text style={styles.termsLink}>Terms of Service</Text>
+                <Text style={styles.termsLink} onPress={() => WebBrowser.openBrowserAsync("https://retuned.app/terms-of-service")}>Terms of Service</Text>
                 {" "}and{" "}
-                <Text style={styles.termsLink}>Privacy Policy</Text>
+                <Text style={styles.termsLink} onPress={() => WebBrowser.openBrowserAsync("https://retuned.app/privacy-policy")}>Privacy Policy</Text>
               </Text>
             </View>
           </BlurView>
@@ -733,6 +733,7 @@ const styles = StyleSheet.create({
   termsLink: {
     color: authColors.gold,
     fontFamily: "Nunito_600SemiBold",
+    textDecorationLine: "underline" as const,
   },
   securityNote: {
     flexDirection: "row",

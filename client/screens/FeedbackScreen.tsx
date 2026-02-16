@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, StyleSheet, Pressable, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform } from "react-native";
+import { View, StyleSheet, Pressable, TextInput, ActivityIndicator, ScrollView, Platform } from "react-native";
 import Constants from "expo-constants";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
@@ -18,9 +18,9 @@ const GOLD = "#C9A227";
 type FeedbackType = "feedback" | "feature" | "bug";
 
 const FEEDBACK_TYPES: { id: FeedbackType; label: string; icon: keyof typeof Feather.glyphMap; description: string; accent: string }[] = [
-  { id: "feedback", label: "Feedback", icon: "message-circle", description: "Share your experience", accent: "#C9A227" },
-  { id: "feature", label: "Feature Idea", icon: "zap", description: "Suggest something new", accent: "#7C3AED" },
-  { id: "bug", label: "Report Issue", icon: "alert-circle", description: "Something not working?", accent: "#EF4444" },
+  { id: "feedback", label: "Feedback", icon: "message-circle", description: "Your experience", accent: "#C9A227" },
+  { id: "feature", label: "Feature Idea", icon: "zap", description: "Suggest new ideas", accent: "#7C3AED" },
+  { id: "bug", label: "Report Issue", icon: "alert-circle", description: "Report a problem", accent: "#EF4444" },
 ];
 
 export default function FeedbackScreen() {
@@ -112,12 +112,20 @@ export default function FeedbackScreen() {
   const selectedAccent = FEEDBACK_TYPES.find(t => t.id === selectedType)?.accent || GOLD;
 
   return (
-    <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: theme.backgroundRoot }]}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      keyboardVerticalOffset={headerHeight}
-    >
-      <View style={[styles.mainContent, { paddingTop: headerHeight + Spacing.md }]} testID="screen-feedback">
+    <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]} testID="screen-feedback">
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingTop: headerHeight + Spacing.md,
+            paddingBottom: insets.bottom + Spacing.xl,
+          },
+        ]}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        showsVerticalScrollIndicator={false}
+      >
         <ThemedText type="small" style={[styles.intro, { color: theme.textSecondary }]}>
           Questions, ideas, or issues — we read every message at team@retuned.app
         </ThemedText>
@@ -228,9 +236,7 @@ export default function FeedbackScreen() {
             {message.length}/1000
           </ThemedText>
         </View>
-      </View>
 
-      <View style={[styles.bottomSection, { paddingBottom: insets.bottom + Spacing.md }]}>
         <Pressable
           onPress={handleSubmit}
           disabled={!canSubmit || isSubmitting}
@@ -257,8 +263,8 @@ export default function FeedbackScreen() {
             </>
           )}
         </Pressable>
-      </View>
-    </KeyboardAvoidingView>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -266,8 +272,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  mainContent: {
+  scrollView: {
     flex: 1,
+  },
+  scrollContent: {
     paddingHorizontal: Spacing.lg,
   },
   intro: {
@@ -306,7 +314,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   formSection: {
-    flex: 1,
+    marginBottom: Spacing.lg,
   },
   fieldLabel: {
     fontFamily: "Nunito_600SemiBold",
@@ -329,16 +337,11 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm + 2,
     fontSize: 15,
     fontFamily: "Nunito_400Regular",
-    flex: 1,
-    minHeight: 80,
+    minHeight: 120,
   },
   charCount: {
     textAlign: "right",
     marginTop: Spacing.xs,
-  },
-  bottomSection: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.sm,
   },
   submitButton: {
     flexDirection: "row",

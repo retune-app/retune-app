@@ -465,7 +465,12 @@ export default function ProfileScreen() {
           PROFILE
         </ThemedText>
         <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
-          <View style={styles.settingItem}>
+          <Pressable
+            style={styles.settingItem}
+            onPress={isEditingName ? undefined : handleEditName}
+            testID="button-edit-name"
+            disabled={isEditingName}
+          >
             <View style={[styles.settingIcon, { backgroundColor: theme.backgroundSecondary }]}>
               <Feather name="user" size={20} color={theme.primary} />
             </View>
@@ -499,16 +504,9 @@ export default function ProfileScreen() {
                 </Pressable>
               </View>
             ) : (
-              <Pressable 
-                onPress={handleEditName} 
-                testID="button-edit-name"
-                style={styles.editNameButton}
-                hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
-              >
-                <Feather name="edit-2" size={18} color={theme.primary} />
-              </Pressable>
+              <Feather name="edit-2" size={18} color={theme.primary} />
             )}
-          </View>
+          </Pressable>
         </View>
       </View>
 

@@ -193,7 +193,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error("Login error:", error);
-      return { success: false, error: "Network error. Please try again." };
+      return { success: false, error: "Unable to connect. Please check your connection and try again." };
     }
   };
 
@@ -221,7 +221,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error("Signup error:", error);
-      return { success: false, error: "Network error. Please try again." };
+      return { success: false, error: "Unable to connect. Please check your connection and try again." };
     }
   };
 
@@ -234,11 +234,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify(params),
       });
 
-      // Check content type before parsing
       const contentType = response.headers.get("content-type");
       if (!contentType || !contentType.includes("application/json")) {
         console.error("OAuth response not JSON:", contentType);
-        return { success: false, error: "Server error. Please try again." };
+        return { success: false, error: "Unable to connect. Please check your connection and try again." };
       }
 
       let data;
@@ -246,7 +245,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         data = await response.json();
       } catch (parseError) {
         console.error("Failed to parse OAuth response:", parseError);
-        return { success: false, error: "Server error. Please try again." };
+        return { success: false, error: "Unable to connect. Please check your connection and try again." };
       }
 
       if (response.ok) {
@@ -262,7 +261,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error("OAuth login error:", error);
-      return { success: false, error: "Network error. Please try again." };
+      return { success: false, error: "Unable to connect. Please check your connection and try again." };
     }
   };
 

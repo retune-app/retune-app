@@ -337,7 +337,7 @@ export default function HomeScreen() {
     navigation.navigate("Main", { screen: "SettingsTab" } as any);
   };
 
-  const FIXED_HEADER_HEIGHT = 145;
+  const FIXED_HEADER_HEIGHT = 135;
 
   const [showVoiceNudge, setShowVoiceNudge] = useState(false);
   const [voiceNudgeDismissed, setVoiceNudgeDismissed] = useState(false);
@@ -400,14 +400,6 @@ export default function HomeScreen() {
           </Pressable>
         </Animated.View>
       ) : null}
-      {filteredAffirmations.length > 0 && isFirstPlay ? (
-        <Animated.View entering={FadeIn.delay(600).duration(400)} style={styles.tapToListenTip}>
-          <Feather name="play-circle" size={16} color={theme.primary} />
-          <ThemedText type="small" style={{ color: theme.textSecondary, marginLeft: Spacing.sm }}>
-            Tap the play button to hear your first affirmation
-          </ThemedText>
-        </Animated.View>
-      ) : null}
     </View>
   );
 
@@ -430,7 +422,7 @@ export default function HomeScreen() {
             testID="button-header-mood-checkin"
           >
             <Animated.View style={[styles.headerIconButton, { backgroundColor: `${theme.gold}18`, borderColor: `${theme.gold}40` }, moodGlowStyle]}>
-              <Feather name="smile" size={20} color={theme.gold} />
+              <Feather name="smile" size={17} color={theme.gold} />
             </Animated.View>
           </Pressable>
           <View style={[styles.searchContainer, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder }]}>
@@ -449,7 +441,7 @@ export default function HomeScreen() {
             style={[styles.headerIconButton, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder }]}
             testID="button-header-settings"
           >
-            <Feather name="settings" size={20} color={theme.gold} />
+            <Feather name="settings" size={17} color={theme.gold} />
           </Pressable>
         </View>
         <View style={styles.badgeRow}>
@@ -777,7 +769,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   headerContent: {
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   fixedHeader: {
     position: "absolute",
@@ -794,7 +786,7 @@ const styles = StyleSheet.create({
   searchRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
     gap: Spacing.sm,
   },
   headerSettingsButton: {
@@ -806,8 +798,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   headerIconButton: {
-    width: 42,
-    height: 42,
+    width: 36,
+    height: 36,
     borderRadius: BorderRadius.full,
     borderWidth: 1,
     justifyContent: "center",
@@ -818,14 +810,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: Spacing.md,
-    height: 44,
+    height: 36,
     borderRadius: BorderRadius.full,
     borderWidth: 1,
   },
   searchInput: {
     flex: 1,
     marginLeft: Spacing.sm,
-    fontSize: 16,
+    fontSize: 15,
   },
   categoriesContainer: {
     paddingVertical: Spacing.xs,
@@ -930,13 +922,5 @@ const styles = StyleSheet.create({
   footerTipContainer: {
     marginTop: Spacing.lg,
     paddingHorizontal: Spacing.xs,
-  },
-  tapToListenTip: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    marginBottom: Spacing.sm,
-    borderRadius: BorderRadius.md,
   },
 });

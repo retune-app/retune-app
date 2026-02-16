@@ -78,7 +78,7 @@ export default function BreathingScreen() {
   const autoStart = route.params?.autoStart;
   const autoStartTriggered = useRef(false);
   const [showLandscapeMode, setShowLandscapeMode] = useState(false);
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const { user } = useAuth();
   const { currentAffirmation, isPlaying: isAudioPlaying, playAffirmation, togglePlayPause, breathingAffirmation, requestHighlightAffirmation, requestRecommendedAffirmation, stop: stopAffirmationAudio } = useAudio();
   const { selectedMusic, setSelectedMusic, startBackgroundMusic, stopBackgroundMusic, isPlaying: isMusicPlaying, volume, setVolume, setDucked } = useBackgroundMusic();
@@ -1187,7 +1187,7 @@ export default function BreathingScreen() {
         </Animated.View>
 
         {/* Bottom Options Panel */}
-        <Animated.View entering={FadeIn.delay(400).duration(600)} style={styles.bottomPanel}>
+        <Animated.View entering={FadeIn.delay(400).duration(600)} style={[styles.bottomPanel, { backgroundColor: isDark ? theme.backgroundSecondary : theme.cardBackground, borderColor: isDark ? theme.border : `${ACCENT_GOLD}25` }]}>
           {/* Duration Row */}
           <View style={styles.optionRow}>
             <View style={styles.optionLabelContainer}>
@@ -1536,6 +1536,9 @@ const styles = StyleSheet.create({
   // Bottom Options Panel
   bottomPanel: {
     gap: Spacing.md,
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
   },
   optionRow: {
     flexDirection: "row",

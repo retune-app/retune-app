@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { View, StyleSheet, Pressable, Switch, Text, Modal, ActivityIndicator, ImageBackground, TextInput, Alert, Platform, ScrollView, Linking } from "react-native";
+import { View, StyleSheet, Pressable, Switch, Text, Modal, ActivityIndicator, ImageBackground, TextInput, Alert, Linking } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 
 const profileBackgroundDark = require("../../assets/images/library-background.png");
@@ -48,7 +48,6 @@ interface VoicePreferences {
 
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { ThemedText } from "@/components/ThemedText";
-import { Card } from "@/components/Card";
 
 import { ProgressVisualization } from "@/components/ProgressVisualization";
 import { useTheme } from "@/hooks/useTheme";

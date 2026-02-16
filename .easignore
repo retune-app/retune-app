@@ -3,6 +3,7 @@ node_modules/
 .expo/
 static-build/
 uploads/
+attached_assets/
 .git/
 .local/
 .upm/

@@ -814,7 +814,7 @@ export default function ProfileScreen() {
             <View style={styles.settingContent}>
               <ThemedText type="body">Sign Out</ThemedText>
               {user?.email ? (
-                <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: 2 }}>
+                <ThemedText type="small" style={{ color: theme.textSecondary, marginTop: 2 }}>
                   {user.email}
                 </ThemedText>
               ) : null}

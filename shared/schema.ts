@@ -26,6 +26,7 @@ export const users = pgTable("users", {
   monthlyResetDate: timestamp("monthly_reset_date").default(sql`CURRENT_TIMESTAMP`), // When to reset monthly limits
   hasConsentedToVoiceCloning: boolean("has_consented_to_voice_cloning").default(false), // GDPR/privacy consent
   voiceLastUsedAt: timestamp("voice_last_used_at"),
+  voiceExpiryWarningAt: timestamp("voice_expiry_warning_at"),
   role: text("role").default("user"), // 'user', 'admin', 'reviewer'
   subscriptionTier: text("subscription_tier").default("free"), // 'free' or 'premium'
   active: boolean("active").default(true),
@@ -187,6 +188,15 @@ export const reminders = pgTable("reminders", {
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 
+export const pushTokens = pgTable("push_tokens", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  token: text("token").notNull().unique(),
+  platform: text("platform").default("unknown"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
 // Collections for organizing affirmations
 export const collections = pgTable("collections", {
   id: serial("id").primaryKey(),
@@ -230,6 +240,7 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   customCategories: many(customCategories),
   notificationSettings: one(notificationSettings),
   reminders: many(reminders),
+  pushTokens: many(pushTokens),
   listeningSessions: many(listeningSessions),
   journeyCompletions: many(journeyCompletions),
 }));
@@ -249,6 +260,10 @@ export const notificationSettingsRelations = relations(notificationSettings, ({ 
 
 export const remindersRelations = relations(reminders, ({ one }) => ({
   user: one(users, { fields: [reminders.userId], references: [users.id] }),
+}));
+
+export const pushTokensRelations = relations(pushTokens, ({ one }) => ({
+  user: one(users, { fields: [pushTokens.userId], references: [users.id] }),
 }));
 
 export const customCategoriesRelations = relations(customCategories, ({ one }) => ({
@@ -372,6 +387,14 @@ export type SupportRequest = typeof supportRequests.$inferSelect;
 export type InsertSupportRequest = z.infer<typeof insertSupportRequestSchema>;
 export type Reminder = typeof reminders.$inferSelect;
 export type InsertReminder = z.infer<typeof insertReminderSchema>;
+
+export const insertPushTokenSchema = createInsertSchema(pushTokens).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type PushToken = typeof pushTokens.$inferSelect;
+export type InsertPushToken = z.infer<typeof insertPushTokenSchema>;
 
 export const insertJourneyCompletionSchema = createInsertSchema(journeyCompletions).omit({
   id: true,

@@ -5,7 +5,7 @@ import path from "path";
 import fs from "fs";
 import rateLimit from "express-rate-limit";
 import { db } from "./db";
-import { affirmations, voiceSamples, categories, users, collections, customCategories, notificationSettings, reminders, listeningSessions, breathingSessions, supportRequests, journeyCompletions } from "@shared/schema";
+import { affirmations, voiceSamples, categories, users, collections, customCategories, notificationSettings, reminders, pushTokens, listeningSessions, breathingSessions, supportRequests, journeyCompletions } from "@shared/schema";
 import { eq, desc, asc, and, sql, sum, isNull } from "drizzle-orm";
 import { openai } from "./replit_integrations/audio/client";
 import OpenAI from "openai";
@@ -21,6 +21,7 @@ import {
 } from "./replit_integrations/elevenlabs/client";
 import { humeTextToSpeech, humeSimpleTTS, type WordTiming as HumeWordTiming } from "./hume-client";
 import { findInactiveVoices, runVoiceRotation, getVoiceSlotStats, checkVoiceSlotWarning, freeVoiceSlotForNewClone } from "./voice-rotation";
+import { sendVoiceExpiryWarnings } from "./push-notifications";
 import { setupAuth, requireAuth, optionalAuth, AuthenticatedRequest } from "./auth";
 import { moderateContent, validateAffirmationContent } from "./moderation";
 import {
@@ -2699,6 +2700,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/push-token", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { token, platform } = req.body;
+
+      if (!token || typeof token !== "string") {
+        return res.status(400).json({ error: "Push token is required" });
+      }
+
+      const existing = await db
+        .select()
+        .from(pushTokens)
+        .where(eq(pushTokens.token, token))
+        .limit(1);
+
+      if (existing.length > 0) {
+        await db
+          .update(pushTokens)
+          .set({ userId: req.userId!, platform: platform || "unknown", updatedAt: new Date() })
+          .where(eq(pushTokens.token, token));
+      } else {
+        await db
+          .insert(pushTokens)
+          .values({ userId: req.userId!, token, platform: platform || "unknown" });
+      }
+
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Error registering push token:", error);
+      res.status(500).json({ error: "Failed to register push token" });
+    }
+  });
+
+  app.post("/api/voice/keep-active", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const [user] = await db
+        .select({ voiceId: users.voiceId, hasVoiceSample: users.hasVoiceSample })
+        .from(users)
+        .where(eq(users.id, req.userId!));
+
+      if (!user?.voiceId || !user?.hasVoiceSample) {
+        return res.status(400).json({ error: "No active voice clone found" });
+      }
+
+      await db
+        .update(users)
+        .set({ voiceLastUsedAt: new Date(), voiceExpiryWarningAt: null })
+        .where(eq(users.id, req.userId!));
+
+      res.json({ success: true, message: "Voice clone marked as active" });
+    } catch (error: any) {
+      console.error("Error keeping voice active:", error);
+      res.status(500).json({ error: "Failed to update voice status" });
+    }
+  });
+
   // ============ Mood Check-in API ============
 
   app.post("/api/mood-prompt", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
@@ -4437,6 +4493,7 @@ Return ONLY the 8 tips, one per line. No numbering, no titles, no extra text.`;
       await db.delete(listeningSessions).where(eq(listeningSessions.userId, userId));
       await db.delete(breathingSessions).where(eq(breathingSessions.userId, userId));
       await db.delete(notificationSettings).where(eq(notificationSettings.userId, userId));
+      await db.delete(pushTokens).where(eq(pushTokens.userId, userId));
       await db.delete(reminders).where(eq(reminders.userId, userId));
       await db.delete(affirmations).where(eq(affirmations.userId, userId));
       await db.delete(voiceSamples).where(eq(voiceSamples.userId, userId));
@@ -4994,6 +5051,15 @@ Return ONLY the 8 tips, one per line. No numbering, no titles, no extra text.`;
   });
 
   setInterval(async () => {
+    try {
+      const expiryResult = await sendVoiceExpiryWarnings();
+      if (expiryResult.warned > 0) {
+        console.log(`[Voice Expiry] Sent ${expiryResult.warned} expiry warnings`);
+      }
+    } catch (expiryError) {
+      console.error("[Voice Expiry] Warning check failed:", expiryError);
+    }
+
     try {
       console.log("[Voice Rotation] Running scheduled voice cleanup...");
       const results = await runVoiceRotation(60);

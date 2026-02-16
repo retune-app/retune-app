@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect, useRef } from "react";
 import { View, StyleSheet, ActivityIndicator, Platform } from "react-native";
 import { createNativeStackNavigator, NativeStackNavigationProp, NativeStackNavigationOptions } from "@react-navigation/native-stack";
 import { NavigationState, useNavigation } from "@react-navigation/native";
+import * as Notifications from "expo-notifications";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import MainTabNavigator from "@/navigation/MainTabNavigator";
 import VoiceSetupScreen from "@/screens/VoiceSetupScreen";
@@ -19,6 +20,7 @@ import { MiniPlayer } from "@/components/MiniPlayer";
 import { useScreenOptions } from "@/hooks/useScreenOptions";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/hooks/useTheme";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 const ONBOARDING_KEY = "@onboarding/completed";
 
@@ -62,10 +64,33 @@ function VoiceSetupNavigator() {
   return null;
 }
 
+function NotificationHandler() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
+  useEffect(() => {
+    const subscription = Notifications.addNotificationResponseReceivedListener(response => {
+      const data = response.notification.request.content.data;
+      if (data?.screen === "VoiceSettings") {
+        setTimeout(() => {
+          try {
+            navigation.navigate("VoiceSettings");
+          } catch (e) {
+            console.warn("[Push] Navigation failed:", e);
+          }
+        }, 300);
+      }
+    });
+    return () => subscription.remove();
+  }, [navigation]);
+
+  return null;
+}
+
 export default function RootStackNavigator() {
   const screenOptions = useScreenOptions();
   const { theme } = useTheme();
   const { isAuthenticated, isLoading } = useAuth();
+  usePushNotifications();
   const [currentRoute, setCurrentRoute] = useState<string>('AffirmTab');
   const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null);
 
@@ -232,6 +257,7 @@ export default function RootStackNavigator() {
           }}
         />
       </Stack.Navigator>
+      <NotificationHandler />
       <MiniPlayer currentRoute={currentRoute} />
     </View>
   );

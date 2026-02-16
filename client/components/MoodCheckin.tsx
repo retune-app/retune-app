@@ -533,7 +533,7 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
                       <View key={index}>
                         {index > 0 ? (
                           <View style={styles.stepConnector}>
-                            {[0, 1, 2].map((d) => (
+                            {[0, 1].map((d) => (
                               <Animated.View key={d} style={[styles.connectorDot, connDotStyles[d]]} />
                             ))}
                           </View>
@@ -721,7 +721,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginVertical: Spacing.sm,
+    marginVertical: Spacing.xs,
     gap: Spacing.md,
   },
   journeyHeaderMood: {
@@ -752,8 +752,8 @@ const styles = StyleSheet.create({
     backgroundColor: `${ACCENT_GOLD}08`,
     borderWidth: 1,
     borderRadius: BorderRadius.lg,
-    padding: Spacing.md,
-    marginBottom: Spacing.md,
+    padding: Spacing.sm,
+    marginBottom: Spacing.sm,
     gap: Spacing.sm,
   },
   ackIcon: {
@@ -761,8 +761,8 @@ const styles = StyleSheet.create({
   },
   ackText: {
     flex: 1,
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 14,
+    lineHeight: 20,
     fontStyle: "italic",
     fontWeight: "500",
   },
@@ -771,24 +771,24 @@ const styles = StyleSheet.create({
   },
   stepConnector: {
     alignItems: "center",
-    gap: 5,
-    paddingVertical: 8,
+    gap: 4,
+    paddingVertical: 4,
   },
   connectorDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
     backgroundColor: ACCENT_GOLD,
     shadowColor: "#E5C95C",
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.9,
-    shadowRadius: 4,
-    elevation: 6,
+    shadowOpacity: 0.7,
+    shadowRadius: 3,
+    elevation: 4,
   },
   stepCard: {
     borderRadius: BorderRadius.lg,
     borderWidth: 2,
-    padding: Spacing.md,
+    padding: Spacing.sm,
   },
   stepCardRow: {
     flexDirection: "row",
@@ -826,7 +826,7 @@ const styles = StyleSheet.create({
   },
   stepNote: {
     fontSize: 13,
-    lineHeight: 19,
+    lineHeight: 18,
     marginTop: -28,
     paddingLeft: 36,
   },

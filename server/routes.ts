@@ -1526,17 +1526,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
           })
           .returning();
 
-        // Clone voice with ElevenLabs
+        // Clone voice with both providers for A/B comparison
         try {
           const provider = user.ttsProvider || 'elevenlabs';
           let voiceId: string;
+          const providerVoiceUpdate: Record<string, any> = { 
+            hasVoiceSample: true, 
+            preferredVoiceType: "personal",
+            voiceClonesUsed: (clonesUsed + 1)
+          };
+
+          // Clone with primary provider first
           if (provider === 'cartesia' && isCartesiaConfigured()) {
             voiceId = await cartesiaCloneVoice(file.path, "My Affirmation Voice");
+            providerVoiceUpdate.cartesiaVoiceId = voiceId;
           } else {
             voiceId = await cloneVoice(file.path, "My Affirmation Voice");
+            providerVoiceUpdate.elevenLabsVoiceId = voiceId;
+          }
+          providerVoiceUpdate.voiceId = voiceId;
+
+          // Clone with secondary provider for A/B comparison (non-blocking)
+          if (provider === 'cartesia' || provider === 'elevenlabs') {
+            try {
+              if (provider === 'cartesia') {
+                // Also clone with ElevenLabs
+                const elVoiceId = await cloneVoice(file.path, "My Affirmation Voice");
+                providerVoiceUpdate.elevenLabsVoiceId = elVoiceId;
+                console.log("[Voice Clone] Also cloned with ElevenLabs for A/B comparison:", elVoiceId);
+              } else if (isCartesiaConfigured()) {
+                // Also clone with Cartesia
+                const cartVoiceId = await cartesiaCloneVoice(file.path, "My Affirmation Voice");
+                providerVoiceUpdate.cartesiaVoiceId = cartVoiceId;
+                console.log("[Voice Clone] Also cloned with Cartesia for A/B comparison:", cartVoiceId);
+              }
+            } catch (secondaryErr: any) {
+              console.warn("[Voice Clone] Secondary provider clone failed (non-critical):", secondaryErr?.message);
+            }
           }
 
-          // PRIVACY: Delete the voice sample file immediately after successful cloning
+          // PRIVACY: Delete the voice sample file immediately after cloning
           fs.unlink(file.path, (err) => {
             if (err) console.error("Failed to delete voice sample file:", err);
             else console.log("Voice sample file deleted for privacy:", file.filename);
@@ -1549,18 +1578,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .where(eq(voiceSamples.id, sample.id))
             .returning();
 
-          // Update user: voiceId, hasVoiceSample, auto-switch to personal voice, and increment clones used
-          const providerVoiceUpdate: Record<string, any> = { 
-            voiceId, 
-            hasVoiceSample: true, 
-            preferredVoiceType: "personal",
-            voiceClonesUsed: (clonesUsed + 1)
-          };
-          if (provider === 'cartesia') {
-            providerVoiceUpdate.cartesiaVoiceId = voiceId;
-          } else {
-            providerVoiceUpdate.elevenLabsVoiceId = voiceId;
-          }
+          // Update user with all voice IDs
           await db
             .update(users)
             .set(providerVoiceUpdate)

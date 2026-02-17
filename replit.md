@@ -27,7 +27,7 @@ The application follows a "Serene Empowerment" aesthetic, utilizing Primary Gold
 
 ### Technical Implementations
 - **Personalized Affirmations**: AI generates scripts incorporating Subconscious Language Patterns, organized by 5 Life Pillars (Mind, Body, Spirit, Connection, Achievement), each with distinct Text-to-Speech (TTS) treatments for optimal delivery.
-- **Voice Management**: A hybrid TTS system uses Hume AI for stock voices and ElevenLabs for cloned voices, with OpenAI as a fallback. An automated voice rotation system manages inactive cloned voices. Journey voice consistency ensures a single voice is used across all journey steps.
+- **Voice Management**: A hybrid TTS system uses Hume AI for stock voices, ElevenLabs or Cartesia for cloned voices (A/B test via `ttsProvider` field in users table), and OpenAI as a fallback. An automated voice rotation system manages inactive ElevenLabs cloned voices (not needed for Cartesia). Journey voice consistency ensures a single voice is used across all journey steps. Admin can switch a user's TTS provider via `PATCH /api/admin/users/:userId/tts-provider`.
 - **Global Audio Player**: Ensures consistent audio playback across the application.
 - **RSVP Mode**: Displays word-synced text for visual reinforcement during affirmations.
 - **Breathing Mode**: Offers science-backed techniques with animated visualizations, customizable durations, and ambient soundscapes, including mood-matched recommendations. Controls (Duration/Audio) are grouped in a themed card with technique-colored border and subtle shadow.
@@ -50,12 +50,13 @@ The application follows a "Serene Empowerment" aesthetic, utilizing Primary Gold
 - **OpenAI API**: Affirmation script generation, micro-meditation script generation, daily greeting generation, and TTS fallback.
 - **Hume AI API**: Primary TTS for stock AI voices (with word-level timestamps) and micro-meditations.
 - **ElevenLabs API**: Voice cloning and TTS for personal cloned voices.
+- **Cartesia API**: Alternative voice cloning and TTS provider (A/B test). Uses Sonic-3 model, embedding-based cloning (3-second samples), no slot limits. Module: `server/cartesia-tts.ts`.
 
 ### Database
 - **PostgreSQL**: Primary database for application data.
 
 ### Key npm Packages
-- `expo-av`, `expo-file-system`, `drizzle-orm`, `pg`, `multer`, `elevenlabs`, `hume`, `@tanstack/react-query`, `expo-linear-gradient`.
+- `expo-av`, `expo-file-system`, `drizzle-orm`, `pg`, `multer`, `elevenlabs`, `hume`, `@cartesia/cartesia-js`, `@tanstack/react-query`, `expo-linear-gradient`.
 
 ### Environment Variables
 - `DATABASE_URL`

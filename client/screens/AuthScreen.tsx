@@ -605,7 +605,7 @@ const styles = StyleSheet.create({
     shadowRadius: 20,
   },
   cardContent: {
-    padding: Spacing.md,
+    paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.lg,
     backgroundColor: "rgba(255,255,255,0.1)",
     borderTopWidth: 1,
@@ -613,19 +613,19 @@ const styles = StyleSheet.create({
   },
   welcomeTitle: {
     fontFamily: "Nunito_700Bold",
-    fontSize: 24,
+    fontSize: 22,
     color: authColors.textPrimary,
-    marginBottom: Spacing.xs,
+    marginBottom: 2,
     textAlign: "center",
     letterSpacing: 1,
   },
   welcomeSubtitle: {
     fontFamily: "Nunito_400Regular",
-    fontSize: 14,
+    fontSize: 13,
     color: authColors.textSecondary,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
     textAlign: "center",
-    lineHeight: 20,
+    lineHeight: 18,
     letterSpacing: 0.5,
   },
   errorContainer: {
@@ -648,7 +648,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.lg,
     borderRadius: BorderRadius.lg,
     marginBottom: Spacing.xs,
@@ -668,7 +668,7 @@ const styles = StyleSheet.create({
   divider: {
     flexDirection: "row",
     alignItems: "center",
-    marginVertical: Spacing.sm,
+    marginVertical: 4,
   },
   dividerLine: {
     flex: 1,
@@ -683,10 +683,10 @@ const styles = StyleSheet.create({
   },
   termsText: {
     fontFamily: "Nunito_400Regular",
-    fontSize: 12,
+    fontSize: 11,
     color: authColors.textSecondary,
     textAlign: "center",
-    lineHeight: 18,
+    lineHeight: 16,
   },
   termsLink: {
     color: authColors.gold,
@@ -697,11 +697,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: Spacing.md,
+    marginTop: Spacing.xs,
   },
   securityText: {
     fontFamily: "Nunito_400Regular",
-    fontSize: 12,
+    fontSize: 11,
     color: authColors.textSecondary,
     marginLeft: Spacing.xs,
   },

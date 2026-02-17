@@ -100,8 +100,6 @@ export async function humeTextToSpeech(
     ...(speed !== undefined && { speed }),
   }));
 
-  console.log(`Hume TTS: Sending ${utterances.length} utterances with ${effectivePause}s trailing silence${speed !== undefined ? `, speed: ${speed}` : ''}`);
-
   const response = await fetch("https://api.hume.ai/v0/tts", {
     method: "POST",
     headers: {
@@ -155,8 +153,6 @@ export async function humeTextToSpeech(
 
   wordTimings = fixPerUtteranceTimestamps(wordTimings, effectivePause * 1000);
   wordTimings = sanitizeWordTimings(wordTimings);
-
-  console.log(`Hume TTS: Got ${wordTimings.length} word timings from ${utterances.length} utterances, last timing endMs: ${wordTimings.length > 0 ? wordTimings[wordTimings.length - 1].endMs : 0}ms`);
 
   let estimatedDuration: number;
   if (

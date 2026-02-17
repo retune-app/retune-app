@@ -17,17 +17,15 @@ function checkRateLimit(ip: string): { allowed: boolean; retryAfter?: number } {
   
   if (!attempt || now > attempt.resetTime) {
     loginAttempts.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
-    console.log(`Rate limit: First attempt from ${ip}, count=1`);
     return { allowed: true };
   }
   
   // Increment FIRST, then check
   attempt.count++;
-  console.log(`Rate limit: Attempt from ${ip}, count=${attempt.count}`);
   
   if (attempt.count > MAX_ATTEMPTS) {
     const retryAfter = Math.ceil((attempt.resetTime - now) / 1000);
-    console.log(`Rate limit: BLOCKED - ${ip} exceeded ${MAX_ATTEMPTS} attempts`);
+    console.warn(`Rate limit: BLOCKED - ${ip} exceeded ${MAX_ATTEMPTS} attempts`);
     return { allowed: false, retryAfter };
   }
   
@@ -383,7 +381,6 @@ export async function generateAuthToken(userId: string): Promise<string> {
       .update(authTokens)
       .set({ expiresAt: newExpiry })
       .where(eq(authTokens.token, existingTokens[0].token));
-    console.log("Reusing existing token for user:", userId);
     return existingTokens[0].token;
   }
   
@@ -398,7 +395,6 @@ export async function generateAuthToken(userId: string): Promise<string> {
     expiresAt,
   });
   
-  console.log("Created new token for user:", userId);
   return token;
 }
 
@@ -414,11 +410,9 @@ export async function verifyAuthToken(token: string): Promise<string | null> {
     .limit(1);
 
   if (results.length === 0) {
-    console.log("Token not found or expired:", token.substring(0, 10) + "...");
     return null;
   }
   
-  console.log("Token verified for user:", results[0].userId);
   return results[0].userId;
 }
 

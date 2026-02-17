@@ -388,7 +388,6 @@ export async function textToSpeech(
   
   // Find sentence endings and insert pauses into both audio and timing data
   const sentenceEndIndices = findSentenceEndIndices(wordTimings);
-  console.log(`Found ${sentenceEndIndices.length} sentence endings in ${wordTimings.length} words`);
   
   // Post-process: insert silence between sentences and adjust timings
   let finalAudioBuffer: Buffer = rawAudioBuffer;
@@ -405,8 +404,6 @@ export async function textToSpeech(
       sentenceEndIndices,
       effectivePause * 1000
     );
-    
-    console.log(`Inserted ${sentenceEndIndices.length} pauses of ${effectivePause}s each`);
   }
   
   // Calculate duration from the last word's end time, or estimate if no timing data
@@ -444,7 +441,7 @@ export async function textToSpeech(
  */
 function parseCharacterTimingsToWords(alignment: any): WordTiming[] {
   if (!alignment) {
-    console.log("No alignment data provided");
+    console.warn("No alignment data provided");
     return [];
   }
 
@@ -459,7 +456,7 @@ function parseCharacterTimingsToWords(alignment: any): WordTiming[] {
         : [];
     
     if (chars.length === 0) {
-      console.log("No characters found in alignment");
+      console.warn("No characters found in alignment");
       return [];
     }
     
@@ -650,8 +647,6 @@ export async function generateSoundEffect(
 ): Promise<ArrayBuffer> {
   const apiKey = await getCredentials();
 
-  console.log(`Generating sound effect: "${text}" (${durationSeconds}s)`);
-
   const response = await fetch("https://api.elevenlabs.io/v1/sound-generation", {
     method: "POST",
     headers: {
@@ -672,6 +667,5 @@ export async function generateSoundEffect(
   }
 
   const audioBuffer = await response.arrayBuffer();
-  console.log(`Sound effect generated: ${audioBuffer.byteLength} bytes`);
   return audioBuffer;
 }

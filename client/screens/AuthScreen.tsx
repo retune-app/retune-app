@@ -5,7 +5,6 @@ import {
   Text,
   ActivityIndicator,
   Pressable,
-  Image,
   Platform,
   ImageBackground,
   Dimensions,
@@ -357,18 +356,9 @@ export function AuthScreen() {
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-          {/* Top Section - Logo */}
+          {/* Top Section - Brand */}
           <View style={styles.topSection}>
             <View style={styles.logoContainer}>
-              <View style={styles.logoWrapper}>
-                <Image
-                  source={require("../../assets/images/icon-dark-1024x1024.png")}
-                  style={styles.logoImage}
-                  resizeMode="contain"
-                />
-              </View>
-              
-              {/* Liquid Glass Brand Container */}
               <BlurView
                 intensity={80}
                 tint="light"
@@ -547,33 +537,11 @@ const styles = StyleSheet.create({
   logoContainer: {
     alignItems: "center",
   },
-  logoWrapper: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: "rgba(15,28,63,0.6)",
-    borderWidth: 2,
-    borderColor: "rgba(201,162,39,0.4)",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: Spacing.md,
-    shadowColor: "#C9A227",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  logoImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-  },
   brandGlassContainer: {
     borderRadius: BorderRadius.xl,
     overflow: "hidden",
     borderWidth: 1.5,
     borderColor: "rgba(255,255,255,0.3)",
-    marginTop: Spacing.lg,
     shadowColor: "#C9A227",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,

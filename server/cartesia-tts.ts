@@ -102,16 +102,16 @@ export async function cartesiaTTS(
     voice: {
       mode: "id",
       id: voiceId,
-      experimentalControls: {
-        speed: "fast",
-        emotion: ["positivity:highest", "curiosity:high"],
-      },
     },
     language: "en",
     outputFormat: {
       container: "mp3",
       sampleRate: 44100,
       bitRate: 192000,
+    },
+    generationConfig: {
+      speed: 1.15,
+      emotion: "positivity:highest",
     },
   });
 
@@ -148,16 +148,16 @@ export async function cartesiaSimpleTTS(
     voice: {
       mode: "id",
       id: voiceId,
-      experimentalControls: {
-        speed: "fast",
-        emotion: ["positivity:highest", "curiosity:high"],
-      },
     },
     language: "en",
     outputFormat: {
       container: "mp3",
       sampleRate: 44100,
       bitRate: 192000,
+    },
+    generationConfig: {
+      speed: 1.15,
+      emotion: "positivity:highest",
     },
   });
 

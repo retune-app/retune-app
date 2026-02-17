@@ -104,20 +104,20 @@ export async function cartesiaTTS(
       id: voiceId,
       experimentalControls: {
         speed: "normal",
-        emotion: ["positivity:high", "curiosity:medium"],
+        emotion: ["positivity:highest", "curiosity:high"],
       },
     },
     language: "en",
     outputFormat: {
       container: "wav",
       encoding: "pcm_s16le",
-      sampleRate: 44100,
+      sampleRate: 24000,
     },
   });
 
   const audioBuffer = await streamToBuffer(response);
 
-  const sampleRate = 44100;
+  const sampleRate = 24000;
   const bytesPerSample = 2;
   const channels = 1;
   const headerSize = 44;
@@ -154,14 +154,14 @@ export async function cartesiaSimpleTTS(
       id: voiceId,
       experimentalControls: {
         speed: "normal",
-        emotion: ["positivity:high", "curiosity:medium"],
+        emotion: ["positivity:highest", "curiosity:high"],
       },
     },
     language: "en",
     outputFormat: {
       container: "wav",
       encoding: "pcm_s16le",
-      sampleRate: 44100,
+      sampleRate: 24000,
     },
   });
 

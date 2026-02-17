@@ -33,6 +33,7 @@ import type { Affirmation } from "@shared/schema";
 const AUTO_REPLAY_KEY = "@settings/autoReplay";
 const SHOW_SCRIPT_KEY = "@settings/showScript";
 
+const ACCENT_GOLD = "#C9A227";
 const RSVP_ENABLED = true;
 const RSVP_FONT_SIZE: RSVPFontSize = "XL";
 const RSVP_HIGHLIGHT = true;
@@ -51,7 +52,7 @@ export default function PlayerScreen() {
   const route = useRoute<PlayerRouteProp>();
   const navigation = useNavigation<PlayerNavigationProp>();
   const insets = useSafeAreaInsets();
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const queryClient = useQueryClient();
 
   const { affirmationId, isNew = false, autoPlay = false, journeyContext } = route.params;
@@ -143,19 +144,34 @@ export default function PlayerScreen() {
     opacity: controlsOpacity.value,
   }));
 
+  const bottomControlsOpacity = useSharedValue(1);
+  const [bottomControlsVisible, setBottomControlsVisible] = useState(true);
+  const bottomControlsFadeStyle = useAnimatedStyle(() => ({
+    opacity: bottomControlsOpacity.value,
+  }));
+
   const isLastJourneyStep = journeyContext ? journeyContext.currentStep === journeyContext.totalSteps - 1 : false;
   const controlsVisibleRef = useRef(true);
+
+  const showScriptRef = useRef(showScript);
+  useEffect(() => { showScriptRef.current = showScript; }, [showScript]);
 
   const hideControls = useCallback(() => {
     controlsVisibleRef.current = false;
     setControlsVisible(false);
     controlsOpacity.value = withTiming(0, { duration: 400 });
+    if (!showScriptRef.current) {
+      setBottomControlsVisible(false);
+      bottomControlsOpacity.value = withTiming(0, { duration: 400 });
+    }
   }, []);
 
   const showControls = useCallback(() => {
     controlsVisibleRef.current = true;
     setControlsVisible(true);
     controlsOpacity.value = withTiming(1, { duration: 250 });
+    setBottomControlsVisible(true);
+    bottomControlsOpacity.value = withTiming(1, { duration: 250 });
   }, []);
 
   const startAutoHideTimer = useCallback(() => {
@@ -530,6 +546,15 @@ export default function PlayerScreen() {
     await AsyncStorage.setItem(SHOW_SCRIPT_KEY, String(newValue));
   };
 
+  useEffect(() => {
+    if (showScript) {
+      setBottomControlsVisible(true);
+      bottomControlsOpacity.value = withTiming(1, { duration: 250 });
+    } else {
+      startAutoHideTimer();
+    }
+  }, [showScript]);
+
   const favoriteMutation = useMutation({
     mutationFn: async () => {
       await apiRequest("PATCH", `/api/affirmations/${affirmationId}/favorite`, {
@@ -840,8 +865,19 @@ export default function PlayerScreen() {
           <AmbientSoundMixer compact />
         </View>
 
-        <View style={[styles.settingsCard, { backgroundColor: theme.backgroundSecondary }]}>
-          <View style={styles.settingsCardHeader}>
+        <Animated.View
+          style={[
+            styles.bottomPanel,
+            {
+              backgroundColor: isDark ? theme.backgroundSecondary : theme.cardBackground,
+              borderColor: `${ACCENT_GOLD}30`,
+            },
+            Shadows.small,
+            bottomControlsFadeStyle,
+          ]}
+          pointerEvents={bottomControlsVisible || showScript ? "box-none" : "none"}
+        >
+          <View style={styles.optionRow}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Feather name="mic" size={14} color={theme.primary} />
               <ThemedText type="small" style={{ color: theme.textSecondary, marginLeft: 6, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, fontSize: 11 }}>
@@ -868,22 +904,19 @@ export default function PlayerScreen() {
               style={[
                 styles.voiceOption,
                 {
-                  backgroundColor: affirmation?.voiceType === "personal" ? theme.primary : theme.backgroundTertiary,
+                  backgroundColor: affirmation?.voiceType === "personal" ? theme.primary : 'transparent',
                   opacity: isRegeneratingVoice ? 0.5 : 1,
-                  borderWidth: affirmation?.voiceType === "personal" ? 0 : 1,
-                  borderColor: theme.backgroundTertiary,
+                  borderColor: affirmation?.voiceType === "personal" ? theme.primary : `${ACCENT_GOLD}50`,
                 },
               ]}
               testID="button-voice-personal"
             >
-              <Feather name="user" size={14} color={affirmation?.voiceType === "personal" ? "#FFFFFF" : theme.text} />
+              <Feather name="user" size={13} color={affirmation?.voiceType === "personal" ? "#FFFFFF" : theme.text} />
               <ThemedText
-                type="small"
-                style={{
-                  color: affirmation?.voiceType === "personal" ? "#FFFFFF" : theme.text,
-                  marginLeft: 6,
-                  fontWeight: affirmation?.voiceType === "personal" ? '700' : '500',
-                }}
+                style={[
+                  styles.optionPillText,
+                  { color: affirmation?.voiceType === "personal" ? "#FFFFFF" : theme.text, marginLeft: 5 },
+                ]}
               >
                 Inner Voice
               </ThemedText>
@@ -897,30 +930,26 @@ export default function PlayerScreen() {
               style={[
                 styles.voiceOption,
                 {
-                  backgroundColor: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "female" ? theme.primary : theme.backgroundTertiary,
+                  backgroundColor: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "female" ? theme.primary : 'transparent',
                   opacity: isRegeneratingVoice ? 0.5 : 1,
-                  borderWidth: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "female" ? 0 : 1,
-                  borderColor: theme.backgroundTertiary,
+                  borderColor: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "female" ? theme.primary : `${ACCENT_GOLD}50`,
                 },
               ]}
               testID="button-voice-ai-female"
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                <Feather
-                  name="user"
-                  size={13}
-                  color={affirmation?.voiceType === "ai" && affirmation?.voiceGender === "female" ? "#FFFFFF" : theme.text}
-                />
-                <ThemedText
-                  type="small"
-                  style={{
-                    color: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "female" ? "#FFFFFF" : theme.text,
-                    fontWeight: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "female" ? '700' : '500',
-                  }}
-                >
-                  {femaleVoiceName}
-                </ThemedText>
-              </View>
+              <Feather
+                name="user"
+                size={13}
+                color={affirmation?.voiceType === "ai" && affirmation?.voiceGender === "female" ? "#FFFFFF" : theme.text}
+              />
+              <ThemedText
+                style={[
+                  styles.optionPillText,
+                  { color: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "female" ? "#FFFFFF" : theme.text, marginLeft: 5 },
+                ]}
+              >
+                {femaleVoiceName}
+              </ThemedText>
             </Pressable>
             <Pressable
               onPress={() => handleVoiceSwitch("ai", "male")}
@@ -928,36 +957,29 @@ export default function PlayerScreen() {
               style={[
                 styles.voiceOption,
                 {
-                  backgroundColor: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "male" ? theme.primary : theme.backgroundTertiary,
+                  backgroundColor: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "male" ? theme.primary : 'transparent',
                   opacity: isRegeneratingVoice ? 0.5 : 1,
-                  borderWidth: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "male" ? 0 : 1,
-                  borderColor: theme.backgroundTertiary,
+                  borderColor: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "male" ? theme.primary : `${ACCENT_GOLD}50`,
                 },
               ]}
               testID="button-voice-ai-male"
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                <Feather
-                  name="user"
-                  size={13}
-                  color={affirmation?.voiceType === "ai" && affirmation?.voiceGender === "male" ? "#FFFFFF" : theme.text}
-                />
-                <ThemedText
-                  type="small"
-                  style={{
-                    color: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "male" ? "#FFFFFF" : theme.text,
-                    fontWeight: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "male" ? '700' : '500',
-                  }}
-                >
-                  {maleVoiceName}
-                </ThemedText>
-              </View>
+              <Feather
+                name="user"
+                size={13}
+                color={affirmation?.voiceType === "ai" && affirmation?.voiceGender === "male" ? "#FFFFFF" : theme.text}
+              />
+              <ThemedText
+                style={[
+                  styles.optionPillText,
+                  { color: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "male" ? "#FFFFFF" : theme.text, marginLeft: 5 },
+                ]}
+              >
+                {maleVoiceName}
+              </ThemedText>
             </Pressable>
           </View>
-        </View>
-
-        <View style={[styles.settingsCard, { backgroundColor: theme.backgroundSecondary }]}>
-          <View style={styles.settingsCardRow}>
+          <View style={styles.optionRow}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Feather name="file-text" size={14} color={theme.primary} />
               <ThemedText type="small" style={{ color: theme.textSecondary, marginLeft: 6, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, fontSize: 11 }}>
@@ -983,7 +1005,7 @@ export default function PlayerScreen() {
               />
             </Pressable>
           </View>
-        </View>
+        </Animated.View>
 
         {showScript && affirmation?.script ? (
           <View style={[styles.scriptPreview, { backgroundColor: theme.backgroundSecondary }]}>
@@ -1233,22 +1255,20 @@ const styles = StyleSheet.create({
     width: "100%",
     marginBottom: Spacing.md,
   },
-  settingsCard: {
+  bottomPanel: {
     width: "100%",
-    padding: Spacing.lg,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm + 2,
     borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    gap: Spacing.sm,
     marginBottom: Spacing.sm,
   },
-  settingsCardHeader: {
+  optionRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: Spacing.md,
-  },
-  settingsCardRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    gap: Spacing.sm,
   },
   voiceOptions: {
     flexDirection: "row",
@@ -1259,9 +1279,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 10,
-    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.sm + 2,
     borderRadius: BorderRadius.full,
+    borderWidth: 1.5,
+  },
+  optionPillText: {
+    fontWeight: "600" as const,
+    fontSize: 13,
+    letterSpacing: 0.3,
   },
   toggleTrack: {
     width: 48,

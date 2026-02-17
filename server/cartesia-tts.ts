@@ -211,20 +211,52 @@ function estimateWordTimings(text: string, totalDurationMs: number): WordTiming[
   const words = text.split(/\s+/).filter(w => w.length > 0);
   if (words.length === 0) return [];
 
-  const totalChars = words.reduce((sum, w) => sum + w.length, 0);
-  if (totalChars === 0) return [];
+  const SENTENCE_PAUSE_MS_RATIO = 0.03;
+  const COMMA_PAUSE_MS_RATIO = 0.015;
+
+  const sentenceEnders = /[.!?…]+$/;
+  const clauseBreaks = /[,;:—–]+$/;
+
+  let sentenceBreaks = 0;
+  let clauseBreakCount = 0;
+  for (const word of words) {
+    if (sentenceEnders.test(word)) sentenceBreaks++;
+    else if (clauseBreaks.test(word)) clauseBreakCount++;
+  }
+
+  const pauseTimeMs = totalDurationMs * (sentenceBreaks * SENTENCE_PAUSE_MS_RATIO + clauseBreakCount * COMMA_PAUSE_MS_RATIO);
+  const speechTimeMs = totalDurationMs - pauseTimeMs;
+
+  const totalWeight = words.reduce((sum, w) => sum + Math.max(w.replace(/[^a-zA-Z']/g, "").length, 1), 0);
 
   const timings: WordTiming[] = [];
   let currentMs = 0;
 
   for (const word of words) {
-    const wordDuration = (word.length / totalChars) * totalDurationMs;
+    const cleanLen = Math.max(word.replace(/[^a-zA-Z']/g, "").length, 1);
+    const wordDuration = (cleanLen / totalWeight) * speechTimeMs;
+
+    let pauseAfter = 0;
+    if (sentenceEnders.test(word) && sentenceBreaks > 0) {
+      pauseAfter = (totalDurationMs * SENTENCE_PAUSE_MS_RATIO);
+    } else if (clauseBreaks.test(word) && clauseBreakCount > 0) {
+      pauseAfter = (totalDurationMs * COMMA_PAUSE_MS_RATIO);
+    }
+
     timings.push({
       word,
       startMs: Math.round(currentMs),
       endMs: Math.round(currentMs + wordDuration),
     });
-    currentMs += wordDuration;
+    currentMs += wordDuration + pauseAfter;
+  }
+
+  if (timings.length > 0 && currentMs > 0) {
+    const scale = totalDurationMs / currentMs;
+    for (const t of timings) {
+      t.startMs = Math.round(t.startMs * scale);
+      t.endMs = Math.round(t.endMs * scale);
+    }
   }
 
   return timings;

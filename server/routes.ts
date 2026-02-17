@@ -743,22 +743,12 @@ function resolvePersonalVoiceId(
   elevenLabsVoiceId: string | null | undefined,
   cartesiaVoiceId: string | null | undefined
 ): string | undefined {
-  const provider = ttsProvider || "elevenlabs";
-  if (provider === "cartesia" && cartesiaVoiceId) return cartesiaVoiceId;
-  if (provider === "elevenlabs" && elevenLabsVoiceId) return elevenLabsVoiceId;
+  if (elevenLabsVoiceId) return elevenLabsVoiceId;
   return voiceId || undefined;
 }
 
 async function generateAudioSimple(text: string, voiceId: string, isPersonalVoice: boolean = false, ttsProvider?: string): Promise<ArrayBuffer> {
   if (isPersonalVoice) {
-    if (ttsProvider === "cartesia") {
-      try {
-        return await cartesiaSimpleTTS(text, voiceId);
-      } catch (error: any) {
-        console.error("[Cartesia] Simple TTS failed for personal voice:", error?.message || error);
-        throw new Error("PERSONAL_VOICE_FAILED: Could not generate audio with your Inner Voice. Please try again or re-record your voice.");
-      }
-    }
     try {
       const client = await getElevenLabsClient();
       const audio = await client.textToSpeech.convert(voiceId, {
@@ -824,15 +814,6 @@ async function generateAudio(
   ttsProvider?: string
 ): Promise<{ audio: ArrayBuffer; duration: number; wordTimings: WordTiming[] }> {
   if (isPersonalVoice) {
-    if (ttsProvider === "cartesia") {
-      try {
-        const result = await cartesiaTTS(script, voiceId!, moodConfig ? getCartesiaEmotionConfig(moodConfig) : undefined);
-        return result;
-      } catch (cartesiaError: any) {
-        console.error("[Cartesia] TTS failed for personal voice:", cartesiaError?.message || cartesiaError);
-        throw new Error("PERSONAL_VOICE_FAILED: Could not generate audio with your Inner Voice. Please try again or re-record your voice.");
-      }
-    }
     try {
       const result = await elevenLabsTTS(script, voiceId, moodConfig ? {
         stability: moodConfig.elevenLabsStability,
@@ -1546,9 +1527,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           })
           .returning();
 
-        // Clone voice with both providers for A/B comparison
         try {
-          const provider = user.ttsProvider || 'elevenlabs';
           let voiceId: string;
           const providerVoiceUpdate: Record<string, any> = { 
             hasVoiceSample: true, 
@@ -1556,46 +1535,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             voiceClonesUsed: (clonesUsed + 1)
           };
 
-          // Clone with primary provider first
-          if (provider === 'cartesia' && isCartesiaConfigured()) {
-            voiceId = await cartesiaCloneVoice(file.path, "My Affirmation Voice");
-            providerVoiceUpdate.cartesiaVoiceId = voiceId;
-          } else {
-            voiceId = await cloneVoice(file.path, "My Affirmation Voice");
-            providerVoiceUpdate.elevenLabsVoiceId = voiceId;
-          }
+          voiceId = await cloneVoice(file.path, "My Affirmation Voice");
+          providerVoiceUpdate.elevenLabsVoiceId = voiceId;
           providerVoiceUpdate.voiceId = voiceId;
-
-          // Clone with secondary provider for A/B comparison (non-blocking)
-          if (provider === 'cartesia' || provider === 'elevenlabs') {
-            try {
-              const fileExists = fs.existsSync(file.path);
-              const fileSize = fileExists ? fs.statSync(file.path).size : 0;
-              console.log(`[Voice Clone] Secondary clone attempt - file exists: ${fileExists}, size: ${fileSize} bytes`);
-
-              if (!fileExists) {
-                console.warn("[Voice Clone] File was deleted before secondary clone could run");
-              } else if (provider === 'cartesia') {
-                console.log("[Voice Clone] Starting ElevenLabs secondary clone...");
-                const elVoiceId = await cloneVoice(file.path, "My Affirmation Voice");
-                providerVoiceUpdate.elevenLabsVoiceId = elVoiceId;
-                console.log("[Voice Clone] ElevenLabs secondary clone succeeded:", elVoiceId);
-              } else if (isCartesiaConfigured()) {
-                console.log("[Voice Clone] Starting Cartesia secondary clone...");
-                const cartVoiceId = await cartesiaCloneVoice(file.path, "My Affirmation Voice");
-                providerVoiceUpdate.cartesiaVoiceId = cartVoiceId;
-                console.log("[Voice Clone] Cartesia secondary clone succeeded:", cartVoiceId);
-              }
-            } catch (secondaryErr: any) {
-              console.error("[Voice Clone] Secondary provider clone FAILED:", {
-                message: secondaryErr?.message,
-                statusCode: secondaryErr?.statusCode,
-                elevenLabsDetail: secondaryErr?.elevenLabsDetail,
-                cartesiaDetail: secondaryErr?.cartesiaDetail,
-                stack: secondaryErr?.stack?.split('\n').slice(0, 3).join('\n'),
-              });
-            }
-          }
 
           // PRIVACY: Delete the voice sample file immediately after cloning
           fs.unlink(file.path, (err) => {
@@ -1632,12 +1574,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .set({ status: "failed", audioUrl: null })
             .where(eq(voiceSamples.id, sample.id));
 
-          const provider = user.ttsProvider || 'elevenlabs';
-          const errorDetail = cloneError?.elevenLabsDetail || cloneError?.cartesiaDetail || cloneError?.message || "";
+          const errorDetail = cloneError?.elevenLabsDetail || cloneError?.message || "";
           const statusCode = cloneError?.statusCode || 500;
           let userMessage = "Voice cloning failed. Please try again.";
 
-          if (provider === 'elevenlabs' && (errorDetail.toLowerCase().includes("maximum") || errorDetail.toLowerCase().includes("custom voices") || errorDetail.toLowerCase().includes("voice limit"))) {
+          if (errorDetail.toLowerCase().includes("maximum") || errorDetail.toLowerCase().includes("custom voices") || errorDetail.toLowerCase().includes("voice limit")) {
             console.warn("[Voice Slots] ElevenLabs quota hit. Attempting queue-based slot recovery...");
             
             try {
@@ -1679,7 +1620,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           } else if (statusCode === 429) {
             userMessage = "Voice cloning service is busy. Please wait a few minutes and try again.";
           } else if (errorDetail.toLowerCase().includes("too short") || errorDetail.toLowerCase().includes("duration")) {
-            const minDuration = provider === 'cartesia' ? '3' : '20';
+            const minDuration = '20';
             userMessage = `Your recording was too short. Please record at least ${minDuration} seconds of clear speech.`;
           } else if (errorDetail.toLowerCase().includes("audio") || errorDetail.toLowerCase().includes("format") || errorDetail.toLowerCase().includes("processed")) {
             userMessage = "There was a problem with the audio format. Please try recording again.";
@@ -1808,7 +1749,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       let audioBuffer: ArrayBuffer;
       try {
-        audioBuffer = await generateAudioSimple(PREVIEW_PHRASE, resolvedVoiceId, true, user.ttsProvider || undefined);
+        audioBuffer = await generateAudioSimple(PREVIEW_PHRASE, resolvedVoiceId, true);
       } catch (ttsError: any) {
         const msg = ttsError?.message || "";
         if (msg.includes("PERSONAL_VOICE_FAILED") || msg.includes("voice_not_found") || msg.includes("404")) {
@@ -1836,72 +1777,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Compare TTS providers - generates audio with both ElevenLabs and Cartesia for A/B testing
   app.post("/api/tts/compare", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { text, provider } = req.body;
-      if (!text || typeof text !== "string" || text.length > 5000) {
-        return res.status(400).json({ error: "Text is required (max 5000 characters)" });
-      }
-
-      if (provider && !["elevenlabs", "cartesia"].includes(provider)) {
-        return res.status(400).json({ error: "Provider must be 'elevenlabs' or 'cartesia'" });
-      }
-
-      const [user] = await db
-        .select({
-          elevenLabsVoiceId: users.elevenLabsVoiceId,
-          cartesiaVoiceId: users.cartesiaVoiceId,
-          hasVoiceSample: users.hasVoiceSample,
-        })
-        .from(users)
-        .where(eq(users.id, req.userId!));
-
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
-      }
-
-      const results: Record<string, any> = {};
-
-      if (!provider || provider === "elevenlabs") {
-        if (user.elevenLabsVoiceId) {
-          try {
-            const audio = await generateAudioSimple(text, user.elevenLabsVoiceId, true, "elevenlabs");
-            results.elevenlabs = {
-              available: true,
-              audio: Buffer.from(audio).toString("base64"),
-            };
-          } catch (err: any) {
-            console.error("[Compare] ElevenLabs TTS failed:", err?.message);
-            results.elevenlabs = { available: false, error: "ElevenLabs voice unavailable or expired" };
-          }
-        } else {
-          results.elevenlabs = { available: false, error: "No ElevenLabs voice clone found. Please clone your voice with ElevenLabs first." };
-        }
-      }
-
-      if (!provider || provider === "cartesia") {
-        if (user.cartesiaVoiceId && isCartesiaConfigured()) {
-          try {
-            const audio = await generateAudioSimple(text, user.cartesiaVoiceId, true, "cartesia");
-            results.cartesia = {
-              available: true,
-              audio: Buffer.from(audio).toString("base64"),
-            };
-          } catch (err: any) {
-            console.error("[Compare] Cartesia TTS failed:", err?.message);
-            results.cartesia = { available: false, error: "Cartesia voice unavailable" };
-          }
-        } else {
-          results.cartesia = { available: false, error: "No Cartesia voice clone found. Please clone your voice with Cartesia first." };
-        }
-      }
-
-      res.json(results);
-    } catch (error) {
-      console.error("Error comparing TTS providers:", error);
-      res.status(500).json({ error: "Failed to compare TTS providers" });
-    }
+    return res.status(410).json({ error: "TTS comparison is temporarily disabled" });
   });
 
   // Get user's voice preferences
@@ -1932,9 +1809,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         preferredMaleVoiceId: user.preferredMaleVoiceId || "hume_orion",
         preferredFemaleVoiceId: user.preferredFemaleVoiceId || "hume_lotus",
         hasPersonalVoice: !!user.hasVoiceSample && !!(user.elevenLabsVoiceId || user.cartesiaVoiceId || user.voiceId),
-        ttsProvider: user.ttsProvider || "elevenlabs",
+        ttsProvider: "elevenlabs",
         hasElevenLabsVoice: !!user.elevenLabsVoiceId,
-        hasCartesiaVoice: !!user.cartesiaVoiceId,
+        hasCartesiaVoice: false,
       });
     } catch (error) {
       console.error("Error fetching voice preferences:", error);
@@ -1955,10 +1832,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (preferredAiGender && ["male", "female"].includes(preferredAiGender)) {
         updates.preferredAiGender = preferredAiGender;
-      }
-
-      if (ttsProvider && ["elevenlabs", "cartesia"].includes(ttsProvider)) {
-        updates.ttsProvider = ttsProvider;
       }
 
       // Validate and set male voice ID
@@ -2055,7 +1928,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const isPersonalVoice = voiceType === "personal";
-      const audioResult = await generateAudio(affirmation.script, voiceIdToUse, isPersonalVoice, getPillarVoiceConfig(affirmation.pillar), userTtsInfo?.ttsProvider || undefined);
+      const audioResult = await generateAudio(affirmation.script, voiceIdToUse, isPersonalVoice, getPillarVoiceConfig(affirmation.pillar));
 
       if (isPersonalVoice) {
         await db
@@ -3635,7 +3508,7 @@ Rules for tone:
 
       try {
         if (usePersonalVoice && voiceId) {
-          const result = await generateAudio(script, voiceId, true, moodConfig, userTtsSettings?.ttsProvider || undefined);
+          const result = await generateAudio(script, voiceId, true, moodConfig);
           audioBuffer = result.audio;
           wordTimings = result.wordTimings;
           audioDuration = result.duration;
@@ -3800,7 +3673,7 @@ Rules for tone:
 
       try {
         if (usePersonalVoice && voiceId) {
-          const result = await generateAudio(script, voiceId, true, moodConfig, userTtsSettings2?.ttsProvider || undefined);
+          const result = await generateAudio(script, voiceId, true, moodConfig);
           audioBuffer = result.audio;
           wordTimings = result.wordTimings;
           audioDuration = result.duration;
@@ -5261,33 +5134,7 @@ Return ONLY the 8 tips, one per line. No numbering, no titles, no extra text.`;
   }, 24 * 60 * 60 * 1000);
 
   app.patch("/api/admin/users/:userId/tts-provider", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const [adminUser] = await db.select({ role: users.role }).from(users).where(eq(users.id, req.userId!)).limit(1);
-      if (!adminUser || adminUser.role !== "admin") {
-        return res.status(403).json({ error: "Admin access required" });
-      }
-
-      const { userId } = req.params;
-      const { provider } = req.body;
-      if (!provider || !["elevenlabs", "cartesia"].includes(provider)) {
-        return res.status(400).json({ error: "Invalid provider. Must be 'elevenlabs' or 'cartesia'" });
-      }
-
-      if (provider === "cartesia" && !isCartesiaConfigured()) {
-        return res.status(400).json({ error: "Cartesia API key is not configured" });
-      }
-
-      const [updated] = await db.update(users).set({ ttsProvider: provider } as any).where(eq(users.id, userId as string)).returning();
-      if (!updated) {
-        return res.status(404).json({ error: "User not found" });
-      }
-
-      console.log(`[Admin] TTS provider for user ${userId} changed to ${provider}`);
-      res.json({ success: true, userId: updated.id, ttsProvider: updated.ttsProvider });
-    } catch (error) {
-      console.error("Error updating TTS provider:", error);
-      res.status(500).json({ error: "Failed to update TTS provider" });
-    }
+    return res.status(410).json({ error: "TTS provider switching is temporarily disabled. All users use ElevenLabs." });
   });
 
   const httpServer = createServer(app);

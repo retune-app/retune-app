@@ -40,9 +40,7 @@ interface VoicePreferences {
   preferredMaleVoiceId: string;
   preferredFemaleVoiceId: string;
   hasPersonalVoice: boolean;
-  ttsProvider: string;
   hasElevenLabsVoice: boolean;
-  hasCartesiaVoice: boolean;
 }
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -85,7 +83,6 @@ export default function VoiceSettingsScreen() {
       preferredAiGender?: VoiceGender;
       preferredMaleVoiceId?: string;
       preferredFemaleVoiceId?: string;
-      ttsProvider?: string;
     }) => {
       await apiRequest("PUT", "/api/voice-preferences", updates);
     },
@@ -425,100 +422,6 @@ export default function VoiceSettingsScreen() {
         </View>
       </View>
 
-      {voicePreferences?.hasPersonalVoice && voicePreferences.preferredVoiceType === "personal" ? (
-        <View style={styles.section}>
-          <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-            VOICE PROVIDER (BETA)
-          </ThemedText>
-          <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
-            <View style={styles.toggleContainer}>
-              <Pressable
-                onPress={() => {
-                  if (voicePreferences.hasElevenLabsVoice) {
-                    updateVoicePreferences.mutate({ ttsProvider: "elevenlabs" });
-                  }
-                }}
-                style={[
-                  styles.providerButton,
-                  {
-                    backgroundColor: voicePreferences.ttsProvider === "elevenlabs"
-                      ? ACCENT_GOLD
-                      : theme.backgroundSecondary,
-                    borderColor: voicePreferences.hasElevenLabsVoice ? ACCENT_GOLD : theme.border,
-                    opacity: voicePreferences.hasElevenLabsVoice ? 1 : 0.5,
-                  },
-                ]}
-                disabled={!voicePreferences.hasElevenLabsVoice}
-                testID="button-provider-a"
-              >
-                <View style={styles.providerButtonContent}>
-                  <Text style={[
-                    styles.providerLabel,
-                    { color: voicePreferences.ttsProvider === "elevenlabs" ? "#FFFFFF" : theme.text }
-                  ]}>
-                    Type A
-                  </Text>
-                  <Text style={[
-                    styles.providerSubLabel,
-                    { color: voicePreferences.ttsProvider === "elevenlabs" ? "rgba(255,255,255,0.7)" : theme.textSecondary }
-                  ]}>
-                    {voicePreferences.hasElevenLabsVoice ? "Available" : "No clone"}
-                  </Text>
-                </View>
-                {voicePreferences.ttsProvider === "elevenlabs" ? (
-                  <View style={[styles.providerCheck, { backgroundColor: "rgba(255,255,255,0.3)" }]}>
-                    <Feather name="check" size={12} color="#FFFFFF" />
-                  </View>
-                ) : null}
-              </Pressable>
-              <Pressable
-                onPress={() => {
-                  if (voicePreferences.hasCartesiaVoice) {
-                    updateVoicePreferences.mutate({ ttsProvider: "cartesia" });
-                  }
-                }}
-                style={[
-                  styles.providerButton,
-                  {
-                    backgroundColor: voicePreferences.ttsProvider === "cartesia"
-                      ? ACCENT_GOLD
-                      : theme.backgroundSecondary,
-                    borderColor: voicePreferences.hasCartesiaVoice ? ACCENT_GOLD : theme.border,
-                    opacity: voicePreferences.hasCartesiaVoice ? 1 : 0.5,
-                  },
-                ]}
-                disabled={!voicePreferences.hasCartesiaVoice}
-                testID="button-provider-b"
-              >
-                <View style={styles.providerButtonContent}>
-                  <Text style={[
-                    styles.providerLabel,
-                    { color: voicePreferences.ttsProvider === "cartesia" ? "#FFFFFF" : theme.text }
-                  ]}>
-                    Type B
-                  </Text>
-                  <Text style={[
-                    styles.providerSubLabel,
-                    { color: voicePreferences.ttsProvider === "cartesia" ? "rgba(255,255,255,0.7)" : theme.textSecondary }
-                  ]}>
-                    {voicePreferences.hasCartesiaVoice ? "Available" : "No clone"}
-                  </Text>
-                </View>
-                {voicePreferences.ttsProvider === "cartesia" ? (
-                  <View style={[styles.providerCheck, { backgroundColor: "rgba(255,255,255,0.3)" }]}>
-                    <Feather name="check" size={12} color="#FFFFFF" />
-                  </View>
-                ) : null}
-              </Pressable>
-            </View>
-            <ThemedText type="caption" style={[styles.providerHint, { color: theme.textSecondary }]}>
-              Switch between voice engines to compare quality. Your affirmations will use the selected type.
-            </ThemedText>
-          </View>
-        </View>
-      ) : null}
-
-
       <View style={styles.section}>
         <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
           AI VOICE OPTIONS
@@ -845,40 +748,6 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
     fontStyle: "italic",
     textAlign: "center",
-  },
-  providerButton: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.md,
-    borderRadius: BorderRadius.full,
-    borderWidth: 1,
-    gap: Spacing.sm,
-  },
-  providerButtonContent: {
-    alignItems: "center",
-  },
-  providerLabel: {
-    fontSize: 15,
-    fontWeight: "700",
-  },
-  providerSubLabel: {
-    fontSize: 11,
-    marginTop: 2,
-  },
-  providerCheck: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  providerHint: {
-    marginTop: Spacing.md,
-    textAlign: "center",
-    fontStyle: "italic",
   },
   usageLimitItem: {
     paddingVertical: Spacing.md,

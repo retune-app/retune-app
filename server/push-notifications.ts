@@ -1,4 +1,5 @@
-import Expo, { ExpoPushMessage, ExpoPushTicket } from "expo-server-sdk";
+import ExpoModule, { ExpoPushMessage, ExpoPushTicket } from "expo-server-sdk";
+const Expo = (ExpoModule as any).default || ExpoModule;
 import { db } from "./db";
 import { pushTokens, users } from "@shared/schema";
 import { eq, and, isNotNull, sql } from "drizzle-orm";

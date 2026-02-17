@@ -109,20 +109,16 @@ export async function cartesiaTTS(
     },
     language: "en",
     outputFormat: {
-      container: "wav",
-      encoding: "pcm_s16le",
-      sampleRate: 24000,
+      container: "mp3",
+      sampleRate: 44100,
+      bitRate: 128000,
     },
   });
 
   const audioBuffer = await streamToBuffer(response);
 
-  const sampleRate = 24000;
-  const bytesPerSample = 2;
-  const channels = 1;
-  const headerSize = 44;
-  const dataSize = Math.max(0, audioBuffer.length - headerSize);
-  const durationSeconds = dataSize / (sampleRate * bytesPerSample * channels);
+  const bitRate = 128000;
+  const durationSeconds = (audioBuffer.length * 8) / bitRate;
   const estimatedDuration = Math.max(1, Math.ceil(durationSeconds));
 
   const wordTimings = estimateWordTimings(text, durationSeconds * 1000);
@@ -159,9 +155,9 @@ export async function cartesiaSimpleTTS(
     },
     language: "en",
     outputFormat: {
-      container: "wav",
-      encoding: "pcm_s16le",
-      sampleRate: 24000,
+      container: "mp3",
+      sampleRate: 44100,
+      bitRate: 128000,
     },
   });
 

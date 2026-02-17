@@ -176,7 +176,7 @@ export default function PlayerScreen() {
 
   const startAutoHideTimer = useCallback(() => {
     if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
-    controlsTimerRef.current = setTimeout(hideControls, 3000);
+    controlsTimerRef.current = setTimeout(hideControls, 5000);
   }, [hideControls]);
 
   useEffect(() => {

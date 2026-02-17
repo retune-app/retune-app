@@ -1549,19 +1549,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Clone with secondary provider for A/B comparison (non-blocking)
           if (provider === 'cartesia' || provider === 'elevenlabs') {
             try {
-              if (provider === 'cartesia') {
-                // Also clone with ElevenLabs
+              const fileExists = fs.existsSync(file.path);
+              const fileSize = fileExists ? fs.statSync(file.path).size : 0;
+              console.log(`[Voice Clone] Secondary clone attempt - file exists: ${fileExists}, size: ${fileSize} bytes`);
+
+              if (!fileExists) {
+                console.warn("[Voice Clone] File was deleted before secondary clone could run");
+              } else if (provider === 'cartesia') {
+                console.log("[Voice Clone] Starting ElevenLabs secondary clone...");
                 const elVoiceId = await cloneVoice(file.path, "My Affirmation Voice");
                 providerVoiceUpdate.elevenLabsVoiceId = elVoiceId;
-                console.log("[Voice Clone] Also cloned with ElevenLabs for A/B comparison:", elVoiceId);
+                console.log("[Voice Clone] ElevenLabs secondary clone succeeded:", elVoiceId);
               } else if (isCartesiaConfigured()) {
-                // Also clone with Cartesia
+                console.log("[Voice Clone] Starting Cartesia secondary clone...");
                 const cartVoiceId = await cartesiaCloneVoice(file.path, "My Affirmation Voice");
                 providerVoiceUpdate.cartesiaVoiceId = cartVoiceId;
-                console.log("[Voice Clone] Also cloned with Cartesia for A/B comparison:", cartVoiceId);
+                console.log("[Voice Clone] Cartesia secondary clone succeeded:", cartVoiceId);
               }
             } catch (secondaryErr: any) {
-              console.warn("[Voice Clone] Secondary provider clone failed (non-critical):", secondaryErr?.message);
+              console.error("[Voice Clone] Secondary provider clone FAILED:", {
+                message: secondaryErr?.message,
+                statusCode: secondaryErr?.statusCode,
+                elevenLabsDetail: secondaryErr?.elevenLabsDetail,
+                cartesiaDetail: secondaryErr?.cartesiaDetail,
+                stack: secondaryErr?.stack?.split('\n').slice(0, 3).join('\n'),
+              });
             }
           }
 

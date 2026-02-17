@@ -737,6 +737,18 @@ async function generateAudioSimpleOpenAI(
   return await response.arrayBuffer();
 }
 
+function resolvePersonalVoiceId(
+  ttsProvider: string | null | undefined,
+  voiceId: string | null | undefined,
+  elevenLabsVoiceId: string | null | undefined,
+  cartesiaVoiceId: string | null | undefined
+): string | undefined {
+  const provider = ttsProvider || "elevenlabs";
+  if (provider === "cartesia" && cartesiaVoiceId) return cartesiaVoiceId;
+  if (provider === "elevenlabs" && elevenLabsVoiceId) return elevenLabsVoiceId;
+  return voiceId || undefined;
+}
+
 async function generateAudioSimple(text: string, voiceId: string, isPersonalVoice: boolean = false, ttsProvider?: string): Promise<ArrayBuffer> {
   if (isPersonalVoice) {
     if (ttsProvider === "cartesia") {
@@ -1124,6 +1136,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           preferredMaleVoiceId: users.preferredMaleVoiceId,
           preferredFemaleVoiceId: users.preferredFemaleVoiceId,
           ttsProvider: users.ttsProvider,
+          elevenLabsVoiceId: users.elevenLabsVoiceId,
+          cartesiaVoiceId: users.cartesiaVoiceId,
         })
         .from(users)
         .where(eq(users.id, req.userId!));
@@ -1133,8 +1147,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let usedPersonalVoice = false;
       let usedGender = userWithPrefs?.preferredAiGender || "female";
 
-      if (!forceAiVoice && userWithPrefs?.preferredVoiceType === "personal" && userWithPrefs?.voiceId && userWithPrefs?.hasVoiceSample) {
-        voiceIdToUse = userWithPrefs.voiceId;
+      if (!forceAiVoice && userWithPrefs?.preferredVoiceType === "personal" && userWithPrefs?.hasVoiceSample) {
+        voiceIdToUse = resolvePersonalVoiceId(userWithPrefs.ttsProvider, userWithPrefs.voiceId, userWithPrefs.elevenLabsVoiceId, userWithPrefs.cartesiaVoiceId);
         usedPersonalVoice = true;
       } else {
         if (usedGender === "male") {
@@ -1777,6 +1791,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           hasVoiceSample: users.hasVoiceSample,
           name: users.name,
           ttsProvider: users.ttsProvider,
+          elevenLabsVoiceId: users.elevenLabsVoiceId,
+          cartesiaVoiceId: users.cartesiaVoiceId,
         })
         .from(users)
         .where(eq(users.id, req.userId!));
@@ -1785,13 +1801,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "User not found" });
       }
 
-      if (!user.voiceId || !user.hasVoiceSample) {
+      const resolvedVoiceId = resolvePersonalVoiceId(user.ttsProvider, user.voiceId, user.elevenLabsVoiceId, user.cartesiaVoiceId);
+      if (!resolvedVoiceId || !user.hasVoiceSample) {
         return res.status(400).json({ error: "No Inner Voice recorded. Please record your voice first." });
       }
 
       let audioBuffer: ArrayBuffer;
       try {
-        audioBuffer = await generateAudioSimple(PREVIEW_PHRASE, user.voiceId, true, user.ttsProvider || undefined);
+        audioBuffer = await generateAudioSimple(PREVIEW_PHRASE, resolvedVoiceId, true, user.ttsProvider || undefined);
       } catch (ttsError: any) {
         const msg = ttsError?.message || "";
         if (msg.includes("PERSONAL_VOICE_FAILED") || msg.includes("voice_not_found") || msg.includes("404")) {
@@ -1914,7 +1931,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         preferredAiGender: user.preferredAiGender || "female",
         preferredMaleVoiceId: user.preferredMaleVoiceId || "hume_orion",
         preferredFemaleVoiceId: user.preferredFemaleVoiceId || "hume_lotus",
-        hasPersonalVoice: !!user.hasVoiceSample && !!user.voiceId,
+        hasPersonalVoice: !!user.hasVoiceSample && !!(user.elevenLabsVoiceId || user.cartesiaVoiceId || user.voiceId),
         ttsProvider: user.ttsProvider || "elevenlabs",
         hasElevenLabsVoice: !!user.elevenLabsVoiceId,
         hasCartesiaVoice: !!user.cartesiaVoiceId,
@@ -1928,7 +1945,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update user's voice preferences
   app.put("/api/voice-preferences", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { preferredVoiceType, preferredAiGender, preferredMaleVoiceId, preferredFemaleVoiceId } = req.body;
+      const { preferredVoiceType, preferredAiGender, preferredMaleVoiceId, preferredFemaleVoiceId, ttsProvider } = req.body;
 
       const updates: Record<string, string> = {};
       
@@ -1938,6 +1955,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (preferredAiGender && ["male", "female"].includes(preferredAiGender)) {
         updates.preferredAiGender = preferredAiGender;
+      }
+
+      if (ttsProvider && ["elevenlabs", "cartesia"].includes(ttsProvider)) {
+        updates.ttsProvider = ttsProvider;
       }
 
       // Validate and set male voice ID
@@ -2004,17 +2025,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (voiceType === "personal") {
         // Get user's cloned voice
         const [user] = await db
-          .select({ voiceId: users.voiceId, hasVoiceSample: users.hasVoiceSample })
+          .select({ voiceId: users.voiceId, hasVoiceSample: users.hasVoiceSample, elevenLabsVoiceId: users.elevenLabsVoiceId, cartesiaVoiceId: users.cartesiaVoiceId, ttsProvider: users.ttsProvider })
           .from(users)
           .where(eq(users.id, req.userId!));
 
-        if (!user?.voiceId || !user?.hasVoiceSample) {
+        const resolvedVoiceId = resolvePersonalVoiceId(user?.ttsProvider, user?.voiceId, user?.elevenLabsVoiceId, user?.cartesiaVoiceId);
+        if (!resolvedVoiceId || !user?.hasVoiceSample) {
           return res.status(400).json({ 
             error: "VOICE_ROTATED",
             message: "Your personal voice has expired. Please re-record your voice sample to continue using your Inner Voice, or switch to an AI voice.",
           });
         }
-        voiceIdToUse = user.voiceId;
+        voiceIdToUse = resolvedVoiceId;
       } else {
         const gender = voiceGender || "female";
         const [userPrefs] = await db

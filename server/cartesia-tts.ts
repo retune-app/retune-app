@@ -103,7 +103,7 @@ export async function cartesiaTTS(
       mode: "id",
       id: voiceId,
       experimentalControls: {
-        speed: "normal",
+        speed: "fast",
         emotion: ["positivity:highest", "curiosity:high"],
       },
     },
@@ -111,13 +111,13 @@ export async function cartesiaTTS(
     outputFormat: {
       container: "mp3",
       sampleRate: 44100,
-      bitRate: 128000,
+      bitRate: 192000,
     },
   });
 
   const audioBuffer = await streamToBuffer(response);
 
-  const bitRate = 128000;
+  const bitRate = 192000;
   const durationSeconds = (audioBuffer.length * 8) / bitRate;
   const estimatedDuration = Math.max(1, Math.ceil(durationSeconds));
 
@@ -149,7 +149,7 @@ export async function cartesiaSimpleTTS(
       mode: "id",
       id: voiceId,
       experimentalControls: {
-        speed: "normal",
+        speed: "fast",
         emotion: ["positivity:highest", "curiosity:high"],
       },
     },
@@ -157,7 +157,7 @@ export async function cartesiaSimpleTTS(
     outputFormat: {
       container: "mp3",
       sampleRate: 44100,
-      bitRate: 128000,
+      bitRate: 192000,
     },
   });
 

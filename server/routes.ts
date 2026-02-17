@@ -1550,14 +1550,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .returning();
 
           // Update user: voiceId, hasVoiceSample, auto-switch to personal voice, and increment clones used
+          const providerVoiceUpdate: Record<string, any> = { 
+            voiceId, 
+            hasVoiceSample: true, 
+            preferredVoiceType: "personal",
+            voiceClonesUsed: (clonesUsed + 1)
+          };
+          if (provider === 'cartesia') {
+            providerVoiceUpdate.cartesiaVoiceId = voiceId;
+          } else {
+            providerVoiceUpdate.elevenLabsVoiceId = voiceId;
+          }
           await db
             .update(users)
-            .set({ 
-              voiceId, 
-              hasVoiceSample: true, 
-              preferredVoiceType: "personal",
-              voiceClonesUsed: (clonesUsed + 1)
-            })
+            .set(providerVoiceUpdate)
             .where(eq(users.id, req.userId!));
 
           res.json({

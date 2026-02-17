@@ -28,6 +28,8 @@ export const users = pgTable("users", {
   voiceLastUsedAt: timestamp("voice_last_used_at"),
   voiceExpiryWarningAt: timestamp("voice_expiry_warning_at"),
   ttsProvider: text("tts_provider").default("elevenlabs"),
+  elevenLabsVoiceId: text("elevenlabs_voice_id"),
+  cartesiaVoiceId: text("cartesia_voice_id"),
   role: text("role").default("user"), // 'user', 'admin', 'reviewer'
   subscriptionTier: text("subscription_tier").default("free"), // 'free' or 'premium'
   active: boolean("active").default(true),

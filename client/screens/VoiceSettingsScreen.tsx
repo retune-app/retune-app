@@ -311,22 +311,6 @@ export default function VoiceSettingsScreen() {
           <Feather name="chevron-right" size={20} color={theme.textSecondary} />
         </Pressable>
 
-        <Pressable
-          onPress={() => navigation.navigate("VoiceCompare" as any)}
-          style={[styles.recordButton, { backgroundColor: theme.cardBackground, borderColor: theme.border, marginTop: Spacing.sm }]}
-          testID="button-compare-voices"
-        >
-          <Feather name="bar-chart-2" size={20} color={theme.text} />
-          <View style={styles.recordButtonText}>
-            <ThemedText type="body" style={{ fontWeight: "600" }}>
-              Compare Voice Providers
-            </ThemedText>
-            <ThemedText type="small" style={{ color: theme.textSecondary }}>
-              A/B test ElevenLabs vs Cartesia
-            </ThemedText>
-          </View>
-          <Feather name="chevron-right" size={20} color={theme.textSecondary} />
-        </Pressable>
       </View>
 
       <View style={styles.section}>
@@ -534,92 +518,6 @@ export default function VoiceSettingsScreen() {
         </View>
       ) : null}
 
-      {voicePreferences?.hasPersonalVoice ? (
-        <View style={styles.section}>
-          <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-            COMPARE VOICES
-          </ThemedText>
-          <ThemedText type="small" style={[styles.compareSubtitle, { color: theme.textSecondary }]}>
-            Hear the same phrase in both voices
-          </ThemedText>
-          <View style={styles.compareRow}>
-            <Pressable
-              onPress={handlePersonalVoicePreview}
-              style={[
-                styles.compareCard,
-                {
-                  backgroundColor: theme.cardBackground,
-                  borderColor: isPersonalPreviewPlaying ? ACCENT_GOLD : theme.border,
-                  borderWidth: isPersonalPreviewPlaying ? 2 : 1,
-                },
-              ]}
-              testID="button-compare-personal"
-            >
-              <Feather name="mic" size={24} color={isPersonalPreviewPlaying ? ACCENT_GOLD : theme.textSecondary} />
-              <Text style={[styles.compareCardLabel, { color: theme.text }]}>Inner Voice</Text>
-              <View
-                style={[
-                  styles.comparePlayButton,
-                  {
-                    borderColor: ACCENT_GOLD,
-                    backgroundColor: isPersonalPreviewPlaying ? ACCENT_GOLD + "20" : "transparent",
-                  },
-                ]}
-              >
-                {isPersonalPreviewLoading ? (
-                  <ActivityIndicator size="small" color={ACCENT_GOLD} />
-                ) : isPersonalPreviewPlaying ? (
-                  <Feather name="volume-2" size={20} color={ACCENT_GOLD} />
-                ) : (
-                  <Feather name="play" size={20} color={ACCENT_GOLD} />
-                )}
-              </View>
-            </Pressable>
-
-            <Pressable
-              onPress={() => selectedVoiceId ? handleVoicePreview(selectedVoiceId) : null}
-              style={[
-                styles.compareCard,
-                {
-                  backgroundColor: theme.cardBackground,
-                  borderColor: previewingVoiceId === selectedVoiceId && selectedVoiceId ? ACCENT_GOLD : theme.border,
-                  borderWidth: previewingVoiceId === selectedVoiceId && selectedVoiceId ? 2 : 1,
-                },
-              ]}
-              testID="button-compare-ai"
-            >
-              <Feather
-                name="cpu"
-                size={24}
-                color={previewingVoiceId === selectedVoiceId && selectedVoiceId ? ACCENT_GOLD : theme.textSecondary}
-              />
-              <Text style={[styles.compareCardLabel, { color: theme.text }]} numberOfLines={1}>
-                {voices?.find(v => v.id === selectedVoiceId)?.name || "AI Voice"}
-              </Text>
-              <View
-                style={[
-                  styles.comparePlayButton,
-                  {
-                    borderColor: ACCENT_GOLD,
-                    backgroundColor: previewingVoiceId === selectedVoiceId && selectedVoiceId ? ACCENT_GOLD + "20" : "transparent",
-                  },
-                ]}
-              >
-                {isPreviewLoading && previewingVoiceId === selectedVoiceId ? (
-                  <ActivityIndicator size="small" color={ACCENT_GOLD} />
-                ) : previewingVoiceId === selectedVoiceId && !isPreviewLoading ? (
-                  <Feather name="volume-2" size={20} color={ACCENT_GOLD} />
-                ) : (
-                  <Feather name="play" size={20} color={ACCENT_GOLD} />
-                )}
-              </View>
-            </Pressable>
-          </View>
-          <ThemedText type="caption" style={[styles.comparePhrase, { color: theme.textSecondary }]}>
-            "I am strong, capable, and worthy of success."
-          </ThemedText>
-        </View>
-      ) : null}
 
       <View style={styles.section}>
         <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
@@ -945,41 +843,6 @@ const styles = StyleSheet.create({
   },
   previewPhraseText: {
     marginTop: Spacing.sm,
-    fontStyle: "italic",
-    textAlign: "center",
-  },
-  compareSubtitle: {
-    marginBottom: Spacing.md,
-    marginLeft: Spacing.xs,
-  },
-  compareRow: {
-    flexDirection: "row",
-    gap: Spacing.md,
-  },
-  compareCard: {
-    flex: 1,
-    height: 140,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.md,
-    gap: Spacing.sm,
-  },
-  compareCardLabel: {
-    fontSize: 14,
-    fontWeight: "600",
-    textAlign: "center",
-  },
-  comparePlayButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    borderWidth: 1.5,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  comparePhrase: {
-    marginTop: Spacing.md,
     fontStyle: "italic",
     textAlign: "center",
   },

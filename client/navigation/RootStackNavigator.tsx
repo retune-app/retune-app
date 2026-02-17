@@ -7,7 +7,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import MainTabNavigator from "@/navigation/MainTabNavigator";
 import VoiceSetupScreen from "@/screens/VoiceSetupScreen";
 import VoiceSettingsScreen from "@/screens/VoiceSettingsScreen";
-import VoiceCompareScreen from "@/screens/VoiceCompareScreen";
 import SoundLibraryScreen from "@/screens/SoundLibraryScreen";
 import GuidedMomentScreen from "@/screens/GuidedMomentScreen";
 import type { GuidedMomentScreenParams } from "@/screens/GuidedMomentScreen";
@@ -38,7 +37,6 @@ export type RootStackParamList = {
   Main: undefined;
   VoiceSetup: undefined;
   VoiceSettings: undefined;
-  VoiceCompare: undefined;
   SoundLibrary: undefined;
   Create: undefined;
   Player: { affirmationId: number; isNew?: boolean; autoPlay?: boolean; journeyContext?: JourneyContext };
@@ -226,15 +224,6 @@ export default function RootStackNavigator() {
           options={{
             headerTitle: "Voice Settings",
             headerBackTitle: "Settings",
-            animation: "slide_from_right",
-          }}
-        />
-        <Stack.Screen
-          name="VoiceCompare"
-          component={VoiceCompareScreen}
-          options={{
-            headerTitle: "Voice Comparison",
-            headerBackTitle: "Back",
             animation: "slide_from_right",
           }}
         />

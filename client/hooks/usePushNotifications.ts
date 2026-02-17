@@ -47,9 +47,13 @@ export function usePushNotifications() {
         return;
       }
 
-      const tokenData = await Notifications.getExpoPushTokenAsync({
-        projectId: undefined,
-      });
+      let tokenData;
+      try {
+        tokenData = await Notifications.getExpoPushTokenAsync();
+      } catch {
+        console.log("[Push] Token registration skipped (no projectId configured)");
+        return;
+      }
 
       const token = tokenData.data;
       const platform = Platform.OS;
@@ -58,7 +62,7 @@ export function usePushNotifications() {
       registered.current = true;
       console.log("[Push] Token registered successfully");
     } catch (error) {
-      console.error("[Push] Registration failed:", error);
+      console.log("[Push] Registration skipped:", error);
     }
   }
 }

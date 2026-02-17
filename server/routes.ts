@@ -3602,17 +3602,25 @@ Rules for tone:
       }
 
       const userId = req.userId!;
-      const [userTtsSettings] = await db.select({ ttsProvider: users.ttsProvider }).from(users).where(eq(users.id, userId));
+      const [userTtsSettings] = await db.select({ 
+        ttsProvider: users.ttsProvider,
+        voiceId: users.voiceId,
+        elevenLabsVoiceId: users.elevenLabsVoiceId,
+        cartesiaVoiceId: users.cartesiaVoiceId,
+      }).from(users).where(eq(users.id, userId));
 
       let voiceId = rawVoiceId;
       if (usePersonalVoice && !voiceId) {
-        const voiceResult = await db.select({ voiceId: voiceSamples.voiceId }).from(voiceSamples)
-          .where(and(eq(voiceSamples.userId, userId), eq(voiceSamples.status, "ready")))
-          .orderBy(desc(voiceSamples.createdAt)).limit(1);
-        if (voiceResult[0]?.voiceId) {
-          voiceId = voiceResult[0].voiceId;
+        const resolved = resolvePersonalVoiceId(
+          userTtsSettings?.ttsProvider,
+          userTtsSettings?.voiceId,
+          userTtsSettings?.elevenLabsVoiceId,
+          userTtsSettings?.cartesiaVoiceId
+        );
+        if (resolved) {
+          voiceId = resolved;
         } else {
-          console.warn(`User ${userId} requested personal voice but no completed voice clone found`);
+          console.warn(`User ${userId} requested personal voice but no voice clone found`);
         }
       }
 
@@ -3695,24 +3703,28 @@ Rules for tone:
       const durationLabel = duration === 1 ? "60-90 seconds" : `${duration} minutes`;
 
       const userId = req.userId!;
-      const [userTtsSettings2] = await db.select({ ttsProvider: users.ttsProvider }).from(users).where(eq(users.id, userId));
+      const [userTtsSettings2] = await db.select({ 
+        ttsProvider: users.ttsProvider,
+        voiceId: users.voiceId,
+        elevenLabsVoiceId: users.elevenLabsVoiceId,
+        cartesiaVoiceId: users.cartesiaVoiceId,
+      }).from(users).where(eq(users.id, userId));
 
-      const [userResult, voiceResult] = await Promise.all([
-        db.select({ name: users.name }).from(users).where(eq(users.id, userId)).limit(1),
-        (usePersonalVoice && !rawVoiceId)
-          ? db.select({ voiceId: voiceSamples.voiceId }).from(voiceSamples)
-              .where(and(eq(voiceSamples.userId, userId), eq(voiceSamples.status, "ready")))
-              .orderBy(desc(voiceSamples.createdAt)).limit(1)
-          : Promise.resolve([]),
-      ]);
+      const [userResult] = await db.select({ name: users.name }).from(users).where(eq(users.id, userId)).limit(1);
 
-      const userName = userResult[0]?.name?.split(" ")[0] || "Friend";
+      const userName = userResult?.name?.split(" ")[0] || "Friend";
       let voiceId = rawVoiceId;
       if (usePersonalVoice && !voiceId) {
-        if (voiceResult[0]?.voiceId) {
-          voiceId = voiceResult[0].voiceId;
+        const resolved = resolvePersonalVoiceId(
+          userTtsSettings2?.ttsProvider,
+          userTtsSettings2?.voiceId,
+          userTtsSettings2?.elevenLabsVoiceId,
+          userTtsSettings2?.cartesiaVoiceId
+        );
+        if (resolved) {
+          voiceId = resolved;
         } else {
-          console.warn(`User ${userId} requested personal voice but no completed voice clone found`);
+          console.warn(`User ${userId} requested personal voice but no voice clone found`);
         }
       }
 

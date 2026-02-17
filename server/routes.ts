@@ -1786,6 +1786,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           preferredFemaleVoiceId: users.preferredFemaleVoiceId,
           hasVoiceSample: users.hasVoiceSample,
           voiceId: users.voiceId,
+          ttsProvider: users.ttsProvider,
         })
         .from(users)
         .where(eq(users.id, req.userId!));
@@ -1800,6 +1801,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         preferredMaleVoiceId: user.preferredMaleVoiceId || "hume_orion",
         preferredFemaleVoiceId: user.preferredFemaleVoiceId || "hume_lotus",
         hasPersonalVoice: !!user.hasVoiceSample && !!user.voiceId,
+        ttsProvider: user.ttsProvider || "elevenlabs",
       });
     } catch (error) {
       console.error("Error fetching voice preferences:", error);

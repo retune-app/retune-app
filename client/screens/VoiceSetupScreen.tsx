@@ -3,7 +3,7 @@ import { View, StyleSheet, Alert, Platform, ScrollView, Pressable } from "react-
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Audio } from "expo-av";
 import * as Haptics from "expo-haptics";
 import { Feather } from "@expo/vector-icons";
@@ -53,10 +53,16 @@ My creativity flows freely, and I express myself authentically. I embrace who I 
 
 Success is not just a destination but a way of living. I celebrate small victories and keep moving forward.`;
 
-const MILESTONES = [
+const MILESTONES_ELEVENLABS = [
   { seconds: 20, label: "Min", icon: "check" as const },
   { seconds: 40, label: "Good", icon: "thumbs-up" as const },
   { seconds: 60, label: "Best", icon: "star" as const },
+];
+
+const MILESTONES_CARTESIA = [
+  { seconds: 3, label: "Min", icon: "check" as const },
+  { seconds: 6, label: "Good", icon: "thumbs-up" as const },
+  { seconds: 10, label: "Best", icon: "star" as const },
 ];
 
 function UnifiedRecordButton({
@@ -328,13 +334,17 @@ function MilestoneBar({
   isRecording,
   hasRecording,
   theme,
+  milestones,
 }: {
   duration: number;
   isRecording: boolean;
   hasRecording: boolean;
   theme: any;
+  milestones: typeof MILESTONES_ELEVENLABS;
 }) {
   if (!isRecording && !hasRecording) return null;
+
+  const maxSeconds = milestones[milestones.length - 1].seconds;
 
   return (
     <Animated.View entering={FadeInUp.duration(300)} style={msStyles.container}>
@@ -344,13 +354,13 @@ function MilestoneBar({
             msStyles.trackFill,
             {
               backgroundColor: theme.primary,
-              width: `${Math.min((duration / 60) * 100, 100)}%`,
+              width: `${Math.min((duration / maxSeconds) * 100, 100)}%`,
             },
           ]}
         />
       </View>
       <View style={msStyles.milestonesRow}>
-        {MILESTONES.map((m) => {
+        {milestones.map((m) => {
           const reached = duration >= m.seconds;
           return (
             <View key={m.seconds} style={msStyles.milestone}>
@@ -425,6 +435,13 @@ export default function VoiceSetupScreen() {
   const navigation = useNavigation<NavigationProp>();
   const queryClient = useQueryClient();
   const { refreshUser } = useAuth();
+
+  const { data: voicePrefs } = useQuery<{ ttsProvider?: string }>({
+    queryKey: ["/api/voice-preferences"],
+  });
+  const isCartesia = voicePrefs?.ttsProvider === "cartesia";
+  const milestones = isCartesia ? MILESTONES_CARTESIA : MILESTONES_ELEVENLABS;
+  const minDuration = milestones[0].seconds;
 
   const [showPrivacyNotice, setShowPrivacyNotice] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
@@ -699,7 +716,7 @@ export default function VoiceSetupScreen() {
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const isValidDuration = recordingDuration >= 20;
+  const isValidDuration = recordingDuration >= minDuration;
 
   const handleClose = () => {
     navigation.goBack();
@@ -836,13 +853,14 @@ export default function VoiceSetupScreen() {
 
   const getSubText = () => {
     if (hasRecording && isValidDuration) return "Your voice sample is ready to create your Inner Voice clone.";
-    if (hasRecording && !isValidDuration) return `Only ${recordingDuration}s recorded. You need at least 20 seconds for a good voice clone.`;
+    if (hasRecording && !isValidDuration) return `Only ${recordingDuration}s recorded. You need at least ${minDuration} seconds for a good voice clone.`;
     if (isRecording) {
-      if (recordingDuration < 20) return "Keep reading naturally...";
-      if (recordingDuration < 40) return "Looking good! Keep going for better quality.";
+      if (recordingDuration < minDuration) return "Keep reading naturally...";
+      if (recordingDuration < milestones[1].seconds) return "Looking good! Keep going for better quality.";
       return "Excellent quality! You can stop whenever you're ready.";
     }
-    return "Read the passage below out loud for 20-60 seconds. Longer recordings produce better voice quality.";
+    const maxSeconds = milestones[milestones.length - 1].seconds;
+    return `Read the passage below out loud for ${minDuration}-${maxSeconds} seconds. Longer recordings produce better voice quality.`;
   };
 
   return (
@@ -964,6 +982,7 @@ export default function VoiceSetupScreen() {
           isRecording={isRecording}
           hasRecording={hasRecording}
           theme={theme}
+          milestones={milestones}
         />
 
         {!hasRecording ? (

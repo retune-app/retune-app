@@ -752,6 +752,12 @@ async function generateAudioSimple(text: string, voiceId: string, isPersonalVoic
       const audio = await client.textToSpeech.convert(voiceId, {
         text,
         model_id: "eleven_multilingual_v2",
+        voice_settings: {
+          stability: 0.5,
+          similarity_boost: 0.75,
+          style: 0.3,
+          use_speaker_boost: true,
+        },
       });
       const chunks: Buffer[] = [];
       for await (const chunk of audio) {

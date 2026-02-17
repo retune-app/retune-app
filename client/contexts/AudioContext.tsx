@@ -118,6 +118,8 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const soundRef = useRef<Audio.Sound | null>(null);
   const isOperationInProgress = useRef(false);
   const hasRecordedListenRef = useRef(false);
+  const autoReplayRef = useRef(autoReplay);
+  const replayTimerRef = useRef<NodeJS.Timeout | null>(null);
   
   const { startBackgroundMusic, stopBackgroundMusic, selectedMusic } = useBackgroundMusic();
 
@@ -152,6 +154,8 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     };
     loadBreathingAffirmation();
   }, []);
+
+  useEffect(() => { autoReplayRef.current = autoReplay; }, [autoReplay]);
 
   const setBreathingAffirmation = useCallback(async (affirmation: Affirmation | null) => {
     setBreathingAffirmationState(affirmation);
@@ -198,6 +202,10 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     initAudio();
 
     return () => {
+      if (replayTimerRef.current) {
+        clearTimeout(replayTimerRef.current);
+        replayTimerRef.current = null;
+      }
       if (soundRef.current) {
         soundRef.current.unloadAsync();
       }
@@ -205,6 +213,10 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const unloadCurrentSound = useCallback(async (resetState = true) => {
+    if (replayTimerRef.current) {
+      clearTimeout(replayTimerRef.current);
+      replayTimerRef.current = null;
+    }
     if (soundRef.current) {
       const oldSound = soundRef.current;
       soundRef.current = null;
@@ -267,7 +279,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         { uri: audioUri },
         { 
           shouldPlay: true, 
-          isLooping: autoReplay,
+          isLooping: false,
           rate: playbackSpeed,
           shouldCorrectPitch: true,
           progressUpdateIntervalMillis: 50,
@@ -281,7 +293,24 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
               setIsPlaying(status.isPlaying);
               if (status.didJustFinish) {
                 recordListen(affirmation.id);
-                if (!autoReplay) {
+                if (autoReplayRef.current) {
+                  setIsPlaying(false);
+                  if (replayTimerRef.current) clearTimeout(replayTimerRef.current);
+                  replayTimerRef.current = setTimeout(async () => {
+                    replayTimerRef.current = null;
+                    try {
+                      if (activeSoundIdRef.current !== soundId) return;
+                      if (!soundRef.current) return;
+                      await soundRef.current.setPositionAsync(0);
+                      await soundRef.current.playAsync();
+                      setIsPlaying(true);
+                      setPosition(0);
+                      hasRecordedListenRef.current = false;
+                    } catch (e) {
+                      console.error('Error replaying audio:', e);
+                    }
+                  }, 3000);
+                } else {
                   setIsPlaying(false);
                   Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                 }
@@ -316,7 +345,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         setIsLoading(false);
       }
     }
-  }, [currentAffirmation?.id, autoReplay, playbackSpeed, unloadCurrentSound, recordListen, selectedMusic, startBackgroundMusic]);
+  }, [currentAffirmation?.id, playbackSpeed, unloadCurrentSound, recordListen, selectedMusic, startBackgroundMusic]);
 
   const togglePlayPause = useCallback(async () => {
     if (!soundRef.current) {

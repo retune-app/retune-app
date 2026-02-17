@@ -27,6 +27,7 @@ export const users = pgTable("users", {
   hasConsentedToVoiceCloning: boolean("has_consented_to_voice_cloning").default(false), // GDPR/privacy consent
   voiceLastUsedAt: timestamp("voice_last_used_at"),
   voiceExpiryWarningAt: timestamp("voice_expiry_warning_at"),
+  ttsProvider: text("tts_provider").default("elevenlabs"),
   role: text("role").default("user"), // 'user', 'admin', 'reviewer'
   subscriptionTier: text("subscription_tier").default("free"), // 'free' or 'premium'
   active: boolean("active").default(true),

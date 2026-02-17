@@ -4,7 +4,7 @@ import path from "path";
 import { Readable } from "stream";
 import type { WordTiming } from "./replit_integrations/elevenlabs/client";
 
-const CARTESIA_MODEL = "sonic-3-2026-01-12";
+const CARTESIA_MODEL = "sonic-3-latest";
 
 let cartesiaClient: CartesiaClient | null = null;
 let cachedApiKey: string | null = null;
@@ -68,7 +68,7 @@ export async function cartesiaCloneVoice(
         name,
         language: "en",
         mode: "similarity",
-        enhance: true,
+        enhance: false,
         description: "User voice for personalized affirmations",
       }
     );
@@ -110,7 +110,7 @@ export async function cartesiaTTS(
       bitRate: 192000,
     },
     generationConfig: {
-      speed: 1.15,
+      speed: 1.3,
       emotion: "positivity:highest",
     },
   });
@@ -156,7 +156,7 @@ export async function cartesiaSimpleTTS(
       bitRate: 192000,
     },
     generationConfig: {
-      speed: 1.15,
+      speed: 1.3,
       emotion: "positivity:highest",
     },
   });

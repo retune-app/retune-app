@@ -130,13 +130,14 @@ async function insertSilenceIntoAudio(
       const startTime = lastPos;
       const endTime = splitPositions[i];
       
-      // Extract segment
       await new Promise<void>((resolve, reject) => {
         const ffmpeg = spawn("ffmpeg", [
           "-i", inputPath,
           "-ss", startTime.toString(),
           "-to", endTime.toString(),
-          "-c", "copy",
+          "-c:a", "libmp3lame",
+          "-q:a", "2",
+          "-ar", "44100",
           "-y",
           segmentPath,
         ]);
@@ -158,7 +159,9 @@ async function insertSilenceIntoAudio(
       const ffmpeg = spawn("ffmpeg", [
         "-i", inputPath,
         "-ss", lastPos.toString(),
-        "-c", "copy",
+        "-c:a", "libmp3lame",
+        "-q:a", "2",
+        "-ar", "44100",
         "-y",
         finalSegmentPath,
       ]);
@@ -182,13 +185,14 @@ async function insertSilenceIntoAudio(
     }
     await writeFile(concatListPath, concatContent);
 
-    // Concatenate all segments with silence
     await new Promise<void>((resolve, reject) => {
       const ffmpeg = spawn("ffmpeg", [
         "-f", "concat",
         "-safe", "0",
         "-i", concatListPath,
-        "-c", "copy",
+        "-c:a", "libmp3lame",
+        "-q:a", "2",
+        "-ar", "44100",
         "-y",
         outputPath,
       ]);

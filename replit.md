@@ -10,8 +10,6 @@ Retuned is an application designed to help users reprogram their subconscious mi
 - Gold gradient styling: #E5C95C to #C9A227 (light), #C9A227 to #8A6D1A (dark).
 - Button states on gold: Active = white semi-transparent bg (0.85), Inactive = frosted white bg (0.2) with white text.
 - Pill buttons: Fixed height of 36px for visual consistency.
-- Brand logo: "Resonance Rings" — concentric gold rings with gold core. Light version (grey bg) is primary, dark version (navy bg) for dark mode. See `docs/rebrand.md` for full details.
-- Landing page fonts: Instrument Serif (headlines), DM Sans (body), Nunito (accents). In-app font: Nunito (unchanged).
 
 ## System Architecture
 

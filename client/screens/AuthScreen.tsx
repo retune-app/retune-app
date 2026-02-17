@@ -9,7 +9,6 @@ import {
   ImageBackground,
   Dimensions,
   KeyboardAvoidingView,
-  ScrollView,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
@@ -345,168 +344,157 @@ export function AuthScreen() {
           style={{ flex: 1 }} 
           behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
-          <ScrollView
-            contentContainerStyle={[
-              styles.scrollContent,
-              {
-                paddingTop: insets.top + Spacing.lg,
-                paddingBottom: insets.bottom + Spacing.xl + 40,
-              }
-            ]}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
-          {/* Top Section - Brand */}
-          <View style={styles.topSection}>
-            <View style={styles.logoContainer}>
+          <View style={[styles.fixedLayout, { paddingTop: insets.top + Spacing.lg, paddingBottom: insets.bottom + Spacing.md }]}>
+            {/* Top Section - Brand */}
+            <View style={styles.topSection}>
+              <View style={styles.logoContainer}>
+                <BlurView
+                  intensity={80}
+                  tint="light"
+                  style={styles.brandGlassContainer}
+                >
+                  <View style={styles.brandGlassInner}>
+                    <Text style={styles.brandName}>RETUNED</Text>
+                    <View style={styles.brandAccent} />
+                  </View>
+                </BlurView>
+                
+                <Text style={styles.brandSubtitle}>Breathe, Believe, Become</Text>
+              </View>
+            </View>
+
+            {/* Spacer to let background image show */}
+            <View style={styles.spacer} />
+
+            {/* Bottom-pinned login section */}
+            <View style={styles.bottomSection}>
               <BlurView
                 intensity={80}
                 tint="light"
-                style={styles.brandGlassContainer}
+                style={styles.glassCard}
               >
-                <View style={styles.brandGlassInner}>
-                  <Text style={styles.brandName}>RETUNED</Text>
-                  <View style={styles.brandAccent} />
+                <View style={styles.cardContent}>
+                  <Text style={styles.welcomeTitle}>Welcome</Text>
+                  <Text style={styles.welcomeSubtitle}>
+                    Sign in to tune into your true self
+                  </Text>
+
+                  {error.length > 0 ? (
+                    <View style={styles.errorContainer}>
+                      <Feather name="alert-circle" size={16} color={authColors.error} />
+                      <Text style={styles.errorText}>{error}</Text>
+                    </View>
+                  ) : null}
+
+                  {Platform.OS === "ios" ? (
+                    <Pressable
+                      style={[
+                        styles.authButton,
+                        styles.appleButton,
+                        isLoading && styles.disabledButton,
+                      ]}
+                      onPress={handleAppleSignIn}
+                      disabled={isLoading}
+                      testID="button-apple-signin"
+                    >
+                      {loadingProvider === "apple" ? (
+                        <ActivityIndicator color="#0F1C3F" />
+                      ) : (
+                        <>
+                          <Feather name="smartphone" size={20} color="#0F1C3F" />
+                          <Text style={styles.appleButtonText}>
+                            Continue with Apple
+                          </Text>
+                        </>
+                      )}
+                    </Pressable>
+                  ) : null}
+
+                  {Platform.OS === "web" ? (
+                    <GoogleAuthErrorBoundary fallback={
+                      <GoogleSignInFallback
+                        onSuccess={handleGoogleSuccess}
+                        onError={setError}
+                        isLoading={isLoading}
+                        loadingProvider={loadingProvider}
+                        setLoadingProvider={setLoadingProvider}
+                        setIsLoading={setIsLoading}
+                      />
+                    }>
+                      <GoogleSignInButton
+                        onSuccess={handleGoogleSuccess}
+                        onError={setError}
+                        isLoading={isLoading}
+                        loadingProvider={loadingProvider}
+                        setLoadingProvider={setLoadingProvider}
+                        setIsLoading={setIsLoading}
+                      />
+                    </GoogleAuthErrorBoundary>
+                  ) : (
+                    <GoogleSignInFallback
+                      onSuccess={handleGoogleSuccess}
+                      onError={setError}
+                      isLoading={isLoading}
+                      loadingProvider={loadingProvider}
+                      setLoadingProvider={setLoadingProvider}
+                      setIsLoading={setIsLoading}
+                    />
+                  )}
+
+                  <View style={styles.divider}>
+                    <View style={styles.dividerLine} />
+                    <Text style={styles.dividerText}>secure sign in</Text>
+                    <View style={styles.dividerLine} />
+                  </View>
+
+                  <Text style={styles.termsText}>
+                    By continuing, you agree to our{" "}
+                    <Text style={styles.termsLink} onPress={() => WebBrowser.openBrowserAsync("https://retuned.app/terms-of-service")}>Terms of Service</Text>
+                    {" "}and{" "}
+                    <Text style={styles.termsLink} onPress={() => WebBrowser.openBrowserAsync("https://retuned.app/privacy-policy")}>Privacy Policy</Text>
+                  </Text>
                 </View>
               </BlurView>
-              
-              <Text style={styles.brandSubtitle}>Breathe, Believe, Become</Text>
-            </View>
-          </View>
 
-          {/* Spacer to push login to bottom */}
-          <View style={styles.spacer} />
-
-          {/* Frosted Glass Card */}
-          <BlurView
-            intensity={80}
-            tint="light"
-            style={styles.glassCard}
-          >
-            <View style={styles.cardContent}>
-              <Text style={styles.welcomeTitle}>Welcome</Text>
-              <Text style={styles.welcomeSubtitle}>
-                Sign in to tune into your true self
-              </Text>
-
-              {error.length > 0 ? (
-                <View style={styles.errorContainer}>
-                  <Feather name="alert-circle" size={16} color={authColors.error} />
-                  <Text style={styles.errorText}>{error}</Text>
-                </View>
-              ) : null}
-
-              {/* Apple Sign In - iOS only */}
-              {Platform.OS === "ios" ? (
-                <Pressable
-                  style={[
-                    styles.authButton,
-                    styles.appleButton,
-                    isLoading && styles.disabledButton,
-                  ]}
-                  onPress={handleAppleSignIn}
-                  disabled={isLoading}
-                  testID="button-apple-signin"
-                >
-                  {loadingProvider === "apple" ? (
-                    <ActivityIndicator color="#0F1C3F" />
-                  ) : (
-                    <>
-                      <Feather name="smartphone" size={20} color="#0F1C3F" />
-                      <Text style={styles.appleButtonText}>
-                        Continue with Apple
-                      </Text>
-                    </>
-                  )}
-                </Pressable>
-              ) : null}
-
-              {/* Google Sign In - browser-based on iOS/Android, hook-based on web */}
-              {Platform.OS === "web" ? (
-                <GoogleAuthErrorBoundary fallback={
-                  <GoogleSignInFallback
-                    onSuccess={handleGoogleSuccess}
-                    onError={setError}
-                    isLoading={isLoading}
-                    loadingProvider={loadingProvider}
-                    setLoadingProvider={setLoadingProvider}
-                    setIsLoading={setIsLoading}
-                  />
-                }>
-                  <GoogleSignInButton
-                    onSuccess={handleGoogleSuccess}
-                    onError={setError}
-                    isLoading={isLoading}
-                    loadingProvider={loadingProvider}
-                    setLoadingProvider={setLoadingProvider}
-                    setIsLoading={setIsLoading}
-                  />
-                </GoogleAuthErrorBoundary>
-              ) : (
-                <GoogleSignInFallback
-                  onSuccess={handleGoogleSuccess}
-                  onError={setError}
-                  isLoading={isLoading}
-                  loadingProvider={loadingProvider}
-                  setLoadingProvider={setLoadingProvider}
-                  setIsLoading={setIsLoading}
-                />
-              )}
-
-              <View style={styles.divider}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>secure sign in</Text>
-                <View style={styles.dividerLine} />
+              <View style={styles.securityNote}>
+                <Feather name="shield" size={14} color={authColors.gold} />
+                <Text style={styles.securityText}>
+                  Your data is encrypted and securely stored
+                </Text>
               </View>
 
-              <Text style={styles.termsText}>
-                By continuing, you agree to our{" "}
-                <Text style={styles.termsLink} onPress={() => WebBrowser.openBrowserAsync("https://retuned.app/terms-of-service")}>Terms of Service</Text>
-                {" "}and{" "}
-                <Text style={styles.termsLink} onPress={() => WebBrowser.openBrowserAsync("https://retuned.app/privacy-policy")}>Privacy Policy</Text>
-              </Text>
+              {__DEV__ ? (
+                <Pressable
+                  onPress={async () => {
+                    setError("");
+                    setIsLoading(true);
+                    try {
+                      const result = await oauthLogin({
+                        email: "appreview@retuned.app",
+                        name: "App Reviewer",
+                        provider: "apple",
+                        providerId: "apple-review-test-account",
+                      });
+                      if (!result.success) {
+                        setError(result.error || "Dev login failed");
+                      }
+                    } catch (err) {
+                      setError("Dev login failed");
+                    } finally {
+                      setIsLoading(false);
+                    }
+                  }}
+                  disabled={isLoading}
+                  style={{ paddingVertical: 8, alignItems: 'center', marginTop: 4 }}
+                  testID="button-dev-login"
+                >
+                  <Text style={{ color: 'rgba(255,255,255,0.3)', fontSize: 12, fontFamily: 'Nunito_400Regular' }}>
+                    Dev Login
+                  </Text>
+                </Pressable>
+              ) : null}
             </View>
-          </BlurView>
-
-          {/* Security Note */}
-          <View style={styles.securityNote}>
-            <Feather name="shield" size={14} color={authColors.gold} />
-            <Text style={styles.securityText}>
-              Your data is encrypted and securely stored
-            </Text>
           </View>
-
-          {__DEV__ ? (
-            <Pressable
-              onPress={async () => {
-                setError("");
-                setIsLoading(true);
-                try {
-                  const result = await oauthLogin({
-                    email: "appreview@retuned.app",
-                    name: "App Reviewer",
-                    provider: "apple",
-                    providerId: "apple-review-test-account",
-                  });
-                  if (!result.success) {
-                    setError(result.error || "Dev login failed");
-                  }
-                } catch (err) {
-                  setError("Dev login failed");
-                } finally {
-                  setIsLoading(false);
-                }
-              }}
-              disabled={isLoading}
-              style={{ paddingVertical: 12, alignItems: 'center', marginTop: 8 }}
-              testID="button-dev-login"
-            >
-              <Text style={{ color: 'rgba(255,255,255,0.3)', fontSize: 12, fontFamily: 'Nunito_400Regular' }}>
-                Dev Login
-              </Text>
-            </Pressable>
-          ) : null}
-          </ScrollView>
         </KeyboardAvoidingView>
       </ImageBackground>
     </View>
@@ -523,8 +511,8 @@ const styles = StyleSheet.create({
     width: SCREEN_WIDTH,
     height: SCREEN_HEIGHT,
   },
-  scrollContent: {
-    flexGrow: 1,
+  fixedLayout: {
+    flex: 1,
     paddingHorizontal: Spacing.xl,
   },
   topSection: {
@@ -532,7 +520,9 @@ const styles = StyleSheet.create({
   },
   spacer: {
     flex: 1,
-    minHeight: 100,
+  },
+  bottomSection: {
+    alignItems: "center",
   },
   logoContainer: {
     alignItems: "center",

@@ -12,7 +12,6 @@ import {
 import { Audio } from "expo-av";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
-import { useNavigation } from "@react-navigation/native";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -26,25 +25,31 @@ interface ProviderResult {
   error?: string;
 }
 
-interface CompareResponse {
-  elevenlabs: ProviderResult;
-  cartesia: ProviderResult;
-}
+const DEFAULT_TEXT = `I am confident, capable, and worthy of success. Every day I grow stronger and more resilient. My mind is clear, focused, and ready for whatever comes my way. I trust in my ability to handle any challenge with grace and determination.
 
-const DEFAULT_TEXT =
-  "I am confident, capable, and worthy of success. Every day I grow stronger and more resilient.";
+I release all doubt and embrace the power within me. I am deserving of love, abundance, and joy. My thoughts create my reality, and I choose thoughts that uplift and empower me. I am grateful for this moment and all the possibilities it holds.
+
+I speak my truth with confidence and compassion. My voice matters, and my words carry weight. I attract positive experiences and meaningful connections into my life. Each breath fills me with renewed energy and purpose.
+
+I am at peace with who I am and where I am on my journey. I celebrate my progress and honor my growth. The universe supports me in all that I do. I am enough, exactly as I am, right here, right now.
+
+I choose to see the beauty in every situation. My heart is open, my spirit is strong, and my path is illuminated with possibility. Today, I step forward with courage and embrace the extraordinary life I am creating.`;
+
+type ProviderKey = "elevenlabs" | "cartesia";
 
 export default function VoiceCompareScreen() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
   const { theme, isDark } = useTheme();
-  const navigation = useNavigation();
 
   const [text, setText] = useState(DEFAULT_TEXT);
-  const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<CompareResponse | null>(null);
+  const [loadingProvider, setLoadingProvider] = useState<ProviderKey | null>(null);
+  const [results, setResults] = useState<Record<ProviderKey, ProviderResult | null>>({
+    elevenlabs: null,
+    cartesia: null,
+  });
   const [error, setError] = useState<string | null>(null);
-  const [playingProvider, setPlayingProvider] = useState<string | null>(null);
+  const [playingProvider, setPlayingProvider] = useState<ProviderKey | null>(null);
 
   const elevenlabsSoundRef = useRef<Audio.Sound | null>(null);
   const cartesiaSoundRef = useRef<Audio.Sound | null>(null);
@@ -70,26 +75,32 @@ export default function VoiceCompareScreen() {
     setPlayingProvider(null);
   };
 
-  const handleGenerate = async () => {
+  const handleGenerate = async (provider: ProviderKey) => {
     if (!text.trim()) return;
     await stopAll();
-    setIsLoading(true);
+    setLoadingProvider(provider);
     setError(null);
-    setResult(null);
 
     try {
-      const res = await apiRequest("POST", "/api/tts/compare", { text: text.trim() });
-      const data: CompareResponse = await res.json();
-      setResult(data);
+      const res = await apiRequest("POST", "/api/tts/compare", {
+        text: text.trim(),
+        provider,
+      });
+      const data = await res.json();
+      setResults((prev) => ({
+        ...prev,
+        [provider]: data[provider] || { available: false, error: "No response from provider" },
+      }));
     } catch (err: any) {
       setError(err.message || "Failed to generate audio");
     } finally {
-      setIsLoading(false);
+      setLoadingProvider(null);
     }
   };
 
-  const handlePlay = async (provider: "elevenlabs" | "cartesia") => {
-    if (!result) return;
+  const handlePlay = async (provider: ProviderKey) => {
+    const providerResult = results[provider];
+    if (!providerResult?.available || !providerResult?.audio) return;
 
     if (playingProvider === provider) {
       await stopAll();
@@ -97,9 +108,6 @@ export default function VoiceCompareScreen() {
     }
 
     await stopAll();
-
-    const providerResult = result[provider];
-    if (!providerResult.available || !providerResult.audio) return;
 
     const mimeType = provider === "elevenlabs" ? "audio/mp3" : "audio/wav";
     const uri = `data:${mimeType};base64,${providerResult.audio}`;
@@ -132,12 +140,10 @@ export default function VoiceCompareScreen() {
     ? ["#C9A227", "#8A6D1A"]
     : ["#E5C95C", "#C9A227"];
 
-  const renderProviderCard = (
-    provider: "elevenlabs" | "cartesia",
-    label: string
-  ) => {
-    const providerResult = result ? result[provider] : null;
+  const renderProviderCard = (provider: ProviderKey, label: string, iconColor: string) => {
+    const providerResult = results[provider];
     const isPlaying = playingProvider === provider;
+    const isLoading = loadingProvider === provider;
     const hasAudio = providerResult?.available && providerResult?.audio;
     const hasError = providerResult && (!providerResult.available || providerResult.error);
 
@@ -153,95 +159,110 @@ export default function VoiceCompareScreen() {
         ]}
       >
         <View style={styles.providerHeader}>
-          <Feather
-            name="mic"
-            size={18}
-            color={theme.gold}
-            style={styles.providerIcon}
-          />
-          <Text
-            style={[
-              styles.providerLabel,
-              { color: theme.text, fontFamily: "Nunito_700Bold" },
-            ]}
-          >
-            {label}
-          </Text>
-          {providerResult ? (
-            <View
-              style={[
-                styles.statusDot,
-                {
-                  backgroundColor: providerResult.available
-                    ? theme.success
-                    : theme.error,
-                },
-              ]}
-            />
-          ) : null}
+          <View style={[styles.providerIconCircle, { backgroundColor: iconColor + "20" }]}>
+            <Feather name="mic" size={16} color={iconColor} />
+          </View>
+          <View style={styles.providerHeaderText}>
+            <Text
+              style={[styles.providerLabel, { color: theme.text, fontFamily: "Nunito_700Bold" }]}
+            >
+              {label}
+            </Text>
+            {providerResult ? (
+              <View style={styles.statusRow}>
+                <View
+                  style={[
+                    styles.statusDot,
+                    { backgroundColor: providerResult.available ? theme.success : theme.error },
+                  ]}
+                />
+                <Text style={[styles.statusText, { color: theme.textSecondary, fontFamily: "Nunito_400Regular" }]}>
+                  {providerResult.available ? "Ready" : "Unavailable"}
+                </Text>
+              </View>
+            ) : null}
+          </View>
         </View>
 
         {hasError ? (
-          <Text
-            style={[styles.errorText, { color: theme.error }]}
-            testID={`text-error-${provider}`}
-          >
-            {providerResult?.error || "Provider unavailable"}
-          </Text>
+          <View style={[styles.providerError, { backgroundColor: isDark ? "rgba(255,107,107,0.1)" : "rgba(231,76,60,0.08)" }]}>
+            <Feather name="alert-circle" size={14} color={theme.error} />
+            <Text
+              style={[styles.errorText, { color: theme.error, fontFamily: "Nunito_400Regular" }]}
+              testID={`text-error-${provider}`}
+            >
+              {providerResult?.error || "Provider unavailable"}
+            </Text>
+          </View>
         ) : null}
 
-        {hasAudio ? (
+        <View style={styles.cardActions}>
           <Pressable
-            testID={`button-play-${provider}`}
-            onPress={() => handlePlay(provider)}
+            testID={`button-generate-${provider}`}
+            onPress={() => handleGenerate(provider)}
+            disabled={isLoading || !text.trim()}
             style={({ pressed }) => [
-              styles.playButton,
-              {
-                backgroundColor: isPlaying
-                  ? theme.gold
-                  : isDark
-                  ? theme.backgroundSecondary
-                  : theme.backgroundTertiary,
-                opacity: pressed ? 0.8 : 1,
-              },
+              styles.sampleButton,
+              { opacity: pressed ? 0.85 : isLoading || !text.trim() ? 0.5 : 1 },
             ]}
           >
-            <Feather
-              name={isPlaying ? "square" : "play"}
-              size={20}
-              color={isPlaying ? (isDark ? theme.navy : "#FFFFFF") : theme.text}
-            />
-            <Text
-              style={[
-                styles.playButtonText,
+            <LinearGradient
+              colors={goldGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.sampleGradient}
+            >
+              {isLoading ? (
+                <ActivityIndicator size="small" color={isDark ? "#0F1C3F" : "#FFFFFF"} />
+              ) : (
+                <Feather name="zap" size={16} color={isDark ? "#0F1C3F" : "#FFFFFF"} />
+              )}
+              <Text
+                style={[
+                  styles.sampleButtonText,
+                  { color: isDark ? "#0F1C3F" : "#FFFFFF", fontFamily: "Nunito_700Bold" },
+                ]}
+              >
+                {isLoading ? "Generating..." : `${label} Sample`}
+              </Text>
+            </LinearGradient>
+          </Pressable>
+
+          {hasAudio ? (
+            <Pressable
+              testID={`button-play-${provider}`}
+              onPress={() => handlePlay(provider)}
+              style={({ pressed }) => [
+                styles.playButton,
                 {
-                  color: isPlaying
-                    ? isDark
-                      ? theme.navy
-                      : "#FFFFFF"
-                    : theme.text,
-                  fontFamily: "Nunito_600SemiBold",
+                  backgroundColor: isPlaying
+                    ? theme.gold
+                    : isDark
+                    ? theme.backgroundSecondary
+                    : theme.backgroundTertiary,
+                  opacity: pressed ? 0.8 : 1,
                 },
               ]}
             >
-              {isPlaying ? "Stop" : "Play"}
-            </Text>
-          </Pressable>
-        ) : null}
-
-        {!providerResult && !isLoading ? (
-          <Text style={[styles.pendingText, { color: theme.textSecondary }]}>
-            Generate to compare
-          </Text>
-        ) : null}
-
-        {isLoading ? (
-          <ActivityIndicator
-            size="small"
-            color={theme.gold}
-            style={styles.cardLoader}
-          />
-        ) : null}
+              <Feather
+                name={isPlaying ? "square" : "play"}
+                size={18}
+                color={isPlaying ? (isDark ? theme.navy : "#FFFFFF") : theme.text}
+              />
+              <Text
+                style={[
+                  styles.playButtonText,
+                  {
+                    color: isPlaying ? (isDark ? theme.navy : "#FFFFFF") : theme.text,
+                    fontFamily: "Nunito_600SemiBold",
+                  },
+                ]}
+              >
+                {isPlaying ? "Stop" : "Play"}
+              </Text>
+            </Pressable>
+          ) : null}
+        </View>
       </View>
     );
   };
@@ -258,27 +279,18 @@ export default function VoiceCompareScreen() {
       testID="screen-voice-compare"
     >
       <Text
-        style={[
-          styles.title,
-          { color: theme.text, fontFamily: "Nunito_700Bold" },
-        ]}
+        style={[styles.title, { color: theme.text, fontFamily: "Nunito_700Bold" }]}
       >
         Voice Comparison
       </Text>
       <Text
-        style={[
-          styles.subtitle,
-          { color: theme.textSecondary, fontFamily: "Nunito_400Regular" },
-        ]}
+        style={[styles.subtitle, { color: theme.textSecondary, fontFamily: "Nunito_400Regular" }]}
       >
-        Compare ElevenLabs and Cartesia TTS on the same text
+        Generate samples individually to compare ElevenLabs and Cartesia side by side
       </Text>
 
       <Text
-        style={[
-          styles.inputLabel,
-          { color: theme.text, fontFamily: "Nunito_600SemiBold" },
-        ]}
+        style={[styles.inputLabel, { color: theme.text, fontFamily: "Nunito_600SemiBold" }]}
       >
         Affirmation Text
       </Text>
@@ -296,49 +308,11 @@ export default function VoiceCompareScreen() {
         value={text}
         onChangeText={setText}
         multiline
-        numberOfLines={4}
+        numberOfLines={6}
         placeholder="Enter affirmation text..."
         placeholderTextColor={theme.placeholder}
         textAlignVertical="top"
       />
-
-      <Pressable
-        testID="button-generate"
-        onPress={handleGenerate}
-        disabled={isLoading || !text.trim()}
-        style={({ pressed }) => [
-          styles.generateButton,
-          { opacity: pressed ? 0.85 : isLoading || !text.trim() ? 0.5 : 1 },
-        ]}
-      >
-        <LinearGradient
-          colors={goldGradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.generateGradient}
-        >
-          {isLoading ? (
-            <ActivityIndicator size="small" color={isDark ? "#0F1C3F" : "#FFFFFF"} />
-          ) : (
-            <Feather
-              name="zap"
-              size={20}
-              color={isDark ? "#0F1C3F" : "#FFFFFF"}
-            />
-          )}
-          <Text
-            style={[
-              styles.generateText,
-              {
-                color: isDark ? "#0F1C3F" : "#FFFFFF",
-                fontFamily: "Nunito_700Bold",
-              },
-            ]}
-          >
-            {isLoading ? "Generating..." : "Generate Comparison"}
-          </Text>
-        </LinearGradient>
-      </Pressable>
 
       {error ? (
         <View
@@ -357,22 +331,10 @@ export default function VoiceCompareScreen() {
         </View>
       ) : null}
 
-      {result || isLoading ? (
-        <View style={styles.resultsSection}>
-          <Text
-            style={[
-              styles.resultsTitle,
-              { color: theme.text, fontFamily: "Nunito_700Bold" },
-            ]}
-          >
-            Results
-          </Text>
-          <View style={styles.cardsContainer}>
-            {renderProviderCard("elevenlabs", "ElevenLabs")}
-            {renderProviderCard("cartesia", "Cartesia")}
-          </View>
-        </View>
-      ) : null}
+      <View style={styles.cardsContainer}>
+        {renderProviderCard("elevenlabs", "ElevenLabs", "#6366F1")}
+        {renderProviderCard("cartesia", "Cartesia", "#10B981")}
+      </View>
     </ScrollView>
   );
 }
@@ -389,7 +351,7 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 14,
     lineHeight: 20,
-    marginBottom: Spacing.xxl,
+    marginBottom: Spacing.xl,
   },
   inputLabel: {
     fontSize: 16,
@@ -400,27 +362,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: BorderRadius.sm,
     padding: Spacing.md,
-    fontSize: 16,
-    lineHeight: 24,
-    minHeight: 120,
+    fontSize: 15,
+    lineHeight: 22,
+    minHeight: 160,
     marginBottom: Spacing.xl,
-  },
-  generateButton: {
-    borderRadius: BorderRadius.sm,
-    overflow: "hidden",
-    marginBottom: Spacing.xl,
-  },
-  generateGradient: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    height: Spacing.buttonHeight,
-    gap: Spacing.sm,
-    borderRadius: BorderRadius.sm,
-  },
-  generateText: {
-    fontSize: 16,
-    lineHeight: 24,
   },
   errorBanner: {
     flexDirection: "row",
@@ -428,20 +373,12 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
     padding: Spacing.md,
     borderRadius: BorderRadius.sm,
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.lg,
   },
   errorBannerText: {
     fontSize: 14,
     lineHeight: 20,
     flex: 1,
-  },
-  resultsSection: {
-    marginTop: Spacing.sm,
-  },
-  resultsTitle: {
-    fontSize: 20,
-    lineHeight: 28,
-    marginBottom: Spacing.lg,
   },
   cardsContainer: {
     gap: Spacing.lg,
@@ -456,43 +393,78 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: Spacing.md,
   },
-  providerIcon: {
+  providerIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: Spacing.sm,
+  },
+  providerHeaderText: {
+    flex: 1,
   },
   providerLabel: {
     fontSize: 18,
-    lineHeight: 26,
-    flex: 1,
+    lineHeight: 24,
+  },
+  statusRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 2,
   },
   statusDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  statusText: {
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  providerError: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: Spacing.sm,
+    padding: Spacing.sm,
+    borderRadius: BorderRadius.xs,
+    marginBottom: Spacing.md,
   },
   errorText: {
-    fontSize: 14,
-    lineHeight: 20,
-    marginBottom: Spacing.sm,
+    fontSize: 13,
+    lineHeight: 18,
+    flex: 1,
+  },
+  cardActions: {
+    gap: Spacing.sm,
+  },
+  sampleButton: {
+    borderRadius: BorderRadius.sm,
+    overflow: "hidden",
+  },
+  sampleGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    height: 44,
+    gap: Spacing.sm,
+    borderRadius: BorderRadius.sm,
+  },
+  sampleButtonText: {
+    fontSize: 15,
+    lineHeight: 22,
   },
   playButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: Spacing.sm,
-    paddingVertical: Spacing.md,
+    height: 44,
     borderRadius: BorderRadius.sm,
-    marginTop: Spacing.xs,
   },
   playButtonText: {
-    fontSize: 16,
-    lineHeight: 24,
-  },
-  pendingText: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontStyle: "italic",
-  },
-  cardLoader: {
-    marginTop: Spacing.sm,
+    fontSize: 15,
+    lineHeight: 22,
   },
 });

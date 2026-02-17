@@ -590,8 +590,21 @@ export default function PlayerScreen() {
   const displayPosition = currentAffirmation?.id === affirmationId ? position : 0;
   const displayDuration = currentAffirmation?.id === affirmationId ? duration : 0;
   const progress = displayDuration > 0 ? displayPosition / displayDuration : 0;
-  
-  const rsvpPositionOffset = 200 * playbackSpeed;
+
+  const scaledWordTimings: WordTiming[] = useMemo(() => {
+    if (wordTimings.length === 0 || displayDuration <= 0) return wordTimings;
+    const lastEnd = wordTimings[wordTimings.length - 1].endMs;
+    if (lastEnd <= 0) return wordTimings;
+    const ratio = displayDuration / lastEnd;
+    if (Math.abs(ratio - 1) < 0.02) return wordTimings;
+    return wordTimings.map(wt => ({
+      word: wt.word,
+      startMs: Math.round(wt.startMs * ratio),
+      endMs: Math.round(wt.endMs * ratio),
+    }));
+  }, [wordTimings, displayDuration]);
+
+  const rsvpPositionOffset = 100 * playbackSpeed;
   const rsvpPosition = displayDuration > 0
     ? Math.min(displayPosition + rsvpPositionOffset, displayDuration - 1)
     : displayPosition + rsvpPositionOffset;
@@ -618,7 +631,7 @@ export default function PlayerScreen() {
           >
             <View pointerEvents="none">
               <RSVPDisplay
-                wordTimings={wordTimings}
+                wordTimings={scaledWordTimings}
                 currentPositionMs={rsvpPosition}
                 isPlaying={isCurrentlyPlaying}
                 fontSize="LANDSCAPE"
@@ -710,7 +723,7 @@ export default function PlayerScreen() {
         <View style={styles.visualizerContainer}>
           {rsvpEnabled ? (
             <RSVPDisplay
-              wordTimings={wordTimings}
+              wordTimings={scaledWordTimings}
               currentPositionMs={rsvpPosition}
               isPlaying={isCurrentlyPlaying}
               fontSize={rsvpFontSize}

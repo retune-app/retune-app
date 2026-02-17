@@ -14,12 +14,6 @@ import {
   Nunito_700Bold,
 } from "@expo-google-fonts/nunito";
 import {
-  Poppins_400Regular,
-  Poppins_500Medium,
-  Poppins_600SemiBold,
-  Poppins_700Bold,
-} from "@expo-google-fonts/poppins";
-import {
   Outfit_400Regular,
   Outfit_500Medium,
 } from "@expo-google-fonts/outfit";
@@ -58,10 +52,6 @@ function AppWithProviders() {
     Nunito_500Medium,
     Nunito_600SemiBold,
     Nunito_700Bold,
-    Poppins_400Regular,
-    Poppins_500Medium,
-    Poppins_600SemiBold,
-    Poppins_700Bold,
     Outfit_400Regular,
     Outfit_500Medium,
   });

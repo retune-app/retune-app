@@ -19,6 +19,7 @@ import {
   deleteVoice,
   type WordTiming,
 } from "./replit_integrations/elevenlabs/client";
+import { cartesiaCloneVoice, cartesiaTTS, cartesiaSimpleTTS, isCartesiaConfigured } from "./cartesia-tts";
 import { humeTextToSpeech, humeSimpleTTS, type WordTiming as HumeWordTiming } from "./hume-client";
 import { findInactiveVoices, runVoiceRotation, getVoiceSlotStats, checkVoiceSlotWarning, freeVoiceSlotForNewClone } from "./voice-rotation";
 import { sendVoiceExpiryWarnings } from "./push-notifications";
@@ -736,9 +737,16 @@ async function generateAudioSimpleOpenAI(
   return await response.arrayBuffer();
 }
 
-async function generateAudioSimple(text: string, voiceId: string, isPersonalVoice: boolean = false): Promise<ArrayBuffer> {
-  // Personal voice: always use ElevenLabs
+async function generateAudioSimple(text: string, voiceId: string, isPersonalVoice: boolean = false, ttsProvider?: string): Promise<ArrayBuffer> {
   if (isPersonalVoice) {
+    if (ttsProvider === "cartesia") {
+      try {
+        return await cartesiaSimpleTTS(text, voiceId);
+      } catch (error: any) {
+        console.error("[Cartesia] Simple TTS failed for personal voice:", error?.message || error);
+        throw new Error("PERSONAL_VOICE_FAILED: Could not generate audio with your Inner Voice. Please try again or re-record your voice.");
+      }
+    }
     try {
       const client = await getElevenLabsClient();
       const audio = await client.textToSpeech.convert(voiceId, {
@@ -794,10 +802,19 @@ async function generateAudio(
   script: string,
   voiceId?: string,
   isPersonalVoice: boolean = false,
-  moodConfig?: typeof MEDITATION_MOOD_CONFIG[string]
+  moodConfig?: typeof MEDITATION_MOOD_CONFIG[string],
+  ttsProvider?: string
 ): Promise<{ audio: ArrayBuffer; duration: number; wordTimings: WordTiming[] }> {
-  // Personal voice: always use ElevenLabs (voice clones live there)
   if (isPersonalVoice) {
+    if (ttsProvider === "cartesia") {
+      try {
+        const result = await cartesiaTTS(script, voiceId!);
+        return result;
+      } catch (cartesiaError: any) {
+        console.error("[Cartesia] TTS failed for personal voice:", cartesiaError?.message || cartesiaError);
+        throw new Error("PERSONAL_VOICE_FAILED: Could not generate audio with your Inner Voice. Please try again or re-record your voice.");
+      }
+    }
     try {
       const result = await elevenLabsTTS(script, voiceId, moodConfig ? {
         stability: moodConfig.elevenLabsStability,
@@ -1100,6 +1117,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           preferredAiGender: users.preferredAiGender,
           preferredMaleVoiceId: users.preferredMaleVoiceId,
           preferredFemaleVoiceId: users.preferredFemaleVoiceId,
+          ttsProvider: users.ttsProvider,
         })
         .from(users)
         .where(eq(users.id, req.userId!));
@@ -1126,7 +1144,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           script,
           voiceIdToUse,
           usedPersonalVoice,
-          getPillarVoiceConfig(pillar)
+          getPillarVoiceConfig(pillar),
+          userWithPrefs?.ttsProvider || undefined
         );
       } catch (genError: any) {
         if (usedPersonalVoice && genError?.message?.includes("QUOTA_EXCEEDED")) {
@@ -1468,7 +1487,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Check user's voice clone limit
         const [user] = await db
-          .select({ voiceClonesUsed: users.voiceClonesUsed, hasConsentedToVoiceCloning: users.hasConsentedToVoiceCloning })
+          .select({ voiceClonesUsed: users.voiceClonesUsed, hasConsentedToVoiceCloning: users.hasConsentedToVoiceCloning, ttsProvider: users.ttsProvider })
           .from(users)
           .where(eq(users.id, req.userId!))
           .limit(1);
@@ -1509,7 +1528,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Clone voice with ElevenLabs
         try {
-          const voiceId = await cloneVoice(file.path, "My Affirmation Voice");
+          const provider = user.ttsProvider || 'elevenlabs';
+          let voiceId: string;
+          if (provider === 'cartesia' && isCartesiaConfigured()) {
+            voiceId = await cartesiaCloneVoice(file.path, "My Affirmation Voice");
+          } else {
+            voiceId = await cloneVoice(file.path, "My Affirmation Voice");
+          }
 
           // PRIVACY: Delete the voice sample file immediately after successful cloning
           fs.unlink(file.path, (err) => {
@@ -1707,6 +1732,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           voiceId: users.voiceId,
           hasVoiceSample: users.hasVoiceSample,
           name: users.name,
+          ttsProvider: users.ttsProvider,
         })
         .from(users)
         .where(eq(users.id, req.userId!));
@@ -1721,7 +1747,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       let audioBuffer: ArrayBuffer;
       try {
-        audioBuffer = await generateAudioSimple(PREVIEW_PHRASE, user.voiceId, true);
+        audioBuffer = await generateAudioSimple(PREVIEW_PHRASE, user.voiceId, true, user.ttsProvider || undefined);
       } catch (ttsError: any) {
         const msg = ttsError?.message || "";
         if (msg.includes("PERSONAL_VOICE_FAILED") || msg.includes("voice_not_found") || msg.includes("404")) {
@@ -1852,6 +1878,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Affirmation not found" });
       }
 
+      const [userTtsInfo] = await db.select({ ttsProvider: users.ttsProvider }).from(users).where(eq(users.id, req.userId!));
+
       // Determine which voice ID to use
       let voiceIdToUse: string | undefined;
       
@@ -1887,7 +1915,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const isPersonalVoice = voiceType === "personal";
-      const audioResult = await generateAudio(affirmation.script, voiceIdToUse, isPersonalVoice, getPillarVoiceConfig(affirmation.pillar));
+      const audioResult = await generateAudio(affirmation.script, voiceIdToUse, isPersonalVoice, getPillarVoiceConfig(affirmation.pillar), userTtsInfo?.ttsProvider || undefined);
 
       if (isPersonalVoice) {
         await db
@@ -3434,6 +3462,7 @@ Rules for tone:
       }
 
       const userId = req.userId!;
+      const [userTtsSettings] = await db.select({ ttsProvider: users.ttsProvider }).from(users).where(eq(users.id, userId));
 
       let voiceId = rawVoiceId;
       if (usePersonalVoice && !voiceId) {
@@ -3458,7 +3487,7 @@ Rules for tone:
 
       try {
         if (usePersonalVoice && voiceId) {
-          const result = await generateAudio(script, voiceId, true, moodConfig);
+          const result = await generateAudio(script, voiceId, true, moodConfig, userTtsSettings?.ttsProvider || undefined);
           audioBuffer = result.audio;
           wordTimings = result.wordTimings;
           audioDuration = result.duration;
@@ -3526,6 +3555,7 @@ Rules for tone:
       const durationLabel = duration === 1 ? "60-90 seconds" : `${duration} minutes`;
 
       const userId = req.userId!;
+      const [userTtsSettings2] = await db.select({ ttsProvider: users.ttsProvider }).from(users).where(eq(users.id, userId));
 
       const [userResult, voiceResult] = await Promise.all([
         db.select({ name: users.name }).from(users).where(eq(users.id, userId)).limit(1),
@@ -3618,7 +3648,7 @@ Rules for tone:
 
       try {
         if (usePersonalVoice && voiceId) {
-          const result = await generateAudio(script, voiceId, true, moodConfig);
+          const result = await generateAudio(script, voiceId, true, moodConfig, userTtsSettings2?.ttsProvider || undefined);
           audioBuffer = result.audio;
           wordTimings = result.wordTimings;
           audioDuration = result.duration;
@@ -5077,6 +5107,36 @@ Return ONLY the 8 tips, one per line. No numbering, no titles, no extra text.`;
       console.error("[Voice Rotation] Scheduled cleanup failed:", error);
     }
   }, 24 * 60 * 60 * 1000);
+
+  app.patch("/api/admin/users/:userId/tts-provider", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const [adminUser] = await db.select({ role: users.role }).from(users).where(eq(users.id, req.userId!)).limit(1);
+      if (!adminUser || adminUser.role !== "admin") {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+
+      const { userId } = req.params;
+      const { provider } = req.body;
+      if (!provider || !["elevenlabs", "cartesia"].includes(provider)) {
+        return res.status(400).json({ error: "Invalid provider. Must be 'elevenlabs' or 'cartesia'" });
+      }
+
+      if (provider === "cartesia" && !isCartesiaConfigured()) {
+        return res.status(400).json({ error: "Cartesia API key is not configured" });
+      }
+
+      const [updated] = await db.update(users).set({ ttsProvider: provider } as any).where(eq(users.id, userId as string)).returning();
+      if (!updated) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      console.log(`[Admin] TTS provider for user ${userId} changed to ${provider}`);
+      res.json({ success: true, userId: updated.id, ttsProvider: updated.ttsProvider });
+    } catch (error) {
+      console.error("Error updating TTS provider:", error);
+      res.status(500).json({ error: "Failed to update TTS provider" });
+    }
+  });
 
   const httpServer = createServer(app);
 

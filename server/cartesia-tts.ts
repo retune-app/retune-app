@@ -7,14 +7,16 @@ import type { WordTiming } from "./replit_integrations/elevenlabs/client";
 const CARTESIA_MODEL = "sonic-3";
 
 let cartesiaClient: CartesiaClient | null = null;
+let cachedApiKey: string | null = null;
 
 function getClient(): CartesiaClient {
-  if (!cartesiaClient) {
-    const apiKey = process.env.CARTESIA_API_KEY;
-    if (!apiKey) {
-      throw new Error("CARTESIA_API_KEY environment variable is not set");
-    }
+  const apiKey = process.env.CARTESIA_API_KEY;
+  if (!apiKey) {
+    throw new Error("CARTESIA_API_KEY environment variable is not set");
+  }
+  if (!cartesiaClient || cachedApiKey !== apiKey) {
     cartesiaClient = new CartesiaClient({ apiKey });
+    cachedApiKey = apiKey;
   }
   return cartesiaClient;
 }

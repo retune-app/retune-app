@@ -102,6 +102,10 @@ export async function cartesiaTTS(
     voice: {
       mode: "id",
       id: voiceId,
+      experimentalControls: {
+        speed: "normal",
+        emotion: ["positivity:high", "curiosity:medium"],
+      },
     },
     language: "en",
     outputFormat: {
@@ -148,6 +152,10 @@ export async function cartesiaSimpleTTS(
     voice: {
       mode: "id",
       id: voiceId,
+      experimentalControls: {
+        speed: "normal",
+        emotion: ["positivity:high", "curiosity:medium"],
+      },
     },
     language: "en",
     outputFormat: {

@@ -1783,6 +1783,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Compare TTS providers - generates audio with both ElevenLabs and Cartesia for A/B testing
+  app.post("/api/tts/compare", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { text } = req.body;
+      if (!text || typeof text !== "string" || text.length > 2000) {
+        return res.status(400).json({ error: "Text is required (max 2000 characters)" });
+      }
+
+      const [user] = await db
+        .select({
+          elevenLabsVoiceId: users.elevenLabsVoiceId,
+          cartesiaVoiceId: users.cartesiaVoiceId,
+          hasVoiceSample: users.hasVoiceSample,
+        })
+        .from(users)
+        .where(eq(users.id, req.userId!));
+
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      const results: Record<string, any> = {};
+
+      // Generate with ElevenLabs if voice exists
+      if (user.elevenLabsVoiceId) {
+        try {
+          const audio = await generateAudioSimple(text, user.elevenLabsVoiceId, true, "elevenlabs");
+          results.elevenlabs = {
+            available: true,
+            audio: Buffer.from(audio).toString("base64"),
+          };
+        } catch (err: any) {
+          console.error("[Compare] ElevenLabs TTS failed:", err?.message);
+          results.elevenlabs = { available: false, error: "ElevenLabs voice unavailable or expired" };
+        }
+      } else {
+        results.elevenlabs = { available: false, error: "No ElevenLabs voice clone found. Please clone your voice with ElevenLabs first." };
+      }
+
+      // Generate with Cartesia if voice exists
+      if (user.cartesiaVoiceId && isCartesiaConfigured()) {
+        try {
+          const audio = await generateAudioSimple(text, user.cartesiaVoiceId, true, "cartesia");
+          results.cartesia = {
+            available: true,
+            audio: Buffer.from(audio).toString("base64"),
+          };
+        } catch (err: any) {
+          console.error("[Compare] Cartesia TTS failed:", err?.message);
+          results.cartesia = { available: false, error: "Cartesia voice unavailable" };
+        }
+      } else {
+        results.cartesia = { available: false, error: "No Cartesia voice clone found. Please clone your voice with Cartesia first." };
+      }
+
+      res.json(results);
+    } catch (error) {
+      console.error("Error comparing TTS providers:", error);
+      res.status(500).json({ error: "Failed to compare TTS providers" });
+    }
+  });
+
   // Get user's voice preferences
   app.get("/api/voice-preferences", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
@@ -1795,6 +1857,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           hasVoiceSample: users.hasVoiceSample,
           voiceId: users.voiceId,
           ttsProvider: users.ttsProvider,
+          elevenLabsVoiceId: users.elevenLabsVoiceId,
+          cartesiaVoiceId: users.cartesiaVoiceId,
         })
         .from(users)
         .where(eq(users.id, req.userId!));
@@ -1810,6 +1874,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         preferredFemaleVoiceId: user.preferredFemaleVoiceId || "hume_lotus",
         hasPersonalVoice: !!user.hasVoiceSample && !!user.voiceId,
         ttsProvider: user.ttsProvider || "elevenlabs",
+        hasElevenLabsVoice: !!user.elevenLabsVoiceId,
+        hasCartesiaVoice: !!user.cartesiaVoiceId,
       });
     } catch (error) {
       console.error("Error fetching voice preferences:", error);

@@ -306,6 +306,23 @@ export default function VoiceSettingsScreen() {
           </View>
           <Feather name="chevron-right" size={20} color={theme.textSecondary} />
         </Pressable>
+
+        <Pressable
+          onPress={() => navigation.navigate("VoiceCompare" as any)}
+          style={[styles.recordButton, { backgroundColor: theme.cardBackground, borderColor: theme.border, marginTop: Spacing.sm }]}
+          testID="button-compare-voices"
+        >
+          <Feather name="bar-chart-2" size={20} color={theme.text} />
+          <View style={styles.recordButtonText}>
+            <ThemedText type="body" style={{ fontWeight: "600" }}>
+              Compare Voice Providers
+            </ThemedText>
+            <ThemedText type="small" style={{ color: theme.textSecondary }}>
+              A/B test ElevenLabs vs Cartesia
+            </ThemedText>
+          </View>
+          <Feather name="chevron-right" size={20} color={theme.textSecondary} />
+        </Pressable>
       </View>
 
       <View style={styles.section}>

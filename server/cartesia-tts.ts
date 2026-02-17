@@ -121,7 +121,7 @@ export function getCartesiaEmotionConfig(moodConfig?: { elevenLabsStability?: nu
   const emotion = emotions.join(" ");
   
   const humeSpeed = moodConfig.humeSpeed ?? 0.92;
-  const speed = 0.7 + (humeSpeed * 0.35);
+  const speed = humeSpeed;
   
   return { emotion, speed: Math.round(speed * 100) / 100 };
 }

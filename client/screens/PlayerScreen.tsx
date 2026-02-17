@@ -180,7 +180,9 @@ export default function PlayerScreen() {
   }, [hideControls]);
 
   useEffect(() => {
-    startAutoHideTimer();
+    if (controlsVisibleRef.current) {
+      startAutoHideTimer();
+    }
     return () => { if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current); };
   }, [startAutoHideTimer]);
 

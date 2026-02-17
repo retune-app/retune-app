@@ -3,6 +3,13 @@
 ## Overview
 Retuned is an application designed to help users reprogram their subconscious minds through personalized audio affirmations. It leverages AI to generate affirmation scripts based on user goals, which can then be played in the user's cloned voice or a selection of curated AI voices. The project aims to provide a powerful tool for personal growth and mental well-being, focusing on subconscious language patterns to maximize effectiveness. Key features include voice cloning, guided breathing exercises, AI-powered mood check-ins with personalized wellness paths, micro-meditations, and a comprehensive ambient sound library.
 
+## Recent Changes
+- **Auth Screen Typography (Feb 2026)**: Replaced Montserrat and Space Grotesk fonts with Nunito (app primary) and Outfit (website brand font) across the login screen. RETUNED wordmark uses Outfit_500Medium (38px, letter-spacing 4.5) to match the website's nav branding. All other auth text uses Nunito variants.
+- **Auth Screen Layout (Feb 2026)**: Removed circular logo image from sign-in screen. Restructured layout from scrollable ScrollView to fixed flex layout — RETUNED branding pinned to top, login card pinned to bottom, meditation background image visible in between. Compressed card padding, font sizes, and spacing for a tighter bottom section.
+- **Auth Button Consistency (Feb 2026)**: Unified Apple and Google sign-in buttons to a fixed height of 48px for visual consistency.
+- **Font Cleanup (Feb 2026)**: Removed unused Poppins, Montserrat, and Space Grotesk font imports from App.tsx. App now loads only Nunito (primary) and Outfit (brand/auth). Removed dead `tagline` and `topTagline` style definitions from AuthScreen.
+- **Landing Page Typography (Feb 2026)**: Implemented hybrid typography system — Cormorant Garamond (serif) for h1/h2 headlines, Outfit (sans-serif) for h3/h4/body/UI elements across all 5 landing pages. Refined nav branding with Outfit 500, 17px, 4.5px letter-spacing.
+
 ## User Preferences
 - Preferred communication style: Simple, everyday language.
 - Design approach: Conservative, iterative improvements over major redesigns.
@@ -10,6 +17,7 @@ Retuned is an application designed to help users reprogram their subconscious mi
 - Gold gradient styling: #E5C95C to #C9A227 (light), #C9A227 to #8A6D1A (dark).
 - Button states on gold: Active = white semi-transparent bg (0.85), Inactive = frosted white bg (0.2) with white text.
 - Pill buttons: Fixed height of 36px for visual consistency.
+- Auth button height: Fixed 48px for Apple and Google sign-in buttons.
 
 ## System Architecture
 
@@ -18,7 +26,7 @@ Retuned is an application designed to help users reprogram their subconscious mi
 - **Backend**: Express 5 (Node.js).
 - **Database**: PostgreSQL with Drizzle ORM.
 - **State Management**: TanStack Query.
-- **Styling**: Custom theme with light/dark mode and Nunito font family.
+- **Styling**: Custom theme with light/dark mode. Nunito font family (primary), Outfit (brand/auth screen). Landing pages use Cormorant Garamond + Outfit.
 - **Animations**: React Native Reanimated.
 - **Audio**: `expo-av` for recording and playback.
 
@@ -56,7 +64,7 @@ The application follows a "Serene Empowerment" aesthetic, utilizing Primary Gold
 - **PostgreSQL**: Primary database for application data.
 
 ### Key npm Packages
-- `expo-av`, `expo-file-system`, `drizzle-orm`, `pg`, `multer`, `elevenlabs`, `hume`, `@cartesia/cartesia-js`, `@tanstack/react-query`, `expo-linear-gradient`.
+- `expo-av`, `expo-file-system`, `drizzle-orm`, `pg`, `multer`, `elevenlabs`, `hume`, `@cartesia/cartesia-js`, `@tanstack/react-query`, `expo-linear-gradient`, `@expo-google-fonts/outfit`.
 
 ### Environment Variables
 - `DATABASE_URL`

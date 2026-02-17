@@ -10,7 +10,7 @@ export function HeaderTitle({ logoOnly = false }: HeaderTitleProps) {
   return (
     <View style={styles.container}>
       <Image
-        source={require("../../assets/images/rewired-logo.png")}
+        source={require("../../assets/images/icon-dark-1024x1024.png")}
         style={logoOnly ? styles.iconLarge : styles.icon}
         resizeMode="contain"
       />

@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { FlatList, View, StyleSheet, RefreshControl, TextInput, Modal, Pressable, Alert, ImageBackground, Platform } from "react-native";
-import Animated, { FadeInUp, FadeIn, useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming, Easing, interpolate } from "react-native-reanimated";
+import Animated, { FadeInUp, useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming, Easing, interpolate } from "react-native-reanimated";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BlurView } from "expo-blur";
 

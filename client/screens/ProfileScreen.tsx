@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import { View, StyleSheet, Pressable, Switch, Text, Modal, ActivityIndicator, ImageBackground, TextInput, Alert, Linking } from "react-native";
-import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 
 const profileBackgroundDark = require("../../assets/images/library-background.png");
 const profileBackgroundLight = require("../../assets/images/library-background-light.png");
@@ -53,7 +52,7 @@ import { ProgressVisualization } from "@/components/ProgressVisualization";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { getAuthToken } from "@/lib/auth-token";
-import { useBackgroundMusic, BACKGROUND_MUSIC_OPTIONS, BackgroundMusicType } from "@/contexts/BackgroundMusicContext";
+import { useBackgroundMusic, BACKGROUND_MUSIC_OPTIONS } from "@/contexts/BackgroundMusicContext";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { getApiUrl, apiRequest } from "@/lib/query-client";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";

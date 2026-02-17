@@ -10,7 +10,6 @@ import { Feather, Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 
 import { ThemedText } from "@/components/ThemedText";
-import { Card } from "@/components/Card";
 import { useTheme } from "@/hooks/useTheme";
 import { getAuthToken } from "@/lib/auth-token";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";

@@ -33,7 +33,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { useQuery } from "@tanstack/react-query";
-import { apiRequest, getApiUrl } from "@/lib/query-client";
+import { getApiUrl } from "@/lib/query-client";
 import { getAuthToken } from "@/lib/auth-token";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -42,7 +42,7 @@ import {
   useBackgroundMusic,
   BackgroundMusicOption,
 } from "@/contexts/BackgroundMusicContext";
-import { RSVPDisplay, WordTiming } from "@/components/RSVPDisplay";
+import { RSVPDisplay } from "@/components/RSVPDisplay";
 import { useAudio } from "@/contexts/AudioContext";
 
 const ACCENT_GOLD = "#C9A227";

@@ -818,7 +818,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
           }),
         });
       } catch (e) {
-        console.log("Failed to record journey completion:", e);
+        console.warn("Failed to record journey completion:", e);
       }
 
       await stopBackgroundMusic();

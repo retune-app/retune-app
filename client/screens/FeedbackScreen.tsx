@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, StyleSheet, Pressable, TextInput, ActivityIndicator, ScrollView, Platform } from "react-native";
+import { View, StyleSheet, Pressable, TextInput, ActivityIndicator, ScrollView } from "react-native";
 import Constants from "expo-constants";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";

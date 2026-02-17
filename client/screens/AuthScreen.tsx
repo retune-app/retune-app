@@ -362,7 +362,7 @@ export function AuthScreen() {
             <View style={styles.logoContainer}>
               <View style={styles.logoWrapper}>
                 <Image
-                  source={require("../../assets/images/rewired-logo.png")}
+                  source={require("../../assets/images/icon.png")}
                   style={styles.logoImage}
                   resizeMode="contain"
                 />

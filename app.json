@@ -5,7 +5,7 @@
     "version": "1.7.2",
     "runtimeVersion": "exposdk:54.0.0",
     "orientation": "default",
-    "icon": "./assets/images/rewired-logo-dark.png",
+    "icon": "./assets/images/rewired-logo.png",
     "scheme": "subconsciousrewire",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -41,7 +41,7 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#0F1C3F",
-        "foregroundImage": "./assets/images/rewired-logo-dark.png"
+        "foregroundImage": "./assets/images/rewired-logo.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -56,12 +56,12 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/rewired-logo-dark.png",
+          "image": "./assets/images/rewired-logo.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#0F1C3F",
+          "backgroundColor": "#E8EDF2",
           "dark": {
-            "backgroundColor": "#0F1C3F"
+            "backgroundColor": "#1A1A2E"
           }
         }
       ],

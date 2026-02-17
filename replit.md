@@ -27,7 +27,7 @@ The application follows a "Serene Empowerment" aesthetic, utilizing Primary Gold
 
 ### Technical Implementations
 - **Personalized Affirmations**: AI generates scripts incorporating Subconscious Language Patterns, organized by 5 Life Pillars (Mind, Body, Spirit, Connection, Achievement), each with distinct Text-to-Speech (TTS) treatments for optimal delivery.
-- **Voice Management**: A hybrid TTS system uses Hume AI for stock voices, ElevenLabs or Cartesia for cloned voices (A/B test via `ttsProvider` field in users table), and OpenAI as a fallback. An automated voice rotation system manages inactive ElevenLabs cloned voices (not needed for Cartesia). Journey voice consistency ensures a single voice is used across all journey steps. Admin can switch a user's TTS provider via `PATCH /api/admin/users/:userId/tts-provider`.
+- **Voice Management**: A hybrid TTS system uses Hume AI for stock voices, ElevenLabs for cloned voices (Inner Voice), and OpenAI as a fallback. An automated voice rotation system manages inactive ElevenLabs cloned voices. Journey voice consistency ensures a single voice is used across all journey steps. **Note**: Cartesia integration code is preserved in `server/cartesia-tts.ts` but is fully disabled — no Cartesia API calls are made during normal operation. The `ttsProvider` field in the users table and admin provider-switch endpoint exist but are inactive. Cartesia can be re-enabled for A/B testing at a later date.
 - **Global Audio Player**: Ensures consistent audio playback across the application.
 - **RSVP Mode**: Displays word-synced text for visual reinforcement during affirmations.
 - **Breathing Mode**: Offers science-backed techniques with animated visualizations, customizable durations, and ambient soundscapes, including mood-matched recommendations. Controls (Duration/Audio) are grouped in a themed card with technique-colored border and subtle shadow.
@@ -50,7 +50,7 @@ The application follows a "Serene Empowerment" aesthetic, utilizing Primary Gold
 - **OpenAI API**: Affirmation script generation, micro-meditation script generation, daily greeting generation, and TTS fallback.
 - **Hume AI API**: Primary TTS for stock AI voices (with word-level timestamps) and micro-meditations.
 - **ElevenLabs API**: Voice cloning and TTS for personal cloned voices.
-- **Cartesia API**: Alternative voice cloning and TTS provider (A/B test). Uses Sonic-3 model, embedding-based cloning (3-second samples), no slot limits. Module: `server/cartesia-tts.ts`.
+- **Cartesia API**: *Currently disabled*. Code preserved in `server/cartesia-tts.ts` for future A/B testing. Uses Sonic-3 model, embedding-based cloning (3-second samples), no slot limits.
 
 ### Database
 - **PostgreSQL**: Primary database for application data.

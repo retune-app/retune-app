@@ -815,11 +815,11 @@ async function generateAudio(
 ): Promise<{ audio: ArrayBuffer; duration: number; wordTimings: WordTiming[] }> {
   if (isPersonalVoice) {
     try {
-      const result = await elevenLabsTTS(script, voiceId, moodConfig ? {
-        stability: moodConfig.elevenLabsStability,
-        style: moodConfig.elevenLabsStyle,
-        pauseSeconds: moodConfig.pauseSeconds,
-      } : undefined);
+      const result = await elevenLabsTTS(script, voiceId, {
+        stability: 0.6,
+        style: 0.25,
+        pauseSeconds: 1.8,
+      });
       return result;
     } catch (elevenLabsError: any) {
       const isQuotaExhausted = elevenLabsError?.message?.includes("quota_exceeded") ||

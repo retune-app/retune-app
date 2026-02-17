@@ -145,7 +145,7 @@ export function GuidedMomentPlayer({ mood, timeOfDay, onClose, visible }: Guided
       const uri = `data:audio/mp3;base64,${moment.audioBase64}`;
       const { sound } = await Audio.Sound.createAsync(
         { uri },
-        { shouldPlay: true, progressUpdateIntervalMillis: 200 },
+        { shouldPlay: true, progressUpdateIntervalMillis: 50 },
         (status) => {
           if (status.isLoaded) {
             setCurrentPosition(status.positionMillis || 0);
@@ -194,6 +194,9 @@ export function GuidedMomentPlayer({ mood, timeOfDay, onClose, visible }: Guided
   }, [cleanup, onClose]);
 
   const getVisibleWords = useCallback(() => {
+    const syncOffset = 200;
+    const adjustedPosition = currentPosition + syncOffset;
+
     if (!moment?.wordTimings || moment.wordTimings.length === 0) {
       if (!moment?.script) return [];
       const words = moment.script.split(/\s+/);
@@ -201,13 +204,13 @@ export function GuidedMomentPlayer({ mood, timeOfDay, onClose, visible }: Guided
       const avgDuration = totalDuration / words.length;
       return words.map((word, i) => ({
         word,
-        visible: currentPosition >= i * avgDuration,
+        visible: adjustedPosition >= i * avgDuration,
       }));
     }
 
     return moment.wordTimings.map((wt) => ({
       word: wt.word,
-      visible: currentPosition >= wt.startMs,
+      visible: adjustedPosition >= wt.startMs,
     }));
   }, [moment, currentPosition]);
 

@@ -1,5 +1,44 @@
 # RETUNED Changelog
 
+## Version 1.7.2 (Build 3) — February 17, 2026
+
+### Inner Voice RSVP Sync Fix
+- Fixed cumulative timing drift in Inner Voice (ElevenLabs) RSVP word display.
+- Root cause: ffmpeg stream copy mode (`-c copy`) could only split MP3 at frame boundaries (~26ms per frame), causing ~130-150ms cumulative error across 5-6 sentences.
+- Fix: Changed from stream copy to re-encoding segments with `libmp3lame -q:a 2 -ar 44100` for sample-accurate MP3 splitting.
+- AI Voice (Hume) was unaffected — Hume handles pauses natively via `trailing_silence` parameter without ffmpeg post-processing.
+
+### Inner Voice Tone Standardization
+- All Inner Voice affirmations now use Spirit pillar settings (stability 0.6, style 0.25, pauseSeconds 1.8s) regardless of pillar.
+- Provides a consistent, soft, contemplative, and spacious delivery across all affirmation categories.
+- Previous pillar-specific ElevenLabs settings were inconsistent — some pillars produced rushed or unstable delivery with the user's cloned voice.
+- AI Voice (Hume) pillar-specific configs remain unchanged and active.
+
+### RSVP Baseline Restored
+- Reverted experimental RSVP changes (word timing rescaling and reduced offset) that degraded sync performance.
+- Restored pre-Cartesia baseline: 200ms forward offset scaled by playback speed, 50ms audio progress updates, ORP highlighting enabled.
+
+### TTS/RSVP Reference Documentation
+- Created comprehensive reference document: `docs/voice-cloning/10-tts-rsvp-reference.md`.
+- Documents all current ElevenLabs and Hume TTS settings, pillar voice configs, meditation mood configs, RSVP display parameters, ORP algorithm, word timing pipelines, voice catalogs, and quick-restore commands.
+
+### Code Cleanup
+- Removed verbose debug `console.log` statements from ElevenLabs alignment parsing (9 removed, 4 operational logs retained).
+- Changed unrecognized alignment format log from `console.log` to `console.warn` for better visibility.
+- All Cartesia code, documentation, and database fields preserved for future re-activation.
+
+### Files Changed
+- `server/replit_integrations/elevenlabs/client.ts` — ffmpeg re-encode fix, debug log cleanup
+- `server/routes.ts` — Inner Voice fixed to Spirit pillar settings for all pillars
+- `client/screens/PlayerScreen.tsx` — RSVP offset restored to 200ms baseline
+- `client/components/RSVPDisplay.tsx` — ORP highlighting baseline confirmed
+- `client/contexts/AudioContext.tsx` — 50ms progress update interval confirmed
+- `docs/voice-cloning/10-tts-rsvp-reference.md` — New comprehensive TTS/RSVP reference
+- `CHANGELOG.md` — This entry
+- `replit.md` — Updated to reflect current state
+
+---
+
 ## Version 1.7.2 (Build 2) — February 17, 2026
 
 ### Cartesia A/B Test Paused

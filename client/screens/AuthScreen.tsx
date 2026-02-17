@@ -546,10 +546,10 @@ const styles = StyleSheet.create({
     borderTopColor: "rgba(255,255,255,0.2)",
   },
   brandName: {
-    fontFamily: "Nunito_700Bold",
+    fontFamily: "Outfit_500Medium",
     fontSize: 38,
     color: authColors.white,
-    letterSpacing: 5,
+    letterSpacing: 4.5,
     textShadowColor: "rgba(201,162,39,0.4)",
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 20,

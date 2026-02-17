@@ -174,6 +174,7 @@ export default function BreathingScreen() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const sessionCompletedNaturally = useRef(false);
   const affirmationSoundRef = useRef<Audio.Sound | null>(null);
+  const breathingReplayTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch affirmations for background display
   const { data: affirmations = [] } = useQuery<Affirmation[]>({
@@ -265,6 +266,10 @@ export default function BreathingScreen() {
       if (isPlaying && isMusicPlaying) {
         stopBackgroundMusic();
       }
+      if (breathingReplayTimerRef.current) {
+        clearTimeout(breathingReplayTimerRef.current);
+        breathingReplayTimerRef.current = null;
+      }
       if (affirmationSoundRef.current) {
         affirmationSoundRef.current.unloadAsync();
       }
@@ -304,16 +309,32 @@ export default function BreathingScreen() {
         { uri: audioUri },
         { 
           shouldPlay: true, 
-          isLooping: true,
+          isLooping: false,
           volume: voiceVolume,
         }
       );
       
       sound.setOnPlaybackStatusUpdate((status) => {
-        if ('error' in status && status.error) {
-          console.warn('Affirmation playback issue, will retry:', status.error);
-          sound.unloadAsync().catch(() => {});
-          affirmationSoundRef.current = null;
+        if (!('isLoaded' in status) || !status.isLoaded) {
+          if ('error' in status && status.error) {
+            console.warn('Affirmation playback issue, will retry:', status.error);
+            sound.unloadAsync().catch(() => {});
+            affirmationSoundRef.current = null;
+          }
+          return;
+        }
+        if (status.didJustFinish) {
+          if (breathingReplayTimerRef.current) clearTimeout(breathingReplayTimerRef.current);
+          breathingReplayTimerRef.current = setTimeout(async () => {
+            breathingReplayTimerRef.current = null;
+            try {
+              if (!affirmationSoundRef.current) return;
+              await affirmationSoundRef.current.setPositionAsync(0);
+              await affirmationSoundRef.current.playAsync();
+            } catch (e) {
+              console.warn('Error replaying breathing affirmation:', e);
+            }
+          }, 3000);
         }
       });
       
@@ -531,6 +552,10 @@ export default function BreathingScreen() {
   ), [showSoundSwitcher, musicEnabled, volume, selectedMusic, categories, insets.bottom, handleSwitchSoundDuringPlayback, renderSoundTile, renderNoSoundTile, setVolume, voiceEnabled, soundSheetAnimatedStyle, soundSheetPanResponder]);
 
   const stopAffirmationLoop = useCallback(async () => {
+    if (breathingReplayTimerRef.current) {
+      clearTimeout(breathingReplayTimerRef.current);
+      breathingReplayTimerRef.current = null;
+    }
     if (affirmationSoundRef.current) {
       try {
         await affirmationSoundRef.current.stopAsync();

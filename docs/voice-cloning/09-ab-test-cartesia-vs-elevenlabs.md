@@ -1,7 +1,8 @@
 # A/B Test: Cartesia Sonic vs ElevenLabs for Voice Cloning & TTS
 
 > Date: February 2026
-> Status: Planning
+> Status: **PAUSED** — Cartesia disabled in v1.7.2+. ElevenLabs is the sole active provider. Code preserved for future re-activation.
+> Last updated: February 17, 2026
 
 ---
 
@@ -296,6 +297,48 @@ If Cartesia doesn't work out:
 2. Users would need to re-clone with ElevenLabs (their Cartesia voiceId won't work)
 3. Remove Cartesia module and package
 4. No schema rollback needed (the `ttsProvider` field can stay for future experiments)
+
+---
+
+## Current Status: PAUSED (February 17, 2026)
+
+### What was implemented
+- `server/cartesia-tts.ts` — Full Cartesia service module with voice cloning, TTS (with emotional tone mapping), and voice deletion
+- `ttsProvider` and `cartesiaVoiceId` fields in the users table schema
+- Dual-clone flow (recording creates both ElevenLabs and Cartesia clones simultaneously)
+- Provider routing in `resolvePersonalVoiceId`, `generateAudio`, and `generateAudioSimple`
+- Voice Provider (BETA) toggle in VoiceSettingsScreen (Type A / Type B buttons)
+- Compare TTS endpoint (`POST /api/tts/compare`)
+- Admin provider switch endpoint (`PATCH /api/admin/users/:userId/tts-provider`)
+- Contextual emotion mapping (`getCartesiaEmotionConfig`) for all 11 meditation moods and 5 affirmation pillars
+
+### Why paused
+- RSVP word timing sync was not satisfactory with Cartesia's estimated timings vs ElevenLabs' real alignment data
+- Decision to simplify to one provider while scaling up, then revisit Cartesia later
+
+### What was disabled (but code preserved)
+- Voice cloning only creates ElevenLabs clone (Cartesia secondary clone removed)
+- All TTS routes force ElevenLabs (ttsProvider field ignored)
+- Voice Provider toggle removed from VoiceSettingsScreen
+- Compare TTS endpoint returns 410 Gone
+- Admin provider switch returns 410 Gone
+- Voice preferences API always returns `ttsProvider: "elevenlabs"`, `hasCartesiaVoice: false`
+
+### What's preserved for re-activation
+- `server/cartesia-tts.ts` — Untouched, all functions remain (`cartesiaCloneVoice`, `cartesiaTTS`, `cartesiaSimpleTTS`, `getCartesiaEmotionConfig`, `cartesiaDeleteVoice`)
+- Import of cartesia-tts in routes.ts (compiles but no functions are called)
+- Database fields: `ttsProvider` and `cartesiaVoiceId` in users table schema
+- `@cartesia/cartesia-js` npm package remains installed
+- `CARTESIA_API_KEY` secret remains configured
+- Startup plan subscription ($39/mo) continues for future testing
+
+### To re-enable
+1. Restore provider routing in `resolvePersonalVoiceId` (check ttsProvider field again)
+2. Restore Cartesia branches in `generateAudioSimple` and `generateAudio`
+3. Restore dual-clone or Cartesia-only clone in the voice cloning endpoint
+4. Re-enable the Compare TTS and admin provider-switch endpoints
+5. Add Voice Provider toggle back to VoiceSettingsScreen
+6. Address RSVP timing sync (improve `estimateWordTimings` or find Cartesia word-level timestamp support)
 
 ---
 

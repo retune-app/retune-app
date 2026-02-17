@@ -1,5 +1,50 @@
 # RETUNED Changelog
 
+## Version 1.7.2 (Build 2) — February 17, 2026
+
+### Cartesia A/B Test Paused
+- Disabled Cartesia as a TTS/voice cloning provider. ElevenLabs is now the sole active Inner Voice provider.
+- All code preserved in `server/cartesia-tts.ts` for future re-activation (functions, emotion mapping, SDK integration untouched).
+- Database fields (`ttsProvider`, `cartesiaVoiceId`) and `@cartesia/cartesia-js` package remain in place.
+- `CARTESIA_API_KEY` secret remains configured; Startup plan subscription continues.
+
+### Voice Cloning Simplified
+- Voice cloning now creates only an ElevenLabs clone (removed dual-clone flow that created both ElevenLabs and Cartesia clones simultaneously).
+- Removed secondary provider clone attempt and associated error handling.
+- Minimum recording duration always 20 seconds (previously 3 seconds for Cartesia).
+
+### TTS Provider Routing Disabled
+- `resolvePersonalVoiceId` always returns ElevenLabs voice ID, ignoring `ttsProvider` field.
+- `generateAudio` and `generateAudioSimple` always use ElevenLabs for personal voices (Cartesia branches bypassed).
+- Voice preferences API always returns `ttsProvider: "elevenlabs"` and `hasCartesiaVoice: false`.
+- Provider switching via voice preferences update is blocked.
+
+### Disabled Endpoints
+- `POST /api/tts/compare` — Returns 410 Gone (was used for side-by-side provider comparison).
+- `PATCH /api/admin/users/:userId/tts-provider` — Returns 410 Gone (was used to switch a user's provider).
+
+### UI Cleanup
+- Removed "VOICE PROVIDER (BETA)" section from Voice Settings screen (Type A / Type B toggle buttons).
+- Removed provider-related styles (`providerButton`, `providerLabel`, `providerCheck`, etc.).
+- Cleaned up `ttsProvider` and `hasCartesiaVoice` from VoiceSettingsScreen type definitions.
+
+### RSVP Sync Improvements
+- Improved Cartesia word timing estimation with sentence-boundary pauses and punctuation-aware duration weighting (preserved in `server/cartesia-tts.ts` for future use).
+- GuidedMomentPlayer (micro-meditations) now uses 50ms progress update interval (was 200ms) and 200ms forward sync offset for better word-audio alignment.
+
+### Files Changed
+- `server/routes.ts` — Disabled Cartesia in cloning, TTS routing, preferences, compare, and admin endpoints
+- `client/screens/VoiceSettingsScreen.tsx` — Removed Voice Provider (BETA) section and related styles
+- `server/cartesia-tts.ts` — Improved `estimateWordTimings` (code preserved, not called)
+- `client/components/GuidedMomentPlayer.tsx` — Faster progress updates, sync offset
+- `docs/voice-cloning/09-ab-test-cartesia-vs-elevenlabs.md` — Status updated to PAUSED with full re-activation guide
+- `docs/voice-cloning/00-voice-ai-architecture.md` — Updated to reflect ElevenLabs-only active state
+- `docs/voice-ai-architecture.md` — Updated to reflect ElevenLabs-only active state
+- `CHANGELOG.md` — This entry
+- `replit.md` — Updated Voice Management and Cartesia API sections
+
+---
+
 ## Version 1.7.2 (Build 1) — February 16, 2026
 
 ### Create Screen Redesign

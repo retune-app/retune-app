@@ -1,6 +1,6 @@
 # Retuned — Voice & AI Architecture
 
-*Last updated: February 2026 | v1.3 Build 3*
+*Last updated: February 17, 2026 | v1.7.2 Build 2*
 
 ---
 
@@ -177,6 +177,20 @@ User plays an affirmation
 | `ELEVENLABS_API_KEY` | ElevenLabs voice cloning + TTS |
 | `OPENAI_API_KEY` | OpenAI fallback TTS |
 | `AI_INTEGRATIONS_OPENAI_API_KEY` | OpenAI script generation + daily greetings |
+
+---
+
+## Cartesia (Disabled)
+
+> **Status**: Code preserved, not active. See `docs/voice-cloning/09-ab-test-cartesia-vs-elevenlabs.md` for details.
+
+Cartesia Sonic-3 was implemented as an alternative voice cloning and TTS provider for A/B testing. The integration is fully built in `server/cartesia-tts.ts` (cloning, TTS with emotional tone mapping, voice deletion) but all API calls are bypassed in `server/routes.ts`. No Cartesia API calls occur during normal operation.
+
+Preserved assets:
+- `server/cartesia-tts.ts` — Full service module
+- `CARTESIA_API_KEY` — Secret configured
+- `@cartesia/cartesia-js` — npm package installed
+- `ttsProvider` / `cartesiaVoiceId` — Database fields in users table
 
 ---
 

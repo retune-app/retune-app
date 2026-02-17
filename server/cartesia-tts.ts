@@ -110,7 +110,7 @@ export async function cartesiaTTS(
       bitRate: 192000,
     },
     generationConfig: {
-      speed: 1.3,
+      speed: 1.0,
       emotion: "positivity:highest",
     },
   });
@@ -156,7 +156,7 @@ export async function cartesiaSimpleTTS(
       bitRate: 192000,
     },
     generationConfig: {
-      speed: 1.3,
+      speed: 1.0,
       emotion: "positivity:highest",
     },
   });

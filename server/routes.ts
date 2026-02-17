@@ -19,7 +19,7 @@ import {
   deleteVoice,
   type WordTiming,
 } from "./replit_integrations/elevenlabs/client";
-import { cartesiaCloneVoice, cartesiaTTS, cartesiaSimpleTTS, isCartesiaConfigured } from "./cartesia-tts";
+import { cartesiaCloneVoice, cartesiaTTS, cartesiaSimpleTTS, isCartesiaConfigured, getCartesiaEmotionConfig } from "./cartesia-tts";
 import { humeTextToSpeech, humeSimpleTTS, type WordTiming as HumeWordTiming } from "./hume-client";
 import { findInactiveVoices, runVoiceRotation, getVoiceSlotStats, checkVoiceSlotWarning, freeVoiceSlotForNewClone } from "./voice-rotation";
 import { sendVoiceExpiryWarnings } from "./push-notifications";
@@ -826,7 +826,7 @@ async function generateAudio(
   if (isPersonalVoice) {
     if (ttsProvider === "cartesia") {
       try {
-        const result = await cartesiaTTS(script, voiceId!);
+        const result = await cartesiaTTS(script, voiceId!, moodConfig ? getCartesiaEmotionConfig(moodConfig) : undefined);
         return result;
       } catch (cartesiaError: any) {
         console.error("[Cartesia] TTS failed for personal voice:", cartesiaError?.message || cartesiaError);

@@ -4,6 +4,11 @@ import path from "path";
 import { Readable } from "stream";
 import type { WordTiming } from "./replit_integrations/elevenlabs/client";
 
+export interface CartesiaEmotionConfig {
+  emotion: string;
+  speed: number;
+}
+
 const CARTESIA_MODEL = "sonic-3-latest";
 
 let cartesiaClient: CartesiaClient | null = null;
@@ -88,10 +93,43 @@ export async function cartesiaCloneVoice(
   }
 }
 
+export function getCartesiaEmotionConfig(moodConfig?: { elevenLabsStability?: number; elevenLabsStyle?: number; humeSpeed?: number }): CartesiaEmotionConfig {
+  if (!moodConfig) {
+    return { emotion: "positivity:high", speed: 1.0 };
+  }
+  
+  const stability = moodConfig.elevenLabsStability ?? 0.5;
+  const style = moodConfig.elevenLabsStyle ?? 0.3;
+  
+  const expressiveness = style + (1 - stability) * 0.5;
+  
+  const emotions: string[] = [];
+  
+  if (expressiveness >= 0.7) {
+    emotions.push("positivity:highest");
+    if (style >= 0.4) emotions.push("curiosity:high");
+  } else if (expressiveness >= 0.5) {
+    emotions.push("positivity:high");
+    if (style >= 0.3) emotions.push("curiosity:medium");
+  } else if (expressiveness >= 0.35) {
+    emotions.push("positivity:medium");
+    emotions.push("curiosity:low");
+  } else {
+    emotions.push("positivity:low");
+  }
+  
+  const emotion = emotions.join(" ");
+  
+  const humeSpeed = moodConfig.humeSpeed ?? 0.92;
+  const speed = 0.7 + (humeSpeed * 0.35);
+  
+  return { emotion, speed: Math.round(speed * 100) / 100 };
+}
+
 export async function cartesiaTTS(
   text: string,
   voiceId: string,
-  voiceSettingsOverride?: { stability?: number; style?: number; pauseSeconds?: number }
+  emotionConfig?: CartesiaEmotionConfig
 ): Promise<{ audio: ArrayBuffer; duration: number; wordTimings: WordTiming[] }> {
   const client = getClient();
   const startTime = Date.now();
@@ -110,8 +148,8 @@ export async function cartesiaTTS(
       bitRate: 192000,
     },
     generationConfig: {
-      speed: 1.0,
-      emotion: "positivity:highest",
+      speed: emotionConfig?.speed ?? 1.0,
+      emotion: emotionConfig?.emotion ?? "positivity:high",
     },
   });
 
@@ -137,7 +175,8 @@ export async function cartesiaTTS(
 
 export async function cartesiaSimpleTTS(
   text: string,
-  voiceId: string
+  voiceId: string,
+  emotionConfig?: CartesiaEmotionConfig
 ): Promise<ArrayBuffer> {
   const client = getClient();
   const startTime = Date.now();
@@ -156,8 +195,8 @@ export async function cartesiaSimpleTTS(
       bitRate: 192000,
     },
     generationConfig: {
-      speed: 1.0,
-      emotion: "positivity:highest",
+      speed: emotionConfig?.speed ?? 1.0,
+      emotion: emotionConfig?.emotion ?? "positivity:high",
     },
   });
 

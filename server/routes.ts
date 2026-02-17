@@ -1576,11 +1576,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .set({ status: "failed", audioUrl: null })
             .where(eq(voiceSamples.id, sample.id));
 
-          const elevenLabsDetail = cloneError?.elevenLabsDetail || cloneError?.message || "";
+          const provider = user.ttsProvider || 'elevenlabs';
+          const errorDetail = cloneError?.elevenLabsDetail || cloneError?.cartesiaDetail || cloneError?.message || "";
           const statusCode = cloneError?.statusCode || 500;
           let userMessage = "Voice cloning failed. Please try again.";
 
-          if (elevenLabsDetail.toLowerCase().includes("maximum") || elevenLabsDetail.toLowerCase().includes("custom voices") || elevenLabsDetail.toLowerCase().includes("voice limit")) {
+          if (provider === 'elevenlabs' && (errorDetail.toLowerCase().includes("maximum") || errorDetail.toLowerCase().includes("custom voices") || errorDetail.toLowerCase().includes("voice limit"))) {
             console.warn("[Voice Slots] ElevenLabs quota hit. Attempting queue-based slot recovery...");
             
             try {
@@ -1621,9 +1622,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             userMessage = "Voice cloning service is temporarily unavailable. Please try again later.";
           } else if (statusCode === 429) {
             userMessage = "Voice cloning service is busy. Please wait a few minutes and try again.";
-          } else if (elevenLabsDetail.toLowerCase().includes("too short") || elevenLabsDetail.toLowerCase().includes("duration")) {
-            userMessage = "Your recording was too short. Please record at least 20 seconds of clear speech.";
-          } else if (elevenLabsDetail.toLowerCase().includes("audio") || elevenLabsDetail.toLowerCase().includes("format")) {
+          } else if (errorDetail.toLowerCase().includes("too short") || errorDetail.toLowerCase().includes("duration")) {
+            const minDuration = provider === 'cartesia' ? '3' : '20';
+            userMessage = `Your recording was too short. Please record at least ${minDuration} seconds of clear speech.`;
+          } else if (errorDetail.toLowerCase().includes("audio") || errorDetail.toLowerCase().includes("format") || errorDetail.toLowerCase().includes("processed")) {
             userMessage = "There was a problem with the audio format. Please try recording again.";
           } else {
             userMessage = "Voice cloning failed. Please try again later.";

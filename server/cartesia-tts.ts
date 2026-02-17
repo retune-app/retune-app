@@ -54,24 +54,38 @@ export async function cartesiaCloneVoice(
   const startTime = Date.now();
 
   const fileBuffer = fs.readFileSync(audioFilePath);
+  const ext = path.extname(audioFilePath).toLowerCase();
+  const mimeType = ext === '.m4a' ? 'audio/mp4' : ext === '.wav' ? 'audio/wav' : ext === '.mp3' ? 'audio/mpeg' : 'audio/mp4';
 
-  const blob = new Blob([fileBuffer]) as any;
+  console.log(`[Cartesia] Cloning voice from ${ext} file (${fileBuffer.length} bytes, mime: ${mimeType})`);
 
-  const clonedVoice = await client.voices.clone(
-    blob,
-    {
-      name,
-      language: "en",
-      mode: "similarity",
-      enhance: false,
-      description: "User voice for personalized affirmations",
-    }
-  );
+  const blob = new Blob([fileBuffer], { type: mimeType }) as any;
 
-  const duration = Date.now() - startTime;
-  console.log(`[Cartesia] Voice cloned in ${duration}ms: ${clonedVoice.id}`);
+  try {
+    const clonedVoice = await client.voices.clone(
+      blob,
+      {
+        name,
+        language: "en",
+        mode: "similarity",
+        enhance: false,
+        description: "User voice for personalized affirmations",
+      }
+    );
 
-  return clonedVoice.id;
+    const duration = Date.now() - startTime;
+    console.log(`[Cartesia] Voice cloned in ${duration}ms: ${clonedVoice.id}`);
+
+    return clonedVoice.id;
+  } catch (error: any) {
+    const statusCode = error?.statusCode || 500;
+    const rawBody = error?.body?.error?.rawBody || error?.message || "Unknown error";
+    console.error(`[Cartesia] Clone failed (${statusCode}): ${rawBody}`);
+    const err: any = new Error(rawBody);
+    err.statusCode = statusCode;
+    err.cartesiaDetail = rawBody;
+    throw err;
+  }
 }
 
 export async function cartesiaTTS(

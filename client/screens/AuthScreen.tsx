@@ -588,10 +588,10 @@ const styles = StyleSheet.create({
     borderTopColor: "rgba(255,255,255,0.2)",
   },
   brandName: {
-    fontFamily: "Montserrat_600SemiBold",
-    fontSize: 44,
+    fontFamily: "Nunito_700Bold",
+    fontSize: 38,
     color: authColors.white,
-    letterSpacing: 6,
+    letterSpacing: 5,
     textShadowColor: "rgba(201,162,39,0.4)",
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 20,
@@ -608,7 +608,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
   },
   brandSubtitle: {
-    fontFamily: "SpaceGrotesk_500Medium",
+    fontFamily: "Nunito_400Regular",
     fontSize: 14,
     color: "#C9A227",
     textAlign: "center",
@@ -625,7 +625,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   topTagline: {
-    fontFamily: "SpaceGrotesk_500Medium",
+    fontFamily: "Nunito_600SemiBold",
     fontSize: 13,
     color: authColors.goldLight,
     textAlign: "center",
@@ -654,7 +654,7 @@ const styles = StyleSheet.create({
     borderTopColor: "rgba(255,255,255,0.2)",
   },
   welcomeTitle: {
-    fontFamily: "SpaceGrotesk_600SemiBold",
+    fontFamily: "Nunito_700Bold",
     fontSize: 24,
     color: authColors.textPrimary,
     marginBottom: Spacing.xs,
@@ -662,7 +662,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   welcomeSubtitle: {
-    fontFamily: "SpaceGrotesk_400Regular",
+    fontFamily: "Nunito_400Regular",
     fontSize: 14,
     color: authColors.textSecondary,
     marginBottom: Spacing.md,

@@ -1,5 +1,60 @@
 # RETUNED Changelog
 
+## Version 1.7.3 — February 18, 2026
+
+### Auth Screen Redesign
+- Replaced circular logo image with text-only RETUNED wordmark using Outfit_500Medium (38px, letter-spacing 4.5) matching website nav branding.
+- Restructured layout from scrollable ScrollView to fixed flex layout — RETUNED branding pinned to top, login card pinned to bottom, meditation background image visible in between.
+- Compressed card padding, font sizes, and spacing for a tighter bottom section.
+- Unified Apple and Google sign-in button heights to fixed 48px for visual consistency.
+- All auth text uses Nunito variants (app primary font).
+
+### Landing Page Typography
+- Implemented hybrid typography system across all 5 landing pages.
+- Cormorant Garamond (serif) for h1/h2 headlines.
+- Outfit (sans-serif) for h3/h4/body/UI elements.
+- Refined nav branding with Outfit 500, 17px, 4.5px letter-spacing.
+
+### Font Cleanup
+- Removed unused Poppins, Montserrat, and Space Grotesk font imports from App.tsx.
+- App now loads only Nunito (primary) and Outfit (brand/auth).
+- Removed dead `tagline` and `topTagline` style definitions from AuthScreen.
+
+### Logo Update
+- Replaced old logo assets with new brand logo at `assets/images/logo.png`.
+- Removed deprecated `rewired-logo.png` and `docs/retune-logo.png`.
+
+### Code Optimization
+- Removed 43 debug `console.log` statements from server code (ElevenLabs client, auth.ts, Hume client). Retained security and operational logs.
+- Removed 14 unused imports across 11 client files (AuthScreen, FeedbackScreen, GuidedMomentScreen, HomeScreen, OnboardingScreen, ProfileScreen, RemindersScreen, SoundLibraryScreen, VoiceSettingsScreen, AmbientSoundMixer, MoodJourneyScreen).
+
+### Routes Modularization
+- Split monolithic `server/routes.ts` (5,143 lines, 85 endpoints) into focused modules:
+  - `server/routes/github-routes.ts` — 16 GitHub integration endpoints
+  - `server/routes/breathing-routes.ts` — 4 breathing session endpoints + wisdom cache
+  - `server/routes/reminder-routes.ts` — 7 reminder + support/feedback endpoints
+  - `server/routes/admin-routes.ts` — 7 admin/voice management endpoints
+- Core `routes.ts` reduced to ~4,050 lines with 51 tightly-coupled core routes (affirmations, voice, mood, user management).
+
+### Files Changed
+- `client/screens/AuthScreen.tsx` — Layout and typography redesign
+- `client/App.tsx` — Font cleanup (removed Poppins, Montserrat, Space Grotesk)
+- `server/templates/landing-page.html` — Hybrid typography system
+- `assets/images/logo.png` — New brand logo
+- `server/replit_integrations/elevenlabs/client.ts` — Debug log removal
+- `server/auth.ts` — Debug log removal
+- `server/hume-client.ts` — Debug log removal
+- 11 client files — Unused import cleanup
+- `server/routes.ts` — Modularized into 4 route modules
+- `server/routes/github-routes.ts` — New module
+- `server/routes/breathing-routes.ts` — New module
+- `server/routes/reminder-routes.ts` — New module
+- `server/routes/admin-routes.ts` — New module
+- `CHANGELOG.md` — This entry
+- `replit.md` — Updated to reflect current state
+
+---
+
 ## Version 1.7.2 (Build 3) — February 17, 2026
 
 ### Inner Voice RSVP Sync Fix

@@ -1,17 +1,24 @@
 {
   "expo": {
-    "name": "Retune",
+    "name": "Retuned",
     "slug": "subconscious-rewire",
-    "version": "1.0.0",
+    "version": "1.7.2",
+    "runtimeVersion": "exposdk:54.0.0",
     "orientation": "default",
-    "icon": "./assets/images/rewired-logo.png",
+    "icon": "./assets/images/icon-light-1024x1024.png",
     "scheme": "subconsciousrewire",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "updates": {
+      "url": "https://retuned.app/manifest",
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 5000
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.subconsciousrewire.app",
-      "buildNumber": "1",
+      "buildNumber": "4",
       "usesAppleSignIn": true,
       "infoPlist": {
         "NSMicrophoneUsageDescription": "This app needs access to your microphone to record your voice for personalized affirmations.",
@@ -34,7 +41,7 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#0F1C3F",
-        "foregroundImage": "./assets/images/rewired-logo.png"
+        "foregroundImage": "./assets/images/icon-light-1024x1024.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -43,13 +50,13 @@
     },
     "web": {
       "output": "single",
-      "favicon": "./assets/images/rewired-logo.png"
+      "favicon": "./assets/images/icon-light-1024x1024.png"
     },
     "plugins": [
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/rewired-logo.png",
+          "image": "./assets/images/icon-dark-1024x1024.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#E8EDF2",
@@ -62,7 +69,7 @@
       [
         "expo-av",
         {
-          "microphonePermission": "Allow Retune to access your microphone to record personalized affirmations."
+          "microphonePermission": "Allow Retuned to access your microphone to record personalized affirmations."
         }
       ]
     ],

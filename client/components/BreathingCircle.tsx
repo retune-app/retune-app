@@ -1,18 +1,19 @@
-import React, { useEffect } from "react";
-import { View, StyleSheet, Text } from "react-native";
+import React, { memo, useEffect, useRef, useMemo } from "react";
+import { View, StyleSheet, Text, Platform } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
+  withRepeat,
+  withSequence,
   Easing,
   interpolate,
+  interpolateColor,
   runOnJS,
 } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 
-import { useTheme } from "@/hooks/useTheme";
-import { ThemedText } from "@/components/ThemedText";
 import type { BreathPhase, BreathingTechnique } from "@shared/breathingTechniques";
 import { PHASE_LABELS } from "@shared/breathingTechniques";
 
@@ -23,44 +24,120 @@ interface BreathingCircleProps {
   onCycleComplete?: () => void;
   size?: number;
   hapticsEnabled?: boolean;
+  showContent?: boolean;
 }
 
 const ACCENT_GOLD = "#C9A227";
 
-export default function BreathingCircle({
+function hexToRgba(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function lightenHex(hex: string, amount: number): string {
+  let r = parseInt(hex.slice(1, 3), 16);
+  let g = parseInt(hex.slice(3, 5), 16);
+  let b = parseInt(hex.slice(5, 7), 16);
+  r = Math.min(255, Math.round(r + (255 - r) * amount));
+  g = Math.min(255, Math.round(g + (255 - g) * amount));
+  b = Math.min(255, Math.round(b + (255 - b) * amount));
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+function dimHex(hex: string, amount: number): string {
+  let r = parseInt(hex.slice(1, 3), 16);
+  let g = parseInt(hex.slice(3, 5), 16);
+  let b = parseInt(hex.slice(5, 7), 16);
+  r = Math.round(r * (1 - amount));
+  g = Math.round(g * (1 - amount));
+  b = Math.round(b * (1 - amount));
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+function BreathingCircle({
   technique,
   isPlaying,
   onPhaseChange,
   onCycleComplete,
   size = 280,
   hapticsEnabled = true,
+  showContent = true,
 }: BreathingCircleProps) {
-  const { theme } = useTheme();
-  const scale = useSharedValue(0.6);
-  const opacity = useSharedValue(0.3);
-  const phaseIndex = useSharedValue(0);
-  const countdown = useSharedValue(0);
+  const progress = useSharedValue(0);
+  const idlePulse = useSharedValue(1);
   const [currentPhase, setCurrentPhase] = React.useState<BreathPhase>("inhale");
   const [currentCountdown, setCurrentCountdown] = React.useState(0);
+  const [currentPhaseIdx, setCurrentPhaseIdx] = React.useState(0);
+  const hapticsEnabledRef = useRef(hapticsEnabled);
 
-  const triggerHaptic = () => {
-    if (hapticsEnabled) {
-      try {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      } catch (e) {}
+  useEffect(() => {
+    hapticsEnabledRef.current = hapticsEnabled;
+  }, [hapticsEnabled]);
+
+  const hapticIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const stopHapticPulses = () => {
+    if (hapticIntervalRef.current) {
+      clearInterval(hapticIntervalRef.current);
+      hapticIntervalRef.current = null;
     }
   };
 
-  const updatePhaseState = (phase: BreathPhase, count: number) => {
+  const startHapticPulses = (phaseName: string) => {
+    stopHapticPulses();
+    if (!hapticsEnabledRef.current) return;
+
+    if (phaseName === "inhale") {
+      const doubleTap = () => {
+        try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); } catch (e) {}
+        setTimeout(() => {
+          try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); } catch (e) {}
+        }, 50);
+      };
+      doubleTap();
+      hapticIntervalRef.current = setInterval(() => {
+        if (!hapticsEnabledRef.current) return;
+        doubleTap();
+      }, 200);
+    } else if (phaseName === "exhale") {
+      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+      hapticIntervalRef.current = setInterval(() => {
+        if (!hapticsEnabledRef.current) return;
+        try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+      }, 800);
+    } else {
+      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
+    }
+  };
+
+  const updatePhaseState = (phase: BreathPhase, count: number, phaseIdx?: number) => {
     setCurrentPhase(phase);
     setCurrentCountdown(count);
+    if (phaseIdx !== undefined) setCurrentPhaseIdx(phaseIdx);
     onPhaseChange?.(phase, count);
   };
 
   useEffect(() => {
     if (!isPlaying) {
-      scale.value = withTiming(0.6, { duration: 500 });
-      opacity.value = withTiming(0.3, { duration: 500 });
+      idlePulse.value = withRepeat(
+        withSequence(
+          withTiming(1.04, { duration: 2400, easing: Easing.inOut(Easing.sin) }),
+          withTiming(0.96, { duration: 2400, easing: Easing.inOut(Easing.sin) }),
+        ),
+        -1,
+        true,
+      );
+    } else {
+      idlePulse.value = withTiming(1, { duration: 300 });
+    }
+  }, [isPlaying]);
+
+  useEffect(() => {
+    if (!isPlaying) {
+      stopHapticPulses();
+      progress.value = withTiming(0, { duration: 600, easing: Easing.out(Easing.ease) });
       return;
     }
 
@@ -72,20 +149,14 @@ export default function BreathingCircle({
       const phase = technique.phases[currentPhaseIdx];
       const phaseName = phase.phase;
 
-      runOnJS(updatePhaseState)(phaseName, currentCountdownVal);
-      runOnJS(triggerHaptic)();
+      runOnJS(updatePhaseState)(phaseName, currentCountdownVal, currentPhaseIdx);
+      runOnJS(startHapticPulses)(phaseName);
 
-      const targetScale = phaseName === "inhale" || phaseName === "holdIn" ? 1 : 0.6;
-      const targetOpacity = phaseName === "inhale" || phaseName === "holdIn" ? 0.8 : 0.3;
+      const targetProgress = phaseName === "inhale" || phaseName === "holdIn" ? 1 : 0;
 
-      scale.value = withTiming(targetScale, {
+      progress.value = withTiming(targetProgress, {
         duration: phase.duration * 1000,
-        easing: Easing.inOut(Easing.ease),
-      });
-
-      opacity.value = withTiming(targetOpacity, {
-        duration: phase.duration * 1000,
-        easing: Easing.inOut(Easing.ease),
+        easing: Easing.inOut(Easing.sin),
       });
     };
 
@@ -105,95 +176,244 @@ export default function BreathingCircle({
         currentCountdownVal = technique.phases[currentPhaseIdx].duration;
         runBreathCycle();
       } else {
-        runOnJS(updatePhaseState)(technique.phases[currentPhaseIdx].phase, currentCountdownVal);
+        runOnJS(updatePhaseState)(technique.phases[currentPhaseIdx].phase, currentCountdownVal, currentPhaseIdx);
       }
     }, 1000);
 
     return () => {
       clearInterval(intervalId);
+      stopHapticPulses();
     };
   }, [isPlaying, technique]);
 
-  const animatedCircleStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-    opacity: opacity.value,
-  }));
-
-  const innerGlowStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: interpolate(scale.value, [0.6, 1], [0.8, 1.1]) }],
-    opacity: interpolate(scale.value, [0.6, 1], [0.2, 0.5]),
-  }));
-
-  const outerRingStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: interpolate(scale.value, [0.6, 1], [1.0, 1.15]) }],
-    opacity: interpolate(scale.value, [0.6, 1], [0.1, 0.25]),
-  }));
-
   const phaseColor = technique.color || ACCENT_GOLD;
+
+  const colorDim = useMemo(() => dimHex(phaseColor, 0.55), [phaseColor]);
+  const colorBright = useMemo(() => lightenHex(phaseColor, 0.35), [phaseColor]);
+  const colorBase = useMemo(() => {
+    const r = parseInt(phaseColor.slice(1, 3), 16);
+    const g = parseInt(phaseColor.slice(3, 5), 16);
+    const b = parseInt(phaseColor.slice(5, 7), 16);
+    return `rgb(${r}, ${g}, ${b})`;
+  }, [phaseColor]);
+
+  const outerHaloStyle = useAnimatedStyle(() => {
+    const p = progress.value;
+    const s = interpolate(p, [0, 1], [0.85, 1.2]);
+    const o = interpolate(p, [0, 1], [0.04, 0.18]);
+    const idleS = isPlaying ? 1 : idlePulse.value;
+    const borderC = interpolateColor(p, [0, 0.5, 1], [colorDim, colorBase, colorBright]);
+    return { transform: [{ scale: s * idleS }], opacity: o, borderColor: borderC };
+  });
+
+  const ring3Style = useAnimatedStyle(() => {
+    const p = progress.value;
+    const s = interpolate(p, [0, 1], [0.82, 1.1]);
+    const o = interpolate(p, [0, 1], [0.06, 0.28]);
+    const idleS = isPlaying ? 1 : idlePulse.value;
+    const borderC = interpolateColor(p, [0, 0.5, 1], [colorDim, colorBase, colorBright]);
+    return { transform: [{ scale: s * idleS }], opacity: o, borderColor: borderC };
+  });
+
+  const ring2Style = useAnimatedStyle(() => {
+    const p = progress.value;
+    const s = interpolate(p, [0, 1], [0.78, 1.02]);
+    const o = interpolate(p, [0, 1], [0.08, 0.35]);
+    const idleS = isPlaying ? 1 : idlePulse.value;
+    const borderC = interpolateColor(p, [0, 0.4, 1], [colorDim, colorBase, colorBright]);
+    return { transform: [{ scale: s * idleS }], opacity: o, borderColor: borderC };
+  });
+
+  const ring1Style = useAnimatedStyle(() => {
+    const p = progress.value;
+    const s = interpolate(p, [0, 1], [0.75, 0.95]);
+    const o = interpolate(p, [0, 1], [0.1, 0.45]);
+    const idleS = isPlaying ? 1 : idlePulse.value;
+    const borderC = interpolateColor(p, [0, 0.3, 1], [colorDim, colorBase, colorBright]);
+    return { transform: [{ scale: s * idleS }], opacity: o, borderColor: borderC };
+  });
+
+  const glowStyle = useAnimatedStyle(() => {
+    const p = progress.value;
+    const s = interpolate(p, [0, 1], [0.55, 0.92]);
+    const o = interpolate(p, [0, 1], [0.12, 0.45]);
+    const idleS = isPlaying ? 1 : idlePulse.value;
+    const bgC = interpolateColor(p, [0, 0.5, 1], [colorDim, colorBase, colorBright]);
+    return { transform: [{ scale: s * idleS }], opacity: o, backgroundColor: bgC };
+  });
+
+  const coreStyle = useAnimatedStyle(() => {
+    const p = progress.value;
+    const s = interpolate(p, [0, 1], [0.5, 0.82]);
+    const o = interpolate(p, [0, 1], [0.35, 0.9]);
+    const idleS = isPlaying ? 1 : idlePulse.value;
+    return { transform: [{ scale: s * idleS }], opacity: o };
+  });
+
+  const phaseTextStyle = useAnimatedStyle(() => {
+    const p = progress.value;
+    const s = interpolate(p, [0, 1], [1.15, 0.82]);
+    const o = interpolate(p, [0, 1], [1.0, 0.7]);
+    return {
+      transform: [{ scale: s }],
+      opacity: o,
+    };
+  });
+
+  const haloD = size * 1.05;
+  const r3D = size * 0.92;
+  const r2D = size * 0.78;
+  const r1D = size * 0.65;
+  const glowD = size * 0.72;
+  const coreD = size * 0.55;
+
+  const countdownFontSize = Math.round(size * 0.16);
+  const phaseFontSize = Math.round(size * 0.05);
 
   return (
     <View style={[styles.container, { width: size, height: size }]}>
       <Animated.View
         style={[
-          styles.outerRing,
-          outerRingStyle,
+          styles.centered,
+          outerHaloStyle,
           {
-            width: size,
-            height: size,
-            borderRadius: size / 2,
-            borderColor: phaseColor,
+            width: haloD,
+            height: haloD,
+            borderRadius: haloD / 2,
+            borderWidth: 1.5,
           },
         ]}
       />
 
       <Animated.View
         style={[
-          styles.innerGlow,
-          innerGlowStyle,
+          styles.centered,
+          ring3Style,
           {
-            width: size * 0.85,
-            height: size * 0.85,
-            borderRadius: size * 0.425,
-            backgroundColor: phaseColor,
+            width: r3D,
+            height: r3D,
+            borderRadius: r3D / 2,
+            borderWidth: 1.5,
           },
         ]}
       />
 
       <Animated.View
         style={[
-          animatedCircleStyle,
-          styles.mainCircle,
+          styles.centered,
+          ring2Style,
           {
-            width: size * 0.7,
-            height: size * 0.7,
-            borderRadius: size * 0.35,
+            width: r2D,
+            height: r2D,
+            borderRadius: r2D / 2,
+            borderWidth: 2,
+          },
+        ]}
+      />
+
+      <Animated.View
+        style={[
+          styles.centered,
+          ring1Style,
+          {
+            width: r1D,
+            height: r1D,
+            borderRadius: r1D / 2,
+            borderWidth: 2.5,
+          },
+        ]}
+      />
+
+      <Animated.View
+        style={[
+          styles.centered,
+          glowStyle,
+          {
+            width: glowD,
+            height: glowD,
+            borderRadius: glowD / 2,
+          },
+        ]}
+      />
+
+      <Animated.View
+        style={[
+          styles.centered,
+          coreStyle,
+          {
+            width: coreD,
+            height: coreD,
+            borderRadius: coreD / 2,
+            overflow: "hidden",
           },
         ]}
       >
         <LinearGradient
-          colors={[phaseColor, `${phaseColor}99`]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[
-            styles.gradientCircle,
-            {
-              width: size * 0.7,
-              height: size * 0.7,
-              borderRadius: size * 0.35,
-            },
+          colors={[
+            hexToRgba(phaseColor, 0.95),
+            hexToRgba(phaseColor, 0.6),
+            hexToRgba(phaseColor, 0.3),
           ]}
-        >
-          <View style={styles.textContainer}>
-            <ThemedText
-              type="h2"
-              style={[styles.phaseText, { color: "#FFFFFF" }]}
-            >
-              {PHASE_LABELS[currentPhase]}
-            </ThemedText>
-            <Text style={styles.countdownText}>{currentCountdown}</Text>
-          </View>
-        </LinearGradient>
+          start={{ x: 0.3, y: 0 }}
+          end={{ x: 0.7, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
       </Animated.View>
+
+      {showContent && isPlaying ? (
+        <View style={styles.textOverlay} pointerEvents="none">
+          {technique.phases[currentPhaseIdx]?.instruction ? (
+            <Animated.View style={phaseTextStyle}>
+              <Text
+                style={[
+                  styles.phaseLabel,
+                  {
+                    fontSize: phaseFontSize,
+                    letterSpacing: phaseFontSize * 0.18,
+                  },
+                  (currentPhase === "holdIn" || currentPhase === "holdOut") ? styles.phaseLabelBold : undefined,
+                ]}
+              >
+                {PHASE_LABELS[currentPhase].toUpperCase()}
+              </Text>
+              <Text
+                style={[
+                  styles.instructionText,
+                  { fontSize: Math.round(size * 0.038) },
+                ]}
+                numberOfLines={2}
+              >
+                {technique.phases[currentPhaseIdx].instruction}
+              </Text>
+            </Animated.View>
+          ) : (
+            <Animated.Text
+              style={[
+                styles.phaseLabel,
+                {
+                  fontSize: phaseFontSize,
+                  letterSpacing: phaseFontSize * 0.18,
+                },
+                (currentPhase === "holdIn" || currentPhase === "holdOut") ? styles.phaseLabelBold : undefined,
+                phaseTextStyle,
+              ]}
+            >
+              {PHASE_LABELS[currentPhase].toUpperCase()}
+            </Animated.Text>
+          )}
+          <Text
+            style={[
+              styles.countdownNumber,
+              {
+                fontSize: countdownFontSize,
+                lineHeight: countdownFontSize * 1.15,
+              },
+            ]}
+          >
+            {currentCountdown}
+          </Text>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -203,32 +423,42 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  outerRing: {
+  centered: {
     position: "absolute",
-    borderWidth: 2,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  innerGlow: {
+  textOverlay: {
     position: "absolute",
-  },
-  mainCircle: {
     alignItems: "center",
     justifyContent: "center",
+    zIndex: 10,
   },
-  gradientCircle: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  textContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  phaseText: {
+  phaseLabel: {
+    color: "rgba(255, 255, 255, 0.9)",
+    fontWeight: "300",
     textAlign: "center",
-    marginBottom: 8,
+    marginBottom: 2,
   },
-  countdownText: {
-    fontSize: 48,
+  phaseLabelBold: {
     fontWeight: "700",
+  },
+  instructionText: {
+    color: "rgba(255, 255, 255, 0.75)",
+    fontWeight: "400",
+    textAlign: "center",
+    marginTop: 2,
+    paddingHorizontal: 8,
+  },
+  countdownNumber: {
     color: "#FFFFFF",
+    fontWeight: "200",
+    textAlign: "center",
+    ...Platform.select({
+      android: { includeFontPadding: false },
+      default: {},
+    }),
   },
 });
+
+export default memo(BreathingCircle);

@@ -1,5 +1,6 @@
 import React from "react";
 import { View, StyleSheet, Image, ImageSourcePropType } from "react-native";
+import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 import { ThemedText } from "@/components/ThemedText";
 import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
@@ -23,27 +24,35 @@ export function EmptyState({
   const { theme } = useTheme();
 
   return (
-    <View style={styles.container}>
+    <Animated.View entering={FadeIn.duration(600)} style={styles.container}>
       {image ? (
-        <Image source={image} style={styles.image} resizeMode="contain" />
+        <Animated.View entering={FadeInUp.delay(200).duration(700).springify()}>
+          <Image source={image} style={styles.image} resizeMode="contain" />
+        </Animated.View>
       ) : null}
-      <ThemedText type="h3" style={styles.title}>
-        {title}
-      </ThemedText>
-      {description ? (
-        <ThemedText
-          type="body"
-          style={[styles.description, { color: theme.textSecondary }]}
-        >
-          {description}
+      <Animated.View entering={FadeInUp.delay(400).duration(500)}>
+        <ThemedText type="h3" style={styles.title}>
+          {title}
         </ThemedText>
+      </Animated.View>
+      {description ? (
+        <Animated.View entering={FadeInUp.delay(550).duration(500)}>
+          <ThemedText
+            type="body"
+            style={[styles.description, { color: theme.textSecondary }]}
+          >
+            {description}
+          </ThemedText>
+        </Animated.View>
       ) : null}
       {actionLabel && onAction ? (
-        <Button variant="gradient" onPress={onAction} style={styles.button}>
-          {actionLabel}
-        </Button>
+        <Animated.View entering={FadeInUp.delay(700).duration(500)}>
+          <Button variant="gradient" onPress={onAction} style={styles.button}>
+            {actionLabel}
+          </Button>
+        </Animated.View>
       ) : null}
-    </View>
+    </Animated.View>
   );
 }
 
@@ -59,6 +68,7 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
     marginBottom: Spacing["2xl"],
+    borderRadius: 20,
   },
   title: {
     textAlign: "center",

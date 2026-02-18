@@ -23,6 +23,7 @@ import { getPillarColor } from "@shared/pillars";
 interface AffirmationCardProps {
   id: number;
   title: string;
+  description?: string | null;
   pillar?: string | null;
   category?: string;
   duration?: number;
@@ -46,6 +47,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 export function AffirmationCard({
   id,
   title,
+  description = null,
   pillar,
   category,
   duration,
@@ -136,14 +138,14 @@ export function AffirmationCard({
 
   const handlePress = () => {
     if (hapticEnabled) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
     }
     onPress?.();
   };
 
   const handlePlayPress = () => {
     if (hapticEnabled) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
     }
     onPlayPress?.();
   };
@@ -166,7 +168,7 @@ export function AffirmationCard({
 
   const getVoiceLabel = () => {
     if (voiceType === "personal") {
-      return { label: "My Voice", icon: "mic" as const };
+      return { label: "Inner Voice", icon: "mic" as const };
     }
     const voiceName = getVoiceDisplayName(voiceType, voiceGender, aiVoiceId);
     return { label: `AI Voice (${voiceName})`, icon: "cpu" as const };
@@ -202,48 +204,64 @@ export function AffirmationCard({
           (pillar || isBreathingAffirmation) && { borderLeftWidth: 0, borderTopLeftRadius: 0, borderBottomLeftRadius: 0 },
         ]}>
         <View style={[styles.cardHeader, { borderBottomColor: isDark ? 'rgba(255,255,255,0.08)' : theme.border }]}>
-          <View style={styles.ownershipBadge}>
-            <Feather name={voiceInfo.icon} size={10} color={theme.gold} />
-            <ThemedText style={[styles.ownershipText, { color: theme.gold }]}>
-              {voiceInfo.label}
-            </ThemedText>
-          </View>
-          <View style={styles.headerRight}>
-            {lengthInfo.label ? (
-              <View style={[styles.lengthBadge, { borderColor: lengthInfo.color }]}>
-                <ThemedText style={[styles.lengthText, { color: lengthInfo.color }]}>
-                  {lengthInfo.label}
+          <View style={styles.headerTopRow}>
+            <View style={styles.headerLeft}>
+              <View style={styles.ownershipBadge}>
+                <Feather name={voiceInfo.icon} size={10} color={theme.gold} />
+                <ThemedText style={[styles.ownershipText, { color: theme.gold }]}>
+                  {voiceInfo.label}
                 </ThemedText>
               </View>
-            ) : null}
-            <Pressable 
-              onPress={(e) => {
-                e.stopPropagation?.();
-                if (hapticEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                onFavoriteToggle?.();
-              }}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              style={styles.favoriteButton}
-            >
-              <Feather 
-                name={isFavorite ? "heart" : "heart"} 
-                size={14} 
-                color={isFavorite ? "#E91E63" : theme.textSecondary} 
-                style={isFavorite ? { opacity: 1 } : { opacity: 0.5 }}
-              />
-            </Pressable>
-            {formatCreatedDate(createdAt) ? (
-              <ThemedText style={[styles.dateText, { color: theme.textSecondary }]}>
-                {formatCreatedDate(createdAt)}
+              <ThemedText style={[styles.durationText, { color: theme.textSecondary }]}>
+                {formatDuration(duration)}
               </ThemedText>
-            ) : null}
+            </View>
+            <View style={styles.headerRight}>
+              {lengthInfo.label ? (
+                <View style={[styles.lengthBadge, { borderColor: lengthInfo.color }]}>
+                  <ThemedText style={[styles.lengthText, { color: lengthInfo.color }]}>
+                    {lengthInfo.label}
+                  </ThemedText>
+                </View>
+              ) : null}
+              <Pressable 
+                onPress={(e) => {
+                  e.stopPropagation?.();
+                  if (hapticEnabled) try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+                  onFavoriteToggle?.();
+                }}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                style={styles.favoriteButton}
+              >
+                <Feather 
+                  name={isFavorite ? "heart" : "heart"} 
+                  size={14} 
+                  color={isFavorite ? "#E91E63" : theme.textSecondary} 
+                  style={isFavorite ? { opacity: 1 } : { opacity: 0.5 }}
+                />
+              </Pressable>
+              {formatCreatedDate(createdAt) ? (
+                <ThemedText style={[styles.dateText, { color: theme.textSecondary }]}>
+                  {formatCreatedDate(createdAt)}
+                </ThemedText>
+              ) : null}
+            </View>
           </View>
         </View>
         <View style={styles.content}>
           <View style={styles.textContainer}>
-            <ThemedText type="h4" numberOfLines={2} style={styles.title}>
+            <ThemedText type="h4" numberOfLines={2} style={[styles.title, { fontSize: 15, lineHeight: 21 }]}>
               {title}
             </ThemedText>
+            {description ? (
+              <ThemedText
+                type="caption"
+                numberOfLines={2}
+                style={[styles.description, { color: theme.textSecondary }]}
+              >
+                {description}
+              </ThemedText>
+            ) : null}
             <View style={styles.meta}>
               {category ? (
                 <View style={styles.categoriesContainer}>
@@ -272,9 +290,6 @@ export function AffirmationCard({
                   </ThemedText>
                 </View>
               ) : null}
-              <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                {formatDuration(duration)}
-              </ThemedText>
             </View>
           </View>
           <View style={styles.actions}>
@@ -328,17 +343,28 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   cardHeader: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderBottomWidth: 1,
+  },
+  headerTopRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    borderBottomWidth: 1,
+  },
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
   },
   ownershipBadge: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
+  },
+  durationText: {
+    fontSize: 11,
+    fontWeight: "500",
   },
   ownershipText: {
     fontSize: 11,
@@ -357,25 +383,35 @@ const styles = StyleSheet.create({
   content: {
     flexDirection: "row",
     alignItems: "center",
-    padding: Spacing.lg,
+    paddingHorizontal: Spacing.md,
+    paddingTop: 4,
+    paddingBottom: Spacing.xs,
   },
   textContainer: {
     flex: 1,
+    paddingRight: Spacing.sm,
   },
   title: {
-    marginBottom: Spacing.xs,
+    marginBottom: 2,
   },
   meta: {
     flexDirection: "row",
     alignItems: "center",
     flexWrap: "wrap",
     gap: Spacing.xs,
+    marginTop: 4,
   },
   categoriesContainer: {
     flexDirection: "row",
     alignItems: "center",
     flexWrap: "wrap",
     gap: 4,
+  },
+  description: {
+    fontStyle: "italic",
+    fontSize: 11,
+    marginBottom: 2,
+    opacity: 0.7,
   },
   categoryBadge: {
     paddingHorizontal: 6,
@@ -401,6 +437,19 @@ const styles = StyleSheet.create({
     marginRight: Spacing.xs,
     padding: 2,
   },
+  pillarBadge: {
+    paddingHorizontal: 5,
+    paddingVertical: 0,
+    borderRadius: BorderRadius.xs,
+    borderWidth: 1,
+  },
+  pillarBadgeText: {
+    fontSize: 9,
+    lineHeight: 13,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.3,
+  },
   lengthBadge: {
     paddingHorizontal: 5,
     paddingVertical: 0,
@@ -409,6 +458,7 @@ const styles = StyleSheet.create({
   },
   lengthText: {
     fontSize: 9,
+    lineHeight: 13,
     fontWeight: "700",
     textTransform: "uppercase",
     letterSpacing: 0.3,

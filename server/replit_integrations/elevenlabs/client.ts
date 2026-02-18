@@ -130,13 +130,14 @@ async function insertSilenceIntoAudio(
       const startTime = lastPos;
       const endTime = splitPositions[i];
       
-      // Extract segment
       await new Promise<void>((resolve, reject) => {
         const ffmpeg = spawn("ffmpeg", [
           "-i", inputPath,
           "-ss", startTime.toString(),
           "-to", endTime.toString(),
-          "-c", "copy",
+          "-c:a", "libmp3lame",
+          "-q:a", "2",
+          "-ar", "44100",
           "-y",
           segmentPath,
         ]);
@@ -158,7 +159,9 @@ async function insertSilenceIntoAudio(
       const ffmpeg = spawn("ffmpeg", [
         "-i", inputPath,
         "-ss", lastPos.toString(),
-        "-c", "copy",
+        "-c:a", "libmp3lame",
+        "-q:a", "2",
+        "-ar", "44100",
         "-y",
         finalSegmentPath,
       ]);
@@ -182,13 +185,14 @@ async function insertSilenceIntoAudio(
     }
     await writeFile(concatListPath, concatContent);
 
-    // Concatenate all segments with silence
     await new Promise<void>((resolve, reject) => {
       const ffmpeg = spawn("ffmpeg", [
         "-f", "concat",
         "-safe", "0",
         "-i", concatListPath,
-        "-c", "copy",
+        "-c:a", "libmp3lame",
+        "-q:a", "2",
+        "-ar", "44100",
         "-y",
         outputPath,
       ]);
@@ -223,10 +227,19 @@ async function insertSilenceIntoAudio(
 }
 
 let connectionSettings: any;
+let credentialsCachedAt: number = 0;
+const CREDENTIALS_TTL_MS = 5 * 60 * 1000;
 
 async function getCredentials() {
+  if (process.env.ELEVENLABS_API_KEY) {
+    return process.env.ELEVENLABS_API_KEY;
+  }
+
+  if (connectionSettings?.settings?.api_key && (Date.now() - credentialsCachedAt) < CREDENTIALS_TTL_MS) {
+    return connectionSettings.settings.api_key;
+  }
+  connectionSettings = null;
   let hostname = process.env.REPLIT_CONNECTORS_HOSTNAME || "";
-  // Remove https:// prefix if already present to avoid double protocol
   if (hostname.startsWith("https://")) {
     hostname = hostname.replace("https://", "");
   }
@@ -253,6 +266,7 @@ async function getCredentials() {
   if (!connectionSettings || !connectionSettings.settings.api_key) {
     throw new Error("ElevenLabs not connected");
   }
+  credentialsCachedAt = Date.now();
   return connectionSettings.settings.api_key;
 }
 
@@ -271,7 +285,7 @@ export async function getElevenLabsApiKey() {
  */
 export async function cloneVoice(
   audioFilePath: string,
-  name: string = "My Voice"
+  name: string = "Inner Voice"
 ): Promise<string> {
   const apiKey = await getCredentials();
 
@@ -294,9 +308,19 @@ export async function cloneVoice(
   });
 
   if (!response.ok) {
-    const error = await response.text();
-    console.error("Voice cloning error:", error);
-    throw new Error(`Voice cloning failed: ${response.statusText}`);
+    const errorText = await response.text();
+    console.error("Voice cloning error:", response.status, errorText);
+    let parsedDetail = "";
+    try {
+      const errorJson = JSON.parse(errorText);
+      parsedDetail = errorJson?.detail?.message || errorJson?.detail || errorJson?.error || "";
+    } catch (_) {
+      parsedDetail = errorText;
+    }
+    const err = new Error(parsedDetail || `Voice cloning failed: ${response.statusText}`);
+    (err as any).statusCode = response.status;
+    (err as any).elevenLabsDetail = parsedDetail;
+    throw err;
   }
 
   const result = await response.json();
@@ -319,9 +343,11 @@ export interface WordTiming {
  */
 export async function textToSpeech(
   text: string,
-  voiceId: string = "21m00Tcm4TlvDq8ikWAM" // Default Rachel voice
+  voiceId: string = "21m00Tcm4TlvDq8ikWAM", // Default Rachel voice
+  voiceSettingsOverride?: { stability?: number; style?: number; pauseSeconds?: number }
 ): Promise<{ audio: ArrayBuffer; duration: number; wordTimings: WordTiming[] }> {
   const apiKey = await getCredentials();
+  const effectivePause = voiceSettingsOverride?.pauseSeconds ?? SENTENCE_PAUSE_SECONDS;
 
   // Use the with-timestamps endpoint for word timing data
   const response = await fetch(
@@ -336,9 +362,9 @@ export async function textToSpeech(
         text,
         model_id: "eleven_multilingual_v2",
         voice_settings: {
-          stability: 0.5,
+          stability: voiceSettingsOverride?.stability ?? 0.5,
           similarity_boost: 0.75,
-          style: 0.3,
+          style: voiceSettingsOverride?.style ?? 0.3,
           use_speaker_boost: true,
         },
       }),
@@ -362,27 +388,22 @@ export async function textToSpeech(
   
   // Find sentence endings and insert pauses into both audio and timing data
   const sentenceEndIndices = findSentenceEndIndices(wordTimings);
-  console.log(`Found ${sentenceEndIndices.length} sentence endings in ${wordTimings.length} words`);
   
   // Post-process: insert silence between sentences and adjust timings
   let finalAudioBuffer: Buffer = rawAudioBuffer;
-  if (sentenceEndIndices.length > 0 && SENTENCE_PAUSE_SECONDS > 0) {
-    // Insert silence into audio
+  if (sentenceEndIndices.length > 0 && effectivePause > 0) {
     finalAudioBuffer = await insertSilenceIntoAudio(
       rawAudioBuffer,
       wordTimings,
       sentenceEndIndices,
-      SENTENCE_PAUSE_SECONDS
+      effectivePause
     );
     
-    // Adjust word timings to account for inserted pauses
     wordTimings = adjustWordTimingsForPauses(
       wordTimings,
       sentenceEndIndices,
-      SENTENCE_PAUSE_SECONDS * 1000 // Convert to ms
+      effectivePause * 1000
     );
-    
-    console.log(`Inserted ${sentenceEndIndices.length} pauses of ${SENTENCE_PAUSE_SECONDS}s each`);
   }
   
   // Calculate duration from the last word's end time, or estimate if no timing data
@@ -420,19 +441,13 @@ export async function textToSpeech(
  */
 function parseCharacterTimingsToWords(alignment: any): WordTiming[] {
   if (!alignment) {
-    console.log("No alignment data provided");
+    console.warn("No alignment data provided");
     return [];
   }
-
-  // Log the alignment structure to debug
-  console.log("Alignment keys:", Object.keys(alignment));
-  console.log("Alignment sample:", JSON.stringify(alignment).substring(0, 300));
 
   // Format 1: characters (string or array) with start/end times in seconds (most common ElevenLabs format)
   if (alignment.characters && 
       alignment.character_start_times_seconds && alignment.character_end_times_seconds) {
-    console.log("Using Format 1: characters + character_start_times_seconds");
-    
     // Handle characters as either string or array
     const chars: string[] = typeof alignment.characters === 'string' 
       ? alignment.characters.split('')
@@ -441,11 +456,9 @@ function parseCharacterTimingsToWords(alignment: any): WordTiming[] {
         : [];
     
     if (chars.length === 0) {
-      console.log("No characters found in alignment");
+      console.warn("No characters found in alignment");
       return [];
     }
-    
-    console.log(`Processing ${chars.length} characters`);
     
     const words: WordTiming[] = [];
     let currentWord = "";
@@ -496,13 +509,11 @@ function parseCharacterTimingsToWords(alignment: any): WordTiming[] {
       !isNaN(w.startMs) && 
       !isNaN(w.endMs)
     );
-    console.log(`Parsed ${validWords.length} valid words from Format 1 (${words.length} before filtering)`);
     return validWords;
   }
 
   // Format 2: chars/charStartTimesMs/charDurationsMs arrays
   if (alignment.chars && alignment.charStartTimesMs && alignment.charDurationsMs) {
-    console.log("Using Format 2: chars + charStartTimesMs");
     const words: WordTiming[] = [];
     let currentWord = "";
     let wordStartMs: number | null = null;
@@ -536,14 +547,12 @@ function parseCharacterTimingsToWords(alignment: any): WordTiming[] {
       words.push({ word: currentWord, startMs: wordStartMs, endMs: wordEndMs });
     }
 
-    console.log(`Parsed ${words.length} words from Format 2`);
     return words;
   }
 
   // Format 3: characters as array of objects with character, start_time_ms, end_time_ms
   if (alignment.characters && Array.isArray(alignment.characters) && 
       alignment.characters.length > 0 && typeof alignment.characters[0] === 'object') {
-    console.log("Using Format 3: characters as objects");
     const words: WordTiming[] = [];
     let currentWord = "";
     let wordStartMs: number | null = null;
@@ -574,12 +583,11 @@ function parseCharacterTimingsToWords(alignment: any): WordTiming[] {
       words.push({ word: currentWord, startMs: wordStartMs, endMs: wordEndMs });
     }
 
-    console.log(`Parsed ${words.length} words from Format 3`);
     return words;
   }
 
   // No recognized format - log detailed info and return empty array
-  console.log("Unrecognized alignment format. Full structure:", JSON.stringify(alignment).substring(0, 500));
+  console.warn("Unrecognized alignment format. Full structure:", JSON.stringify(alignment).substring(0, 500));
   return [];
 }
 
@@ -639,8 +647,6 @@ export async function generateSoundEffect(
 ): Promise<ArrayBuffer> {
   const apiKey = await getCredentials();
 
-  console.log(`Generating sound effect: "${text}" (${durationSeconds}s)`);
-
   const response = await fetch("https://api.elevenlabs.io/v1/sound-generation", {
     method: "POST",
     headers: {
@@ -661,6 +667,5 @@ export async function generateSoundEffect(
   }
 
   const audioBuffer = await response.arrayBuffer();
-  console.log(`Sound effect generated: ${audioBuffer.byteLength} bytes`);
   return audioBuffer;
 }

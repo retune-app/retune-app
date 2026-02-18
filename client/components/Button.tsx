@@ -53,7 +53,7 @@ export function Button({
   const handlePressIn = () => {
     if (!disabled && !loading) {
       scale.value = withSpring(Animation.pressScale, springConfig);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
     }
   };
 

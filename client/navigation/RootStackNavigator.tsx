@@ -2,18 +2,35 @@ import React, { useState, useCallback, useEffect, useRef } from "react";
 import { View, StyleSheet, ActivityIndicator, Platform } from "react-native";
 import { createNativeStackNavigator, NativeStackNavigationProp, NativeStackNavigationOptions } from "@react-navigation/native-stack";
 import { NavigationState, useNavigation } from "@react-navigation/native";
+import * as Notifications from "expo-notifications";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import MainTabNavigator from "@/navigation/MainTabNavigator";
 import VoiceSetupScreen from "@/screens/VoiceSetupScreen";
 import VoiceSettingsScreen from "@/screens/VoiceSettingsScreen";
 import SoundLibraryScreen from "@/screens/SoundLibraryScreen";
+import GuidedMomentScreen from "@/screens/GuidedMomentScreen";
+import type { GuidedMomentScreenParams } from "@/screens/GuidedMomentScreen";
+import MoodJourneyScreen from "@/screens/MoodJourneyScreen";
 import CreateScreen from "@/screens/CreateScreen";
 import PlayerScreen from "@/screens/PlayerScreen";
 import AnalyticsScreen from "@/screens/AnalyticsScreen";
+import OnboardingScreen from "@/screens/OnboardingScreen";
 import { AuthScreen } from "@/screens/AuthScreen";
 import { MiniPlayer } from "@/components/MiniPlayer";
 import { useScreenOptions } from "@/hooks/useScreenOptions";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/hooks/useTheme";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
+
+const ONBOARDING_KEY = "@onboarding/completed";
+
+export type JourneyContext = {
+  currentStep: number;
+  totalSteps: number;
+  stepLabels: string[];
+  journeyVoiceId?: string;
+  journeyVoiceType?: "personal" | "ai";
+};
 
 export type RootStackParamList = {
   Auth: undefined;
@@ -22,8 +39,10 @@ export type RootStackParamList = {
   VoiceSettings: undefined;
   SoundLibrary: undefined;
   Create: undefined;
-  Player: { affirmationId: number; isNew?: boolean };
+  Player: { affirmationId: number; isNew?: boolean; autoPlay?: boolean; journeyContext?: JourneyContext };
   Analytics: undefined;
+  GuidedMoment: GuidedMomentScreenParams;
+  MoodJourney: { journey: any };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -45,11 +64,52 @@ function VoiceSetupNavigator() {
   return null;
 }
 
+function NotificationHandler() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
+  useEffect(() => {
+    const subscription = Notifications.addNotificationResponseReceivedListener(response => {
+      const data = response.notification.request.content.data;
+      if (data?.screen === "VoiceSettings") {
+        setTimeout(() => {
+          try {
+            navigation.navigate("VoiceSettings");
+          } catch (e) {
+            console.warn("[Push] Navigation failed:", e);
+          }
+        }, 300);
+      }
+    });
+    return () => subscription.remove();
+  }, [navigation]);
+
+  return null;
+}
+
 export default function RootStackNavigator() {
   const screenOptions = useScreenOptions();
   const { theme } = useTheme();
   const { isAuthenticated, isLoading } = useAuth();
-  const [currentRoute, setCurrentRoute] = useState<string>('BreatheTab');
+  usePushNotifications();
+  const [currentRoute, setCurrentRoute] = useState<string>('AffirmTab');
+  const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      AsyncStorage.getItem(ONBOARDING_KEY).then((value) => {
+        setShowOnboarding(value !== "true");
+      }).catch(() => {
+        setShowOnboarding(false);
+      });
+    }
+  }, [isAuthenticated]);
+
+  const handleOnboardingComplete = useCallback(async () => {
+    try {
+      await AsyncStorage.setItem(ONBOARDING_KEY, "true");
+    } catch {}
+    setShowOnboarding(false);
+  }, []);
 
   const fadeScreenOptions: NativeStackNavigationOptions = {
     ...screenOptions,
@@ -96,6 +156,18 @@ export default function RootStackNavigator() {
     );
   }
 
+  if (showOnboarding === null) {
+    return (
+      <View style={[styles.loadingContainer, { backgroundColor: theme.backgroundRoot }]}>
+        <ActivityIndicator size="large" color={theme.primary} />
+      </View>
+    );
+  }
+
+  if (showOnboarding) {
+    return <OnboardingScreen onComplete={handleOnboardingComplete} />;
+  }
+
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       <Stack.Navigator 
@@ -134,7 +206,7 @@ export default function RootStackNavigator() {
             headerTitle: "",
             headerTransparent: true,
             animation: "fade",
-            animationDuration: 250,
+            animationDuration: 150,
           }}
         />
         <Stack.Screen
@@ -164,9 +236,29 @@ export default function RootStackNavigator() {
             animation: "slide_from_right",
           }}
         />
+        <Stack.Screen
+          name="GuidedMoment"
+          component={GuidedMomentScreen}
+          options={{
+            headerShown: false,
+            presentation: "card",
+            animation: "fade",
+            gestureEnabled: false,
+          }}
+        />
+        <Stack.Screen
+          name="MoodJourney"
+          component={MoodJourneyScreen}
+          options={{
+            headerShown: false,
+            presentation: "card",
+            animation: "fade",
+            gestureEnabled: false,
+          }}
+        />
       </Stack.Navigator>
+      <NotificationHandler />
       <MiniPlayer currentRoute={currentRoute} />
-      <VoiceSetupNavigator />
     </View>
   );
 }

@@ -5,42 +5,231 @@ import path from "path";
 import fs from "fs";
 import rateLimit from "express-rate-limit";
 import { db } from "./db";
-import { affirmations, voiceSamples, categories, users, collections, customCategories, notificationSettings, listeningSessions, breathingSessions, supportRequests } from "@shared/schema";
-import { eq, desc, asc, and, sql, sum } from "drizzle-orm";
+import { affirmations, voiceSamples, categories, users, collections, customCategories, notificationSettings, reminders, pushTokens, listeningSessions, breathingSessions, journeyCompletions } from "@shared/schema";
+import { eq, desc, asc, and, sql, sum, isNull } from "drizzle-orm";
 import { openai } from "./replit_integrations/audio/client";
+import OpenAI from "openai";
+import { isPremiumUser, FREE_FEATURES, PREMIUM_FEATURES_LIST, BETA_MODE } from "./premium";
+import { MOOD_TAG_PREFERENCES, TARGET_MOOD_TAGS, type MoodType, type TimeOfDay, type TargetMoodType } from "@shared/pillars";
 import {
   cloneVoice,
   textToSpeech as elevenLabsTTS,
   getElevenLabsClient,
-  generateSoundEffect,
+  deleteVoice,
   type WordTiming,
 } from "./replit_integrations/elevenlabs/client";
+import { cartesiaCloneVoice, cartesiaTTS, cartesiaSimpleTTS, isCartesiaConfigured, getCartesiaEmotionConfig } from "./cartesia-tts";
+import { humeTextToSpeech, humeSimpleTTS, type WordTiming as HumeWordTiming } from "./hume-client";
+import { runVoiceRotation, checkVoiceSlotWarning, freeVoiceSlotForNewClone } from "./voice-rotation";
+import { sendVoiceExpiryWarnings } from "./push-notifications";
 import { setupAuth, requireAuth, optionalAuth, AuthenticatedRequest } from "./auth";
+import { moderateContent, validateAffirmationContent } from "./moderation";
+import { registerGithubRoutes } from "./routes/github-routes";
+import { registerBreathingRoutes } from "./routes/breathing-routes";
+import { registerReminderRoutes } from "./routes/reminder-routes";
+import { registerAdminRoutes, ADMIN_USER_IDS } from "./routes/admin-routes";
 
 // Rate limiters to prevent API abuse
 const aiGenerationLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 5, // max 5 requests per minute for AI generation
+  windowMs: 60 * 1000,
+  max: 5,
   message: { error: "Too many requests. Please wait a minute before generating more affirmations." },
   standardHeaders: true,
   legacyHeaders: false,
+  validate: false,
 });
 
 const voiceCloneLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 3, // max 3 voice clone attempts per hour
-  message: { error: "Too many voice cloning attempts. Please try again later." },
+  windowMs: 60 * 60 * 1000,
+  max: 6,
+  message: { error: "Too many voice cloning attempts. Please wait about an hour and try again." },
   standardHeaders: true,
   legacyHeaders: false,
+  validate: false,
 });
 
 const ttsLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 10, // max 10 TTS requests per minute
+  windowMs: 60 * 1000,
+  max: 10,
   message: { error: "Too many audio generation requests. Please wait before creating more." },
   standardHeaders: true,
   legacyHeaders: false,
+  validate: false,
 });
+
+const dailyGreetingLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  message: { error: "Too many greeting requests. Please wait a moment." },
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: false,
+  keyGenerator: (req: Request) => {
+    const authReq = req as AuthenticatedRequest;
+    return authReq.userId || req.ip || "unknown";
+  },
+});
+
+const guidedMomentLimiter = rateLimit({
+  windowMs: 24 * 60 * 60 * 1000,
+  max: 20,
+  message: { error: "You've reached today's limit for micro-meditations. Come back tomorrow for a fresh session." },
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: false,
+  keyGenerator: (req: Request) => {
+    const authReq = req as AuthenticatedRequest;
+    return `guided-${authReq.userId || req.ip || "unknown"}`;
+  },
+});
+
+const MEDITATION_MOOD_CONFIG: Record<string, {
+  scriptTone: string;
+  humeSpeed: number;
+  pauseSeconds: number;
+  elevenLabsStability: number;
+  elevenLabsStyle: number;
+}> = {
+  calm: {
+    scriptTone: "serene, spacious, and deeply unhurried — like floating on still water. Use languid, flowing language with long vowel sounds. Invite the listener to sink deeper into stillness.",
+    humeSpeed: 0.85,
+    pauseSeconds: 1.8,
+    elevenLabsStability: 0.6,
+    elevenLabsStyle: 0.25,
+  },
+  stressed: {
+    scriptTone: "soothing, reassuring, and safe — like a warm blanket wrapping around tension. Use short, simple sentences that feel like exhales. Emphasize releasing, letting go, and being held.",
+    humeSpeed: 0.9,
+    pauseSeconds: 1.7,
+    elevenLabsStability: 0.55,
+    elevenLabsStyle: 0.3,
+  },
+  tired: {
+    scriptTone: "gentle, nurturing, and restoring — like soft morning light. Use comforting, cozy language. Acknowledge weariness with compassion before gently inviting renewal.",
+    humeSpeed: 0.85,
+    pauseSeconds: 1.8,
+    elevenLabsStability: 0.55,
+    elevenLabsStyle: 0.25,
+  },
+  anxious: {
+    scriptTone: "grounding, steady, and anchoring — like roots growing deep into earth. Use concrete, physical language (feet on ground, weight of body, solid surfaces). Repeat grounding cues. Prioritize predictability and safety in word choice.",
+    humeSpeed: 0.9,
+    pauseSeconds: 1.7,
+    elevenLabsStability: 0.6,
+    elevenLabsStyle: 0.2,
+  },
+  sad: {
+    scriptTone: "warm, tender, and compassionate — like being gently held by someone who truly understands. Use soft, comforting language that acknowledges pain without rushing past it. Invite the listener to be gentle with themselves.",
+    humeSpeed: 0.88,
+    pauseSeconds: 1.8,
+    elevenLabsStability: 0.55,
+    elevenLabsStyle: 0.3,
+  },
+  overwhelmed: {
+    scriptTone: "steady, simplifying, and reassuring — like a calm hand on your shoulder when everything feels too much. Use short, clear sentences. Emphasize one thing at a time, letting go of what can wait, and coming back to this single breath.",
+    humeSpeed: 0.88,
+    pauseSeconds: 1.7,
+    elevenLabsStability: 0.6,
+    elevenLabsStyle: 0.2,
+  },
+  energized: {
+    scriptTone: "bright, uplifting, and invigorating — like the first breath of fresh mountain air. Use dynamic, forward-moving language that celebrates vitality and momentum.",
+    humeSpeed: 1.0,
+    pauseSeconds: 1.3,
+    elevenLabsStability: 0.45,
+    elevenLabsStyle: 0.4,
+  },
+  grateful: {
+    scriptTone: "warm, reverent, and heart-centered — like sunlight pouring through a window onto your chest. Use rich, appreciative language that savors each moment and connection.",
+    humeSpeed: 0.9,
+    pauseSeconds: 1.6,
+    elevenLabsStability: 0.55,
+    elevenLabsStyle: 0.35,
+  },
+  confident: {
+    scriptTone: "strong, grounded, and empowering — like standing tall on solid ground with the wind at your back. Use affirming, bold language that reinforces inner strength and self-trust.",
+    humeSpeed: 0.95,
+    pauseSeconds: 1.4,
+    elevenLabsStability: 0.5,
+    elevenLabsStyle: 0.4,
+  },
+  focused: {
+    scriptTone: "clear, precise, and centering — like a laser beam of gentle attention cutting through noise. Use clean, purposeful language that sharpens awareness and quiets distraction.",
+    humeSpeed: 0.92,
+    pauseSeconds: 1.5,
+    elevenLabsStability: 0.55,
+    elevenLabsStyle: 0.3,
+  },
+  joyful: {
+    scriptTone: "light, playful, and radiant — like bubbles of laughter rising through warm water. Use buoyant, celebratory language that invites smiling from the inside out.",
+    humeSpeed: 0.95,
+    pauseSeconds: 1.4,
+    elevenLabsStability: 0.45,
+    elevenLabsStyle: 0.45,
+  },
+};
+
+const PILLAR_VOICE_CONFIG: Record<string, {
+  scriptTone: string;
+  humeSpeed: number;
+  pauseSeconds: number;
+  elevenLabsStability: number;
+  elevenLabsStyle: number;
+}> = {
+  mind: {
+    scriptTone: "Clear, steady, and measured. Quiet certainty. Deliver each statement like a calm, focused thought landing with precision.",
+    humeSpeed: 0.92,
+    pauseSeconds: 1.3,
+    elevenLabsStability: 0.55,
+    elevenLabsStyle: 0.3,
+  },
+  body: {
+    scriptTone: "Warm, grounded, and physical. Connected to sensation. Speak as if you can feel each word in your body — rooted and present.",
+    humeSpeed: 0.95,
+    pauseSeconds: 1.1,
+    elevenLabsStability: 0.5,
+    elevenLabsStyle: 0.4,
+  },
+  spirit: {
+    scriptTone: "Soft, contemplative, and spacious. Gentle and unhurried. Let each phrase breathe, as if the silence between words matters as much as the words themselves.",
+    humeSpeed: 0.85,
+    pauseSeconds: 1.8,
+    elevenLabsStability: 0.6,
+    elevenLabsStyle: 0.25,
+  },
+  connection: {
+    scriptTone: "Warm, open, and heartfelt. Inviting and sincere. Speak as if addressing someone you deeply care about — natural, genuine, emotionally present.",
+    humeSpeed: 0.93,
+    pauseSeconds: 1.3,
+    elevenLabsStability: 0.45,
+    elevenLabsStyle: 0.45,
+  },
+  achievement: {
+    scriptTone: "Confident, grounded, and forward-moving. Strong without being aggressive. Deliver like a coach who believes in you — direct, clear, empowering.",
+    humeSpeed: 1.0,
+    pauseSeconds: 0.9,
+    elevenLabsStability: 0.4,
+    elevenLabsStyle: 0.5,
+  },
+};
+
+function getPillarVoiceConfig(pillar?: string | null): typeof MEDITATION_MOOD_CONFIG[string] | undefined {
+  if (!pillar) return undefined;
+  const key = pillar.toLowerCase();
+  const config = PILLAR_VOICE_CONFIG[key];
+  if (!config) return undefined;
+  return config;
+}
+
+const dailyGreetingCache = new Map<string, { message: string; actionText?: string; actionType?: string }>();
+const lastNudgeTypeByUser = new Map<string, string>();
+
+const dailyGreetingFallbacks: Record<string, string> = {
+  morning: "A new morning means a new chance to become who you are meant to be",
+  afternoon: "You are carrying today with quiet strength — keep moving forward",
+  evening: "Tonight you can rest knowing you gave today your honest effort",
+  night: "Let the stillness remind you how far you have already come",
+};
 
 const uploadDir = path.join(process.cwd(), "uploads");
 if (!fs.existsSync(uploadDir)) {
@@ -48,8 +237,9 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 // Usage limit constants
-const MAX_AI_AFFIRMATIONS_PER_MONTH = 10;
-const MAX_VOICE_CLONES_LIFETIME = 2;
+const MAX_AI_AFFIRMATIONS_PER_MONTH = 20;
+const MAX_VOICE_CLONES_LIFETIME = 5;
+
 
 // Helper to check and reset monthly limits
 async function checkAndResetMonthlyLimits(userId: string): Promise<{
@@ -111,9 +301,9 @@ const audioUpload = multer({
 // Generate affirmation script using OpenAI
 async function generateScript(goal: string, categories?: string[], length?: string, pillar?: string): Promise<string> {
   const lengthConfig = {
-    short: { sentences: 2, tokens: 80, description: "exactly 2 sentences" },
-    medium: { sentences: 5, tokens: 200, description: "exactly 5 sentences" },
-    long: { sentences: 10, tokens: 400, description: "exactly 10 sentences" },
+    short: { sentences: 2, tokens: 150, description: "exactly 2 sentences" },
+    medium: { sentences: 5, tokens: 350, description: "exactly 5 sentences" },
+    long: { sentences: 10, tokens: 600, description: "exactly 10 sentences" },
   };
   
   // Category-specific tone and style instructions
@@ -143,7 +333,6 @@ async function generateScript(goal: string, categories?: string[], length?: stri
   };
 
   const config = lengthConfig[length as keyof typeof lengthConfig] || lengthConfig.medium;
-  console.log(`Generating script with length: ${length}, pillar: ${pillar}, categories: ${categories?.join(", ")}, using config:`, config);
   
   // Build combined tone instruction from pillar and subcategories
   let toneInstruction = "Use positive, empowering, and uplifting language.";
@@ -163,7 +352,33 @@ async function generateScript(goal: string, categories?: string[], length?: stri
     }
   }
   
-  const systemPrompt = `Write ${config.sentences} affirmation sentences. First person, present tense. No titles, no instructions, no numbering. Just ${config.sentences} sentences.
+  const systemPrompt = `You are an expert in subconscious reprogramming and neurolinguistic patterning. Write ${config.sentences} affirmation sentences that are psychologically optimized to bypass conscious resistance and embed deeply into the subconscious mind.
+
+SUBCONSCIOUS LANGUAGE RULES (apply ALL of these):
+
+1. PRESENT TENSE ONLY: Always "I am", "I have", "I feel" — never future tense. The subconscious cannot process "I will" or "someday". Everything must feel true NOW.
+
+2. POSITIVE FRAMING: Never use negatives (not, don't, won't, no longer, without, free from). The subconscious ignores negation and absorbs the negative concept. Say "I am calm" not "I am not anxious". Say "I welcome abundance" not "I am free from scarcity".
+
+3. SENSORY-RICH LANGUAGE: Include felt sensations — what the person feels in their body, sees in their mind, or hears internally. Examples: "I feel the steady warmth of confidence radiating through my chest", "I sense my own quiet power". This activates the subconscious through embodiment.
+
+4. IDENTITY-LEVEL STATEMENTS: Frame as identity ("I am someone who..."), not behavior ("I try to..."). Identity statements reshape self-concept at the deepest level. Mix "I am" with "I naturally...", "I effortlessly...", "It is in my nature to...".
+
+5. PROGRESSIVE BELIEVABILITY: Start with grounded, easily believable statements and gradually build to more aspirational ones. This prevents conscious rejection. First sentence should feel undeniably true, last sentence should feel like an exciting stretch.
+
+6. EMBEDDED COMMANDS: Weave in subtle permission-giving phrases: "I allow myself to...", "I give myself permission to...", "I am ready to...", "I am open to receiving...". These dissolve inner resistance.
+
+7. RHYTHM AND FLOW: Create a natural, almost poetic cadence. Use parallel structure and gentle repetition of key power words. The rhythm makes phrases easier for the subconscious to absorb during repetitive listening.
+
+8. EMOTIONAL ANCHORING: Each sentence should evoke a specific positive emotion (safety, pride, gratitude, excitement, peace, love). Name the emotion when possible: "I feel deeply proud of who I am becoming."
+
+9. WORD VARIETY: Avoid overusing any single verb or adjective. Specifically, do NOT overuse these words: embrace, unlock, harness, ignite, unleash, manifest, radiate, transcend, awaken, abundant, limitless, boundless, infinite. Use each at most ONCE across the entire script, and prefer simpler, more natural alternatives like "welcome", "hold", "carry", "choose", "build", "step into", "notice", "trust".
+
+10. HUMAN VOICE: Write the way a real person talks to themselves — not like a motivational poster. Use contractions (I'm, it's, I've, that's). Vary sentence length — mix short punchy statements with longer flowing ones. Avoid stacking grandiose adjectives (never "immense, limitless, boundless power"). Include moments of gentle self-acknowledgment: "I've been working on this, and it's showing" or "something in me is shifting." Occasional dashes and commas create natural breathing pauses. The listener should feel like these are their own private thoughts, not a script being read to them.
+
+11. AVOID AI-ISMS: Never sound like a corporate affirmation card or self-help book cover. Avoid clichés like "I am a beacon of light", "I radiate pure energy", "I command the room", "my potential is limitless." Instead, choose language that feels intimate and specific — "there's a quiet confidence building in me" rather than "I radiate unshakeable confidence." If a sentence could appear on a motivational Instagram post, rewrite it to sound more like a private journal entry.
+
+FORMAT: No titles, no instructions, no numbering, no quotes. Just ${config.sentences} flowing sentences, each on its own line. Write as if speaking directly to the deepest part of someone's mind.
 
 TONE AND STYLE: ${toneInstruction}`;
 
@@ -201,7 +416,70 @@ TONE AND STYLE: ${toneInstruction}`;
     script = sentences.slice(0, config.sentences).join(" ").trim();
   }
   
+  script = await humanizeScript(script, config.sentences);
+  
   return script;
+}
+
+async function humanizeScript(script: string, sentenceCount: number): Promise<string> {
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: `You are a humanizer for affirmation scripts. Your ONLY job is to rewrite stiff, AI-sounding affirmations so they sound like a real person's private inner thoughts.
+
+RULES:
+- Exactly ${sentenceCount} sentences. Each on its own line. No titles, numbering, or quotes.
+- Preserve the psychological structure: present tense, positive framing, identity statements, embedded commands, progressive believability.
+- Do NOT add new concepts. Only rephrase what's there.
+
+VOICE — This is the most important part:
+- Use contractions ALWAYS: I'm, I've, it's, that's, there's, I'd, who's. Never "I am" when "I'm" works. Never "it is" when "it's" sounds more natural.
+- Mix sentence lengths dramatically. Some sentences should be 5-8 words. Others can flow longer. Never let all sentences be the same length.
+- Add dashes and commas for breathing rhythm: "I'm building something real — and I can feel it."
+- Include self-acknowledgment: "I've been working at this, and it's showing." "Something in me is different now."
+- Write like a private journal entry, not a speech. "There's a steadiness in me that wasn't there before" instead of "I am filled with unwavering steadiness."
+
+KILL THESE AI PATTERNS:
+- "I naturally bring [grandiose noun] to every [context]" → too formulaic
+- "I am someone who carries/radiates/embodies [abstract quality]" → too stiff
+- Stacking multiple abstract nouns: "clarity, purpose, and determination" → pick ONE and make it specific
+- "It is in my nature to..." → sounds robotic, rephrase conversationally
+- Any phrase that could appear on a motivational poster or Instagram caption → rewrite intimately`,
+        },
+        {
+          role: "user",
+          content: script,
+        },
+      ],
+      temperature: 0.8,
+      max_tokens: 600,
+    });
+
+    const humanized = response.choices[0]?.message?.content?.trim();
+    if (!humanized) return script;
+
+    let result = humanized
+      .replace(/^\*\*.*?\*\*\s*/gm, "")
+      .replace(/^#+\s*.*?\n/gm, "")
+      .replace(/^\d+\.\s*/gm, "")
+      .replace(/^["']/gm, "")
+      .replace(/["']$/gm, "")
+      .replace(/^\s*\n/gm, "")
+      .trim();
+
+    const humanizedSentences = result.match(/[^.!?]+[.!?]+/g) || [];
+    if (humanizedSentences.length > sentenceCount) {
+      result = humanizedSentences.slice(0, sentenceCount).join(" ").trim();
+    }
+
+    return result;
+  } catch (error) {
+    console.error("Humanizer pass failed, using original script:", error);
+    return script;
+  }
 }
 
 // Auto-generate title from affirmation script
@@ -212,8 +490,37 @@ async function autoGenerateTitle(script: string): Promise<string> {
       messages: [
         {
           role: "system",
-          content: `You are a title generator for affirmations. Create a short, inspiring title (3-6 words) that captures the essence of the affirmation. 
-The title should be motivational and concise. Do NOT include quotation marks.
+          content: `You are a title generator for personalized affirmations. Create a short, inspiring title (3-6 words) that captures the core theme of the affirmation.
+
+CRITICAL RULES:
+- Be specific and vivid — reflect the unique theme, not generic motivation
+- Use fresh, varied language — never default to the same patterns
+- Do NOT include quotation marks
+- NEVER start the title with any word from the banned list below
+
+BANNED WORDS (NEVER use these in titles):
+Embrace, Unlock, Harness, Ignite, Unleash, Empower, Elevate, Manifest, Radiate, Cultivate, Transcend, Awaken, Thrive, Navigate, Journey, Transform, Limitless, Boundless, Infinite, Unstoppable, Abundant, Sacred, Divine, Vibrant, Magnetic, Unleashing, Embracing, Unlocking, Harnessing, Igniting
+
+GOOD TITLE EXAMPLES:
+- Steady Mind, Open Heart
+- Strength in Every Step
+- Rest That Restores
+- Roots of Real Confidence
+- Sleep Like Still Water
+- Bright Focus, Clear Path
+- Calm in the Storm
+- My Voice, My Power
+- Growing Stronger Each Day
+- Peaceful and Present
+
+BAD TITLE EXAMPLES (REJECTED — uses banned words):
+- Embrace Your Inner Power
+- Unlock Your True Potential
+- Radiate Boundless Energy
+- Manifest Infinite Abundance
+- Embracing Growth and Confidence
+- Embrace the Abundance Within
+
 Respond with ONLY the title, nothing else.`,
         },
         {
@@ -221,14 +528,64 @@ Respond with ONLY the title, nothing else.`,
           content: script,
         },
       ],
-      temperature: 0.7,
+      temperature: 0.9,
       max_tokens: 30,
     });
 
-    return response.choices[0]?.message?.content?.trim() || "My Affirmation";
+    let title = response.choices[0]?.message?.content?.trim() || "My Affirmation";
+    title = title.replace(/^["']|["']$/g, "");
+    return title;
   } catch (error) {
     console.error("Auto-title generation failed:", error);
     return "My Affirmation";
+  }
+}
+
+async function autoGenerateDescription(script: string, goal?: string): Promise<string> {
+  try {
+    const userContext = goal 
+      ? `\nUSER'S ORIGINAL GOAL: "${goal}"\nUse this goal to ground the description in what the user actually wants to achieve.`
+      : '';
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: `You write short, clear descriptions for affirmation cards in a mindfulness app. Write one sentence (8-15 words) that explains what this affirmation is about — its purpose and theme.
+
+RULES:
+- Be clear and grounded — describe what the affirmation helps with, not how it makes you feel
+- Start with "For" or a clear action-oriented phrase
+- No quotation marks, no period at the end
+- Do NOT repeat the affirmation title
+- Avoid flowery or overly poetic language
+
+BANNED OPENING WORDS (NEVER start with these):
+Fosters, Cultivates, Nurtures, Promotes, Encourages, Supports, Enhances, Develops, Strengthens, Builds, Empowers, Inspires
+
+GOOD EXAMPLES:
+- For building confidence in public speaking and presentations
+- For letting go of perfectionism and embracing progress
+- For staying calm and grounded during stressful moments
+- For deepening self-trust when making big life decisions
+- For improving sleep by quieting a busy mind
+- For finding motivation to stay consistent with your goals
+- For healing from past experiences and moving forward
+- For embracing change with courage and openness
+${userContext}
+Respond with ONLY the description, nothing else.`,
+        },
+        { role: "user", content: script },
+      ],
+      temperature: 0.7,
+      max_tokens: 40,
+    });
+
+    return response.choices[0]?.message?.content?.trim().replace(/['"]/g, '').replace(/\.$/, '') || "";
+  } catch (error) {
+    console.error("Error generating description:", error);
+    return "";
   }
 }
 
@@ -276,68 +633,229 @@ Respond with ONLY the category name, nothing else.`,
   }
 }
 
-// Simple audio generation for voice previews (no word timings needed)
-async function generateAudioSimple(text: string, voiceId: string): Promise<ArrayBuffer> {
-  try {
-    const client = await getElevenLabsClient();
-    const audio = await client.textToSpeech.convert(voiceId, {
-      text,
-      model_id: "eleven_multilingual_v2",
-    });
-    
-    // Collect chunks into a buffer
-    const chunks: Buffer[] = [];
-    for await (const chunk of audio) {
-      chunks.push(Buffer.from(chunk));
-    }
-    return Buffer.concat(chunks).buffer;
-  } catch (error) {
-    console.error("Simple TTS failed:", error);
-    throw error;
-  }
+// Direct OpenAI client for TTS fallback (uses real OpenAI API, not Replit AI integration)
+const directOpenAI = process.env.OPENAI_API_KEY
+  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  : null;
+
+const HUME_TO_OPENAI_VOICE_MAP: Record<string, string> = {
+  "hume_seraphina": "nova",
+  "hume_lotus": "shimmer",
+  "hume_amber": "alloy",
+  "hume_nova": "nova",
+  "hume_willow": "shimmer",
+  "hume_orion": "onyx",
+  "hume_atlas": "echo",
+  "hume_sage": "fable",
+  "hume_summit": "onyx",
+  "hume_bodhi": "echo",
+};
+
+// Map Hume voice IDs to their voice names for TTS API calls
+const HUME_VOICE_ID_MAP: Record<string, string> = {
+  "hume_seraphina": "Serene Assistant",
+  "hume_lotus": "Female Meditation Guide",
+  "hume_amber": "Warm American Female",
+  "hume_nova": "Warm Female Assistant Voice",
+  "hume_willow": "Demure Conversationalist",
+  "hume_orion": "Inspiring Man",
+  "hume_atlas": "Deep Male Conversational Voice",
+  "hume_sage": "Soft Male Conversationalist",
+  "hume_summit": "Nature Documentary Narrator",
+  "hume_bodhi": "Wise Wizard",
+};
+
+function getHumeVoiceNameForId(voiceId?: string): string | null {
+  if (!voiceId) return null;
+  return HUME_VOICE_ID_MAP[voiceId] || null;
 }
 
-// Generate audio using ElevenLabs or fallback to OpenAI
+function isHumeVoice(voiceId?: string): boolean {
+  return !!voiceId && voiceId.startsWith("hume_");
+}
+
+function getOpenAIFallbackVoice(voiceId?: string): "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer" {
+  if (!voiceId) return "nova";
+  const mapped = HUME_TO_OPENAI_VOICE_MAP[voiceId];
+  return (mapped as any) || "nova";
+}
+
+async function generateAudioOpenAI(
+  script: string,
+  voice: "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer" = "nova"
+): Promise<{ audio: ArrayBuffer; duration: number; wordTimings: WordTiming[] }> {
+  if (!directOpenAI) {
+    throw new Error("TTS_UNAVAILABLE: No OpenAI API key configured");
+  }
+
+  const response = await directOpenAI.audio.speech.create({
+    model: "tts-1",
+    voice,
+    input: script,
+  });
+
+  const audioBuffer = await response.arrayBuffer();
+  const words = script.split(/\s+/).filter(w => w.length > 0);
+  const wordCount = words.length;
+  const estimatedDuration = Math.ceil((wordCount / 150) * 60);
+
+  const avgWordDurationMs = (estimatedDuration * 1000) / wordCount;
+  const wordTimings: WordTiming[] = words.map((word, index) => ({
+    word,
+    startMs: Math.round(index * avgWordDurationMs),
+    endMs: Math.round((index + 1) * avgWordDurationMs),
+  }));
+
+  return {
+    audio: audioBuffer,
+    duration: estimatedDuration,
+    wordTimings,
+  };
+}
+
+async function generateAudioSimpleOpenAI(
+  text: string,
+  voice: "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer" = "nova"
+): Promise<ArrayBuffer> {
+  if (!directOpenAI) {
+    throw new Error("TTS_UNAVAILABLE: No OpenAI API key configured");
+  }
+  const response = await directOpenAI.audio.speech.create({
+    model: "tts-1",
+    voice,
+    input: text,
+  });
+  return await response.arrayBuffer();
+}
+
+function resolvePersonalVoiceId(
+  ttsProvider: string | null | undefined,
+  voiceId: string | null | undefined,
+  elevenLabsVoiceId: string | null | undefined,
+  cartesiaVoiceId: string | null | undefined
+): string | undefined {
+  if (elevenLabsVoiceId) return elevenLabsVoiceId;
+  return voiceId || undefined;
+}
+
+async function generateAudioSimple(text: string, voiceId: string, isPersonalVoice: boolean = false, ttsProvider?: string): Promise<ArrayBuffer> {
+  if (isPersonalVoice) {
+    try {
+      const client = await getElevenLabsClient();
+      const audio = await client.textToSpeech.convert(voiceId, {
+        text,
+        model_id: "eleven_multilingual_v2",
+        voice_settings: {
+          stability: 0.5,
+          similarity_boost: 0.75,
+          style: 0.3,
+          use_speaker_boost: true,
+        },
+      });
+      const chunks: Buffer[] = [];
+      for await (const chunk of audio) {
+        chunks.push(Buffer.from(chunk));
+      }
+      return Buffer.concat(chunks).buffer;
+    } catch (error: any) {
+      const errMsg = error?.message || String(error);
+      const isQuota = errMsg.includes("quota_exceeded") || errMsg.includes("Unauthorized");
+      const isVoiceNotFound = errMsg.includes("voice_not_found") ||
+        errMsg.includes("Not Found") ||
+        String(error).includes("voice_not_found");
+      if (isQuota) {
+        throw new Error("QUOTA_EXCEEDED: Your voice cloning credits have been used up for this period. Please switch to an AI voice or wait for your credits to reset.");
+      }
+      if (isVoiceNotFound) {
+        throw new Error("VOICE_EXPIRED: Your voice clone has expired or is no longer available. Please re-record your voice sample.");
+      }
+      throw new Error("PERSONAL_VOICE_FAILED: Could not generate audio with your Inner Voice. Please try again or re-record your voice.");
+    }
+  }
+
+  // Stock AI voice: use Hume AI (primary), OpenAI (fallback)
+  const humeName = getHumeVoiceNameForId(voiceId);
+  
+  if (humeName) {
+    try {
+      return await humeSimpleTTS(text, humeName);
+    } catch (humeError: any) {
+      console.error("Hume AI simple TTS failed, trying OpenAI fallback:", humeError?.message || humeError);
+    }
+  }
+
+  // Fallback to OpenAI
+  if (directOpenAI) {
+    try {
+      const openaiVoice = getOpenAIFallbackVoice(voiceId);
+      return await generateAudioSimpleOpenAI(text, openaiVoice);
+    } catch (openaiError: any) {
+      console.error("OpenAI simple TTS fallback also failed:", openaiError?.message || openaiError);
+    }
+  }
+
+  throw new Error("TTS_UNAVAILABLE: All TTS services are unavailable");
+}
+
 async function generateAudio(
   script: string,
-  voiceId?: string
+  voiceId?: string,
+  isPersonalVoice: boolean = false,
+  moodConfig?: typeof MEDITATION_MOOD_CONFIG[string],
+  ttsProvider?: string,
+  isMeditation: boolean = false
 ): Promise<{ audio: ArrayBuffer; duration: number; wordTimings: WordTiming[] }> {
-  try {
-    // Try ElevenLabs first (for cloned voices or better quality)
-    console.log("Attempting ElevenLabs TTS with voiceId:", voiceId);
-    const result = await elevenLabsTTS(script, voiceId);
-    console.log("ElevenLabs TTS succeeded with", result.wordTimings?.length || 0, "word timings");
-    return result;
-  } catch (error) {
-    console.error("ElevenLabs TTS failed, falling back to OpenAI:", error);
-    
-    // Fallback to OpenAI TTS if ElevenLabs fails
-    // Note: OpenAI TTS doesn't provide word-level timestamps, so we generate approximate timings
-    const response = await openai.audio.speech.create({
-      model: "tts-1",
-      voice: "nova",
-      input: script,
-    });
-
-    const audioBuffer = await response.arrayBuffer();
-    const words = script.split(/\s+/).filter(w => w.length > 0);
-    const wordCount = words.length;
-    const estimatedDuration = Math.ceil((wordCount / 150) * 60);
-    
-    // Generate approximate word timings based on word length (no real timing data from OpenAI)
-    const avgWordDurationMs = (estimatedDuration * 1000) / wordCount;
-    const wordTimings: WordTiming[] = words.map((word, index) => ({
-      word,
-      startMs: Math.round(index * avgWordDurationMs),
-      endMs: Math.round((index + 1) * avgWordDurationMs),
-    }));
-
-    return {
-      audio: audioBuffer,
-      duration: estimatedDuration,
-      wordTimings,
-    };
+  if (isPersonalVoice) {
+    const personalVoiceSettings = isMeditation
+      ? { stability: 0.70, style: 0.25, pauseSeconds: 2.5 }
+      : { stability: 0.78, style: 0.15, pauseSeconds: 2.0 };
+    try {
+      const result = await elevenLabsTTS(script, voiceId, personalVoiceSettings);
+      return result;
+    } catch (elevenLabsError: any) {
+      const isQuotaExhausted = elevenLabsError?.message?.includes("quota_exceeded") ||
+        elevenLabsError?.message?.includes("Unauthorized") ||
+        String(elevenLabsError).includes("quota_exceeded");
+      const isVoiceNotFound = elevenLabsError?.message?.includes("voice_not_found") ||
+        elevenLabsError?.message?.includes("Not Found") ||
+        String(elevenLabsError).includes("voice_not_found");
+      console.error(
+        `ElevenLabs TTS failed for PERSONAL voice (${voiceId})${isQuotaExhausted ? " (quota exhausted)" : ""}${isVoiceNotFound ? " (voice not found)" : ""}:`,
+        elevenLabsError?.message || elevenLabsError
+      );
+      if (isQuotaExhausted) {
+        throw new Error("QUOTA_EXCEEDED: Your voice cloning credits have been used up for this period. Please switch to an AI voice or wait for your credits to reset.");
+      }
+      if (isVoiceNotFound) {
+        throw new Error("VOICE_EXPIRED: Your voice clone has expired or is no longer available. Please re-record your voice sample.");
+      }
+      throw new Error("PERSONAL_VOICE_FAILED: Could not generate audio with your Inner Voice. Please try again or re-record your voice.");
+    }
   }
+
+  // Stock AI voice: use Hume AI (primary), OpenAI (fallback)
+  const humeName = getHumeVoiceNameForId(voiceId);
+  
+  if (humeName) {
+    try {
+      const result = await humeTextToSpeech(script, humeName, moodConfig?.humeSpeed, moodConfig?.pauseSeconds);
+      return result;
+    } catch (humeError: any) {
+      console.error("Hume AI TTS failed, trying OpenAI fallback:", humeError?.message || humeError);
+    }
+  }
+
+  // Fallback to OpenAI for stock voices
+  if (directOpenAI) {
+    try {
+      const openaiVoice = getOpenAIFallbackVoice(voiceId);
+      return await generateAudioOpenAI(script, openaiVoice);
+    } catch (openaiError: any) {
+      console.error("OpenAI TTS fallback also failed:", openaiError?.message || openaiError);
+    }
+  }
+
+  throw new Error("TTS_UNAVAILABLE: All TTS services (Hume AI, OpenAI) are unavailable");
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -357,13 +875,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Security is enforced through: filename pattern validation + path traversal prevention
   app.get("/uploads/audio/:filename", async (req: Request, res: Response) => {
     try {
-      const rawFilename = req.params.filename;
+      const rawFilename = req.params.filename as string;
       
       // SECURITY: Sanitize filename to prevent path traversal attacks (e.g., ../../etc/passwd)
       const filename = path.basename(rawFilename);
       
       // SECURITY: Reject any filename that doesn't match expected pattern
-      if (!/^(affirmation|voice)-\d+(-\d+)?\.(mp3|m4a|wav|webm)$/.test(filename)) {
+      if (!/^(affirmation|voice)[-\w]+\.(mp3|m4a|wav|webm)$/.test(filename)) {
         return res.status(400).json({ error: "Invalid filename format" });
       }
       
@@ -438,7 +956,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get single affirmation (must belong to user)
   app.get("/api/affirmations/:id", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const [affirmation] = await db
         .select()
         .from(affirmations)
@@ -458,6 +976,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/moderate-content", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { text } = req.body;
+      if (!text || typeof text !== "string") {
+        return res.status(400).json({ error: "Text is required" });
+      }
+      const result = await moderateContent(text);
+      res.json(result);
+    } catch (error) {
+      console.error("Moderation check error:", error);
+      res.json({ flagged: false, categories: [], message: "" });
+    }
+  });
+
   // Generate script using AI (requires auth) - Limited to MAX_AI_AFFIRMATIONS_PER_MONTH per month
   // Rate limited: max 5 requests per minute
   app.post("/api/affirmations/generate-script", requireAuth, aiGenerationLimiter, async (req: AuthenticatedRequest, res: Response) => {
@@ -468,10 +1000,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Goal is required" });
       }
 
-      // Check monthly usage limit for AI-generated affirmations
+      // Validate goal input — checks both explicit content and affirmation alignment
+      const goalModResult = await validateAffirmationContent(goal);
+      if (goalModResult.flagged) {
+        return res.status(422).json({
+          error: "content_flagged", 
+          message: goalModResult.message,
+          categories: goalModResult.categories
+        });
+      }
+
+      // Check monthly usage limit for AI-generated affirmations (skip for admin accounts)
+      const isAdmin = ADMIN_USER_IDS.has(req.userId!);
       const limits = await checkAndResetMonthlyLimits(req.userId!);
       
-      if (limits.affirmationsRemaining <= 0) {
+      if (!isAdmin && limits.affirmationsRemaining <= 0) {
         return res.status(429).json({
           error: `Monthly AI affirmation limit reached. Maximum ${MAX_AI_AFFIRMATIONS_PER_MONTH} AI-generated affirmations per month.`,
           limit: MAX_AI_AFFIRMATIONS_PER_MONTH,
@@ -485,6 +1028,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const categoryList = categories || (category ? [category] : []);
       const script = await generateScript(goal, categoryList, length, pillar);
       
+      const [title, description] = await Promise.all([
+        autoGenerateTitle(script),
+        autoGenerateDescription(script, goal),
+      ]);
+      
       // Increment usage counter after successful generation
       await db
         .update(users)
@@ -495,6 +1043,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ 
         script,
+        title,
+        description,
         usage: {
           used: limits.affirmationsThisMonth + 1,
           remaining: limits.affirmationsRemaining - 1,
@@ -511,10 +1061,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Rate limited: max 10 TTS requests per minute
   app.post("/api/affirmations/create-with-voice", requireAuth, ttsLimiter, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { title, script, pillar, categories, category, isManual } = req.body;
+      const { title, script, pillar, categories, category, isManual, forceAiVoice, description } = req.body;
 
       if (!script) {
         return res.status(400).json({ error: "Script is required" });
+      }
+
+      // Content moderation check — validates both explicit content and affirmation alignment
+      const textsToCheck = [script, title].filter(Boolean);
+      if (categories && Array.isArray(categories)) {
+        textsToCheck.push(...categories);
+      }
+      const modResult = await validateAffirmationContent(textsToCheck.join(" "));
+      if (modResult.flagged) {
+        return res.status(422).json({ 
+          error: "content_flagged",
+          message: modResult.message,
+          categories: modResult.categories
+        });
+      }
+
+      let finalDescription = description || null;
+      if (!finalDescription && script) {
+        try {
+          finalDescription = await autoGenerateDescription(script);
+        } catch (e) {
+          console.error("Failed to auto-generate description:", e);
+        }
       }
 
       // Support both old single category and new multi-category format
@@ -525,8 +1098,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         categoryName = category;
       }
 
-      console.log("Saving affirmation with pillar:", pillar, "categories:", categoryName);
-
       // Get user's voice preferences and voice sample
       const [userWithPrefs] = await db
         .select({
@@ -536,6 +1107,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           preferredAiGender: users.preferredAiGender,
           preferredMaleVoiceId: users.preferredMaleVoiceId,
           preferredFemaleVoiceId: users.preferredFemaleVoiceId,
+          ttsProvider: users.ttsProvider,
+          elevenLabsVoiceId: users.elevenLabsVoiceId,
+          cartesiaVoiceId: users.cartesiaVoiceId,
         })
         .from(users)
         .where(eq(users.id, req.userId!));
@@ -545,31 +1119,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let usedPersonalVoice = false;
       let usedGender = userWithPrefs?.preferredAiGender || "female";
 
-      if (userWithPrefs?.preferredVoiceType === "personal" && userWithPrefs?.voiceId && userWithPrefs?.hasVoiceSample) {
-        // Use personal cloned voice
-        voiceIdToUse = userWithPrefs.voiceId;
+      if (!forceAiVoice && userWithPrefs?.preferredVoiceType === "personal" && userWithPrefs?.hasVoiceSample) {
+        voiceIdToUse = resolvePersonalVoiceId(userWithPrefs.ttsProvider, userWithPrefs.voiceId, userWithPrefs.elevenLabsVoiceId, userWithPrefs.cartesiaVoiceId);
         usedPersonalVoice = true;
-        console.log("Using personal voice:", voiceIdToUse);
       } else {
-        // Use AI voice based on gender preference
-        console.log("Voice preferences loaded:", {
-          preferredMaleVoiceId: userWithPrefs?.preferredMaleVoiceId,
-          preferredFemaleVoiceId: userWithPrefs?.preferredFemaleVoiceId,
-          preferredAiGender: userWithPrefs?.preferredAiGender
-        });
         if (usedGender === "male") {
           voiceIdToUse = userWithPrefs?.preferredMaleVoiceId || VOICE_OPTIONS.male[0].id;
         } else {
           voiceIdToUse = userWithPrefs?.preferredFemaleVoiceId || VOICE_OPTIONS.female[0].id;
         }
-        console.log("Using AI voice:", voiceIdToUse, "for gender:", usedGender);
       }
 
-      // Generate audio with word timings
-      const audioResult = await generateAudio(
-        script,
-        voiceIdToUse
-      );
+      let audioResult;
+      try {
+        audioResult = await generateAudio(
+          script,
+          voiceIdToUse,
+          usedPersonalVoice,
+          getPillarVoiceConfig(pillar),
+          userWithPrefs?.ttsProvider || undefined
+        );
+      } catch (genError: any) {
+        if (usedPersonalVoice && genError?.message?.includes("QUOTA_EXCEEDED")) {
+          const fallbackGender = usedGender || "female";
+          const fallbackVoiceId = fallbackGender === "male"
+            ? (userWithPrefs?.preferredMaleVoiceId || VOICE_OPTIONS.male[0].id)
+            : (userWithPrefs?.preferredFemaleVoiceId || VOICE_OPTIONS.female[0].id);
+          usedPersonalVoice = false;
+          voiceIdToUse = fallbackVoiceId;
+          audioResult = await generateAudio(script, fallbackVoiceId, false, getPillarVoiceConfig(pillar));
+        } else if (usedPersonalVoice && (genError?.message?.includes("PERSONAL_VOICE_FAILED") || genError?.message?.includes("VOICE_EXPIRED"))) {
+          const fallbackGender = usedGender || "female";
+          const fallbackVoiceId = fallbackGender === "male"
+            ? (userWithPrefs?.preferredMaleVoiceId || VOICE_OPTIONS.male[0].id)
+            : (userWithPrefs?.preferredFemaleVoiceId || VOICE_OPTIONS.female[0].id);
+          usedPersonalVoice = false;
+          voiceIdToUse = fallbackVoiceId;
+          audioResult = await generateAudio(script, fallbackVoiceId, false, getPillarVoiceConfig(pillar));
+        } else {
+          throw genError;
+        }
+      }
+
+      if (usedPersonalVoice) {
+        await db
+          .update(users)
+          .set({ voiceLastUsedAt: new Date() })
+          .where(eq(users.id, req.userId!));
+      }
 
       // Save audio file to the audio subdirectory
       const audioDir = path.join(uploadDir, "audio");
@@ -589,6 +1186,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           script,
           pillar: pillar || null,
           categoryName: categoryName || null,
+          description: finalDescription || null,
           audioUrl: `/uploads/audio/${audioFilename}`,
           duration: audioResult.duration,
           wordTimings: JSON.stringify(audioResult.wordTimings),
@@ -600,16 +1198,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .returning();
 
       res.json(newAffirmation);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating affirmation:", error);
-      res.status(500).json({ error: "Failed to create affirmation" });
+      if (error?.message?.includes("QUOTA_EXCEEDED")) {
+        res.status(429).json({ error: "QUOTA_EXCEEDED", message: "Your voice credits have been used up for this period. The affirmation will be created with an AI voice instead." });
+      } else if (error?.message?.includes("PERSONAL_VOICE_FAILED")) {
+        res.status(422).json({ error: "PERSONAL_VOICE_FAILED", message: "Could not generate audio with your Inner Voice. You can try again or switch to an AI voice." });
+      } else if (error?.message?.includes("TTS_UNAVAILABLE")) {
+        res.status(503).json({ error: "Voice services are temporarily unavailable. Please try again later." });
+      } else {
+        res.status(500).json({ error: "Failed to create affirmation. Please try again." });
+      }
     }
   });
 
   // Delete affirmation (requires auth, must belong to user)
   app.delete("/api/affirmations/:id", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       
       // Get the affirmation to delete the audio file (ensure it belongs to user)
       const [affirmation] = await db
@@ -661,7 +1267,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update favorite status (requires auth, must belong to user)
   app.patch("/api/affirmations/:id/favorite", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const { isFavorite } = req.body;
 
       const [updated] = await db
@@ -687,7 +1293,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Rename affirmation (requires auth, must belong to user)
   app.patch("/api/affirmations/:id/rename", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const { title } = req.body;
 
       if (!title || typeof title !== "string" || title.trim().length === 0) {
@@ -717,7 +1323,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auto-save affirmation with AI-generated title and category (requires auth)
   app.post("/api/affirmations/:id/auto-save", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
 
       const [affirmation] = await db
         .select()
@@ -732,13 +1338,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const script = affirmation.script || affirmation.title || "";
+
+      // Content moderation check on the script
+      const autoSaveModResult = await moderateContent(script);
+      if (autoSaveModResult.flagged) {
+        return res.status(422).json({
+          error: "content_flagged",
+          message: autoSaveModResult.message,
+          categories: autoSaveModResult.categories
+        });
+      }
       
       // Only auto-categorize if no category is set
       const hasCategory = affirmation.categoryName;
       
-      // Generate AI title and category in parallel
-      const [generatedTitle, newCategoryName] = await Promise.all([
+      // Generate AI title, description and category in parallel
+      const [generatedTitle, generatedDescription, newCategoryName] = await Promise.all([
         autoGenerateTitle(script),
+        autoGenerateDescription(script),
         hasCategory ? Promise.resolve(null) : autoCategorizе(script),
       ]);
 
@@ -747,13 +1364,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .update(affirmations)
         .set({
           title: generatedTitle,
+          description: generatedDescription || undefined,
           ...(hasCategory ? {} : { categoryName: newCategoryName }),
           updatedAt: new Date(),
         })
         .where(eq(affirmations.id, parseInt(id)))
         .returning();
 
-      console.log(`Auto-saved affirmation ${id}: title="${generatedTitle}", categoryName=${updated.categoryName}`);
       res.json(updated);
     } catch (error) {
       console.error("Error auto-saving affirmation:", error);
@@ -761,10 +1378,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/affirmations/backfill-descriptions", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const userAffirmations = await db
+        .select({ id: affirmations.id, script: affirmations.script })
+        .from(affirmations)
+        .where(and(
+          eq(affirmations.userId, req.userId!),
+          isNull(affirmations.description)
+        ));
+
+      if (userAffirmations.length === 0) {
+        return res.json({ updated: 0, message: "All affirmations already have descriptions" });
+      }
+
+      let updated = 0;
+      for (const aff of userAffirmations) {
+        try {
+          const description = await autoGenerateDescription(aff.script);
+          if (description) {
+            await db
+              .update(affirmations)
+              .set({ description, updatedAt: new Date() })
+              .where(eq(affirmations.id, aff.id));
+            updated++;
+          }
+        } catch (e) {
+          console.error(`Failed to generate description for affirmation ${aff.id}:`, e);
+        }
+      }
+
+      res.json({ updated, total: userAffirmations.length });
+    } catch (error) {
+      console.error("Error backfilling descriptions:", error);
+      res.status(500).json({ error: "Failed to backfill descriptions" });
+    }
+  });
+
   // Increment play count and record listening session (requires auth)
   app.post("/api/affirmations/:id/play", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const { durationSeconds } = req.body || {};
 
       const [affirmation] = await db
@@ -799,8 +1453,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         dateKey,
       });
       
-      console.log(`Recorded listening session for user ${req.userId}, affirmation ${id}, date ${dateKey}`);
-
       res.json(updated);
     } catch (error) {
       console.error("Error updating play count:", error);
@@ -809,9 +1461,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Upload voice sample and clone voice (requires auth)
-  // Max 2 voice clones per user lifetime
+  // Max 5 voice clones per user lifetime (ElevenLabs Pro Plan)
   // Rate limited: max 3 attempts per hour
-  const MAX_VOICE_CLONES = 2;
+  const MAX_VOICE_CLONES = 5;
   
   app.post(
     "/api/voice-samples",
@@ -827,7 +1479,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Check user's voice clone limit
         const [user] = await db
-          .select({ voiceClonesUsed: users.voiceClonesUsed, hasConsentedToVoiceCloning: users.hasConsentedToVoiceCloning })
+          .select({ voiceClonesUsed: users.voiceClonesUsed, hasConsentedToVoiceCloning: users.hasConsentedToVoiceCloning, ttsProvider: users.ttsProvider })
           .from(users)
           .where(eq(users.id, req.userId!))
           .limit(1);
@@ -866,11 +1518,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           })
           .returning();
 
-        // Clone voice with ElevenLabs
         try {
-          const voiceId = await cloneVoice(file.path, "My Affirmation Voice");
+          let voiceId: string;
+          const providerVoiceUpdate: Record<string, any> = { 
+            hasVoiceSample: true, 
+            preferredVoiceType: "personal",
+            voiceClonesUsed: (clonesUsed + 1)
+          };
 
-          // PRIVACY: Delete the voice sample file immediately after successful cloning
+          voiceId = await cloneVoice(file.path, "My Affirmation Voice");
+          providerVoiceUpdate.elevenLabsVoiceId = voiceId;
+          providerVoiceUpdate.voiceId = voiceId;
+
+          // PRIVACY: Delete the voice sample file immediately after cloning
           fs.unlink(file.path, (err) => {
             if (err) console.error("Failed to delete voice sample file:", err);
             else console.log("Voice sample file deleted for privacy:", file.filename);
@@ -883,22 +1543,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .where(eq(voiceSamples.id, sample.id))
             .returning();
 
-          // Update user: voiceId, hasVoiceSample, auto-switch to personal voice, and increment clones used
+          // Update user with all voice IDs
           await db
             .update(users)
-            .set({ 
-              voiceId, 
-              hasVoiceSample: true, 
-              preferredVoiceType: "personal",
-              voiceClonesUsed: (clonesUsed + 1)
-            })
+            .set(providerVoiceUpdate)
             .where(eq(users.id, req.userId!));
 
           res.json({
             ...updatedSample,
             clonesRemaining: MAX_VOICE_CLONES - (clonesUsed + 1)
           });
-        } catch (cloneError) {
+        } catch (cloneError: any) {
           console.error("Voice cloning error:", cloneError);
 
           // PRIVACY: Delete file even on failure
@@ -910,7 +1565,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .set({ status: "failed", audioUrl: null })
             .where(eq(voiceSamples.id, sample.id));
 
-          res.status(500).json({ error: "Voice cloning failed. Please ensure your recording is at least 30 seconds." });
+          const errorDetail = cloneError?.elevenLabsDetail || cloneError?.message || "";
+          const statusCode = cloneError?.statusCode || 500;
+          let userMessage = "Voice cloning failed. Please try again.";
+
+          if (errorDetail.toLowerCase().includes("maximum") || errorDetail.toLowerCase().includes("custom voices") || errorDetail.toLowerCase().includes("voice limit")) {
+            console.warn("[Voice Slots] ElevenLabs quota hit. Attempting queue-based slot recovery...");
+            
+            try {
+              const slotResult = await freeVoiceSlotForNewClone(req.userId!);
+              if (slotResult.freed) {
+                console.log(`[Voice Slots] Freed slot (rotated user=${slotResult.rotatedUserId}). Retrying clone...`);
+                
+                const retryVoiceId = await cloneVoice(file.path, "My Affirmation Voice");
+                fs.unlink(file.path, () => {});
+                
+                const [retryUpdatedSample] = await db
+                  .update(voiceSamples)
+                  .set({ voiceId: retryVoiceId, status: "ready", audioUrl: null })
+                  .where(eq(voiceSamples.id, sample.id))
+                  .returning();
+                
+                await db
+                  .update(users)
+                  .set({ 
+                    voiceId: retryVoiceId, 
+                    hasVoiceSample: true, 
+                    preferredVoiceType: "personal",
+                    voiceClonesUsed: (clonesUsed + 1)
+                  })
+                  .where(eq(users.id, req.userId!));
+                
+                return res.json({
+                  ...retryUpdatedSample,
+                  clonesRemaining: MAX_VOICE_CLONES - (clonesUsed + 1)
+                });
+              }
+            } catch (retryError: any) {
+              console.error("[Voice Slots] Retry after slot recovery failed:", retryError?.message);
+            }
+            
+            userMessage = "Voice cloning is temporarily unavailable. Please try again in a few minutes.";
+          } else if (statusCode === 401 || statusCode === 403) {
+            userMessage = "Voice cloning service is temporarily unavailable. Please try again later.";
+          } else if (statusCode === 429) {
+            userMessage = "Voice cloning service is busy. Please wait a few minutes and try again.";
+          } else if (errorDetail.toLowerCase().includes("too short") || errorDetail.toLowerCase().includes("duration")) {
+            const minDuration = '20';
+            userMessage = `Your recording was too short. Please record at least ${minDuration} seconds of clear speech.`;
+          } else if (errorDetail.toLowerCase().includes("audio") || errorDetail.toLowerCase().includes("format") || errorDetail.toLowerCase().includes("processed")) {
+            userMessage = "There was a problem with the audio format. Please try recording again.";
+          } else {
+            userMessage = "Voice cloning failed. Please try again later.";
+          }
+
+          res.status(statusCode === 429 ? 429 : 500).json({ error: userMessage });
         }
       } catch (error) {
         console.error("Error uploading voice sample:", error);
@@ -950,32 +1659,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // AI Voice options - expanded selection from ElevenLabs
   const VOICE_OPTIONS = {
     female: [
-      { id: "EXAVITQu4vr4xnSDxMaL", name: "Sarah", description: "Mature, reassuring, confident" },
-      { id: "FGY2WhTYpPnrIDTdsKH5", name: "Laura", description: "Enthusiastic, quirky" },
-      { id: "Xb7hH8MSUJpSbSDYk0k2", name: "Alice", description: "Clear, engaging, British" },
-      { id: "XrExE9yKIg1WjnnlVkGX", name: "Matilda", description: "Knowledgeable, professional" },
-      { id: "cgSgspJ2msm6clMCkdW9", name: "Jessica", description: "Playful, bright, warm" },
-      { id: "hpp4J3VqNfWAUOO0d1Us", name: "Bella", description: "Professional, warm" },
-      { id: "pFZP5JQG7iQjIQuC4Bku", name: "Lily", description: "Velvety, British actress" },
-      { id: "21m00Tcm4TlvDq8ikWAM", name: "Rachel", description: "Soft, warm tone (legacy)" },
-      { id: "XB0fDUnXU5powFXDhCwa", name: "Charlotte", description: "Warm, British (legacy)" },
+      { id: "hume_lotus", name: "Lotus", description: "Peaceful, guiding presence", provider: "HUME_AI", humeName: "Female Meditation Guide" },
+      { id: "hume_seraphina", name: "Seraphina", description: "Tranquil, radiant calm", provider: "HUME_AI", humeName: "Serene Assistant" },
+      { id: "hume_amber", name: "Amber", description: "Warm, grounding energy", provider: "HUME_AI", humeName: "Warm American Female" },
+      { id: "hume_nova", name: "Nova", description: "Gentle, luminous clarity", provider: "HUME_AI", humeName: "Warm Female Assistant Voice" },
+      { id: "hume_willow", name: "Willow", description: "Soft, graceful wisdom", provider: "HUME_AI", humeName: "Demure Conversationalist" },
     ],
     male: [
-      { id: "CwhRBWXzGAHq8TQ4Fs17", name: "Roger", description: "Laid-back, casual, resonant" },
-      { id: "IKne3meq5aSn9XLyUdCD", name: "Charlie", description: "Deep, confident, Australian" },
-      { id: "JBFqnCBsd6RMkjVDRZzb", name: "George", description: "Warm, captivating storyteller, British" },
-      { id: "TX3LPaxmHKxFdv7VOQHJ", name: "Liam", description: "Energetic, social media creator" },
-      { id: "bIHbv24MWmeRgasZH58o", name: "Will", description: "Relaxed, optimistic" },
-      { id: "cjVigY5qzO86Huf0OWal", name: "Eric", description: "Smooth, trustworthy" },
-      { id: "iP95p4xoKVk53GoZ742B", name: "Chris", description: "Charming, down-to-earth" },
-      { id: "nPczCjzI2devNBz1zQrb", name: "Brian", description: "Deep, resonant, comforting" },
-      { id: "onwK4e9ZLuTAKqWW03F9", name: "Daniel", description: "Steady, professional, British" },
-      { id: "pNInz6obpgDQGcFmaJgB", name: "Adam", description: "Dominant, firm" },
-      { id: "pqHfZKP75CvOlQylNhV4", name: "Bill", description: "Wise, mature, balanced" },
-      { id: "ErXwobaYiN019PkySvjV", name: "Antoni", description: "Warm, friendly (legacy)" },
+      { id: "hume_orion", name: "Orion", description: "Bold, uplifting strength", provider: "HUME_AI", humeName: "Inspiring Man" },
+      { id: "hume_atlas", name: "Atlas", description: "Deep, grounded resonance", provider: "HUME_AI", humeName: "Deep Male Conversational Voice" },
+      { id: "hume_sage", name: "Sage", description: "Calm, centering stillness", provider: "HUME_AI", humeName: "Soft Male Conversationalist" },
+      { id: "hume_summit", name: "Summit", description: "Steady, expansive clarity", provider: "HUME_AI", humeName: "Nature Documentary Narrator" },
+      { id: "hume_bodhi", name: "Bodhi", description: "Ancient, soulful wisdom", provider: "HUME_AI", humeName: "Wise Wizard" },
     ],
   };
 
@@ -1003,20 +1700,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid voice ID" });
       }
 
-      console.log(`Generating voice preview for ${validVoice.name} (${voiceId})`);
-
-      // Generate TTS without timestamps (simpler, faster)
       const audioBuffer = await generateAudioSimple(PREVIEW_PHRASE, voiceId);
 
-      // Return audio as base64
       const base64Audio = Buffer.from(audioBuffer).toString("base64");
       res.json({ 
         audio: base64Audio,
         voiceName: validVoice.name,
       });
-    } catch (error) {
-      console.error("Error generating voice preview:", error);
-      res.status(500).json({ error: "Failed to generate voice preview" });
+    } catch (error: any) {
+      console.error("Error generating voice preview:", error?.message || error);
+      res.status(500).json({ error: "Failed to generate voice preview. Please try again." });
     }
   });
 
@@ -1029,6 +1722,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           voiceId: users.voiceId,
           hasVoiceSample: users.hasVoiceSample,
           name: users.name,
+          ttsProvider: users.ttsProvider,
+          elevenLabsVoiceId: users.elevenLabsVoiceId,
+          cartesiaVoiceId: users.cartesiaVoiceId,
         })
         .from(users)
         .where(eq(users.id, req.userId!));
@@ -1037,25 +1733,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "User not found" });
       }
 
-      if (!user.voiceId || !user.hasVoiceSample) {
-        return res.status(400).json({ error: "No personal voice recorded. Please record your voice first." });
+      const resolvedVoiceId = resolvePersonalVoiceId(user.ttsProvider, user.voiceId, user.elevenLabsVoiceId, user.cartesiaVoiceId);
+      if (!resolvedVoiceId || !user.hasVoiceSample) {
+        return res.status(400).json({ error: "No Inner Voice recorded. Please record your voice first." });
       }
 
-      console.log(`Generating personal voice preview for user ${user.name} (voice: ${user.voiceId})`);
+      let audioBuffer: ArrayBuffer;
+      try {
+        audioBuffer = await generateAudioSimple(PREVIEW_PHRASE, resolvedVoiceId, true);
+      } catch (ttsError: any) {
+        const msg = ttsError?.message || "";
+        if (msg.includes("PERSONAL_VOICE_FAILED") || msg.includes("voice_not_found") || msg.includes("404")) {
+          return res.status(422).json({ 
+            error: "VOICE_EXPIRED",
+            message: "Your voice clone may have expired. Please re-record your voice to continue using Inner Voice features."
+          });
+        }
+        throw ttsError;
+      }
 
-      // Generate TTS using user's cloned voice
-      const audioBuffer = await generateAudioSimple(PREVIEW_PHRASE, user.voiceId);
+      await db
+        .update(users)
+        .set({ voiceLastUsedAt: new Date() })
+        .where(eq(users.id, req.userId!));
 
-      // Return audio as base64
       const base64Audio = Buffer.from(audioBuffer).toString("base64");
       res.json({ 
         audio: base64Audio,
-        voiceName: "My Voice",
+        voiceName: "Inner Voice",
       });
     } catch (error) {
-      console.error("Error generating personal voice preview:", error);
-      res.status(500).json({ error: "Failed to generate personal voice preview" });
+      console.error("Error generating Inner Voice preview:", error);
+      res.status(500).json({ error: "Failed to generate Inner Voice preview. Please try again." });
     }
+  });
+
+  app.post("/api/tts/compare", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    return res.status(410).json({ error: "TTS comparison is temporarily disabled" });
   });
 
   // Get user's voice preferences
@@ -1069,6 +1783,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           preferredFemaleVoiceId: users.preferredFemaleVoiceId,
           hasVoiceSample: users.hasVoiceSample,
           voiceId: users.voiceId,
+          ttsProvider: users.ttsProvider,
+          elevenLabsVoiceId: users.elevenLabsVoiceId,
+          cartesiaVoiceId: users.cartesiaVoiceId,
         })
         .from(users)
         .where(eq(users.id, req.userId!));
@@ -1080,9 +1797,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         preferredVoiceType: user.preferredVoiceType || "ai",
         preferredAiGender: user.preferredAiGender || "female",
-        preferredMaleVoiceId: user.preferredMaleVoiceId || "ErXwobaYiN019PkySvjV",
-        preferredFemaleVoiceId: user.preferredFemaleVoiceId || "21m00Tcm4TlvDq8ikWAM",
-        hasPersonalVoice: !!user.hasVoiceSample && !!user.voiceId,
+        preferredMaleVoiceId: user.preferredMaleVoiceId || "hume_orion",
+        preferredFemaleVoiceId: user.preferredFemaleVoiceId || "hume_lotus",
+        hasPersonalVoice: !!user.hasVoiceSample && !!(user.elevenLabsVoiceId || user.cartesiaVoiceId || user.voiceId),
+        ttsProvider: "elevenlabs",
+        hasElevenLabsVoice: !!user.elevenLabsVoiceId,
+        hasCartesiaVoice: false,
       });
     } catch (error) {
       console.error("Error fetching voice preferences:", error);
@@ -1093,7 +1813,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update user's voice preferences
   app.put("/api/voice-preferences", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { preferredVoiceType, preferredAiGender, preferredMaleVoiceId, preferredFemaleVoiceId } = req.body;
+      const { preferredVoiceType, preferredAiGender, preferredMaleVoiceId, preferredFemaleVoiceId, ttsProvider } = req.body;
 
       const updates: Record<string, string> = {};
       
@@ -1140,7 +1860,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Regenerate affirmation audio with different voice
   app.post("/api/affirmations/:id/regenerate-voice", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const affirmationId = parseInt(req.params.id, 10);
+      const affirmationId = parseInt(req.params.id as string, 10);
       const { voiceType, voiceGender } = req.body;
 
       if (!voiceType || !["personal", "ai"].includes(voiceType)) {
@@ -1161,24 +1881,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Affirmation not found" });
       }
 
+      const [userTtsInfo] = await db.select({ ttsProvider: users.ttsProvider }).from(users).where(eq(users.id, req.userId!));
+
       // Determine which voice ID to use
       let voiceIdToUse: string | undefined;
       
       if (voiceType === "personal") {
         // Get user's cloned voice
         const [user] = await db
-          .select({ voiceId: users.voiceId, hasVoiceSample: users.hasVoiceSample })
+          .select({ voiceId: users.voiceId, hasVoiceSample: users.hasVoiceSample, elevenLabsVoiceId: users.elevenLabsVoiceId, cartesiaVoiceId: users.cartesiaVoiceId, ttsProvider: users.ttsProvider })
           .from(users)
           .where(eq(users.id, req.userId!));
 
-        if (!user?.voiceId || !user?.hasVoiceSample) {
+        const resolvedVoiceId = resolvePersonalVoiceId(user?.ttsProvider, user?.voiceId, user?.elevenLabsVoiceId, user?.cartesiaVoiceId);
+        if (!resolvedVoiceId || !user?.hasVoiceSample) {
           return res.status(400).json({ 
-            error: "No personal voice available. Please record a voice sample first." 
+            error: "VOICE_ROTATED",
+            message: "Your personal voice has expired. Please re-record your voice sample to continue using your Inner Voice, or switch to an AI voice.",
           });
         }
-        voiceIdToUse = user.voiceId;
+        voiceIdToUse = resolvedVoiceId;
       } else {
-        // Use AI voice based on gender - get user's preferred voice for that gender
         const gender = voiceGender || "female";
         const [userPrefs] = await db
           .select({
@@ -1195,8 +1918,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Generate new audio
-      const audioResult = await generateAudio(affirmation.script, voiceIdToUse);
+      const isPersonalVoice = voiceType === "personal";
+      const audioResult = await generateAudio(affirmation.script, voiceIdToUse, isPersonalVoice, getPillarVoiceConfig(affirmation.pillar));
+
+      if (isPersonalVoice) {
+        await db
+          .update(users)
+          .set({ voiceLastUsedAt: new Date() })
+          .where(eq(users.id, req.userId!));
+      }
       
       // Save audio to file
       const audioDir = path.join(process.cwd(), "uploads", "audio");
@@ -1231,8 +1961,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .where(eq(affirmations.id, affirmationId));
 
       res.json(updated);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error regenerating voice:", error);
+      const errorMsg = error?.message || "";
+      if (errorMsg.includes("QUOTA_EXCEEDED")) {
+        return res.status(422).json({ 
+          error: "QUOTA_EXCEEDED",
+          message: "Your voice cloning credits have been used up for this period. Please switch to an AI voice or wait for your credits to reset."
+        });
+      }
+      if (errorMsg.includes("PERSONAL_VOICE_FAILED")) {
+        return res.status(422).json({ 
+          error: "PERSONAL_VOICE_FAILED",
+          message: "Could not generate audio with your Inner Voice. Please try again or switch to an AI voice."
+        });
+      }
       res.status(500).json({ error: "Failed to regenerate voice" });
     }
   });
@@ -1313,7 +2056,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Delete a custom category (requires auth)
   app.delete("/api/custom-categories/:id", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const categoryId = parseInt(req.params.id);
+      const categoryId = parseInt(req.params.id as string);
       
       if (isNaN(categoryId)) {
         return res.status(400).json({ error: "Invalid category ID" });
@@ -1605,45 +2348,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json({ message: "User already has affirmations", created: 0 });
       }
 
-      // Sample affirmation scripts
+      // 6 sample affirmations: one per pillar, varied lengths (2 short, 2 medium, 2 long)
+      // Each gently steers users toward mental wellness and meditation
       const sampleAffirmations = [
         {
-          title: "Morning Confidence",
-          script: "I am confident, capable, and ready to embrace today. Every challenge is an opportunity for growth. I trust myself and my abilities. I am worthy of success and happiness.",
-          categoryId: 3, // Confidence
+          title: "Calm Mind",
+          pillar: "Mind",
+          categoryName: "Focus,Resilience",
+          script: "My mind is still and clear. In this moment of quiet, I find my center. I breathe deeply and let every thought settle like water becoming glass. I choose calm over chaos.",
         },
         {
-          title: "Abundance Mindset",
-          script: "I attract abundance in all areas of my life. Money flows to me easily and effortlessly. I am open to receiving prosperity. My financial future is bright and secure.",
-          categoryId: 4, // Wealth
+          title: "Body at Rest",
+          pillar: "Body",
+          categoryName: "Health,Sleep",
+          script: "I honor my body by giving it rest. With every slow breath, tension melts from my shoulders, my jaw, my hands. I feel my heartbeat steady and strong. My body knows how to heal when I create space for stillness. Tonight, I will sleep deeply and wake restored.",
         },
         {
-          title: "Inner Peace",
-          script: "I am calm, centered, and at peace. I release all stress and tension. My mind is clear and my heart is open. I choose peace in every moment of my day.",
-          categoryId: 2, // Health
+          title: "Grateful Spirit",
+          pillar: "Spirit",
+          categoryName: "Gratitude,Joy",
+          script: "I am grateful for this quiet moment. Gratitude fills me like warm sunlight. I appreciate the small blessings that surround me today. In stillness, I discover that everything I need is already within me.",
+        },
+        {
+          title: "Present with Others",
+          pillar: "Connection",
+          categoryName: "Love,Self-Compassion",
+          script: "I am fully present when I am with the people I love. I listen with patience and speak with kindness. By nurturing my own inner peace through meditation, I bring a calmer, more compassionate version of myself to every conversation. I attract meaningful connections because I first connect deeply with myself. The love I cultivate in stillness radiates outward and touches everyone around me.",
+        },
+        {
+          title: "Focused Achievement",
+          pillar: "Achievement",
+          categoryName: "Career,Drive",
+          script: "I accomplish my goals with steady focus. Each morning I take a moment to breathe, set my intention, and move forward with clarity. Success flows naturally when my mind is calm.",
+        },
+        {
+          title: "Peaceful Home",
+          pillar: "Home",
+          categoryName: "Family,Comfort",
+          script: "My home is a sanctuary of peace and warmth. I create calm in my living space by first cultivating calm within myself. When I pause to breathe and center my thoughts, that serenity flows into every room. My family feels safe and loved because I choose presence over distraction. I tend to my home with the same gentle attention I give to my meditation practice. Order, beauty, and tranquility are not things I chase. They are things I create, one mindful moment at a time. My home reflects the peace I carry inside.",
         },
       ];
 
-      // Get user's voice preferences to use their preferred voice
-      const [userPrefs] = await db
-        .select({
-          preferredAiGender: users.preferredAiGender,
-          preferredMaleVoiceId: users.preferredMaleVoiceId,
-          preferredFemaleVoiceId: users.preferredFemaleVoiceId,
-        })
-        .from(users)
-        .where(eq(users.id, req.userId!));
-
-      // Determine voice to use based on preferences
-      const gender = userPrefs?.preferredAiGender || "female";
-      let voiceIdToUse: string;
-      if (gender === "male") {
-        voiceIdToUse = userPrefs?.preferredMaleVoiceId || VOICE_OPTIONS.male[0].id;
-      } else {
-        voiceIdToUse = userPrefs?.preferredFemaleVoiceId || VOICE_OPTIONS.female[0].id;
-      }
-      console.log("Creating sample affirmations with voice:", voiceIdToUse, "gender:", gender);
-
+      const voiceRotation = [
+        { id: "hume_lotus", gender: "female" },
+        { id: "hume_orion", gender: "male" },
+        { id: "hume_amber", gender: "female" },
+        { id: "hume_sage", gender: "male" },
+        { id: "hume_nova", gender: "female" },
+        { id: "hume_atlas", gender: "male" },
+      ];
       const createdAffirmations = [];
 
       // Ensure audio subdirectory exists
@@ -1652,31 +2405,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fs.mkdirSync(audioDir, { recursive: true });
       }
 
-      for (const sample of sampleAffirmations) {
+      for (let idx = 0; idx < sampleAffirmations.length; idx++) {
+        const sample = sampleAffirmations[idx];
+        const voice = voiceRotation[idx % voiceRotation.length];
         try {
-          // Generate audio with user's preferred voice
-          const audioResult = await generateAudio(sample.script, voiceIdToUse);
+          const audioResult = await generateAudio(sample.script, voice.id);
           
-          // Save audio file to audio subdirectory
           const audioFilename = `affirmation-${Date.now()}-${Math.random().toString(36).slice(2)}.mp3`;
           const audioPath = path.join(audioDir, audioFilename);
           fs.writeFileSync(audioPath, Buffer.from(audioResult.audio));
 
-          // Create affirmation record
           const [newAffirmation] = await db
             .insert(affirmations)
             .values({
               userId: req.userId!,
               title: sample.title,
               script: sample.script,
-              categoryId: sample.categoryId,
+              pillar: sample.pillar,
+              categoryName: sample.categoryName,
               audioUrl: `/uploads/audio/${audioFilename}`,
               duration: audioResult.duration,
               wordTimings: JSON.stringify(audioResult.wordTimings),
               isManual: false,
               voiceType: "ai",
-              voiceGender: gender,
-              aiVoiceId: voiceIdToUse,
+              voiceGender: voice.gender,
+              aiVoiceId: voice.id,
             })
             .returning();
 
@@ -1979,308 +2732,994 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ============ Breathing Sessions API ============
-  
-  // Record a breathing session
-  app.post("/api/breathing-sessions", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+  app.post("/api/push-token", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const userId = req.user?.id;
-      if (!userId) {
-        return res.status(401).json({ error: "Unauthorized" });
+      const { token, platform } = req.body;
+
+      if (!token || typeof token !== "string") {
+        return res.status(400).json({ error: "Push token is required" });
       }
 
-      const { techniqueId, durationSeconds } = req.body;
-      
-      if (!techniqueId || typeof durationSeconds !== 'number' || durationSeconds <= 0) {
-        return res.status(400).json({ error: "Invalid session data" });
+      const existing = await db
+        .select()
+        .from(pushTokens)
+        .where(eq(pushTokens.token, token))
+        .limit(1);
+
+      if (existing.length > 0) {
+        await db
+          .update(pushTokens)
+          .set({ userId: req.userId!, platform: platform || "unknown", updatedAt: new Date() })
+          .where(eq(pushTokens.token, token));
+      } else {
+        await db
+          .insert(pushTokens)
+          .values({ userId: req.userId!, token, platform: platform || "unknown" });
       }
 
-      const today = new Date();
-      const dateKey = today.toISOString().split('T')[0]; // YYYY-MM-DD
-
-      const [session] = await db
-        .insert(breathingSessions)
-        .values({
-          userId,
-          techniqueId,
-          durationSeconds,
-          dateKey,
-        })
-        .returning();
-
-      res.json(session);
-    } catch (error) {
-      console.error("Error recording breathing session:", error);
-      res.status(500).json({ error: "Failed to record breathing session" });
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Error registering push token:", error);
+      res.status(500).json({ error: "Failed to register push token" });
     }
   });
 
-  // Get today's breathing progress
-  app.get("/api/breathing-sessions/today", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+  app.post("/api/voice/keep-active", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const userId = req.user?.id;
-      if (!userId) {
-        return res.status(401).json({ error: "Unauthorized" });
+      const [user] = await db
+        .select({ voiceId: users.voiceId, hasVoiceSample: users.hasVoiceSample })
+        .from(users)
+        .where(eq(users.id, req.userId!));
+
+      if (!user?.voiceId || !user?.hasVoiceSample) {
+        return res.status(400).json({ error: "No active voice clone found" });
       }
 
-      const today = new Date();
-      const dateKey = today.toISOString().split('T')[0]; // YYYY-MM-DD
+      await db
+        .update(users)
+        .set({ voiceLastUsedAt: new Date(), voiceExpiryWarningAt: null })
+        .where(eq(users.id, req.userId!));
 
-      const sessions = await db
-        .select({
-          totalSeconds: sql<number>`COALESCE(SUM(${breathingSessions.durationSeconds}), 0)::int`,
-          sessionCount: sql<number>`COUNT(*)::int`,
+      res.json({ success: true, message: "Voice clone marked as active" });
+    } catch (error: any) {
+      console.error("Error keeping voice active:", error);
+      res.status(500).json({ error: "Failed to update voice status" });
+    }
+  });
+
+  // ============ Mood Check-in API ============
+
+  app.post("/api/mood-prompt", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { currentMood, timeOfDay } = req.body;
+      if (!currentMood || !timeOfDay) {
+        return res.status(400).json({ error: "currentMood and timeOfDay are required" });
+      }
+
+      const userId = req.userId!;
+      const userData = await db.select({ name: users.name }).from(users).where(eq(users.id, userId)).limit(1);
+      const userName = userData[0]?.name?.split(" ")[0] || "Friend";
+
+      try {
+        const response = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [
+            {
+              role: "system",
+              content: `You are the voice of Retuned, a personal wellness app. The user just told you they feel "${currentMood}" and it's ${timeOfDay}. Generate a compassionate, creative title and subtitle for the next screen where they'll choose where they want to be emotionally.
+
+Respond as JSON:
+{
+  "title": "A short, warm 3-6 word title that acknowledges their ${currentMood} feeling and hints at transformation. Use ${userName}'s name sometimes but not always. Examples for stressed: 'Let's lighten that load, ${userName}', 'You deserve some ease'. Examples for tired: 'Rest is calling you', 'Time to recharge, ${userName}'. Examples for anxious: 'Let's find your ground'. Examples for sad: 'Sunshine is on its way'. Examples for overwhelmed: 'One breath at a time'. Examples for calm: 'Beautiful — let's build on this'. Never use emojis.",
+  "subtitle": "A short 5-10 word sentence about choosing their destination mood. Creative and warm, not clinical. Examples: 'Pick the feeling you want to carry', 'Where shall we take you?', 'Choose the version of you that's waiting'. Never use emojis."
+}
+
+Rules:
+- Be specific to the ${currentMood} mood, not generic
+- Sound like a wise, warm friend
+- Vary language dramatically each time
+- No exclamation marks, no emojis
+- Keep it concise and punchy`,
+            },
+            {
+              role: "user",
+              content: `I'm feeling ${currentMood} right now. It's ${timeOfDay}.`,
+            },
+          ],
+          temperature: 0.95,
+          max_tokens: 100,
+          response_format: { type: "json_object" },
+        });
+
+        const parsed = JSON.parse(response.choices[0]?.message?.content || "{}");
+        res.json({
+          title: parsed.title || "Where would you like to be?",
+          subtitle: parsed.subtitle || "Choose your destination",
+        });
+      } catch (aiError) {
+        res.json({
+          title: "Where would you like to be?",
+          subtitle: "Choose your destination",
+        });
+      }
+    } catch (error) {
+      console.error("Error generating mood prompt:", error);
+      res.status(500).json({ error: "Failed to generate prompt" });
+    }
+  });
+
+  app.post("/api/mood-checkin", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { mood, targetMood, timeOfDay } = req.body;
+
+      if (!mood || !targetMood || !timeOfDay) {
+        return res.status(400).json({ error: "mood, targetMood, and timeOfDay are required" });
+      }
+
+      const validStartingMoods = ["calm", "stressed", "tired", "anxious", "sad", "overwhelmed"];
+      const validTargetMoods = ["calm", "energized", "grateful", "confident", "focused", "joyful"];
+      const validTimes = ["morning", "afternoon", "evening", "night"];
+
+      if (!validStartingMoods.includes(mood)) {
+        return res.status(400).json({ error: "Invalid mood value" });
+      }
+      if (!validTargetMoods.includes(targetMood)) {
+        return res.status(400).json({ error: "Invalid targetMood value" });
+      }
+      if (!validTimes.includes(timeOfDay)) {
+        return res.status(400).json({ error: "Invalid timeOfDay value" });
+      }
+
+      const userId = req.userId!;
+
+      const [userData, userAffirmationsList, latestVoiceSample] = await Promise.all([
+        db.select({ name: users.name, voiceId: users.voiceId, preferredVoiceType: users.preferredVoiceType }).from(users).where(eq(users.id, userId)).limit(1),
+        db.select({
+          id: affirmations.id,
+          title: affirmations.title,
+          description: affirmations.description,
+          pillar: affirmations.pillar,
+          categoryName: affirmations.categoryName,
+          voiceType: affirmations.voiceType,
+          audioUrl: affirmations.audioUrl,
+          playCount: affirmations.playCount,
+          isFavorite: affirmations.isFavorite,
+        }).from(affirmations).where(eq(affirmations.userId, userId)),
+        db.select({ status: voiceSamples.status, voiceId: voiceSamples.voiceId })
+          .from(voiceSamples)
+          .where(eq(voiceSamples.userId, userId))
+          .orderBy(desc(voiceSamples.createdAt))
+          .limit(1),
+      ]);
+
+      const user = userData[0];
+      const userName = user?.name?.split(" ")[0] || "Friend";
+      const hasClonedVoice = !!(latestVoiceSample[0]?.status === "ready" && latestVoiceSample[0]?.voiceId) || !!user?.voiceId;
+      const hasAffirmations = userAffirmationsList.length > 0;
+      const hasAffirmationsWithAudio = userAffirmationsList.filter(a => a.audioUrl).length > 0;
+      const userPreferredVoiceType = user?.preferredVoiceType || "ai";
+
+      const moodPrefs = MOOD_TAG_PREFERENCES[mood as MoodType]?.[timeOfDay as TimeOfDay];
+      const preferredTags = moodPrefs?.preferredTags || [];
+      const preferredPillars = moodPrefs?.preferredPillars || ["Mind"];
+
+      let matchedAffirmation: { id: number; title: string; description: string | null; voiceType: string | null } | null = null;
+      let matchReason: "tag" | "pillar" | "any" | null = null;
+
+      const withAudio = userAffirmationsList.filter(a => a.audioUrl);
+
+      if (withAudio.length > 0) {
+        const targetPrefs = TARGET_MOOD_TAGS[targetMood as TargetMoodType];
+
+        const scoreAffirmation = (a: typeof withAudio[0]) => {
+          let score = 0;
+          const tags = (a.categoryName || "").split(",").map(t => t.trim()).filter(Boolean);
+
+          if (targetPrefs) {
+            const targetTagMatches = tags.filter(t => targetPrefs.boostTags.includes(t)).length;
+            score += targetTagMatches * 4;
+            if (a.pillar && targetPrefs.boostPillars.includes(a.pillar)) {
+              score += targetPrefs.boostPillars.indexOf(a.pillar) === 0 ? 3 : 2;
+            }
+            const penaltyMatches = tags.filter(t => targetPrefs.penaltyTags.includes(t)).length;
+            score -= penaltyMatches * 3;
+          }
+
+          const startingTagMatches = tags.filter(t => preferredTags.includes(t)).length;
+          score += startingTagMatches * 1;
+          if (a.pillar && preferredPillars.includes(a.pillar)) {
+            score += 1;
+          }
+
+          if (a.isFavorite) score += 1;
+          if (a.voiceType === userPreferredVoiceType) score += 1;
+          return score;
+        };
+
+        const scored = withAudio.map(a => ({ ...a, score: scoreAffirmation(a) }));
+        scored.sort((a, b) => b.score - a.score);
+
+        const topScore = scored[0].score;
+        if (topScore > 0) {
+          const topPool = scored.filter(a => a.score === topScore);
+          const picked = topPool[Math.floor(Math.random() * topPool.length)];
+          matchedAffirmation = picked;
+          matchReason = topScore >= 4 ? "tag" : "pillar";
+        } else {
+          matchedAffirmation = withAudio[Math.floor(Math.random() * withAudio.length)];
+          matchReason = "any";
+        }
+      }
+
+      const suggestedCreationTheme = !matchedAffirmation ? (() => {
+        const themeMap: Record<string, Record<string, string>> = {
+          stressed: { morning: "calm clarity to start your day", afternoon: "releasing tension and finding ease", evening: "letting go of the day's weight", night: "peaceful surrender into rest" },
+          anxious: { morning: "grounded confidence for the day ahead", afternoon: "calm resilience and inner safety", evening: "releasing worry and finding peace", night: "safe, calm sleep and letting go of fear" },
+          tired: { morning: "gentle energy and vitality", afternoon: "renewed focus and stamina", evening: "restful sleep and deep recovery", night: "peaceful sleep and body restoration" },
+          sad: { morning: "warmth and gentle hope for the day", afternoon: "finding light in the present moment", evening: "self-compassion and tender care", night: "comfort and knowing tomorrow is new" },
+          overwhelmed: { morning: "simplicity and one step at a time", afternoon: "clearing the noise and finding clarity", evening: "releasing what you can't control", night: "letting go and trusting the process" },
+          calm: { morning: "deepening your morning serenity", afternoon: "sustaining your peaceful presence", evening: "gratitude and gentle reflection", night: "honoring your calm with restful sleep" },
+        };
+        return themeMap[mood]?.[timeOfDay] || "your current emotional state";
+      })() : null;
+
+      const moodPairBreathMap: Record<string, { name: string; id: string }> = {
+        "stressed→calm": { name: "4-7-8 Relaxation", id: "478" },
+        "stressed→energized": { name: "Box Breathing", id: "box" },
+        "stressed→grateful": { name: "Coherent Breathing", id: "coherent" },
+        "stressed→confident": { name: "Box Breathing", id: "box" },
+        "stressed→focused": { name: "Box Breathing", id: "box" },
+        "stressed→joyful": { name: "Coherent Breathing", id: "coherent" },
+        "anxious→calm": { name: "4-7-8 Relaxation", id: "478" },
+        "anxious→grateful": { name: "Box Breathing", id: "box" },
+        "anxious→confident": { name: "Box Breathing", id: "box" },
+        "anxious→focused": { name: "Alternate Nostril", id: "alternate" },
+        "anxious→energized": { name: "Box Breathing", id: "box" },
+        "anxious→joyful": { name: "Coherent Breathing", id: "coherent" },
+        "tired→energized": { name: "Energizing Breath", id: "energizing" },
+        "tired→calm": { name: "Coherent Breathing", id: "coherent" },
+        "tired→focused": { name: "Energizing Breath", id: "energizing" },
+        "tired→confident": { name: "Energizing Breath", id: "energizing" },
+        "tired→grateful": { name: "Coherent Breathing", id: "coherent" },
+        "tired→joyful": { name: "Energizing Breath", id: "energizing" },
+        "sad→calm": { name: "Coherent Breathing", id: "coherent" },
+        "sad→grateful": { name: "Coherent Breathing", id: "coherent" },
+        "sad→joyful": { name: "Energizing Breath", id: "energizing" },
+        "sad→confident": { name: "Box Breathing", id: "box" },
+        "sad→energized": { name: "Energizing Breath", id: "energizing" },
+        "sad→focused": { name: "Box Breathing", id: "box" },
+        "overwhelmed→calm": { name: "4-7-8 Relaxation", id: "478" },
+        "overwhelmed→focused": { name: "Alternate Nostril", id: "alternate" },
+        "overwhelmed→grateful": { name: "Coherent Breathing", id: "coherent" },
+        "overwhelmed→confident": { name: "Box Breathing", id: "box" },
+        "overwhelmed→energized": { name: "Box Breathing", id: "box" },
+        "overwhelmed→joyful": { name: "Coherent Breathing", id: "coherent" },
+        "calm→energized": { name: "Energizing Breath", id: "energizing" },
+        "calm→grateful": { name: "Coherent Breathing", id: "coherent" },
+        "calm→confident": { name: "Energizing Breath", id: "energizing" },
+        "calm→focused": { name: "Box Breathing", id: "box" },
+        "calm→joyful": { name: "Coherent Breathing", id: "coherent" },
+      };
+
+      const moodOnlyBreathFallback: Record<string, { name: string; id: string }> = {
+        stressed: { name: "Box Breathing", id: "box" },
+        anxious: { name: "4-7-8 Relaxation", id: "478" },
+        tired: { name: "Energizing Breath", id: "energizing" },
+        sad: { name: "Coherent Breathing", id: "coherent" },
+        overwhelmed: { name: "4-7-8 Relaxation", id: "478" },
+        calm: { name: "Coherent Breathing", id: "coherent" },
+      };
+
+      const pairKey = `${mood}→${targetMood}`;
+      const breathing = moodPairBreathMap[pairKey] || moodOnlyBreathFallback[mood] || { name: "Box Breathing", id: "box" };
+
+      let listenContext = "";
+      if (matchedAffirmation) {
+        const isInnerVoice = matchedAffirmation.voiceType === "personal";
+        const matchQuality = matchReason === "tag" ? "closely matches their mood and time of day" : matchReason === "pillar" ? "aligns with their current emotional needs" : "is available to listen to";
+        const descriptionContext = matchedAffirmation.description ? ` This affirmation is "${matchedAffirmation.description}".` : "";
+        listenContext = `The user has an affirmation called "${matchedAffirmation.title}"${isInnerVoice ? " recorded in their own cloned voice (Inner Voice)" : ""} that ${matchQuality}.${descriptionContext} It is ${timeOfDay} — tailor your note accordingly.`;
+      } else if (hasAffirmations) {
+        listenContext = `The user has affirmations but none with audio yet. It is ${timeOfDay} — suggest bringing one to life.`;
+      } else {
+        listenContext = `The user hasn't created any affirmations yet. Suggest creating one about ${suggestedCreationTheme}.`;
+      }
+
+      const voiceContext = hasClonedVoice
+        ? "The user has set up their Inner Voice (personal cloned voice)."
+        : "The user hasn't set up their Inner Voice yet — hearing affirmations in your own voice deepens subconscious impact.";
+
+      let journeyHistoryContext = "";
+      try {
+        const [journeyTotal, lastJourney, frequentPath] = await Promise.all([
+          db.select({ total: sql<number>`count(*)::int` })
+            .from(journeyCompletions)
+            .where(eq(journeyCompletions.userId, userId))
+            .then(r => r[0]),
+          db.select()
+            .from(journeyCompletions)
+            .where(eq(journeyCompletions.userId, userId))
+            .orderBy(desc(journeyCompletions.completedAt))
+            .limit(1)
+            .then(r => r[0]),
+          db.select({
+            currentMood: journeyCompletions.currentMood,
+            targetMood: journeyCompletions.targetMood,
+            count: sql<number>`count(*)::int`,
+          })
+            .from(journeyCompletions)
+            .where(eq(journeyCompletions.userId, userId))
+            .groupBy(journeyCompletions.currentMood, journeyCompletions.targetMood)
+            .orderBy(sql`count(*) desc`)
+            .limit(1)
+            .then(r => r[0]),
+        ]);
+
+        const totalJourneys = journeyTotal?.total || 0;
+        if (totalJourneys > 0) {
+          const parts: string[] = [`${totalJourneys} mood journey(s) completed`];
+          if (lastJourney) {
+            parts.push(`last journey was ${lastJourney.currentMood}→${lastJourney.targetMood}`);
+            if (lastJourney.completedFully) parts.push("(completed fully)");
+          }
+          if (frequentPath) {
+            parts.push(`most common path: ${frequentPath.currentMood}→${frequentPath.targetMood} (${frequentPath.count} times)`);
+          }
+          journeyHistoryContext = `\nJourney history: ${parts.join(", ")}.`;
+          if (lastJourney?.currentMood === mood && lastJourney?.targetMood === targetMood) {
+            journeyHistoryContext += " Note: this is the SAME mood path as their last journey — acknowledge the pattern subtly.";
+          }
+        }
+      } catch (e) {}
+
+      let journeyTitle = "Your Journey";
+      let acknowledgment = `${userName}, let's take you from ${mood} to ${targetMood}.`;
+      let stepTypes: string[] = ["breathe", "meditate"];
+      let breatheNote: string | null = `Two minutes of ${breathing.name} can help settle your nervous system.`;
+      let meditateNote: string | null = "A 2-minute guided moment to reconnect with yourself.";
+      let listenNote: string | null = matchedAffirmation
+        ? `Your affirmation "${matchedAffirmation.title}" is waiting for you.`
+        : suggestedCreationTheme ? `Create an affirmation about ${suggestedCreationTheme}.` : "Create an affirmation that speaks to how you feel.";
+
+      try {
+        const response = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [
+            {
+              role: "system",
+              content: `You are the voice of Retuned, a personal wellness app backed by neuroscience and mindfulness traditions. The user wants to journey from feeling ${mood} to feeling ${targetMood}. Design a personalized wellness journey with 2-3 steps (minimum 2, maximum 3) from these tools: breathe, meditate, listen.
+
+Choose steps wisely — not every journey needs all three. Consider:
+- If user is already calm, they probably don't need breathing
+- If they want energy, meditation alone won't cut it
+- If they're anxious, breathing should almost always be first
+- Order matters: breathing first to settle the body, meditation to shift the mind, listening to reinforce
+
+KNOWLEDGE BASE — draw from these naturally (pick 1-2 per response, never lecture):
+Neuroscience: vagus nerve stimulation, amygdala downregulation, prefrontal cortex activation, parasympathetic nervous system, neuroplasticity, default mode network quieting, theta/alpha brainwave states, cortisol reduction, HRV (heart rate variability), mirror neuron activation, dopamine and serotonin pathways, polyvagal theory (ventral vagal = safe/social state)
+Spirituality & mindfulness: present-moment awareness, non-attachment to emotional states, the observer self, pranayama traditions, loving-kindness practice roots, body scan origins in Vipassana, the concept of "witness consciousness," energy shifting through intention, the Buddhist concept that feelings are visitors not residents, somatic awareness, the yogic idea that breath is the bridge between body and mind
+
+User context:
+- Name: ${userName}
+- Current mood: ${mood}
+- Target mood: ${targetMood}
+- Time: ${timeOfDay}
+- ${listenContext}
+- ${voiceContext}
+- Total affirmations: ${userAffirmationsList.length}
+- Best breathing match for this transition: ${breathing.name}
+- ${journeyHistoryContext || "First mood journey"}
+
+Respond as JSON with exactly these fields:
+{
+  "journeyTitle": "A creative 2-5 word title for this journey. Should capture the mood transition. No emojis. Can reference a neuroscience or mindfulness concept when it fits naturally (e.g., 'Vagal Reset', 'Rewiring the Signal', 'Back to Center', 'Finding Ventral'). Keep it punchy.",
+  "acknowledgment": "1-2 sentences, max 30 words total. Use ${userName}'s name. Validate their ${mood} state with a real insight, then pivot to ${targetMood} with confidence. Never use emojis. Never use metaphors.
+
+VARIETY IS CRITICAL. Randomly choose ONE of these angles — and within that angle, pick a DIFFERENT mechanism each time:
+A) Neuroscience angle — pick ONE mechanism you haven't used recently: amygdala hijack, cortisol flooding, prefrontal cortex going offline, sympathetic overdrive, depleted serotonin, overactive default mode network, disrupted HRV, dopamine seeking loops, adrenaline surplus, or polyvagal dorsal shutdown. DO NOT default to 'fight-or-flight' or 'vagus nerve' — those are overused.
+B) Mindfulness angle — pick from: feelings as visitors, observer self, non-attachment, witness consciousness, present-moment anchoring, the space between stimulus and response, beginner's mind, radical acceptance, pranayama traditions, or the Buddhist concept of impermanence. Vary which tradition or concept you reference.
+C) Body-first angle — name where ${mood} shows up physically: jaw tension, shallow breathing, chest tightness, shoulder knots, stomach churning, heavy limbs, restless hands, constricted throat, tight forehead, or numb extremities. Be specific to ${mood}, not generic.
+D) Direct/confident angle — no science, just a grounded observation about what ${userName} needs right now. Vary your sentence structure — sometimes start with their name, sometimes end with it.
+
+CRITICAL: Do NOT copy or closely paraphrase any example text. Generate completely original phrasing every time. Vary sentence structure, word choice, and rhythm.
+
+BANNED PHRASES (never write these exact words):
+- 'stuck in fight-or-flight'
+- 'activate your vagus nerve'
+- 'bring you back to baseline'
+- 'doesn't have to stay'
+- 'let's move you toward'
+- 'totally doable'
+- 'your brain already knows how'
+- 'open the door to'
+- 'studies show' / 'research suggests' / 'research shows'
+- 'proven to' / 'has been proven' / 'science proves'
+- 'according to' / 'experts say' / 'scientists found'
+- 'can help' / 'may reduce' / any hedging language
+
+If the user has journey history, reference it naturally with fresh phrasing each time.",
+  "stepTypes": ["breathe", "meditate", "listen"],
+  "breatheNote": "One punchy sentence (max 20 words) or null if breathe is not in stepTypes. Mention this is a 2-minute exercise. Pick a DIFFERENT mechanism each time from: vagus nerve stimulation, CO2 tolerance building, HRV improvement, parasympathetic activation, baroreceptor reset, diaphragm engagement, or a pranayama principle. State it as fact, not textbook. Do NOT reuse previous phrasing — generate fresh wording.",
+  "meditateNote": "One punchy sentence (max 20 words) or null if meditate is not in stepTypes. Mention this is a 2-minute guided meditation. Pick a DIFFERENT mechanism each time from: default mode network quieting, theta state access, amygdala cooling, witness consciousness, present-moment anchoring, prefrontal re-engagement, or interoceptive awareness. Connect it to ${timeOfDay}. Do NOT reuse previous phrasing — generate fresh wording.",
+  "listenNote": "One or two sentences (max 30 words) or null if listen is not in stepTypes. ${matchedAffirmation ? `Reference '${matchedAffirmation.title}' specifically.${matchedAffirmation.description ? ` Use the affirmation's description — "${matchedAffirmation.description}" — to explain WHY this particular affirmation is the perfect fit for the ${mood}→${targetMood} transition right now. Reference neuroplasticity or subconscious reprogramming.` : ` Explain why hearing it NOW after breathing/meditation lands differently — reference neuroplasticity, subconscious receptivity, or how the brain is more open to new patterns after a nervous system reset.`}` : hasAffirmations ? `Connect one of their existing affirmations to the ${mood}→${targetMood} shift. Reference how repetition rewires neural pathways or how the subconscious is most receptive after breathwork/meditation.` : `Inspire them to create their first affirmation about ${suggestedCreationTheme}${!hasClonedVoice ? " — mention how hearing your own voice activates mirror neurons differently than any other voice" : ""}. Reference neuroplasticity or subconscious programming.`}"
+}
+
+Rules for stepTypes:
+- Must be an array of 2-3 strings from: "breathe", "meditate", "listen"
+- Order them in the sequence the user should do them
+- Be smart about which steps to include for this specific ${mood}→${targetMood} transition
+
+Rules for tone:
+- Sound like a confident coach who knows the science cold — not a textbook, not a greeting card
+- No metaphors, no flowery imagery, no poetic language
+- State neuroscience and spiritual concepts as direct facts — never hedge with "studies show" or "research suggests"
+- No "you should" — use "let's" or direct suggestions
+- No exclamation marks
+- Each note must teach them something specific or create genuine curiosity
+- NEVER repeat the same phrasing across responses — vary structure, angle, and vocabulary dramatically
+- Treat the user as intelligent — they can handle real concepts like "vagus nerve" or "amygdala" without dumbing down
+- Keep language accessible — explain the science in everyday words, not academic jargon`,
+            },
+            {
+              role: "user",
+              content: `I'm feeling ${mood} and I want to feel ${targetMood}. It's ${timeOfDay}.`,
+            },
+          ],
+          temperature: 0.95,
+          max_tokens: 450,
+          response_format: { type: "json_object" },
+        });
+
+        const parsed = JSON.parse(response.choices[0]?.message?.content || "{}");
+        if (parsed.journeyTitle) journeyTitle = parsed.journeyTitle;
+        if (parsed.acknowledgment) acknowledgment = parsed.acknowledgment;
+        if (Array.isArray(parsed.stepTypes) && parsed.stepTypes.length >= 2 && parsed.stepTypes.length <= 3) {
+          const validStepTypes = parsed.stepTypes.filter((s: string) => ["breathe", "meditate", "listen"].includes(s));
+          if (validStepTypes.length >= 2) {
+            stepTypes = validStepTypes;
+          }
+        }
+        if (parsed.breatheNote) breatheNote = parsed.breatheNote;
+        if (parsed.meditateNote) meditateNote = parsed.meditateNote;
+        if (parsed.listenNote) listenNote = parsed.listenNote;
+      } catch (e) {}
+
+      if (!stepTypes.includes("listen")) {
+        stepTypes.push("listen");
+      }
+      const reordered = stepTypes.filter((s: string) => s !== "listen");
+      reordered.push("listen");
+
+      const steps: any[] = [];
+      for (const stepType of reordered) {
+        if (stepType === "breathe") {
+          steps.push({
+            type: "breathe",
+            techniqueId: breathing.id,
+            techniqueName: breathing.name,
+            duration: 3,
+            note: breatheNote || `${breathing.name} can help settle your nervous system.`,
+          });
+        } else if (stepType === "meditate") {
+          steps.push({
+            type: "meditate",
+            note: meditateNote || "A guided moment to reconnect with yourself.",
+            mood: targetMood,
+            timeOfDay,
+          });
+        } else if (stepType === "listen") {
+          steps.push({
+            type: "listen",
+            affirmationId: matchedAffirmation?.id || null,
+            affirmationTitle: matchedAffirmation?.title || null,
+            isInnerVoice: matchedAffirmation?.voiceType === "personal" || false,
+            hasClonedVoice,
+            hasAnyAffirmations: hasAffirmations,
+            note: listenNote || "Create an affirmation that speaks to how you feel.",
+            suggestedTheme: suggestedCreationTheme,
+          });
+        }
+      }
+
+      res.json({
+        journeyTitle,
+        acknowledgment,
+        currentMood: mood,
+        targetMood,
+        steps,
+      });
+    } catch (error) {
+      console.error("Error in mood check-in:", error);
+      res.status(500).json({ error: "Failed to process mood check-in" });
+    }
+  });
+
+  // ============ Journey Completions API ============
+
+  app.post("/api/journey-completions", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { currentMood, targetMood, stepsPlanned, stepsCompleted, stepsSkipped, stepTypes, completedFully, timeOfDay, durationSeconds } = req.body;
+      const userId = req.userId!;
+      
+      if (!currentMood || !targetMood || !stepTypes) {
+        return res.status(400).json({ error: "currentMood, targetMood, and stepTypes are required" });
+      }
+      
+      const dateKey = new Date().toISOString().slice(0, 10);
+      
+      const [completion] = await db.insert(journeyCompletions).values({
+        userId,
+        currentMood,
+        targetMood,
+        stepsPlanned: stepsPlanned || 0,
+        stepsCompleted: stepsCompleted || 0,
+        stepsSkipped: stepsSkipped || 0,
+        stepTypes: Array.isArray(stepTypes) ? stepTypes.join(",") : stepTypes,
+        completedFully: completedFully || false,
+        timeOfDay: timeOfDay || null,
+        durationSeconds: durationSeconds || null,
+        dateKey,
+      }).returning();
+      
+      res.json(completion);
+    } catch (error) {
+      console.error("Error recording journey completion:", error);
+      res.status(500).json({ error: "Failed to record journey completion" });
+    }
+  });
+
+  app.get("/api/journey-stats", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const userId = req.userId!;
+      
+      const [totalCount, completedCount, recentJourneys, moodFrequency, topTargetMood] = await Promise.all([
+        db.select({ total: sql<number>`count(*)::int` })
+          .from(journeyCompletions)
+          .where(eq(journeyCompletions.userId, userId))
+          .then(r => r[0]),
+        db.select({ total: sql<number>`count(*)::int` })
+          .from(journeyCompletions)
+          .where(and(eq(journeyCompletions.userId, userId), eq(journeyCompletions.completedFully, true)))
+          .then(r => r[0]),
+        db.select()
+          .from(journeyCompletions)
+          .where(eq(journeyCompletions.userId, userId))
+          .orderBy(desc(journeyCompletions.completedAt))
+          .limit(5),
+        db.select({
+          currentMood: journeyCompletions.currentMood,
+          targetMood: journeyCompletions.targetMood,
+          count: sql<number>`count(*)::int`,
         })
-        .from(breathingSessions)
-        .where(and(
-          eq(breathingSessions.userId, userId),
-          eq(breathingSessions.dateKey, dateKey)
-        ));
-
-      const result = sessions[0] || { totalSeconds: 0, sessionCount: 0 };
+          .from(journeyCompletions)
+          .where(eq(journeyCompletions.userId, userId))
+          .groupBy(journeyCompletions.currentMood, journeyCompletions.targetMood)
+          .orderBy(sql`count(*) desc`)
+          .limit(3),
+        db.select({
+          targetMood: journeyCompletions.targetMood,
+          count: sql<number>`count(*)::int`,
+        })
+          .from(journeyCompletions)
+          .where(and(eq(journeyCompletions.userId, userId), eq(journeyCompletions.completedFully, true)))
+          .groupBy(journeyCompletions.targetMood)
+          .orderBy(sql`count(*) desc`)
+          .limit(1),
+      ]);
+      
+      let journeyStreak = 0;
+      if (recentJourneys.length > 0) {
+        let checkDate = new Date();
+        checkDate.setHours(0, 0, 0, 0);
+        const todayKey = checkDate.toISOString().slice(0, 10);
+        const yesterdayDate = new Date(checkDate);
+        yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+        const yesterdayKey = yesterdayDate.toISOString().slice(0, 10);
+        
+        const allDates = await db
+          .select({ dateKey: journeyCompletions.dateKey })
+          .from(journeyCompletions)
+          .where(eq(journeyCompletions.userId, userId))
+          .orderBy(desc(journeyCompletions.dateKey));
+        
+        const uniqueDates = [...new Set(allDates.map(d => d.dateKey))];
+        if (uniqueDates.length > 0 && (uniqueDates[0] === todayKey || uniqueDates[0] === yesterdayKey)) {
+          let current = new Date(uniqueDates[0]);
+          for (const d of uniqueDates) {
+            const expected = current.toISOString().slice(0, 10);
+            if (d === expected) {
+              journeyStreak++;
+              current.setDate(current.getDate() - 1);
+            } else {
+              break;
+            }
+          }
+        }
+      }
       
       res.json({
-        totalMinutes: Math.floor(result.totalSeconds / 60),
-        totalSeconds: result.totalSeconds,
-        sessionCount: result.sessionCount,
-        dateKey,
-        goalMinutes: 5, // Default daily goal
+        totalJourneys: totalCount?.total || 0,
+        completedJourneys: completedCount?.total || 0,
+        journeyStreak,
+        frequentMoodPaths: moodFrequency,
+        topTargetMood: topTargetMood[0] || null,
+        lastJourney: recentJourneys[0] || null,
       });
     } catch (error) {
-      console.error("Error getting today's breathing progress:", error);
-      res.status(500).json({ error: "Failed to get breathing progress" });
+      console.error("Error fetching journey stats:", error);
+      res.status(500).json({ error: "Failed to fetch journey stats" });
     }
   });
 
-  // Get breathing streak (consecutive days)
-  app.get("/api/breathing-sessions/streak", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+  // ============ Micro-Meditations API ============
+
+  app.post("/api/guided-moments/script", requireAuth, guidedMomentLimiter, async (req: AuthenticatedRequest, res: Response) => {
+    let clientDisconnected = false;
+    req.on("close", () => { clientDisconnected = true; });
+
     try {
-      const userId = req.user?.id;
-      if (!userId) {
-        return res.status(401).json({ error: "Unauthorized" });
+      const { mood, timeOfDay, duration: rawDuration } = req.body;
+
+      if (!mood || !timeOfDay) {
+        return res.status(400).json({ error: "mood and timeOfDay are required" });
       }
 
-      // Get distinct dates with breathing sessions, ordered by date desc
-      const sessionsResult = await db
-        .select({
-          dateKey: breathingSessions.dateKey,
-        })
-        .from(breathingSessions)
-        .where(eq(breathingSessions.userId, userId))
-        .groupBy(breathingSessions.dateKey)
-        .orderBy(desc(breathingSessions.dateKey));
+      const validMoods = ["calm", "stressed", "tired", "anxious", "sad", "overwhelmed", "energized", "grateful", "confident", "focused", "joyful"];
+      const validTimes = ["morning", "afternoon", "evening", "night"];
+      const validDurations = [1, 2, 3];
 
-      const dates = sessionsResult.map(s => s.dateKey);
-      
-      if (dates.length === 0) {
-        return res.json({ streak: 0, lastActiveDate: null });
+      if (!validMoods.includes(mood)) {
+        return res.status(400).json({ error: "Invalid mood value" });
+      }
+      if (!validTimes.includes(timeOfDay)) {
+        return res.status(400).json({ error: "Invalid timeOfDay value" });
       }
 
-      // Calculate streak
-      let streak = 0;
-      const today = new Date().toISOString().split('T')[0];
-      const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-      
-      // Check if most recent session was today or yesterday
-      if (dates[0] !== today && dates[0] !== yesterday) {
-        return res.json({ streak: 0, lastActiveDate: dates[0] });
+      const duration = validDurations.includes(Number(rawDuration)) ? Number(rawDuration) : 1;
+
+      const wordCountMap: Record<number, { min: number; max: number }> = {
+        1: { min: 50, max: 75 },
+        2: { min: 100, max: 145 },
+        3: { min: 150, max: 210 },
+      };
+      const maxTokensMap: Record<number, number> = { 1: 250, 2: 450, 3: 600 };
+      const wordCount = wordCountMap[duration] || wordCountMap[1];
+      const maxTokens = maxTokensMap[duration] || 350;
+
+      const durationLabel = duration === 1 ? "60-90 seconds" : `${duration} minutes`;
+
+      const userId = req.userId!;
+
+      const [userResult] = await Promise.all([
+        db.select({ name: users.name }).from(users).where(eq(users.id, userId)).limit(1),
+      ]);
+
+      const userName = userResult[0]?.name?.split(" ")[0] || "Friend";
+
+      const validDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+      const clientDayOfWeek = req.body.dayOfWeek;
+      const dayOfWeek = (clientDayOfWeek && validDays.includes(clientDayOfWeek)) ? clientDayOfWeek : validDays[new Date().getDay()];
+
+      if (clientDisconnected) {
+        console.log(`Client disconnected before script generation (${duration}min), aborting`);
+        return;
       }
 
-      // Count consecutive days
-      let currentDate = new Date(dates[0]);
-      for (const dateKey of dates) {
-        const sessionDate = new Date(dateKey);
-        const diffDays = Math.floor((currentDate.getTime() - sessionDate.getTime()) / 86400000);
-        
-        if (diffDays <= 1) {
-          streak++;
-          currentDate = sessionDate;
+      const moodConfig = MEDITATION_MOOD_CONFIG[mood] || MEDITATION_MOOD_CONFIG.calm;
+      const paceDescription = "at a calm pace";
+
+      const scriptResponse = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: [
+              `You are an expert mindfulness meditation guide creating a personalized micro-meditation. This is a mindfulness exercise (${durationLabel} when read aloud ${paceDescription}).`,
+              ``,
+              `CONTEXT: It is ${dayOfWeek} ${timeOfDay}. The person is feeling ${mood}. Use this context naturally.`,
+              ``,
+              `STRUCTURE (follow this order):`,
+              `1. OPENING (1-2 sentences): Begin with a brief, natural acknowledgment of where they are in their week and day — weave the day and time of day into a warm, conversational greeting before the grounding cue. Examples: "It's ${dayOfWeek} ${timeOfDay} — let this be your moment of calm..." or "The middle of the week can feel long... right here, right now, you're choosing stillness." Keep it effortless, never forced. Then invite them to close their eyes, notice their breath, or feel their body.`,
+              `2. BREATHING GUIDANCE (2-3 sentences): Lead a brief breathing cycle tailored to their mood. For stressed/anxious/overwhelmed: slow exhales for vagus nerve activation. For tired: energizing breath with counts. For sad: gentle, warming breaths. For calm: simple awareness breath.`,
+              `3. VISUALIZATION (3-4 sentences): Paint a vivid, sensory-rich scene using present tense. Include at least 2 senses (sight + touch, or sound + warmth, etc.). Match the imagery to their mood — calming scenes for stress/overwhelm, gentle uplifting scenes for sadness, expansive scenes for energy, warm scenes for gratitude.`,
+              `4. AFFIRMATION ANCHORING (2-3 sentences): Weave in identity-level affirmations using "I am" or "I choose" language. Use embedded commands naturally. Connect the affirmation to the visualization scene.`,
+              `5. GENTLE RETURN (2-3 sentences): Slowly guide them back to their surroundings. Include a physical cue like "wiggle your fingers" or "notice the sounds around you." Then invite them to open their eyes when ready — never rush this transition. Add a pause ("...") before the final line.`,
+              `6. WARM SEND-OFF (1-2 complete sentences): This is the most important part to get right. Always end with a complete, warm farewell that matches the time of day. Use phrases like: morning→"Have a wonderful morning" or "Carry this light into your day," afternoon→"Have a beautiful afternoon" or "Let this fuel the rest of your day," evening→"Have a peaceful evening" or "Take this warmth into your night," night→"Have a restful night" or "Sleep well tonight." The send-off MUST be a fully finished sentence — never trail off or leave a thought incomplete. This is the last thing the listener hears, so it must land with warmth and finality.`,
+              ``,
+              `RULES:`,
+              `- Total length: ${wordCount.min}-${wordCount.max} words (${durationLabel} ${paceDescription})`,
+              `- Use the person's name once, naturally, about three-quarters of the way through — in the visualization or early affirmation anchoring section. Never at the very beginning, middle, or very end.`,
+              `- Include natural pauses marked with "..." (3-4 throughout, including one before the final sign-off)`,
+              `- Write in second person ("you") for guidance, first person ("I am") for affirmations`,
+              `- Tone: ${moodConfig.scriptTone}`,
+              `- No exclamation marks, no questions, no medical claims`,
+              `- The day/time reference should feel organic and conversational — never robotic or templated. Vary your approach each time.`,
+              `- The ending must never feel rushed or cut short. The last 2-3 sentences should slow down in pacing and feel like a soft exhale.`,
+              `- CRITICAL: The very last sentence must always be a complete send-off wish (e.g., "Have a peaceful evening" or "Enjoy the rest of your day"). Never end mid-thought or with an ellipsis.`,
+              `- Reference accessible neuroscience concepts naturally (e.g., "your nervous system settles," "each breath sends a signal of safety")`,
+              `- Mood-specific emphasis: stressed→release/safety, anxious→grounding/presence, tired→vitality/awakening, sad→warmth/comfort, overwhelmed→simplicity/clarity, calm→deepening/peace, energized→momentum/vitality, grateful→appreciation/connection, confident→strength/self-trust, focused→clarity/precision, joyful→celebration/lightness`,
+              `- This is a mindfulness exercise, not medical advice`,
+              ``,
+              `Return ONLY the script text, no formatting or labels.`,
+            ].join("\n"),
+          },
+          {
+            role: "user",
+            content: `Create a ${duration}-minute micro-meditation for someone named ${userName} feeling ${mood} on ${dayOfWeek} ${timeOfDay}.`,
+          },
+        ],
+        temperature: 0.85,
+        max_tokens: maxTokens,
+      });
+
+      const script = scriptResponse.choices[0]?.message?.content?.trim();
+      if (!script) {
+        return res.status(500).json({ error: "Failed to generate meditation script" });
+      }
+
+      res.json({
+        script,
+        mood,
+        disclaimer: "This is a mindfulness exercise for relaxation purposes. It is not a substitute for professional mental health care.",
+      });
+    } catch (error: any) {
+      console.error("Error generating micro-meditation script:", error);
+      res.status(500).json({ error: "Failed to generate micro-meditation script. Please try again." });
+    }
+  });
+
+  app.post("/api/guided-moments/audio", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    let clientDisconnected = false;
+    req.on("close", () => { clientDisconnected = true; });
+
+    try {
+      const { script, usePersonalVoice, voiceId: rawVoiceId, mood } = req.body;
+      const moodConfig = mood ? (MEDITATION_MOOD_CONFIG[mood] || MEDITATION_MOOD_CONFIG.calm) : MEDITATION_MOOD_CONFIG.calm;
+
+      if (!script || typeof script !== "string" || script.trim().length === 0) {
+        return res.status(400).json({ error: "script is required and must be a non-empty string" });
+      }
+
+      const userId = req.userId!;
+      const [userTtsSettings] = await db.select({ 
+        ttsProvider: users.ttsProvider,
+        voiceId: users.voiceId,
+        elevenLabsVoiceId: users.elevenLabsVoiceId,
+        cartesiaVoiceId: users.cartesiaVoiceId,
+      }).from(users).where(eq(users.id, userId));
+
+      let voiceId = rawVoiceId;
+      if (usePersonalVoice && !voiceId) {
+        const resolved = resolvePersonalVoiceId(
+          userTtsSettings?.ttsProvider,
+          userTtsSettings?.voiceId,
+          userTtsSettings?.elevenLabsVoiceId,
+          userTtsSettings?.cartesiaVoiceId
+        );
+        if (resolved) {
+          voiceId = resolved;
         } else {
-          break;
+          console.warn(`User ${userId} requested personal voice but no voice clone found`);
         }
       }
 
-      res.json({ streak, lastActiveDate: dates[0] });
-    } catch (error) {
-      console.error("Error getting breathing streak:", error);
-      res.status(500).json({ error: "Failed to get breathing streak" });
-    }
-  });
-
-  // Generate ambient sounds using ElevenLabs Sound Effects API
-  // Regenerate a single ambient sound
-  app.post("/api/admin/regenerate-sound/:filename", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { filename } = req.params;
-      const { prompt } = req.body;
-      
-      if (!prompt) {
-        return res.status(400).json({ error: "Prompt is required" });
+      if (clientDisconnected) {
+        console.log(`Client disconnected before TTS, aborting`);
+        return;
       }
-      
-      const audioDir = path.join(process.cwd(), "assets", "audio");
-      console.log(`Regenerating: ${filename} with prompt: ${prompt}`);
-      
-      const audioBuffer = await generateSoundEffect(prompt, 22, 0.3);
-      const filePath = path.join(audioDir, filename);
-      fs.writeFileSync(filePath, Buffer.from(audioBuffer));
-      
-      console.log(`Successfully regenerated: ${filename}`);
-      res.json({ success: true, filename, bytes: audioBuffer.byteLength });
-    } catch (error: any) {
-      console.error("Error regenerating sound:", error);
-      res.status(500).json({ error: "Failed to regenerate sound", details: error.message });
-    }
-  });
 
-  app.post("/api/admin/generate-ambient-sounds", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const audioDir = path.join(process.cwd(), "assets", "audio");
-      
-      // Sound prompts for each ambient type
-      const soundConfigs = [
-        { filename: "rain-ambient.mp3", prompt: "Gentle rain falling on leaves and soft ground, peaceful and calming ambient rainfall for meditation and relaxation" },
-        { filename: "ocean-waves.mp3", prompt: "Peaceful ocean waves gently lapping on a sandy beach at sunset, calming sea ambience for relaxation and sleep" },
-        { filename: "forest-birds.mp3", prompt: "Serene forest ambience with gentle birdsong, rustling leaves, and distant woodland sounds, peaceful nature atmosphere" },
-        { filename: "wind-gentle.mp3", prompt: "Steady wind blowing through trees with audible whooshing and rustling sounds, continuous breeze ambience, clear wind noise for relaxation" },
-        { filename: "432hz-healing.mp3", prompt: "Deep resonant 432Hz healing frequency tone, pure and sustained, for meditation and spiritual healing" },
-        { filename: "528hz-love.mp3", prompt: "Pure 528Hz solfeggio love frequency tone, sustained and harmonious, for transformation and DNA healing" },
-        { filename: "theta-waves.mp3", prompt: "Deep theta brainwave binaural beat at 6Hz, layered with soft ambient tones for deep meditation and creativity" },
-        { filename: "alpha-waves.mp3", prompt: "Relaxing alpha brainwave binaural beat at 10Hz, with gentle ambient background for relaxation and calm focus" },
-        { filename: "delta-waves.mp3", prompt: "Deep delta brainwave binaural beat at 2Hz, with soft dreamy ambient tones for deep sleep and restoration" },
-        { filename: "beta-waves.mp3", prompt: "Energizing beta brainwave binaural beat at 18Hz, with subtle ambient background for focus and concentration" },
-      ];
+      let audioBuffer: ArrayBuffer;
+      let wordTimings: WordTiming[] = [];
+      let audioDuration = 0;
 
-      const results: { filename: string; success: boolean; error?: string }[] = [];
-
-      for (const config of soundConfigs) {
-        try {
-          console.log(`Generating: ${config.filename}`);
-          const audioBuffer = await generateSoundEffect(config.prompt, 22, 0.3);
-          
-          const filePath = path.join(audioDir, config.filename);
-          fs.writeFileSync(filePath, Buffer.from(audioBuffer));
-          
-          results.push({ filename: config.filename, success: true });
-          console.log(`Successfully generated: ${config.filename}`);
-        } catch (error: any) {
-          console.error(`Failed to generate ${config.filename}:`, error.message);
-          results.push({ filename: config.filename, success: false, error: error.message });
+      try {
+        if (usePersonalVoice && voiceId) {
+          const result = await generateAudio(script, voiceId, true, moodConfig, undefined, true);
+          audioBuffer = result.audio;
+          wordTimings = result.wordTimings;
+          audioDuration = result.duration;
+        } else {
+          const stockVoiceId = voiceId && isHumeVoice(voiceId) ? voiceId : "hume_lotus";
+          const result = await generateAudio(script, stockVoiceId, false, moodConfig, undefined, true);
+          audioBuffer = result.audio;
+          wordTimings = result.wordTimings;
+          audioDuration = result.duration;
         }
+      } catch (ttsError: any) {
+        console.error("Guided moment TTS failed:", ttsError?.message || ttsError);
+        return res.status(500).json({
+          error: "Could not generate audio for your micro-meditation. Please try again.",
+          code: ttsError?.message?.includes("QUOTA_EXCEEDED") ? "QUOTA_EXCEEDED" :
+                ttsError?.message?.includes("VOICE_EXPIRED") ? "VOICE_EXPIRED" : "TTS_FAILED"
+        });
       }
+      const audioBase64 = Buffer.from(audioBuffer).toString("base64");
 
-      res.json({ 
-        message: "Ambient sound generation complete", 
-        results,
-        successCount: results.filter(r => r.success).length,
-        failureCount: results.filter(r => !r.success).length
+      res.json({
+        audioBase64,
+        duration: audioDuration,
+        wordTimings,
       });
     } catch (error: any) {
-      console.error("Error generating ambient sounds:", error);
-      res.status(500).json({ error: "Failed to generate ambient sounds", details: error.message });
+      console.error("Error generating micro-meditation audio:", error);
+      res.status(500).json({ error: "Failed to generate micro-meditation audio. Please try again." });
     }
   });
 
-  // Support request submission
-  app.post("/api/support", optionalAuth, async (req: AuthenticatedRequest, res: Response) => {
+  app.post("/api/guided-moments/generate", requireAuth, guidedMomentLimiter, async (req: AuthenticatedRequest, res: Response) => {
+    let clientDisconnected = false;
+    req.on("close", () => { clientDisconnected = true; });
+
     try {
-      const { email, subject, message } = req.body;
-      
-      if (!email || !subject || !message) {
-        return res.status(400).json({ error: "Email, subject, and message are required" });
+      const { mood, timeOfDay, usePersonalVoice, voiceId: rawVoiceId, duration: rawDuration } = req.body;
+
+      if (!mood || !timeOfDay) {
+        return res.status(400).json({ error: "mood and timeOfDay are required" });
       }
 
-      const userId = req.user?.id || null;
+      const validMoods = ["calm", "stressed", "tired", "anxious", "sad", "overwhelmed", "energized", "grateful", "confident", "focused", "joyful"];
+      const validTimes = ["morning", "afternoon", "evening", "night"];
+      const validDurations = [1, 2, 3];
 
-      const [request] = await db
-        .insert(supportRequests)
-        .values({
-          userId,
-          email,
-          subject,
-          message,
-        })
-        .returning();
-
-      res.json({ success: true, requestId: request.id });
-    } catch (error: any) {
-      console.error("Error submitting support request:", error);
-      res.status(500).json({ error: "Failed to submit support request" });
-    }
-  });
-
-  // TEMPORARY: Admin endpoint to generate audio for sample affirmations
-  app.post("/api/admin/generate-sample-audio", async (req: Request, res: Response) => {
-    try {
-      const { adminKey } = req.body;
-      
-      // Simple admin key protection
-      if (adminKey !== "generate-sample-audio-2024") {
-        return res.status(401).json({ error: "Unauthorized" });
+      if (!validMoods.includes(mood)) {
+        return res.status(400).json({ error: "Invalid mood value" });
       }
-      
-      // Get all sample affirmations that need audio
-      const sampleAffirmations = await db
-        .select()
-        .from(affirmations)
-        .where(eq(affirmations.userId, "apple-review-test-account"));
-      
-      const results: { id: number; title: string; status: string; error?: string }[] = [];
-      const audioDir = path.join(process.cwd(), "uploads", "audio");
-      if (!fs.existsSync(audioDir)) {
-        fs.mkdirSync(audioDir, { recursive: true });
+      if (!validTimes.includes(timeOfDay)) {
+        return res.status(400).json({ error: "Invalid timeOfDay value" });
       }
-      
-      for (const affirmation of sampleAffirmations) {
-        try {
-          // Skip if already has audio
-          if (affirmation.audioUrl) {
-            results.push({ id: affirmation.id, title: affirmation.title, status: "skipped - already has audio" });
-            continue;
-          }
-          
-          // Use the assigned AI voice or default to Sarah
-          const voiceId = affirmation.aiVoiceId || "EXAVITQu4vr4xnSDxMaL";
-          
-          console.log(`Generating audio for: ${affirmation.title} with voice ${voiceId}`);
-          
-          // Generate audio
-          const audioResult = await generateAudio(affirmation.script, voiceId);
-          
-          // Save audio file
-          const audioFileName = `affirmation-${affirmation.id}-${Date.now()}.mp3`;
-          const audioPath = path.join(audioDir, audioFileName);
-          fs.writeFileSync(audioPath, Buffer.from(audioResult.audio));
-          
-          const audioUrl = `/uploads/audio/${audioFileName}`;
-          
-          // Update affirmation
-          await db
-            .update(affirmations)
-            .set({
-              audioUrl,
-              duration: audioResult.duration,
-              wordTimings: JSON.stringify(audioResult.wordTimings),
-              updatedAt: new Date(),
-            })
-            .where(eq(affirmations.id, affirmation.id));
-          
-          results.push({ id: affirmation.id, title: affirmation.title, status: "success" });
-          
-          // Small delay to avoid rate limits
-          await new Promise(resolve => setTimeout(resolve, 500));
-        } catch (err: any) {
-          console.error(`Failed to generate audio for ${affirmation.title}:`, err);
-          results.push({ id: affirmation.id, title: affirmation.title, status: "error", error: err.message });
+
+      const duration = validDurations.includes(Number(rawDuration)) ? Number(rawDuration) : 1;
+
+      const wordCountMap: Record<number, { min: number; max: number }> = {
+        1: { min: 50, max: 75 },
+        2: { min: 100, max: 145 },
+        3: { min: 150, max: 210 },
+      };
+      const maxTokensMap: Record<number, number> = { 1: 250, 2: 450, 3: 600 };
+      const wordCount = wordCountMap[duration] || wordCountMap[1];
+      const maxTokens = maxTokensMap[duration] || 350;
+
+      const durationLabel = duration === 1 ? "60-90 seconds" : `${duration} minutes`;
+
+      const userId = req.userId!;
+      const [userTtsSettings2] = await db.select({ 
+        ttsProvider: users.ttsProvider,
+        voiceId: users.voiceId,
+        elevenLabsVoiceId: users.elevenLabsVoiceId,
+        cartesiaVoiceId: users.cartesiaVoiceId,
+      }).from(users).where(eq(users.id, userId));
+
+      const [userResult] = await db.select({ name: users.name }).from(users).where(eq(users.id, userId)).limit(1);
+
+      const userName = userResult?.name?.split(" ")[0] || "Friend";
+      let voiceId = rawVoiceId;
+      if (usePersonalVoice && !voiceId) {
+        const resolved = resolvePersonalVoiceId(
+          userTtsSettings2?.ttsProvider,
+          userTtsSettings2?.voiceId,
+          userTtsSettings2?.elevenLabsVoiceId,
+          userTtsSettings2?.cartesiaVoiceId
+        );
+        if (resolved) {
+          voiceId = resolved;
+        } else {
+          console.warn(`User ${userId} requested personal voice but no voice clone found`);
         }
       }
-      
-      res.json({ total: sampleAffirmations.length, results });
+
+      const validDaysLegacy = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+      const clientDayOfWeekLegacy = req.body.dayOfWeek;
+      const dayOfWeek = (clientDayOfWeekLegacy && validDaysLegacy.includes(clientDayOfWeekLegacy)) ? clientDayOfWeekLegacy : validDaysLegacy[new Date().getDay()];
+
+      if (clientDisconnected) {
+        console.log(`Client disconnected before script generation (${duration}min), aborting`);
+        return;
+      }
+
+      const moodConfig = MEDITATION_MOOD_CONFIG[mood] || MEDITATION_MOOD_CONFIG.calm;
+      const paceDescription = "at a calm pace";
+
+      const scriptPromise = openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: [
+              `You are an expert mindfulness meditation guide creating a personalized micro-meditation. This is a mindfulness exercise (${durationLabel} when read aloud ${paceDescription}).`,
+              ``,
+              `CONTEXT: It is ${dayOfWeek} ${timeOfDay}. The person is feeling ${mood}. Use this context naturally.`,
+              ``,
+              `STRUCTURE (follow this order):`,
+              `1. OPENING (1-2 sentences): Begin with a brief, natural acknowledgment of where they are in their week and day — weave the day and time of day into a warm, conversational greeting before the grounding cue. Keep it effortless, never forced. Then invite them to close their eyes, notice their breath, or feel their body.`,
+              `2. BREATHING GUIDANCE (2-3 sentences): Lead a brief breathing cycle tailored to their mood. For stressed/anxious/overwhelmed: slow exhales for vagus nerve activation. For tired: energizing breath with counts. For sad: gentle, warming breaths. For calm: simple awareness breath.`,
+              `3. VISUALIZATION (3-4 sentences): Paint a vivid, sensory-rich scene using present tense. Include at least 2 senses (sight + touch, or sound + warmth, etc.). Match the imagery to their mood — calming scenes for stress/overwhelm, gentle uplifting scenes for sadness, expansive scenes for energy, warm scenes for gratitude.`,
+              `4. AFFIRMATION ANCHORING (2-3 sentences): Weave in identity-level affirmations using "I am" or "I choose" language. Use embedded commands naturally. Connect the affirmation to the visualization scene.`,
+              `5. GENTLE RETURN (2-3 sentences): Slowly guide them back to their surroundings. Include a physical cue like "wiggle your fingers" or "notice the sounds around you." Then invite them to open their eyes when ready — never rush this transition. Add a pause ("...") before the final line.`,
+              `6. WARM SEND-OFF (1-2 complete sentences): This is the most important part to get right. Always end with a complete, warm farewell that matches the time of day. Use phrases like: morning→"Have a wonderful morning" or "Carry this light into your day," afternoon→"Have a beautiful afternoon" or "Let this fuel the rest of your day," evening→"Have a peaceful evening" or "Take this warmth into your night," night→"Have a restful night" or "Sleep well tonight." The send-off MUST be a fully finished sentence — never trail off or leave a thought incomplete. This is the last thing the listener hears, so it must land with warmth and finality.`,
+              ``,
+              `RULES:`,
+              `- Total length: ${wordCount.min}-${wordCount.max} words (${durationLabel} ${paceDescription})`,
+              `- Use the person's name once, naturally, about three-quarters of the way through — in the visualization or early affirmation anchoring section. Never at the very beginning, middle, or very end.`,
+              `- Include natural pauses marked with "..." (3-4 throughout, including one before the final sign-off)`,
+              `- Write in second person ("you") for guidance, first person ("I am") for affirmations`,
+              `- Tone: ${moodConfig.scriptTone}`,
+              `- No exclamation marks, no questions, no medical claims`,
+              `- The day/time reference should feel organic and conversational — never robotic or templated. Vary your approach each time.`,
+              `- The ending must never feel rushed or cut short. The last 2-3 sentences should slow down in pacing and feel like a soft exhale.`,
+              `- CRITICAL: The very last sentence must always be a complete send-off wish (e.g., "Have a peaceful evening" or "Enjoy the rest of your day"). Never end mid-thought or with an ellipsis.`,
+              `- Reference accessible neuroscience concepts naturally (e.g., "your nervous system settles," "each breath sends a signal of safety")`,
+              `- Mood-specific emphasis: stressed→release/safety, anxious→grounding/presence, tired→vitality/awakening, sad→warmth/comfort, overwhelmed→simplicity/clarity, calm→deepening/peace, energized→momentum/vitality, grateful→appreciation/connection, confident→strength/self-trust, focused→clarity/precision, joyful→celebration/lightness`,
+              `- This is a mindfulness exercise, not medical advice`,
+              ``,
+              `Return ONLY the script text, no formatting or labels.`,
+            ].join("\n"),
+          },
+          {
+            role: "user",
+            content: `Create a ${duration}-minute micro-meditation for someone named ${userName} feeling ${mood} on ${dayOfWeek} ${timeOfDay}.`,
+          },
+        ],
+        temperature: 0.85,
+        max_tokens: maxTokens,
+      });
+
+      const scriptResponse = await scriptPromise;
+      const script = scriptResponse.choices[0]?.message?.content?.trim();
+      if (!script) {
+        return res.status(500).json({ error: "Failed to generate meditation script" });
+      }
+
+      if (clientDisconnected) {
+        console.log(`Client disconnected after script generation (${duration}min), skipping TTS`);
+        return;
+      }
+
+      let audioBuffer: ArrayBuffer;
+      let wordTimings: WordTiming[] = [];
+      let audioDuration = 0;
+
+      try {
+        if (usePersonalVoice && voiceId) {
+          const result = await generateAudio(script, voiceId, true, moodConfig, undefined, true);
+          audioBuffer = result.audio;
+          wordTimings = result.wordTimings;
+          audioDuration = result.duration;
+        } else {
+          const stockVoiceId = voiceId && isHumeVoice(voiceId) ? voiceId : "hume_lotus";
+          const result = await generateAudio(script, stockVoiceId, false, moodConfig, undefined, true);
+          audioBuffer = result.audio;
+          wordTimings = result.wordTimings;
+          audioDuration = result.duration;
+        }
+      } catch (ttsError: any) {
+        console.error("Guided moment TTS failed:", ttsError?.message || ttsError);
+        return res.status(500).json({ 
+          error: "Could not generate audio for your micro-meditation. Please try again.",
+          code: ttsError?.message?.includes("QUOTA_EXCEEDED") ? "QUOTA_EXCEEDED" : 
+                ttsError?.message?.includes("VOICE_EXPIRED") ? "VOICE_EXPIRED" : "TTS_FAILED"
+        });
+      }
+      const audioBase64 = Buffer.from(audioBuffer).toString("base64");
+
+      res.json({
+        script,
+        audioBase64,
+        duration: audioDuration,
+        wordTimings,
+        mood,
+        disclaimer: "This is a mindfulness exercise for relaxation purposes. It is not a substitute for professional mental health care.",
+      });
     } catch (error: any) {
-      console.error("Error generating sample audio:", error);
-      res.status(500).json({ error: "Failed to generate sample audio" });
+      console.error("Error generating micro-meditation:", error);
+      res.status(500).json({ error: "Failed to generate micro-meditation. Please try again." });
     }
   });
+
+  registerReminderRoutes(app);
+
+  registerBreathingRoutes(app);
+
+  registerAdminRoutes(app, generateAudio, getPillarVoiceConfig);
 
   // Set voice cloning consent (required before recording)
   app.post("/api/user/voice-consent", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
@@ -2303,6 +3742,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user's subscription info
+  app.get("/api/subscription", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const [user] = await db
+        .select({ subscriptionTier: users.subscriptionTier })
+        .from(users)
+        .where(eq(users.id, req.userId!))
+        .limit(1);
+
+      const tier = (user?.subscriptionTier || "free") as "free" | "premium";
+      res.json({
+        tier,
+        isPremium: isPremiumUser({ subscriptionTier: tier } as any),
+        betaMode: BETA_MODE,
+        freeFeatures: FREE_FEATURES,
+        premiumFeatures: PREMIUM_FEATURES_LIST,
+      });
+    } catch (error) {
+      console.error("Error fetching subscription:", error);
+      res.status(500).json({ error: "Failed to fetch subscription info" });
+    }
+  });
+
   // Get user's usage limits and consent status
   app.get("/api/user/limits", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
@@ -2317,16 +3779,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .where(eq(users.id, req.userId!))
         .limit(1);
 
+      const isAdmin = ADMIN_USER_IDS.has(req.userId!);
       res.json({
         voiceClones: {
           used: user?.voiceClonesUsed || 0,
-          limit: MAX_VOICE_CLONES_LIFETIME,
-          remaining: Math.max(0, MAX_VOICE_CLONES_LIFETIME - (user?.voiceClonesUsed || 0))
+          limit: isAdmin ? 999 : MAX_VOICE_CLONES_LIFETIME,
+          remaining: isAdmin ? 999 : Math.max(0, MAX_VOICE_CLONES_LIFETIME - (user?.voiceClonesUsed || 0))
         },
         aiAffirmations: {
           used: limits.affirmationsThisMonth,
-          limit: MAX_AI_AFFIRMATIONS_PER_MONTH,
-          remaining: limits.affirmationsRemaining
+          limit: isAdmin ? 999 : MAX_AI_AFFIRMATIONS_PER_MONTH,
+          remaining: isAdmin ? 999 : limits.affirmationsRemaining
         },
         hasConsentedToVoiceCloning: user?.hasConsentedToVoiceCloning || false
       });
@@ -2377,6 +3840,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await db.delete(listeningSessions).where(eq(listeningSessions.userId, userId));
       await db.delete(breathingSessions).where(eq(breathingSessions.userId, userId));
       await db.delete(notificationSettings).where(eq(notificationSettings.userId, userId));
+      await db.delete(pushTokens).where(eq(pushTokens.userId, userId));
+      await db.delete(reminders).where(eq(reminders.userId, userId));
       await db.delete(affirmations).where(eq(affirmations.userId, userId));
       await db.delete(voiceSamples).where(eq(voiceSamples.userId, userId));
       await db.delete(customCategories).where(eq(customCategories.userId, userId));
@@ -2394,6 +3859,273 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to delete user data. Please contact support." });
     }
   });
+
+  registerGithubRoutes(app);
+
+  app.get("/api/daily-greeting", requireAuth, dailyGreetingLimiter, async (req: AuthenticatedRequest, res: Response) => {
+    const userId = req.userId!;
+    const timeOfDay = (req.query.timeOfDay as string) || "morning";
+    const validTimes = ["morning", "afternoon", "evening", "night"];
+    const normalizedTime = validTimes.includes(timeOfDay) ? timeOfDay : "morning";
+    const hoursAway = req.query.hoursAway ? parseInt(req.query.hoursAway as string, 10) : null;
+    const isWelcomeBack = hoursAway !== null && hoursAway >= 4;
+
+    const today = new Date().toISOString().slice(0, 10);
+    const cacheKey = isWelcomeBack ? `${userId}-${today}-wb` : `${userId}-${today}`;
+
+    const cached = dailyGreetingCache.get(cacheKey);
+    if (cached) {
+      return res.json({ ...cached, cached: true });
+    }
+
+    try {
+      const [user] = await db.select({ name: users.name }).from(users).where(eq(users.id, userId));
+      const firstName = user?.name?.split(" ")[0] || "";
+
+      const [sessionStats, affirmationCount, voiceCloneStatus, listeningCount, journeyCount, topJourneyMood] = await Promise.all([
+        db.select({ total: sql<number>`count(*)::int` })
+          .from(breathingSessions)
+          .where(eq(breathingSessions.userId, userId))
+          .then(r => r[0]),
+        db.select({ total: sql<number>`count(*)::int` })
+          .from(affirmations)
+          .where(eq(affirmations.userId, userId))
+          .then(r => r[0]),
+        db.select({ voiceId: voiceSamples.voiceId, status: voiceSamples.status })
+          .from(voiceSamples)
+          .where(and(eq(voiceSamples.userId, userId), eq(voiceSamples.status, "ready")))
+          .limit(1)
+          .then(r => r[0]),
+        db.select({ total: sql<number>`count(*)::int` })
+          .from(listeningSessions)
+          .where(eq(listeningSessions.userId, userId))
+          .then(r => r[0]),
+        db.select({ total: sql<number>`count(*)::int` })
+          .from(journeyCompletions)
+          .where(eq(journeyCompletions.userId, userId))
+          .then(r => r[0]),
+        db.select({
+          targetMood: journeyCompletions.targetMood,
+          count: sql<number>`count(*)::int`,
+        })
+          .from(journeyCompletions)
+          .where(and(eq(journeyCompletions.userId, userId), eq(journeyCompletions.completedFully, true)))
+          .groupBy(journeyCompletions.targetMood)
+          .orderBy(sql`count(*) desc`)
+          .limit(1)
+          .then(r => r[0]),
+      ]);
+
+      const totalBreathingSessions = sessionStats?.total || 0;
+      const totalAffirmations = affirmationCount?.total || 0;
+      const hasVoiceClone = !!voiceCloneStatus;
+      const totalListens = listeningCount?.total || 0;
+      const totalJourneys = journeyCount?.total || 0;
+
+      const [streakResult] = await db
+        .select({ dateKey: breathingSessions.dateKey })
+        .from(breathingSessions)
+        .where(eq(breathingSessions.userId, userId))
+        .orderBy(desc(breathingSessions.completedAt))
+        .limit(1);
+
+      let streak = 0;
+      if (streakResult) {
+        let checkDate = new Date();
+        checkDate.setHours(0, 0, 0, 0);
+        const todayKey = checkDate.toISOString().slice(0, 10);
+        const yesterdayDate = new Date(checkDate);
+        yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+        const yesterdayKey = yesterdayDate.toISOString().slice(0, 10);
+
+        if (streakResult.dateKey === todayKey || streakResult.dateKey === yesterdayKey) {
+          const allDates = await db
+            .select({ dateKey: breathingSessions.dateKey })
+            .from(breathingSessions)
+            .where(eq(breathingSessions.userId, userId))
+            .orderBy(desc(breathingSessions.dateKey));
+
+          const uniqueDates = [...new Set(allDates.map(d => d.dateKey))];
+          let current = streakResult.dateKey === todayKey ? new Date(todayKey) : new Date(yesterdayKey);
+          for (const d of uniqueDates) {
+            const expected = current.toISOString().slice(0, 10);
+            if (d === expected) {
+              streak++;
+              current.setDate(current.getDate() - 1);
+            } else {
+              break;
+            }
+          }
+        }
+      }
+
+      const [topTechnique] = await db
+        .select({
+          techniqueId: breathingSessions.techniqueId,
+          count: sql<number>`count(*)::int`,
+        })
+        .from(breathingSessions)
+        .where(eq(breathingSessions.userId, userId))
+        .groupBy(breathingSessions.techniqueId)
+        .orderBy(sql`count(*) desc`)
+        .limit(1);
+
+      const nudgeOpportunities: string[] = [];
+      if (totalAffirmations === 0) nudgeOpportunities.push("NO_AFFIRMATIONS: User has never created an affirmation yet.");
+      else if (totalAffirmations < 3) nudgeOpportunities.push(`FEW_AFFIRMATIONS: User has only ${totalAffirmations} affirmation(s). Encourage creating more.`);
+      if (!hasVoiceClone) nudgeOpportunities.push("NO_VOICE_CLONE: User hasn't set up voice cloning (Inner Voice) yet.");
+      if (totalBreathingSessions === 0) nudgeOpportunities.push("NO_BREATHING: User hasn't tried any breathing exercises yet.");
+      if (totalListens === 0 && totalAffirmations > 0) nudgeOpportunities.push("NO_LISTENS: User has affirmations but hasn't listened to any yet. Use actionType 'listen'.");
+      if (totalListens > 0 && totalAffirmations > 0) nudgeOpportunities.push(`LISTEN_AGAIN: User has ${totalListens} listening sessions — encourage them to listen again. Repetition rewires neural pathways. Use actionType 'listen'.`);
+      if (totalJourneys === 0) nudgeOpportunities.push("NO_JOURNEYS: User has never tried a mood journey. These are guided wellness paths combining breathing, meditation, and affirmations.");
+
+      let statsContext = "";
+      if (totalBreathingSessions > 0 || totalAffirmations > 0 || totalJourneys > 0) {
+        const parts = [];
+        if (streak > 1) parts.push(`${streak}-day breathing streak`);
+        if (totalBreathingSessions > 0) parts.push(`${totalBreathingSessions} breathing sessions`);
+        if (totalAffirmations > 0) parts.push(`${totalAffirmations} affirmation(s) created`);
+        if (totalListens > 0) parts.push(`${totalListens} listening sessions`);
+        if (hasVoiceClone) parts.push("has cloned voice (Inner Voice)");
+        if (topTechnique) parts.push(`favorite technique: ${topTechnique.techniqueId}`);
+        if (totalJourneys > 0) parts.push(`${totalJourneys} mood journey(s) completed`);
+        if (topJourneyMood) parts.push(`most-sought mood: ${topJourneyMood.targetMood}`);
+        statsContext = `\nUser activity: ${parts.join(", ")}.`;
+      }
+
+      let welcomeBackContext = "";
+      if (isWelcomeBack && hoursAway) {
+        const awayLabel = hoursAway >= 24
+          ? `${Math.round(hoursAway / 24)} day(s)`
+          : `${hoursAway} hour(s)`;
+        welcomeBackContext = `\nWELCOME BACK: The user is returning after being away for ${awayLabel}. Acknowledge their return warmly but subtly — don't say "welcome back" literally. Instead, reference the time away naturally: "Your ${normalizedTime} reset awaits" or "picking up right where you left off" or weave their streak/stats into a return-flavored message. Make it feel like the app noticed them and is glad they're here.`;
+      }
+
+      const lastNudge = lastNudgeTypeByUser.get(userId);
+      let filteredNudges = nudgeOpportunities;
+      if (lastNudge && nudgeOpportunities.length > 1) {
+        filteredNudges = nudgeOpportunities.filter(n => {
+          const tag = n.split(":")[0];
+          if (lastNudge === "listen" && (tag === "LISTEN_AGAIN" || tag === "NO_LISTENS")) return false;
+          if (lastNudge === "create" && (tag === "NO_AFFIRMATIONS" || tag === "FEW_AFFIRMATIONS")) return false;
+          if (lastNudge === "clone" && tag === "NO_VOICE_CLONE") return false;
+          if (lastNudge === "breathe" && tag === "NO_BREATHING") return false;
+          if (lastNudge === "journey" && tag === "NO_JOURNEYS") return false;
+          return true;
+        });
+        if (filteredNudges.length === 0) filteredNudges = nudgeOpportunities;
+      }
+
+      let nudgeContext = "";
+      if (filteredNudges.length > 0) {
+        nudgeContext = `\nNudge opportunities (pick ONE randomly if you want to nudge, or skip if you prefer pure encouragement):\n${filteredNudges.join("\n")}`;
+      }
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: [
+              `You write ultra-short empowering sub-messages for the Retuned wellness app. The greeting line ("Good morning, Name") is already shown above your message — you only write the sub-message below it.`,
+              ``,
+              `TONE: ${normalizedTime} mood. Warm, not cheery. Like a knowing friend. Be creative, witty, surprising — users should look forward to what it says next. No quotation marks, no exclamation marks.`,
+              ``,
+              `THEMES to weave in (pick one per message): neural pathways strengthening, brain rewiring for confidence, neuroplasticity shaping beliefs, amygdala calming through breathwork, prefrontal cortex activation, mood journeys building emotional resilience pathways. Use accessible language — no jargon.`,
+              `${statsContext}`,
+              `${welcomeBackContext}`,
+              `${nudgeContext}`,
+              ``,
+              `RESPONSE FORMAT: Return valid JSON only. No markdown, no code fences.`,
+              `{`,
+              `  "message": "Your main message text here (max 12 words)",`,
+              `  "actionText": "tappable link text (2-5 words, optional — omit key if no nudge)",`,
+              `  "actionType": "create | breathe | meditate | clone | listen (only if actionText is provided)"`,
+              `}`,
+              ``,
+              `RULES:`,
+              `- "message" is the full visible text INCLUDING a natural lead-in to the action. Max 12 words total.`,
+              `- If nudging, end "message" with a dash or ellipsis, then put the call-to-action in "actionText". The actionText is rendered as a tappable link right after the message.`,
+              `  Example: { "message": "Your mind is ready for something new —", "actionText": "create your first affirmation", "actionType": "create" }`,
+              `  Example: { "message": "Imagine hearing these words in your voice —", "actionText": "try Inner Voice", "actionType": "clone" }`,
+              `  Example: { "message": "A 60-second reset could change your day —", "actionText": "breathe now", "actionType": "breathe" }`,
+              `  Example: { "message": "Let stillness find you —", "actionText": "start a guided moment", "actionType": "meditate" }`,
+              `  Example: { "message": "Your mind knows the path to ${topJourneyMood?.targetMood || 'calm'} now —", "actionText": "start a mood journey", "actionType": "journey" }`,
+              `  Example: { "message": "Your neural pathways are ready to absorb —", "actionText": "listen now", "actionType": "listen" }`,
+              `- If no nudge fits, just return { "message": "..." } with pure encouragement (max 10 words).`,
+              `- actionType mapping: "create" = create new affirmation, "breathe" = breathing exercise, "meditate" = guided meditation, "clone" = voice cloning setup, "journey" = mood check-in/journey, "listen" = play an affirmation.`,
+              `- About 60% of the time, include a nudge when opportunities exist. 40% pure encouragement.`,
+              `- Never nag. Be curious, inviting, playful. Each message should feel fresh.`,
+              `- NEVER use first-person "I" (e.g., "I know you can do it", "I believe in you"). Always address the user directly with "you/your".`,
+            ].join("\n"),
+          },
+          {
+            role: "user",
+            content: isWelcomeBack
+              ? `Generate a ${normalizedTime} welcome-back sub-message for a user returning after ${hoursAway} hours.`
+              : `Generate a ${normalizedTime} sub-message.`,
+          },
+        ],
+        temperature: 0.85,
+        max_tokens: 80,
+      });
+
+      const raw = response.choices[0]?.message?.content?.trim() || "";
+      let parsed: { message: string; actionText?: string; actionType?: string };
+      try {
+        const cleaned = raw.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+        parsed = JSON.parse(cleaned);
+        parsed.message = (parsed.message || "").replace(/["""''!]/g, "");
+        if (parsed.actionText) {
+          parsed.actionText = parsed.actionText.replace(/["""''!]/g, "");
+        }
+        const validActions = ["create", "breathe", "meditate", "clone", "journey", "listen"];
+        if (parsed.actionType && !validActions.includes(parsed.actionType)) {
+          delete parsed.actionText;
+          delete parsed.actionType;
+        }
+      } catch {
+        parsed = { message: raw.replace(/["""''!]/g, "").substring(0, 80) || dailyGreetingFallbacks[normalizedTime] };
+      }
+
+      dailyGreetingCache.set(cacheKey, parsed);
+      if (parsed.actionType) {
+        lastNudgeTypeByUser.set(userId, parsed.actionType);
+      }
+      res.json({ ...parsed, cached: false });
+    } catch (error) {
+      console.error("Daily greeting generation failed:", error);
+      res.json({ message: dailyGreetingFallbacks[normalizedTime], cached: false });
+    }
+  });
+
+  setInterval(async () => {
+    try {
+      const expiryResult = await sendVoiceExpiryWarnings();
+      if (expiryResult.warned > 0) {
+        console.log(`[Voice Expiry] Sent ${expiryResult.warned} expiry warnings`);
+      }
+    } catch (expiryError) {
+      console.error("[Voice Expiry] Warning check failed:", expiryError);
+    }
+
+    try {
+      console.log("[Voice Rotation] Running scheduled voice cleanup...");
+      const results = await runVoiceRotation(60);
+      if (results.rotated > 0) {
+        console.log(`[Voice Rotation] Rotated ${results.rotated} inactive voices`);
+      } else {
+        console.log("[Voice Rotation] No inactive voices to rotate");
+      }
+
+      const warning = await checkVoiceSlotWarning();
+      if (warning) {
+        console.warn(warning);
+      }
+    } catch (error) {
+      console.error("[Voice Rotation] Scheduled cleanup failed:", error);
+    }
+  }, 24 * 60 * 60 * 1000);
 
   const httpServer = createServer(app);
 

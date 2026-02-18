@@ -3,38 +3,79 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RETUNE - Breathe, Believe, Become</title>
-  <meta name="description" content="Reprogram your mind with personalized affirmations in your own voice. AI-powered voice cloning meets mindfulness.">
-  <meta name="keywords" content="affirmations, meditation, mindfulness, voice cloning, breathing, self-improvement, wellness, mental health">
-  <meta property="og:title" content="RETUNE - Breathe, Believe, Become">
-  <meta property="og:description" content="Reprogram your mind with personalized affirmations in your own voice.">
+  <script>
+  (function() {
+    var hash = window.location.hash;
+    if (hash && hash.indexOf('access_token') !== -1) {
+      var params = hash.substring(1);
+      window.location.href = 'subconsciousrewire://auth/google?' + params;
+      document.write('<html><body style="background:#0F1C3F;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:sans-serif;color:white"><p>Signing you in...</p></body></html>');
+    }
+  })();
+  </script>
+  <title>RETUNED - The First Wellness App with a Positive Feedback Loop</title>
+  <meta name="description" content="RETUNED creates a personalized wellness journey where affirmations, breathing, and meditation flow seamlessly into each other. Your words. Your voice. One continuous experience.">
+  <meta property="og:title" content="RETUNED - The First Wellness App with a Positive Feedback Loop">
+  <meta property="og:description" content="RETUNED creates a personalized wellness journey where affirmations, breathing, and meditation flow seamlessly into each other. Your words. Your voice. One continuous experience.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://retuned.app">
+  <meta property="og:image" content="BASE_URL_PLACEHOLDER/landing-assets/logo.png">
+  <meta property="og:image:width" content="1024">
+  <meta property="og:image:height" content="1024">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="RETUNED - The First Wellness App with a Positive Feedback Loop">
+  <meta name="twitter:description" content="RETUNED creates a personalized wellness journey where affirmations, breathing, and meditation flow seamlessly into each other. Your words. Your voice. One continuous experience.">
+  <meta name="twitter:image" content="BASE_URL_PLACEHOLDER/landing-assets/logo.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/landing-assets/logo.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/landing-assets/logo.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/landing-assets/logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "RETUNED",
+    "operatingSystem": "iOS",
+    "applicationCategory": "HealthApplication",
+    "description": "The first wellness app with a positive Breathe-Believe-Meditate feedback loop.",
+    "url": "https://retuned.app",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    }
+  }
+  </script>
   <style>
-    * {
+    *, *::before, *::after {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
 
     :root {
-      --primary-gold: #C9A227;
-      --gold-light: #D4B545;
-      --gold-glow: rgba(201, 162, 39, 0.3);
-      --navy-dark: #0F1C3F;
-      --navy-mid: #1A2D4F;
-      --navy-light: #243656;
+      --bg: #FAFAFA;
+      --bg-warm: #F7F4EF;
+      --text: #2C2C2C;
+      --text-muted: #6B6B6B;
+      --text-light: #8A8A8A;
+      --believe: #C9A227;
+      --believe-light: #D4B545;
+      --believe-glow: rgba(201, 162, 39, 0.15);
+      --believe-bg: rgba(201, 162, 39, 0.08);
+      --breathe: #2EC4B6;
+      --breathe-glow: rgba(46, 196, 182, 0.15);
+      --breathe-bg: rgba(46, 196, 182, 0.08);
+      --meditate: #7C3AED;
+      --meditate-glow: rgba(124, 58, 237, 0.15);
+      --meditate-bg: rgba(124, 58, 237, 0.08);
       --white: #FFFFFF;
-      --white-muted: rgba(255, 255, 255, 0.7);
-      --mind-blue: #3B82F6;
-      --body-green: #10B981;
-      --spirit-purple: #8B5CF6;
-      --connection-orange: #F97316;
-      --achievement-gold: #C9A227;
-      --home-pink: #EC4899;
+      --border: rgba(44, 44, 44, 0.1);
+      --card-bg: #FFFFFF;
+      --card-shadow: 0 2px 20px rgba(0,0,0,0.06);
+      --nav-bg: rgba(250, 250, 250, 0.92);
     }
 
     html {
@@ -42,33 +83,76 @@
     }
 
     body {
-      font-family: 'Nunito', sans-serif;
-      background-color: var(--navy-dark);
-      color: var(--white);
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
       line-height: 1.6;
       overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
-    h1, h2, h3, h4 {
-      font-family: 'Space Grotesk', sans-serif;
+    h1, h2 {
+      font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+
+    h3, h4, h5, h6 {
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+
+    h4, h5, h6 {
+      font-weight: 600;
     }
 
     .container {
       max-width: 1200px;
       margin: 0 auto;
-      padding: 0 24px;
+      padding: 0 clamp(20px, 5vw, 80px);
     }
 
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .fade-in {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+
+    .fade-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ===== NAVIGATION ===== */
     nav {
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
       z-index: 1000;
-      padding: 20px 0;
-      background: rgba(15, 28, 63, 0.95);
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 16px 0;
+      background: var(--nav-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid transparent;
+      transition: all 0.3s ease;
+    }
+
+    nav.scrolled {
+      border-bottom-color: var(--border);
+      box-shadow: 0 1px 10px rgba(0,0,0,0.04);
     }
 
     nav .container {
@@ -80,68 +164,58 @@
     .logo {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       text-decoration: none;
     }
 
     .logo img {
-      width: 40px;
-      height: 40px;
-      border-radius: 10px;
+      width: 46px;
+      height: 46px;
+      border-radius: 12px;
     }
 
     .logo-text {
-      font-family: 'Montserrat', sans-serif;
-      font-size: 24px;
-      font-weight: 600;
-      color: var(--white);
-      letter-spacing: 4px;
-      display: inline-flex;
-    }
-
-    .logo-text .underlined {
-      position: relative;
-    }
-
-    .logo-text .underlined::after {
-      content: '';
-      position: absolute;
-      bottom: -4px;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: var(--primary-gold);
-      border-radius: 2px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 17px;
+      font-weight: 500;
+      color: var(--text);
+      letter-spacing: 4.5px;
     }
 
     .nav-cta {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 8px 18px;
-      background: var(--primary-gold);
-      color: var(--navy-dark);
-      text-decoration: none;
-      border-radius: 20px;
-      font-family: 'Nunito', sans-serif;
-      font-weight: 600;
-      font-size: 13px;
-      letter-spacing: 0.3px;
+      padding: 10px 22px;
+      background: var(--believe);
+      color: var(--white);
+      border-radius: 24px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 500;
+      font-size: 14px;
       transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
     }
 
     .nav-cta:hover {
-      background: var(--gold-light);
+      background: var(--believe-light);
       transform: translateY(-1px);
-      box-shadow: 0 6px 20px var(--gold-glow);
+      box-shadow: 0 4px 16px var(--believe-glow);
     }
 
+    .nav-cta:focus-visible {
+      outline: 2px solid var(--believe);
+      outline-offset: 3px;
+    }
+
+    /* ===== HERO ===== */
     .hero {
-      min-height: 100vh;
+      min-height: 90vh;
       display: flex;
       align-items: center;
-      padding: 120px 0 80px;
-      background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy-mid) 50%, var(--navy-dark) 100%);
+      padding: 140px 0 100px;
+      background: linear-gradient(180deg, var(--bg) 0%, var(--bg-warm) 60%, var(--bg) 100%);
       position: relative;
       overflow: hidden;
     }
@@ -149,567 +223,1385 @@
     .hero::before {
       content: '';
       position: absolute;
-      top: -50%;
-      right: -20%;
-      width: 80%;
-      height: 150%;
-      background: radial-gradient(ellipse, var(--gold-glow) 0%, transparent 70%);
+      top: 20%;
+      right: -10%;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, var(--believe-glow) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: 10%;
+      left: -5%;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, var(--breathe-glow) 0%, transparent 70%);
       pointer-events: none;
     }
 
     .hero .container {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 60px;
+      display: flex;
+      flex-direction: column;
       align-items: center;
+      text-align: center;
+      max-width: 720px;
     }
 
     .hero-content {
       z-index: 1;
     }
 
-    .hero-tagline {
+    .hero-badge {
       display: inline-block;
-      padding: 8px 16px;
-      background: rgba(201, 162, 39, 0.15);
-      border: 1px solid var(--gold-glow);
+      padding: 6px 16px;
+      background: var(--believe-bg);
+      border: 1px solid rgba(201, 162, 39, 0.2);
       border-radius: 30px;
-      font-size: 14px;
-      color: var(--primary-gold);
+      font-family: 'Outfit', sans-serif;
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--believe);
       margin-bottom: 24px;
-      font-weight: 600;
+      letter-spacing: 0.5px;
     }
 
     .hero h1 {
-      font-size: 56px;
-      font-weight: 700;
-      line-height: 1.1;
+      font-size: clamp(36px, 5vw, 54px);
+      font-weight: 600;
+      color: var(--text);
       margin-bottom: 24px;
-    }
-
-    .hero h1 span {
-      background: linear-gradient(135deg, var(--primary-gold) 0%, var(--gold-light) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      max-width: 540px;
+      text-wrap: balance;
     }
 
     .hero-description {
-      font-size: 20px;
-      color: var(--white-muted);
+      font-size: 18px;
+      color: var(--text-muted);
       margin-bottom: 40px;
-      max-width: 500px;
+      max-width: 560px;
+      line-height: 1.7;
+      margin-left: auto;
+      margin-right: auto;
     }
 
-    .hero-buttons {
+    .hero-actions {
       display: flex;
+      flex-direction: column;
       gap: 16px;
-      flex-wrap: wrap;
+      align-items: center;
     }
 
     .btn-primary {
       display: inline-flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       padding: 16px 32px;
-      background: var(--primary-gold);
-      color: var(--navy-dark);
-      text-decoration: none;
+      background: var(--believe);
+      color: var(--white);
       border-radius: 30px;
-      font-family: 'Inter', sans-serif;
-      font-weight: 600;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 500;
       font-size: 16px;
-      letter-spacing: 0.5px;
       transition: all 0.3s ease;
-      box-shadow: 0 0 20px var(--gold-glow), 0 0 40px rgba(201, 162, 39, 0.3);
+      border: none;
+      cursor: pointer;
     }
 
     .btn-primary:hover {
-      background: var(--gold-light);
-      transform: translateY(-3px);
-      box-shadow: 0 12px 40px var(--gold-glow);
+      background: var(--believe-light);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px var(--believe-glow);
+    }
+
+    .btn-primary:focus-visible {
+      outline: 2px solid var(--believe);
+      outline-offset: 3px;
     }
 
     .btn-secondary {
       display: inline-flex;
       align-items: center;
-      gap: 10px;
-      padding: 16px 32px;
+      gap: 8px;
+      padding: 14px 28px;
       background: transparent;
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      color: var(--white);
-      text-decoration: none;
+      border: 2px solid var(--border);
+      color: var(--text);
       border-radius: 30px;
-      font-family: 'Inter', sans-serif;
-      font-weight: 600;
-      font-size: 16px;
-      letter-spacing: 0.5px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 500;
+      font-size: 15px;
       transition: all 0.3s ease;
+      cursor: pointer;
     }
 
     .btn-secondary:hover {
-      border-color: var(--white);
-      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--text-muted);
+      background: rgba(44, 44, 44, 0.03);
     }
 
-    .hero-phones {
-      position: relative;
-      display: flex;
-      justify-content: center;
-      z-index: 1;
+    .btn-secondary:focus-visible {
+      outline: 2px solid var(--text);
+      outline-offset: 3px;
     }
 
-    .phone-frame {
-      position: relative;
-      background: #000;
-      border-radius: 50px;
-      padding: 12px;
-      box-shadow: 
-        0 40px 80px rgba(0, 0, 0, 0.4),
-        inset 0 0 0 2px rgba(255, 255, 255, 0.1),
-        0 0 0 1px rgba(0, 0, 0, 0.5);
-      transition: transform 0.5s ease;
+    .hero-link {
+      font-size: 15px;
+      color: var(--text-muted);
+      transition: color 0.3s ease;
+      font-weight: 500;
     }
 
-
-    .phone-mockup {
-      width: 260px;
-      border-radius: 38px;
-      display: block;
+    .hero-link:hover {
+      color: var(--believe);
     }
 
-    .phone-frame:first-child {
-      transform: rotate(-5deg) translateX(10px);
+    .hero-link:focus-visible {
+      outline: 2px solid var(--believe);
+      outline-offset: 3px;
+      border-radius: 4px;
     }
 
-    .phone-frame:last-child {
-      transform: rotate(5deg) translateX(-10px);
-      margin-left: -20px;
+    .flywheel-circle-path {
+      fill: none;
+      stroke: var(--border);
+      stroke-width: 2.5;
     }
 
-    .hero-phones:hover .phone-frame:first-child {
-      transform: rotate(-8deg) translateX(20px) translateY(-10px);
+    .flywheel-circle-animated {
+      fill: none;
+      stroke-width: 5;
+      stroke-dasharray: 942;
+      stroke-dashoffset: 942;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 2s ease;
     }
 
-    .hero-phones:hover .phone-frame:last-child {
-      transform: rotate(8deg) translateX(-20px) translateY(-10px);
+    .flywheel-hero.animate .flywheel-circle-animated {
+      stroke-dashoffset: 0;
     }
 
-    .how-it-works {
+    .flywheel-node {
+      transition: all 0.3s ease;
+    }
+
+    .flywheel-node-glow {
+      opacity: 0;
+      transition: opacity 1s ease;
+    }
+
+    .flywheel-hero.animate .flywheel-node-glow {
+      animation: pulse-glow 3s ease-in-out infinite;
+    }
+
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.7; }
+    }
+
+    .flywheel-node-glow.believe-glow { animation-delay: 0s; }
+    .flywheel-node-glow.breathe-glow { animation-delay: 1s; }
+    .flywheel-node-glow.meditate-glow { animation-delay: 2s; }
+
+    .flywheel-tagline {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 400;
+      font-size: 18px;
+      fill: var(--text-muted);
+      font-style: italic;
+    }
+
+    .flywheel-label {
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-weight: 700;
+      font-size: 20px;
+      letter-spacing: 2px;
+      fill: var(--text-muted);
+    }
+
+    .flywheel-center-text {
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-weight: 700;
+      font-size: 24px;
+      fill: var(--text);
+      letter-spacing: 0.5px;
+    }
+
+    .flywheel-sublabel {
+      font-family: 'Outfit', sans-serif;
+      font-size: 10px;
+      fill: var(--text-light);
+    }
+
+    .flywheel-arrow {
+      fill: none;
+      stroke: var(--text-light);
+      stroke-width: 1.5;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    .flywheel-hero.animate .flywheel-arrow {
+      opacity: 0.5;
+    }
+
+    .flywheel-arrowhead {
+      fill: var(--text-light);
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    .flywheel-hero.animate .flywheel-arrowhead {
+      opacity: 0.5;
+    }
+
+    .flywheel-orbiter {
+      animation: orbit-flywheel 30s linear infinite;
+    }
+
+    @keyframes orbit-flywheel {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* ===== PROBLEM STATEMENT ===== */
+    .problem {
       padding: 120px 0;
-      background: var(--navy-mid);
+      background: var(--white);
+    }
+
+    .problem .container {
+      max-width: 1100px;
+    }
+
+    .problem h2 {
+      font-size: clamp(28px, 4vw, 40px);
+      text-align: center;
+      margin-bottom: 40px;
+      max-width: 700px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .problem-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: start;
+      margin-top: 50px;
+    }
+
+    .problem-text p {
+      font-size: 17px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+      line-height: 1.75;
+    }
+
+    .problem-visual {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    .mock-cluttered {
+      background: #F0F0F0;
+      border-radius: 16px;
+      padding: 20px;
+      border: 1px solid var(--border);
+    }
+
+    .mock-cluttered-label {
+      font-family: 'Outfit', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-light);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+    }
+
+    .mock-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .mock-tab {
+      padding: 6px 10px;
+      background: #E0E0E0;
+      border-radius: 8px;
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: 'Outfit', sans-serif;
+    }
+
+    .mock-clean {
+      background: var(--white);
+      border-radius: 16px;
+      padding: 16px 16px;
+      border: 2px solid var(--believe);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .problem-visual {
+      align-items: stretch;
+    }
+
+    .mock-clean-label {
+      font-family: 'Outfit', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--believe);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+
+    .mock-mood-transition {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .mock-mood-from {
+      font-family: 'Outfit', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-light);
+    }
+
+    .mock-mood-arrow {
+      font-size: 12px;
+      color: var(--believe);
+    }
+
+    .mock-mood-to {
+      font-family: 'Outfit', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--believe);
+    }
+
+    .mock-journey-path {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 12px;
+    }
+
+    .mock-journey-step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      padding: 4px 8px;
+      text-align: left;
+    }
+
+    .mock-step-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .mock-step-dot.breathe { background: var(--breathe); }
+    .mock-step-dot.believe { background: var(--believe); }
+    .mock-step-dot.meditate { background: var(--meditate); }
+
+    .mock-step-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .mock-step-name {
+      font-family: 'Outfit', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .mock-step-name.breathe { color: var(--breathe); }
+    .mock-step-name.believe { color: var(--believe); }
+    .mock-step-name.meditate { color: var(--meditate); }
+
+    .mock-step-desc {
+      font-family: 'Outfit', sans-serif;
+      font-size: 9px;
+      color: var(--text-light);
+      line-height: 1.2;
+    }
+
+    .mock-clean-btn {
+      padding: 7px 18px;
+      background: var(--believe);
+      color: var(--white);
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: 'Outfit', sans-serif;
+      margin-top: auto;
+    }
+
+    /* ===== FEEDBACK LOOP CALLOUT ===== */
+    .feedback-loop-callout {
+      max-width: 640px;
+      margin: 0 auto 60px;
+      text-align: center;
+      padding: 36px 40px;
+      background: var(--white);
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      box-shadow: var(--card-shadow);
+      position: relative;
+    }
+
+    .feedback-loop-callout::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 3px;
+      background: linear-gradient(90deg, var(--breathe), var(--believe), var(--meditate));
+      border-radius: 0 0 3px 3px;
+    }
+
+    .feedback-loop-callout h3 {
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: clamp(18px, 2.5vw, 22px);
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+
+    .feedback-loop-callout p {
+      font-size: 16px;
+      color: var(--text-muted);
+      line-height: 1.75;
+      font-style: italic;
+    }
+
+    /* ===== FLYWHEEL SECTION ===== */
+    .flywheel-section {
+      padding: 120px 0;
+      background: var(--bg);
     }
 
     .section-header {
       text-align: center;
-      margin-bottom: 80px;
+      margin-bottom: 60px;
     }
 
     .section-header h2 {
-      font-size: 42px;
+      font-size: clamp(28px, 4vw, 40px);
       margin-bottom: 16px;
+      color: var(--text);
     }
 
     .section-header p {
       font-size: 18px;
-      color: var(--white-muted);
+      color: var(--text-muted);
       max-width: 600px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* Flywheel diagram */
+    .flywheel-diagram {
+      max-width: 440px;
+      margin: 0 auto 80px;
+      aspect-ratio: 500 / 490;
+    }
+
+    .flywheel-diagram svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .flywheel-diagram .flywheel-circle-animated {
+      stroke-dasharray: 942;
+      stroke-dashoffset: 942;
+      transition: stroke-dashoffset 2.5s ease;
+    }
+
+    .flywheel-diagram.animate .flywheel-circle-animated {
+      stroke-dashoffset: 0;
+    }
+
+    .flywheel-diagram.animate .flywheel-node-glow {
+      animation: pulse-glow 3s ease-in-out infinite;
+    }
+
+    .flywheel-diagram.animate .flywheel-arrow {
+      opacity: 0.5;
+    }
+
+    .flywheel-diagram.animate .flywheel-arrowhead {
+      opacity: 0.5;
+    }
+
+    /* Journey points */
+    .journey-point {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+      margin-bottom: 100px;
+    }
+
+    .journey-point:last-child {
+      margin-bottom: 0;
+    }
+
+    .journey-point.reverse {
+      direction: rtl;
+    }
+
+    .journey-point.reverse > * {
+      direction: ltr;
+    }
+
+    .journey-content {
+      max-width: 480px;
+    }
+
+    .journey-tag {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .journey-tag.believe-breathe {
+      background: linear-gradient(135deg, var(--believe-bg), var(--breathe-bg));
+      color: var(--believe);
+    }
+
+    .journey-tag.breathe-meditate {
+      background: linear-gradient(135deg, var(--breathe-bg), var(--meditate-bg));
+      color: var(--breathe);
+    }
+
+    .journey-tag.meditate-believe {
+      background: linear-gradient(135deg, var(--meditate-bg), var(--believe-bg));
+      color: var(--meditate);
+    }
+
+    .journey-content h3 {
+      font-size: clamp(22px, 3vw, 30px);
+      margin-bottom: 16px;
+      color: var(--text);
+    }
+
+    .journey-content p {
+      font-size: 16px;
+      color: var(--text-muted);
+      line-height: 1.75;
+    }
+
+    .journey-images {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+    }
+
+    .journey-images .phone-frame {
+      max-width: 240px;
+    }
+
+    /* ===== PHONE FRAME ===== */
+    .phone-frame {
+      position: relative;
+      display: inline-block;
+      border-radius: 32px;
+      overflow: hidden;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.12), 0 2px 10px rgba(0,0,0,0.06);
+      border: 3px solid rgba(44, 44, 44, 0.08);
+      background: #000;
+    }
+
+    .phone-frame img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .phone-frame-landscape {
+      border-radius: 20px;
+      max-width: 420px;
+      width: 100%;
+    }
+
+    .journey-images .phone-frame-landscape {
+      max-width: 420px;
+    }
+
+    /* ===== AFFIRMATION JOURNEY ===== */
+    .affirmation-journey {
+      padding: 120px 0;
+      background: var(--white);
+    }
+
+    .journey-steps {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 40px;
+      max-width: 1100px;
       margin: 0 auto;
     }
 
-    .steps-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 30px;
-    }
-
-    .step-card {
+    .journey-step {
+      flex: 0 1 calc(33.333% - 28px);
+      min-width: 200px;
       text-align: center;
-      padding: 40px 30px;
-      background: rgba(255, 255, 255, 0.03);
-      border-radius: 24px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      transition: all 0.3s ease;
-    }
-
-    .step-card:hover {
-      transform: translateY(-10px);
-      background: rgba(255, 255, 255, 0.05);
-      border-color: var(--gold-glow);
+      position: relative;
     }
 
     .step-number {
-      width: 60px;
-      height: 60px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--believe);
+      color: var(--white);
+      font-family: 'Outfit', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: var(--primary-gold);
-      color: var(--navy-dark);
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 24px;
-      font-weight: 700;
-      border-radius: 50%;
       margin: 0 auto 24px;
     }
 
-    .step-card img {
-      width: 180px;
-      border-radius: 24px;
-      margin-bottom: 24px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    .journey-step .phone-frame {
+      max-width: 220px;
+      margin: 0 auto 24px;
     }
 
-    .step-card h3 {
-      font-size: 22px;
+    .journey-step h3 {
+      font-size: 18px;
+      margin-bottom: 10px;
+      color: var(--text);
+    }
+
+    .journey-step p {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.65;
+      max-width: 280px;
+      margin: 0 auto;
+    }
+
+    /* ===== CAPABILITIES SHOWCASE ===== */
+    .capabilities-showcase {
+      margin-top: 60px;
+    }
+
+    .showcase-card {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 48px;
+      align-items: center;
+      margin-bottom: 60px;
+      padding: 40px;
+      background: var(--bg);
+      border-radius: 24px;
+      border: 1px solid var(--border);
+    }
+
+    .showcase-card:last-child {
+      margin-bottom: 0;
+    }
+
+    .showcase-card.reverse {
+      direction: rtl;
+    }
+
+    .showcase-card.reverse > * {
+      direction: ltr;
+    }
+
+    .showcase-card .phone-frame {
+      max-width: 200px;
+    }
+
+    .showcase-info h3 {
+      font-size: clamp(20px, 2.5vw, 26px);
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+
+    .showcase-info p {
+      font-size: 15px;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+
+    .showcase-info .journey-tag {
       margin-bottom: 12px;
     }
 
-    .step-card p {
-      color: var(--white-muted);
-      font-size: 16px;
-    }
-
-    .rsvp-gallery {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-
-    .rsvp-portraits {
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-    }
-
-    .rsvp-portrait {
-      width: 120px !important;
-      border-radius: 16px !important;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-    }
-
-    .rsvp-landscape {
-      width: 100% !important;
-      max-width: 260px;
-      margin: 0 auto;
-      border-radius: 12px !important;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-      border: 2px solid var(--gold-glow);
-    }
-
-    .step-card:last-child {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .focus-areas {
+    /* ===== CAPABILITIES GRID ===== */
+    .capabilities {
       padding: 120px 0;
-      background: var(--navy-dark);
+      background: var(--white);
     }
 
-    .focus-grid {
+    .capabilities-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 24px;
     }
 
-    .focus-card {
-      padding: 32px;
-      background: var(--navy-mid);
+    .capability-card {
+      padding: 36px 28px;
+      background: var(--bg);
       border-radius: 20px;
-      border-left: 4px solid;
+      border: 1px solid var(--border);
       transition: all 0.3s ease;
     }
 
-    .focus-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    .capability-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.08);
+      border-color: transparent;
     }
 
-    .focus-card.mind { border-left-color: var(--mind-blue); }
-    .focus-card.body { border-left-color: var(--body-green); }
-    .focus-card.spirit { border-left-color: var(--spirit-purple); }
-    .focus-card.connection { border-left-color: var(--connection-orange); }
-    .focus-card.achievement { border-left-color: var(--achievement-gold); }
-    .focus-card.home { border-left-color: var(--home-pink); }
+    .capability-card:focus-within {
+      outline: 2px solid var(--believe);
+      outline-offset: 2px;
+    }
 
-    .focus-icon {
-      width: 50px;
-      height: 50px;
+    .capability-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
-      border-radius: 12px;
-      font-size: 24px;
-      margin-bottom: 16px;
+      margin-bottom: 20px;
     }
 
-    .focus-card.mind .focus-icon { background: rgba(59, 130, 246, 0.2); }
-    .focus-card.body .focus-icon { background: rgba(16, 185, 129, 0.2); }
-    .focus-card.spirit .focus-icon { background: rgba(139, 92, 246, 0.2); }
-    .focus-card.connection .focus-icon { background: rgba(249, 115, 22, 0.2); }
-    .focus-card.achievement .focus-icon { background: rgba(201, 162, 39, 0.2); }
-    .focus-card.home .focus-icon { background: rgba(236, 72, 153, 0.2); }
+    .capability-icon.believe-accent { background: var(--believe-bg); }
+    .capability-icon.breathe-accent { background: var(--breathe-bg); }
+    .capability-icon.meditate-accent { background: var(--meditate-bg); }
 
-    .focus-card h3 {
-      font-size: 20px;
-      margin-bottom: 8px;
+    .capability-icon svg {
+      width: 24px;
+      height: 24px;
     }
 
-    .focus-card p {
-      color: var(--white-muted);
-      font-size: 14px;
-    }
-
-    .features {
-      padding: 120px 0;
-      background: linear-gradient(180deg, var(--navy-mid) 0%, var(--navy-dark) 100%);
-    }
-
-    .features-content {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 80px;
-      align-items: center;
-    }
-
-    .features-text h2 {
-      font-size: 42px;
-      margin-bottom: 24px;
-    }
-
-    .features-text h2 span {
-      color: var(--primary-gold);
-    }
-
-    .features-list {
-      list-style: none;
-      margin-top: 40px;
-    }
-
-    .features-list li {
-      display: flex;
-      align-items: flex-start;
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-
-    .feature-check {
-      width: 28px;
-      height: 28px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--primary-gold);
-      color: var(--navy-dark);
-      border-radius: 50%;
-      flex-shrink: 0;
-      font-weight: 700;
-    }
-
-    .features-list h4 {
+    .capability-card h3 {
       font-size: 18px;
+      margin-bottom: 10px;
+      color: var(--text);
+    }
+
+    .capability-card p {
+      font-size: 15px;
+      color: var(--text-muted);
+      line-height: 1.65;
+    }
+
+    /* ===== COMPARISON TABLE ===== */
+    .comparison {
+      padding: 120px 0;
+      background: var(--bg);
+    }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--card-shadow);
+      background: var(--white);
+    }
+
+    .comparison-table thead th {
+      padding: 20px 24px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      text-align: left;
+      letter-spacing: 0.5px;
+    }
+
+    .comparison-table thead th:first-child {
+      background: var(--bg);
+      color: var(--text-muted);
+    }
+
+    .comparison-table thead th:nth-child(2) {
+      background: #F0F0F0;
+      color: var(--text-muted);
+    }
+
+    .comparison-table thead th:nth-child(3) {
+      background: var(--believe-bg);
+      color: var(--believe);
+    }
+
+    .comparison-table tbody td {
+      padding: 18px 24px;
+      font-size: 15px;
+      border-top: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    .comparison-table tbody td:first-child {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      color: var(--text);
+      background: var(--bg);
+      width: 180px;
+    }
+
+    .comparison-table tbody td:nth-child(2) {
+      color: var(--text-muted);
+    }
+
+    .comparison-table tbody td:nth-child(3) {
+      color: var(--text);
+      background: rgba(201, 162, 39, 0.03);
+      font-weight: 500;
+    }
+
+    /* Mobile accordion */
+    .comparison-accordion {
+      display: none;
+    }
+
+    .accordion-item {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 8px;
+      overflow: hidden;
+    }
+
+    .accordion-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      cursor: pointer;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--text);
+      background: none;
+      border: none;
+      width: 100%;
+      text-align: left;
+    }
+
+    .accordion-header:focus-visible {
+      outline: 2px solid var(--believe);
+      outline-offset: -2px;
+    }
+
+    .accordion-chevron {
+      transition: transform 0.3s ease;
+      flex-shrink: 0;
+    }
+
+    .accordion-item.open .accordion-chevron {
+      transform: rotate(180deg);
+    }
+
+    .accordion-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+
+    .accordion-item.open .accordion-body {
+      max-height: 300px;
+    }
+
+    .accordion-row {
+      padding: 12px 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .accordion-row-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
       margin-bottom: 4px;
     }
 
-    .features-list p {
-      color: var(--white-muted);
+    .accordion-row-label.traditional {
+      color: var(--text-light);
+    }
+
+    .accordion-row-label.retuned {
+      color: var(--believe);
+    }
+
+    .accordion-row p {
       font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.5;
     }
 
-    .features-phones {
-      display: flex;
-      gap: 20px;
-      justify-content: center;
+    .accordion-row.retuned-row {
+      background: rgba(201, 162, 39, 0.03);
     }
 
-    .features-phones img {
-      width: 220px;
-      border-radius: 30px;
-      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+    .accordion-row.retuned-row p {
+      color: var(--text);
+      font-weight: 500;
     }
 
-    .cta {
+    /* ===== USE CASE TIMELINE ===== */
+    .use-case {
       padding: 120px 0;
-      background: var(--navy-dark);
+      background: var(--white);
+    }
+
+    .timeline {
+      max-width: 700px;
+      margin: 0 auto;
+      position: relative;
+      padding-left: 60px;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 24px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: linear-gradient(180deg, var(--believe), var(--breathe), var(--meditate));
+      border-radius: 2px;
+    }
+
+    .timeline-item {
+      position: relative;
+      margin-bottom: 48px;
+    }
+
+    .timeline-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .timeline-dot {
+      position: absolute;
+      left: -48px;
+      top: 4px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 3px solid var(--white);
+      box-shadow: 0 0 0 2px var(--believe);
+      background: var(--believe);
+    }
+
+    .timeline-item:nth-child(2) .timeline-dot {
+      box-shadow: 0 0 0 2px var(--breathe);
+      background: var(--breathe);
+    }
+
+    .timeline-item:nth-child(3) .timeline-dot {
+      box-shadow: 0 0 0 2px var(--meditate);
+      background: var(--meditate);
+    }
+
+    .timeline-time {
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-light);
+      margin-bottom: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    .timeline-title {
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .timeline-body {
+      font-size: 15px;
+      color: var(--text-muted);
+      line-height: 1.65;
+    }
+
+    .timeline-footer {
+      text-align: center;
+      margin-top: 48px;
+      padding: 20px;
+      background: var(--believe-bg);
+      border-radius: 12px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--text);
+    }
+
+    /* ===== FINAL CTA ===== */
+    .final-cta {
+      padding: 120px 0;
+      background: linear-gradient(180deg, var(--bg) 0%, var(--bg-warm) 50%, var(--bg) 100%);
       text-align: center;
       position: relative;
       overflow: hidden;
     }
 
-    .cta::before {
+    .final-cta::before {
       content: '';
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 600px;
-      height: 600px;
-      background: radial-gradient(circle, var(--gold-glow) 0%, transparent 70%);
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, var(--believe-glow) 0%, transparent 70%);
       pointer-events: none;
     }
 
-    .cta-content {
+    .final-cta .container {
       position: relative;
       z-index: 1;
     }
 
-    .cta h2 {
-      font-size: 48px;
-      margin-bottom: 16px;
+    .final-cta h2 {
+      font-size: clamp(32px, 4vw, 48px);
+      margin-bottom: 20px;
+      color: var(--text);
     }
 
-    .cta h2 span {
-      color: var(--primary-gold);
+    .final-cta > .container > p {
+      font-size: 18px;
+      color: var(--text-muted);
+      max-width: 580px;
+      margin: 0 auto 40px;
+      line-height: 1.7;
     }
 
-    .cta p {
-      font-size: 20px;
-      color: var(--white-muted);
-      margin-bottom: 40px;
-      max-width: 600px;
-      margin-left: auto;
-      margin-right: auto;
+    .cta-buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
     }
 
-    .app-store-badge {
-      height: 54px;
-      transition: transform 0.3s ease;
+    .btn-ios {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 32px;
+      background: var(--text);
+      color: var(--white);
+      border-radius: 30px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 16px;
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
     }
 
-    .app-store-badge:hover {
-      transform: scale(1.05);
+    .btn-ios:hover {
+      background: #1a1a1a;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.15);
     }
 
+    .btn-ios:focus-visible {
+      outline: 2px solid var(--believe);
+      outline-offset: 3px;
+    }
+
+    .btn-ios svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .btn-android {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 28px;
+      background: transparent;
+      border: 2px solid var(--border);
+      color: var(--text);
+      border-radius: 30px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 15px;
+      transition: all 0.3s ease;
+      cursor: default;
+    }
+
+    .btn-android:focus-visible {
+      outline: 2px solid var(--text);
+      outline-offset: 3px;
+    }
+
+    /* ===== FOOTER ===== */
     footer {
-      padding: 60px 0;
-      background: var(--navy-mid);
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 80px 0 40px;
+      background: var(--text);
+      color: rgba(255, 255, 255, 0.7);
     }
 
-    .footer-content {
+    .footer-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 40px;
+      margin-bottom: 60px;
+    }
+
+    .footer-col h4 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: rgba(255, 255, 255, 0.4);
+      margin-bottom: 20px;
+    }
+
+    .footer-col a {
+      display: block;
+      font-size: 15px;
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 12px;
+      transition: color 0.3s ease;
+    }
+
+    .footer-col a:hover {
+      color: var(--believe);
+    }
+
+    .footer-col a:focus-visible {
+      outline: 2px solid var(--believe);
+      outline-offset: 3px;
+      border-radius: 3px;
+    }
+
+    .footer-social {
+      display: flex;
+      gap: 16px;
+    }
+
+    .footer-social a {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      transition: all 0.3s ease;
+    }
+
+    .footer-social a:hover {
+      background: var(--believe);
+      color: var(--white);
+    }
+
+    .footer-social a:focus-visible {
+      outline: 2px solid var(--believe);
+      outline-offset: 3px;
+    }
+
+    .footer-social svg {
+      width: 18px;
+      height: 18px;
+      fill: rgba(255, 255, 255, 0.7);
+    }
+
+    .footer-social a:hover svg {
+      fill: var(--white);
+    }
+
+    .footer-bottom {
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding-top: 24px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
-      gap: 24px;
+      gap: 16px;
     }
 
-    .footer-logo {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .footer-logo img {
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
-    }
-
-    .footer-logo .logo-text {
-      font-size: 20px;
-    }
-
-    .footer-links {
-      display: flex;
-      gap: 32px;
-    }
-
-    .footer-links a {
-      color: var(--white-muted);
-      text-decoration: none;
+    .footer-bottom p {
       font-size: 14px;
-      transition: color 0.3s ease;
+      color: rgba(255, 255, 255, 0.4);
     }
 
-    .footer-links a:hover {
-      color: var(--primary-gold);
+    .footer-bottom .logo-text {
+      color: var(--white);
+      font-size: 18px;
     }
 
-    .footer-copyright {
-      color: var(--white-muted);
-      font-size: 14px;
-    }
-
+    /* ===== RESPONSIVE ===== */
     @media (max-width: 1024px) {
       .hero .container {
         grid-template-columns: 1fr;
         text-align: center;
       }
 
-      .hero-content {
-        order: 1;
-      }
-
-      .hero-phones {
-        order: 0;
-        margin-bottom: 40px;
-      }
-
       .hero h1 {
-        font-size: 42px;
-      }
-
-      .hero-description {
+        max-width: 480px;
         margin-left: auto;
         margin-right: auto;
+        text-wrap: balance;
       }
 
-      .hero-buttons {
-        justify-content: center;
-      }
-
-      .steps-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 20px;
-      }
-
-      .rsvp-portrait {
-        width: 100px !important;
-      }
-
-      .rsvp-landscape {
-        max-width: 220px;
-      }
-    }
-
-    @media (max-width: 600px) {
-      .steps-grid {
+      .journey-point {
         grid-template-columns: 1fr;
-        max-width: 400px;
-        margin: 0 auto;
+        gap: 30px;
       }
 
-      .rsvp-portrait {
-        width: 140px !important;
+      .journey-point.reverse {
+        direction: ltr;
       }
 
-      .rsvp-landscape {
-        max-width: 300px;
-      }
-
-      .focus-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      .features-content {
-        grid-template-columns: 1fr;
-        text-align: center;
-      }
-
-      .features-phones {
+      .journey-images {
         order: -1;
       }
 
-      .features-list {
-        text-align: left;
+      .capabilities-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .footer-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .journey-steps {
+        gap: 24px;
+      }
+
+      .journey-step {
+        flex: 0 1 calc(33.333% - 16px);
+      }
+
+      .showcase-card {
+        gap: 32px;
+        padding: 28px;
+      }
+
+      .showcase-card .phone-frame {
+        max-width: 170px;
       }
     }
 
     @media (max-width: 768px) {
+      .hero {
+        padding: 120px 0 60px;
+        min-height: 70vh;
+      }
+
+      .problem, .flywheel-section, .capabilities, .comparison, .use-case, .final-cta {
+        padding: 70px 0;
+      }
+
+      .section-header {
+        margin-bottom: 40px;
+      }
+
+      .problem-body {
+        grid-template-columns: 1fr;
+        gap: 40px;
+      }
+
+      .journey-images .phone-frame {
+        max-width: 200px;
+      }
+
+      .journey-images .phone-frame-landscape {
+        max-width: 340px;
+      }
+
+      .affirmation-journey {
+        padding: 70px 0;
+      }
+
+      .journey-steps {
+        flex-direction: column;
+        align-items: center;
+        gap: 48px;
+        max-width: 320px;
+        margin: 0 auto;
+      }
+
+      .journey-step {
+        flex: 0 1 auto;
+        width: 100%;
+      }
+
+      .journey-step .phone-frame {
+        max-width: 200px;
+      }
+
+      .showcase-card {
+        grid-template-columns: 1fr;
+        text-align: center;
+        gap: 24px;
+        padding: 24px;
+      }
+
+      .showcase-card.reverse {
+        direction: ltr;
+      }
+
+      .showcase-card .phone-frame {
+        max-width: 200px;
+        margin: 0 auto;
+      }
+
+      .comparison-table {
+        display: none;
+      }
+
+      .comparison-accordion {
+        display: block;
+      }
+
+      .capabilities-grid {
+        grid-template-columns: 1fr;
+        max-width: 480px;
+        margin: 0 auto;
+      }
+
+      .footer-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+      }
+
+      .footer-bottom {
+        flex-direction: column;
+        text-align: center;
+      }
+
       .logo-text {
         font-size: 18px;
         letter-spacing: 2px;
@@ -720,311 +1612,718 @@
         height: 32px;
       }
 
-      .hero h1 {
-        font-size: 36px;
+      .nav-cta {
+        font-size: 12px;
+        padding: 8px 16px;
       }
 
-      .hero-description {
-        font-size: 18px;
-      }
-
-      .phone-frame {
-        padding: 8px;
-        border-radius: 40px;
-      }
-
-
-      .phone-mockup {
-        width: 180px;
-        border-radius: 32px;
-      }
-
-      .focus-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .features-phones img {
-        width: 160px;
-      }
-
-      .section-header h2,
-      .features-text h2,
-      .cta h2 {
-        font-size: 32px;
-      }
-
-      .footer-content {
-        flex-direction: column;
-        text-align: center;
-      }
-
-      .footer-links {
-        flex-wrap: wrap;
-        justify-content: center;
+      .flywheel-diagram {
+        max-width: 320px;
+        margin-bottom: 50px;
       }
     }
 
     @media (max-width: 480px) {
-      .hero-buttons {
-        flex-direction: column;
+      .hero-actions {
         width: 100%;
       }
 
-      .btn-primary,
-      .btn-secondary {
+      .btn-primary, .btn-ios {
         width: 100%;
         justify-content: center;
       }
 
-      .phone-frame {
-        padding: 6px;
-        border-radius: 32px;
+      .cta-buttons {
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        max-width: 320px;
+        margin: 0 auto;
       }
 
-
-      .phone-mockup {
-        width: 140px;
-        border-radius: 26px;
+      .cta-buttons .btn-ios,
+      .cta-buttons .btn-android {
+        width: 100%;
+        justify-content: center;
       }
 
-      .phone-frame:first-child {
-        transform: rotate(-3deg) translateX(10px);
+      .journey-images .phone-frame {
+        max-width: 180px;
       }
 
-      .phone-frame:last-child {
-        transform: rotate(3deg) translateX(-10px);
-        margin-left: -20px;
+      .journey-images .phone-frame-landscape {
+        max-width: 300px;
+      }
+
+      .journey-step .phone-frame {
+        max-width: 180px;
+      }
+
+      .showcase-card .phone-frame {
+        max-width: 180px;
+      }
+
+      .timeline {
+        padding-left: 40px;
+      }
+
+      .timeline::before {
+        left: 14px;
+      }
+
+      .timeline-dot {
+        left: -34px;
+        width: 12px;
+        height: 12px;
+      }
+
+      .footer-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .flywheel-hero {
+        max-width: 260px;
+      }
+    }
+
+    @media (min-width: 1440px) {
+      .container {
+        max-width: 1280px;
       }
     }
   </style>
 </head>
 <body>
+
+  <!-- NAVIGATION -->
   <nav>
     <div class="container">
-      <a href="#" class="logo">
-        <img src="/landing-assets/logo.png" alt="RETUNE">
-        <span class="logo-text">RE<span class="underlined">TU</span>NE</span>
+      <a href="#" class="logo" aria-label="RETUNED home">
+        <img src="/landing-assets/logo.png" alt="RETUNED logo" width="46" height="46">
+        <span class="logo-text">RETUNED</span>
       </a>
-      <a href="#download" class="nav-cta">
-        Download App
-      </a>
+      <a href="https://apps.apple.com/app/retuned/id6758591982" class="nav-cta" target="_blank" rel="noopener noreferrer">Experience the Flywheel</a>
     </div>
   </nav>
 
+  <!-- HERO -->
   <section class="hero">
     <div class="container">
-      <div class="hero-content">
-        <span class="hero-tagline">Breathe, Believe, Become</span>
-        <h1>Reprogram Your Mind with <span>Your Own Voice</span></h1>
-        <p class="hero-description">
-          Unlock the power of personalized affirmations. RETUNE uses AI voice cloning to speak directly to your subconscious in the voice you trust most — yours.
-        </p>
-        <div class="hero-buttons">
-          <a href="#download" class="btn-primary">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
-            </svg>
-            Download for iOS
-          </a>
-          <a href="#features" class="btn-secondary">
-            Learn More
-          </a>
-        </div>
-      </div>
-      <div class="hero-phones">
-        <div class="phone-frame">
-          <img src="/landing-assets/hero-light.jpg" alt="Retune Breathing Light Mode" class="phone-mockup">
-        </div>
-        <div class="phone-frame">
-          <img src="/landing-assets/hero-dark.jpg" alt="Retune Library Dark Mode" class="phone-mockup">
+      <div class="hero-content fade-in">
+        <span class="hero-badge">Personalized Wellness</span>
+        <h1>The First Wellness App That Meets You Where You Are</h1>
+        <p class="hero-description">Tell RETUNED how you feel, and it guides you through affirmations, breathing, and meditation&#8212;all flowing together, spoken in your own voice.</p>
+        <div class="hero-actions">
+          <a href="#flywheel" class="btn-primary">Experience the Wellness Flywheel &#8594;</a>
+          <a href="#flywheel" class="hero-link">See How It Works &#8594;</a>
+          <a href="/science" class="hero-link">The Science Behind It &#8594;</a>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="how-it-works" id="how-it-works">
+  <!-- PROBLEM STATEMENT -->
+  <section class="problem">
     <div class="container">
-      <div class="section-header">
-        <h2>How RETUNE Works</h2>
-        <p>Transform your mindset in four simple steps</p>
-      </div>
-      <div class="steps-grid">
-        <div class="step-card">
-          <div class="step-number">1</div>
-          <img src="/landing-assets/create-focus.jpg" alt="Choose Focus Area">
-          <h3>Choose Your Focus</h3>
-          <p>Select from 6 life areas: Mind, Body, Spirit, Connection, Achievement, or Home</p>
+      <h2 class="fade-in">Most Wellness Apps Give You More Choices. We Give You What You Actually Need.</h2>
+      <div class="problem-body">
+        <div class="problem-text fade-in">
+          <p>You open a meditation app and see 10+ tabs: Sleep, Meditate, Breathe, Music, Courses, Focus. Which one do you need right now?</p>
+          <p>That moment of hesitation&#8212;scrolling through options, second-guessing your choice&#8212;defeats the purpose. You came to feel better, not to make more decisions.</p>
+          <p>RETUNED works differently. The app listens to your mood, remembers your state, and guides you naturally between practices&#8212;without making you think about what comes next.</p>
         </div>
-        <div class="step-card">
-          <div class="step-number">2</div>
-          <img src="/landing-assets/create-script.jpg" alt="AI Generates Script">
-          <h3>AI Creates Your Script</h3>
-          <p>Our AI crafts personalized affirmations tailored to your specific goals</p>
-        </div>
-        <div class="step-card">
-          <div class="step-number">3</div>
-          <img src="/landing-assets/breathing-active.jpg" alt="Breathe and Listen">
-          <h3>Breathe & Listen</h3>
-          <p>Hear affirmations in your own cloned voice while practicing guided breathing</p>
-        </div>
-        <div class="step-card">
-          <div class="step-number">4</div>
-          <div class="rsvp-gallery">
-            <div class="rsvp-portraits">
-              <img src="/landing-assets/rsvp-settings.jpg" alt="RSVP Settings" class="rsvp-portrait">
-              <img src="/landing-assets/rsvp-focus.jpg" alt="RSVP Focus Mode" class="rsvp-portrait">
+        <div class="problem-visual fade-in">
+          <div class="mock-cluttered">
+            <div class="mock-cluttered-label">Traditional Apps</div>
+            <div class="mock-tabs">
+              <span class="mock-tab">Sleep</span>
+              <span class="mock-tab">Meditate</span>
+              <span class="mock-tab">Breathe</span>
+              <span class="mock-tab">Music</span>
+              <span class="mock-tab">Courses</span>
+              <span class="mock-tab">Focus</span>
+              <span class="mock-tab">Stories</span>
+              <span class="mock-tab">Timer</span>
+              <span class="mock-tab">Sounds</span>
+              <span class="mock-tab">Journal</span>
             </div>
-            <img src="/landing-assets/rsvp-landscape.png" alt="RSVP Visualization" class="rsvp-landscape">
           </div>
-          <h3>Listen & Absorb</h3>
-          <p>Focus deeply with RSVP mode — words appear one at a time, synced perfectly with your voice</p>
+          <div class="mock-clean">
+            <div class="mock-clean-label">RETUNED</div>
+            <div class="mock-mood-transition">
+              <span class="mock-mood-from">Anxious</span>
+              <span class="mock-mood-arrow">&#8594;</span>
+              <span class="mock-mood-to">Calm</span>
+            </div>
+            <div class="mock-journey-path">
+              <div class="mock-journey-step">
+                <div class="mock-step-dot breathe"></div>
+                <div class="mock-step-info">
+                  <div class="mock-step-name breathe">Breathe · 4 min</div>
+                  <div class="mock-step-desc">Calming box breathing to settle your nervous system</div>
+                </div>
+              </div>
+              <div class="mock-journey-step">
+                <div class="mock-step-dot believe"></div>
+                <div class="mock-step-info">
+                  <div class="mock-step-name believe">Believe · 5 min</div>
+                  <div class="mock-step-desc">Affirmations for inner peace, spoken in your own voice</div>
+                </div>
+              </div>
+              <div class="mock-journey-step">
+                <div class="mock-step-dot meditate"></div>
+                <div class="mock-step-info">
+                  <div class="mock-step-name meditate">Meditate · 3 min</div>
+                  <div class="mock-step-desc">Guided meditation spoken in your voice</div>
+                </div>
+              </div>
+            </div>
+            <div class="mock-clean-btn">Begin Your Journey</div>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="focus-areas" id="focus">
+  <!-- THE WELLNESS FLYWHEEL -->
+  <section class="flywheel-section" id="flywheel">
     <div class="container">
-      <div class="section-header">
-        <h2>6 Life Focus Areas</h2>
-        <p>Target every dimension of your personal growth journey</p>
+      <div class="section-header fade-in">
+        <h2>How the Breathe-Believe-Meditate Flywheel Works</h2>
+        <p>Three modes. One continuous journey. Each experience makes the next one more powerful.</p>
       </div>
-      <div class="focus-grid">
-        <div class="focus-card mind">
-          <div class="focus-icon">&#9889;</div>
-          <h3>Mind</h3>
-          <p>Mental clarity, focus, and emotional resilience</p>
+
+      <div class="feedback-loop-callout fade-in">
+        <h3>A positive feedback loop &mdash; in every sense.</h3>
+        <p>Each step strengthens the next: breathing calms your mind, affirmations reshape your beliefs, meditation locks it in. The more you practice, the deeper it works &mdash; and every word along the way is designed to lift you up.</p>
+      </div>
+
+      <div class="flywheel-diagram fade-in" id="flywheel-diagram">
+        <svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <linearGradient id="flywheel-gradient-2" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#C9A227"/>
+              <stop offset="33%" style="stop-color:#2EC4B6"/>
+              <stop offset="66%" style="stop-color:#7C3AED"/>
+              <stop offset="100%" style="stop-color:#C9A227"/>
+            </linearGradient>
+            <filter id="glow-believe-2"><feGaussianBlur stdDeviation="8" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            <filter id="glow-breathe-2"><feGaussianBlur stdDeviation="8" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            <filter id="glow-meditate-2"><feGaussianBlur stdDeviation="8" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            <filter id="glow-orbiter-2"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+
+          <circle cx="250" cy="250" r="145" class="flywheel-circle-path"/>
+          <circle cx="250" cy="250" r="145" class="flywheel-circle-animated" stroke="url(#flywheel-gradient-2)"/>
+
+          <text x="250" y="242" text-anchor="middle" class="flywheel-center-text">with your</text>
+          <text x="250" y="270" text-anchor="middle" class="flywheel-center-text">inner voice</text>
+
+          <path d="M 318 115 L 328 103 L 333 123" class="flywheel-arrowhead" fill="var(--text-light)"/>
+          <path d="M 128 378 L 113 386 L 126 393" class="flywheel-arrowhead" fill="var(--text-light)"/>
+          <path d="M 383 350 L 393 362 L 378 360" class="flywheel-arrowhead" fill="var(--text-light)"/>
+
+          <circle cx="250" cy="105" r="30" class="flywheel-node-glow believe-glow" fill="var(--believe)" opacity="0.3" filter="url(#glow-believe-2)"/>
+          <circle cx="250" cy="105" r="24" fill="var(--believe)" class="flywheel-node"/>
+          <svg x="237" y="92" width="26" height="26" viewBox="0 0 24 24" fill="white">
+            <path d="M12 2l2.4 7.2H22l-6 4.8 2.4 7.2L12 16.4l-6.4 4.8 2.4-7.2-6-4.8h7.6z"/>
+          </svg>
+          <text x="250" y="44" text-anchor="middle" class="flywheel-tagline">Your words become your truth</text>
+          <text x="250" y="64" text-anchor="middle" class="flywheel-label">AFFIRMATIONS</text>
+
+          <circle cx="110" cy="370" r="30" class="flywheel-node-glow breathe-glow" fill="var(--breathe)" opacity="0.3" filter="url(#glow-breathe-2)"/>
+          <circle cx="110" cy="370" r="24" fill="var(--breathe)" class="flywheel-node"/>
+          <svg x="97" y="357" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round">
+            <path d="M3 8c3-2 6 2 9 0s6-2 9 0"/>
+            <path d="M3 12c3-2 6 2 9 0s6-2 9 0"/>
+            <path d="M3 16c3-2 6 2 9 0s6-2 9 0"/>
+          </svg>
+          <text x="110" y="428" text-anchor="middle" class="flywheel-label">BREATHWORK</text>
+          <text x="110" y="452" text-anchor="middle" class="flywheel-tagline">Calm your nervous system</text>
+
+          <circle cx="390" cy="370" r="30" class="flywheel-node-glow meditate-glow" fill="var(--meditate)" opacity="0.3" filter="url(#glow-meditate-2)"/>
+          <circle cx="390" cy="370" r="24" fill="var(--meditate)" class="flywheel-node"/>
+          <svg x="377" y="357" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 21c-1.5-1.5-6-5-6-9 0-2 1-4 3-4s3 2 3 4c0-2 1-4 3-4s3 2 3 4c0 4-4.5 7.5-6 9z"/>
+            <path d="M12 13v4"/>
+          </svg>
+          <text x="390" y="428" text-anchor="middle" class="flywheel-label">MEDITATION</text>
+          <text x="390" y="452" text-anchor="middle" class="flywheel-tagline">Let your mind reset</text>
+
+          <g class="flywheel-orbiter" style="transform-origin: 250px 250px;" filter="url(#glow-orbiter-2)">
+            <circle cx="250" cy="105" r="5" fill="white" opacity="0.9"/>
+            <circle cx="250" cy="105" r="8" fill="white" opacity="0.3"/>
+          </g>
+        </svg>
+      </div>
+
+      <!-- Journey 1: BELIEVE to BREATHE -->
+      <div class="journey-point fade-in">
+        <div class="journey-content">
+          <span class="journey-tag believe-breathe">Believe to Breathe</span>
+          <h3>Your Affirmations Don't Stop&#8212;They Transform</h3>
+          <p>After your mood check-in, the app guides you into breathing&#8212;and your affirmation comes along for the ride. Your words loop softly under ambient music while you breathe, so what you were hearing becomes what you're feeling. No manual switching, no choosing what comes next.</p>
         </div>
-        <div class="focus-card body">
-          <div class="focus-icon">&#10084;</div>
-          <h3>Body</h3>
-          <p>Physical health, rest, and self-acceptance</p>
+        <div class="journey-images">
+          <div class="phone-frame">
+            <img src="/landing-assets/screenshot-breathe-home.jpg" alt="RETUNED Breathe tab with Box Breathing, daily greeting, and Radiant Bloom rings" loading="lazy">
+          </div>
         </div>
-        <div class="focus-card spirit">
-          <div class="focus-icon">&#9728;</div>
-          <h3>Spirit</h3>
-          <p>Inner peace, gratitude, and vision for the future</p>
+      </div>
+
+      <!-- Journey 2: BREATHE to MEDITATE -->
+      <div class="journey-point reverse fade-in">
+        <div class="journey-content">
+          <span class="journey-tag breathe-meditate">Breathe to Meditate</span>
+          <h3>Your Mood Shapes What Comes Next</h3>
+          <p>After breathing, the Micro-Meditation check-in reads how you're feeling and offers three personalized paths: breathe deeper, start a guided meditation, or listen to an affirmation. Every recommendation is shaped by AI based on your mood and the time of day.</p>
         </div>
-        <div class="focus-card connection">
-          <div class="focus-icon">&#128101;</div>
-          <h3>Connection</h3>
-          <p>Relationships and self-compassion</p>
+        <div class="journey-images">
+          <div class="phone-frame">
+            <img src="/landing-assets/screenshot-mindful-moment.png" alt="RETUNED Micro-Meditation mood check-in with personalized Breathe, Meditate, and Listen pathways" loading="lazy">
+          </div>
         </div>
-        <div class="focus-card achievement">
-          <div class="focus-icon">&#127942;</div>
-          <h3>Achievement</h3>
-          <p>Career success, wealth, and personal growth</p>
+      </div>
+
+      <!-- Journey 3: MEDITATE to BELIEVE -->
+      <div class="journey-point fade-in">
+        <div class="journey-content">
+          <span class="journey-tag meditate-believe">Meditate to Believe</span>
+          <h3>Meditation That Speaks Your Words</h3>
+          <p>Your AI-guided meditation isn't generic&#8212;it weaves affirmation-style language into every session. Words appear inside the breathing rings as you listen, reinforcing what you believe while you meditate. Each session closes the loop, carrying your intentions full circle.</p>
         </div>
-        <div class="focus-card home">
-          <div class="focus-icon">&#127968;</div>
-          <h3>Home</h3>
-          <p>Family harmony, living space, and domestic peace</p>
+        <div class="journey-images">
+          <div class="phone-frame phone-frame-landscape">
+            <img src="/landing-assets/screenshot-guided-moment-landscape.png" alt="RETUNED AI Guided Moment meditation with Focus Reading word display inside breathing rings" loading="lazy">
+          </div>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="features" id="features">
+  <!-- YOUR AFFIRMATION JOURNEY -->
+  <section class="affirmation-journey" id="affirmations">
     <div class="container">
-      <div class="features-content">
-        <div class="features-text">
-          <h2>Everything You Need to <span>Transform</span></h2>
-          <ul class="features-list">
-            <li>
-              <span class="feature-check">&#10003;</span>
-              <div>
-                <h4>AI Voice Cloning</h4>
-                <p>Hear affirmations in your own voice for maximum subconscious impact</p>
-              </div>
-            </li>
-            <li>
-              <span class="feature-check">&#10003;</span>
-              <div>
-                <h4>Guided Breathing Exercises</h4>
-                <p>Box breathing, 4-7-8, and coherent breathing with visual guidance</p>
-              </div>
-            </li>
-            <li>
-              <span class="feature-check">&#10003;</span>
-              <div>
-                <h4>RSVP Deep Focus Mode</h4>
-                <p>Rapid serial visual presentation for accelerated affirmation absorption</p>
-              </div>
-            </li>
-            <li>
-              <span class="feature-check">&#10003;</span>
-              <div>
-                <h4>Progress Analytics</h4>
-                <p>Track your listening streaks, sessions, and category breakdown</p>
-              </div>
-            </li>
-            <li>
-              <span class="feature-check">&#10003;</span>
-              <div>
-                <h4>Ambient Soundscapes</h4>
-                <p>Nature sounds and binaural beats for deeper relaxation</p>
-              </div>
-            </li>
-          </ul>
+      <div class="section-header fade-in">
+        <h2>Create Affirmations That Speak to You</h2>
+        <p>From choosing your focus to building a personal library — your affirmation journey in five simple steps.</p>
+      </div>
+      <div class="journey-steps">
+        <div class="journey-step fade-in">
+          <div class="step-number">1</div>
+          <div class="phone-frame">
+            <img src="/landing-assets/screenshot-create-pillars.jpg" alt="Choose your Life Pillar: Mind, Body, Spirit, Connection, or Achievement" loading="lazy">
+          </div>
+          <h3>Choose Your Focus</h3>
+          <p>Select from six Life Pillars — Mind, Body, Spirit, Connection, Achievement, or Home — to ground your affirmation in what matters most right now.</p>
         </div>
-        <div class="features-phones">
-          <img src="/landing-assets/settings.jpg" alt="Retune Settings">
-          <img src="/landing-assets/analytics.png" alt="Retune Analytics">
+        <div class="journey-step fade-in">
+          <div class="step-number">2</div>
+          <div class="phone-frame">
+            <img src="/landing-assets/screenshot-create-goals.jpg" alt="Share your intentions and choose affirmation length" loading="lazy">
+          </div>
+          <h3>Share Your Intention</h3>
+          <p>Tell the app what you want to achieve in your own words. Add tags, pick a length, and let AI understand your unique goals.</p>
+        </div>
+        <div class="journey-step fade-in">
+          <div class="step-number">3</div>
+          <div class="phone-frame">
+            <img src="/landing-assets/screenshot-create-script.jpg" alt="AI-generated affirmation script with Subconscious Language Patterns" loading="lazy">
+          </div>
+          <h3>AI Writes Your Script</h3>
+          <p>Powered by Subconscious Language Patterns, the AI crafts affirmations that sound like your own inner thoughts — natural, personal, and deeply believable.</p>
+        </div>
+        <div class="journey-step fade-in">
+          <div class="step-number">4</div>
+          <div class="phone-frame">
+            <img src="/landing-assets/screenshot-create-playback.jpg" alt="Listen to your affirmation in your own cloned voice with RSVP word display" loading="lazy">
+          </div>
+          <h3>Hear It in Your Voice</h3>
+          <p>Play your affirmation back in your own cloned Inner Voice or choose from curated AI voices. Read along with word-synced RSVP display for deeper absorption.</p>
+        </div>
+        <div class="journey-step fade-in">
+          <div class="step-number">5</div>
+          <div class="phone-frame">
+            <img src="/landing-assets/screenshot-create-library.jpg" alt="Your personal affirmation library with filters and categories" loading="lazy">
+          </div>
+          <h3>Build Your Library</h3>
+          <p>Every affirmation you create lives in your personal library — searchable, filterable by pillar, and ready to play anytime you need a boost.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="cta" id="download">
+  <!-- CAPABILITIES GRID -->
+  <section class="capabilities" id="features">
     <div class="container">
-      <div class="cta-content">
-        <h2>Ready to <span>RETUNE</span> Your Mind?</h2>
-        <p>Join thousands transforming their mindset with personalized affirmations in their own voice.</p>
-        <a href="https://apps.apple.com/app/retune" target="_blank">
-          <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store" class="app-store-badge">
+      <div class="section-header fade-in">
+        <h2>What Makes It All Feel Seamless</h2>
+        <p>Six things working quietly behind the scenes so you can just focus on feeling better.</p>
+      </div>
+      <div class="capabilities-grid">
+        <div class="capability-card fade-in">
+          <div class="capability-icon believe-accent">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#C9A227" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="9" cy="12" r="7"/><circle cx="15" cy="12" r="7"/>
+            </svg>
+          </div>
+          <h3>Context-Aware Transitions</h3>
+          <p>Switching modes isn't navigation&#8212;it's a handoff. Your affirmation, mood, and audio state travel with you. Nothing restarts. Nothing gets forgotten.</p>
+        </div>
+        <div class="capability-card fade-in">
+          <div class="capability-icon breathe-accent">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#2EC4B6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a7 7 0 017 7c0 3-2 5-4 7l-3 4-3-4c-2-2-4-4-4-7a7 7 0 017-7z"/><circle cx="12" cy="9" r="2"/>
+            </svg>
+          </div>
+          <h3>Mood-Responsive AI</h3>
+          <p>Check-ins shape what the app suggests next&#8212;anxious gets grounding, energized gets empowerment. Even your daily greeting knows your streak, recent moods, and last session.</p>
+        </div>
+        <div class="capability-card fade-in">
+          <div class="capability-icon meditate-accent">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>
+            </svg>
+          </div>
+          <h3>Smart Affirmation Matching</h3>
+          <p>Every affirmation has emotional pillars (calm, confidence, focus). After meditation or breathing, the app matches your state to existing affirmations&#8212;or suggests creating new ones.</p>
+        </div>
+        <div class="capability-card fade-in">
+          <div class="capability-icon believe-accent">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#C9A227" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 1a4 4 0 00-4 4v7a4 4 0 008 0V5a4 4 0 00-4-4z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
+            </svg>
+          </div>
+          <h3>Your Voice, Everywhere</h3>
+          <p>Clone your voice in 30 seconds and hear it across every affirmation, breathing cue, and meditation. One consistent voice your subconscious learns to trust&#8212;because it's yours.</p>
+        </div>
+        <div class="capability-card fade-in">
+          <div class="capability-icon believe-accent">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#C9A227" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+            </svg>
+          </div>
+          <h3>Progress You Can See</h3>
+          <p>Streaks, listening time, and category breakdowns show you what's working. Tracking turns a vague intention into a visible practice&#8212;and practices you can see are practices you keep.</p>
+        </div>
+        <div class="capability-card fade-in">
+          <div class="capability-icon breathe-accent">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#2EC4B6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"/>
+            </svg>
+          </div>
+          <h3>25 Ambient Soundscapes</h3>
+          <p>Layer rain, ocean waves, forest sounds, or singing bowls under any session. Ambient audio plays seamlessly across breathing, affirmations, and meditation&#8212;no interruptions, no restarts.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMPARISON TABLE -->
+  <section class="comparison">
+    <div class="container">
+      <div class="section-header fade-in">
+        <h2>How RETUNED Compares to Traditional Wellness Apps</h2>
+        <p>It's not about having more features. It's about having features that work together.</p>
+      </div>
+
+      <!-- Desktop table -->
+      <table class="comparison-table fade-in">
+        <thead>
+          <tr>
+            <th>Experience</th>
+            <th>Traditional Wellness Apps</th>
+            <th>RETUNED</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Navigation</td>
+            <td>Choose from 8+ separate tabs and tools</td>
+            <td>Two tabs, one mood check-in, and the app guides you from there</td>
+          </tr>
+          <tr>
+            <td>Voice Consistency</td>
+            <td>Different narrators per feature</td>
+            <td>Same voice across affirmations, breathing, and meditation</td>
+          </tr>
+          <tr>
+            <td>How Features Connect</td>
+            <td>Isolated tools that don't communicate</td>
+            <td>Positive feedback loop where each step strengthens the others</td>
+          </tr>
+          <tr>
+            <td>Context Preservation</td>
+            <td>Each feature starts from scratch</td>
+            <td>Your affirmation, mood, and audio travel with you</td>
+          </tr>
+          <tr>
+            <td>Personalization</td>
+            <td>Generic content libraries</td>
+            <td>AI adapts meditation scripts and suggestions to your current mood</td>
+          </tr>
+          <tr>
+            <td>Decision Fatigue</td>
+            <td>"What should I do now?"</td>
+            <td>"Here's what serves you next"</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Mobile accordion -->
+      <div class="comparison-accordion fade-in">
+        <div class="accordion-item">
+          <button class="accordion-header" aria-expanded="false">
+            Navigation
+            <svg class="accordion-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="accordion-body">
+            <div class="accordion-row">
+              <div class="accordion-row-label traditional">Traditional Apps</div>
+              <p>Choose from 8+ separate tabs and tools</p>
+            </div>
+            <div class="accordion-row retuned-row">
+              <div class="accordion-row-label retuned">RETUNED</div>
+              <p>Two tabs, one mood check-in, and the app guides you from there</p>
+            </div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <button class="accordion-header" aria-expanded="false">
+            Voice Consistency
+            <svg class="accordion-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="accordion-body">
+            <div class="accordion-row">
+              <div class="accordion-row-label traditional">Traditional Apps</div>
+              <p>Different narrators per feature</p>
+            </div>
+            <div class="accordion-row retuned-row">
+              <div class="accordion-row-label retuned">RETUNED</div>
+              <p>Same voice across affirmations, breathing, and meditation</p>
+            </div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <button class="accordion-header" aria-expanded="false">
+            How Features Connect
+            <svg class="accordion-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="accordion-body">
+            <div class="accordion-row">
+              <div class="accordion-row-label traditional">Traditional Apps</div>
+              <p>Isolated tools that don't communicate</p>
+            </div>
+            <div class="accordion-row retuned-row">
+              <div class="accordion-row-label retuned">RETUNED</div>
+              <p>Positive feedback loop where each step strengthens the others</p>
+            </div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <button class="accordion-header" aria-expanded="false">
+            Context Preservation
+            <svg class="accordion-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="accordion-body">
+            <div class="accordion-row">
+              <div class="accordion-row-label traditional">Traditional Apps</div>
+              <p>Each feature starts from scratch</p>
+            </div>
+            <div class="accordion-row retuned-row">
+              <div class="accordion-row-label retuned">RETUNED</div>
+              <p>Your affirmation, mood, and audio travel with you</p>
+            </div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <button class="accordion-header" aria-expanded="false">
+            Personalization
+            <svg class="accordion-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="accordion-body">
+            <div class="accordion-row">
+              <div class="accordion-row-label traditional">Traditional Apps</div>
+              <p>Generic content libraries</p>
+            </div>
+            <div class="accordion-row retuned-row">
+              <div class="accordion-row-label retuned">RETUNED</div>
+              <p>AI adapts meditation scripts and suggestions to your current mood</p>
+            </div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <button class="accordion-header" aria-expanded="false">
+            Decision Fatigue
+            <svg class="accordion-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="accordion-body">
+            <div class="accordion-row">
+              <div class="accordion-row-label traditional">Traditional Apps</div>
+              <p>"What should I do now?"</p>
+            </div>
+            <div class="accordion-row retuned-row">
+              <div class="accordion-row-label retuned">RETUNED</div>
+              <p>"Here's what serves you next"</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- USE CASE — MORNING ROUTINE -->
+  <section class="use-case">
+    <div class="container">
+      <div class="section-header fade-in">
+        <h2>Real Moments. Real Flow.</h2>
+        <p>See how the Breathe-Believe-Meditate flywheel works in everyday life.</p>
+      </div>
+
+      <div class="timeline">
+        <div class="timeline-item fade-in">
+          <div class="timeline-dot"></div>
+          <div class="timeline-time">7:00 AM</div>
+          <div class="timeline-title">Wake Up, Open App</div>
+          <p class="timeline-body">You start with your morning affirmation: "Today, I choose peace over stress." Your own voice fills the quiet morning.</p>
+        </div>
+        <div class="timeline-item fade-in">
+          <div class="timeline-dot"></div>
+          <div class="timeline-time">7:05 AM</div>
+          <div class="timeline-title">Tap Breathe</div>
+          <p class="timeline-body">Your affirmation becomes the voice guiding your 4-7-8 breathing. You hear your words with every inhale. Your body internalizes what your mind was hearing.</p>
+        </div>
+        <div class="timeline-item fade-in">
+          <div class="timeline-dot"></div>
+          <div class="timeline-time">7:12 AM</div>
+          <div class="timeline-title">Mood Check-In</div>
+          <p class="timeline-body">"How do you feel?" &#8212; "Calm, ready." The app suggests skipping meditation this morning&#8212;you're already centered. It sends you into your day with one last affirmation loop.</p>
+        </div>
+      </div>
+
+      <div class="timeline-footer fade-in">
+        Total time: 12 minutes. Zero decision fatigue.
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="final-cta" id="download">
+    <div class="container">
+      <h2 class="fade-in">Experience the Wellness Flywheel</h2>
+      <p class="fade-in">See how affirmations, breathing, and meditation amplify each other in one continuous journey. Your first session will show you what integration really feels like.</p>
+      <div class="cta-buttons fade-in">
+        <a href="https://apps.apple.com/app/retuned/id6758591982" class="btn-ios" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+          Download for iOS &#8594;
         </a>
+        <span class="btn-android">Join the Waitlist (Android) &#8594;</span>
       </div>
     </div>
   </section>
 
+  <!-- FOOTER -->
   <footer>
     <div class="container">
-      <div class="footer-content">
-        <div class="footer-logo">
-          <img src="/landing-assets/logo.png" alt="RETUNE">
-          <span class="logo-text">RE<span class="underlined">TU</span>NE</span>
+      <div class="footer-grid">
+        <div class="footer-col">
+          <h4>Product</h4>
+          <a href="#affirmations">How It Works</a>
+          <a href="#flywheel">The Flywheel</a>
+          <a href="#features">Features</a>
+          <a href="/science">The Science</a>
         </div>
-        <div class="footer-links">
-          <a href="/support">Support</a>
+        <div class="footer-col">
+          <h4>Legal</h4>
           <a href="/support#privacy">Privacy Policy</a>
           <a href="/support#terms">Terms of Service</a>
+          <a href="/support">Support</a>
         </div>
-        <div class="footer-copyright">
-          &copy; 2026 RETUNE. All rights reserved.
+        <div class="footer-col">
+          <h4>Connect</h4>
+          <div class="footer-social">
+            <a href="#" aria-label="Instagram">
+              <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+            </a>
+            <a href="#" aria-label="X (Twitter)">
+              <svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            </a>
+            <a href="#" aria-label="TikTok">
+              <svg viewBox="0 0 24 24"><path d="M16.6 5.82s.51.5 0 0A4.278 4.278 0 0 1 15.54 3h-3.09v12.4a2.592 2.592 0 0 1-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 0 0 4.3 1.38V7.3s-1.88.09-3.24-1.48z"/></svg>
+            </a>
+            <a href="#" aria-label="YouTube">
+              <svg viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+            </a>
+          </div>
         </div>
+      </div>
+      <div class="footer-bottom">
+        <div class="logo" aria-hidden="true">
+          <span class="logo-text">RETUNED</span>
+        </div>
+        <p>&copy; 2026 RETUNED. The first wellness app with a Positive Feedback Loop.</p>
       </div>
     </div>
   </footer>
 
   <script>
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-      anchor.addEventListener('click', function (e) {
-        e.preventDefault();
-        const target = document.querySelector(this.getAttribute('href'));
-        if (target) {
-          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    (function() {
+      // Nav scroll effect
+      var nav = document.querySelector('nav');
+      window.addEventListener('scroll', function() {
+        if (window.scrollY > 50) {
+          nav.classList.add('scrolled');
+        } else {
+          nav.classList.remove('scrolled');
         }
-      });
-    });
+      }, { passive: true });
 
-    window.addEventListener('scroll', () => {
-      const nav = document.querySelector('nav');
-      if (window.scrollY > 50) {
-        nav.style.background = 'rgba(15, 28, 63, 0.98)';
-      } else {
-        nav.style.background = 'rgba(15, 28, 63, 0.95)';
-      }
-    });
+      // Smooth scroll for anchor links
+      document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {
+        anchor.addEventListener('click', function(e) {
+          var target = document.querySelector(this.getAttribute('href'));
+          if (target) {
+            e.preventDefault();
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        });
+      });
+
+      // Scroll-triggered animations
+      var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            if (entry.target.classList.contains('flywheel-hero') || entry.target.classList.contains('flywheel-diagram')) {
+              entry.target.classList.add('animate');
+            }
+          }
+        });
+      }, {
+        threshold: 0.15,
+        rootMargin: '0px 0px -50px 0px'
+      });
+
+      document.querySelectorAll('.fade-in').forEach(function(el) {
+        observer.observe(el);
+      });
+
+      // Also observe flywheel elements
+      var heroFlywheel = document.getElementById('hero-flywheel');
+      var diagramFlywheel = document.getElementById('flywheel-diagram');
+      if (heroFlywheel) observer.observe(heroFlywheel);
+      if (diagramFlywheel) observer.observe(diagramFlywheel);
+
+      // Mobile accordion
+      document.querySelectorAll('.accordion-header').forEach(function(header) {
+        header.addEventListener('click', function() {
+          var item = this.parentElement;
+          var isOpen = item.classList.contains('open');
+          item.classList.toggle('open');
+          this.setAttribute('aria-expanded', !isOpen);
+        });
+      });
+    })();
   </script>
 </body>
 </html>

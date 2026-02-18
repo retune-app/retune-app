@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { View, StyleSheet, Pressable, Switch, Text, Modal, ActivityIndicator, ImageBackground, TextInput, Alert, Platform, ScrollView } from "react-native";
-import { KeyboardAvoidingView } from "react-native-keyboard-controller";
+import { View, StyleSheet, Pressable, Switch, Text, Modal, ActivityIndicator, ImageBackground, TextInput, Alert, Linking } from "react-native";
 
 const profileBackgroundDark = require("../../assets/images/library-background.png");
 const profileBackgroundLight = require("../../assets/images/library-background-light.png");
@@ -14,10 +13,14 @@ import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Constants from "expo-constants";
+import * as StoreReview from "expo-store-review";
 
 const AUTO_REPLAY_KEY = "@settings/autoReplay";
 const BACKGROUND_WALLPAPER_KEY = "@settings/backgroundWallpaper";
 const PROGRESS_INDICATOR_KEY = "@settings/progressIndicator";
+const HAPTIC_FEEDBACK_KEY = "@settings/hapticFeedback";
+
 
 // Voice preference types
 type VoiceType = "personal" | "ai";
@@ -44,13 +47,12 @@ interface VoicePreferences {
 
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { ThemedText } from "@/components/ThemedText";
-import { Card } from "@/components/Card";
-import ReminderSettings from "@/components/ReminderSettings";
+
 import { ProgressVisualization } from "@/components/ProgressVisualization";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { getAuthToken } from "@/lib/auth-token";
-import { useBackgroundMusic, BACKGROUND_MUSIC_OPTIONS, BackgroundMusicType } from "@/contexts/BackgroundMusicContext";
+import { useBackgroundMusic, BACKGROUND_MUSIC_OPTIONS } from "@/contexts/BackgroundMusicContext";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { getApiUrl, apiRequest } from "@/lib/query-client";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
@@ -114,17 +116,13 @@ export default function ProfileScreen() {
   const [autoReplayEnabled, setAutoReplayEnabled] = useState(true);
   const [backgroundWallpaperEnabled, setBackgroundWallpaperEnabled] = useState(false);
   const [progressIndicatorEnabled, setProgressIndicatorEnabled] = useState(true);
+  const [hapticFeedbackEnabled, setHapticFeedbackEnabled] = useState(true);
+
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
   const [showClearAffirmationsModal, setShowClearAffirmationsModal] = useState(false);
-  const [showSupportModal, setShowSupportModal] = useState(false);
   const [isClearingAffirmations, setIsClearingAffirmations] = useState(false);
-  const [supportSubject, setSupportSubject] = useState("");
-  const [supportMessage, setSupportMessage] = useState("");
-  const [supportEmail, setSupportEmail] = useState("");
-  const [isSubmittingSupport, setIsSubmittingSupport] = useState(false);
-  const [supportSuccess, setSupportSuccess] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -132,16 +130,6 @@ export default function ProfileScreen() {
   const nameInputRef = useRef<TextInput>(null);
   const { data: stats } = useQuery({
     queryKey: ["/api/user/stats"],
-  });
-
-  // Usage limits query
-  interface UsageLimits {
-    voiceClones: { used: number; limit: number; remaining: number };
-    aiAffirmations: { used: number; limit: number; remaining: number };
-    hasConsentedToVoiceCloning: boolean;
-  }
-  const { data: usageLimits } = useQuery<UsageLimits>({
-    queryKey: ["/api/user/limits"],
   });
 
   // Voice preferences query
@@ -153,6 +141,9 @@ export default function ProfileScreen() {
   const { data: voiceOptions } = useQuery<VoiceOptions>({
     queryKey: ["/api/voices"],
   });
+
+  // Reminders query
+  const { data: reminders } = useQuery<any[]>({ queryKey: ["/api/reminders"] });
 
   const updateNameMutation = useMutation({
     mutationFn: async (name: string) => {
@@ -205,6 +196,12 @@ export default function ProfileScreen() {
         setProgressIndicatorEnabled(value === "true");
       }
     });
+    AsyncStorage.getItem(HAPTIC_FEEDBACK_KEY).then((value) => {
+      if (value !== null) {
+        setHapticFeedbackEnabled(value === "true");
+      }
+    });
+
   }, []);
 
   const handleVoiceSetup = () => {
@@ -243,6 +240,13 @@ export default function ProfileScreen() {
     setProgressIndicatorEnabled(newValue);
     await AsyncStorage.setItem(PROGRESS_INDICATOR_KEY, String(newValue));
   };
+
+  const handleToggleHapticFeedback = async () => {
+    const newValue = !hapticFeedbackEnabled;
+    setHapticFeedbackEnabled(newValue);
+    await AsyncStorage.setItem(HAPTIC_FEEDBACK_KEY, String(newValue));
+  };
+
 
   const handleResetData = async () => {
     setIsResetting(true);
@@ -358,57 +362,10 @@ export default function ProfileScreen() {
     }
   };
 
-  const handleOpenSupportModal = () => {
-    setSupportEmail(user?.email || "");
-    setSupportSubject("");
-    setSupportMessage("");
-    setSupportSuccess(false);
-    setShowSupportModal(true);
-  };
-
-  const handleSubmitSupport = async () => {
-    if (!supportEmail || !supportSubject || !supportMessage) {
-      return;
-    }
-    
-    setIsSubmittingSupport(true);
-    try {
-      const url = new URL("/api/support", getApiUrl()).toString();
-      const authToken = getAuthToken();
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-      };
-      if (authToken) {
-        headers["X-Auth-Token"] = authToken;
-      }
-      
-      const response = await fetch(url, {
-        method: "POST",
-        credentials: "include",
-        headers,
-        body: JSON.stringify({
-          email: supportEmail,
-          subject: supportSubject,
-          message: supportMessage,
-        }),
-      });
-      
-      if (response.ok) {
-        try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
-        setSupportSuccess(true);
-      } else {
-        console.error("Support request failed");
-      }
-    } catch (error) {
-      console.error("Support request error:", error);
-    } finally {
-      setIsSubmittingSupport(false);
-    }
-  };
 
   const getCurrentVoiceLabel = () => {
     if (voicePreferences?.preferredVoiceType === "personal" && voicePreferences?.hasPersonalVoice) {
-      return "Using your personal voice";
+      return "Using your Inner Voice";
     }
     
     const gender = voicePreferences?.preferredAiGender || "female";
@@ -443,7 +400,12 @@ export default function ProfileScreen() {
           PROFILE
         </ThemedText>
         <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
-          <View style={styles.settingItem}>
+          <Pressable
+            style={styles.settingItem}
+            onPress={isEditingName ? undefined : handleEditName}
+            testID="button-edit-name"
+            disabled={isEditingName}
+          >
             <View style={[styles.settingIcon, { backgroundColor: theme.backgroundSecondary }]}>
               <Feather name="user" size={20} color={theme.primary} />
             </View>
@@ -477,16 +439,9 @@ export default function ProfileScreen() {
                 </Pressable>
               </View>
             ) : (
-              <Pressable 
-                onPress={handleEditName} 
-                testID="button-edit-name"
-                style={styles.editNameButton}
-                hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
-              >
-                <Feather name="edit-2" size={18} color={theme.primary} />
-              </Pressable>
+              <Feather name="edit-2" size={18} color={theme.primary} />
             )}
-          </View>
+          </Pressable>
         </View>
       </View>
 
@@ -552,9 +507,17 @@ export default function ProfileScreen() {
 
       <View style={styles.section}>
         <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-          DAILY REMINDERS
+          NOTIFICATIONS
         </ThemedText>
-        <ReminderSettings />
+        <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
+          <SettingItem
+            icon="bell"
+            label="Daily Reminders"
+            value={reminders ? `${reminders.length} active reminder${reminders.length !== 1 ? 's' : ''}` : "Personalized AI notifications"}
+            onPress={() => (navigation as any).navigate("Reminders")}
+            testID="button-daily-reminders"
+          />
+        </View>
       </View>
 
       <View style={styles.section}>
@@ -562,63 +525,32 @@ export default function ProfileScreen() {
           APPEARANCE
         </ThemedText>
         <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
-          <Pressable
-            onPress={() => setThemeMode("light")}
-            style={({ pressed }) => [
-              styles.settingItem,
-              { backgroundColor: pressed ? theme.backgroundSecondary : "transparent" },
-            ]}
-            testID="button-theme-light"
-          >
-            <View style={[styles.settingIcon, { backgroundColor: theme.backgroundSecondary }]}>
-              <Feather name="sun" size={20} color={theme.primary} />
-            </View>
-            <View style={styles.settingContent}>
-              <ThemedText type="body">Light Mode</ThemedText>
-            </View>
-            {themeMode === "light" ? (
-              <Feather name="check" size={20} color={theme.primary} />
-            ) : null}
-          </Pressable>
-          <Pressable
-            onPress={() => setThemeMode("dark")}
-            style={({ pressed }) => [
-              styles.settingItem,
-              { backgroundColor: pressed ? theme.backgroundSecondary : "transparent" },
-            ]}
-            testID="button-theme-dark"
-          >
-            <View style={[styles.settingIcon, { backgroundColor: theme.backgroundSecondary }]}>
-              <Feather name="moon" size={20} color={theme.primary} />
-            </View>
-            <View style={styles.settingContent}>
-              <ThemedText type="body">Dark Mode</ThemedText>
-            </View>
-            {themeMode === "dark" ? (
-              <Feather name="check" size={20} color={theme.primary} />
-            ) : null}
-          </Pressable>
-          <Pressable
-            onPress={() => setThemeMode("system")}
-            style={({ pressed }) => [
-              styles.settingItem,
-              { backgroundColor: pressed ? theme.backgroundSecondary : "transparent" },
-            ]}
-            testID="button-theme-system"
-          >
-            <View style={[styles.settingIcon, { backgroundColor: theme.backgroundSecondary }]}>
-              <Feather name="smartphone" size={20} color={theme.primary} />
-            </View>
-            <View style={styles.settingContent}>
-              <ThemedText type="body">System Default</ThemedText>
-              <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                Match device settings
-              </ThemedText>
-            </View>
-            {themeMode === "system" ? (
-              <Feather name="check" size={20} color={theme.primary} />
-            ) : null}
-          </Pressable>
+          <View style={[styles.themeSelector, { backgroundColor: theme.backgroundSecondary }]}>
+            {([
+              { mode: "light" as const, label: "Light", icon: "sun" as const },
+              { mode: "dark" as const, label: "Dark", icon: "moon" as const },
+              { mode: "system" as const, label: "System", icon: "smartphone" as const },
+            ]).map((option) => {
+              const isActive = themeMode === option.mode;
+              return (
+                <Pressable
+                  key={option.mode}
+                  onPress={() => setThemeMode(option.mode)}
+                  style={[
+                    styles.themePill,
+                    isActive && { backgroundColor: theme.cardBackground },
+                    isActive && Shadows.small,
+                  ]}
+                  testID={`button-theme-${option.mode}`}
+                >
+                  <Feather name={option.icon} size={16} color={isActive ? theme.primary : theme.textSecondary} />
+                  <ThemedText type="small" style={{ color: isActive ? theme.text : theme.textSecondary, marginLeft: 6, fontWeight: isActive ? "600" : "400" }}>
+                    {option.label}
+                  </ThemedText>
+                </Pressable>
+              );
+            })}
+          </View>
           <SettingItem
             icon="image"
             label="Background Wallpaper"
@@ -647,87 +579,77 @@ export default function ProfileScreen() {
               />
             }
           />
+          <SettingItem
+            icon="smartphone"
+            label="Haptic Feedback"
+            value={hapticFeedbackEnabled ? "Vibrations enabled" : "Off"}
+            showArrow={false}
+            rightElement={
+              <Switch
+                value={hapticFeedbackEnabled}
+                onValueChange={handleToggleHapticFeedback}
+                trackColor={{ false: theme.border, true: ACCENT_GOLD + "80" }}
+                thumbColor={hapticFeedbackEnabled ? ACCENT_GOLD : theme.textSecondary}
+              />
+            }
+          />
+
         </View>
       </View>
 
-      {/* Usage Limits Section */}
-      {usageLimits ? (
-        <View style={styles.section}>
-          <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-            USAGE LIMITS
-          </ThemedText>
-          <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
-            <View style={styles.usageLimitItem}>
-              <View style={[styles.usageLimitIcon, { backgroundColor: "#6366F120" }]}>
-                <Feather name="mic" size={20} color="#6366F1" />
-              </View>
-              <View style={styles.usageLimitContent}>
-                <ThemedText type="body">Voice Clones</ThemedText>
-                <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                  {usageLimits.voiceClones.used} of {usageLimits.voiceClones.limit} used (lifetime)
-                </ThemedText>
-              </View>
-              <View style={[styles.usageLimitBadge, { 
-                backgroundColor: usageLimits.voiceClones.remaining > 0 ? "#10B98120" : "#EF444420" 
-              }]}>
-                <ThemedText type="small" style={{ 
-                  color: usageLimits.voiceClones.remaining > 0 ? "#10B981" : "#EF4444",
-                  fontWeight: "600"
-                }}>
-                  {usageLimits.voiceClones.remaining} left
-                </ThemedText>
-              </View>
-            </View>
-            <View style={styles.usageLimitItem}>
-              <View style={[styles.usageLimitIcon, { backgroundColor: "#C9A22720" }]}>
-                <Feather name="zap" size={20} color="#C9A227" />
-              </View>
-              <View style={styles.usageLimitContent}>
-                <ThemedText type="body">AI Affirmations</ThemedText>
-                <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                  {usageLimits.aiAffirmations.used} of {usageLimits.aiAffirmations.limit} used this month
-                </ThemedText>
-              </View>
-              <View style={[styles.usageLimitBadge, { 
-                backgroundColor: usageLimits.aiAffirmations.remaining > 0 ? "#10B98120" : "#EF444420" 
-              }]}>
-                <ThemedText type="small" style={{ 
-                  color: usageLimits.aiAffirmations.remaining > 0 ? "#10B981" : "#EF4444",
-                  fontWeight: "600"
-                }}>
-                  {usageLimits.aiAffirmations.remaining} left
-                </ThemedText>
-              </View>
-            </View>
-          </View>
-        </View>
-      ) : null}
 
       <View style={styles.section}>
         <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-          SUPPORT & INFO
+          INFO & SUPPORT
         </ThemedText>
         <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }, Shadows.small]}>
           <SettingItem
             icon="heart"
             label="Benefits for Wellbeing"
+            value="How Retuned helps you grow"
             onPress={() => navigation.navigate("Benefits" as never)}
           />
           <SettingItem
             icon="shield"
             label="Security & Privacy"
+            value="How we protect your data"
             onPress={() => navigation.navigate("SecurityPrivacy" as never)}
           />
           <SettingItem
-            icon="help-circle"
-            label="Help & Support"
-            value="Get assistance"
-            onPress={handleOpenSupportModal}
+            icon="message-square"
+            label="Get in Touch"
+            value="Questions, ideas, or just say hi"
+            onPress={() => navigation.navigate("Feedback" as never)}
+            testID="button-feedback"
+          />
+          <SettingItem
+            icon="star"
+            label="Rate Retuned"
+            value="Enjoying the app? Let us know"
+            onPress={async () => {
+              try {
+                if (await StoreReview.hasAction()) {
+                  await StoreReview.requestReview();
+                } else {
+                  Linking.openURL('https://apps.apple.com/app/id6742468498?action=write-review');
+                }
+              } catch (e) {
+                Linking.openURL('https://apps.apple.com/app/id6742468498?action=write-review');
+              }
+            }}
+            testID="button-rate-app"
+          />
+          <SettingItem
+            icon="award"
+            label="Plans"
+            value="Free (Beta)"
+            onPress={() => navigation.navigate("Plans" as never)}
+            testID="button-plans"
           />
           <SettingItem
             icon="info"
-            label="About Retune"
-            value="Version 1.0.0"
+            label="App Version"
+            value={`v${Constants.expoConfig?.version || "1.0"} (${Constants.expoConfig?.ios?.buildNumber || "1"})`}
             showArrow={false}
           />
         </View>
@@ -751,6 +673,11 @@ export default function ProfileScreen() {
             </View>
             <View style={styles.settingContent}>
               <ThemedText type="body">Sign Out</ThemedText>
+              {user?.email ? (
+                <ThemedText type="small" style={{ color: theme.textSecondary, marginTop: 2 }}>
+                  {user.email}
+                </ThemedText>
+              ) : null}
             </View>
             <Feather name="chevron-right" size={20} color={theme.textSecondary} />
           </Pressable>
@@ -973,145 +900,6 @@ export default function ProfileScreen() {
         </View>
       </Modal>
 
-      {/* Help & Support Modal */}
-      <Modal
-        visible={showSupportModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowSupportModal(false)}
-      >
-        <KeyboardAvoidingView 
-          style={styles.modalOverlay} 
-          behavior="padding"
-          keyboardVerticalOffset={0}
-        >
-          <Pressable 
-            style={StyleSheet.absoluteFill} 
-            onPress={() => setShowSupportModal(false)} 
-          />
-          <View style={[styles.supportModalContent, { backgroundColor: theme.cardBackground }]}>
-            {supportSuccess ? (
-              <>
-                <View style={styles.supportHeader}>
-                  <View style={[styles.modalIconContainer, { backgroundColor: "#50C9B020" }]}>
-                    <Text style={{ fontSize: 32 }}>✅</Text>
-                  </View>
-                  <ThemedText type="h4" style={styles.modalTitle}>Request Submitted!</ThemedText>
-                  <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "center", marginTop: Spacing.sm }}>
-                    Thank you for reaching out. We'll get back to you at {supportEmail} as soon as possible.
-                  </ThemedText>
-                </View>
-                <Pressable
-                  onPress={() => setShowSupportModal(false)}
-                  style={[styles.supportSuccessButton, { backgroundColor: theme.primary }]}
-                  testID="button-close-support-success"
-                >
-                  <Text style={styles.confirmLogoutText}>Done</Text>
-                </Pressable>
-              </>
-            ) : (
-              <>
-                <View style={styles.supportHeader}>
-                  <View style={[styles.modalIconContainer, { backgroundColor: theme.primary + "20" }]}>
-                    <Feather name="help-circle" size={32} color={theme.primary} />
-                  </View>
-                  <ThemedText type="h4" style={styles.modalTitle}>Help & Support</ThemedText>
-                  <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "center", marginTop: Spacing.xs }}>
-                    Send us a message and we'll get back to you
-                  </ThemedText>
-                </View>
-
-                <View style={styles.supportFormField}>
-                  <ThemedText type="small" style={[styles.supportLabel, { color: theme.textSecondary }]}>
-                    📧 Email Address
-                  </ThemedText>
-                  <TextInput
-                    style={[styles.supportInput, { 
-                      backgroundColor: theme.backgroundSecondary,
-                      color: theme.text,
-                      borderColor: theme.border,
-                    }]}
-                    value={supportEmail}
-                    onChangeText={setSupportEmail}
-                    placeholder="your@email.com"
-                    placeholderTextColor={theme.textSecondary}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    testID="input-support-email"
-                  />
-                </View>
-
-                <View style={styles.supportFormField}>
-                  <ThemedText type="small" style={[styles.supportLabel, { color: theme.textSecondary }]}>
-                    📝 Subject
-                  </ThemedText>
-                  <TextInput
-                    style={[styles.supportInput, { 
-                      backgroundColor: theme.backgroundSecondary,
-                      color: theme.text,
-                      borderColor: theme.border,
-                    }]}
-                    value={supportSubject}
-                    onChangeText={setSupportSubject}
-                    placeholder="What can we help with?"
-                    placeholderTextColor={theme.textSecondary}
-                    testID="input-support-subject"
-                  />
-                </View>
-
-                <View style={styles.supportFormField}>
-                  <ThemedText type="small" style={[styles.supportLabel, { color: theme.textSecondary }]}>
-                    💬 Message
-                  </ThemedText>
-                  <TextInput
-                    style={[styles.supportInput, styles.supportTextArea, { 
-                      backgroundColor: theme.backgroundSecondary,
-                      color: theme.text,
-                      borderColor: theme.border,
-                    }]}
-                    value={supportMessage}
-                    onChangeText={setSupportMessage}
-                    placeholder="Describe your question or issue..."
-                    placeholderTextColor={theme.textSecondary}
-                    multiline
-                    numberOfLines={4}
-                    textAlignVertical="top"
-                    testID="input-support-message"
-                  />
-                </View>
-
-                <View style={styles.supportButtonRow}>
-                  <Pressable
-                    onPress={() => setShowSupportModal(false)}
-                    style={[styles.supportCancelButton, { borderColor: theme.border }]}
-                    testID="button-cancel-support"
-                  >
-                    <ThemedText type="body">Cancel</ThemedText>
-                  </Pressable>
-                  <Pressable
-                    onPress={handleSubmitSupport}
-                    disabled={isSubmittingSupport || !supportEmail || !supportSubject || !supportMessage}
-                    style={[
-                      styles.supportSubmitButton, 
-                      { 
-                        backgroundColor: theme.primary,
-                        opacity: (!supportEmail || !supportSubject || !supportMessage) ? 0.5 : 1,
-                      }
-                    ]}
-                    testID="button-submit-support"
-                  >
-                    {isSubmittingSupport ? (
-                      <ActivityIndicator color="#FFFFFF" size="small" />
-                    ) : (
-                      <Text style={styles.confirmLogoutText}>Send Message</Text>
-                    )}
-                  </Pressable>
-                </View>
-              </>
-            )}
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
       </KeyboardAwareScrollViewCompat>
 
       {/* Top edge fade gradient */}
@@ -1257,27 +1045,19 @@ const styles = StyleSheet.create({
   settingContent: {
     flex: 1,
   },
-  usageLimitItem: {
+  themeSelector: {
+    flexDirection: "row",
+    borderRadius: BorderRadius.md,
+    padding: 4,
+    marginBottom: Spacing.xs,
+  },
+  themePill: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.lg,
-  },
-  usageLimitIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
     justifyContent: "center",
-    marginRight: Spacing.md,
-  },
-  usageLimitContent: {
-    flex: 1,
-  },
-  usageLimitBadge: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.sm,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.md - 2,
   },
   deleteButton: {
     padding: Spacing.sm,
@@ -1336,62 +1116,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginBottom: Spacing.md,
-  },
-  supportModalContent: {
-    width: "100%",
-    maxWidth: 360,
-    borderRadius: BorderRadius.xl,
-    padding: Spacing.xl,
-  },
-  supportHeader: {
-    alignItems: "center",
-    marginBottom: Spacing.lg,
-  },
-  supportFormField: {
-    marginBottom: Spacing.md,
-  },
-  supportLabel: {
-    marginBottom: Spacing.xs,
-    fontFamily: "Nunito_600SemiBold",
-  },
-  supportInput: {
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    fontFamily: "Nunito_400Regular",
-    fontSize: 16,
-  },
-  supportTextArea: {
-    minHeight: 100,
-    paddingTop: Spacing.sm,
-  },
-  supportButtonRow: {
-    flexDirection: "row",
-    gap: Spacing.md,
-    marginTop: Spacing.md,
-  },
-  supportCancelButton: {
-    flex: 1,
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.lg,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-  },
-  supportSubmitButton: {
-    flex: 1,
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.lg,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  supportSuccessButton: {
-    width: "100%",
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.lg,
-    alignItems: "center",
-    justifyContent: "center",
   },
   settingItemBorder: {
     borderBottomWidth: 1,

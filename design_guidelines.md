@@ -1,12 +1,12 @@
-# Design Guidelines: Retune
+# Design Guidelines: Retuned
 
 ## 1. Brand Identity
 
-**Purpose**: Empower users to rewire their subconscious mind through personalized audio affirmations in their own voice, replacing limiting beliefs with positive programming.
+**Purpose**: Help users reprogram their subconscious mind using personalized audio affirmations — spoken in their own cloned voice or a curated AI voice. AI generates powerful affirmation scripts using Subconscious Language Patterns — optimized for present tense, positive language, sensory imagery, and emotional anchoring.
 
 **Aesthetic Direction**: **Serene Empowerment** - A calming yet purposeful aesthetic that blends therapeutic tranquility with motivational energy. Think meditation app meets personal coaching.
 
-**Brand Name**: "Retune" (capital I, capital T)
+**Brand Name**: "Retuned"
 
 **Memorable Element**: The voice wave visualization during recording and playback - a dynamic, flowing waveform that represents the user's unique voice signature, reinforcing the personal nature of subconscious reprogramming.
 

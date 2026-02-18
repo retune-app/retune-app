@@ -17,17 +17,15 @@ function checkRateLimit(ip: string): { allowed: boolean; retryAfter?: number } {
   
   if (!attempt || now > attempt.resetTime) {
     loginAttempts.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
-    console.log(`Rate limit: First attempt from ${ip}, count=1`);
     return { allowed: true };
   }
   
   // Increment FIRST, then check
   attempt.count++;
-  console.log(`Rate limit: Attempt from ${ip}, count=${attempt.count}`);
   
   if (attempt.count > MAX_ATTEMPTS) {
     const retryAfter = Math.ceil((attempt.resetTime - now) / 1000);
-    console.log(`Rate limit: BLOCKED - ${ip} exceeded ${MAX_ATTEMPTS} attempts`);
+    console.warn(`Rate limit: BLOCKED - ${ip} exceeded ${MAX_ATTEMPTS} attempts`);
     return { allowed: false, retryAfter };
   }
   
@@ -61,16 +59,19 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 export function setupAuth(app: Express) {
   const sessionSecret = process.env.SESSION_SECRET || "rewired-session-secret-change-in-production";
   
+  const isProduction = process.env.NODE_ENV === "production" || !!process.env.REPLIT_DEPLOYMENT;
+  
   app.use(
     session({
       secret: sessionSecret,
       resave: false,
       saveUninitialized: false,
+      proxy: isProduction,
       cookie: {
-        secure: true, // Required for sameSite: "none" and HTTPS
+        secure: isProduction,
         httpOnly: true,
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-        sameSite: "none", // Allow cross-origin requests from mobile app
+        sameSite: isProduction ? "none" as const : "lax" as const,
       },
     })
   );
@@ -322,14 +323,23 @@ export function setupAuth(app: Express) {
   // Get current user
   app.get("/api/auth/me", async (req: Request, res: Response) => {
     try {
-      if (!req.session.userId) {
+      let userId = req.session.userId;
+      
+      if (!userId) {
+        const headerToken = req.header("X-Auth-Token");
+        if (headerToken) {
+          userId = await verifyAuthToken(headerToken) ?? undefined;
+        }
+      }
+      
+      if (!userId) {
         return res.status(401).json({ error: "Not authenticated" });
       }
 
       const [user] = await db
         .select()
         .from(users)
-        .where(eq(users.id, req.session.userId));
+        .where(eq(users.id, userId));
 
       if (!user) {
         req.session.destroy(() => {});
@@ -371,7 +381,6 @@ export async function generateAuthToken(userId: string): Promise<string> {
       .update(authTokens)
       .set({ expiresAt: newExpiry })
       .where(eq(authTokens.token, existingTokens[0].token));
-    console.log("Reusing existing token for user:", userId);
     return existingTokens[0].token;
   }
   
@@ -386,7 +395,6 @@ export async function generateAuthToken(userId: string): Promise<string> {
     expiresAt,
   });
   
-  console.log("Created new token for user:", userId);
   return token;
 }
 
@@ -402,11 +410,9 @@ export async function verifyAuthToken(token: string): Promise<string | null> {
     .limit(1);
 
   if (results.length === 0) {
-    console.log("Token not found or expired:", token.substring(0, 10) + "...");
     return null;
   }
   
-  console.log("Token verified for user:", results[0].userId);
   return results[0].userId;
 }
 

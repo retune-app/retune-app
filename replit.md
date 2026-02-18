@@ -1,97 +1,76 @@
-# Retune
+# Retuned
 
 ## Overview
-Retune is a mobile application (React Native/Expo) designed to help users reprogram their subconscious mind through personalized audio affirmations. Users define their goals, and an AI generates affirmation scripts. The app then utilizes voice cloning technology to play these affirmations back in the user's own voice. The project aims to blend therapeutic tranquility with motivational energy, offering a "Serene Empowerment" aesthetic. The business vision is to provide an accessible and personalized tool for mental well-being and personal growth.
+Retuned is an application designed to help users reprogram their subconscious minds through personalized audio affirmations. It leverages AI to generate affirmation scripts based on user goals, which can then be played in the user's cloned voice or a selection of curated AI voices. The project aims to provide a powerful tool for personal growth and mental well-being, focusing on subconscious language patterns to maximize effectiveness. Key features include voice cloning, guided breathing exercises, AI-powered mood check-ins with personalized wellness paths, micro-meditations, and a comprehensive ambient sound library.
+
+## Recent Changes
+- **v1.7.2 Build 4 App Icon & Landing Page (Feb 18, 2026)**: Switched app icon to light rings design (gold rings on white/grey, no play button). Updated landing page logo to match and enlarged nav logo from 38px to 46px.
+- **v1.7.2 Build 3 Affirmation Humanizer (Feb 18, 2026)**: Two-pass humanizer system for affirmations. Option A: Enhanced system prompt with rules 10 (HUMAN VOICE) and 11 (AVOID AI-ISMS) for natural language generation. Option B: Post-processing `humanizeScript` pass via GPT-4o-mini rewrites stiff AI phrasing into private-thought tone with contractions, varied rhythm, and dashes. Falls back to original script on failure.
+- **v1.7.2 Build 2 Code Optimization (Feb 18, 2026)**: Removed 43 debug console.logs from server, 14 unused imports across 11 client files. Modularized server/routes.ts (5,143→4,050 lines) by extracting GitHub, breathing, reminder, and admin routes into `server/routes/` modules.
+- **v1.7.2 Build 2 Auth Screen Redesign (Feb 2026)**: Removed circular logo, restructured to fixed flex layout with RETUNED wordmark (Outfit_500Medium) at top and login card at bottom. Unified sign-in button heights to 48px.
+- **v1.7.2 Build 2 Landing Page Typography (Feb 2026)**: Cormorant Garamond (serif) for h1/h2, Outfit (sans-serif) for h3/h4/body/UI. Nav branding: Outfit 500, 17px, 4.5px letter-spacing.
+- **v1.7.2 Build 2 Font Cleanup (Feb 2026)**: Removed Poppins, Montserrat, Space Grotesk. App loads only Nunito (primary) + Outfit (brand/auth).
 
 ## User Preferences
-Preferred communication style: Simple, everyday language.
+- Preferred communication style: Simple, everyday language.
+- Design approach: Conservative, iterative improvements over major redesigns.
+- UI naming conventions: "AI-Powered" vs "Write Your Own", "Set your intention", "Write My Affirmation", "NOTIFICATIONS", "Inner Voice".
+- Gold gradient styling: #E5C95C to #C9A227 (light), #C9A227 to #8A6D1A (dark).
+- Button states on gold: Active = white semi-transparent bg (0.85), Inactive = frosted white bg (0.2) with white text.
+- Pill buttons: Fixed height of 36px for visual consistency.
+- Auth button height: Fixed 48px for Apple and Google sign-in buttons.
 
 ## System Architecture
 
 ### Core Technologies
-- **Frontend**: React Native with Expo SDK 54, targeting iOS, Android, and web.
-- **Backend**: Express 5 (Node.js) server.
+- **Frontend**: React Native with Expo SDK 54 (iOS, Android, web).
+- **Backend**: Express 5 (Node.js). Routes modularized: `server/routes.ts` (core 51 endpoints) + `server/routes/` modules (github, breathing, reminders, admin — 34 endpoints).
 - **Database**: PostgreSQL with Drizzle ORM.
-- **State Management**: TanStack Query for server state and caching.
-- **Styling**: Custom theme system with light/dark mode and Nunito font family.
-- **Animations**: React Native Reanimated for fluid UI.
+- **State Management**: TanStack Query.
+- **Styling**: Custom theme with light/dark mode. Nunito font family (primary), Outfit (brand/auth screen). Landing pages use Cormorant Garamond + Outfit.
+- **Animations**: React Native Reanimated.
 - **Audio**: `expo-av` for recording and playback.
 
-### Key Features
-- **Personalized Affirmations**: Users input goals, AI generates scripts, and voice cloning plays them in the user's voice. Uses a hierarchical pillar-based organization system:
-  - **5 Life Pillars**: Mind (#3B82F6), Body (#10B981), Spirit (#8B5CF6), Connection (#F97316), Achievement (#C9A227) - users must select one pillar when creating affirmations
-  - **Subcategory Tags**: Optional fine-tuning with up to 5 subcategory tags per affirmation (e.g., Mind → Confidence, Focus, Resilience, Emotion)
-  - **Custom Tags**: Users can add up to 3 custom tags per pillar via "+" button in create flow. Stored in AsyncStorage with key `@create/customTags`. Custom tags can be deleted with X button.
-  - **Visual Identification**: Affirmation cards display a 4px left accent bar in the pillar's color
-  - **Library Filtering**: HomeScreen filters affirmations by pillar with color-coded chips
-  - Database stores: `pillar` field (single text) + `categoryName` (comma-separated subcategories for backward compatibility)
-- **Audio Pipeline**: Involves user voice sample recording, ElevenLabs voice cloning, AI script generation, text-to-speech synthesis, and audio streaming.
-- **Global Audio Player**: A single-instance audio player for consistent playback control across the app.
-- **RSVP Mode**: Rapid Serial Visual Presentation of affirmation text, synchronized with audio playback, using word timing data from ElevenLabs.
-- **Breathing Mode**: A dedicated feature offering various breathing techniques (Box, 4-7-8, Coherent) with animated visuals, duration selection, and binaural beats integration.
-- **User Analytics**: Tracks listening sessions, streaks, and category breakdowns to provide insights into user progress. Includes meditation KPIs (breathing streaks, mindful minutes, technique breakdown, weekly breathing charts).
-- **Sound Library**: Dedicated screen for browsing ambient sounds categorized into Nature, Solfeggio, and Binaural categories with auto-play on selection.
-- **Authentication**: Session-based for web, token-based for mobile, secured with bcrypt and data isolation.
-- **Notification Settings**: Customizable daily reminder settings for affirmations.
-- **Voice Selection System**: Users can choose from various AI voices or clone their own voice, with preferences stored and manageable through a dedicated UI.
+### UI/UX Decisions
+The application follows a "Serene Empowerment" aesthetic, utilizing Primary Gold and Navy colors, Nunito typography, and custom components like `GoldShimmer` and `BreathingPulse`. It features a 2-tab navigation structure (Breathe, Believe) with a central "Create" button, and integrates haptic feedback and custom screen transitions for an enhanced user experience.
 
-### Security & Privacy (App Store Ready)
-- **Voice Consent**: Users must explicitly consent before any voice recording. Consent is stored in database (`hasConsentedToVoiceCloning` field).
-- **Voice File Deletion**: Voice recording files are automatically deleted from the server immediately after successful cloning (PII protection).
-- **Usage Limits**: 
-  - Max 2 voice clones per user (lifetime)
-  - Max 10 AI-generated affirmations per month (auto-resets monthly)
-  - Limits displayed in Settings under "USAGE LIMITS" section
-- **Rate Limiting**: AI endpoints protected with rate limiting (5 generations/min, 10 TTS/min, 3 voice clones/hour)
-- **Delete My Data**: GDPR-compliant data deletion in Security & Privacy settings. Users type "delete" to confirm, then all their data is permanently removed including:
-  - User account and profile
-  - All affirmations and audio files
-  - Voice clone data (deleted from ElevenLabs via API)
-  - Listening history and statistics
-- **API Endpoints**:
-  - `GET /api/user/limits` - Returns current usage and remaining limits
-  - `POST /api/user/voice-consent` - Records user consent for voice cloning
-  - `DELETE /api/user/data` - Permanently deletes all user data
-
-### Navigation Structure
-- **2-Tab Navigation**: Breathe (left), Believe (right) with middle Create (+) button - aligns with "Breathe, Believe, Become" tagline
-- **Settings Access**: Floating settings button (gear icon) on Breathe and Believe screens, positioned bottom-right above tab bar (48x48px with gold border)
-- **Affirmation Selection**: Swipe left on affirmation cards to "Set for Breathing" - persisted in AsyncStorage with key `@breathing/selectedAffirmation`
-- **Breathing Priority**: Selected breathing affirmation takes precedence over time-based suggestions
-- **Breathing Technique Persistence**: Selected technique auto-saves to AsyncStorage with key `@breathing/defaultTechnique`. Long-press on technique card to set as default.
-
-### UI/UX Design
-- **Theme**: "Serene Empowerment" with a color palette of Primary Gold (#C9A227) and Navy backgrounds (#0F1C3F, #1A2D4F, #243656).
-- **Color Hierarchy**: Gold (#C9A227) for breathing metrics, Purple (#9C27B0) for affirmation metrics.
-- **Typography**: Nunito font family.
-- **Components**: Includes `GoldShimmer`, `BreathingPulse`, `GradientCard`, `WelcomeSection`, `AmbientSoundMixer`, `ProgressVisualization`, `FloatingSettingsButton`, `SwipeableAffirmationCard`, and `MiniPlayer` for enhanced user experience.
-- **Create Button**: Gold gradient (60x60px) with navy icon, white translucent border, and enhanced gold glow effect.
-- **Mini Player**: Compact pill-shaped design with blur effect, waveform indicator when playing, positioned 94px + insets.bottom from screen bottom.
-- **Haptic Feedback**: Integrated for key interactions and milestones.
-- **Screen Transitions**: Default fade for iOS, fade_from_bottom for Android, slide_from_bottom for modals.
-- **Background Wallpaper**: Optional meditation-themed background images (disabled by default). Stored in AsyncStorage with key `@settings/backgroundWallpaper`. When enabled, shows `library-background.png` (dark) or `library-background-light.png` (light). When disabled, uses solid colors: #0F1C3F (dark) or #F8FAFB (light).
+### Technical Implementations
+- **Personalized Affirmations**: AI generates scripts incorporating Subconscious Language Patterns, organized by 5 Life Pillars (Mind, Body, Spirit, Connection, Achievement), each with distinct Text-to-Speech (TTS) treatments for optimal delivery.
+- **Voice Management**: A hybrid TTS system uses Hume AI for stock voices, ElevenLabs for cloned voices (Inner Voice), and OpenAI as a fallback. An automated voice rotation system manages inactive ElevenLabs cloned voices. Journey voice consistency ensures a single voice is used across all journey steps. Inner Voice affirmations use fixed Spirit pillar TTS settings (stability 0.6, style 0.25, 1.8s pause) for consistent, contemplative delivery regardless of pillar. AI Voice affirmations use pillar-specific Hume speed/pause configs. **Note**: Cartesia integration code is preserved in `server/cartesia-tts.ts` but is fully disabled — no Cartesia API calls are made during normal operation. The `ttsProvider` field in the users table and admin provider-switch endpoint exist but are inactive. Cartesia can be re-enabled for A/B testing at a later date.
+- **Global Audio Player**: Ensures consistent audio playback across the application.
+- **RSVP Mode**: Displays word-synced text for visual reinforcement during affirmations. Uses 200ms forward offset (scaled by playback speed), 50ms audio progress updates, ORP (Optimal Recognition Point) character highlighting, and XL font size. ElevenLabs word timings use re-encoded ffmpeg segments for sample-accurate sync. Full configuration reference: `docs/voice-cloning/10-tts-rsvp-reference.md`.
+- **Breathing Mode**: Offers science-backed techniques with animated visualizations, customizable durations, and ambient soundscapes, including mood-matched recommendations. Controls (Duration/Audio) are grouped in a themed card with technique-colored border and subtle shadow.
+- **AI Mood Check-in**: An ephemeral system that analyzes user mood to recommend personalized wellness paths: breathing, meditating, or listening/creating affirmations, utilizing multi-layer scoring for smart affirmation matching.
+- **Mood Journey Personalization**: Tracks journey completions and feeds this history into AI daily greetings and mood check-in prompts for deeper personalization. Ambient sounds persist seamlessly across step transitions.
+- **Micro-Meditations**: Ephemeral, AI-generated guided meditations tailored to current mood and available in varying durations.
+- **AI Daily Greetings**: Context-aware, personalized messages based on user activity.
+- **User Analytics**: Tracks listening sessions, streaks, and category breakdowns.
+- **Sound Library**: A collection of 25 seamless ambient sound loops across 7 categories.
+- **Authentication**: Session-based for web, token-based for mobile.
+- **Daily Reminders**: A flexible notification system for breathing or affirmation sessions, with AI-generated messages.
+- **Voice Clone Expiry Warnings**: Server-side push notifications warn users at ~53 and ~58 days of voice inactivity before the 60-day rotation. Users can tap to keep their voice active via a lightweight `/api/voice/keep-active` endpoint. Push tokens stored in `push_tokens` table, sent via Expo push notification service (`expo-server-sdk`).
+- **Security & Privacy**: Features explicit voice consent, immediate deletion of voice recordings post-cloning, usage limits, rate limiting, and GDPR-compliant data deletion.
+- **First-Time User Experience (FTUE)**: Includes onboarding, deferred voice setup, first-play celebrations, and contextual hints.
+- **Server Resilience (v1.7.2)**: Structured JSON logging (level/timestamp/component), process-level crash handlers (uncaughtException/unhandledRejection), try/catch isolation around each startup subsystem so partial failures don't crash the server, `/api/health` endpoint for monitoring (checks server + DB), client-side API error logging with HTML-detection for misconfiguration alerts, and API catch-all for unknown endpoints returning proper JSON.
 
 ## External Dependencies
 
 ### AI Services
-- **OpenAI API**: Used for generating affirmation scripts.
-- **ElevenLabs API**: Used for voice cloning (Instant Voice Cloning) and text-to-speech synthesis.
+- **OpenAI API**: Affirmation script generation, micro-meditation script generation, daily greeting generation, and TTS fallback.
+- **Hume AI API**: Primary TTS for stock AI voices (with word-level timestamps) and micro-meditations.
+- **ElevenLabs API**: Voice cloning and TTS for personal cloned voices.
+- **Cartesia API**: *Currently disabled*. Code preserved in `server/cartesia-tts.ts` for future A/B testing. Uses Sonic-3 model, embedding-based cloning (3-second samples), no slot limits.
 
 ### Database
-- **PostgreSQL**: The primary database, managed with Drizzle ORM.
+- **PostgreSQL**: Primary database for application data.
 
 ### Key npm Packages
-- `expo-av`: Audio recording and playback.
-- `expo-file-system`: File handling.
-- `drizzle-orm` + `pg`: Database ORM and driver.
-- `multer`: Multipart form data handling.
-- `elevenlabs`: Official ElevenLabs SDK.
-- `@tanstack/react-query`: Data fetching and caching.
-- `expo-linear-gradient`: Gradient backgrounds.
+- `expo-av`, `expo-file-system`, `drizzle-orm`, `pg`, `multer`, `elevenlabs`, `hume`, `@cartesia/cartesia-js`, `@tanstack/react-query`, `expo-linear-gradient`, `@expo-google-fonts/outfit`.
 
 ### Environment Variables
 - `DATABASE_URL`
 - `AI_INTEGRATIONS_OPENAI_API_KEY`
 - `AI_INTEGRATIONS_OPENAI_BASE_URL`
+- `HUME_API_KEY`
 - `REPLIT_CONNECTORS_HOSTNAME`
 - `EXPO_PUBLIC_DOMAIN`

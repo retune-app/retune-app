@@ -1,6 +1,8 @@
-import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { Platform } from 'react-native';
 import { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
+import * as LegacyFS from 'expo-file-system/legacy';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Affirmation } from '@shared/schema';
 import { getApiUrl, apiRequest } from '@/lib/query-client';
@@ -8,6 +10,62 @@ import { useBackgroundMusic } from './BackgroundMusicContext';
 import { queryClient } from '@/lib/query-client';
 
 const BREATHING_AFFIRMATION_KEY = '@breathing/selectedAffirmation';
+const AUDIO_CACHE_DIR = `${LegacyFS.cacheDirectory}audio/`;
+
+const audioCacheReady = Platform.OS !== 'web'
+  ? LegacyFS.makeDirectoryAsync(AUDIO_CACHE_DIR, { intermediates: true }).catch(() => {})
+  : Promise.resolve();
+
+export async function preloadAudioToCache(audioUrl: string, affirmationId: number): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    const remoteUri = `${getApiUrl()}${audioUrl}`;
+    await getCachedAudioUri(remoteUri, affirmationId);
+  } catch {}
+}
+
+export async function clearCachedAudio(affirmationId: number): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    await audioCacheReady;
+    const dirContents = await LegacyFS.readDirectoryAsync(AUDIO_CACHE_DIR);
+    const pattern = `affirmation-${affirmationId}-`;
+    const legacyPattern = `affirmation_${affirmationId}.`;
+    for (const file of dirContents) {
+      if (file.startsWith(pattern) || file.startsWith(legacyPattern)) {
+        await LegacyFS.deleteAsync(`${AUDIO_CACHE_DIR}${file}`, { idempotent: true });
+      }
+    }
+  } catch {}
+}
+
+async function getCachedAudioUri(remoteUri: string, affirmationId: number): Promise<string> {
+  if (Platform.OS === 'web') return remoteUri;
+  try {
+    await audioCacheReady;
+    const urlFilename = remoteUri.split('/').pop() || '';
+    const ext = remoteUri.includes('.mp3') ? '.mp3' : '.wav';
+    const cacheKey = urlFilename.replace(/\.[^.]+$/, '') || `affirmation_${affirmationId}`;
+    const localPath = `${AUDIO_CACHE_DIR}${cacheKey}${ext}`;
+    const info = await LegacyFS.getInfoAsync(localPath);
+    if (info.exists && (info.size ?? 0) > 0) {
+      return localPath;
+    }
+    const oldPattern = `${AUDIO_CACHE_DIR}affirmation_${affirmationId}${ext}`;
+    const oldLegacy = `${AUDIO_CACHE_DIR}affirmation-${affirmationId}-`;
+    try {
+      const oldInfo = await LegacyFS.getInfoAsync(oldPattern);
+      if (oldInfo.exists) await LegacyFS.deleteAsync(oldPattern, { idempotent: true });
+    } catch {}
+    const result = await LegacyFS.downloadAsync(remoteUri, localPath);
+    if (result.status === 200) {
+      return localPath;
+    }
+    return remoteUri;
+  } catch {
+    return remoteUri;
+  }
+}
 
 interface AudioState {
   currentAffirmation: Affirmation | null;
@@ -19,6 +77,7 @@ interface AudioState {
   playbackSpeed: number;
   breathingAffirmation: Affirmation | null;
   highlightAffirmationId: number | null;
+  recommendedAffirmationId: number | null;
 }
 
 interface AudioContextType extends AudioState {
@@ -31,6 +90,8 @@ interface AudioContextType extends AudioState {
   setBreathingAffirmation: (affirmation: Affirmation | null) => void;
   requestHighlightAffirmation: (id: number) => void;
   clearHighlightAffirmation: () => void;
+  requestRecommendedAffirmation: (id: number) => void;
+  clearRecommendedAffirmation: () => void;
 }
 
 const AudioContext = createContext<AudioContextType | null>(null);
@@ -53,9 +114,12 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const [playbackSpeed, setPlaybackSpeedState] = useState(1);
   const [breathingAffirmation, setBreathingAffirmationState] = useState<Affirmation | null>(null);
   const [highlightAffirmationId, setHighlightAffirmationId] = useState<number | null>(null);
+  const [recommendedAffirmationId, setRecommendedAffirmationId] = useState<number | null>(null);
   const soundRef = useRef<Audio.Sound | null>(null);
   const isOperationInProgress = useRef(false);
   const hasRecordedListenRef = useRef(false);
+  const autoReplayRef = useRef(autoReplay);
+  const replayTimerRef = useRef<NodeJS.Timeout | null>(null);
   
   const { startBackgroundMusic, stopBackgroundMusic, selectedMusic } = useBackgroundMusic();
 
@@ -65,6 +129,14 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
   const clearHighlightAffirmation = useCallback(() => {
     setHighlightAffirmationId(null);
+  }, []);
+
+  const requestRecommendedAffirmation = useCallback((id: number) => {
+    setRecommendedAffirmationId(id);
+  }, []);
+
+  const clearRecommendedAffirmation = useCallback(() => {
+    setRecommendedAffirmationId(null);
   }, []);
 
   // Load saved breathing affirmation on mount
@@ -82,6 +154,8 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     };
     loadBreathingAffirmation();
   }, []);
+
+  useEffect(() => { autoReplayRef.current = autoReplay; }, [autoReplay]);
 
   const setBreathingAffirmation = useCallback(async (affirmation: Affirmation | null) => {
     setBreathingAffirmationState(affirmation);
@@ -128,26 +202,40 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     initAudio();
 
     return () => {
+      if (replayTimerRef.current) {
+        clearTimeout(replayTimerRef.current);
+        replayTimerRef.current = null;
+      }
       if (soundRef.current) {
         soundRef.current.unloadAsync();
       }
     };
   }, []);
 
-  const unloadCurrentSound = useCallback(async () => {
+  const unloadCurrentSound = useCallback(async (resetState = true) => {
+    if (replayTimerRef.current) {
+      clearTimeout(replayTimerRef.current);
+      replayTimerRef.current = null;
+    }
     if (soundRef.current) {
+      const oldSound = soundRef.current;
+      soundRef.current = null;
       try {
-        await soundRef.current.stopAsync();
-        await soundRef.current.unloadAsync();
+        await oldSound.stopAsync();
+        await oldSound.unloadAsync();
       } catch (error) {
         console.error('Error unloading sound:', error);
       }
-      soundRef.current = null;
     }
-    setIsPlaying(false);
-    setPosition(0);
-    setDuration(0);
+    if (resetState) {
+      setIsPlaying(false);
+      setPosition(0);
+      setDuration(0);
+    }
   }, []);
+
+  const playRequestId = useRef(0);
+  const activeSoundIdRef = useRef(0);
 
   const playAffirmation = useCallback(async (affirmation: Affirmation) => {
     if (!affirmation.audioUrl) {
@@ -155,53 +243,74 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // Prevent overlapping operations from rapid button presses
-    if (isOperationInProgress.current) {
-      return;
-    }
-
-    // If same affirmation is already loaded, just resume playback
     if (currentAffirmation?.id === affirmation.id && soundRef.current) {
       try {
-        isOperationInProgress.current = true;
         const status = await soundRef.current.getStatusAsync();
         if (status.isLoaded) {
           await soundRef.current.playAsync();
           setIsPlaying(true);
           return;
         }
-      } finally {
-        isOperationInProgress.current = false;
+      } catch (e) {
+        // Fall through to full reload
       }
     }
 
-    isOperationInProgress.current = true;
+    const thisRequestId = ++playRequestId.current;
+
     setIsLoading(true);
-    hasRecordedListenRef.current = false; // Reset listen tracking for new affirmation
-    await unloadCurrentSound();
+    setCurrentAffirmation(affirmation);
+    setPosition(0);
+    setDuration(0);
+    setIsPlaying(false);
+    hasRecordedListenRef.current = false;
+    await unloadCurrentSound(false);
+
+    if (thisRequestId !== playRequestId.current) return;
 
     try {
-      const audioUri = `${getApiUrl()}${affirmation.audioUrl}`;
+      const remoteUri = `${getApiUrl()}${affirmation.audioUrl}`;
+      const audioUri = await getCachedAudioUri(remoteUri, affirmation.id);
 
+      if (thisRequestId !== playRequestId.current) return;
+
+      const soundId = thisRequestId;
       const { sound } = await Audio.Sound.createAsync(
         { uri: audioUri },
         { 
           shouldPlay: true, 
-          isLooping: autoReplay,
+          isLooping: false,
           rate: playbackSpeed,
           shouldCorrectPitch: true,
-          progressUpdateIntervalMillis: 50, // Update every 50ms for smoother RSVP sync
+          progressUpdateIntervalMillis: 50,
         },
         (status) => {
           try {
+            if (activeSoundIdRef.current !== soundId) return;
             if (status.isLoaded) {
               setPosition(status.positionMillis || 0);
               setDuration(status.durationMillis || 0);
               setIsPlaying(status.isPlaying);
               if (status.didJustFinish) {
-                // Record the listen (only once per playback session)
                 recordListen(affirmation.id);
-                if (!autoReplay) {
+                if (autoReplayRef.current) {
+                  setIsPlaying(false);
+                  if (replayTimerRef.current) clearTimeout(replayTimerRef.current);
+                  replayTimerRef.current = setTimeout(async () => {
+                    replayTimerRef.current = null;
+                    try {
+                      if (activeSoundIdRef.current !== soundId) return;
+                      if (!soundRef.current) return;
+                      await soundRef.current.setPositionAsync(0);
+                      await soundRef.current.playAsync();
+                      setIsPlaying(true);
+                      setPosition(0);
+                      hasRecordedListenRef.current = false;
+                    } catch (e) {
+                      console.error('Error replaying audio:', e);
+                    }
+                  }, 3000);
+                } else {
                   setIsPlaying(false);
                   Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                 }
@@ -215,18 +324,28 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         }
       );
 
+      if (thisRequestId !== playRequestId.current) {
+        try { await sound.stopAsync(); await sound.unloadAsync(); } catch (e) {}
+        return;
+      }
+
       soundRef.current = sound;
-      setCurrentAffirmation(affirmation);
+      activeSoundIdRef.current = soundId;
       setIsPlaying(true);
       
-      // Background music is NOT auto-started - user must manually enable it from player controls
+      if (selectedMusic !== 'none') {
+        startBackgroundMusic();
+      }
     } catch (error) {
-      console.error('Error loading audio:', error);
+      if (thisRequestId === playRequestId.current) {
+        console.error('Error loading audio:', error);
+      }
     } finally {
-      setIsLoading(false);
-      isOperationInProgress.current = false;
+      if (thisRequestId === playRequestId.current) {
+        setIsLoading(false);
+      }
     }
-  }, [currentAffirmation?.id, autoReplay, playbackSpeed, unloadCurrentSound, recordListen]);
+  }, [currentAffirmation?.id, playbackSpeed, unloadCurrentSound, recordListen, selectedMusic, startBackgroundMusic]);
 
   const togglePlayPause = useCallback(async () => {
     if (!soundRef.current) {
@@ -262,7 +381,9 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
           await soundRef.current.playAsync();
           setIsPlaying(true);
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          // Background music is NOT auto-resumed - user controls it manually
+          if (selectedMusic !== 'none') {
+            startBackgroundMusic();
+          }
         }
       }
     } catch (error) {
@@ -270,7 +391,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     } finally {
       isOperationInProgress.current = false;
     }
-  }, [stopBackgroundMusic]);
+  }, [stopBackgroundMusic, selectedMusic, startBackgroundMusic]);
 
   const stop = useCallback(async () => {
     await unloadCurrentSound();
@@ -303,29 +424,54 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const contextValue = useMemo<AudioContextType>(() => ({
+    currentAffirmation,
+    isPlaying,
+    position,
+    duration,
+    isLoading,
+    autoReplay,
+    playbackSpeed,
+    breathingAffirmation,
+    highlightAffirmationId,
+    recommendedAffirmationId,
+    playAffirmation,
+    togglePlayPause,
+    stop,
+    seek,
+    setAutoReplay,
+    setPlaybackSpeed,
+    setBreathingAffirmation,
+    requestHighlightAffirmation,
+    clearHighlightAffirmation,
+    requestRecommendedAffirmation,
+    clearRecommendedAffirmation,
+  }), [
+    currentAffirmation,
+    isPlaying,
+    position,
+    duration,
+    isLoading,
+    autoReplay,
+    playbackSpeed,
+    breathingAffirmation,
+    highlightAffirmationId,
+    recommendedAffirmationId,
+    playAffirmation,
+    togglePlayPause,
+    stop,
+    seek,
+    setAutoReplay,
+    setPlaybackSpeed,
+    setBreathingAffirmation,
+    requestHighlightAffirmation,
+    clearHighlightAffirmation,
+    requestRecommendedAffirmation,
+    clearRecommendedAffirmation,
+  ]);
+
   return (
-    <AudioContext.Provider
-      value={{
-        currentAffirmation,
-        isPlaying,
-        position,
-        duration,
-        isLoading,
-        autoReplay,
-        playbackSpeed,
-        breathingAffirmation,
-        highlightAffirmationId,
-        playAffirmation,
-        togglePlayPause,
-        stop,
-        seek,
-        setAutoReplay,
-        setPlaybackSpeed,
-        setBreathingAffirmation,
-        requestHighlightAffirmation,
-        clearHighlightAffirmation,
-      }}
-    >
+    <AudioContext.Provider value={contextValue}>
       {children}
     </AudioContext.Provider>
   );

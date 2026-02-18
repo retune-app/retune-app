@@ -48,11 +48,11 @@ export function SwipeableAffirmationCard({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/affirmations"] });
-      if (hapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (hapticEnabled) try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
       if (onAfterDelete) onAfterDelete(affirmation);
     },
     onError: () => {
-      if (hapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      if (hapticEnabled) try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error); } catch (e) {}
       Alert.alert("Error", "Failed to delete affirmation");
     },
   });
@@ -67,7 +67,7 @@ export function SwipeableAffirmationCard({
       queryClient.invalidateQueries({ queryKey: ["/api/affirmations"] });
     },
     onError: () => {
-      if (hapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      if (hapticEnabled) try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error); } catch (e) {}
     },
   });
 
@@ -76,7 +76,7 @@ export function SwipeableAffirmationCard({
   };
 
   const handleDelete = () => {
-    if (hapticEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (hapticEnabled) try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
     Alert.alert(
       "Delete Affirmation",
       `Are you sure you want to delete "${affirmation.title}"?`,
@@ -96,7 +96,7 @@ export function SwipeableAffirmationCard({
   };
 
   const handleRename = () => {
-    if (hapticEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (hapticEnabled) try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
     swipeableRef.current?.close();
     if (onRename) {
       onRename(affirmation);
@@ -104,7 +104,7 @@ export function SwipeableAffirmationCard({
   };
 
   const handleSetForBreathing = () => {
-    if (hapticEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (hapticEnabled) try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
     swipeableRef.current?.close();
     if (onSetForBreathing) {
       onSetForBreathing(affirmation);
@@ -183,6 +183,7 @@ export function SwipeableAffirmationCard({
       <AffirmationCard
         id={affirmation.id}
         title={affirmation.title}
+        description={affirmation.description}
         pillar={affirmation.pillar}
         category={affirmation.categoryName ?? undefined}
         duration={affirmation.duration ?? undefined}

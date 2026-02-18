@@ -1,12 +1,13 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useRef, useMemo } from "react";
 import { View, StyleSheet, Text } from "react-native";
 import Animated, {
   useAnimatedStyle,
+  useSharedValue,
   withTiming,
   Easing,
 } from "react-native-reanimated";
 import { useTheme } from "@/hooks/useTheme";
-import { Spacing, BorderRadius } from "@/constants/theme";
+import { Spacing } from "@/constants/theme";
 
 export interface WordTiming {
   word: string;
@@ -14,7 +15,7 @@ export interface WordTiming {
   endMs: number;
 }
 
-export type RSVPFontSize = "S" | "M" | "L" | "XL";
+export type RSVPFontSize = "S" | "M" | "L" | "XL" | "LANDSCAPE";
 
 interface RSVPDisplayProps {
   wordTimings: WordTiming[];
@@ -23,13 +24,15 @@ interface RSVPDisplayProps {
   fontSize?: RSVPFontSize;
   showHighlight?: boolean;
   forceDarkMode?: boolean;
+  ambient?: boolean;
 }
 
 const FONT_SIZES: Record<RSVPFontSize, number> = {
-  S: 28,
-  M: 36,
-  L: 48,
-  XL: 64,
+  S: 24,
+  M: 32,
+  L: 40,
+  XL: 52,
+  LANDSCAPE: 72,
 };
 
 function getORPIndex(word: string): number {
@@ -41,16 +44,28 @@ function getORPIndex(word: string): number {
   return 4;
 }
 
+function isStandalonePunctuation(word: string): boolean {
+  return /^[,.!?;:'\-"—–…]+$/.test(word);
+}
+
+function stripPunctuation(word: string): string {
+  return word.replace(/[^a-zA-Z0-9']/g, "");
+}
+
 function renderWordWithORP(
   word: string,
   fontSize: number,
   textColor: string,
   accentColor: string,
-  showHighlight: boolean
+  showHighlight: boolean,
+  ambient: boolean
 ) {
-  if (!showHighlight) {
+  if (!showHighlight || ambient) {
     return (
-      <Text style={[styles.word, { fontSize, color: textColor }]}>
+      <Text style={[
+        ambient ? styles.wordAmbient : styles.word,
+        { fontSize, color: textColor }
+      ]}>
         {word}
       </Text>
     );
@@ -86,12 +101,15 @@ export function RSVPDisplay({
   fontSize = "M",
   showHighlight = true,
   forceDarkMode = false,
+  ambient = false,
 }: RSVPDisplayProps) {
   const { theme } = useTheme();
   
-  // Use light colors for dark background in fullscreen mode
   const textColor = forceDarkMode ? "#F8FAFB" : theme.text;
   const accentColor = forceDarkMode ? "#E5C95C" : theme.accent;
+
+  const wordOpacity = useSharedValue(0);
+  const prevWordRef = useRef<string | null>(null);
 
   const currentWord = useMemo(() => {
     if (!wordTimings || wordTimings.length === 0) {
@@ -100,17 +118,51 @@ export function RSVPDisplay({
 
     for (let i = wordTimings.length - 1; i >= 0; i--) {
       if (currentPositionMs >= wordTimings[i].startMs) {
-        return wordTimings[i];
+        if (!isStandalonePunctuation(wordTimings[i].word)) {
+          return wordTimings[i];
+        }
+        for (let j = i - 1; j >= 0; j--) {
+          if (!isStandalonePunctuation(wordTimings[j].word)) {
+            return wordTimings[j];
+          }
+        }
+        return null;
       }
     }
 
-    return wordTimings[0];
+    return null;
   }, [wordTimings, currentPositionMs]);
+
+  const displayWord = currentWord ? (stripPunctuation(currentWord.word) || currentWord.word) : null;
+
+  useEffect(() => {
+    if (ambient) {
+      if (displayWord && displayWord !== prevWordRef.current) {
+        wordOpacity.value = 0;
+        wordOpacity.value = withTiming(0.55, {
+          duration: 400,
+          easing: Easing.out(Easing.ease),
+        });
+      } else if (!displayWord && prevWordRef.current) {
+        wordOpacity.value = withTiming(0, {
+          duration: 500,
+          easing: Easing.in(Easing.ease),
+        });
+      }
+      prevWordRef.current = displayWord;
+    }
+  }, [displayWord, ambient]);
 
 
   const fontSizeValue = FONT_SIZES[fontSize];
 
   const animatedStyle = useAnimatedStyle(() => {
+    if (ambient) {
+      return {
+        opacity: wordOpacity.value,
+        transform: [{ scale: 1 }],
+      };
+    }
     return {
       opacity: withTiming(isPlaying ? 1 : 0.7, {
         duration: 150,
@@ -129,9 +181,9 @@ export function RSVPDisplay({
 
   if (!wordTimings || wordTimings.length === 0) {
     return (
-      <View style={[styles.container, { backgroundColor: theme.backgroundSecondary }]}>
+      <View style={styles.container}>
         <Text style={[styles.placeholder, { color: theme.textSecondary }]}>
-          No word timing data available
+          Preparing your affirmation...
         </Text>
       </View>
     );
@@ -141,14 +193,15 @@ export function RSVPDisplay({
     <View style={styles.container}>
 
       <Animated.View style={[styles.wordContainer, animatedStyle]}>
-        {currentWord &&
+        {displayWord ?
           renderWordWithORP(
-            currentWord.word,
+            displayWord,
             fontSizeValue,
             textColor,
             accentColor,
-            showHighlight
-          )}
+            showHighlight,
+            ambient
+          ) : null}
       </Animated.View>
 
     </View>
@@ -172,6 +225,11 @@ const styles = StyleSheet.create({
     fontFamily: "Nunito_700Bold",
     textAlign: "center",
     letterSpacing: 1,
+  },
+  wordAmbient: {
+    fontFamily: "Nunito_400Regular",
+    textAlign: "center",
+    letterSpacing: 2,
   },
   placeholder: {
     fontSize: 16,

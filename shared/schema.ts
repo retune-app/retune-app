@@ -18,13 +18,21 @@ export const users = pgTable("users", {
   voiceId: text("voice_id"),
   preferredVoiceType: text("preferred_voice_type").default("ai"), // 'personal' or 'ai'
   preferredAiGender: text("preferred_ai_gender").default("female"), // 'male' or 'female'
-  preferredMaleVoiceId: text("preferred_male_voice_id").default("ErXwobaYiN019PkySvjV"), // Default: Antoni
-  preferredFemaleVoiceId: text("preferred_female_voice_id").default("21m00Tcm4TlvDq8ikWAM"), // Default: Rachel
+  preferredMaleVoiceId: text("preferred_male_voice_id").default("hume_orion"), // Default: Orion (Hume AI)
+  preferredFemaleVoiceId: text("preferred_female_voice_id").default("hume_lotus"), // Default: Lotus (Hume AI)
   // Usage limits for App Store compliance
   voiceClonesUsed: integer("voice_clones_used").default(0), // Max 2 lifetime clones
   affirmationsThisMonth: integer("affirmations_this_month").default(0), // Max 10 AI-generated per month
   monthlyResetDate: timestamp("monthly_reset_date").default(sql`CURRENT_TIMESTAMP`), // When to reset monthly limits
   hasConsentedToVoiceCloning: boolean("has_consented_to_voice_cloning").default(false), // GDPR/privacy consent
+  voiceLastUsedAt: timestamp("voice_last_used_at"),
+  voiceExpiryWarningAt: timestamp("voice_expiry_warning_at"),
+  ttsProvider: text("tts_provider").default("elevenlabs"),
+  elevenLabsVoiceId: text("elevenlabs_voice_id"),
+  cartesiaVoiceId: text("cartesia_voice_id"),
+  role: text("role").default("user"), // 'user', 'admin', 'reviewer'
+  subscriptionTier: text("subscription_tier").default("free"), // 'free' or 'premium'
+  active: boolean("active").default(true),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 
@@ -101,6 +109,7 @@ export const affirmations = pgTable("affirmations", {
   isFavorite: boolean("is_favorite").default(false),
   playCount: integer("play_count").default(0),
   displayOrder: integer("display_order").default(0),
+  description: text("description"),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
@@ -109,7 +118,7 @@ export const affirmations = pgTable("affirmations", {
 export const voiceSamples = pgTable("voice_samples", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id"),
-  audioUrl: text("audio_url").notNull(),
+  audioUrl: text("audio_url"), // Nullable for privacy - file deleted after cloning
   duration: integer("duration"),
   voiceId: text("voice_id"),
   status: text("status").default("pending"),
@@ -152,6 +161,7 @@ export const supportRequests = pgTable("support_requests", {
   email: text("email").notNull(),
   subject: text("subject").notNull(),
   message: text("message").notNull(),
+  appVersion: text("app_version"),
   status: text("status").default("pending"), // pending, in_progress, resolved
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
@@ -166,6 +176,26 @@ export const notificationSettings = pgTable("notification_settings", {
   afternoonTime: text("afternoon_time").default("13:00"),
   eveningEnabled: boolean("evening_enabled").default(false),
   eveningTime: text("evening_time").default("20:00"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
+// Reminders for breathe/believe activities
+export const reminders = pgTable("reminders", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  activityType: text("activity_type").notNull(),
+  time: text("time").notNull(),
+  enabled: boolean("enabled").default(true),
+  notificationMessage: text("notification_message"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
+export const pushTokens = pgTable("push_tokens", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  token: text("token").notNull().unique(),
+  platform: text("platform").default("unknown"),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
@@ -188,6 +218,23 @@ export const affirmationCollections = pgTable("affirmation_collections", {
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 
+// Journey completions for tracking mood journey patterns
+export const journeyCompletions = pgTable("journey_completions", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  currentMood: text("current_mood").notNull(),
+  targetMood: text("target_mood").notNull(),
+  stepsPlanned: integer("steps_planned").notNull(),
+  stepsCompleted: integer("steps_completed").notNull(),
+  stepsSkipped: integer("steps_skipped").default(0),
+  stepTypes: text("step_types").notNull(),
+  completedFully: boolean("completed_fully").default(false),
+  timeOfDay: text("time_of_day"),
+  durationSeconds: integer("duration_seconds"),
+  completedAt: timestamp("completed_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  dateKey: text("date_key").notNull(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many, one }) => ({
   affirmations: many(affirmations),
@@ -195,7 +242,10 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   collections: many(collections),
   customCategories: many(customCategories),
   notificationSettings: one(notificationSettings),
+  reminders: many(reminders),
+  pushTokens: many(pushTokens),
   listeningSessions: many(listeningSessions),
+  journeyCompletions: many(journeyCompletions),
 }));
 
 export const listeningSessionsRelations = relations(listeningSessions, ({ one }) => ({
@@ -209,6 +259,14 @@ export const breathingSessionsRelations = relations(breathingSessions, ({ one })
 
 export const notificationSettingsRelations = relations(notificationSettings, ({ one }) => ({
   user: one(users, { fields: [notificationSettings.userId], references: [users.id] }),
+}));
+
+export const remindersRelations = relations(reminders, ({ one }) => ({
+  user: one(users, { fields: [reminders.userId], references: [users.id] }),
+}));
+
+export const pushTokensRelations = relations(pushTokens, ({ one }) => ({
+  user: one(users, { fields: [pushTokens.userId], references: [users.id] }),
 }));
 
 export const customCategoriesRelations = relations(customCategories, ({ one }) => ({
@@ -237,6 +295,10 @@ export const voiceSamplesRelations = relations(voiceSamples, ({ one }) => ({
 export const affirmationCollectionsRelations = relations(affirmationCollections, ({ one }) => ({
   affirmation: one(affirmations, { fields: [affirmationCollections.affirmationId], references: [affirmations.id] }),
   collection: one(collections, { fields: [affirmationCollections.collectionId], references: [collections.id] }),
+}));
+
+export const journeyCompletionsRelations = relations(journeyCompletions, ({ one }) => ({
+  user: one(users, { fields: [journeyCompletions.userId], references: [users.id] }),
 }));
 
 // Insert schemas
@@ -298,6 +360,11 @@ export const insertSupportRequestSchema = createInsertSchema(supportRequests).om
   status: true,
 });
 
+export const insertReminderSchema = createInsertSchema(reminders).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type Conversation = typeof conversations.$inferSelect;
 export type InsertConversation = z.infer<typeof insertConversationSchema>;
@@ -321,3 +388,21 @@ export type BreathingSession = typeof breathingSessions.$inferSelect;
 export type InsertBreathingSession = z.infer<typeof insertBreathingSessionSchema>;
 export type SupportRequest = typeof supportRequests.$inferSelect;
 export type InsertSupportRequest = z.infer<typeof insertSupportRequestSchema>;
+export type Reminder = typeof reminders.$inferSelect;
+export type InsertReminder = z.infer<typeof insertReminderSchema>;
+
+export const insertPushTokenSchema = createInsertSchema(pushTokens).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type PushToken = typeof pushTokens.$inferSelect;
+export type InsertPushToken = z.infer<typeof insertPushTokenSchema>;
+
+export const insertJourneyCompletionSchema = createInsertSchema(journeyCompletions).omit({
+  id: true,
+  completedAt: true,
+});
+
+export type JourneyCompletion = typeof journeyCompletions.$inferSelect;
+export type InsertJourneyCompletion = z.infer<typeof insertJourneyCompletionSchema>;

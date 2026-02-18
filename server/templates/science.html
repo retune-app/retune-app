@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Science Behind RETUNED</title>
+  <meta name="description" content="Discover the neuroscience behind RETUNED's approach to wellness — from voice cloning and subconscious language to breathwork and meditation.">
+  <link rel="icon" type="image/png" href="/landing-assets/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #FAFAFA;
+      --bg-warm: #F7F4EF;
+      --text: #2C2C2C;
+      --text-muted: #6B6B6B;
+      --text-light: #8A8A8A;
+      --believe: #C9A227;
+      --believe-light: #D4B545;
+      --believe-glow: rgba(201, 162, 39, 0.15);
+      --believe-bg: rgba(201, 162, 39, 0.08);
+      --breathe: #2EC4B6;
+      --breathe-bg: rgba(46, 196, 182, 0.08);
+      --meditate: #7C3AED;
+      --meditate-bg: rgba(124, 58, 237, 0.08);
+      --white: #FFFFFF;
+      --border: rgba(44, 44, 44, 0.1);
+      --card-shadow: 0 2px 20px rgba(0,0,0,0.06);
+      --nav-bg: rgba(250, 250, 250, 0.92);
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    h1, h2 {
+      font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+
+    h3, h4, h5, h6 {
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+
+    h4, h5, h6 {
+      font-weight: 600;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .fade-in {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+
+    .fade-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      padding: 16px 0;
+      background: var(--nav-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 1px 10px rgba(0,0,0,0.04);
+    }
+
+    nav .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 clamp(20px, 5vw, 80px);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+
+    .logo img {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+    }
+
+    .logo-text {
+      font-family: 'Outfit', sans-serif;
+      font-size: 17px;
+      font-weight: 500;
+      color: var(--text);
+      letter-spacing: 4.5px;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-muted);
+      transition: color 0.3s ease;
+    }
+
+    .back-link:hover {
+      color: var(--believe);
+    }
+
+    .back-link svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .hero-header {
+      padding: 140px 0 60px;
+      background: linear-gradient(180deg, var(--bg) 0%, var(--bg-warm) 60%, var(--bg) 100%);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--believe), var(--believe-light), var(--breathe), var(--meditate), var(--believe));
+    }
+
+    .hero-header::after {
+      content: '';
+      position: absolute;
+      top: 20%;
+      right: -10%;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, var(--believe-glow) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      padding: 6px 16px;
+      background: var(--believe-bg);
+      border: 1px solid rgba(201, 162, 39, 0.2);
+      border-radius: 30px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--believe);
+      margin-bottom: 20px;
+      letter-spacing: 0.5px;
+    }
+
+    .hero-header h1 {
+      font-size: clamp(32px, 5vw, 48px);
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 16px;
+    }
+
+    .hero-subtitle {
+      font-size: clamp(16px, 2.5vw, 18px);
+      color: var(--text-muted);
+      line-height: 1.8;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    .content-area {
+      padding: 60px 0 100px;
+    }
+
+    .science-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 48px 40px;
+      margin-bottom: 32px;
+      box-shadow: var(--card-shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .science-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+    }
+
+    .science-card.accent-gold::before {
+      background: var(--believe);
+    }
+
+    .science-card.accent-teal::before {
+      background: var(--breathe);
+    }
+
+    .science-card.accent-purple::before {
+      background: var(--meditate);
+    }
+
+    .section-badge {
+      display: inline-block;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      margin-bottom: 16px;
+    }
+
+    .section-badge.gold {
+      background: var(--believe-bg);
+      color: var(--believe);
+    }
+
+    .section-badge.teal {
+      background: var(--breathe-bg);
+      color: var(--breathe);
+    }
+
+    .section-badge.purple {
+      background: var(--meditate-bg);
+      color: var(--meditate);
+    }
+
+    .science-card h2 {
+      font-size: clamp(20px, 3vw, 24px);
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 20px;
+    }
+
+    .science-card p {
+      font-size: 16px;
+      color: var(--text-muted);
+      line-height: 1.8;
+      margin-bottom: 16px;
+    }
+
+    .science-card p:last-of-type {
+      margin-bottom: 0;
+    }
+
+    .science-card .hook {
+      font-size: 17px;
+      color: var(--text);
+      font-weight: 600;
+      line-height: 1.7;
+      margin-bottom: 20px;
+    }
+
+    .science-list {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 16px;
+    }
+
+    .science-list li {
+      position: relative;
+      padding-left: 24px;
+      margin-bottom: 14px;
+      font-size: 15px;
+      color: var(--text-muted);
+      line-height: 1.75;
+    }
+
+    .science-list li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 10px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .accent-gold .science-list li::before {
+      background: var(--believe);
+      opacity: 0.6;
+    }
+
+    .accent-teal .science-list li::before {
+      background: var(--breathe);
+      opacity: 0.6;
+    }
+
+    .accent-purple .science-list li::before {
+      background: var(--meditate);
+      opacity: 0.6;
+    }
+
+    .science-list li strong {
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .analogy {
+      padding: 16px 20px;
+      background: var(--bg-warm);
+      border-radius: 12px;
+      font-size: 15px;
+      color: var(--text);
+      line-height: 1.7;
+      margin: 20px 0;
+      font-style: italic;
+    }
+
+    .key-takeaway {
+      padding: 16px 20px;
+      border-radius: 12px;
+      border-left: 3px solid;
+      margin-top: 24px;
+      font-size: 15px;
+      line-height: 1.7;
+      font-weight: 600;
+    }
+
+    .key-takeaway.gold {
+      background: var(--believe-bg);
+      border-left-color: var(--believe);
+      color: var(--believe);
+    }
+
+    .key-takeaway.teal {
+      background: var(--breathe-bg);
+      border-left-color: var(--breathe);
+      color: var(--breathe);
+    }
+
+    .key-takeaway.purple {
+      background: var(--meditate-bg);
+      border-left-color: var(--meditate);
+      color: var(--meditate);
+    }
+
+    .voice-comparison {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin: 28px 0;
+    }
+
+    .voice-box {
+      padding: 24px 20px;
+      border-radius: 16px;
+      text-align: center;
+      border: 1px solid var(--border);
+    }
+
+    .voice-box.external {
+      background: var(--bg);
+    }
+
+    .voice-box.your-voice {
+      background: var(--believe-bg);
+      border-color: rgba(201, 162, 39, 0.25);
+      box-shadow: 0 0 20px var(--believe-glow);
+    }
+
+    .voice-box .brain-icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 12px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .voice-box.external .brain-icon {
+      background: rgba(44, 44, 44, 0.06);
+      color: var(--text-light);
+    }
+
+    .voice-box.your-voice .brain-icon {
+      background: var(--believe-glow);
+      color: var(--believe);
+      box-shadow: 0 0 16px var(--believe-glow);
+    }
+
+    .voice-box .voice-label {
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .voice-box.external .voice-label {
+      color: var(--text-light);
+    }
+
+    .voice-box.your-voice .voice-label {
+      color: var(--believe);
+    }
+
+    .voice-box .voice-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .voice-box .voice-arrow {
+      font-size: 18px;
+      margin-bottom: 6px;
+      color: var(--text-light);
+    }
+
+    .voice-box.your-voice .voice-arrow {
+      color: var(--believe);
+    }
+
+    .techniques-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin: 20px 0 8px;
+    }
+
+    .technique-pill {
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: var(--breathe-bg);
+      border: 1px solid rgba(46, 196, 182, 0.15);
+      text-align: center;
+    }
+
+    .technique-pill .technique-name {
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--breathe);
+      margin-bottom: 4px;
+    }
+
+    .technique-pill .technique-origin {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .feedback-section {
+      padding: 80px 0;
+      background: var(--white);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .feedback-section .container {
+      text-align: center;
+    }
+
+    .feedback-section h2 {
+      font-size: clamp(24px, 4vw, 36px);
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 16px;
+    }
+
+    .feedback-section > .container > p {
+      font-size: 16px;
+      color: var(--text-muted);
+      line-height: 1.8;
+      max-width: 640px;
+      margin: 0 auto 48px;
+    }
+
+    .loop-visual {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 40px;
+    }
+
+    .loop-card {
+      width: 180px;
+      padding: 28px 16px;
+      border-radius: 20px;
+      text-align: center;
+      border: 1px solid var(--border);
+      box-shadow: var(--card-shadow);
+      background: var(--white);
+      position: relative;
+    }
+
+    .loop-card .loop-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      margin: 0 auto 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .loop-card.breathe-card .loop-icon {
+      background: var(--breathe-bg);
+      color: var(--breathe);
+    }
+
+    .loop-card.believe-card .loop-icon {
+      background: var(--believe-bg);
+      color: var(--believe);
+    }
+
+    .loop-card.meditate-card .loop-icon {
+      background: var(--meditate-bg);
+      color: var(--meditate);
+    }
+
+    .loop-card .loop-title {
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .loop-card.breathe-card .loop-title {
+      color: var(--breathe);
+    }
+
+    .loop-card.believe-card .loop-title {
+      color: var(--believe);
+    }
+
+    .loop-card.meditate-card .loop-title {
+      color: var(--meditate);
+    }
+
+    .loop-card .loop-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .loop-arrow {
+      color: var(--text-light);
+      flex-shrink: 0;
+    }
+
+    .loop-summary {
+      font-size: 15px;
+      color: var(--text-muted);
+      line-height: 1.8;
+      max-width: 700px;
+      margin: 0 auto;
+      font-style: italic;
+    }
+
+    .cta-section {
+      padding: 80px 0;
+      text-align: center;
+    }
+
+    .cta-section h2 {
+      font-size: clamp(24px, 4vw, 36px);
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+
+    .cta-section p {
+      font-size: 16px;
+      color: var(--text-muted);
+      margin-bottom: 32px;
+      max-width: 480px;
+      margin-left: auto;
+      margin-right: auto;
+      line-height: 1.7;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 16px 32px;
+      background: var(--believe);
+      color: var(--white);
+      border-radius: 30px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 16px;
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-primary:hover {
+      background: var(--believe-light);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px var(--believe-glow);
+    }
+
+    footer {
+      padding: 40px 0;
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+
+    footer .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    footer p {
+      font-size: 14px;
+      color: var(--text-light);
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 24px;
+    }
+
+    .footer-links a {
+      font-size: 14px;
+      color: var(--text-muted);
+      font-family: 'Outfit', sans-serif;
+      font-weight: 500;
+      transition: color 0.3s ease;
+    }
+
+    .footer-links a:hover {
+      color: var(--believe);
+    }
+
+    @media (max-width: 768px) {
+      .hero-header {
+        padding: 120px 0 48px;
+      }
+
+      .science-card {
+        padding: 32px 24px;
+      }
+
+      .container {
+        padding: 0 20px;
+      }
+
+      .techniques-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .loop-visual {
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .loop-arrow {
+        transform: rotate(90deg);
+      }
+
+      .loop-card {
+        width: 100%;
+        max-width: 280px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .voice-comparison {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .logo-text {
+        font-size: 18px;
+        letter-spacing: 2px;
+      }
+
+      .hero-header h1 {
+        font-size: 28px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="container">
+      <a href="/" class="logo" aria-label="RETUNED home">
+        <img src="/landing-assets/logo.png" alt="RETUNED logo" width="38" height="38">
+        <span class="logo-text">RETUNED</span>
+      </a>
+      <a href="/" class="back-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Back to Home
+      </a>
+    </div>
+  </nav>
+
+  <header class="hero-header">
+    <div class="container">
+      <div class="fade-in">
+        <div class="hero-badge">Evidence-Based Wellness</div>
+        <h1>The Science Behind RETUNED</h1>
+        <p class="hero-subtitle">Every feature in RETUNED is grounded in neuroscience, psychology, and decades of research on how the mind transforms. Here's why it works.</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="content-area">
+    <div class="container">
+
+      <div class="science-card accent-gold fade-in">
+        <span class="section-badge gold">Section 1</span>
+        <h2>Why Your Own Voice Changes Everything</h2>
+
+        <p class="hook">Your brain processes your own voice completely differently from anyone else's. Not because of familiarity &mdash; because of neuroscience.</p>
+
+        <ul class="science-list">
+          <li><strong>Dedicated neural pathway:</strong> Your brain's "self-referential network," centered in the medial prefrontal cortex (mPFC), is responsible for identity, self-awareness, and belief formation. Your own voice activates it directly.</li>
+          <li><strong>Measurably different brain activation:</strong> Self-voice perception research shows your own voice triggers stronger emotional responses and deeper memory encoding than any external voice.</li>
+          <li><strong>Identity, not information:</strong> When a stranger says "you're capable of amazing things," your brain files it as a nice comment. When you hear yourself say it, your brain treats it as a fact about who you are.</li>
+        </ul>
+
+        <div class="voice-comparison">
+          <div class="voice-box external">
+            <div class="brain-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"/><line x1="9" y1="21" x2="15" y2="21"/></svg>
+            </div>
+            <div class="voice-arrow">&darr;</div>
+            <div class="voice-label">External Voice</div>
+            <div class="voice-desc">Surface Processing</div>
+          </div>
+          <div class="voice-box your-voice">
+            <div class="brain-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"/><line x1="9" y1="21" x2="15" y2="21"/></svg>
+            </div>
+            <div class="voice-arrow">&darr;</div>
+            <div class="voice-label">Your Voice</div>
+            <div class="voice-desc">Deep Processing &mdash; Identity, Belief, Memory</div>
+          </div>
+        </div>
+
+        <p>This is why RETUNED clones your voice. Affirmations in your own voice bypass the brain's skepticism toward external suggestions. You're not listening to a motivational speaker &mdash; you're listening to yourself.</p>
+
+        <div class="key-takeaway gold">Your brain is wired to believe what it hears in your own voice &mdash; activating deeper neural pathways tied to identity and self-belief.</div>
+      </div>
+
+      <div class="science-card accent-teal fade-in">
+        <span class="section-badge teal">Section 2</span>
+        <h2>How Breathing Primes Your Brain</h2>
+
+        <p class="hook">Deep breathing does far more than calm you down. It physically rewires which parts of your brain are active &mdash; and that changes what your mind can absorb.</p>
+
+        <ul class="science-list">
+          <li><strong>Vagus nerve activation:</strong> Controlled breathing stimulates the vagus nerve (the longest cranial nerve in your body), shifting your nervous system from fight-or-flight to rest-and-receive mode.</li>
+          <li><strong>Measurable within 60 seconds:</strong> Heart rate variability (HRV) increases almost immediately with paced breathing &mdash; your nervous system is literally changing state.</li>
+          <li><strong>Prefrontal cortex opens up:</strong> In a parasympathetic state, the brain region responsible for rational thought and self-talk becomes significantly more receptive to new information.</li>
+          <li><strong>Threat detector quiets down:</strong> Your amygdala &mdash; the brain's alarm system &mdash; reduces activity, lowering that automatic resistance that makes positive statements feel fake when you're stressed.</li>
+        </ul>
+
+        <div class="analogy">Think of it like writing on water versus still paper. When you're stressed, your mind is choppy water &mdash; nothing sticks. Breathwork makes the surface still.</div>
+
+        <div class="techniques-grid">
+          <div class="technique-pill">
+            <div class="technique-name">Box Breathing</div>
+            <div class="technique-origin">Used by Navy SEALs</div>
+          </div>
+          <div class="technique-pill">
+            <div class="technique-name">4-7-8</div>
+            <div class="technique-origin">Dr. Andrew Weil</div>
+          </div>
+          <div class="technique-pill">
+            <div class="technique-name">Nadi Shodhana</div>
+            <div class="technique-origin">Yogic tradition &mdash; balances brain hemispheres</div>
+          </div>
+        </div>
+
+        <p>This is why RETUNED starts with breathwork before affirmations. You're not just relaxing &mdash; you're opening a neurological window where new beliefs can take root.</p>
+
+        <div class="key-takeaway teal">Breathwork shifts your nervous system into a state where your brain can actually absorb and integrate new beliefs.</div>
+      </div>
+
+      <div class="science-card accent-gold fade-in">
+        <span class="section-badge gold">Section 3</span>
+        <h2>The Science of Subconscious Language</h2>
+
+        <p class="hook">Ever noticed how saying "I am confident" out loud sometimes makes you feel less confident? That's your brain's gatekeeper rejecting a statement it doesn't yet believe.</p>
+
+        <ul class="science-list">
+          <li><strong>Cognitive dissonance is the problem:</strong> Direct affirmations like "I am confident" often trigger an internal "no you're not" response &mdash; the uncomfortable clash between what you're saying and what you currently believe.</li>
+          <li><strong>Permissive language bypasses it:</strong> Phrases like "you might begin to notice..." or "it's possible that..." don't demand belief. They invite exploration &mdash; and that's a completely different experience for your brain.</li>
+          <li><strong>Backed by Erickson's research:</strong> Milton Erickson's hypnotherapy work and modern CBT reframing techniques showed that embedded commands &mdash; positive suggestions woven into longer sentences &mdash; are processed by the subconscious even when the conscious mind doesn't flag them.</li>
+          <li><strong>5 Life Pillars:</strong> RETUNED's AI generates affirmations across Mind, Body, Spirit, Connection, and Achievement &mdash; each targeting different neural pathways and dimensions of personal growth.</li>
+        </ul>
+
+        <div class="analogy">It's the difference between "Be happy!" (which feels pushy) and "You might find yourself feeling lighter as the day goes on" (which feels like a gentle possibility your brain is willing to explore).</div>
+
+        <div class="key-takeaway gold">Permissive language patterns and embedded commands slip past the brain's natural skepticism &mdash; making affirmations feel true instead of forced.</div>
+      </div>
+
+      <div class="science-card accent-purple fade-in">
+        <span class="section-badge purple">Section 4</span>
+        <h2>Why Meditation Locks It In</h2>
+
+        <p class="hook">Most affirmation apps stop after the affirmations. But neuroplasticity research tells us new neural pathways are fragile &mdash; without consolidation, they fade like footprints in sand.</p>
+
+        <ul class="science-list">
+          <li><strong>Default mode network (DMN):</strong> Meditation activates the brain system responsible for self-referential thinking &mdash; the part that fires when you daydream about your future, reflect on your past, or integrate experiences into your identity. It's your brain's "identity processor."</li>
+          <li><strong>5&ndash;10 minutes is enough:</strong> Research from Harvard, Yale, and the Max Planck Institute shows that even brief meditation after learning increases retention and deepens integration into long-term memory.</li>
+          <li><strong>Space for new patterns:</strong> The quiet, focused state gives your brain room to weave new beliefs into your existing neural architecture &mdash; turning thoughts into lasting pathways.</li>
+          <li><strong>The one-two punch:</strong> Affirmations introduce the new pattern. Meditation consolidates it. Together, they create durable change.</li>
+        </ul>
+
+        <p>This is why meditation comes after affirmations in RETUNED. You're not just meditating for calm &mdash; you're giving your brain dedicated time to lock in what you just heard, in your own voice.</p>
+
+        <div class="key-takeaway purple">Meditation after affirmations is the consolidation phase &mdash; where your brain turns new thoughts into lasting neural pathways.</div>
+      </div>
+
+    </div>
+  </main>
+
+  <section class="feedback-section">
+    <div class="container">
+      <div class="fade-in">
+        <h2>Why It Gets Stronger Over Time</h2>
+        <p>This isn't three practices bolted together &mdash; it's a genuine positive feedback loop where each practice makes the next one more effective.</p>
+      </div>
+
+      <div class="loop-visual fade-in">
+        <div class="loop-card breathe-card">
+          <div class="loop-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c4-4 8-7.5 8-12a8 8 0 1 0-16 0c0 4.5 4 8 8 12z"/></svg>
+          </div>
+          <div class="loop-title">Breathe</div>
+          <div class="loop-desc">Calms the nervous system, opens the mind</div>
+        </div>
+
+        <div class="loop-arrow">
+          <svg width="32" height="24" viewBox="0 0 32 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h24M22 6l6 6-6 6"/></svg>
+        </div>
+
+        <div class="loop-card believe-card">
+          <div class="loop-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          </div>
+          <div class="loop-title">Believe</div>
+          <div class="loop-desc">Plants new beliefs in your own voice</div>
+        </div>
+
+        <div class="loop-arrow">
+          <svg width="32" height="24" viewBox="0 0 32 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h24M22 6l6 6-6 6"/></svg>
+        </div>
+
+        <div class="loop-card meditate-card">
+          <div class="loop-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          </div>
+          <div class="loop-title">Meditate</div>
+          <div class="loop-desc">Consolidates new pathways into identity</div>
+        </div>
+      </div>
+
+      <p class="loop-summary fade-in">Breathing creates a calmer state &rarr; affirmations land deeper &rarr; meditation consolidates more effectively &rarr; your next breathing session starts from a calmer baseline. Each cycle strengthens the one that follows.</p>
+    </div>
+  </section>
+
+  <section class="cta-section">
+    <div class="container fade-in">
+      <h2>Experience It Yourself</h2>
+      <p>The science is clear. The only thing left is to feel it for yourself.</p>
+      <a href="https://apps.apple.com/app/retuned/id6758591982" class="btn-primary" target="_blank" rel="noopener noreferrer">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+        Download on the App Store
+      </a>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <p>&copy; 2026 Retuned. All rights reserved.</p>
+      <div class="footer-links">
+        <a href="/privacy-policy">Privacy Policy</a>
+        <a href="/terms-of-service">Terms of Service</a>
+        <a href="/support">Support</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.fade-in').forEach(function(el) {
+      observer.observe(el);
+    });
+  </script>
+
+</body>
+</html>

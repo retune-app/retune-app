@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { View, StyleSheet, Pressable, Modal, ScrollView } from "react-native";
+import React, { useState, useCallback } from "react";
+import { View, StyleSheet, Pressable, Modal, ScrollView, Dimensions, PanResponder } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -9,8 +9,8 @@ import Animated, {
   withTiming,
   Easing,
   interpolate,
+  runOnJS,
 } from "react-native-reanimated";
-import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import Slider from "@react-native-community/slider";
 import * as Haptics from "expo-haptics";
@@ -18,7 +18,7 @@ import * as Haptics from "expo-haptics";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { useBackgroundMusic, BACKGROUND_MUSIC_OPTIONS, BackgroundMusicType } from "@/contexts/BackgroundMusicContext";
-import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
+import { Spacing, BorderRadius } from "@/constants/theme";
 
 interface AmbientSoundMixerProps {
   compact?: boolean;
@@ -35,6 +35,37 @@ export function AmbientSoundMixer({ compact = false }: AmbientSoundMixerProps) {
   const { selectedMusic, setSelectedMusic, volume, setVolume, isPlaying } = useBackgroundMusic();
   const [showModal, setShowModal] = useState(false);
   const pulseValue = useSharedValue(0);
+  const translateY = useSharedValue(0);
+
+  const closeModal = useCallback(() => {
+    setShowModal(false);
+    translateY.value = 0;
+  }, []);
+
+  const panResponder = React.useMemo(() => PanResponder.create({
+    onStartShouldSetPanResponder: () => false,
+    onMoveShouldSetPanResponder: (_, gestureState) => {
+      return gestureState.dy > 10 && Math.abs(gestureState.dy) > Math.abs(gestureState.dx);
+    },
+    onPanResponderMove: (_, gestureState) => {
+      if (gestureState.dy > 0) {
+        translateY.value = gestureState.dy;
+      }
+    },
+    onPanResponderRelease: (_, gestureState) => {
+      if (gestureState.dy > 80 || gestureState.vy > 0.5) {
+        translateY.value = withTiming(Dimensions.get("window").height, { duration: 200 }, () => {
+          runOnJS(closeModal)();
+        });
+      } else {
+        translateY.value = withSpring(0, { damping: 20, stiffness: 300 });
+      }
+    },
+  }), [closeModal]);
+
+  const modalSlideStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+  }));
 
   React.useEffect(() => {
     if (isPlaying && selectedMusic !== "none") {
@@ -57,10 +88,10 @@ export function AmbientSoundMixer({ compact = false }: AmbientSoundMixerProps) {
   }));
 
   const handleSelectMusic = async (type: BackgroundMusicType) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
     await setSelectedMusic(type);
     if (compact) {
-      setShowModal(false);
+      closeModal();
     }
   };
 
@@ -75,7 +106,7 @@ export function AmbientSoundMixer({ compact = false }: AmbientSoundMixerProps) {
       <>
         <Pressable
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
             setShowModal(true);
           }}
           style={({ pressed }) => [
@@ -85,7 +116,7 @@ export function AmbientSoundMixer({ compact = false }: AmbientSoundMixerProps) {
         >
           <Animated.View style={pulseStyle}>
             <Feather
-              name={getIconForMusic(selectedMusic) as any}
+              name="music"
               size={20}
               color={selectedMusic === "none" ? theme.textSecondary : theme.gold}
             />
@@ -96,13 +127,14 @@ export function AmbientSoundMixer({ compact = false }: AmbientSoundMixerProps) {
           visible={showModal}
           transparent
           animationType="slide"
-          onRequestClose={() => setShowModal(false)}
+          onRequestClose={closeModal}
+          onShow={() => { translateY.value = 0; }}
         >
-          <Pressable style={styles.modalOverlay} onPress={() => setShowModal(false)}>
-            <View
-              style={[styles.modalContent, { backgroundColor: theme.cardBackground }]}
-              onStartShouldSetResponder={() => true}
+          <Pressable style={styles.modalOverlay} onPress={closeModal}>
+            <Animated.View
+              style={[styles.modalContent, { backgroundColor: theme.cardBackground }, modalSlideStyle]}
             >
+              <View {...panResponder.panHandlers} onStartShouldSetResponder={() => true}>
               <View style={styles.modalHandle} />
               <ThemedText type="h3" style={styles.modalTitle}>
                 Background Sounds
@@ -147,9 +179,123 @@ export function AmbientSoundMixer({ compact = false }: AmbientSoundMixerProps) {
                 </Pressable>
 
                 <ThemedText type="caption" style={[styles.sectionLabel, { color: theme.textSecondary }]}>
-                  Nature Sounds
+                  Rain
                 </ThemedText>
-                {BACKGROUND_MUSIC_OPTIONS.filter(o => o.category === 'nature').map((option) => (
+                {BACKGROUND_MUSIC_OPTIONS.filter(o => o.category === 'rain').map((option) => (
+                  <Pressable
+                    key={option.id}
+                    onPress={() => handleSelectMusic(option.id)}
+                    style={[
+                      styles.optionItem,
+                      {
+                        backgroundColor: selectedMusic === option.id
+                          ? theme.gold + "20"
+                          : theme.backgroundSecondary,
+                        borderColor: selectedMusic === option.id ? theme.gold : "transparent",
+                      },
+                    ]}
+                  >
+                    <View style={[styles.optionIcon, { backgroundColor: theme.backgroundTertiary }]}>
+                      <Feather
+                        name={option.icon as any}
+                        size={20}
+                        color={selectedMusic === option.id ? theme.gold : theme.textSecondary}
+                      />
+                    </View>
+                    <View style={styles.optionText}>
+                      <ThemedText type="body" style={{ fontWeight: "600" }}>
+                        {option.name}
+                      </ThemedText>
+                      <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                        {option.description}
+                      </ThemedText>
+                    </View>
+                    {selectedMusic === option.id ? (
+                      <Feather name="check-circle" size={20} color={theme.gold} />
+                    ) : null}
+                  </Pressable>
+                ))}
+
+                <ThemedText type="caption" style={[styles.sectionLabel, { color: theme.textSecondary }]}>
+                  Ocean
+                </ThemedText>
+                {BACKGROUND_MUSIC_OPTIONS.filter(o => o.category === 'ocean').map((option) => (
+                  <Pressable
+                    key={option.id}
+                    onPress={() => handleSelectMusic(option.id)}
+                    style={[
+                      styles.optionItem,
+                      {
+                        backgroundColor: selectedMusic === option.id
+                          ? theme.gold + "20"
+                          : theme.backgroundSecondary,
+                        borderColor: selectedMusic === option.id ? theme.gold : "transparent",
+                      },
+                    ]}
+                  >
+                    <View style={[styles.optionIcon, { backgroundColor: theme.backgroundTertiary }]}>
+                      <Feather
+                        name={option.icon as any}
+                        size={20}
+                        color={selectedMusic === option.id ? theme.gold : theme.textSecondary}
+                      />
+                    </View>
+                    <View style={styles.optionText}>
+                      <ThemedText type="body" style={{ fontWeight: "600" }}>
+                        {option.name}
+                      </ThemedText>
+                      <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                        {option.description}
+                      </ThemedText>
+                    </View>
+                    {selectedMusic === option.id ? (
+                      <Feather name="check-circle" size={20} color={theme.gold} />
+                    ) : null}
+                  </Pressable>
+                ))}
+
+                <ThemedText type="caption" style={[styles.sectionLabel, { color: theme.textSecondary }]}>
+                  Forest & Birds
+                </ThemedText>
+                {BACKGROUND_MUSIC_OPTIONS.filter(o => o.category === 'forest').map((option) => (
+                  <Pressable
+                    key={option.id}
+                    onPress={() => handleSelectMusic(option.id)}
+                    style={[
+                      styles.optionItem,
+                      {
+                        backgroundColor: selectedMusic === option.id
+                          ? theme.gold + "20"
+                          : theme.backgroundSecondary,
+                        borderColor: selectedMusic === option.id ? theme.gold : "transparent",
+                      },
+                    ]}
+                  >
+                    <View style={[styles.optionIcon, { backgroundColor: theme.backgroundTertiary }]}>
+                      <Feather
+                        name={option.icon as any}
+                        size={20}
+                        color={selectedMusic === option.id ? theme.gold : theme.textSecondary}
+                      />
+                    </View>
+                    <View style={styles.optionText}>
+                      <ThemedText type="body" style={{ fontWeight: "600" }}>
+                        {option.name}
+                      </ThemedText>
+                      <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                        {option.description}
+                      </ThemedText>
+                    </View>
+                    {selectedMusic === option.id ? (
+                      <Feather name="check-circle" size={20} color={theme.gold} />
+                    ) : null}
+                  </Pressable>
+                ))}
+
+                <ThemedText type="caption" style={[styles.sectionLabel, { color: theme.textSecondary }]}>
+                  Meditation
+                </ThemedText>
+                {BACKGROUND_MUSIC_OPTIONS.filter(o => o.category === 'meditation').map((option) => (
                   <Pressable
                     key={option.id}
                     onPress={() => handleSelectMusic(option.id)}
@@ -259,6 +405,44 @@ export function AmbientSoundMixer({ compact = false }: AmbientSoundMixerProps) {
                     ) : null}
                   </Pressable>
                 ))}
+
+                <ThemedText type="caption" style={[styles.sectionLabel, { color: theme.textSecondary }]}>
+                  Noise
+                </ThemedText>
+                {BACKGROUND_MUSIC_OPTIONS.filter(o => o.category === 'noise').map((option) => (
+                  <Pressable
+                    key={option.id}
+                    onPress={() => handleSelectMusic(option.id)}
+                    style={[
+                      styles.optionItem,
+                      {
+                        backgroundColor: selectedMusic === option.id
+                          ? theme.gold + "20"
+                          : theme.backgroundSecondary,
+                        borderColor: selectedMusic === option.id ? theme.gold : "transparent",
+                      },
+                    ]}
+                  >
+                    <View style={[styles.optionIcon, { backgroundColor: theme.backgroundTertiary }]}>
+                      <Feather
+                        name={option.icon as any}
+                        size={20}
+                        color={selectedMusic === option.id ? theme.gold : theme.textSecondary}
+                      />
+                    </View>
+                    <View style={styles.optionText}>
+                      <ThemedText type="body" style={{ fontWeight: "600" }}>
+                        {option.name}
+                      </ThemedText>
+                      <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                        {option.description}
+                      </ThemedText>
+                    </View>
+                    {selectedMusic === option.id ? (
+                      <Feather name="check-circle" size={20} color={theme.gold} />
+                    ) : null}
+                  </Pressable>
+                ))}
               </ScrollView>
 
               {selectedMusic !== "none" ? (
@@ -281,7 +465,8 @@ export function AmbientSoundMixer({ compact = false }: AmbientSoundMixerProps) {
                   />
                 </View>
               ) : null}
-            </View>
+              </View>
+            </Animated.View>
           </Pressable>
         </Modal>
       </>

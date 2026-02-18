@@ -1,40 +1,66 @@
 {
-  "id": "f03f03ed-3961-440c-99de-41fda34e5569",
-  "createdAt": "2026-01-31T01:46:05.343Z",
+  "id": "5712f14f-1047-4a8a-ad36-4f688a979b62",
+  "createdAt": "2026-02-18T02:57:08.118Z",
   "runtimeVersion": "exposdk:54.0.0",
   "launchAsset": {
-    "key": "bundle-1769823965343-20577",
+    "key": "bundle-1771383428118-41222",
     "contentType": "application/javascript",
-    "url": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev:5000/1769823965343-20577/_expo/static/js/android/bundle.js"
+    "url": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev:5000/1771383428118-41222/_expo/static/js/android/bundle.js"
   },
   "assets": [],
   "metadata": {},
   "extra": {
     "eas": {},
     "expoClient": {
-      "name": "ReWired",
+      "name": "Retuned",
       "slug": "subconscious-rewire",
-      "version": "1.0.0",
+      "version": "1.7.2",
+      "runtimeVersion": "exposdk:54.0.0",
       "orientation": "default",
-      "icon": "./assets/images/icon.jpg",
+      "icon": "./assets/images/icon-light-1024x1024.png",
       "scheme": "subconsciousrewire",
       "userInterfaceStyle": "automatic",
       "newArchEnabled": true,
+      "updates": {
+        "url": "https://retuned.app/manifest",
+        "enabled": true,
+        "checkAutomatically": "ON_LOAD",
+        "fallbackToCacheTimeout": 5000
+      },
       "ios": {
         "supportsTablet": true,
         "bundleIdentifier": "com.subconsciousrewire.app",
+        "buildNumber": "4",
+        "usesAppleSignIn": true,
         "infoPlist": {
           "NSMicrophoneUsageDescription": "This app needs access to your microphone to record your voice for personalized affirmations.",
           "UIBackgroundModes": [
             "audio"
+          ],
+          "ITSAppUsesNonExemptEncryption": false
+        },
+        "privacyManifests": {
+          "NSPrivacyAccessedAPITypes": [
+            {
+              "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+              "NSPrivacyAccessedAPITypeReasons": [
+                "CA92.1"
+              ]
+            },
+            {
+              "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryFileTimestamp",
+              "NSPrivacyAccessedAPITypeReasons": [
+                "C617.1"
+              ]
+            }
           ]
         }
       },
       "android": {
         "adaptiveIcon": {
-          "backgroundColor": "#4A90E2",
-          "foregroundImage": "./assets/images/icon.jpg",
-          "foregroundImageUrl": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev/assets/./assets/images/icon.jpg"
+          "backgroundColor": "#0F1C3F",
+          "foregroundImage": "./assets/images/icon-light-1024x1024.png",
+          "foregroundImageUrl": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev/assets/./assets/images/icon-light-1024x1024.png"
         },
         "edgeToEdgeEnabled": true,
         "predictiveBackGestureEnabled": false,
@@ -47,16 +73,16 @@
       },
       "web": {
         "output": "single",
-        "favicon": "./assets/images/icon.jpg"
+        "favicon": "./assets/images/icon-light-1024x1024.png"
       },
       "plugins": [
         [
           "expo-splash-screen",
           {
-            "image": "./assets/images/splash-icon.jpg",
+            "image": "./assets/images/icon-dark-1024x1024.png",
             "imageWidth": 200,
             "resizeMode": "contain",
-            "backgroundColor": "#F8FAFB",
+            "backgroundColor": "#E8EDF2",
             "dark": {
               "backgroundColor": "#1A1A2E"
             }
@@ -66,7 +92,7 @@
         [
           "expo-av",
           {
-            "microphonePermission": "Allow ReWired to access your microphone to record personalized affirmations."
+            "microphonePermission": "Allow Retuned to access your microphone to record personalized affirmations."
           }
         ]
       ],
@@ -101,9 +127,9 @@
         "web"
       ],
       "androidStatusBar": {
-        "backgroundColor": "#F8FAFB"
+        "backgroundColor": "#E8EDF2"
       },
-      "iconUrl": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev/assets/./assets/images/icon.jpg",
+      "iconUrl": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev/assets/./assets/images/icon-light-1024x1024.png",
       "hostUri": "ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev:5000/android"
     },
     "expoGo": {
@@ -117,6 +143,6 @@
       },
       "mainModuleName": "client/index"
     },
-    "scopeKey": "@anonymous/subconscious-rewire-e22f1ab4-fb82-4813-8d08-bc6a996c7ef8"
+    "scopeKey": "@anonymous/subconscious-rewire-1cb845ef-6a70-4be8-80d0-316973639caa"
   }
 }

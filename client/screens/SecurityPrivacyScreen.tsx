@@ -27,32 +27,31 @@ interface SecuritySectionProps {
   iconColor: string;
   iconBgColor: string;
   title: string;
-  subtitle: string;
-  description: string;
-  highlight: string;
+  points: string[];
 }
 
-function SecuritySection({ icon, iconColor, iconBgColor, title, subtitle, description, highlight }: SecuritySectionProps) {
+function SecuritySection({ icon, iconColor, iconBgColor, title, points }: SecuritySectionProps) {
   const { theme } = useTheme();
   
   return (
     <View style={[styles.sectionCard, { backgroundColor: theme.cardBackground }]}>
       <View style={styles.sectionHeader}>
         <View style={[styles.sectionIcon, { backgroundColor: iconBgColor }]}>
-          <Feather name={icon as any} size={24} color={iconColor} />
+          <Feather name={icon as any} size={22} color={iconColor} />
         </View>
-        <View style={styles.sectionTitleContainer}>
-          <ThemedText type="body" style={styles.sectionTitle}>{title}</ThemedText>
-          <ThemedText type="small" style={{ color: theme.textSecondary }}>{subtitle}</ThemedText>
-        </View>
+        <ThemedText type="body" style={styles.sectionTitle}>{title}</ThemedText>
       </View>
       <View style={styles.sectionBody}>
-        <ThemedText type="body" style={[styles.highlightText, { color: theme.primary }]}>
-          {highlight}
-        </ThemedText>
-        <ThemedText type="small" style={[styles.descriptionText, { color: theme.textSecondary }]}>
-          {description}
-        </ThemedText>
+        {points.map((point, index) => (
+          <View key={index} style={styles.pointRow}>
+            <View style={[styles.pointDot, { backgroundColor: iconColor + "40" }]}>
+              <Feather name="check" size={12} color={iconColor} />
+            </View>
+            <ThemedText type="small" style={[styles.pointText, { color: theme.textSecondary }]}>
+              {point}
+            </ThemedText>
+          </View>
+        ))}
       </View>
     </View>
   );
@@ -111,49 +110,48 @@ export default function SecurityPrivacyScreen() {
 
   const sections: SecuritySectionProps[] = [
     {
-      icon: "lock",
-      iconColor: "#C9A227",
-      iconBgColor: "#C9A22720",
-      title: "Data Protection",
-      subtitle: "passwords, sessions",
-      highlight: "Your Replit PostgreSQL database",
-      description: "Passwords are hashed with bcrypt before storage",
-    },
-    {
       icon: "mic",
       iconColor: "#6366F1",
       iconBgColor: "#6366F120",
-      title: "Voice Data Security",
-      subtitle: "voice samples, cloned voice IDs",
-      highlight: "ElevenLabs cloud",
-      description: "When users upload voice samples for cloning, ElevenLabs stores and processes them to create the cloned voice",
+      title: "Voice Privacy",
+      points: [
+        "Voice recordings are used only for cloning and immediately deleted afterward",
+        "Your cloned voice is stored securely with our voice technology partner and can be fully removed at any time",
+        "Stock AI voices are generated on demand — no personal data is stored",
+      ],
     },
     {
-      icon: "database",
+      icon: "lock",
+      iconColor: "#C9A227",
+      iconBgColor: "#C9A22720",
+      title: "Data Security",
+      points: [
+        "All data is encrypted in transit using HTTPS/TLS",
+        "Passwords are securely hashed — we never store them in plain text",
+        "Your affirmations and personal content are isolated to your account only",
+      ],
+    },
+    {
+      icon: "eye-off",
       iconColor: "#10B981",
       iconBgColor: "#10B98120",
-      title: "Data Isolation",
-      subtitle: "affirmations, personal data",
-      highlight: "Your Replit PostgreSQL database",
-      description: "All user content stays in your database",
+      title: "What We Don't Do",
+      points: [
+        "We never sell or share your data with third parties",
+        "Your personal goals are used only to generate your affirmation, then immediately discarded",
+        "We don't track you across other apps or websites",
+      ],
     },
     {
-      icon: "shield",
+      icon: "user-check",
       iconColor: "#F59E0B",
       iconBgColor: "#F59E0B20",
-      title: "Encryption",
-      subtitle: "TLS/HTTPS",
-      highlight: "Replit infrastructure",
-      description: "Handles the HTTPS encryption in transit",
-    },
-    {
-      icon: "trash-2",
-      iconColor: "#EF4444",
-      iconBgColor: "#EF444420",
-      title: "Your Control",
-      subtitle: "deletion rights",
-      highlight: "Applies to both your database and ElevenLabs",
-      description: "Your database (which you control) and ElevenLabs (cloned voices can be deleted via their API)",
+      title: "You're in Control",
+      points: [
+        "Delete all your data at any time — account, affirmations, voice clone, everything",
+        "We collect only what's needed: account info, your affirmations, and basic usage stats",
+        "No hidden data collection or surprise analytics",
+      ],
     },
   ];
 
@@ -187,9 +185,9 @@ export default function SecurityPrivacyScreen() {
           <View style={[styles.heroIcon, { backgroundColor: theme.primary + "30" }]}>
             <Feather name="shield" size={40} color={theme.primary} />
           </View>
-          <ThemedText type="h4" style={styles.heroTitle}>Your data protection is our priority</ThemedText>
+          <ThemedText type="h4" style={styles.heroTitle}>Your privacy is built in, not bolted on</ThemedText>
           <ThemedText type="small" style={[styles.heroSubtitle, { color: theme.textSecondary }]}>
-            Here's exactly where your data lives and how it's protected
+            Here's how we protect your voice, your words, and your data
           </ThemedText>
         </View>
 
@@ -199,47 +197,6 @@ export default function SecurityPrivacyScreen() {
           ))}
         </View>
 
-        <View style={[styles.assuranceCard, { backgroundColor: theme.cardBackground }]}>
-          <ThemedText type="body" style={[styles.assuranceTitle, { color: theme.text }]}>
-            Our Commitment to You
-          </ThemedText>
-          <View style={styles.assuranceList}>
-            <View style={styles.assuranceItem}>
-              <View style={[styles.checkIcon, { backgroundColor: "#10B98120" }]}>
-                <Feather name="check" size={14} color="#10B981" />
-              </View>
-              <ThemedText type="small" style={{ color: theme.textSecondary, flex: 1 }}>
-                We collect only what's needed to power your experience: account info, affirmations, voice samples, and usage stats
-              </ThemedText>
-            </View>
-            <View style={styles.assuranceItem}>
-              <View style={[styles.checkIcon, { backgroundColor: "#10B98120" }]}>
-                <Feather name="check" size={14} color="#10B981" />
-              </View>
-              <ThemedText type="small" style={{ color: theme.textSecondary, flex: 1 }}>
-                We never sell or share your data to third parties
-              </ThemedText>
-            </View>
-            <View style={styles.assuranceItem}>
-              <View style={[styles.checkIcon, { backgroundColor: "#10B98120" }]}>
-                <Feather name="check" size={14} color="#10B981" />
-              </View>
-              <ThemedText type="small" style={{ color: theme.textSecondary, flex: 1 }}>
-                You can delete all your data at any time
-              </ThemedText>
-            </View>
-            <View style={styles.assuranceItem}>
-              <View style={[styles.checkIcon, { backgroundColor: "#10B98120" }]}>
-                <Feather name="check" size={14} color="#10B981" />
-              </View>
-              <ThemedText type="small" style={{ color: theme.textSecondary, flex: 1 }}>
-                Voice data can be removed from ElevenLabs
-              </ThemedText>
-            </View>
-          </View>
-        </View>
-
-        {/* Delete My Data Section */}
         <View style={[styles.deleteSection, { backgroundColor: "#EF444410", borderColor: "#EF444430" }]}>
           <View style={styles.deleteSectionHeader}>
             <View style={[styles.deleteIcon, { backgroundColor: "#EF444420" }]}>
@@ -270,7 +227,6 @@ export default function SecurityPrivacyScreen() {
         </View>
       </ScrollView>
 
-      {/* Delete Confirmation Modal */}
       <Modal
         visible={showDeleteModal}
         transparent
@@ -415,59 +371,40 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   sectionIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
     marginRight: Spacing.md,
   },
-  sectionTitleContainer: {
-    flex: 1,
-  },
   sectionTitle: {
     fontFamily: "Nunito_700Bold",
+    flex: 1,
   },
   sectionBody: {
-    paddingLeft: 48 + Spacing.md,
-  },
-  highlightText: {
-    fontFamily: "Nunito_700Bold",
-    marginBottom: Spacing.xs,
-  },
-  descriptionText: {
-    lineHeight: 20,
-  },
-  assuranceCard: {
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
-  },
-  assuranceTitle: {
-    fontFamily: "Nunito_700Bold",
-    marginBottom: Spacing.md,
-    textAlign: "center",
-  },
-  assuranceList: {
     gap: Spacing.sm,
   },
-  assuranceItem: {
+  pointRow: {
     flexDirection: "row",
     alignItems: "flex-start",
     gap: Spacing.sm,
   },
-  checkIcon: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+  pointDot: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 1,
+    marginTop: 2,
   },
-  // Delete section styles
+  pointText: {
+    flex: 1,
+    lineHeight: 20,
+  },
   deleteSection: {
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
-    marginTop: Spacing.xl,
     borderWidth: 1,
   },
   deleteSectionHeader: {
@@ -494,7 +431,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: BorderRadius.md,
   },
-  // Modal styles
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.7)",

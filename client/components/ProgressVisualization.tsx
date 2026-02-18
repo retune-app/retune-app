@@ -63,7 +63,7 @@ export function ProgressVisualization({
       const prevLevel = getMilestoneLevel(previousSessionsRef.current);
       const newLevel = getMilestoneLevel(breathingSessions);
       if (prevLevel !== newLevel) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
       }
     }
     previousSessionsRef.current = breathingSessions;

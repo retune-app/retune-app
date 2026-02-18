@@ -56,6 +56,15 @@ export function getApiUrl(): string {
   return url.href.replace(/\/$/, "");
 }
 
+function logApiError(context: string, method: string, url: string, status: number, body: string) {
+  const isHtml = body.startsWith("<!") || body.startsWith("<html");
+  console.error(
+    `[API ${context}] ${method} ${url} → ${status}` +
+    (isHtml ? " (server returned HTML instead of JSON — possible server crash or misconfiguration)" : ""),
+    { status, bodyPreview: body.substring(0, 200) }
+  );
+}
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
@@ -76,20 +85,30 @@ export async function apiRequest(
     headers["Content-Type"] = "application/json";
   }
   
-  // Add auth token if available
   const authToken = getAuthToken();
   if (authToken) {
     headers["X-Auth-Token"] = authToken;
   }
 
-  const res = await fetch(url, {
-    method,
-    headers,
-    body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
-  });
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method,
+      headers,
+      body: data ? JSON.stringify(data) : undefined,
+      credentials: "include",
+    });
+  } catch (err) {
+    console.error(`[API network] ${method} ${url.pathname} failed — server unreachable`, err);
+    throw new Error("Unable to connect. Please check your connection and try again.");
+  }
 
-  await throwIfResNotOk(res);
+  if (!res.ok) {
+    const text = (await res.text()) || res.statusText;
+    logApiError("mutation", method, url.pathname, res.status, text);
+    throw new Error(`${res.status}: ${text}`);
+  }
+
   return res;
 }
 
@@ -102,23 +121,33 @@ export const getQueryFn: <T>(options: {
     const baseUrl = getApiUrl();
     const url = new URL(queryKey.join("/") as string, baseUrl);
 
-    // Build headers with auth token if available
     const headers: Record<string, string> = {};
     const authToken = getAuthToken();
     if (authToken) {
       headers["X-Auth-Token"] = authToken;
     }
 
-    const res = await fetch(url, {
-      credentials: "include",
-      headers,
-    });
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        credentials: "include",
+        headers,
+      });
+    } catch (err) {
+      console.error(`[API network] GET ${url.pathname} failed — server unreachable`, err);
+      throw new Error("Unable to connect. Please check your connection and try again.");
+    }
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
       return null;
     }
 
-    await throwIfResNotOk(res);
+    if (!res.ok) {
+      const text = (await res.text()) || res.statusText;
+      logApiError("query", "GET", url.pathname, res.status, text);
+      throw new Error(`${res.status}: ${text}`);
+    }
+
     return await res.json();
   };
 

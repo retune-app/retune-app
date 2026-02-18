@@ -9,9 +9,15 @@ export interface BreathingTechnique {
   phases: {
     phase: BreathPhase;
     duration: number;
+    instruction?: string;
   }[];
   benefits: string;
   color: string;
+  scienceTip: string;
+  detailedBenefits: {
+    icon: string;
+    text: string;
+  }[];
 }
 
 export const BREATHING_TECHNIQUES: BreathingTechnique[] = [
@@ -29,6 +35,13 @@ export const BREATHING_TECHNIQUES: BreathingTechnique[] = [
     ],
     benefits: "Focus & grounding",
     color: "#50C9B0",
+    scienceTip: "Equal rhythm activates your parasympathetic system — your body's built-in calm response",
+    detailedBenefits: [
+      { icon: "target", text: "Sharpens focus and mental clarity" },
+      { icon: "anchor", text: "Grounds you in the present moment" },
+      { icon: "shield", text: "Reduces stress and anxiety" },
+      { icon: "battery-charging", text: "Resets your nervous system" },
+    ],
   },
   {
     id: "478",
@@ -43,6 +56,13 @@ export const BREATHING_TECHNIQUES: BreathingTechnique[] = [
     ],
     benefits: "Sleep & relaxation",
     color: "#7B68EE",
+    scienceTip: "The extended exhale signals safety to your nervous system, slowing your heart rate naturally",
+    detailedBenefits: [
+      { icon: "moon", text: "Promotes deep, restful sleep" },
+      { icon: "heart", text: "Lowers heart rate and blood pressure" },
+      { icon: "wind", text: "Releases physical tension" },
+      { icon: "smile", text: "Eases anxiety and racing thoughts" },
+    ],
   },
   {
     id: "coherent",
@@ -56,13 +76,62 @@ export const BREATHING_TECHNIQUES: BreathingTechnique[] = [
     ],
     benefits: "Heart coherence",
     color: "#C9A227",
+    scienceTip: "5-5 rhythm synchronizes your heart and brain waves for optimal balance",
+    detailedBenefits: [
+      { icon: "heart", text: "Synchronizes heart and brain rhythms" },
+      { icon: "activity", text: "Improves heart rate variability" },
+      { icon: "sunrise", text: "Creates emotional balance" },
+      { icon: "zap", text: "Boosts overall resilience" },
+    ],
+  },
+  {
+    id: "energizing",
+    name: "Energizing Breath",
+    description: "Quick 2-1 rhythm to boost energy and alertness",
+    pattern: "2-1 seconds",
+    icon: "zap",
+    phases: [
+      { phase: "inhale", duration: 2 },
+      { phase: "exhale", duration: 1 },
+    ],
+    benefits: "Energy & alertness",
+    color: "#E85D5D",
+    scienceTip: "Quick breathing floods your system with oxygen for a natural energy boost",
+    detailedBenefits: [
+      { icon: "zap", text: "Provides a natural energy boost" },
+      { icon: "eye", text: "Heightens alertness and awareness" },
+      { icon: "cpu", text: "Increases oxygen to the brain" },
+      { icon: "trending-up", text: "Elevates mood and motivation" },
+    ],
+  },
+  {
+    id: "alternate",
+    name: "Alternate Nostril",
+    description: "Nadi Shodhana — alternating sides for balance",
+    pattern: "4-4-4-4 seconds",
+    icon: "repeat",
+    phases: [
+      { phase: "inhale", duration: 4, instruction: "Close right nostril \u2014 inhale left" },
+      { phase: "exhale", duration: 4, instruction: "Close left nostril \u2014 exhale right" },
+      { phase: "inhale", duration: 4, instruction: "Keep left closed \u2014 inhale right" },
+      { phase: "exhale", duration: 4, instruction: "Close right nostril \u2014 exhale left" },
+    ],
+    benefits: "Balance & mental clarity",
+    color: "#5B9BD5",
+    scienceTip: "Alternating airflow activates both brain hemispheres, balancing your autonomic nervous system",
+    detailedBenefits: [
+      { icon: "git-merge", text: "Balances left and right brain hemispheres" },
+      { icon: "wind", text: "Calms the nervous system deeply" },
+      { icon: "sun", text: "Sharpens focus and mental clarity" },
+      { icon: "heart", text: "Improves emotional stability" },
+    ],
   },
 ];
 
 export const PHASE_LABELS: Record<BreathPhase, string> = {
-  inhale: "Breathe In",
+  inhale: "Inhale",
   holdIn: "Hold",
-  exhale: "Breathe Out",
+  exhale: "Exhale",
   holdOut: "Hold",
 };
 

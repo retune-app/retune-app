@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { FlatList, View, StyleSheet, RefreshControl, TextInput, Modal, Pressable, Alert, ImageBackground, Platform } from "react-native";
-import Animated, { FadeInUp } from "react-native-reanimated";
+import Animated, { FadeInUp, useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming, Easing, interpolate } from "react-native-reanimated";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BlurView } from "expo-blur";
 
@@ -21,10 +21,11 @@ import { EmptyState } from "@/components/EmptyState";
 import { SwipeableAffirmationCard } from "@/components/SwipeableAffirmationCard";
 import { CategoryChip } from "@/components/CategoryChip";
 import { LibraryTip } from "@/components/LibraryTip";
-import { FloatingSettingsButton } from "@/components/FloatingSettingsButton";
+import { MoodCheckin } from "@/components/MoodCheckin";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAudio } from "@/contexts/AudioContext";
+import { useBackgroundMusic, BACKGROUND_MUSIC_OPTIONS } from "@/contexts/BackgroundMusicContext";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { apiRequest } from "@/lib/query-client";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
@@ -32,6 +33,8 @@ import type { Affirmation } from "@shared/schema";
 import { PILLAR_LIST, getPillarColor } from "@shared/pillars";
 
 const PILLAR_FILTERS = ["All", "Favorites", ...PILLAR_LIST];
+
+const SeparatorComponent = () => <View style={styles.separator} />;
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -46,11 +49,16 @@ export default function HomeScreen() {
   const { theme, isDark } = useTheme();
   const { user } = useAuth();
   const navigation = useNavigation<NavigationProp>();
+
+  const { data: voiceStatus } = useQuery<{ hasPersonalVoice: boolean; hasClonedVoice: boolean }>({ queryKey: ["/api/voice-samples/status"] });
+  const { data: voicePrefs } = useQuery<{ preferredVoiceType: string; hasPersonalVoice: boolean }>({ queryKey: ["/api/voice-preferences"] });
   const route = useRoute<RouteProp<HomeScreenRouteParams, 'Home'>>();
-  const { playAffirmation, currentAffirmation, isPlaying, togglePlayPause, breathingAffirmation, setBreathingAffirmation, highlightAffirmationId, clearHighlightAffirmation } = useAudio();
+  const { playAffirmation, currentAffirmation, isPlaying, togglePlayPause, breathingAffirmation, setBreathingAffirmation, highlightAffirmationId, clearHighlightAffirmation, recommendedAffirmationId, clearRecommendedAffirmation } = useAudio();
+  const { selectedMusic } = useBackgroundMusic();
   
   const flatListRef = useRef<FlatList<Affirmation>>(null);
   const [highlightedAffirmationId, setHighlightedAffirmationId] = useState<number | null>(null);
+  const [recommendedHighlightId, setRecommendedHighlightId] = useState<number | null>(null);
 
   const queryClient = useQueryClient();
   const [selectedPillar, setSelectedPillar] = useState("All");
@@ -62,6 +70,29 @@ export default function HomeScreen() {
   const [hapticEnabled, setHapticEnabled] = useState(true);
   const [showSwipeTip, setShowSwipeTip] = useState(false);
   const [backgroundWallpaperEnabled, setBackgroundWallpaperEnabled] = useState(false);
+  const [isFirstPlay, setIsFirstPlay] = useState(false);
+  const [firstPlayTriggered, setFirstPlayTriggered] = useState(false);
+  const [showMoodCheckin, setShowMoodCheckin] = useState(false);
+  const [hasBackfilled, setHasBackfilled] = useState(false);
+
+  const moodGlowPulse = useSharedValue(0);
+  useEffect(() => {
+    moodGlowPulse.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 1800, easing: Easing.inOut(Easing.sin) }),
+        withTiming(0, { duration: 1800, easing: Easing.inOut(Easing.sin) })
+      ),
+      -1
+    );
+  }, []);
+  const moodGlowStyle = useAnimatedStyle(() => ({
+    shadowColor: '#C9A227',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: interpolate(moodGlowPulse.value, [0, 1], [0.2, 0.6]),
+    shadowRadius: interpolate(moodGlowPulse.value, [0, 1], [4, 14]),
+    elevation: interpolate(moodGlowPulse.value, [0, 1], [3, 8]),
+    transform: [{ scale: interpolate(moodGlowPulse.value, [0, 1], [1, 1.05]) }],
+  }));
 
   useEffect(() => {
     AsyncStorage.getItem("@settings/hapticEnabled").then((value) => {
@@ -69,9 +100,18 @@ export default function HomeScreen() {
         setHapticEnabled(value === "true");
       }
     });
-    AsyncStorage.getItem("@tips/librarySwipe").then((value) => {
-      if (value === null) {
+    AsyncStorage.getItem("@tips/librarySwipeCount").then((value) => {
+      const count = value ? parseInt(value, 10) : 0;
+      if (count < 3) {
         setShowSwipeTip(true);
+        AsyncStorage.setItem("@tips/librarySwipeCount", String(count + 1));
+      }
+    });
+    AsyncStorage.getItem("@play/firstPlayCount").then((value) => {
+      const count = value ? parseInt(value, 10) : 0;
+      if (count < 3) {
+        setIsFirstPlay(true);
+        AsyncStorage.setItem("@play/firstPlayCount", String(count + 1));
       }
     });
   }, []);
@@ -86,12 +126,26 @@ export default function HomeScreen() {
 
   const dismissSwipeTip = useCallback(() => {
     setShowSwipeTip(false);
-    AsyncStorage.setItem("@tips/librarySwipe", "seen");
+    AsyncStorage.setItem("@tips/librarySwipeCount", "99");
   }, []);
 
   const { data: affirmations = [], refetch, isLoading } = useQuery<Affirmation[]>({
     queryKey: ["/api/affirmations"],
   });
+
+  useEffect(() => {
+    if (affirmations.length > 0 && !hasBackfilled) {
+      const needsBackfill = affirmations.some(a => !a.description);
+      if (needsBackfill) {
+        setHasBackfilled(true);
+        apiRequest("POST", "/api/affirmations/backfill-descriptions")
+          .then(() => {
+            refetch();
+          })
+          .catch(console.error);
+      }
+    }
+  }, [affirmations, hasBackfilled]);
 
   // Handle context-based highlight request for affirmation
   useEffect(() => {
@@ -111,11 +165,11 @@ export default function HomeScreen() {
         }, 500);
       }
       
-      // Clear highlight after 3.5 seconds
+      // Clear highlight after 2 seconds
       setTimeout(() => {
         setHighlightedAffirmationId(null);
         clearHighlightAffirmation();
-      }, 3500);
+      }, 2000);
     }
   }, [highlightAffirmationId, affirmations, clearHighlightAffirmation]);
 
@@ -137,9 +191,51 @@ export default function HomeScreen() {
         setTimeout(() => {
           setHighlightedAffirmationId(null);
           clearHighlightAffirmation();
-        }, 3500);
+        }, 2000);
       }
     }, [highlightAffirmationId, affirmations, highlightedAffirmationId, clearHighlightAffirmation])
+  );
+
+  useEffect(() => {
+    if (recommendedAffirmationId && affirmations.length > 0) {
+      setSelectedPillar("All");
+      setSearchQuery("");
+      setRecommendedHighlightId(recommendedAffirmationId);
+
+      const index = affirmations.findIndex(a => a.id === recommendedAffirmationId);
+      if (index !== -1 && flatListRef.current) {
+        setTimeout(() => {
+          flatListRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.3 });
+        }, 500);
+      }
+
+      setTimeout(() => {
+        setRecommendedHighlightId(null);
+        clearRecommendedAffirmation();
+      }, 2000);
+    }
+  }, [recommendedAffirmationId, affirmations, clearRecommendedAffirmation]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (recommendedAffirmationId && affirmations.length > 0 && !recommendedHighlightId) {
+        setSelectedPillar("All");
+        setSearchQuery("");
+        setRecommendedHighlightId(recommendedAffirmationId);
+
+        const index = affirmations.findIndex(a => a.id === recommendedAffirmationId);
+        if (index !== -1 && flatListRef.current) {
+          setTimeout(() => {
+            flatListRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.3 });
+          }, 300);
+        }
+
+        setTimeout(() => {
+          setRecommendedHighlightId(null);
+          clearRecommendedAffirmation();
+        }, 2000);
+      }
+    }, [recommendedAffirmationId, affirmations, recommendedHighlightId, clearRecommendedAffirmation])
   );
 
   const suggestedAffirmation = useMemo(() => {
@@ -190,35 +286,40 @@ export default function HomeScreen() {
     setRefreshing(false);
   }, [refetch]);
 
-  // Filter by pillar, favorites, and search
-  const filteredAffirmations = affirmations.filter((item) => {
+  const filteredAffirmations = useMemo(() => affirmations.filter((item) => {
     const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesFavorites = selectedPillar === "Favorites" ? item.isFavorite : true;
     const matchesPillar = selectedPillar === "All" || selectedPillar === "Favorites" || item.pillar === selectedPillar;
     return matchesSearch && matchesFavorites && matchesPillar;
-  });
+  }), [affirmations, searchQuery, selectedPillar]);
 
-  const handleAffirmationPress = (id: number) => {
-    navigation.navigate("Player", { affirmationId: id });
-  };
+  const handleAffirmationPress = useCallback((id: number) => {
+    navigation.navigate("Player", { affirmationId: id, autoPlay: true });
+  }, [navigation]);
 
-  const handlePlayPress = async (affirmation: Affirmation) => {
+  const handlePlayPress = useCallback(async (affirmation: Affirmation) => {
     if (currentAffirmation?.id === affirmation.id) {
       await togglePlayPause();
     } else {
+      if (isFirstPlay && !firstPlayTriggered) {
+        setFirstPlayTriggered(true);
+        setIsFirstPlay(false);
+        AsyncStorage.setItem("@play/firstPlay", "done").catch(() => {});
+        try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
+      }
       await playAffirmation(affirmation);
     }
-  };
+  }, [currentAffirmation?.id, togglePlayPause, isFirstPlay, firstPlayTriggered, playAffirmation]);
 
   const handleCreatePress = () => {
     navigation.navigate("Create");
   };
 
-  const handleRenamePress = (affirmation: Affirmation) => {
+  const handleRenamePress = useCallback((affirmation: Affirmation) => {
     setAffirmationToRename(affirmation);
     setNewTitle(affirmation.title);
     setRenameModalVisible(true);
-  };
+  }, []);
 
   const handleRenameSave = () => {
     if (affirmationToRename && newTitle.trim()) {
@@ -236,13 +337,69 @@ export default function HomeScreen() {
     navigation.navigate("Main", { screen: "SettingsTab" } as any);
   };
 
-  const FIXED_HEADER_HEIGHT = 110;
+  const FIXED_HEADER_HEIGHT = 135;
+
+  const [showVoiceNudge, setShowVoiceNudge] = useState(false);
+  const [voiceNudgeDismissed, setVoiceNudgeDismissed] = useState(false);
+
+  useEffect(() => {
+    if (user && !user.hasVoiceSample && !voiceNudgeDismissed) {
+      AsyncStorage.getItem("@nudge/voiceCloneDismissed").then((value) => {
+        if (value !== "true") {
+          setShowVoiceNudge(true);
+        }
+      });
+    } else if (user?.hasVoiceSample) {
+      setShowVoiceNudge(false);
+    }
+  }, [user, voiceNudgeDismissed]);
+
+  const dismissVoiceNudge = useCallback(() => {
+    setShowVoiceNudge(false);
+    setVoiceNudgeDismissed(true);
+    AsyncStorage.setItem("@nudge/voiceCloneDismissed", "true").catch(() => {});
+  }, []);
+
+  const handleVoiceNudgeAction = useCallback(() => {
+    navigation.navigate("VoiceSetup");
+  }, [navigation]);
 
   const renderHeader = () => (
     <View style={styles.headerContent}>
-      {filteredAffirmations.length > 0 && (
-        <LibraryTip visible={showSwipeTip} onDismiss={dismissSwipeTip} />
-      )}
+      {showVoiceNudge ? (
+        <Animated.View entering={FadeInUp.delay(300).duration(500)}>
+          <Pressable
+            onPress={handleVoiceNudgeAction}
+            style={[styles.voiceNudgeCard, { backgroundColor: isDark ? '#1A2D4F' : '#FFFFFF', borderColor: isDark ? 'rgba(229,201,92,0.3)' : 'rgba(201,162,39,0.2)' }]}
+            testID="card-voice-nudge"
+          >
+            <View style={styles.voiceNudgeIcon}>
+              <LinearGradient
+                colors={['#E5C95C', '#C9A227']}
+                style={styles.voiceNudgeIconGradient}
+              >
+                <Feather name="mic" size={20} color="#0F1C3F" />
+              </LinearGradient>
+            </View>
+            <View style={styles.voiceNudgeContent}>
+              <ThemedText type="h4" style={{ color: theme.text }}>
+                Hear these in your voice
+              </ThemedText>
+              <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                Clone your voice in 60 seconds. It's like magic.
+              </ThemedText>
+            </View>
+            <Pressable
+              onPress={dismissVoiceNudge}
+              hitSlop={12}
+              style={styles.voiceNudgeDismiss}
+              testID="button-dismiss-voice-nudge"
+            >
+              <Feather name="x" size={16} color={theme.textSecondary} />
+            </Pressable>
+          </Pressable>
+        </Animated.View>
+      ) : null}
     </View>
   );
 
@@ -261,11 +418,12 @@ export default function HomeScreen() {
         {/* Search bar with settings button */}
         <View style={styles.searchRow}>
           <Pressable
-            onPress={handleSettingsPress}
-            style={[styles.headerSettingsButton, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder }]}
-            testID="button-header-settings"
+            onPress={() => setShowMoodCheckin(true)}
+            testID="button-header-mood-checkin"
           >
-            <Feather name="settings" size={20} color={theme.gold} />
+            <Animated.View style={[styles.headerIconButton, { backgroundColor: `${theme.gold}18`, borderColor: `${theme.gold}40` }, moodGlowStyle]}>
+              <Feather name="smile" size={17} color={theme.gold} />
+            </Animated.View>
           </Pressable>
           <View style={[styles.searchContainer, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder }]}>
             <Feather name="search" size={18} color={theme.placeholder} />
@@ -278,6 +436,77 @@ export default function HomeScreen() {
               testID="input-search"
             />
           </View>
+          <Pressable
+            onPress={handleSettingsPress}
+            style={[styles.headerIconButton, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder }]}
+            testID="button-header-settings"
+          >
+            <Feather name="settings" size={17} color={theme.gold} />
+          </Pressable>
+        </View>
+        <View style={styles.badgeRow}>
+          <Pressable
+            onPress={() => navigation.navigate("VoiceSettings")}
+            style={[
+              styles.voiceBadge,
+              {
+                backgroundColor: (voicePrefs?.preferredVoiceType === 'personal' && voicePrefs?.hasPersonalVoice)
+                  ? (isDark ? 'rgba(229, 201, 92, 0.15)' : 'rgba(201, 162, 39, 0.1)')
+                  : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'),
+                borderColor: (voicePrefs?.preferredVoiceType === 'personal' && voicePrefs?.hasPersonalVoice)
+                  ? (isDark ? 'rgba(229, 201, 92, 0.3)' : 'rgba(201, 162, 39, 0.25)')
+                  : (isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)'),
+              },
+            ]}
+            testID="badge-voice-status"
+          >
+            <Feather
+              name={(voicePrefs?.preferredVoiceType === 'personal' && voicePrefs?.hasPersonalVoice) ? "mic" : "cpu"}
+              size={12}
+              color={(voicePrefs?.preferredVoiceType === 'personal' && voicePrefs?.hasPersonalVoice) ? '#C9A227' : theme.textSecondary}
+            />
+            <ThemedText
+              style={[
+                styles.voiceBadgeText,
+                {
+                  color: (voicePrefs?.preferredVoiceType === 'personal' && voicePrefs?.hasPersonalVoice) ? '#C9A227' : theme.textSecondary,
+                },
+              ]}
+            >
+              {(voicePrefs?.preferredVoiceType === 'personal' && voicePrefs?.hasPersonalVoice) ? "Inner Voice Active" : "AI Voice"}
+            </ThemedText>
+          </Pressable>
+          <Pressable
+            onPress={() => navigation.navigate("SoundLibrary")}
+            style={[
+              styles.voiceBadge,
+              {
+                backgroundColor: selectedMusic !== 'none'
+                  ? (isDark ? 'rgba(129, 178, 154, 0.15)' : 'rgba(129, 178, 154, 0.1)')
+                  : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'),
+                borderColor: selectedMusic !== 'none'
+                  ? (isDark ? 'rgba(129, 178, 154, 0.3)' : 'rgba(129, 178, 154, 0.25)')
+                  : (isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)'),
+              },
+            ]}
+            testID="badge-ambient-sound"
+          >
+            <Feather
+              name={selectedMusic !== 'none' ? (BACKGROUND_MUSIC_OPTIONS.find(o => o.id === selectedMusic)?.icon as any || 'volume-2') : 'volume-x'}
+              size={12}
+              color={selectedMusic !== 'none' ? (isDark ? '#81B29A' : '#5A8F7B') : theme.textSecondary}
+            />
+            <ThemedText
+              style={[
+                styles.voiceBadgeText,
+                {
+                  color: selectedMusic !== 'none' ? (isDark ? '#81B29A' : '#5A8F7B') : theme.textSecondary,
+                },
+              ]}
+            >
+              {selectedMusic !== 'none' ? (BACKGROUND_MUSIC_OPTIONS.find(o => o.id === selectedMusic)?.name || selectedMusic) : 'No Sound'}
+            </ThemedText>
+          </Pressable>
         </View>
         <FlatList
           horizontal
@@ -317,6 +546,10 @@ export default function HomeScreen() {
 
   const handleSetForBreathing = useCallback((affirmation: Affirmation) => {
     setBreathingAffirmation(affirmation);
+    setHighlightedAffirmationId(affirmation.id);
+    setTimeout(() => {
+      setHighlightedAffirmationId(null);
+    }, 2000);
   }, [setBreathingAffirmation]);
 
   const handleAfterDelete = useCallback((deletedAffirmation: Affirmation) => {
@@ -331,13 +564,19 @@ export default function HomeScreen() {
     }
   }, [breathingAffirmation, affirmations, setBreathingAffirmation]);
 
-  const renderItem = ({ item, index }: { item: Affirmation; index: number }) => {
+  const renderItem = useCallback(({ item, index }: { item: Affirmation; index: number }) => {
     const isCurrentlyPlaying = currentAffirmation?.id === item.id && isPlaying;
     const isBreathingSelected = breathingAffirmation?.id === item.id;
     const isHighlighted = highlightedAffirmationId === item.id;
+    const isRecommended = recommendedHighlightId === item.id;
+    const cardGlowStyle = isRecommended
+      ? [styles.highlightedCard, { borderColor: '#4A9EDE', shadowColor: '#4A9EDE' }]
+      : isHighlighted
+        ? [styles.highlightedCard, { shadowColor: theme.gold }]
+        : undefined;
     return (
       <Animated.View entering={FadeInUp.delay(index * 50).duration(300).springify()}>
-        <View style={isHighlighted ? [styles.highlightedCard, { shadowColor: theme.gold }] : undefined}>
+        <View style={cardGlowStyle}>
           <SwipeableAffirmationCard
             affirmation={item}
             onPress={() => handleAffirmationPress(item.id)}
@@ -353,7 +592,15 @@ export default function HomeScreen() {
         </View>
       </Animated.View>
     );
-  };
+  }, [currentAffirmation?.id, isPlaying, breathingAffirmation?.id, highlightedAffirmationId, recommendedHighlightId, theme.gold, handleAffirmationPress, handlePlayPress, handleRenamePress, handleSetForBreathing, handleAfterDelete, hapticEnabled]);
+
+  const renderFooter = useCallback(() => (
+    showSwipeTip ? (
+      <View style={styles.footerTipContainer}>
+        <LibraryTip visible={showSwipeTip} onDismiss={dismissSwipeTip} />
+      </View>
+    ) : null
+  ), [showSwipeTip, dismissSwipeTip]);
 
   const edgeFadeColors = isDark 
     ? ["rgba(15, 28, 63, 0.95)", "rgba(15, 28, 63, 0)"] as const
@@ -377,6 +624,7 @@ export default function HomeScreen() {
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderItem}
         ListHeaderComponent={renderHeader}
+        ListFooterComponent={renderFooter}
         ListEmptyComponent={renderEmpty}
         onScrollToIndexFailed={(info) => {
           // Handle scroll failure gracefully
@@ -384,7 +632,7 @@ export default function HomeScreen() {
             flatListRef.current?.scrollToIndex({ index: info.index, animated: true });
           }, 100);
         }}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
+        ItemSeparatorComponent={SeparatorComponent}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -456,8 +704,14 @@ export default function HomeScreen() {
         </Pressable>
       </Modal>
 
-      {/* Floating Settings Button */}
-      <FloatingSettingsButton bottomOffset={tabBarHeight + 16} />
+      <MoodCheckin
+        visible={showMoodCheckin}
+        onClose={() => setShowMoodCheckin(false)}
+        onStartBreathing={() => {
+          (navigation as any).navigate("Main", { screen: "BreatheTab" });
+        }}
+        onStartAffirmations={() => {}}
+      />
     </>
   );
 
@@ -515,7 +769,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   headerContent: {
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   fixedHeader: {
     position: "absolute",
@@ -532,7 +786,7 @@ const styles = StyleSheet.create({
   searchRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
     gap: Spacing.sm,
   },
   headerSettingsButton: {
@@ -543,19 +797,27 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  headerIconButton: {
+    width: 36,
+    height: 36,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   searchContainer: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: Spacing.md,
-    height: 44,
+    height: 36,
     borderRadius: BorderRadius.full,
     borderWidth: 1,
   },
   searchInput: {
     flex: 1,
     marginLeft: Spacing.sm,
-    fontSize: 16,
+    fontSize: 15,
   },
   categoriesContainer: {
     paddingVertical: Spacing.xs,
@@ -611,4 +873,54 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   saveButton: {},
+  voiceNudgeCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    marginBottom: Spacing.md,
+    gap: Spacing.md,
+  },
+  voiceNudgeIcon: {
+    flexShrink: 0,
+  },
+  voiceNudgeIconGradient: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  voiceNudgeContent: {
+    flex: 1,
+    gap: 2,
+  },
+  voiceNudgeDismiss: {
+    padding: Spacing.xs,
+    flexShrink: 0,
+  },
+  badgeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+    marginBottom: Spacing.sm,
+  },
+  voiceBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    height: 28,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1,
+    gap: 6,
+  },
+  voiceBadgeText: {
+    fontSize: 12,
+    fontWeight: "500",
+  },
+  footerTipContainer: {
+    marginTop: Spacing.lg,
+    paddingHorizontal: Spacing.xs,
+  },
 });

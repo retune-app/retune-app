@@ -8,6 +8,9 @@ import * as Haptics from "expo-haptics";
 import ProfileScreen from "@/screens/ProfileScreen";
 import SecurityPrivacyScreen from "@/screens/SecurityPrivacyScreen";
 import BenefitsScreen from "@/screens/BenefitsScreen";
+import RemindersScreen from "@/screens/RemindersScreen";
+import PlansScreen from "@/screens/PlansScreen";
+import FeedbackScreen from "@/screens/FeedbackScreen";
 import { useScreenOptions } from "@/hooks/useScreenOptions";
 import { useTheme } from "@/hooks/useTheme";
 
@@ -15,6 +18,9 @@ export type ProfileStackParamList = {
   Settings: { origin?: 'BreatheTab' | 'AffirmTab' };
   SecurityPrivacy: undefined;
   Benefits: undefined;
+  Reminders: undefined;
+  Plans: undefined;
+  Feedback: undefined;
 };
 
 const Stack = createNativeStackNavigator<ProfileStackParamList>();
@@ -63,6 +69,27 @@ export default function ProfileStackNavigator() {
         component={BenefitsScreen}
         options={{
           headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="Reminders"
+        component={RemindersScreen}
+        options={{
+          title: "Daily Reminders",
+        }}
+      />
+      <Stack.Screen
+        name="Plans"
+        component={PlansScreen}
+        options={{
+          title: "Plans",
+        }}
+      />
+      <Stack.Screen
+        name="Feedback"
+        component={FeedbackScreen}
+        options={{
+          title: "Get in Touch",
         }}
       />
     </Stack.Navigator>

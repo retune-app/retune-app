@@ -1,42 +1,312 @@
-import React, { useState, useRef, useEffect } from "react";
-import { View, StyleSheet, Pressable, ImageBackground, ScrollView } from "react-native";
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { View, StyleSheet, Pressable, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
+import { useNavigation } from "@react-navigation/native";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
+import Animated, {
+  FadeIn,
+  FadeInDown,
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withTiming,
+  withSequence,
+  withDelay,
+} from "react-native-reanimated";
 import { Audio } from "expo-av";
+import { LinearGradient } from "expo-linear-gradient";
+import Slider from "@react-native-community/slider";
 
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { useBackgroundMusic, getSoundsByCategory, BackgroundMusicOption, BackgroundMusicType, getAudioFile } from "@/contexts/BackgroundMusicContext";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 
-const profileBackgroundDark = require("../../assets/images/library-background.png");
-const profileBackgroundLight = require("../../assets/images/library-background-light.png");
 
 const ACCENT_GOLD = "#C9A227";
 
 const CATEGORY_INFO = {
-  nature: {
-    title: "Nature Sounds",
-    subtitle: "Immerse yourself in peaceful natural environments",
+  rain: {
+    title: "Rain",
+    subtitle: "Soothing rainfall sounds",
     emoji: "cloud-rain",
-    color: "#4CAF50",
+    color: "#4FC3F7",
   },
-  binaural: {
-    title: "Binaural Beats",
-    subtitle: "Brainwave entrainment for focus & relaxation",
-    emoji: "activity",
-    color: "#9C27B0",
+  ocean: {
+    title: "Ocean",
+    subtitle: "Calming waves & coastal sounds",
+    emoji: "droplet",
+    color: "#29B6F6",
+  },
+  forest: {
+    title: "Forest & Birds",
+    subtitle: "Peaceful natural environments",
+    emoji: "feather",
+    color: "#66BB6A",
+  },
+  meditation: {
+    title: "Meditation",
+    subtitle: "Ambient music for inner peace",
+    emoji: "heart",
+    color: "#E040FB",
   },
   solfeggio: {
     title: "Solfeggio Frequencies",
-    subtitle: "Ancient healing tones for mind & body",
+    subtitle: "Ancient healing tones",
     emoji: "star",
     color: ACCENT_GOLD,
   },
+  binaural: {
+    title: "Binaural Beats",
+    subtitle: "Brainwave entrainment",
+    emoji: "activity",
+    color: "#9C27B0",
+  },
+  noise: {
+    title: "Noise",
+    subtitle: "Ambient noise for focus & sleep",
+    emoji: "radio",
+    color: "#78909C",
+  },
 };
+
+function getCategoryColor(soundId: string): string {
+  if (soundId.startsWith("rain-")) return CATEGORY_INFO.rain.color;
+  if (soundId.startsWith("ocean-")) return CATEGORY_INFO.ocean.color;
+  if (soundId.startsWith("forest-")) return CATEGORY_INFO.forest.color;
+  if (soundId.startsWith("meditation-")) return CATEGORY_INFO.meditation.color;
+  if (soundId.startsWith("solfeggio-")) return CATEGORY_INFO.solfeggio.color;
+  if (soundId.startsWith("binaural-")) return CATEGORY_INFO.binaural.color;
+  if (soundId.startsWith("noise-")) return CATEGORY_INFO.noise.color;
+  return CATEGORY_INFO.rain.color;
+}
+
+function RainAccent() {
+  const drop1Y = useSharedValue(0);
+  const drop2Y = useSharedValue(0);
+  const drop3Y = useSharedValue(0);
+  const drop1Opacity = useSharedValue(0.4);
+  const drop2Opacity = useSharedValue(0.3);
+  const drop3Opacity = useSharedValue(0.35);
+
+  useEffect(() => {
+    drop1Y.value = withRepeat(withTiming(8, { duration: 1200 }), -1, true);
+    drop1Opacity.value = withRepeat(withSequence(withTiming(0.5, { duration: 600 }), withTiming(0.15, { duration: 600 })), -1, true);
+    drop2Y.value = withDelay(400, withRepeat(withTiming(8, { duration: 1400 }), -1, true));
+    drop2Opacity.value = withDelay(400, withRepeat(withSequence(withTiming(0.45, { duration: 700 }), withTiming(0.1, { duration: 700 })), -1, true));
+    drop3Y.value = withDelay(800, withRepeat(withTiming(8, { duration: 1000 }), -1, true));
+    drop3Opacity.value = withDelay(800, withRepeat(withSequence(withTiming(0.5, { duration: 500 }), withTiming(0.15, { duration: 500 })), -1, true));
+  }, []);
+
+  const style1 = useAnimatedStyle(() => ({ transform: [{ translateY: drop1Y.value }], opacity: drop1Opacity.value }));
+  const style2 = useAnimatedStyle(() => ({ transform: [{ translateY: drop2Y.value }], opacity: drop2Opacity.value }));
+  const style3 = useAnimatedStyle(() => ({ transform: [{ translateY: drop3Y.value }], opacity: drop3Opacity.value }));
+
+  const dotStyle = { width: 3, height: 3, borderRadius: 1.5, backgroundColor: "#64B5F6", position: "absolute" as const };
+
+  return (
+    <>
+      <Animated.View style={[dotStyle, { top: 6, left: 10 }, style1]} />
+      <Animated.View style={[dotStyle, { top: 4, right: 12 }, style2]} />
+      <Animated.View style={[dotStyle, { top: 10, left: 22 }, style3]} />
+    </>
+  );
+}
+
+function OceanAccent() {
+  const wave1X = useSharedValue(0);
+  const wave2X = useSharedValue(0);
+
+  useEffect(() => {
+    wave1X.value = withRepeat(withTiming(3, { duration: 2000 }), -1, true);
+    wave2X.value = withDelay(500, withRepeat(withTiming(-3, { duration: 2200 }), -1, true));
+  }, []);
+
+  const style1 = useAnimatedStyle(() => ({ transform: [{ translateX: wave1X.value }], opacity: 0.35 }));
+  const style2 = useAnimatedStyle(() => ({ transform: [{ translateX: wave2X.value }], opacity: 0.25 }));
+
+  return (
+    <>
+      <Animated.View style={[{ position: "absolute", bottom: 4, left: 4, right: 4, height: 2, borderRadius: 1, backgroundColor: "#4FC3F7" }, style1]} />
+      <Animated.View style={[{ position: "absolute", bottom: 8, left: 6, right: 6, height: 1.5, borderRadius: 1, backgroundColor: "#29B6F6" }, style2]} />
+    </>
+  );
+}
+
+function ForestAccent() {
+  const glowScale = useSharedValue(1);
+  const glowOpacity = useSharedValue(0.2);
+
+  useEffect(() => {
+    glowScale.value = withRepeat(withTiming(1.15, { duration: 2000 }), -1, true);
+    glowOpacity.value = withRepeat(withSequence(withTiming(0.4, { duration: 1000 }), withTiming(0.15, { duration: 1000 })), -1, true);
+  }, []);
+
+  const style = useAnimatedStyle(() => ({
+    transform: [{ scale: glowScale.value }],
+    opacity: glowOpacity.value,
+  }));
+
+  return (
+    <Animated.View style={[{
+      position: "absolute", top: -3, left: -3, right: -3, bottom: -3,
+      borderRadius: 27, borderWidth: 2, borderColor: "#66BB6A",
+    }, style]} />
+  );
+}
+
+function WindAccent() {
+  const line1X = useSharedValue(-4);
+  const line2X = useSharedValue(-2);
+  const line3X = useSharedValue(-3);
+
+  useEffect(() => {
+    line1X.value = withRepeat(withTiming(4, { duration: 1500 }), -1, true);
+    line2X.value = withDelay(300, withRepeat(withTiming(3, { duration: 1800 }), -1, true));
+    line3X.value = withDelay(600, withRepeat(withTiming(4, { duration: 1300 }), -1, true));
+  }, []);
+
+  const style1 = useAnimatedStyle(() => ({ transform: [{ translateX: line1X.value }], opacity: 0.35 }));
+  const style2 = useAnimatedStyle(() => ({ transform: [{ translateX: line2X.value }], opacity: 0.25 }));
+  const style3 = useAnimatedStyle(() => ({ transform: [{ translateX: line3X.value }], opacity: 0.3 }));
+
+  const lineBase = { position: "absolute" as const, height: 1.5, borderRadius: 1, backgroundColor: "#90CAF9" };
+
+  return (
+    <>
+      <Animated.View style={[lineBase, { top: 12, left: 6, width: 14 }, style1]} />
+      <Animated.View style={[lineBase, { top: 20, left: 10, width: 12 }, style2]} />
+      <Animated.View style={[lineBase, { top: 28, left: 4, width: 16 }, style3]} />
+    </>
+  );
+}
+
+function SolfeggioAccent({ color }: { color: string }) {
+  const ring1Scale = useSharedValue(1);
+  const ring2Scale = useSharedValue(1);
+  const ring1Opacity = useSharedValue(0.3);
+  const ring2Opacity = useSharedValue(0.2);
+
+  useEffect(() => {
+    ring1Scale.value = withRepeat(withTiming(1.2, { duration: 1800 }), -1, true);
+    ring1Opacity.value = withRepeat(withSequence(withTiming(0.4, { duration: 900 }), withTiming(0.1, { duration: 900 })), -1, true);
+    ring2Scale.value = withDelay(400, withRepeat(withTiming(1.3, { duration: 2200 }), -1, true));
+    ring2Opacity.value = withDelay(400, withRepeat(withSequence(withTiming(0.3, { duration: 1100 }), withTiming(0.05, { duration: 1100 })), -1, true));
+  }, []);
+
+  const style1 = useAnimatedStyle(() => ({ transform: [{ scale: ring1Scale.value }], opacity: ring1Opacity.value }));
+  const style2 = useAnimatedStyle(() => ({ transform: [{ scale: ring2Scale.value }], opacity: ring2Opacity.value }));
+
+  const ringBase = {
+    position: "absolute" as const, borderRadius: 24, borderWidth: 1.5, borderColor: color,
+    justifyContent: "center" as const, alignItems: "center" as const,
+  };
+
+  return (
+    <>
+      <Animated.View style={[ringBase, { top: -2, left: -2, right: -2, bottom: -2 }, style1]} />
+      <Animated.View style={[ringBase, { top: -5, left: -5, right: -5, bottom: -5 }, style2]} />
+    </>
+  );
+}
+
+function BinauralAccent({ color }: { color: string }) {
+  const bar1H = useSharedValue(6);
+  const bar2H = useSharedValue(10);
+  const bar3H = useSharedValue(4);
+  const bar4H = useSharedValue(8);
+
+  useEffect(() => {
+    bar1H.value = withRepeat(withSequence(withTiming(12, { duration: 500 }), withTiming(4, { duration: 500 })), -1, true);
+    bar2H.value = withDelay(150, withRepeat(withSequence(withTiming(14, { duration: 600 }), withTiming(3, { duration: 600 })), -1, true));
+    bar3H.value = withDelay(300, withRepeat(withSequence(withTiming(10, { duration: 450 }), withTiming(5, { duration: 450 })), -1, true));
+    bar4H.value = withDelay(100, withRepeat(withSequence(withTiming(13, { duration: 550 }), withTiming(4, { duration: 550 })), -1, true));
+  }, []);
+
+  const s1 = useAnimatedStyle(() => ({ height: bar1H.value }));
+  const s2 = useAnimatedStyle(() => ({ height: bar2H.value }));
+  const s3 = useAnimatedStyle(() => ({ height: bar3H.value }));
+  const s4 = useAnimatedStyle(() => ({ height: bar4H.value }));
+
+  const barBase = { width: 2, borderRadius: 1, backgroundColor: color, opacity: 0.4 };
+
+  return (
+    <View style={{ position: "absolute", bottom: 6, left: 0, right: 0, flexDirection: "row", justifyContent: "center", alignItems: "flex-end", gap: 2 }}>
+      <Animated.View style={[barBase, s1]} />
+      <Animated.View style={[barBase, s2]} />
+      <Animated.View style={[barBase, s3]} />
+      <Animated.View style={[barBase, s4]} />
+    </View>
+  );
+}
+
+function AnimatedSoundAccent({ soundId }: { soundId: string }) {
+  if (soundId.startsWith("rain-")) return <RainAccent />;
+  if (soundId.startsWith("ocean-")) return <OceanAccent />;
+  if (soundId.startsWith("forest-")) return <ForestAccent />;
+  if (soundId.startsWith("meditation-")) return <SolfeggioAccent color={CATEGORY_INFO.meditation.color} />;
+  if (soundId.startsWith("solfeggio-")) return <SolfeggioAccent color={ACCENT_GOLD} />;
+  if (soundId.startsWith("binaural-")) {
+    const binauralColors: Record<string, string> = {
+      "binaural-theta": "#CE93D8",
+      "binaural-alpha": "#FFB74D",
+      "binaural-delta": "#90CAF9",
+      "binaural-beta": "#FFD54F",
+    };
+    return <BinauralAccent color={binauralColors[soundId] || CATEGORY_INFO.binaural.color} />;
+  }
+  if (soundId.startsWith("noise-")) return <WindAccent />;
+  return null;
+}
+
+function SelectedLeftBar({ color }: { color: string }) {
+  const barOpacity = useSharedValue(0.6);
+
+  useEffect(() => {
+    barOpacity.value = withRepeat(
+      withSequence(withTiming(1, { duration: 1200 }), withTiming(0.5, { duration: 1200 })),
+      -1, true
+    );
+  }, []);
+
+  const style = useAnimatedStyle(() => ({ opacity: barOpacity.value }));
+
+  return (
+    <Animated.View style={[{
+      position: "absolute", left: 0, top: 0, bottom: 0, width: 3,
+      backgroundColor: color, borderTopLeftRadius: 3, borderBottomLeftRadius: 3,
+    }, style]} />
+  );
+}
+
+function CategoryDivider({ color }: { color: string }) {
+  const lineOpacity = useSharedValue(0.3);
+  const lineScaleX = useSharedValue(0.7);
+
+  useEffect(() => {
+    lineOpacity.value = withRepeat(
+      withSequence(withTiming(0.6, { duration: 2000 }), withTiming(0.2, { duration: 2000 })),
+      -1, true
+    );
+    lineScaleX.value = withRepeat(
+      withSequence(withTiming(1, { duration: 2000 }), withTiming(0.7, { duration: 2000 })),
+      -1, true
+    );
+  }, []);
+
+  const style = useAnimatedStyle(() => ({
+    opacity: lineOpacity.value,
+    transform: [{ scaleX: lineScaleX.value }],
+  }));
+
+  return (
+    <Animated.View style={[{
+      height: 1.5, borderRadius: 1, backgroundColor: color, marginTop: Spacing.xs,
+    }, style]} />
+  );
+}
 
 interface SoundItemProps {
   option: BackgroundMusicOption;
@@ -48,73 +318,93 @@ interface SoundItemProps {
 
 function SoundItem({ option, isSelected, isPreviewing, onSelect, onPreview }: SoundItemProps) {
   const { theme } = useTheme();
+  const categoryColor = getCategoryColor(option.id);
 
-  return (
-    <Pressable
-      onPress={() => {
-        try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
-        onSelect();
-      }}
-      style={[
-        styles.soundItem,
-        { 
-          backgroundColor: isSelected 
-            ? `${ACCENT_GOLD}20` 
-            : theme.cardBackground,
-          borderColor: isSelected ? ACCENT_GOLD : theme.border,
-        },
-      ]}
-      testID={`button-sound-${option.id}`}
-    >
+  const itemContent = (
+    <>
+      {isSelected ? <SelectedLeftBar color={categoryColor} /> : null}
       <View style={[
         styles.soundIconContainer, 
-        { backgroundColor: isSelected ? `${ACCENT_GOLD}30` : theme.backgroundSecondary }
+        { backgroundColor: isPreviewing ? `${categoryColor}30` : isSelected ? `${ACCENT_GOLD}30` : theme.backgroundSecondary }
       ]}>
+        <AnimatedSoundAccent soundId={option.id} />
         <Feather 
-          name={option.icon as any} 
+          name={isPreviewing ? "volume-2" : option.icon as any} 
           size={22} 
-          color={isSelected ? ACCENT_GOLD : theme.primary} 
+          color={isPreviewing ? categoryColor : isSelected ? ACCENT_GOLD : theme.primary} 
         />
       </View>
       <View style={styles.soundContent}>
         <ThemedText type="body" style={[
           styles.soundName, 
-          isSelected && { color: ACCENT_GOLD, fontWeight: "600" }
+          isSelected && { color: ACCENT_GOLD, fontWeight: "600" },
+          isPreviewing && !isSelected && { color: categoryColor },
         ]}>
           {option.name}
         </ThemedText>
-        <ThemedText type="small" style={{ color: theme.textSecondary }}>
-          {option.description}
+        <ThemedText type="small" style={{ color: isPreviewing ? categoryColor : theme.textSecondary }}>
+          {isPreviewing ? "Playing preview..." : option.description}
         </ThemedText>
       </View>
       <Pressable
         onPress={(e) => {
           e.stopPropagation();
-          try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
-          onPreview();
+          try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
+          onSelect();
         }}
-        style={[
-          styles.previewButton,
-          { backgroundColor: isPreviewing ? ACCENT_GOLD : theme.backgroundSecondary }
-        ]}
-        testID={`button-preview-${option.id}`}
-      >
-        <Feather 
-          name={isPreviewing ? "pause" : "play"} 
-          size={16} 
-          color={isPreviewing ? "#FFFFFF" : theme.primary} 
-        />
-      </Pressable>
-      <View
         style={[
           styles.radioButton,
           { borderColor: isSelected ? ACCENT_GOLD : theme.border },
         ]}
+        testID={`button-select-${option.id}`}
       >
         {isSelected ? (
           <View style={[styles.radioButtonInner, { backgroundColor: ACCENT_GOLD }]} />
         ) : null}
-      </View>
+      </Pressable>
+    </>
+  );
+
+  if (isSelected) {
+    return (
+      <Pressable
+        onPress={() => {
+          try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+          onPreview();
+        }}
+        testID={`button-sound-${option.id}`}
+      >
+        <LinearGradient
+          colors={[`${categoryColor}18`, `${ACCENT_GOLD}10`, "transparent"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={[
+            styles.soundItem,
+            { borderColor: ACCENT_GOLD },
+          ]}
+        >
+          {itemContent}
+        </LinearGradient>
+      </Pressable>
+    );
+  }
+
+  return (
+    <Pressable
+      onPress={() => {
+        try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+        onPreview();
+      }}
+      style={[
+        styles.soundItem,
+        { 
+          backgroundColor: theme.cardBackground,
+          borderColor: theme.border,
+        },
+      ]}
+      testID={`button-sound-${option.id}`}
+    >
+      {itemContent}
     </Pressable>
   );
 }
@@ -140,18 +430,21 @@ function CategorySection({ category, options, selectedMusic, previewingId, onSel
       entering={FadeInDown.delay(index * 100).duration(400)}
       style={styles.categorySection}
     >
-      <View style={styles.categoryHeader}>
-        <View style={[styles.categoryIconContainer, { backgroundColor: `${info.color}20` }]}>
-          <Feather name={info.emoji as any} size={20} color={info.color} />
+      <View>
+        <View style={styles.categoryHeader}>
+          <View style={[styles.categoryIconContainer, { backgroundColor: `${info.color}20` }]}>
+            <Feather name={info.emoji as any} size={20} color={info.color} />
+          </View>
+          <View style={styles.categoryTitleContainer}>
+            <ThemedText type="h4" style={{ color: theme.text }}>
+              {info.title}
+            </ThemedText>
+            <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+              {info.subtitle}
+            </ThemedText>
+          </View>
         </View>
-        <View style={styles.categoryTitleContainer}>
-          <ThemedText type="h4" style={{ color: theme.text }}>
-            {info.title}
-          </ThemedText>
-          <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-            {info.subtitle}
-          </ThemedText>
-        </View>
+        <CategoryDivider color={info.color} />
       </View>
       <View style={[styles.soundsGrid, { backgroundColor: theme.cardBackground }, Shadows.small]}>
         {options.map((option) => (
@@ -169,34 +462,67 @@ function CategorySection({ category, options, selectedMusic, previewingId, onSel
   );
 }
 
-const PREVIEW_DURATION = 5000; // 5 seconds
+const PREVIEW_DURATION = 5000;
 
 export default function SoundLibraryScreen() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
-  const { theme, isDark } = useTheme();
+  const navigation = useNavigation();
+  const { theme } = useTheme();
   const { selectedMusic, setSelectedMusic, volume, setVolume } = useBackgroundMusic();
   
-  const { nature, binaural, solfeggio } = getSoundsByCategory();
+  const { rain, ocean, forest, meditation, solfeggio, binaural, noise } = getSoundsByCategory();
   
   const [previewingId, setPreviewingId] = useState<BackgroundMusicType | null>(null);
   const previewSoundRef = useRef<Audio.Sound | null>(null);
   const previewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Cleanup on unmount
+  const cleanupPreview = useCallback(async () => {
+    if (previewTimerRef.current) {
+      clearTimeout(previewTimerRef.current);
+      previewTimerRef.current = null;
+    }
+    if (previewSoundRef.current) {
+      try {
+        await previewSoundRef.current.stopAsync();
+      } catch (e) {}
+      try {
+        await previewSoundRef.current.unloadAsync();
+      } catch (e) {}
+      previewSoundRef.current = null;
+    }
+    setPreviewingId(null);
+  }, []);
+
   useEffect(() => {
     return () => {
       if (previewSoundRef.current) {
-        previewSoundRef.current.unloadAsync();
+        previewSoundRef.current.unloadAsync().catch(() => {});
+        previewSoundRef.current = null;
       }
       if (previewTimerRef.current) {
         clearTimeout(previewTimerRef.current);
+        previewTimerRef.current = null;
       }
     };
   }, []);
 
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', () => {
+      if (previewTimerRef.current) {
+        clearTimeout(previewTimerRef.current);
+        previewTimerRef.current = null;
+      }
+      if (previewSoundRef.current) {
+        previewSoundRef.current.stopAsync().catch(() => {});
+        previewSoundRef.current.unloadAsync().catch(() => {});
+        previewSoundRef.current = null;
+      }
+    });
+    return unsubscribe;
+  }, [navigation]);
+
   const handlePreviewMusic = async (id: BackgroundMusicType) => {
-    // If already previewing this sound, stop it
     if (previewingId === id) {
       if (previewSoundRef.current) {
         await previewSoundRef.current.stopAsync();
@@ -211,7 +537,6 @@ export default function SoundLibraryScreen() {
       return;
     }
 
-    // Stop any existing preview
     if (previewSoundRef.current) {
       await previewSoundRef.current.stopAsync();
       await previewSoundRef.current.unloadAsync();
@@ -222,7 +547,6 @@ export default function SoundLibraryScreen() {
       previewTimerRef.current = null;
     }
 
-    // Start new preview
     try {
       const audioFile = getAudioFile(id as Exclude<BackgroundMusicType, 'none'>);
       const { sound } = await Audio.Sound.createAsync(
@@ -232,7 +556,6 @@ export default function SoundLibraryScreen() {
       previewSoundRef.current = sound;
       setPreviewingId(id);
 
-      // Auto-stop after 5 seconds
       previewTimerRef.current = setTimeout(async () => {
         if (previewSoundRef.current) {
           await previewSoundRef.current.stopAsync();
@@ -248,29 +571,20 @@ export default function SoundLibraryScreen() {
   };
 
   const handleSelectMusic = async (id: BackgroundMusicType) => {
-    // Stop any preview when selecting
-    if (previewSoundRef.current) {
-      await previewSoundRef.current.stopAsync();
-      await previewSoundRef.current.unloadAsync();
-      previewSoundRef.current = null;
-    }
-    if (previewTimerRef.current) {
-      clearTimeout(previewTimerRef.current);
-      previewTimerRef.current = null;
-    }
-    setPreviewingId(null);
-    
+    await cleanupPreview();
     await setSelectedMusic(id);
   };
 
-  const currentSelection = [...nature, ...binaural, ...solfeggio].find(o => o.id === selectedMusic);
+  const handleSelectNoSound = async () => {
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
+    await cleanupPreview();
+    await setSelectedMusic("none" as BackgroundMusicType);
+  };
+
+  const currentSelection = [...rain, ...ocean, ...forest, ...meditation, ...solfeggio, ...binaural, ...noise].find(o => o.id === selectedMusic);
 
   return (
-    <ImageBackground
-      source={isDark ? profileBackgroundDark : profileBackgroundLight}
-      style={styles.backgroundImage}
-      resizeMode="cover"
-    >
+    <View style={styles.backgroundImage}>
       <ScrollView
         style={styles.container}
         contentContainerStyle={[
@@ -282,8 +596,7 @@ export default function SoundLibraryScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Current Selection Card - Only show when a sound is selected */}
-        {currentSelection ? (
+        {selectedMusic !== "none" && currentSelection ? (
         <Animated.View entering={FadeIn.duration(400)}>
           <View style={[styles.currentCard, { backgroundColor: theme.cardBackground }, Shadows.medium]}>
             <View style={styles.currentHeader}>
@@ -294,65 +607,119 @@ export default function SoundLibraryScreen() {
             </View>
             <View style={styles.currentContent}>
               <View style={[styles.currentIconContainer, { backgroundColor: `${ACCENT_GOLD}20` }]}>
-                <Feather name={currentSelection.icon as any} size={24} color={ACCENT_GOLD} />
+                <Feather name={(currentSelection.icon as any) || "music"} size={24} color={ACCENT_GOLD} />
               </View>
               <View style={styles.currentInfo}>
                 <ThemedText type="h4" style={{ color: ACCENT_GOLD }}>
                   {currentSelection.name}
                 </ThemedText>
                 <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                  {currentSelection.description}
+                  {currentSelection.description || ""}
                 </ThemedText>
               </View>
             </View>
 
-            {/* Volume Control */}
             <View style={styles.volumeSection}>
               <View style={styles.volumeRow}>
-                <Feather name="volume-1" size={16} color={theme.textSecondary} />
-                <View style={styles.volumeSliderContainer}>
-                  <View style={[styles.volumeTrack, { backgroundColor: theme.border }]}>
-                    <View 
-                      style={[
-                        styles.volumeFill, 
-                        { backgroundColor: ACCENT_GOLD, width: `${volume * 100}%` }
-                      ]} 
-                    />
-                  </View>
-                </View>
-                <Feather name="volume-2" size={16} color={theme.textSecondary} />
-              </View>
-              <View style={styles.volumeControls}>
-                <Pressable 
-                  onPress={() => setVolume(Math.max(0.1, volume - 0.1))}
-                  style={[styles.volumeButton, { backgroundColor: theme.backgroundSecondary }]}
-                >
-                  <Feather name="minus" size={14} color={theme.primary} />
+                <Pressable onPress={() => setVolume(Math.max(0.05, volume - 0.15))}>
+                  <Feather name={volume > 0.05 ? "volume-1" : "volume-x"} size={18} color={theme.textSecondary} />
                 </Pressable>
-                <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                <Slider
+                  style={styles.volumeSlider}
+                  minimumValue={0.05}
+                  maximumValue={1}
+                  value={volume}
+                  onValueChange={(val: number) => setVolume(Math.round(val * 100) / 100)}
+                  minimumTrackTintColor={ACCENT_GOLD}
+                  maximumTrackTintColor={theme.border}
+                  thumbTintColor={ACCENT_GOLD}
+                  testID="slider-volume"
+                />
+                <Pressable onPress={() => setVolume(Math.min(1, volume + 0.15))}>
+                  <Feather name="volume-2" size={18} color={theme.textSecondary} />
+                </Pressable>
+                <ThemedText type="small" style={{ color: theme.textSecondary, width: 36, textAlign: "center" }}>
                   {Math.round(volume * 100)}%
                 </ThemedText>
-                <Pressable 
-                  onPress={() => setVolume(Math.min(1, volume + 0.1))}
-                  style={[styles.volumeButton, { backgroundColor: theme.backgroundSecondary }]}
-                >
-                  <Feather name="plus" size={14} color={theme.primary} />
-                </Pressable>
               </View>
             </View>
           </View>
         </Animated.View>
         ) : null}
 
-        {/* Category Sections */}
+        <Animated.View entering={FadeInDown.duration(400)}>
+          <Pressable
+            onPress={handleSelectNoSound}
+            style={[
+              styles.noSoundCard,
+              {
+                backgroundColor: selectedMusic === "none" ? `${ACCENT_GOLD}10` : theme.cardBackground,
+                borderColor: selectedMusic === "none" ? ACCENT_GOLD : theme.border,
+              },
+              Shadows.small,
+            ]}
+            testID="button-no-sound"
+          >
+            {selectedMusic === "none" ? <SelectedLeftBar color={ACCENT_GOLD} /> : null}
+            <View style={[styles.soundIconContainer, { backgroundColor: selectedMusic === "none" ? `${ACCENT_GOLD}20` : theme.backgroundSecondary }]}>
+              <Feather name="volume-x" size={22} color={selectedMusic === "none" ? ACCENT_GOLD : theme.textSecondary} />
+            </View>
+            <View style={styles.soundContent}>
+              <ThemedText type="body" style={[styles.soundName, selectedMusic === "none" && { color: ACCENT_GOLD, fontWeight: "600" }]}>
+                No Sound
+              </ThemedText>
+              <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                Turn off all background sounds
+              </ThemedText>
+            </View>
+            <View
+              style={[
+                styles.radioButton,
+                { borderColor: selectedMusic === "none" ? ACCENT_GOLD : theme.border },
+              ]}
+            >
+              {selectedMusic === "none" ? (
+                <View style={[styles.radioButtonInner, { backgroundColor: ACCENT_GOLD }]} />
+              ) : null}
+            </View>
+          </Pressable>
+        </Animated.View>
+
         <CategorySection
-          category="nature"
-          options={nature}
+          category="rain"
+          options={rain}
           selectedMusic={selectedMusic}
           previewingId={previewingId}
           onSelectMusic={handleSelectMusic}
           onPreviewMusic={handlePreviewMusic}
           index={0}
+        />
+        <CategorySection
+          category="ocean"
+          options={ocean}
+          selectedMusic={selectedMusic}
+          previewingId={previewingId}
+          onSelectMusic={handleSelectMusic}
+          onPreviewMusic={handlePreviewMusic}
+          index={1}
+        />
+        <CategorySection
+          category="forest"
+          options={forest}
+          selectedMusic={selectedMusic}
+          previewingId={previewingId}
+          onSelectMusic={handleSelectMusic}
+          onPreviewMusic={handlePreviewMusic}
+          index={2}
+        />
+        <CategorySection
+          category="meditation"
+          options={meditation}
+          selectedMusic={selectedMusic}
+          previewingId={previewingId}
+          onSelectMusic={handleSelectMusic}
+          onPreviewMusic={handlePreviewMusic}
+          index={3}
         />
         <CategorySection
           category="solfeggio"
@@ -361,7 +728,7 @@ export default function SoundLibraryScreen() {
           previewingId={previewingId}
           onSelectMusic={handleSelectMusic}
           onPreviewMusic={handlePreviewMusic}
-          index={1}
+          index={4}
         />
         <CategorySection
           category="binaural"
@@ -370,12 +737,11 @@ export default function SoundLibraryScreen() {
           previewingId={previewingId}
           onSelectMusic={handleSelectMusic}
           onPreviewMusic={handlePreviewMusic}
-          index={2}
+          index={5}
         />
         
-        {/* Headphones note for binaural beats */}
         <Animated.View 
-          entering={FadeInDown.delay(300).duration(400)}
+          entering={FadeInDown.delay(600).duration(400)}
           style={[styles.headphonesNote, { backgroundColor: `${theme.primary}15` }]}
         >
           <Feather name="headphones" size={16} color={theme.primary} />
@@ -383,8 +749,18 @@ export default function SoundLibraryScreen() {
             Binaural beats require headphones to work properly. Each ear needs to hear a slightly different frequency for your brain to perceive the beat.
           </ThemedText>
         </Animated.View>
+
+        <CategorySection
+          category="noise"
+          options={noise}
+          selectedMusic={selectedMusic}
+          previewingId={previewingId}
+          onSelectMusic={handleSelectMusic}
+          onPreviewMusic={handlePreviewMusic}
+          index={7}
+        />
       </ScrollView>
-    </ImageBackground>
+    </View>
   );
 }
 
@@ -425,7 +801,6 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   volumeSection: {
-    gap: Spacing.sm,
     paddingTop: Spacing.sm,
     borderTopWidth: 1,
     borderTopColor: "rgba(255,255,255,0.1)",
@@ -433,34 +808,11 @@ const styles = StyleSheet.create({
   volumeRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.sm,
+    gap: Spacing.xs,
   },
-  volumeSliderContainer: {
+  volumeSlider: {
     flex: 1,
-    height: 6,
-  },
-  volumeTrack: {
-    flex: 1,
-    height: 6,
-    borderRadius: 3,
-    overflow: "hidden",
-  },
-  volumeFill: {
-    height: "100%",
-    borderRadius: 3,
-  },
-  volumeControls: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: Spacing.md,
-  },
-  volumeButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: "center",
-    alignItems: "center",
+    height: 40,
   },
   categorySection: {
     gap: Spacing.sm,
@@ -492,14 +844,16 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xl,
     borderBottomWidth: 1,
     borderWidth: 0,
+    overflow: "hidden",
   },
   soundIconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: "center",
     alignItems: "center",
     marginRight: Spacing.md,
+    overflow: "hidden",
   },
   soundContent: {
     flex: 1,
@@ -507,27 +861,28 @@ const styles = StyleSheet.create({
   soundName: {
     marginBottom: 2,
   },
-  previewButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: "center",
-    alignItems: "center",
-    marginLeft: Spacing.sm,
-  },
   radioButton: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     borderWidth: 2,
     justifyContent: "center",
     alignItems: "center",
     marginLeft: Spacing.sm,
   },
   radioButtonInner: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+  },
+  noSoundCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xl,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    overflow: "hidden",
   },
   headphonesNote: {
     flexDirection: "row",

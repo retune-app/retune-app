@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback, useLayoutEffect, useMemo, useRef } from "react";
-import { View, StyleSheet, Pressable, Alert, ScrollView, Modal, Dimensions } from "react-native";
+import { View, StyleSheet, Pressable, ScrollView, Modal } from "react-native";
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSequence, withDelay, Easing } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useHeaderHeight } from "@react-navigation/elements";
-import { HeaderButton } from "@react-navigation/elements";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -19,26 +18,32 @@ import { WaveformVisualizer } from "@/components/WaveformVisualizer";
 import { RSVPDisplay, WordTiming, RSVPFontSize } from "@/components/RSVPDisplay";
 import { IconButton } from "@/components/IconButton";
 import { AmbientSoundMixer } from "@/components/AmbientSoundMixer";
-import { FocusModeTip } from "@/components/FocusModeTip";
 import { ThemedModal } from "@/components/ThemedModal";
-import QuickBreathingModal from "@/components/QuickBreathingModal";
 import { useTheme } from "@/hooks/useTheme";
-import { useAudio } from "@/contexts/AudioContext";
+import { useAudio, preloadAudioToCache, clearCachedAudio } from "@/contexts/AudioContext";
+import { useBackgroundMusic } from "@/contexts/BackgroundMusicContext";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { apiRequest } from "@/lib/query-client";
-import { getVoiceDisplayName } from "@shared/voiceMapping";
+import { getVoiceDisplayName, VOICE_ID_TO_NAME, AI_VOICES } from "@shared/voiceMapping";
+import JourneyStepBar from "@/components/JourneyStepBar";
+import { journeyNavigationRef } from "@/navigation/journeyNavigationRef";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import type { Affirmation } from "@shared/schema";
 
 const AUTO_REPLAY_KEY = "@settings/autoReplay";
-const RSVP_ENABLED_KEY = "@settings/rsvpEnabled";
-const SETTINGS_VERSION_KEY = "@settings/version";
-const CURRENT_SETTINGS_VERSION = "2"; // Increment to reset defaults
-const RSVP_FONT_SIZE_KEY = "@settings/rsvpFontSize";
-const RSVP_HIGHLIGHT_KEY = "@settings/rsvpHighlight";
 const SHOW_SCRIPT_KEY = "@settings/showScript";
-const HAPTIC_ENABLED_KEY = "@settings/hapticEnabled";
-const FOCUS_MODE_TIP_SHOWN_KEY = "@tips/focusMode";
+
+const ACCENT_GOLD = "#C9A227";
+const RSVP_ENABLED = true;
+const RSVP_FONT_SIZE: RSVPFontSize = "XL";
+const RSVP_HIGHLIGHT = true;
+
+function formatTime(millis: number) {
+  const totalSeconds = Math.floor(millis / 1000);
+  const mins = Math.floor(totalSeconds / 60);
+  const secs = totalSeconds % 60;
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
+}
 
 type PlayerRouteProp = RouteProp<RootStackParamList, "Player">;
 type PlayerNavigationProp = NativeStackNavigationProp<RootStackParamList, "Player">;
@@ -47,11 +52,10 @@ export default function PlayerScreen() {
   const route = useRoute<PlayerRouteProp>();
   const navigation = useNavigation<PlayerNavigationProp>();
   const insets = useSafeAreaInsets();
-  const headerHeight = useHeaderHeight();
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const queryClient = useQueryClient();
 
-  const { affirmationId, isNew = false } = route.params;
+  const { affirmationId, isNew = false, autoPlay = false, journeyContext } = route.params;
 
   const {
     currentAffirmation,
@@ -68,15 +72,31 @@ export default function PlayerScreen() {
     breathingAffirmation,
     setBreathingAffirmation,
   } = useAudio();
-  const [rsvpEnabled, setRsvpEnabled] = useState(true);
-  const [rsvpFontSize, setRsvpFontSize] = useState<RSVPFontSize>("M");
-  const [rsvpHighlight, setRsvpHighlight] = useState(false);
+  const { selectedMusic, setSelectedMusic, stopBackgroundMusic } = useBackgroundMusic();
+  const previousMusicRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', () => {
+      stop();
+    });
+    return unsubscribe;
+  }, [navigation, stop]);
+
+  const rsvpEnabled = RSVP_ENABLED;
+  const rsvpFontSize = RSVP_FONT_SIZE;
+  const rsvpHighlight = RSVP_HIGHLIGHT;
   const [showRsvpSettings, setShowRsvpSettings] = useState(false);
   const [showScript, setShowScript] = useState(false);
   const [isLandscape, setIsLandscape] = useState(false);
   const [isInFullscreenMode, setIsInFullscreenMode] = useState(false);
   const [hasSaved, setHasSaved] = useState(false);
   const prevLandscapeRef = useRef(false);
+
+  const tiltHintOpacity = useSharedValue(0);
+  const tiltHintShowCount = useRef(0);
+  const tiltHintDismissed = useRef(false);
+  const TILT_HINT_MAX_SHOWS = 4;
+  const TILT_HINT_INTERVAL_MS = 15000;
 
   const { data: affirmation, isLoading } = useQuery<Affirmation>({
     queryKey: ["/api/affirmations", affirmationId],
@@ -85,16 +105,28 @@ export default function PlayerScreen() {
   // Query for user's voice status (whether they have a personal voice set up)
   const { data: voiceStatus } = useQuery<{ hasPersonalVoice: boolean; hasClonedVoice: boolean }>({
     queryKey: ["/api/voice-samples/status"],
+    staleTime: 30000,
   });
+
+  const { data: voicePrefs } = useQuery<{
+    preferredFemaleVoiceId: string;
+    preferredMaleVoiceId: string;
+  }>({
+    queryKey: ["/api/voice-preferences"],
+    staleTime: 60000,
+  });
+
+  const femaleVoiceName = voicePrefs?.preferredFemaleVoiceId
+    ? (VOICE_ID_TO_NAME[voicePrefs.preferredFemaleVoiceId] || AI_VOICES.female[0].name)
+    : AI_VOICES.female[0].name;
+  const maleVoiceName = voicePrefs?.preferredMaleVoiceId
+    ? (VOICE_ID_TO_NAME[voicePrefs.preferredMaleVoiceId] || AI_VOICES.male[0].name)
+    : AI_VOICES.male[0].name;
 
   // Voice regeneration state
   const [isRegeneratingVoice, setIsRegeneratingVoice] = useState(false);
 
-  // Haptic feedback setting
-  const [hapticEnabled, setHapticEnabled] = useState(true);
-
-  // Focus mode tip (one-time hint)
-  const [showFocusModeTip, setShowFocusModeTip] = useState(false);
+  const autoPlayedRef = useRef(false);
 
   // Modal states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -102,9 +134,97 @@ export default function PlayerScreen() {
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [showVoiceSetupModal, setShowVoiceSetupModal] = useState(false);
-  const [showBreathingModal, setShowBreathingModal] = useState(false);
 
   const isCurrentlyPlaying = currentAffirmation?.id === affirmationId && isPlaying;
+
+  const [controlsVisible, setControlsVisible] = useState(true);
+  const controlsOpacity = useSharedValue(1);
+  const controlsTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const controlsFadeStyle = useAnimatedStyle(() => ({
+    opacity: controlsOpacity.value,
+  }));
+
+  const bottomControlsOpacity = useSharedValue(1);
+  const [bottomControlsVisible, setBottomControlsVisible] = useState(true);
+  const bottomControlsFadeStyle = useAnimatedStyle(() => ({
+    opacity: bottomControlsOpacity.value,
+  }));
+
+  const isLastJourneyStep = journeyContext ? journeyContext.currentStep === journeyContext.totalSteps - 1 : false;
+  const controlsVisibleRef = useRef(true);
+
+  const showScriptRef = useRef(showScript);
+  useEffect(() => { showScriptRef.current = showScript; }, [showScript]);
+
+  const hideControls = useCallback(() => {
+    controlsVisibleRef.current = false;
+    setControlsVisible(false);
+    controlsOpacity.value = withTiming(0, { duration: 400 });
+    if (!showScriptRef.current) {
+      setBottomControlsVisible(false);
+      bottomControlsOpacity.value = withTiming(0, { duration: 400 });
+    }
+  }, []);
+
+  const showControls = useCallback(() => {
+    controlsVisibleRef.current = true;
+    setControlsVisible(true);
+    controlsOpacity.value = withTiming(1, { duration: 250 });
+    setBottomControlsVisible(true);
+    bottomControlsOpacity.value = withTiming(1, { duration: 250 });
+  }, []);
+
+  const startAutoHideTimer = useCallback(() => {
+    if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
+    controlsTimerRef.current = setTimeout(hideControls, 5000);
+  }, [hideControls]);
+
+  useEffect(() => {
+    if (controlsVisibleRef.current) {
+      startAutoHideTimer();
+    }
+    return () => { if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current); };
+  }, [startAutoHideTimer]);
+
+  const toggleControls = useCallback(() => {
+    if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
+    if (controlsVisibleRef.current) {
+      hideControls();
+    } else {
+      showControls();
+      startAutoHideTimer();
+    }
+  }, [showControls, hideControls, startAutoHideTimer]);
+
+  const resetControlsTimer = useCallback(() => {
+    showControls();
+    startAutoHideTimer();
+  }, [showControls, startAutoHideTimer]);
+
+  const tapStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+  const scrolledRef = useRef(false);
+
+  const handleTouchStart = useCallback((e: any) => {
+    scrolledRef.current = false;
+    const touch = e.nativeEvent;
+    tapStartRef.current = { x: touch.pageX, y: touch.pageY, time: Date.now() };
+  }, []);
+
+  const handleTouchEnd = useCallback((e: any) => {
+    if (!tapStartRef.current || scrolledRef.current) return;
+    const touch = e.nativeEvent;
+    const dx = Math.abs(touch.pageX - tapStartRef.current.x);
+    const dy = Math.abs(touch.pageY - tapStartRef.current.y);
+    const dt = Date.now() - tapStartRef.current.time;
+    tapStartRef.current = null;
+    if (dx < 10 && dy < 10 && dt < 300) {
+      toggleControls();
+    }
+  }, [toggleControls]);
+
+  useEffect(() => {
+    return () => { if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current); };
+  }, []);
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
@@ -126,11 +246,11 @@ export default function PlayerScreen() {
       }
       
       queryClient.invalidateQueries({ queryKey: ["/api/affirmations"] });
-      if (hapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
       navigation.goBack();
     },
     onError: () => {
-      if (hapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error); } catch (e) {}
       setErrorMessage("We couldn't delete this affirmation. Please try again.");
       setShowErrorModal(true);
     },
@@ -143,12 +263,12 @@ export default function PlayerScreen() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/affirmations"] });
       queryClient.invalidateQueries({ queryKey: ["/api/affirmations", affirmationId] });
-      if (hapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
       setHasSaved(true);
       setShowSaveSuccessModal(true);
     },
     onError: () => {
-      if (hapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error); } catch (e) {}
       setErrorMessage("We couldn't save this affirmation. Please try again.");
       setShowErrorModal(true);
     },
@@ -165,232 +285,202 @@ export default function PlayerScreen() {
       return response.json();
     },
     onSuccess: async (updatedAffirmation) => {
+      await clearCachedAudio(affirmationId);
       queryClient.invalidateQueries({ queryKey: ["/api/affirmations"] });
       queryClient.invalidateQueries({ queryKey: ["/api/affirmations", affirmationId] });
       setIsRegeneratingVoice(false);
-      if (hapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      // Auto-play the new audio
+      try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
       if (updatedAffirmation) {
         await playAffirmation(updatedAffirmation);
       }
     },
-    onError: () => {
+    onError: (error: any) => {
       setIsRegeneratingVoice(false);
-      if (hapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      setErrorMessage("We couldn't regenerate the audio. Please try again.");
+      try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error); } catch (e) {}
+      const errStr = error?.message || "";
+      if (errStr.includes("QUOTA_EXCEEDED") || errStr.includes("quota")) {
+        setErrorMessage("Your voice cloning credits have been used up. Please switch to an AI voice or wait for credits to reset.");
+      } else if (errStr.includes("VOICE_ROTATED")) {
+        setErrorMessage("Your Inner Voice has expired. Please re-record your voice sample in Settings, or switch to an AI voice.");
+      } else if (errStr.includes("PERSONAL_VOICE_FAILED")) {
+        setErrorMessage("Could not generate audio with your Inner Voice. Try again or switch to an AI voice.");
+      } else {
+        setErrorMessage("We couldn't regenerate the audio. Please try again.");
+      }
       setShowErrorModal(true);
     },
   });
 
+  const journeyVoiceCheckedRef = useRef(false);
+  useEffect(() => {
+    if (!journeyContext?.journeyVoiceId || !affirmation || journeyVoiceCheckedRef.current || isRegeneratingVoice) return;
+    journeyVoiceCheckedRef.current = true;
+    const jVoiceType = journeyContext.journeyVoiceType || "ai";
+    const jVoiceId = journeyContext.journeyVoiceId;
+    const affVoiceType = affirmation.voiceType || "ai";
+    const needsRegeneration =
+      (jVoiceType === "personal" && affVoiceType !== "personal") ||
+      (jVoiceType === "ai" && affVoiceType === "personal");
+    if (needsRegeneration) {
+      autoPlayedRef.current = true;
+      const gender = jVoiceId.includes("orion") || jVoiceId.includes("atlas") || jVoiceId.includes("sage") || jVoiceId.includes("summit") || jVoiceId.includes("bodhi") ? "male" : "female";
+      regenerateVoiceMutation.mutate({ voiceType: jVoiceType, voiceGender: jVoiceType === "ai" ? gender : undefined });
+    }
+  }, [affirmation, journeyContext, isRegeneratingVoice]);
+
   // Handle voice switch
   const handleVoiceSwitch = useCallback((voiceType: "personal" | "ai", voiceGender?: "male" | "female") => {
-    if (hapticEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     
-    // Check if trying to use personal voice but don't have one
     if (voiceType === "personal" && !voiceStatus?.hasClonedVoice) {
       setShowVoiceSetupModal(true);
       return;
     }
     
-    // Stop current playback before regenerating
     stop();
     regenerateVoiceMutation.mutate({ voiceType, voiceGender });
-  }, [voiceStatus, hapticEnabled, stop, regenerateVoiceMutation, navigation]);
+  }, [voiceStatus, stop, regenerateVoiceMutation, navigation]);
 
   // Get current voice display text
   const getCurrentVoiceLabel = () => {
     if (!affirmation) return "Loading...";
-    if (affirmation.voiceType === "personal") return "My Voice";
+    if (affirmation.voiceType === "personal") return "Inner Voice";
     const voiceName = getVoiceDisplayName(affirmation.voiceType, affirmation.voiceGender, affirmation.aiVoiceId);
     return voiceName;
   };
 
   const handleSave = useCallback(() => {
-    if (hapticEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     autoSaveMutation.mutate();
-  }, [autoSaveMutation, hapticEnabled]);
+  }, [autoSaveMutation]);
 
   const handleDelete = useCallback(() => {
-    if (hapticEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setShowDeleteModal(true);
-  }, [hapticEnabled]);
+  }, []);
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: () => (
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <View style={{ width: 3, height: 14, borderRadius: 2, backgroundColor: theme.primary, marginRight: 8 }} />
-          <ThemedText type="caption" style={{ color: theme.primary, textTransform: 'uppercase', letterSpacing: 2, fontWeight: '600', fontSize: 11 }}>
-            My Affirmation
-          </ThemedText>
-        </View>
-      ),
-      headerLeft: () => (
-        isNew && !hasSaved ? (
-          <HeaderButton
-            onPress={handleSave}
-            testID="button-save-affirmation"
-          >
-            <Feather 
-              name="save" 
-              size={22} 
-              color={autoSaveMutation.isPending ? theme.textSecondary : "#4CAF50"} 
-            />
-          </HeaderButton>
-        ) : (
-          <HeaderButton
-            onPress={() => navigation.goBack()}
-            testID="button-back"
-          >
-            <Feather name="arrow-left" size={22} color={theme.text} />
-          </HeaderButton>
-        )
-      ),
-      headerRight: () => (
-        <HeaderButton
-          onPress={handleDelete}
-          testID="button-delete-affirmation"
-        >
-          <Feather name="trash-2" size={22} color="#E53935" />
-        </HeaderButton>
-      ),
+      headerShown: false,
     });
-  }, [navigation, handleSave, handleDelete, autoSaveMutation.isPending, theme, isNew, hasSaved]);
+  }, [navigation]);
 
   useEffect(() => {
-    const loadSettings = async () => {
-      // Check if we need to reset settings to new defaults
-      const storedVersion = await AsyncStorage.getItem(SETTINGS_VERSION_KEY);
-      if (storedVersion !== CURRENT_SETTINGS_VERSION) {
-        // Reset RSVP and Show Script to new defaults
-        await AsyncStorage.setItem(RSVP_ENABLED_KEY, "true");
-        await AsyncStorage.setItem(SHOW_SCRIPT_KEY, "false");
-        await AsyncStorage.setItem(SETTINGS_VERSION_KEY, CURRENT_SETTINGS_VERSION);
-        setRsvpEnabled(true);
-        setShowScript(false);
-      } else {
-        // Load saved settings
-        const rsvpValue = await AsyncStorage.getItem(RSVP_ENABLED_KEY);
-        if (rsvpValue !== null) {
-          setRsvpEnabled(rsvpValue === "true");
-        }
-        const showScriptValue = await AsyncStorage.getItem(SHOW_SCRIPT_KEY);
-        if (showScriptValue !== null) {
-          setShowScript(showScriptValue === "true");
-        }
-      }
+    if (autoPlay && affirmation && !autoPlayedRef.current) {
+      autoPlayedRef.current = true;
+      playAffirmation(affirmation);
+    }
+  }, [autoPlay, affirmation]);
 
-      // Load other settings normally
-      const autoReplayValue = await AsyncStorage.getItem(AUTO_REPLAY_KEY);
-      if (autoReplayValue !== null) {
-        setAutoReplay(autoReplayValue === "true");
-      }
-      const fontSizeValue = await AsyncStorage.getItem(RSVP_FONT_SIZE_KEY);
-      if (fontSizeValue !== null && ["S", "M", "L", "XL"].includes(fontSizeValue)) {
-        setRsvpFontSize(fontSizeValue as RSVPFontSize);
-      }
-      const highlightValue = await AsyncStorage.getItem(RSVP_HIGHLIGHT_KEY);
-      if (highlightValue !== null) {
-        setRsvpHighlight(highlightValue === "true");
-      }
-      const hapticValue = await AsyncStorage.getItem(HAPTIC_ENABLED_KEY);
-      if (hapticValue !== null) {
-        setHapticEnabled(hapticValue === "true");
-      }
-
-      // Check if focus mode tip should be shown (one-time only)
-      const tipShown = await AsyncStorage.getItem(FOCUS_MODE_TIP_SHOWN_KEY);
-      if (tipShown !== "true") {
-        setShowFocusModeTip(true);
-      }
-    };
-
-    loadSettings();
-  }, []);
-
-  // Dismiss focus mode tip and mark as shown
-  const dismissFocusModeTip = useCallback(async () => {
-    setShowFocusModeTip(false);
-    await AsyncStorage.setItem(FOCUS_MODE_TIP_SHOWN_KEY, "true");
-  }, []);
-
-  // Lock orientation to portrait on unmount only
   useEffect(() => {
+    if (affirmation?.audioUrl && currentAffirmation?.id !== affirmation.id) {
+      preloadAudioToCache(affirmation.audioUrl, affirmation.id);
+    }
+  }, [affirmation?.audioUrl, affirmation?.id, currentAffirmation?.id]);
+
+  useEffect(() => {
+    const allKeys = [SHOW_SCRIPT_KEY, AUTO_REPLAY_KEY];
+    AsyncStorage.multiGet(allKeys).then((results) => {
+      const map = new Map(results);
+      const showScriptValue = map.get(SHOW_SCRIPT_KEY);
+      if (showScriptValue !== null && showScriptValue !== undefined) setShowScript(showScriptValue === "true");
+      const autoReplayValue = map.get(AUTO_REPLAY_KEY);
+      if (autoReplayValue !== null && autoReplayValue !== undefined) setAutoReplay(autoReplayValue === "true");
+    });
+  }, []);
+
+  const mountedRef = useRef(true);
+  const orientationLockTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    ScreenOrientation.unlockAsync();
     return () => {
+      mountedRef.current = false;
+      if (orientationLockTimeoutRef.current) {
+        clearTimeout(orientationLockTimeoutRef.current);
+        orientationLockTimeoutRef.current = null;
+      }
       ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
     };
   }, []);
 
-  // Control orientation - keep unlocked in fullscreen so user can tilt to exit
-  useEffect(() => {
-    if (isInFullscreenMode) {
-      // Keep orientation unlocked so user can tilt back to portrait to exit
-      ScreenOrientation.unlockAsync();
-    } else if (!isCurrentlyPlaying || !rsvpEnabled) {
-      // Lock to portrait when not playing or Focus Mode is off
-      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
-    }
-    // When playing with Focus Mode but not in fullscreen, leave unlocked (handled by other effect)
-  }, [isInFullscreenMode, isCurrentlyPlaying, rsvpEnabled]);
-
-  // Unlock orientation when Focus Mode is on and playing (to allow entering fullscreen)
-  useEffect(() => {
-    if (rsvpEnabled && isCurrentlyPlaying && !isInFullscreenMode) {
-      ScreenOrientation.unlockAsync();
-    }
-  }, [rsvpEnabled, isCurrentlyPlaying, isInFullscreenMode]);
-
-  // Listen for orientation changes
   useEffect(() => {
     const checkOrientation = async () => {
       const orientation = await ScreenOrientation.getOrientationAsync();
-      const landscape = 
+      const landscape =
         orientation === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
         orientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT;
-      setIsLandscape(landscape);
+      if (mountedRef.current) setIsLandscape(landscape);
     };
-    
+
     checkOrientation();
-    
+
     const subscription = ScreenOrientation.addOrientationChangeListener((event) => {
       const orientation = event.orientationInfo.orientation;
-      const landscape = 
+      const landscape =
         orientation === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
         orientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT;
-      setIsLandscape(landscape);
+      if (mountedRef.current) setIsLandscape(landscape);
     });
-    
+
     return () => {
       ScreenOrientation.removeOrientationChangeListener(subscription);
     };
   }, []);
 
-  // Handle orientation changes - enter/exit fullscreen based on rotation
   useEffect(() => {
+    if (!mountedRef.current) return;
+
     const wasLandscape = prevLandscapeRef.current;
     const justRotatedToLandscape = isLandscape && !wasLandscape;
     const justRotatedToPortrait = !isLandscape && wasLandscape;
-    
-    // Update prev ref for next run
     prevLandscapeRef.current = isLandscape;
-    
-    // Auto-dismiss focus mode tip when user rotates to landscape
-    if (justRotatedToLandscape && showFocusModeTip) {
-      dismissFocusModeTip();
-    }
-    
-    // Exit fullscreen when rotating back to portrait
+
     if (justRotatedToPortrait && isInFullscreenMode) {
       setIsInFullscreenMode(false);
-      return;
-    }
-    
-    // Enter fullscreen if user just rotated TO landscape while playing
-    if (justRotatedToLandscape && rsvpEnabled && isCurrentlyPlaying && !isInFullscreenMode) {
+    } else if (justRotatedToLandscape && rsvpEnabled && isCurrentlyPlaying && !isInFullscreenMode) {
       setIsInFullscreenMode(true);
     }
-  }, [isLandscape, rsvpEnabled, isCurrentlyPlaying, isInFullscreenMode, showFocusModeTip, dismissFocusModeTip]);
 
+    if (orientationLockTimeoutRef.current) {
+      clearTimeout(orientationLockTimeoutRef.current);
+      orientationLockTimeoutRef.current = null;
+    }
+
+    orientationLockTimeoutRef.current = setTimeout(() => {
+      if (!mountedRef.current) return;
+      ScreenOrientation.unlockAsync();
+      orientationLockTimeoutRef.current = null;
+    }, 100);
+  }, [isLandscape, rsvpEnabled, isCurrentlyPlaying, isInFullscreenMode]);
+
+  useEffect(() => {
+    if (isLandscape || isInFullscreenMode) {
+      tiltHintDismissed.current = true;
+      tiltHintOpacity.value = withTiming(0, { duration: 300 });
+    }
+  }, [isLandscape, isInFullscreenMode]);
+
+  useEffect(() => {
+    if (!journeyContext || !rsvpEnabled || !isCurrentlyPlaying || isLandscape || isInFullscreenMode || tiltHintDismissed.current) return;
+
+    const showHint = () => {
+      if (tiltHintShowCount.current >= TILT_HINT_MAX_SHOWS || tiltHintDismissed.current) return;
+      tiltHintShowCount.current += 1;
+      tiltHintOpacity.value = withSequence(
+        withTiming(1, { duration: 600, easing: Easing.out(Easing.ease) }),
+        withDelay(3000, withTiming(0, { duration: 600, easing: Easing.in(Easing.ease) }))
+      );
+    };
+
+    const timeout = setTimeout(showHint, TILT_HINT_INTERVAL_MS);
+    return () => clearTimeout(timeout);
+  }, [journeyContext, rsvpEnabled, isCurrentlyPlaying, isLandscape, isInFullscreenMode, tiltHintOpacity]);
+
+  const tiltHintAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: tiltHintOpacity.value,
+  }));
 
   // Show fullscreen when in fullscreen mode (stays up even when paused)
   const showFullscreenFocus = isInFullscreenMode && rsvpEnabled;
@@ -432,48 +522,40 @@ export default function PlayerScreen() {
         return generateFallbackTimings();
       }
       
-      return parsed;
+      let lastEnd = 0;
+      const fixed = parsed.map((item: any, idx: number) => {
+        let startMs = item.startMs;
+        let endMs = item.endMs;
+        if (startMs < lastEnd) startMs = lastEnd;
+        if (endMs <= startMs) {
+          const nextStart = idx + 1 < parsed.length ? parsed[idx + 1].startMs : startMs + 200;
+          endMs = Math.max(startMs + 50, Math.min(startMs + 200, nextStart));
+        }
+        lastEnd = endMs;
+        return { word: item.word, startMs, endMs };
+      });
+      
+      return fixed;
     } catch {
       return generateFallbackTimings();
     }
   }, [affirmation?.wordTimings, affirmation?.script, affirmation?.duration]);
 
-  const handleToggleRsvp = async () => {
-    if (hapticEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const newValue = !rsvpEnabled;
-    setRsvpEnabled(newValue);
-    await AsyncStorage.setItem(RSVP_ENABLED_KEY, String(newValue));
-  };
-
-  const handleChangeFontSize = async () => {
-    if (hapticEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const sizes: RSVPFontSize[] = ["S", "M", "L", "XL"];
-    const currentIndex = sizes.indexOf(rsvpFontSize);
-    const nextSize = sizes[(currentIndex + 1) % sizes.length];
-    setRsvpFontSize(nextSize);
-    await AsyncStorage.setItem(RSVP_FONT_SIZE_KEY, nextSize);
-  };
-
-  const handleToggleHighlight = async () => {
-    if (hapticEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const newValue = !rsvpHighlight;
-    setRsvpHighlight(newValue);
-    await AsyncStorage.setItem(RSVP_HIGHLIGHT_KEY, String(newValue));
-  };
-
   const handleToggleScript = async () => {
-    if (hapticEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const newValue = !showScript;
     setShowScript(newValue);
     await AsyncStorage.setItem(SHOW_SCRIPT_KEY, String(newValue));
   };
 
-  const handleToggleHaptic = async () => {
-    const newValue = !hapticEnabled;
-    setHapticEnabled(newValue);
-    await AsyncStorage.setItem(HAPTIC_ENABLED_KEY, String(newValue));
-    if (newValue) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  };
+  useEffect(() => {
+    if (showScript) {
+      setBottomControlsVisible(true);
+      bottomControlsOpacity.value = withTiming(1, { duration: 250 });
+    } else {
+      startAutoHideTimer();
+    }
+  }, [showScript]);
 
   const favoriteMutation = useMutation({
     mutationFn: async () => {
@@ -481,17 +563,30 @@ export default function PlayerScreen() {
         isFavorite: !affirmation?.isFavorite,
       });
     },
-    onSuccess: () => {
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["/api/affirmations", affirmationId] });
+      const previous = queryClient.getQueryData(["/api/affirmations", affirmationId]);
+      queryClient.setQueryData(["/api/affirmations", affirmationId], (old: any) =>
+        old ? { ...old, isFavorite: !old.isFavorite } : old
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(["/api/affirmations", affirmationId], context.previous);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/affirmations"] });
       queryClient.invalidateQueries({ queryKey: ["/api/affirmations", affirmationId] });
-      if (hapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     },
   });
 
   const handlePlayPause = async () => {
     if (!affirmation) return;
 
-    if (hapticEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     if (currentAffirmation?.id === affirmationId) {
       await togglePlayPause();
@@ -501,7 +596,7 @@ export default function PlayerScreen() {
   };
 
   const handleAutoReplay = async () => {
-    if (hapticEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const newAutoReplay = !autoReplay;
     setAutoReplay(newAutoReplay);
     await AsyncStorage.setItem(AUTO_REPLAY_KEY, String(newAutoReplay));
@@ -512,28 +607,22 @@ export default function PlayerScreen() {
     const currentIndex = speeds.indexOf(playbackSpeed);
     const nextSpeed = speeds[(currentIndex + 1) % speeds.length];
     setPlaybackSpeed(nextSpeed);
-    if (hapticEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
   const handleFavorite = () => {
     favoriteMutation.mutate();
   };
 
-  const formatTime = (millis: number) => {
-    const totalSeconds = Math.floor(millis / 1000);
-    const mins = Math.floor(totalSeconds / 60);
-    const secs = totalSeconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  };
-
   const displayPosition = currentAffirmation?.id === affirmationId ? position : 0;
   const displayDuration = currentAffirmation?.id === affirmationId ? duration : 0;
   const progress = displayDuration > 0 ? displayPosition / displayDuration : 0;
-  
-  // Add offset to compensate for audio position latency and UI rendering delay
-  // Higher playback speeds need more forward offset since words change faster
-  const rsvpPositionOffset = 100 * playbackSpeed; // ms ahead to look
-  const rsvpPosition = displayPosition + rsvpPositionOffset;
+
+  const rsvpPositionOffset = 200 * playbackSpeed;
+  const rsvpPosition = displayDuration > 0
+    ? Math.min(displayPosition + rsvpPositionOffset, displayDuration - 1)
+    : displayPosition + rsvpPositionOffset;
+
 
   return (
     <ThemedView style={styles.container}>
@@ -559,7 +648,7 @@ export default function PlayerScreen() {
                 wordTimings={wordTimings}
                 currentPositionMs={rsvpPosition}
                 isPlaying={isCurrentlyPlaying}
-                fontSize="XL"
+                fontSize="LANDSCAPE"
                 showHighlight={rsvpHighlight}
                 forceDarkMode={true}
               />
@@ -578,13 +667,72 @@ export default function PlayerScreen() {
         </View>
       </Modal>
 
+      <Animated.View style={[{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 51 }, controlsFadeStyle]} pointerEvents={controlsVisible ? "box-none" : "none"}>
+        {journeyContext ? (
+          <JourneyStepBar
+            currentStep={journeyContext.currentStep}
+            totalSteps={journeyContext.totalSteps}
+            stepLabels={journeyContext.stepLabels}
+            onPrevious={async () => { await stop(); journeyNavigationRef.action = 'back'; navigation.goBack(); }}
+            showSkip={false}
+            showPrevious={true}
+            showEndJourney={true}
+            onEndJourney={async () => { await stop(); journeyNavigationRef.action = 'complete'; (navigation as any).navigate("Main", { screen: "AffirmTab" }); }}
+          />
+        ) : (
+          <View style={{ paddingTop: insets.top + 8, paddingHorizontal: Spacing.lg, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: theme.backgroundDefault }}>
+            <Pressable
+              onPress={() => {
+                if (isNew && !hasSaved) {
+                  handleSave();
+                } else {
+                  navigation.goBack();
+                }
+              }}
+              style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: theme.backgroundSecondary, alignItems: 'center', justifyContent: 'center' }}
+              testID={isNew && !hasSaved ? "button-save-affirmation" : "button-back"}
+            >
+              <Feather
+                name={isNew && !hasSaved ? "save" : "arrow-left"}
+                size={22}
+                color={isNew && !hasSaved ? (autoSaveMutation.isPending ? theme.textSecondary : "#4CAF50") : theme.text}
+              />
+            </Pressable>
+
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{ width: 3, height: 14, borderRadius: 2, backgroundColor: theme.primary, marginRight: 8 }} />
+              <ThemedText type="caption" style={{ color: theme.primary, textTransform: 'uppercase', letterSpacing: 2, fontWeight: '600', fontSize: 11 }}>
+                My Affirmation
+              </ThemedText>
+            </View>
+
+            <Pressable
+              onPress={() => {
+                if (navigation.canGoBack()) {
+                  navigation.goBack();
+                } else {
+                  (navigation as any).navigate("Main", { screen: "AffirmTab" });
+                }
+              }}
+              style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: theme.backgroundSecondary, alignItems: 'center', justifyContent: 'center' }}
+              testID="button-close-affirmation"
+            >
+              <Feather name="x" size={22} color={theme.text} />
+            </Pressable>
+          </View>
+        )}
+      </Animated.View>
+
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={[
           styles.content,
-          { paddingTop: headerHeight + Spacing.lg, paddingBottom: insets.bottom + Spacing["2xl"] },
+          { paddingTop: insets.top + 70, paddingBottom: insets.bottom + Spacing["2xl"] },
         ]}
         showsVerticalScrollIndicator={false}
+        onScrollBeginDrag={() => { scrolledRef.current = true; resetControlsTimer(); }}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
       >
         <View style={styles.visualizerContainer}>
           {rsvpEnabled ? (
@@ -593,7 +741,7 @@ export default function PlayerScreen() {
               currentPositionMs={rsvpPosition}
               isPlaying={isCurrentlyPlaying}
               fontSize={rsvpFontSize}
-              showHighlight={rsvpHighlight}
+              showHighlight={false}
             />
           ) : (
             <WaveformVisualizer
@@ -603,6 +751,17 @@ export default function PlayerScreen() {
             />
           )}
         </View>
+
+        {journeyContext && !isLandscape && !isInFullscreenMode ? (
+          <Animated.View style={[tiltHintAnimatedStyle, { alignItems: 'center', marginTop: -4, marginBottom: 4 }]} pointerEvents="none">
+            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.08)', paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20 }}>
+              <Feather name="smartphone" size={14} color="rgba(255,255,255,0.55)" style={{ transform: [{ rotate: '90deg' }] }} />
+              <ThemedText type="caption" style={{ color: 'rgba(255,255,255,0.55)', marginLeft: 8, fontSize: 12, fontWeight: '500' }}>
+                Tilt for immersive mode
+              </ThemedText>
+            </View>
+          </Animated.View>
+        ) : null}
 
         <View style={styles.infoContainer}>
           <ThemedText type="h2" style={styles.title} numberOfLines={2}>
@@ -687,9 +846,18 @@ export default function PlayerScreen() {
             testID="button-favorite"
           />
           <Pressable
-            onPress={() => setShowBreathingModal(true)}
+            onPress={async () => {
+              if (affirmation) {
+                await stop();
+                await setBreathingAffirmation(affirmation);
+                navigation.navigate("Main" as any, {
+                  screen: "BreatheTab",
+                  params: { screen: "Breathing", params: { autoStart: true } },
+                });
+              }
+            }}
             style={[styles.breatheButton, { backgroundColor: theme.backgroundSecondary }]}
-            testID="button-breathe-first"
+            testID="button-breathe"
           >
             <Feather name="wind" size={20} color={theme.primary} />
             <ThemedText type="small" style={{ color: theme.primary, marginLeft: 6, fontWeight: "600" }}>
@@ -699,157 +867,34 @@ export default function PlayerScreen() {
           <AmbientSoundMixer compact />
         </View>
 
-        <FocusModeTip visible={showFocusModeTip} onDismiss={dismissFocusModeTip} />
-
-        <View style={[styles.rsvpSettings, { backgroundColor: theme.backgroundSecondary }]}>
-          <View style={styles.rsvpSettingsRow}>
-            <ThemedText type="small" style={{ color: theme.textSecondary }}>
-              Focus Mode
-            </ThemedText>
-            <Pressable
-              onPress={handleToggleRsvp}
-              style={[
-                styles.rsvpToggle,
-                { backgroundColor: rsvpEnabled ? theme.primary : theme.backgroundTertiary },
-              ]}
-              testID="button-toggle-rsvp"
-            >
-              <View
-                style={[
-                  styles.rsvpToggleKnob,
-                  { 
-                    backgroundColor: "#FFFFFF",
-                    transform: [{ translateX: rsvpEnabled ? 20 : 2 }],
-                  },
-                ]}
-              />
-            </Pressable>
-          </View>
-
-          {rsvpEnabled ? (
-            <>
-              <View style={styles.rsvpSettingsRow}>
-                <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                  Font Size
-                </ThemedText>
-                <View style={styles.fontSizeButtons}>
-                  {(["S", "M", "L", "XL"] as RSVPFontSize[]).map((size) => (
-                    <Pressable
-                      key={size}
-                      onPress={() => {
-                        setRsvpFontSize(size);
-                        AsyncStorage.setItem(RSVP_FONT_SIZE_KEY, size);
-                        if (hapticEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      }}
-                      style={[
-                        styles.fontSizeButton,
-                        {
-                          backgroundColor:
-                            rsvpFontSize === size ? theme.primary : theme.backgroundTertiary,
-                        },
-                      ]}
-                      testID={`button-font-size-${size}`}
-                    >
-                      <ThemedText
-                        type="small"
-                        style={{
-                          color: rsvpFontSize === size ? "#FFFFFF" : theme.text,
-                          fontWeight: "600",
-                        }}
-                      >
-                        {size}
-                      </ThemedText>
-                    </Pressable>
-                  ))}
-                </View>
-              </View>
-
-              <View style={styles.rsvpSettingsRow}>
-                <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                  Highlight Focus
-                </ThemedText>
-                <Pressable
-                  onPress={handleToggleHighlight}
-                  style={[
-                    styles.rsvpToggle,
-                    { backgroundColor: rsvpHighlight ? theme.primary : theme.backgroundTertiary },
-                  ]}
-                  testID="button-toggle-highlight"
-                >
-                  <View
-                    style={[
-                      styles.rsvpToggleKnob,
-                      { 
-                        backgroundColor: "#FFFFFF",
-                        transform: [{ translateX: rsvpHighlight ? 20 : 2 }],
-                      },
-                    ]}
-                  />
-                </Pressable>
-              </View>
-            </>
-          ) : null}
-
-          <View style={styles.rsvpSettingsRow}>
-            <ThemedText type="small" style={{ color: theme.textSecondary }}>
-              Show Script
-            </ThemedText>
-            <Pressable
-              onPress={handleToggleScript}
-              style={[
-                styles.rsvpToggle,
-                { backgroundColor: showScript ? theme.primary : theme.backgroundTertiary },
-              ]}
-              testID="button-toggle-script"
-            >
-              <View
-                style={[
-                  styles.rsvpToggleKnob,
-                  { 
-                    backgroundColor: "#FFFFFF",
-                    transform: [{ translateX: showScript ? 20 : 2 }],
-                  },
-                ]}
-              />
-            </Pressable>
-          </View>
-
-          <View style={styles.rsvpSettingsRow}>
-            <ThemedText type="small" style={{ color: theme.textSecondary }}>
-              Haptic Feedback
-            </ThemedText>
-            <Pressable
-              onPress={handleToggleHaptic}
-              style={[
-                styles.rsvpToggle,
-                { backgroundColor: hapticEnabled ? theme.primary : theme.backgroundTertiary },
-              ]}
-              testID="button-toggle-haptic"
-            >
-              <View
-                style={[
-                  styles.rsvpToggleKnob,
-                  { 
-                    backgroundColor: "#FFFFFF",
-                    transform: [{ translateX: hapticEnabled ? 20 : 2 }],
-                  },
-                ]}
-              />
-            </Pressable>
-          </View>
-        </View>
-
-        <View style={[styles.voiceSection, { backgroundColor: theme.backgroundSecondary }]}>
-          <View style={styles.voiceSectionHeader}>
-            <ThemedText type="small" style={{ color: theme.textSecondary }}>
-              Voice
-            </ThemedText>
-            {isRegeneratingVoice ? (
-              <ThemedText type="small" style={{ color: theme.gold }}>
-                Generating...
+        <Animated.View
+          style={[
+            styles.bottomPanel,
+            {
+              backgroundColor: isDark ? theme.backgroundSecondary : theme.cardBackground,
+              borderColor: `${ACCENT_GOLD}30`,
+            },
+            Shadows.small,
+            bottomControlsFadeStyle,
+          ]}
+          pointerEvents={bottomControlsVisible || showScript ? "box-none" : "none"}
+        >
+          <View style={styles.optionRow}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Feather name="mic" size={14} color={theme.primary} />
+              <ThemedText type="small" style={{ color: theme.textSecondary, marginLeft: 6, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, fontSize: 11 }}>
+                Voice
               </ThemedText>
+            </View>
+            {isRegeneratingVoice ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Feather name="loader" size={12} color={theme.gold} />
+                <ThemedText type="small" style={{ color: theme.gold, marginLeft: 4, fontSize: 12 }}>
+                  Generating...
+                </ThemedText>
+              </View>
             ) : (
-              <ThemedText type="small" style={{ color: theme.gold, fontWeight: '600' }}>
+              <ThemedText type="small" style={{ color: theme.gold, fontWeight: '700', fontSize: 12 }}>
                 {getCurrentVoiceLabel()}
               </ThemedText>
             )}
@@ -861,21 +906,21 @@ export default function PlayerScreen() {
               style={[
                 styles.voiceOption,
                 {
-                  backgroundColor: affirmation?.voiceType === "personal" ? theme.primary : theme.backgroundTertiary,
+                  backgroundColor: affirmation?.voiceType === "personal" ? theme.primary : 'transparent',
                   opacity: isRegeneratingVoice ? 0.5 : 1,
+                  borderColor: affirmation?.voiceType === "personal" ? theme.primary : `${ACCENT_GOLD}50`,
                 },
               ]}
               testID="button-voice-personal"
             >
-              <Feather name="user" size={14} color={affirmation?.voiceType === "personal" ? "#FFFFFF" : theme.text} />
+              <Feather name="user" size={13} color={affirmation?.voiceType === "personal" ? "#FFFFFF" : theme.text} />
               <ThemedText
-                type="small"
-                style={{
-                  color: affirmation?.voiceType === "personal" ? "#FFFFFF" : theme.text,
-                  marginLeft: 4,
-                }}
+                style={[
+                  styles.optionPillText,
+                  { color: affirmation?.voiceType === "personal" ? "#FFFFFF" : theme.text, marginLeft: 5 },
+                ]}
               >
-                My Voice
+                Inner Voice
               </ThemedText>
               {!voiceStatus?.hasClonedVoice ? (
                 <Feather name="alert-circle" size={12} color={theme.accent} style={{ marginLeft: 4 }} />
@@ -887,19 +932,25 @@ export default function PlayerScreen() {
               style={[
                 styles.voiceOption,
                 {
-                  backgroundColor: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "female" ? theme.primary : theme.backgroundTertiary,
+                  backgroundColor: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "female" ? theme.primary : 'transparent',
                   opacity: isRegeneratingVoice ? 0.5 : 1,
+                  borderColor: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "female" ? theme.primary : `${ACCENT_GOLD}50`,
                 },
               ]}
               testID="button-voice-ai-female"
             >
+              <Feather
+                name="user"
+                size={13}
+                color={affirmation?.voiceType === "ai" && affirmation?.voiceGender === "female" ? "#FFFFFF" : theme.text}
+              />
               <ThemedText
-                type="small"
-                style={{
-                  color: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "female" ? "#FFFFFF" : theme.text,
-                }}
+                style={[
+                  styles.optionPillText,
+                  { color: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "female" ? "#FFFFFF" : theme.text, marginLeft: 5 },
+                ]}
               >
-                AI Female
+                {femaleVoiceName}
               </ThemedText>
             </Pressable>
             <Pressable
@@ -908,32 +959,94 @@ export default function PlayerScreen() {
               style={[
                 styles.voiceOption,
                 {
-                  backgroundColor: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "male" ? theme.primary : theme.backgroundTertiary,
+                  backgroundColor: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "male" ? theme.primary : 'transparent',
                   opacity: isRegeneratingVoice ? 0.5 : 1,
+                  borderColor: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "male" ? theme.primary : `${ACCENT_GOLD}50`,
                 },
               ]}
               testID="button-voice-ai-male"
             >
+              <Feather
+                name="user"
+                size={13}
+                color={affirmation?.voiceType === "ai" && affirmation?.voiceGender === "male" ? "#FFFFFF" : theme.text}
+              />
               <ThemedText
-                type="small"
-                style={{
-                  color: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "male" ? "#FFFFFF" : theme.text,
-                }}
+                style={[
+                  styles.optionPillText,
+                  { color: affirmation?.voiceType === "ai" && affirmation?.voiceGender === "male" ? "#FFFFFF" : theme.text, marginLeft: 5 },
+                ]}
               >
-                AI Male
+                {maleVoiceName}
               </ThemedText>
             </Pressable>
           </View>
-        </View>
+          <View style={styles.optionRow}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Feather name="file-text" size={14} color={theme.primary} />
+              <ThemedText type="small" style={{ color: theme.textSecondary, marginLeft: 6, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, fontSize: 11 }}>
+                Read Along
+              </ThemedText>
+            </View>
+            <Pressable
+              onPress={handleToggleScript}
+              style={[
+                styles.toggleTrack,
+                { backgroundColor: showScript ? theme.primary : theme.backgroundTertiary },
+              ]}
+              testID="button-toggle-script"
+            >
+              <View
+                style={[
+                  styles.toggleKnob,
+                  { 
+                    backgroundColor: "#FFFFFF",
+                    transform: [{ translateX: showScript ? 22 : 2 }],
+                  },
+                ]}
+              />
+            </Pressable>
+          </View>
+        </Animated.View>
 
         {showScript && affirmation?.script ? (
           <View style={[styles.scriptPreview, { backgroundColor: theme.backgroundSecondary }]}>
-            <ThemedText type="caption" style={{ color: theme.textSecondary, marginBottom: Spacing.sm }}>
-              SCRIPT
-            </ThemedText>
-            <ThemedText type="body" style={{ lineHeight: 24 }}>
-              {affirmation.script}
-            </ThemedText>
+            <View style={styles.scriptHeaderRow}>
+              <View style={styles.scriptTitleRow}>
+                <Feather name="file-text" size={16} color={theme.primary} />
+                <ThemedText type="h4" style={{ marginLeft: Spacing.xs }} numberOfLines={1}>
+                  {affirmation.title}
+                </ThemedText>
+              </View>
+              {(() => {
+                const wordCount = affirmation.script.split(/\s+/).filter(Boolean).length;
+                const label = wordCount < 80 ? "Short" : wordCount < 150 ? "Medium" : "Long";
+                return (
+                  <View style={{ backgroundColor: theme.primary + '20', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 }}>
+                    <ThemedText type="caption" style={{ color: theme.primary, fontWeight: '600' }}>
+                      {label}
+                    </ThemedText>
+                  </View>
+                );
+              })()}
+            </View>
+            <View style={[styles.scriptDivider, { backgroundColor: theme.primary + '30' }]} />
+            {affirmation.script
+              .split(/(?<=\.)\s+/)
+              .filter((line: string) => line.trim().length > 0)
+              .map((line: string, index: number, arr: string[]) => (
+                <ThemedText
+                  key={index}
+                  type="body"
+                  style={{
+                    lineHeight: 26,
+                    fontSize: 16,
+                    marginBottom: index < arr.length - 1 ? Spacing.md : 0,
+                  }}
+                >
+                  {line.trim()}
+                </ThemedText>
+              ))}
           </View>
         ) : null}
       </ScrollView>
@@ -1020,16 +1133,6 @@ export default function PlayerScreen() {
         ]}
       />
 
-      <QuickBreathingModal
-        visible={showBreathingModal}
-        onClose={() => setShowBreathingModal(false)}
-        onComplete={() => {
-          setShowBreathingModal(false);
-          if (affirmation) {
-            playAffirmation(affirmation);
-          }
-        }}
-      />
     </ThemedView>
   );
 }
@@ -1051,6 +1154,7 @@ const styles = StyleSheet.create({
   visualizerContainer: {
     alignItems: "center",
     justifyContent: "center",
+    marginTop: Spacing.xl,
     marginBottom: Spacing["3xl"],
     minHeight: 120,
   },
@@ -1079,6 +1183,7 @@ const styles = StyleSheet.create({
   },
   title: {
     textAlign: "center",
+    fontSize: 20,
     marginBottom: Spacing.xl,
   },
   progressContainer: {
@@ -1137,17 +1242,35 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     marginBottom: Spacing.lg,
   },
-  voiceSection: {
-    width: "100%",
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.lg,
-    marginBottom: Spacing.lg,
-  },
-  voiceSectionHeader: {
+  scriptHeaderRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginBottom: Spacing.sm,
+  },
+  scriptTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  scriptDivider: {
+    height: 1,
+    width: "100%",
     marginBottom: Spacing.md,
+  },
+  bottomPanel: {
+    width: "100%",
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm + 2,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    gap: Spacing.sm,
+    marginBottom: Spacing.sm,
+  },
+  optionRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: Spacing.sm,
   },
   voiceOptions: {
     flexDirection: "row",
@@ -1158,43 +1281,25 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.sm,
-    borderRadius: BorderRadius.md,
+    paddingVertical: Spacing.sm + 2,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1.5,
   },
-  rsvpSettings: {
-    width: "100%",
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.lg,
-    marginBottom: Spacing.lg,
-    gap: Spacing.md,
+  optionPillText: {
+    fontWeight: "600" as const,
+    fontSize: 13,
+    letterSpacing: 0.3,
   },
-  rsvpSettingsRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+  toggleTrack: {
+    width: 48,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: "center",
   },
-  rsvpToggle: {
-    width: 44,
+  toggleKnob: {
+    width: 24,
     height: 24,
     borderRadius: 12,
-    justifyContent: "center",
-  },
-  rsvpToggleKnob: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-  },
-  fontSizeButtons: {
-    flexDirection: "row",
-    gap: Spacing.sm,
-  },
-  fontSizeButton: {
-    width: 36,
-    height: 28,
-    borderRadius: BorderRadius.xs,
-    alignItems: "center",
-    justifyContent: "center",
   },
   fullscreenContainer: {
     flex: 1,

@@ -292,7 +292,6 @@ function configureExpoAndLanding(app: express.Application) {
     "templates",
     "landing-page.html",
   );
-  const landingPageTemplate = fs.readFileSync(templatePath, "utf-8");
   const appName = getAppName();
 
   logInfo("startup", "Serving static Expo files with dynamic manifest routing");
@@ -352,10 +351,11 @@ function configureExpoAndLanding(app: express.Application) {
     }
 
     if (req.path === "/") {
+      const freshTemplate = fs.readFileSync(templatePath, "utf-8");
       return serveLandingPage({
         req,
         res,
-        landingPageTemplate,
+        landingPageTemplate: freshTemplate,
         appName,
       });
     }

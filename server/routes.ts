@@ -807,7 +807,7 @@ async function generateAudio(
 ): Promise<{ audio: ArrayBuffer; duration: number; wordTimings: WordTiming[] }> {
   if (isPersonalVoice) {
     const personalVoiceSettings = isMeditation
-      ? { stability: 0.65, style: 0.35, pauseSeconds: 1.5 }
+      ? { stability: 0.70, style: 0.25, pauseSeconds: 2.5 }
       : { stability: 0.78, style: 0.15, pauseSeconds: 2.0 };
     try {
       const result = await elevenLabsTTS(script, voiceId, personalVoiceSettings);

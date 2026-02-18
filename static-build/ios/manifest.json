@@ -1,11 +1,11 @@
 {
-  "id": "9ca31266-c757-4745-86c4-06e1de290233",
-  "createdAt": "2026-02-18T02:46:42.914Z",
+  "id": "8ff08ab3-1fd2-4152-85bb-fd711777d4aa",
+  "createdAt": "2026-02-18T02:57:08.118Z",
   "runtimeVersion": "exposdk:54.0.0",
   "launchAsset": {
-    "key": "bundle-1771382802914-39350",
+    "key": "bundle-1771383428118-41222",
     "contentType": "application/javascript",
-    "url": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev:5000/1771382802914-39350/_expo/static/js/ios/bundle.js"
+    "url": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev:5000/1771383428118-41222/_expo/static/js/ios/bundle.js"
   },
   "assets": [],
   "metadata": {},
@@ -30,7 +30,7 @@
       "ios": {
         "supportsTablet": true,
         "bundleIdentifier": "com.subconsciousrewire.app",
-        "buildNumber": "3",
+        "buildNumber": "4",
         "usesAppleSignIn": true,
         "infoPlist": {
           "NSMicrophoneUsageDescription": "This app needs access to your microphone to record your voice for personalized affirmations.",

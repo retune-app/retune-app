@@ -6,7 +6,7 @@ import * as path from "path";
 import { pool } from "./db";
 
 const app = express();
-const SERVER_VERSION = "1.7.2";
+const SERVER_VERSION = "1.8.0";
 
 declare module "http" {
   interface IncomingMessage {

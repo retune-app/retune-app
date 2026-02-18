@@ -2,7 +2,7 @@
   "expo": {
     "name": "Retuned",
     "slug": "subconscious-rewire",
-    "version": "1.7.2",
+    "version": "1.8.0",
     "runtimeVersion": "exposdk:54.0.0",
     "orientation": "default",
     "icon": "./assets/images/icon-dark-1024x1024.png",
@@ -18,7 +18,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.subconsciousrewire.app",
-      "buildNumber": "2",
+      "buildNumber": "1",
       "usesAppleSignIn": true,
       "infoPlist": {
         "NSMicrophoneUsageDescription": "This app needs access to your microphone to record your voice for personalized affirmations.",

@@ -1,5 +1,23 @@
 # RETUNED Changelog
 
+## Version 1.7.2 (Build 4) — February 18, 2026
+
+### App Icon Refresh
+- Switched app icon to the light rings design — concentric gold rings on a soft white/grey background, no play button. Applies to iOS icon, Android adaptive icon, web favicon, and splash screen icon reference.
+- Kept the dark rings version for the splash screen where it displays at full size.
+
+### Landing Page Logo Update
+- Replaced play-button logo (`landing-assets/logo.png`) with the matching light rings icon for brand consistency across app and web.
+- Enlarged nav logo from 38px to 46px with adjusted border-radius (12px) for better visibility.
+
+### Files Changed
+- `app.json` — Build number set to 4, icon/favicon/adaptive icon paths updated to `icon-light-1024x1024.png`
+- `server/templates/landing-page.html` — Logo image size bumped to 46px
+- `server/templates/landing-assets/logo.png` — Replaced with light rings icon
+- `CHANGELOG.md` — This entry
+
+---
+
 ## Version 1.7.2 (Build 3) — February 18, 2026
 
 ### Affirmation Humanizer (A + B)

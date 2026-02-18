@@ -374,6 +374,10 @@ SUBCONSCIOUS LANGUAGE RULES (apply ALL of these):
 
 9. WORD VARIETY: Avoid overusing any single verb or adjective. Specifically, do NOT overuse these words: embrace, unlock, harness, ignite, unleash, manifest, radiate, transcend, awaken, abundant, limitless, boundless, infinite. Use each at most ONCE across the entire script, and prefer simpler, more natural alternatives like "welcome", "hold", "carry", "choose", "build", "step into", "notice", "trust".
 
+10. HUMAN VOICE: Write the way a real person talks to themselves — not like a motivational poster. Use contractions (I'm, it's, I've, that's). Vary sentence length — mix short punchy statements with longer flowing ones. Avoid stacking grandiose adjectives (never "immense, limitless, boundless power"). Include moments of gentle self-acknowledgment: "I've been working on this, and it's showing" or "something in me is shifting." Occasional dashes and commas create natural breathing pauses. The listener should feel like these are their own private thoughts, not a script being read to them.
+
+11. AVOID AI-ISMS: Never sound like a corporate affirmation card or self-help book cover. Avoid clichés like "I am a beacon of light", "I radiate pure energy", "I command the room", "my potential is limitless." Instead, choose language that feels intimate and specific — "there's a quiet confidence building in me" rather than "I radiate unshakeable confidence." If a sentence could appear on a motivational Instagram post, rewrite it to sound more like a private journal entry.
+
 FORMAT: No titles, no instructions, no numbering, no quotes. Just ${config.sentences} flowing sentences, each on its own line. Write as if speaking directly to the deepest part of someone's mind.
 
 TONE AND STYLE: ${toneInstruction}`;

@@ -3604,7 +3604,7 @@ Rules for tone:
     req.on("close", () => { clientDisconnected = true; });
 
     try {
-      const { mood, timeOfDay, duration: rawDuration } = req.body;
+      const { mood, timeOfDay, duration: rawDuration, vibeId: reqVibeId } = req.body;
 
       if (!mood || !timeOfDay) {
         return res.status(400).json({ error: "mood and timeOfDay are required" });
@@ -3651,7 +3651,21 @@ Rules for tone:
         return;
       }
 
-      const moodConfig = MEDITATION_MOOD_CONFIG[mood] || MEDITATION_MOOD_CONFIG.calm;
+      let moodConfig = MEDITATION_MOOD_CONFIG[mood] || MEDITATION_MOOD_CONFIG.calm;
+      let vibeContextLine = "";
+      if (reqVibeId && VIBE_LIST.includes(reqVibeId)) {
+        const vibeRouting = routeVibe(reqVibeId);
+        if (vibeRouting) {
+          moodConfig = {
+            scriptTone: vibeRouting.vibe.meditation.ttsConfig.scriptTone,
+            humeSpeed: vibeRouting.vibe.meditation.ttsConfig.humeSpeed,
+            pauseSeconds: vibeRouting.vibe.meditation.ttsConfig.pauseSeconds,
+            elevenLabsStability: vibeRouting.vibe.meditation.ttsConfig.elevenLabsStability,
+            elevenLabsStyle: vibeRouting.vibe.meditation.ttsConfig.elevenLabsStyle,
+          };
+          vibeContextLine = `\nThe user's vibe is "${vibeRouting.vibe.label}" — ${vibeRouting.vibe.description}. Meditation style: ${vibeRouting.vibe.meditation.style}. Focus: ${vibeRouting.vibe.meditation.focusArea}.`;
+        }
+      }
       const paceDescription = "at a calm pace";
 
       const scriptResponse = await openai.chat.completions.create({
@@ -3662,7 +3676,7 @@ Rules for tone:
             content: [
               `You are an expert mindfulness meditation guide creating a personalized micro-meditation. This is a mindfulness exercise (${durationLabel} when read aloud ${paceDescription}).`,
               ``,
-              `CONTEXT: It is ${dayOfWeek} ${timeOfDay}. The person is feeling ${mood}. Use this context naturally.`,
+              `CONTEXT: It is ${dayOfWeek} ${timeOfDay}. The person is feeling ${mood}. Use this context naturally.${vibeContextLine}`,
               ``,
               `STRUCTURE (follow this order):`,
               `1. OPENING (1-2 sentences): Begin with a brief, natural acknowledgment of where they are in their week and day — weave the day and time of day into a warm, conversational greeting before the grounding cue. Examples: "It's ${dayOfWeek} ${timeOfDay} — let this be your moment of calm..." or "The middle of the week can feel long... right here, right now, you're choosing stillness." Keep it effortless, never forced. Then invite them to close their eyes, notice their breath, or feel their body.`,
@@ -3719,8 +3733,20 @@ Rules for tone:
     req.on("close", () => { clientDisconnected = true; });
 
     try {
-      const { script, usePersonalVoice, voiceId: rawVoiceId, mood } = req.body;
-      const moodConfig = mood ? (MEDITATION_MOOD_CONFIG[mood] || MEDITATION_MOOD_CONFIG.calm) : MEDITATION_MOOD_CONFIG.calm;
+      const { script, usePersonalVoice, voiceId: rawVoiceId, mood, vibeId: audioVibeId } = req.body;
+      let moodConfig = mood ? (MEDITATION_MOOD_CONFIG[mood] || MEDITATION_MOOD_CONFIG.calm) : MEDITATION_MOOD_CONFIG.calm;
+      if (audioVibeId && VIBE_LIST.includes(audioVibeId)) {
+        const vibeRouting = routeVibe(audioVibeId);
+        if (vibeRouting) {
+          moodConfig = {
+            scriptTone: vibeRouting.vibe.meditation.ttsConfig.scriptTone,
+            humeSpeed: vibeRouting.vibe.meditation.ttsConfig.humeSpeed,
+            pauseSeconds: vibeRouting.vibe.meditation.ttsConfig.pauseSeconds,
+            elevenLabsStability: vibeRouting.vibe.meditation.ttsConfig.elevenLabsStability,
+            elevenLabsStyle: vibeRouting.vibe.meditation.ttsConfig.elevenLabsStyle,
+          };
+        }
+      }
 
       if (!script || typeof script !== "string" || script.trim().length === 0) {
         return res.status(400).json({ error: "script is required and must be a non-empty string" });

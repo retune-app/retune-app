@@ -94,12 +94,17 @@ interface JourneyStep {
   suggestedTheme?: string | null;
   mood?: string;
   timeOfDay?: string;
+  vibeId?: string;
 }
 
 interface JourneyData {
   acknowledgment: string;
   currentMood: string;
   targetMood: string;
+  vibeId?: string;
+  vibeLabel?: string;
+  vibeAccentColor?: string;
+  vibeIcon?: string;
   steps: JourneyStep[];
 }
 
@@ -541,6 +546,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
             timeOfDay: timeOfDayForScript,
             duration: 2,
             dayOfWeek: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][new Date().getDay()],
+            vibeId: nextMeditationStep.vibeId || journey.vibeId || undefined,
           }),
           credentials: "include",
         });

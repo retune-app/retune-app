@@ -270,7 +270,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
   const [moment, setMoment] = useState<GeneratedMoment | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [currentPosition, setCurrentPosition] = useState(0);
-  const [selectedDuration, setSelectedDuration] = useState<number>(journeyContext ? 2 : 1);
+  const [selectedDuration, setSelectedDuration] = useState<number>(2);
   const [selectedSound, setSelectedSound] = useState<BackgroundMusicType>(
     MOOD_SOUND_MAP[mood]?.[timeOfDay] || MOOD_SOUND_MAP[mood]?.["morning"] || "ocean-waves-beach"
   );

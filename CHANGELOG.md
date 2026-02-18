@@ -1,6 +1,6 @@
 # RETUNED Changelog
 
-## Version 1.7.3 — February 18, 2026
+## Version 1.7.2 (Build 4) — February 18, 2026
 
 ### Auth Screen Redesign
 - Replaced circular logo image with text-only RETUNED wordmark using Outfit_500Medium (38px, letter-spacing 4.5) matching website nav branding.

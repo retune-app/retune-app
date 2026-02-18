@@ -5,7 +5,7 @@
     "version": "1.7.2",
     "runtimeVersion": "exposdk:54.0.0",
     "orientation": "default",
-    "icon": "./assets/images/icon-dark-1024x1024.png",
+    "icon": "./assets/images/icon-v3-soundwave.png",
     "scheme": "subconsciousrewire",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -41,7 +41,7 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#0F1C3F",
-        "foregroundImage": "./assets/images/icon-dark-1024x1024.png"
+        "foregroundImage": "./assets/images/icon-v3-soundwave.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -50,13 +50,13 @@
     },
     "web": {
       "output": "single",
-      "favicon": "./assets/images/icon-dark-1024x1024.png"
+      "favicon": "./assets/images/icon-v3-soundwave.png"
     },
     "plugins": [
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/icon-dark-1024x1024.png",
+          "image": "./assets/images/icon-v3-soundwave.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#E8EDF2",

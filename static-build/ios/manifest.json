@@ -1,11 +1,11 @@
 {
-  "id": "301ae46c-5868-4e17-a00a-ae4dc266e1be",
-  "createdAt": "2026-02-18T02:06:20.912Z",
+  "id": "4c478811-ae58-482b-bcdb-99469ee45208",
+  "createdAt": "2026-02-18T02:29:38.784Z",
   "runtimeVersion": "exposdk:54.0.0",
   "launchAsset": {
-    "key": "bundle-1771380380912-35880",
+    "key": "bundle-1771381778784-37382",
     "contentType": "application/javascript",
-    "url": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev:5000/1771380380912-35880/_expo/static/js/ios/bundle.js"
+    "url": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev:5000/1771381778784-37382/_expo/static/js/ios/bundle.js"
   },
   "assets": [],
   "metadata": {},
@@ -17,7 +17,7 @@
       "version": "1.7.2",
       "runtimeVersion": "exposdk:54.0.0",
       "orientation": "default",
-      "icon": "./assets/images/icon-dark-1024x1024.png",
+      "icon": "./assets/images/icon-v3-soundwave.png",
       "scheme": "subconsciousrewire",
       "userInterfaceStyle": "automatic",
       "newArchEnabled": true,
@@ -59,8 +59,8 @@
       "android": {
         "adaptiveIcon": {
           "backgroundColor": "#0F1C3F",
-          "foregroundImage": "./assets/images/icon-dark-1024x1024.png",
-          "foregroundImageUrl": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev/assets/./assets/images/icon-dark-1024x1024.png"
+          "foregroundImage": "./assets/images/icon-v3-soundwave.png",
+          "foregroundImageUrl": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev/assets/./assets/images/icon-v3-soundwave.png"
         },
         "edgeToEdgeEnabled": true,
         "predictiveBackGestureEnabled": false,
@@ -73,13 +73,13 @@
       },
       "web": {
         "output": "single",
-        "favicon": "./assets/images/icon-dark-1024x1024.png"
+        "favicon": "./assets/images/icon-v3-soundwave.png"
       },
       "plugins": [
         [
           "expo-splash-screen",
           {
-            "image": "./assets/images/icon-dark-1024x1024.png",
+            "image": "./assets/images/icon-v3-soundwave.png",
             "imageWidth": 200,
             "resizeMode": "contain",
             "backgroundColor": "#E8EDF2",
@@ -129,7 +129,7 @@
       "androidStatusBar": {
         "backgroundColor": "#E8EDF2"
       },
-      "iconUrl": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev/assets/./assets/images/icon-dark-1024x1024.png",
+      "iconUrl": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev/assets/./assets/images/icon-v3-soundwave.png",
       "hostUri": "ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev:5000/ios"
     },
     "expoGo": {

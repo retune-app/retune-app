@@ -1122,22 +1122,14 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
       ]}
       pointerEvents={shouldAlwaysShow || controlsVisible ? "box-none" : "none"}
     >
-      {!isLandscape ? (
+      {!isLandscape && playerState !== "generating" && playerState !== "ready" && playerState !== "idle" ? (
         <View style={styles.bottomStatusSection} pointerEvents="none">
           <View style={styles.progressBar}>
             <Animated.View style={[styles.progressFill, progressBarStyle]} />
           </View>
-          {playerState === "generating" ? (
-            <ThemedText type="caption" style={styles.statusLabel}>
-              {getMeditationStatusMessage(mood)}
-            </ThemedText>
-          ) : playerState === "error" ? (
+          {playerState === "error" ? (
             <ThemedText type="caption" style={[styles.statusLabel, { color: "#E85D5D" }]}>
               {errorMessage || "Something went wrong"}
-            </ThemedText>
-          ) : playerState === "ready" ? (
-            <ThemedText type="caption" style={styles.statusLabel}>
-              {countdown !== null && countdown > 0 ? "Get ready..." : "Starting..."}
             </ThemedText>
           ) : playerState === "playing" ? (
             <ThemedText type="caption" style={styles.statusLabel}>
@@ -1174,11 +1166,6 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
 
           {playerState === "finished" ? (
             <View style={styles.finishedSection}>
-              {moment?.disclaimer ? (
-                <ThemedText type="caption" style={styles.disclaimer}>
-                  {moment.disclaimer}
-                </ThemedText>
-              ) : null}
               <View style={styles.finishedActions}>
                 <Pressable
                   onPress={playAudio}

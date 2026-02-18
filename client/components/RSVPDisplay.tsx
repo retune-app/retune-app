@@ -49,7 +49,7 @@ function isStandalonePunctuation(word: string): boolean {
 }
 
 function stripPunctuation(word: string): string {
-  return word.replace(/^[,.!?;:'\-"—–…]+|[,.!?;:'\-"—–…]+$/g, "");
+  return word.replace(/[^a-zA-Z0-9']/g, "");
 }
 
 function renderWordWithORP(

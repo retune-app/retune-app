@@ -3513,13 +3513,13 @@ Rules for tone:
 
       try {
         if (usePersonalVoice && voiceId) {
-          const result = await generateAudio(script, voiceId, true, moodConfig);
+          const result = await generateAudio(script, voiceId, true, moodConfig, undefined, true);
           audioBuffer = result.audio;
           wordTimings = result.wordTimings;
           audioDuration = result.duration;
         } else {
           const stockVoiceId = voiceId && isHumeVoice(voiceId) ? voiceId : "hume_lotus";
-          const result = await generateAudio(script, stockVoiceId, false, moodConfig);
+          const result = await generateAudio(script, stockVoiceId, false, moodConfig, undefined, true);
           audioBuffer = result.audio;
           wordTimings = result.wordTimings;
           audioDuration = result.duration;
@@ -3678,13 +3678,13 @@ Rules for tone:
 
       try {
         if (usePersonalVoice && voiceId) {
-          const result = await generateAudio(script, voiceId, true, moodConfig);
+          const result = await generateAudio(script, voiceId, true, moodConfig, undefined, true);
           audioBuffer = result.audio;
           wordTimings = result.wordTimings;
           audioDuration = result.duration;
         } else {
           const stockVoiceId = voiceId && isHumeVoice(voiceId) ? voiceId : "hume_lotus";
-          const result = await generateAudio(script, stockVoiceId, false, moodConfig);
+          const result = await generateAudio(script, stockVoiceId, false, moodConfig, undefined, true);
           audioBuffer = result.audio;
           wordTimings = result.wordTimings;
           audioDuration = result.duration;

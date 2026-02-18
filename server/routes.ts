@@ -802,15 +802,15 @@ async function generateAudio(
   voiceId?: string,
   isPersonalVoice: boolean = false,
   moodConfig?: typeof MEDITATION_MOOD_CONFIG[string],
-  ttsProvider?: string
+  ttsProvider?: string,
+  isMeditation: boolean = false
 ): Promise<{ audio: ArrayBuffer; duration: number; wordTimings: WordTiming[] }> {
   if (isPersonalVoice) {
+    const personalVoiceSettings = isMeditation
+      ? { stability: 0.65, style: 0.35, pauseSeconds: 1.5 }
+      : { stability: 0.78, style: 0.15, pauseSeconds: 2.0 };
     try {
-      const result = await elevenLabsTTS(script, voiceId, {
-        stability: 0.78,
-        style: 0.15,
-        pauseSeconds: 2.0,
-      });
+      const result = await elevenLabsTTS(script, voiceId, personalVoiceSettings);
       return result;
     } catch (elevenLabsError: any) {
       const isQuotaExhausted = elevenLabsError?.message?.includes("quota_exceeded") ||

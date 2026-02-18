@@ -1,6 +1,6 @@
 # RETUNED Changelog
 
-## Version 1.7.3 — February 18, 2026
+## Version 1.7.2 (Build 3) — February 18, 2026
 
 ### Affirmation Humanizer (A + B)
 - **Improved Generation Prompts (Option A)**: Added two new subconscious language rules to the affirmation system prompt:
@@ -17,8 +17,8 @@
 
 ### Files Changed
 - `server/routes.ts` — Updated `generateScript` system prompt with rules 10-11, added `humanizeScript` post-processing function
-- `server/index.ts` — Server version bumped to 1.7.3
-- `app.json` — Version bumped to 1.7.3, build number reset to 1
+- `server/index.ts` — Server version kept at 1.7.2
+- `app.json` — Version 1.7.2, build number set to 3
 - `CHANGELOG.md` — This entry
 - `replit.md` — Updated to reflect current state
 

@@ -6,7 +6,7 @@ import fs from "fs";
 import rateLimit from "express-rate-limit";
 import { db } from "./db";
 import { affirmations, voiceSamples, categories, users, collections, customCategories, notificationSettings, reminders, pushTokens, listeningSessions, breathingSessions, journeyCompletions } from "@shared/schema";
-import { eq, desc, asc, and, sql, sum, isNull } from "drizzle-orm";
+import { eq, desc, asc, and, sql, sum, isNull, isNotNull } from "drizzle-orm";
 import { openai } from "./replit_integrations/audio/client";
 import OpenAI from "openai";
 import { isPremiumUser, FREE_FEATURES, PREMIUM_FEATURES_LIST, BETA_MODE } from "./premium";
@@ -4154,7 +4154,7 @@ Rules for tone:
       const [user] = await db.select({ name: users.name }).from(users).where(eq(users.id, userId));
       const firstName = user?.name?.split(" ")[0] || "";
 
-      const [sessionStats, affirmationCount, voiceCloneStatus, listeningCount, journeyCount, topJourneyMood] = await Promise.all([
+      const [sessionStats, affirmationCount, voiceCloneStatus, listeningCount, journeyCount, topJourneyMood, lastVibe] = await Promise.all([
         db.select({ total: sql<number>`count(*)::int` })
           .from(breathingSessions)
           .where(eq(breathingSessions.userId, userId))
@@ -4184,6 +4184,12 @@ Rules for tone:
           .where(and(eq(journeyCompletions.userId, userId), eq(journeyCompletions.completedFully, true)))
           .groupBy(journeyCompletions.targetMood)
           .orderBy(sql`count(*) desc`)
+          .limit(1)
+          .then(r => r[0]),
+        db.select({ vibeId: journeyCompletions.vibeId })
+          .from(journeyCompletions)
+          .where(and(eq(journeyCompletions.userId, userId), isNotNull(journeyCompletions.vibeId)))
+          .orderBy(desc(journeyCompletions.completedAt))
           .limit(1)
           .then(r => r[0]),
       ]);
@@ -4262,6 +4268,10 @@ Rules for tone:
         if (topTechnique) parts.push(`favorite technique: ${topTechnique.techniqueId}`);
         if (totalJourneys > 0) parts.push(`${totalJourneys} mood journey(s) completed`);
         if (topJourneyMood) parts.push(`most-sought mood: ${topJourneyMood.targetMood}`);
+        if (lastVibe?.vibeId) {
+          const vibeConfig = getVibeConfig(lastVibe.vibeId as VibeId);
+          if (vibeConfig) parts.push(`last vibe: "${vibeConfig.label}" (${vibeConfig.description})`);
+        }
         statsContext = `\nUser activity: ${parts.join(", ")}.`;
       }
 

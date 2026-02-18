@@ -416,7 +416,63 @@ TONE AND STYLE: ${toneInstruction}`;
     script = sentences.slice(0, config.sentences).join(" ").trim();
   }
   
+  script = await humanizeScript(script, config.sentences);
+  
   return script;
+}
+
+async function humanizeScript(script: string, sentenceCount: number): Promise<string> {
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: `You are a humanizer for affirmation scripts. Your job is to rewrite the given affirmations so they sound like a real person's private inner thoughts — not a motivational poster or self-help book.
+
+REWRITING RULES:
+- Keep the same number of sentences (exactly ${sentenceCount}).
+- Preserve all subconscious language patterns: present tense, positive framing, identity-level statements, embedded commands, progressive believability (grounded first, aspirational last).
+- Use contractions naturally (I'm, I've, it's, that's, there's).
+- Vary sentence length — some short and punchy, others longer and flowing.
+- Replace grandiose or generic phrases with intimate, specific ones. "I radiate unshakeable confidence" becomes "there's a quiet confidence building in me." "I command respect through my presence" becomes "people listen when I speak, and I trust that."
+- Add natural speech rhythms — dashes, commas for breathing pauses, occasional self-reflection ("and I'm okay with that", "that's just who I am now").
+- Remove any language that sounds like it belongs on a motivational Instagram post, corporate training slide, or self-help book cover.
+- The result should sound like something the listener would genuinely think to themselves in a quiet moment — honest, warm, and real.
+- Each sentence on its own line. No titles, numbering, or quotes.
+- Do NOT add new concepts or themes. Only rephrase what's already there.`,
+        },
+        {
+          role: "user",
+          content: script,
+        },
+      ],
+      temperature: 0.8,
+      max_tokens: 600,
+    });
+
+    const humanized = response.choices[0]?.message?.content?.trim();
+    if (!humanized) return script;
+
+    let result = humanized
+      .replace(/^\*\*.*?\*\*\s*/gm, "")
+      .replace(/^#+\s*.*?\n/gm, "")
+      .replace(/^\d+\.\s*/gm, "")
+      .replace(/^["']/gm, "")
+      .replace(/["']$/gm, "")
+      .replace(/^\s*\n/gm, "")
+      .trim();
+
+    const humanizedSentences = result.match(/[^.!?]+[.!?]+/g) || [];
+    if (humanizedSentences.length > sentenceCount) {
+      result = humanizedSentences.slice(0, sentenceCount).join(" ").trim();
+    }
+
+    return result;
+  } catch (error) {
+    console.error("Humanizer pass failed, using original script:", error);
+    return script;
+  }
 }
 
 // Auto-generate title from affirmation script

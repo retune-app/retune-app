@@ -351,6 +351,9 @@ function configureExpoAndLanding(app: express.Application) {
     }
 
     if (req.path === "/") {
+      if (!req.query.v) {
+        return res.redirect(`/?v=${Date.now()}`);
+      }
       const freshTemplate = fs.readFileSync(templatePath, "utf-8");
       return serveLandingPage({
         req,

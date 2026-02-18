@@ -140,6 +140,41 @@ export const MOOD_TAG_PREFERENCES: Record<MoodType, Record<TimeOfDay, { preferre
   },
 };
 
+export type TargetMoodType = "calm" | "energized" | "grateful" | "confident" | "focused" | "joyful";
+
+export const TARGET_MOOD_TAGS: Record<TargetMoodType, { boostTags: string[]; boostPillars: string[]; penaltyTags: string[] }> = {
+  energized: {
+    boostTags: ["Energy", "Drive", "Confidence", "Health", "Focus"],
+    boostPillars: ["Body", "Achievement"],
+    penaltyTags: ["Sleep", "Calm", "Comfort", "Harmony"],
+  },
+  calm: {
+    boostTags: ["Calm", "Inner Peace", "Letting Go", "Presence", "Healing"],
+    boostPillars: ["Spirit", "Mind"],
+    penaltyTags: ["Drive", "Energy"],
+  },
+  confident: {
+    boostTags: ["Confidence", "Resilience", "Drive", "Purpose", "Growth"],
+    boostPillars: ["Mind", "Achievement"],
+    penaltyTags: ["Sleep", "Comfort"],
+  },
+  focused: {
+    boostTags: ["Focus", "Clarity", "Discipline", "Drive", "Purpose"],
+    boostPillars: ["Mind", "Achievement"],
+    penaltyTags: ["Sleep", "Comfort"],
+  },
+  grateful: {
+    boostTags: ["Gratitude", "Joy", "Presence", "Love", "Inner Peace"],
+    boostPillars: ["Spirit", "Connection"],
+    penaltyTags: ["Drive", "Discipline"],
+  },
+  joyful: {
+    boostTags: ["Joy", "Gratitude", "Love", "Presence", "Energy"],
+    boostPillars: ["Spirit", "Connection"],
+    penaltyTags: ["Sleep"],
+  },
+};
+
 export function migrateTag(tag: string): string {
   return TAG_MIGRATION_MAP[tag] || tag;
 }

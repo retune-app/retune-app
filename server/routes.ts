@@ -10,7 +10,7 @@ import { eq, desc, asc, and, sql, sum, isNull } from "drizzle-orm";
 import { openai } from "./replit_integrations/audio/client";
 import OpenAI from "openai";
 import { isPremiumUser, FREE_FEATURES, PREMIUM_FEATURES_LIST, BETA_MODE } from "./premium";
-import { MOOD_TAG_PREFERENCES, type MoodType, type TimeOfDay } from "@shared/pillars";
+import { MOOD_TAG_PREFERENCES, TARGET_MOOD_TAGS, type MoodType, type TimeOfDay, type TargetMoodType } from "@shared/pillars";
 import {
   cloneVoice,
   textToSpeech as elevenLabsTTS,
@@ -2909,16 +2909,30 @@ Rules:
       const withAudio = userAffirmationsList.filter(a => a.audioUrl);
 
       if (withAudio.length > 0) {
+        const targetPrefs = TARGET_MOOD_TAGS[targetMood as TargetMoodType];
+
         const scoreAffirmation = (a: typeof withAudio[0]) => {
           let score = 0;
           const tags = (a.categoryName || "").split(",").map(t => t.trim()).filter(Boolean);
-          const tagMatches = tags.filter(t => preferredTags.includes(t)).length;
-          score += tagMatches * 3;
-          if (a.pillar && preferredPillars.includes(a.pillar)) {
-            score += preferredPillars.indexOf(a.pillar) === 0 ? 2 : 1;
+
+          if (targetPrefs) {
+            const targetTagMatches = tags.filter(t => targetPrefs.boostTags.includes(t)).length;
+            score += targetTagMatches * 4;
+            if (a.pillar && targetPrefs.boostPillars.includes(a.pillar)) {
+              score += targetPrefs.boostPillars.indexOf(a.pillar) === 0 ? 3 : 2;
+            }
+            const penaltyMatches = tags.filter(t => targetPrefs.penaltyTags.includes(t)).length;
+            score -= penaltyMatches * 3;
           }
+
+          const startingTagMatches = tags.filter(t => preferredTags.includes(t)).length;
+          score += startingTagMatches * 1;
+          if (a.pillar && preferredPillars.includes(a.pillar)) {
+            score += 1;
+          }
+
           if (a.isFavorite) score += 1;
-          if (a.voiceType === userPreferredVoiceType) score += 2;
+          if (a.voiceType === userPreferredVoiceType) score += 1;
           return score;
         };
 
@@ -2930,7 +2944,7 @@ Rules:
           const topPool = scored.filter(a => a.score === topScore);
           const picked = topPool[Math.floor(Math.random() * topPool.length)];
           matchedAffirmation = picked;
-          matchReason = topScore >= 3 ? "tag" : "pillar";
+          matchReason = topScore >= 4 ? "tag" : "pillar";
         } else {
           matchedAffirmation = withAudio[Math.floor(Math.random() * withAudio.length)];
           matchReason = "any";

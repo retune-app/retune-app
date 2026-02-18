@@ -350,7 +350,7 @@ function configureExpoAndLanding(app: express.Application) {
       return serveExpoManifest(platform, req, res);
     }
 
-    if (req.path === "/" || req.path === "/home") {
+    if (req.path === "/") {
       const freshTemplate = fs.readFileSync(templatePath, "utf-8");
       return serveLandingPage({
         req,

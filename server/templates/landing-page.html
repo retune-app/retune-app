@@ -1102,6 +1102,162 @@
       font-weight: 500;
     }
 
+    /* Visual comparison cards */
+    .comparison-visual {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      max-width: 800px;
+      margin: 0 auto 60px;
+      align-items: start;
+    }
+
+    .comparison-card {
+      border-radius: 20px;
+      padding: 36px 28px;
+      text-align: center;
+    }
+
+    .comparison-card.traditional {
+      background: var(--white);
+      border: 2px solid var(--border);
+      box-shadow: var(--card-shadow);
+    }
+
+    .comparison-card.retuned {
+      background: var(--white);
+      border: 2px solid var(--believe);
+      box-shadow: 0 4px 24px rgba(201, 162, 39, 0.12);
+    }
+
+    .comparison-card-title {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 14px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+
+    .comparison-card.traditional .comparison-card-title {
+      color: var(--text-muted);
+    }
+
+    .comparison-card.retuned .comparison-card-title {
+      color: var(--believe);
+    }
+
+    .app-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .app-pill {
+      background: #F0F0F0;
+      color: var(--text-muted);
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      padding: 10px 8px;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    .mood-arrow {
+      font-family: 'Outfit', sans-serif;
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .mood-arrow .arrow {
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .mood-arrow .calm {
+      color: var(--believe);
+    }
+
+    .journey-step-card {
+      text-align: left;
+      padding: 14px 16px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+    }
+
+    .journey-step-card:last-child {
+      margin-bottom: 0;
+    }
+
+    .journey-step-card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+
+    .journey-step-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .journey-step-dot.breathe { background: var(--breathe); }
+    .journey-step-dot.believe { background: var(--believe); }
+    .journey-step-dot.meditate { background: #6C63FF; }
+
+    .journey-step-card-title {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    .journey-step-card-title.breathe { color: var(--breathe); }
+    .journey-step-card-title.believe { color: var(--believe); }
+    .journey-step-card-title.meditate { color: #6C63FF; }
+
+    .journey-step-card p {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    .comparison-cta {
+      display: inline-block;
+      margin-top: 24px;
+      padding: 14px 32px;
+      background: var(--believe);
+      color: var(--white);
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 15px;
+      border-radius: 50px;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+
+    .comparison-cta:hover {
+      background: var(--believe-hover);
+    }
+
+    @media (max-width: 600px) {
+      .comparison-visual {
+        grid-template-columns: 1fr;
+        gap: 20px;
+        margin-bottom: 40px;
+      }
+    }
+
     /* Mobile accordion */
     .comparison-accordion {
       display: none;
@@ -2054,6 +2210,55 @@
       <div class="section-header fade-in">
         <h2>How RETUNED Compares to Traditional Wellness Apps</h2>
         <p>It's not about having more features. It's about having features that work together.</p>
+      </div>
+
+      <!-- Visual comparison cards -->
+      <div class="comparison-visual fade-in">
+        <div class="comparison-card traditional">
+          <div class="comparison-card-title">Traditional Apps</div>
+          <div class="app-grid">
+            <div class="app-pill">Sleep</div>
+            <div class="app-pill">Meditate</div>
+            <div class="app-pill">Breathe</div>
+            <div class="app-pill">Music</div>
+            <div class="app-pill">Courses</div>
+            <div class="app-pill">Focus</div>
+            <div class="app-pill">Stories</div>
+            <div class="app-pill">Timer</div>
+            <div class="app-pill">Sounds</div>
+            <div class="app-pill">Journal</div>
+            <div class="app-pill">Habits</div>
+            <div class="app-pill">Goals</div>
+          </div>
+        </div>
+        <div class="comparison-card retuned">
+          <div class="comparison-card-title">RETUNED</div>
+          <div class="mood-arrow">
+            Anxious <span class="arrow">&rarr;</span> <span class="calm">Calm</span>
+          </div>
+          <div class="journey-step-card">
+            <div class="journey-step-card-header">
+              <div class="journey-step-dot breathe"></div>
+              <span class="journey-step-card-title breathe">Breathe &middot; 4 min</span>
+            </div>
+            <p>Calming box breathing to settle your nervous system</p>
+          </div>
+          <div class="journey-step-card">
+            <div class="journey-step-card-header">
+              <div class="journey-step-dot believe"></div>
+              <span class="journey-step-card-title believe">Believe &middot; 5 min</span>
+            </div>
+            <p>Affirmations for inner peace, spoken in your own voice</p>
+          </div>
+          <div class="journey-step-card">
+            <div class="journey-step-card-header">
+              <div class="journey-step-dot meditate"></div>
+              <span class="journey-step-card-title meditate">Meditate &middot; 3 min</span>
+            </div>
+            <p>Guided meditation spoken in your voice</p>
+          </div>
+          <a href="#final-cta" class="comparison-cta">Begin Your Journey</a>
+        </div>
       </div>
 
       <!-- Desktop table -->

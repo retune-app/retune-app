@@ -282,12 +282,12 @@ export default function CreateScreen() {
     const predefinedTags = PILLARS[selectedPillar].subcategories;
     
     if (pillarTags.length >= MAX_CUSTOM_TAGS_PER_PILLAR) {
-      Alert.alert("Limit Reached", `You can only add ${MAX_CUSTOM_TAGS_PER_PILLAR} custom tags per pillar.`);
+      Alert.alert("Limit Reached", `You can only add ${MAX_CUSTOM_TAGS_PER_PILLAR} custom intentions per pillar.`);
       return;
     }
     
     if (pillarTags.includes(trimmedName) || predefinedTags.includes(trimmedName)) {
-      Alert.alert("Duplicate Tag", "This tag already exists.");
+      Alert.alert("Already Exists", "This intention already exists.");
       return;
     }
 
@@ -295,7 +295,7 @@ export default function CreateScreen() {
       const modResult = await apiRequest("POST", "/api/moderate-content", { text: trimmedName });
       const modData = await modResult.json();
       if (modData.flagged) {
-        setContentWarning(modData.message || "This tag contains content that doesn't align with Retuned's purpose. Please choose a different tag name.");
+        setContentWarning(modData.message || "This intention contains content that doesn't align with Retuned's purpose. Please choose a different name.");
         return;
       }
     } catch (e) {}
@@ -926,7 +926,7 @@ export default function CreateScreen() {
                     <TextInput
                       ref={newTagInputRef}
                       style={[styles.addTagInput, { color: theme.text }]}
-                      placeholder="Enter custom tag name..."
+                      placeholder="Enter custom intention..."
                       placeholderTextColor={theme.placeholder}
                       value={newTagName}
                       onChangeText={setNewTagName}
@@ -953,7 +953,7 @@ export default function CreateScreen() {
                   </View>
                 ) : null}
                 <ThemedText type="caption" style={[styles.customTagHint, { color: theme.textSecondary }]}>
-                  {(customTags[selectedPillar] || []).length}/{MAX_CUSTOM_TAGS_PER_PILLAR} custom tags
+                  {(customTags[selectedPillar] || []).length}/{MAX_CUSTOM_TAGS_PER_PILLAR} custom intentions
                 </ThemedText>
                 <Button
                   variant="primary"
@@ -968,7 +968,7 @@ export default function CreateScreen() {
               <Animated.View entering={FadeIn.duration(200)}>
                 {renderStepSummary(
                   2,
-                  "Tags",
+                  "Intentions",
                   selectedSubcategories.length > 0 ? selectedSubcategories.join(", ") : "None selected",
                 )}
               </Animated.View>
@@ -1600,15 +1600,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     zIndex: 1,
-  },
-  addTagButton: {
-    height: 36,
-    width: 36,
-    borderRadius: BorderRadius.full,
-    borderWidth: 1.5,
-    borderStyle: "dashed",
-    justifyContent: "center",
-    alignItems: "center",
   },
   addTagInputContainer: {
     flexDirection: "row",

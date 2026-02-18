@@ -856,14 +856,17 @@
     }
 
     .journey-steps {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
       gap: 40px;
-      max-width: 1000px;
+      max-width: 1100px;
       margin: 0 auto;
     }
 
     .journey-step {
+      flex: 0 1 calc(33.333% - 28px);
+      min-width: 200px;
       text-align: center;
       position: relative;
     }
@@ -1487,8 +1490,11 @@
       }
 
       .journey-steps {
-        grid-template-columns: repeat(3, 1fr);
         gap: 24px;
+      }
+
+      .journey-step {
+        flex: 0 1 calc(33.333% - 16px);
       }
 
       .showcase-card {
@@ -1533,10 +1539,16 @@
       }
 
       .journey-steps {
-        grid-template-columns: 1fr;
+        flex-direction: column;
+        align-items: center;
         gap: 48px;
         max-width: 320px;
         margin: 0 auto;
+      }
+
+      .journey-step {
+        flex: 0 1 auto;
+        width: 100%;
       }
 
       .journey-step .phone-frame {
@@ -1887,7 +1899,7 @@
     <div class="container">
       <div class="section-header fade-in">
         <h2>Create Affirmations That Speak to You</h2>
-        <p>From choosing your focus to hearing your words in your own voice — in three simple steps.</p>
+        <p>From choosing your focus to building a personal library — your affirmation journey in five simple steps.</p>
       </div>
       <div class="journey-steps">
         <div class="journey-step fade-in">
@@ -1896,7 +1908,7 @@
             <img src="/landing-assets/screenshot-create-pillars.jpg" alt="Choose your Life Pillar: Mind, Body, Spirit, Connection, or Achievement" loading="lazy">
           </div>
           <h3>Choose Your Focus</h3>
-          <p>Select from five Life Pillars — Mind, Body, Spirit, Connection, or Achievement — to ground your affirmation in what matters most right now.</p>
+          <p>Select from six Life Pillars — Mind, Body, Spirit, Connection, Achievement, or Home — to ground your affirmation in what matters most right now.</p>
         </div>
         <div class="journey-step fade-in">
           <div class="step-number">2</div>
@@ -1912,7 +1924,23 @@
             <img src="/landing-assets/screenshot-create-script.jpg" alt="AI-generated affirmation script with Subconscious Language Patterns" loading="lazy">
           </div>
           <h3>AI Writes Your Script</h3>
-          <p>Powered by Subconscious Language Patterns, the AI crafts affirmations in present tense with sensory imagery, emotional anchoring, and progressive believability.</p>
+          <p>Powered by Subconscious Language Patterns, the AI crafts affirmations that sound like your own inner thoughts — natural, personal, and deeply believable.</p>
+        </div>
+        <div class="journey-step fade-in">
+          <div class="step-number">4</div>
+          <div class="phone-frame">
+            <img src="/landing-assets/screenshot-create-playback.jpg" alt="Listen to your affirmation in your own cloned voice with RSVP word display" loading="lazy">
+          </div>
+          <h3>Hear It in Your Voice</h3>
+          <p>Play your affirmation back in your own cloned Inner Voice or choose from curated AI voices. Read along with word-synced RSVP display for deeper absorption.</p>
+        </div>
+        <div class="journey-step fade-in">
+          <div class="step-number">5</div>
+          <div class="phone-frame">
+            <img src="/landing-assets/screenshot-create-library.jpg" alt="Your personal affirmation library with filters and categories" loading="lazy">
+          </div>
+          <h3>Build Your Library</h3>
+          <p>Every affirmation you create lives in your personal library — searchable, filterable by pillar, and ready to play anytime you need a boost.</p>
         </div>
       </div>
     </div>

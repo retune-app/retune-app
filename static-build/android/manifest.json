@@ -1,11 +1,11 @@
 {
-  "id": "80d9ed1a-b501-40de-98ee-fcae9971ecc5",
-  "createdAt": "2026-02-16T04:09:05.897Z",
+  "id": "ea9aa5f5-20e0-40b3-aeea-ebc299541d0a",
+  "createdAt": "2026-02-18T02:06:20.912Z",
   "runtimeVersion": "exposdk:54.0.0",
   "launchAsset": {
-    "key": "bundle-1771214945897-31740",
+    "key": "bundle-1771380380912-35880",
     "contentType": "application/javascript",
-    "url": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev:5000/1771214945897-31740/_expo/static/js/android/bundle.js"
+    "url": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev:5000/1771380380912-35880/_expo/static/js/android/bundle.js"
   },
   "assets": [],
   "metadata": {},
@@ -14,10 +14,10 @@
     "expoClient": {
       "name": "Retuned",
       "slug": "subconscious-rewire",
-      "version": "1.7.1",
+      "version": "1.7.2",
       "runtimeVersion": "exposdk:54.0.0",
       "orientation": "default",
-      "icon": "./assets/images/rewired-logo.png",
+      "icon": "./assets/images/icon-dark-1024x1024.png",
       "scheme": "subconsciousrewire",
       "userInterfaceStyle": "automatic",
       "newArchEnabled": true,
@@ -59,8 +59,8 @@
       "android": {
         "adaptiveIcon": {
           "backgroundColor": "#0F1C3F",
-          "foregroundImage": "./assets/images/rewired-logo.png",
-          "foregroundImageUrl": "http://127.0.0.1:8081/assets/./assets/images/rewired-logo.png"
+          "foregroundImage": "./assets/images/icon-dark-1024x1024.png",
+          "foregroundImageUrl": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev/assets/./assets/images/icon-dark-1024x1024.png"
         },
         "edgeToEdgeEnabled": true,
         "predictiveBackGestureEnabled": false,
@@ -73,13 +73,13 @@
       },
       "web": {
         "output": "single",
-        "favicon": "./assets/images/rewired-logo.png"
+        "favicon": "./assets/images/icon-dark-1024x1024.png"
       },
       "plugins": [
         [
           "expo-splash-screen",
           {
-            "image": "./assets/images/rewired-logo.png",
+            "image": "./assets/images/icon-dark-1024x1024.png",
             "imageWidth": 200,
             "resizeMode": "contain",
             "backgroundColor": "#E8EDF2",
@@ -129,7 +129,7 @@
       "androidStatusBar": {
         "backgroundColor": "#E8EDF2"
       },
-      "iconUrl": "http://127.0.0.1:8081/assets/./assets/images/rewired-logo.png",
+      "iconUrl": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev/assets/./assets/images/icon-dark-1024x1024.png",
       "hostUri": "ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev:5000/android"
     },
     "expoGo": {
@@ -143,6 +143,6 @@
       },
       "mainModuleName": "client/index"
     },
-    "scopeKey": "@anonymous/subconscious-rewire-74758cdf-0ab9-4c20-886f-0360259d9e8c"
+    "scopeKey": "@anonymous/subconscious-rewire-1cb845ef-6a70-4be8-80d0-316973639caa"
   }
 }

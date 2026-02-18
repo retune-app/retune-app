@@ -848,8 +848,18 @@
     .phone-frame {
       position: relative;
       display: inline-block;
-      border-radius: 24px;
+      border-radius: 22px;
       overflow: hidden;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.12), 0 2px 10px rgba(0,0,0,0.06);
+      border: 3px solid rgba(44, 44, 44, 0.08);
+      background: #000;
+    }
+
+    .phone-frame.no-bezel {
+      border: none;
+      background: none;
+      box-shadow: none;
+      border-radius: 0;
     }
 
     .phone-frame img {
@@ -2069,7 +2079,7 @@
           <p>After breathing, the Micro-Meditation check-in reads how you're feeling and offers three personalized paths: breathe deeper, start a guided meditation, or listen to an affirmation. Every recommendation is shaped by AI based on your mood and the time of day.</p>
         </div>
         <div class="journey-images">
-          <div class="phone-frame">
+          <div class="phone-frame no-bezel">
             <img src="/landing-assets/screenshot-journey.png" alt="RETUNED Morning Clarity Shift journey with personalized Breathe, Meditate, and Listen steps" loading="lazy">
           </div>
         </div>

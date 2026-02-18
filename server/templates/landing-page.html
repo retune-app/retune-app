@@ -1106,37 +1106,39 @@
     .comparison-visual {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 32px;
-      max-width: 800px;
-      margin: 0 auto 60px;
-      align-items: start;
+      gap: 40px;
+      max-width: 720px;
+      margin: 0 auto 70px;
+      align-items: stretch;
     }
 
     .comparison-card {
-      border-radius: 20px;
-      padding: 36px 28px;
+      border-radius: 24px;
+      padding: 40px 32px;
       text-align: center;
+      display: flex;
+      flex-direction: column;
     }
 
     .comparison-card.traditional {
       background: var(--white);
-      border: 2px solid var(--border);
-      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 16px rgba(0,0,0,0.06);
     }
 
     .comparison-card.retuned {
       background: var(--white);
       border: 2px solid var(--believe);
-      box-shadow: 0 4px 24px rgba(201, 162, 39, 0.12);
+      box-shadow: 0 4px 24px rgba(201, 162, 39, 0.10);
     }
 
     .comparison-card-title {
       font-family: 'Outfit', sans-serif;
       font-weight: 600;
-      font-size: 14px;
-      letter-spacing: 2px;
+      font-size: 13px;
+      letter-spacing: 3px;
       text-transform: uppercase;
-      margin-bottom: 28px;
+      margin-bottom: 32px;
     }
 
     .comparison-card.traditional .comparison-card-title {
@@ -1150,46 +1152,50 @@
     .app-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      gap: 12px;
+      flex: 1;
     }
 
     .app-pill {
-      background: #F0F0F0;
-      color: var(--text-muted);
+      background: #EBEBEB;
+      color: #888;
       font-family: 'Outfit', sans-serif;
       font-size: 14px;
       font-weight: 500;
-      padding: 10px 8px;
-      border-radius: 10px;
+      padding: 12px 10px;
+      border-radius: 12px;
       text-align: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
     }
 
     .mood-arrow {
       font-family: 'Outfit', sans-serif;
-      font-size: 17px;
+      font-size: 18px;
       font-weight: 600;
       color: var(--text);
-      margin-bottom: 24px;
+      margin-bottom: 28px;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 12px;
+      gap: 14px;
     }
 
     .mood-arrow .arrow {
       color: var(--text-muted);
       font-weight: 400;
+      font-size: 20px;
     }
 
     .mood-arrow .calm {
       color: var(--believe);
+      font-weight: 700;
     }
 
     .journey-step-card {
       text-align: left;
-      padding: 14px 16px;
+      padding: 16px 18px;
       border-radius: 12px;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
     }
 
     .journey-step-card:last-child {
@@ -1200,7 +1206,7 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
     }
 
     .journey-step-dot {
@@ -1216,8 +1222,8 @@
 
     .journey-step-card-title {
       font-family: 'Outfit', sans-serif;
-      font-weight: 600;
-      font-size: 15px;
+      font-weight: 700;
+      font-size: 16px;
     }
 
     .journey-step-card-title.breathe { color: var(--breathe); }
@@ -1225,7 +1231,7 @@
     .journey-step-card-title.meditate { color: #6C63FF; }
 
     .journey-step-card p {
-      font-size: 13px;
+      font-size: 14px;
       color: var(--text-muted);
       line-height: 1.5;
       margin: 0;
@@ -1234,16 +1240,18 @@
 
     .comparison-cta {
       display: inline-block;
-      margin-top: 24px;
-      padding: 14px 32px;
+      margin-top: 28px;
+      padding: 16px 40px;
       background: var(--believe);
       color: var(--white);
       font-family: 'Outfit', sans-serif;
       font-weight: 600;
-      font-size: 15px;
+      font-size: 16px;
       border-radius: 50px;
       text-decoration: none;
       transition: background 0.2s;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     .comparison-cta:hover {
@@ -1253,8 +1261,9 @@
     @media (max-width: 600px) {
       .comparison-visual {
         grid-template-columns: 1fr;
-        gap: 20px;
+        gap: 24px;
         margin-bottom: 40px;
+        max-width: 340px;
       }
     }
 

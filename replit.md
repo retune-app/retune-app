@@ -4,10 +4,10 @@
 Retuned is an application designed to help users reprogram their subconscious minds through personalized audio affirmations. It leverages AI to generate affirmation scripts based on user goals, which can then be played in the user's cloned voice or a selection of curated AI voices. The project aims to provide a powerful tool for personal growth and mental well-being, focusing on subconscious language patterns to maximize effectiveness. Key features include voice cloning, guided breathing exercises, AI-powered mood check-ins with personalized wellness paths, micro-meditations, and a comprehensive ambient sound library.
 
 ## Recent Changes
-- **v1.7.2 Build 4 Code Optimization (Feb 18, 2026)**: Removed 43 debug console.logs from server, 14 unused imports across 11 client files. Modularized server/routes.ts (5,143→4,050 lines) by extracting GitHub, breathing, reminder, and admin routes into `server/routes/` modules.
-- **v1.7.2 Build 4 Auth Screen Redesign (Feb 2026)**: Removed circular logo, restructured to fixed flex layout with RETUNED wordmark (Outfit_500Medium) at top and login card at bottom. Unified sign-in button heights to 48px.
-- **v1.7.2 Build 4 Landing Page Typography (Feb 2026)**: Cormorant Garamond (serif) for h1/h2, Outfit (sans-serif) for h3/h4/body/UI. Nav branding: Outfit 500, 17px, 4.5px letter-spacing.
-- **v1.7.2 Build 4 Font Cleanup (Feb 2026)**: Removed Poppins, Montserrat, Space Grotesk. App loads only Nunito (primary) + Outfit (brand/auth).
+- **v1.7.2 Build 2 Code Optimization (Feb 18, 2026)**: Removed 43 debug console.logs from server, 14 unused imports across 11 client files. Modularized server/routes.ts (5,143→4,050 lines) by extracting GitHub, breathing, reminder, and admin routes into `server/routes/` modules.
+- **v1.7.2 Build 2 Auth Screen Redesign (Feb 2026)**: Removed circular logo, restructured to fixed flex layout with RETUNED wordmark (Outfit_500Medium) at top and login card at bottom. Unified sign-in button heights to 48px.
+- **v1.7.2 Build 2 Landing Page Typography (Feb 2026)**: Cormorant Garamond (serif) for h1/h2, Outfit (sans-serif) for h3/h4/body/UI. Nav branding: Outfit 500, 17px, 4.5px letter-spacing.
+- **v1.7.2 Build 2 Font Cleanup (Feb 2026)**: Removed Poppins, Montserrat, Space Grotesk. App loads only Nunito (primary) + Outfit (brand/auth).
 
 ## User Preferences
 - Preferred communication style: Simple, everyday language.

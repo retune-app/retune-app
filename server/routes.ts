@@ -3382,9 +3382,9 @@ Rules for tone:
         2: { min: 100, max: 145 },
         3: { min: 150, max: 210 },
       };
-      const maxTokensMap: Record<number, number> = { 1: 200, 2: 350, 3: 450 };
+      const maxTokensMap: Record<number, number> = { 1: 250, 2: 450, 3: 600 };
       const wordCount = wordCountMap[duration] || wordCountMap[1];
-      const maxTokens = maxTokensMap[duration] || 300;
+      const maxTokens = maxTokensMap[duration] || 350;
 
       const durationLabel = duration === 1 ? "60-90 seconds" : `${duration} minutes`;
 
@@ -3424,7 +3424,7 @@ Rules for tone:
               `3. VISUALIZATION (3-4 sentences): Paint a vivid, sensory-rich scene using present tense. Include at least 2 senses (sight + touch, or sound + warmth, etc.). Match the imagery to their mood — calming scenes for stress/overwhelm, gentle uplifting scenes for sadness, expansive scenes for energy, warm scenes for gratitude.`,
               `4. AFFIRMATION ANCHORING (2-3 sentences): Weave in identity-level affirmations using "I am" or "I choose" language. Use embedded commands naturally. Connect the affirmation to the visualization scene.`,
               `5. GENTLE RETURN (2-3 sentences): Slowly guide them back to their surroundings. Include a physical cue like "wiggle your fingers" or "notice the sounds around you." Then invite them to open their eyes when ready — never rush this transition. Add a pause ("...") before the final line.`,
-              `6. WARM SIGN-OFF (1-2 sentences): End with a genuine, heartfelt send-off that feels like a friend wishing them well. Match the time of day: morning→"carry this into your day," afternoon→"let this fuel your afternoon," evening→"take this peace into your night." Occasionally (~30% of the time), add a playful or tender touch like "and don't forget to breathe" or "you've already done something beautiful today." The closing should feel like a gentle landing, never abrupt — the listener should feel held until the very last word.`,
+              `6. WARM SEND-OFF (1-2 complete sentences): This is the most important part to get right. Always end with a complete, warm farewell that matches the time of day. Use phrases like: morning→"Have a wonderful morning" or "Carry this light into your day," afternoon→"Have a beautiful afternoon" or "Let this fuel the rest of your day," evening→"Have a peaceful evening" or "Take this warmth into your night," night→"Have a restful night" or "Sleep well tonight." The send-off MUST be a fully finished sentence — never trail off or leave a thought incomplete. This is the last thing the listener hears, so it must land with warmth and finality.`,
               ``,
               `RULES:`,
               `- Total length: ${wordCount.min}-${wordCount.max} words (${durationLabel} ${paceDescription})`,
@@ -3435,6 +3435,7 @@ Rules for tone:
               `- No exclamation marks, no questions, no medical claims`,
               `- The day/time reference should feel organic and conversational — never robotic or templated. Vary your approach each time.`,
               `- The ending must never feel rushed or cut short. The last 2-3 sentences should slow down in pacing and feel like a soft exhale.`,
+              `- CRITICAL: The very last sentence must always be a complete send-off wish (e.g., "Have a peaceful evening" or "Enjoy the rest of your day"). Never end mid-thought or with an ellipsis.`,
               `- Reference accessible neuroscience concepts naturally (e.g., "your nervous system settles," "each breath sends a signal of safety")`,
               `- Mood-specific emphasis: stressed→release/safety, anxious→grounding/presence, tired→vitality/awakening, sad→warmth/comfort, overwhelmed→simplicity/clarity, calm→deepening/peace, energized→momentum/vitality, grateful→appreciation/connection, confident→strength/self-trust, focused→clarity/precision, joyful→celebration/lightness`,
               `- This is a mindfulness exercise, not medical advice`,
@@ -3574,9 +3575,9 @@ Rules for tone:
         2: { min: 100, max: 145 },
         3: { min: 150, max: 210 },
       };
-      const maxTokensMap: Record<number, number> = { 1: 200, 2: 350, 3: 450 };
+      const maxTokensMap: Record<number, number> = { 1: 250, 2: 450, 3: 600 };
       const wordCount = wordCountMap[duration] || wordCountMap[1];
-      const maxTokens = maxTokensMap[duration] || 300;
+      const maxTokens = maxTokensMap[duration] || 350;
 
       const durationLabel = duration === 1 ? "60-90 seconds" : `${duration} minutes`;
 
@@ -3634,7 +3635,7 @@ Rules for tone:
               `3. VISUALIZATION (3-4 sentences): Paint a vivid, sensory-rich scene using present tense. Include at least 2 senses (sight + touch, or sound + warmth, etc.). Match the imagery to their mood — calming scenes for stress/overwhelm, gentle uplifting scenes for sadness, expansive scenes for energy, warm scenes for gratitude.`,
               `4. AFFIRMATION ANCHORING (2-3 sentences): Weave in identity-level affirmations using "I am" or "I choose" language. Use embedded commands naturally. Connect the affirmation to the visualization scene.`,
               `5. GENTLE RETURN (2-3 sentences): Slowly guide them back to their surroundings. Include a physical cue like "wiggle your fingers" or "notice the sounds around you." Then invite them to open their eyes when ready — never rush this transition. Add a pause ("...") before the final line.`,
-              `6. WARM SIGN-OFF (1-2 sentences): End with a genuine, heartfelt send-off that feels like a friend wishing them well. Match the time of day: morning→"carry this into your day," afternoon→"let this fuel your afternoon," evening→"take this peace into your night." Occasionally (~30% of the time), add a playful or tender touch like "and don't forget to breathe" or "you've already done something beautiful today." The closing should feel like a gentle landing, never abrupt — the listener should feel held until the very last word.`,
+              `6. WARM SEND-OFF (1-2 complete sentences): This is the most important part to get right. Always end with a complete, warm farewell that matches the time of day. Use phrases like: morning→"Have a wonderful morning" or "Carry this light into your day," afternoon→"Have a beautiful afternoon" or "Let this fuel the rest of your day," evening→"Have a peaceful evening" or "Take this warmth into your night," night→"Have a restful night" or "Sleep well tonight." The send-off MUST be a fully finished sentence — never trail off or leave a thought incomplete. This is the last thing the listener hears, so it must land with warmth and finality.`,
               ``,
               `RULES:`,
               `- Total length: ${wordCount.min}-${wordCount.max} words (${durationLabel} ${paceDescription})`,
@@ -3645,6 +3646,7 @@ Rules for tone:
               `- No exclamation marks, no questions, no medical claims`,
               `- The day/time reference should feel organic and conversational — never robotic or templated. Vary your approach each time.`,
               `- The ending must never feel rushed or cut short. The last 2-3 sentences should slow down in pacing and feel like a soft exhale.`,
+              `- CRITICAL: The very last sentence must always be a complete send-off wish (e.g., "Have a peaceful evening" or "Enjoy the rest of your day"). Never end mid-thought or with an ellipsis.`,
               `- Reference accessible neuroscience concepts naturally (e.g., "your nervous system settles," "each breath sends a signal of safety")`,
               `- Mood-specific emphasis: stressed→release/safety, anxious→grounding/presence, tired→vitality/awakening, sad→warmth/comfort, overwhelmed→simplicity/clarity, calm→deepening/peace, energized→momentum/vitality, grateful→appreciation/connection, confident→strength/self-trust, focused→clarity/precision, joyful→celebration/lightness`,
               `- This is a mindfulness exercise, not medical advice`,

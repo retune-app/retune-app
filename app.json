@@ -2,7 +2,7 @@
   "expo": {
     "name": "Retuned",
     "slug": "subconscious-rewire",
-    "version": "1.8.0",
+    "version": "1.7.3",
     "runtimeVersion": "exposdk:54.0.0",
     "orientation": "default",
     "icon": "./assets/images/icon-dark-1024x1024.png",

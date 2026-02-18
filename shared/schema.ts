@@ -224,6 +224,7 @@ export const journeyCompletions = pgTable("journey_completions", {
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   currentMood: text("current_mood").notNull(),
   targetMood: text("target_mood").notNull(),
+  vibeId: text("vibe_id"),
   stepsPlanned: integer("steps_planned").notNull(),
   stepsCompleted: integer("steps_completed").notNull(),
   stepsSkipped: integer("steps_skipped").default(0),

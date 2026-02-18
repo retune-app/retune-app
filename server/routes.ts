@@ -11,6 +11,8 @@ import { openai } from "./replit_integrations/audio/client";
 import OpenAI from "openai";
 import { isPremiumUser, FREE_FEATURES, PREMIUM_FEATURES_LIST, BETA_MODE } from "./premium";
 import { MOOD_TAG_PREFERENCES, TARGET_MOOD_TAGS, type MoodType, type TimeOfDay, type TargetMoodType } from "@shared/pillars";
+import { VIBE_LIST, getVibeConfig, type VibeId } from "@shared/vibes";
+import { routeVibe, pickBestAffirmation, getSuggestedCreationTheme as getVibeCreationTheme, getVibeJourneyPromptContext } from "./vibe-engine";
 import {
   cloneVoice,
   textToSpeech as elevenLabsTTS,
@@ -3234,11 +3236,254 @@ Rules for tone:
     }
   });
 
+  // ============ Vibe Check-In API ============
+
+  app.post("/api/vibe-checkin", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { vibeId, timeOfDay } = req.body;
+
+      if (!vibeId || !timeOfDay) {
+        return res.status(400).json({ error: "vibeId and timeOfDay are required" });
+      }
+
+      if (!VIBE_LIST.includes(vibeId)) {
+        return res.status(400).json({ error: "Invalid vibeId" });
+      }
+
+      const validTimes = ["morning", "afternoon", "evening", "night"];
+      if (!validTimes.includes(timeOfDay)) {
+        return res.status(400).json({ error: "Invalid timeOfDay" });
+      }
+
+      const routing = routeVibe(vibeId);
+      if (!routing) {
+        return res.status(400).json({ error: "Could not route vibe" });
+      }
+
+      const userId = req.userId!;
+      const { vibe, startingMood: mood, targetMood, matching } = routing;
+
+      const [userData, userAffirmationsList, latestVoiceSample] = await Promise.all([
+        db.select({ name: users.name, voiceId: users.voiceId, preferredVoiceType: users.preferredVoiceType }).from(users).where(eq(users.id, userId)).limit(1),
+        db.select({
+          id: affirmations.id,
+          title: affirmations.title,
+          description: affirmations.description,
+          pillar: affirmations.pillar,
+          categoryName: affirmations.categoryName,
+          voiceType: affirmations.voiceType,
+          audioUrl: affirmations.audioUrl,
+          playCount: affirmations.playCount,
+          isFavorite: affirmations.isFavorite,
+        }).from(affirmations).where(eq(affirmations.userId, userId)),
+        db.select({ status: voiceSamples.status, voiceId: voiceSamples.voiceId })
+          .from(voiceSamples)
+          .where(eq(voiceSamples.userId, userId))
+          .orderBy(desc(voiceSamples.createdAt))
+          .limit(1),
+      ]);
+
+      const user = userData[0];
+      const userName = user?.name?.split(" ")[0] || "Friend";
+      const hasClonedVoice = !!(latestVoiceSample[0]?.status === "ready" && latestVoiceSample[0]?.voiceId) || !!user?.voiceId;
+      const hasAffirmations = userAffirmationsList.length > 0;
+      const userPreferredVoiceType = user?.preferredVoiceType || "ai";
+
+      const matchResult = pickBestAffirmation(userAffirmationsList, matching, userPreferredVoiceType);
+      const matchedAffirmation = matchResult?.affirmation || null;
+      const matchReason = matchResult?.matchReason || null;
+
+      const suggestedCreationTheme = !matchedAffirmation ? getVibeCreationTheme(vibeId as VibeId, timeOfDay) : null;
+
+      const breathing = { name: routing.breathingTechniqueName, id: routing.breathingTechniqueId };
+
+      let listenContext = "";
+      if (matchedAffirmation) {
+        const isInnerVoice = matchedAffirmation.voiceType === "personal";
+        const matchQuality = matchReason === "tag" ? "closely matches their vibe" : matchReason === "pillar" ? "aligns with their current emotional needs" : "is available to listen to";
+        const descriptionContext = matchedAffirmation.description ? ` This affirmation is "${matchedAffirmation.description}".` : "";
+        listenContext = `The user has an affirmation called "${matchedAffirmation.title}"${isInnerVoice ? " recorded in their own cloned voice (Inner Voice)" : ""} that ${matchQuality}.${descriptionContext} It is ${timeOfDay} — tailor your note accordingly.`;
+      } else if (hasAffirmations) {
+        listenContext = `The user has affirmations but none with audio yet. It is ${timeOfDay} — suggest bringing one to life.`;
+      } else {
+        listenContext = `The user hasn't created any affirmations yet. Suggest creating one about ${suggestedCreationTheme}.`;
+      }
+
+      const voiceContext = hasClonedVoice
+        ? "The user has set up their Inner Voice (personal cloned voice)."
+        : "The user hasn't set up their Inner Voice yet — hearing affirmations in your own voice deepens subconscious impact.";
+
+      let journeyHistoryContext = "";
+      try {
+        const [journeyTotal, lastJourney] = await Promise.all([
+          db.select({ total: sql<number>`count(*)::int` })
+            .from(journeyCompletions)
+            .where(eq(journeyCompletions.userId, userId))
+            .then(r => r[0]),
+          db.select()
+            .from(journeyCompletions)
+            .where(eq(journeyCompletions.userId, userId))
+            .orderBy(desc(journeyCompletions.completedAt))
+            .limit(1)
+            .then(r => r[0]),
+        ]);
+
+        if (journeyTotal && journeyTotal.total > 0) {
+          journeyHistoryContext = `This user has completed ${journeyTotal.total} vibe sessions. ${lastJourney ? `Last session: "${lastJourney.currentMood}→${lastJourney.targetMood}"${lastJourney.vibeId ? ` (${lastJourney.vibeId} vibe)` : ""}.` : ""}`;
+        }
+      } catch (e) {}
+
+      const vibeContext = getVibeJourneyPromptContext(vibeId as VibeId);
+
+      let journeyTitle = `${vibe.label} Session`;
+      let acknowledgment = `Let's ${vibe.subtitle.toLowerCase()}.`;
+      let stepTypes: string[] = ["breathe", "meditate", "listen"];
+      let breatheNote: string | null = null;
+      let meditateNote: string | null = null;
+      let listenNote: string | null = null;
+
+      try {
+        const response = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [
+            {
+              role: "system",
+              content: `You are a wellness guide for the Retuned app. The user picked a "vibe" — a casual word for how they're feeling. Your job is to acknowledge their state and design a personalized micro-journey.
+
+${vibeContext}
+
+Vibe: "${vibe.label}" — ${vibe.description}
+From: ${mood} → To: ${targetMood}
+
+Knowledge domains to draw from:
+Neuroscience: amygdala regulation, prefrontal cortex engagement, vagal tone, HRV, default mode network, cortisol/dopamine/serotonin systems, neuroplasticity, polyvagal theory, mirror neurons, interoception
+Mindfulness: present-moment awareness, observer self, non-attachment, pranayama, loving-kindness, body scan, witness consciousness, somatic awareness
+
+User context:
+- Name: ${userName}
+- Vibe: ${vibe.label} ("${vibe.subtitle}")
+- Time: ${timeOfDay}
+- ${listenContext}
+- ${voiceContext}
+- Total affirmations: ${userAffirmationsList.length}
+- Best breathing match: ${breathing.name}
+- ${journeyHistoryContext || "First vibe session"}
+
+Respond as JSON with exactly these fields:
+{
+  "journeyTitle": "A creative 2-5 word title for this session. Should capture the vibe. No emojis. Can reference neuroscience or mindfulness concepts when natural. Keep it punchy.",
+  "acknowledgment": "1-2 sentences, max 30 words. Use ${userName}'s name. Validate their '${vibe.label}' state with a real insight, then pivot toward ${targetMood}. Never use emojis or metaphors.
+
+VARIETY IS CRITICAL. Randomly choose ONE angle:
+A) Neuroscience — pick ONE mechanism: amygdala hijack, cortisol flooding, prefrontal cortex offline, sympathetic overdrive, depleted serotonin, overactive default mode network, disrupted HRV, dopamine loops, polyvagal dorsal shutdown
+B) Mindfulness — pick from: feelings as visitors, observer self, non-attachment, witness consciousness, present-moment anchoring, beginner's mind, radical acceptance, impermanence
+C) Body-first — name where this vibe shows up physically: jaw tension, shallow breathing, chest tightness, shoulder knots, restless hands, tight forehead
+D) Direct/confident — no science, just a grounded observation
+
+BANNED PHRASES: 'stuck in fight-or-flight', 'activate your vagus nerve', 'bring you back to baseline', 'studies show', 'research suggests', 'proven to', 'can help'",
+  "stepTypes": ["breathe", "meditate", "listen"],
+  "breatheNote": "One punchy sentence (max 20 words) or null. Mention 2-minute exercise. Pick a different mechanism each time. State as fact.",
+  "meditateNote": "One punchy sentence (max 20 words) or null. Mention 2-minute guided meditation. Connect to ${timeOfDay}. Fresh wording.",
+  "listenNote": "One or two sentences (max 30 words) or null. ${matchedAffirmation ? `Reference '${matchedAffirmation.title}' specifically.${matchedAffirmation.description ? ` Use "${matchedAffirmation.description}" to explain why this affirmation fits the ${vibe.label} vibe.` : ` Explain why hearing it after breathing/meditation lands differently.`}` : hasAffirmations ? `Connect one of their affirmations to the ${vibe.label} vibe.` : `Inspire creating a first affirmation about ${suggestedCreationTheme}${!hasClonedVoice ? " — mention Inner Voice" : ""}.`}"
+}
+
+Rules for stepTypes:
+- Array of 2-3 strings from: "breathe", "meditate", "listen"
+- Order them in the best sequence for this vibe
+- Be smart about which steps to include
+
+Rules for tone:
+- Sound like a confident coach who knows the science — not a textbook, not a greeting card
+- No metaphors, no flowery imagery
+- State concepts as direct facts — never hedge
+- No "you should" — use "let's" or direct suggestions
+- No exclamation marks
+- NEVER repeat the same phrasing across responses`,
+            },
+            {
+              role: "user",
+              content: `I'm vibing "${vibe.label}" right now. It's ${timeOfDay}.`,
+            },
+          ],
+          temperature: 0.95,
+          max_tokens: 450,
+          response_format: { type: "json_object" },
+        });
+
+        const parsed = JSON.parse(response.choices[0]?.message?.content || "{}");
+        if (parsed.journeyTitle) journeyTitle = parsed.journeyTitle;
+        if (parsed.acknowledgment) acknowledgment = parsed.acknowledgment;
+        if (Array.isArray(parsed.stepTypes) && parsed.stepTypes.length >= 2 && parsed.stepTypes.length <= 3) {
+          const validStepTypes = parsed.stepTypes.filter((s: string) => ["breathe", "meditate", "listen"].includes(s));
+          if (validStepTypes.length >= 2) {
+            stepTypes = validStepTypes;
+          }
+        }
+        if (parsed.breatheNote) breatheNote = parsed.breatheNote;
+        if (parsed.meditateNote) meditateNote = parsed.meditateNote;
+        if (parsed.listenNote) listenNote = parsed.listenNote;
+      } catch (e) {}
+
+      if (!stepTypes.includes("listen")) {
+        stepTypes.push("listen");
+      }
+      const reordered = stepTypes.filter((s: string) => s !== "listen");
+      reordered.push("listen");
+
+      const steps: any[] = [];
+      for (const stepType of reordered) {
+        if (stepType === "breathe") {
+          steps.push({
+            type: "breathe",
+            techniqueId: breathing.id,
+            techniqueName: breathing.name,
+            duration: 3,
+            note: breatheNote || `${breathing.name} can help settle your nervous system.`,
+          });
+        } else if (stepType === "meditate") {
+          steps.push({
+            type: "meditate",
+            note: meditateNote || "A guided moment to reconnect with yourself.",
+            mood: targetMood,
+            timeOfDay,
+            vibeId,
+          });
+        } else if (stepType === "listen") {
+          steps.push({
+            type: "listen",
+            affirmationId: matchedAffirmation?.id || null,
+            affirmationTitle: matchedAffirmation?.title || null,
+            isInnerVoice: matchedAffirmation?.voiceType === "personal" || false,
+            hasClonedVoice,
+            hasAnyAffirmations: hasAffirmations,
+            note: listenNote || "Create an affirmation that speaks to how you feel.",
+            suggestedTheme: suggestedCreationTheme,
+          });
+        }
+      }
+
+      res.json({
+        journeyTitle,
+        acknowledgment,
+        vibeId,
+        vibeLabel: vibe.label,
+        vibeAccentColor: routing.accentColor,
+        vibeIcon: routing.icon,
+        currentMood: mood,
+        targetMood,
+        steps,
+      });
+    } catch (error) {
+      console.error("Error in vibe check-in:", error);
+      res.status(500).json({ error: "Failed to process vibe check-in" });
+    }
+  });
+
   // ============ Journey Completions API ============
 
   app.post("/api/journey-completions", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { currentMood, targetMood, stepsPlanned, stepsCompleted, stepsSkipped, stepTypes, completedFully, timeOfDay, durationSeconds } = req.body;
+      const { currentMood, targetMood, vibeId, stepsPlanned, stepsCompleted, stepsSkipped, stepTypes, completedFully, timeOfDay, durationSeconds } = req.body;
       const userId = req.userId!;
       
       if (!currentMood || !targetMood || !stepTypes) {
@@ -3251,6 +3496,7 @@ Rules for tone:
         userId,
         currentMood,
         targetMood,
+        vibeId: vibeId || null,
         stepsPlanned: stepsPlanned || 0,
         stepsCompleted: stepsCompleted || 0,
         stepsSkipped: stepsSkipped || 0,

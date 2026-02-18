@@ -807,9 +807,9 @@ async function generateAudio(
   if (isPersonalVoice) {
     try {
       const result = await elevenLabsTTS(script, voiceId, {
-        stability: 0.6,
-        style: 0.25,
-        pauseSeconds: 1.8,
+        stability: 0.78,
+        style: 0.15,
+        pauseSeconds: 2.0,
       });
       return result;
     } catch (elevenLabsError: any) {

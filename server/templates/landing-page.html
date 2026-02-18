@@ -826,6 +826,24 @@
       max-width: 240px;
     }
 
+    .journey-images-duo {
+      display: flex;
+      justify-content: center;
+      position: relative;
+    }
+    .journey-images-duo .phone-frame {
+      max-width: 200px;
+      position: relative;
+    }
+    .journey-images-duo .phone-frame:first-child {
+      z-index: 2;
+      transform: translateX(12px);
+    }
+    .journey-images-duo .phone-frame:last-child {
+      z-index: 1;
+      transform: translateX(-12px);
+    }
+
     /* ===== PHONE FRAME ===== */
     .phone-frame {
       position: relative;
@@ -1537,6 +1555,10 @@
         max-width: 200px;
       }
 
+      .journey-images-duo .phone-frame {
+        max-width: 160px;
+      }
+
       .journey-images .phone-frame-landscape {
         max-width: 340px;
       }
@@ -1649,6 +1671,10 @@
 
       .journey-images .phone-frame {
         max-width: 180px;
+      }
+
+      .journey-images-duo .phone-frame {
+        max-width: 140px;
       }
 
       .journey-images .phone-frame-landscape {
@@ -1864,9 +1890,12 @@
           <h3>Your Affirmations Don't Stop&#8212;They Transform</h3>
           <p>After your mood check-in, the app guides you into breathing&#8212;and your affirmation comes along for the ride. Your words loop softly under ambient music while you breathe, so what you were hearing becomes what you're feeling. No manual switching, no choosing what comes next.</p>
         </div>
-        <div class="journey-images">
+        <div class="journey-images-duo">
           <div class="phone-frame">
-            <img src="/landing-assets/screenshot-breathe-home.jpg" alt="RETUNED Breathe tab with Box Breathing, daily greeting, and Radiant Bloom rings" loading="lazy">
+            <img src="/landing-assets/screenshot-breathe.jpg" alt="RETUNED Breathe tab with Box Breathing session, daily greeting, and ambient sound controls" loading="lazy">
+          </div>
+          <div class="phone-frame">
+            <img src="/landing-assets/screenshot-techniques.jpg" alt="RETUNED breathing technique selection with Box Breathing, 4-7-8 Relaxation, Coherent Breathing, and more" loading="lazy">
           </div>
         </div>
       </div>

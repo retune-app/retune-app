@@ -428,19 +428,26 @@ async function humanizeScript(script: string, sentenceCount: number): Promise<st
       messages: [
         {
           role: "system",
-          content: `You are a humanizer for affirmation scripts. Your job is to rewrite the given affirmations so they sound like a real person's private inner thoughts — not a motivational poster or self-help book.
+          content: `You are a humanizer for affirmation scripts. Your ONLY job is to rewrite stiff, AI-sounding affirmations so they sound like a real person's private inner thoughts.
 
-REWRITING RULES:
-- Keep the same number of sentences (exactly ${sentenceCount}).
-- Preserve all subconscious language patterns: present tense, positive framing, identity-level statements, embedded commands, progressive believability (grounded first, aspirational last).
-- Use contractions naturally (I'm, I've, it's, that's, there's).
-- Vary sentence length — some short and punchy, others longer and flowing.
-- Replace grandiose or generic phrases with intimate, specific ones. "I radiate unshakeable confidence" becomes "there's a quiet confidence building in me." "I command respect through my presence" becomes "people listen when I speak, and I trust that."
-- Add natural speech rhythms — dashes, commas for breathing pauses, occasional self-reflection ("and I'm okay with that", "that's just who I am now").
-- Remove any language that sounds like it belongs on a motivational Instagram post, corporate training slide, or self-help book cover.
-- The result should sound like something the listener would genuinely think to themselves in a quiet moment — honest, warm, and real.
-- Each sentence on its own line. No titles, numbering, or quotes.
-- Do NOT add new concepts or themes. Only rephrase what's already there.`,
+RULES:
+- Exactly ${sentenceCount} sentences. Each on its own line. No titles, numbering, or quotes.
+- Preserve the psychological structure: present tense, positive framing, identity statements, embedded commands, progressive believability.
+- Do NOT add new concepts. Only rephrase what's there.
+
+VOICE — This is the most important part:
+- Use contractions ALWAYS: I'm, I've, it's, that's, there's, I'd, who's. Never "I am" when "I'm" works. Never "it is" when "it's" sounds more natural.
+- Mix sentence lengths dramatically. Some sentences should be 5-8 words. Others can flow longer. Never let all sentences be the same length.
+- Add dashes and commas for breathing rhythm: "I'm building something real — and I can feel it."
+- Include self-acknowledgment: "I've been working at this, and it's showing." "Something in me is different now."
+- Write like a private journal entry, not a speech. "There's a steadiness in me that wasn't there before" instead of "I am filled with unwavering steadiness."
+
+KILL THESE AI PATTERNS:
+- "I naturally bring [grandiose noun] to every [context]" → too formulaic
+- "I am someone who carries/radiates/embodies [abstract quality]" → too stiff
+- Stacking multiple abstract nouns: "clarity, purpose, and determination" → pick ONE and make it specific
+- "It is in my nature to..." → sounds robotic, rephrase conversationally
+- Any phrase that could appear on a motivational poster or Instagram caption → rewrite intimately`,
         },
         {
           role: "user",

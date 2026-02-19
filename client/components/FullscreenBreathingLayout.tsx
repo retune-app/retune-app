@@ -110,10 +110,10 @@ export default function FullscreenBreathingLayout({
           </Animated.View>
         )}
 
-        <View style={[renderStepBar ? styles.landscapeContentJourney : styles.landscapeContent, { paddingLeft: Math.max(insets.left, 48), paddingRight: Math.max(insets.right, 48) }]}>
-          {!renderStepBar ? (
-            <Animated.View style={[styles.landscapeSidePanel, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"} onStartShouldSetResponder={() => true}>
-              {renderMoodPills ? renderMoodPills() : null}
+        <View style={[styles.landscapeContent, { paddingLeft: Math.max(insets.left, 48), paddingRight: Math.max(insets.right, 48) }]}>
+          <View style={styles.landscapeSidePanel}>
+            {renderMoodPills ? renderMoodPills() : null}
+            <Animated.View style={[{ alignItems: 'center' }, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"} onStartShouldSetResponder={() => true}>
               <Text style={[styles.landscapeTechniqueName, { color: technique.color }]}>
                 {technique.name}
               </Text>
@@ -125,9 +125,13 @@ export default function FullscreenBreathingLayout({
                   {affirmationTitle}
                 </Text>
               ) : null}
-              {renderWisdom ? renderWisdom() : null}
+              {renderWisdom ? (
+                <View style={{ maxHeight: 80, overflow: 'hidden' }}>
+                  {renderWisdom()}
+                </View>
+              ) : null}
             </Animated.View>
-          ) : null}
+          </View>
 
           <View style={styles.landscapeCircleContainer}>
             {renderProgressRing ? renderProgressRing(circleSize) : null}
@@ -142,12 +146,8 @@ export default function FullscreenBreathingLayout({
             {renderCircleOverlay ? renderCircleOverlay(circleSize) : null}
           </View>
 
-          <View style={renderStepBar ? styles.landscapeRightPanel : styles.landscapeSidePanel}>
-            {renderStepBar && renderMoodPills ? renderMoodPills() : null}
+          <View style={styles.landscapeSidePanel}>
             <Animated.View style={[{ alignItems: 'center', width: '100%' }, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"} onStartShouldSetResponder={() => true}>
-              <Text style={[styles.landscapeTechniqueName, { color: technique.color }]} numberOfLines={1}>
-                {technique.name}
-              </Text>
               {stats.map((stat, i) => (
                 <View key={i} style={styles.landscapeStats}>
                   <Text style={styles.landscapeStatLabel}>{stat.label}</Text>
@@ -289,21 +289,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     width: "100%",
   },
-  landscapeContentJourney: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "100%",
-    gap: 32,
-  },
   landscapeSidePanel: {
     width: 180,
     alignItems: "center",
-  },
-  landscapeRightPanel: {
-    width: 180,
-    alignItems: "center",
-    justifyContent: "center",
   },
   landscapeTechniqueName: {
     fontSize: 20,

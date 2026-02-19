@@ -1236,6 +1236,13 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
               <Feather name="music" size={18} color={isMusicPlaying ? ACCENT_GOLD : "rgba(255,255,255,0.7)"} />
             </Pressable>
           )}
+          renderWisdom={() => (
+            <BreathingWisdom
+              techniqueId={technique.id}
+              isPlaying={breathingPlaying}
+              cyclesCompleted={cyclesCompleted}
+            />
+          )}
         />
       </Animated.View>
     );

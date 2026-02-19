@@ -300,10 +300,12 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
     }
   }, [visible]);
 
-  const journeyAccent = journeyResponse?.vibeAccentColor || ACCENT_GOLD;
-  const journeyGradient: [string, string] = journeyResponse?.vibeAccentColor
-    ? [journeyResponse.vibeAccentColor, `${journeyResponse.vibeAccentColor}CC`]
-    : [ACCENT_GOLD, GOLD_LIGHT];
+  const journeyAccent = selectedTarget?.color || journeyResponse?.vibeAccentColor || ACCENT_GOLD;
+  const journeyGradient: [string, string] = selectedTarget?.color
+    ? [selectedTarget.color, `${selectedTarget.color}CC`]
+    : journeyResponse?.vibeAccentColor
+      ? [journeyResponse.vibeAccentColor, `${journeyResponse.vibeAccentColor}CC`]
+      : [ACCENT_GOLD, GOLD_LIGHT];
 
   const handleBackToMood = useCallback(() => {
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}

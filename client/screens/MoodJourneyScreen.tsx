@@ -1126,7 +1126,18 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
               showPrevious={true}
               skipDelay={10}
             />
-            <View style={[styles.journeyMusicButton, { top: insets.top + 70 }]}>
+            <View style={[styles.journeyControlsRow, { top: insets.top + 70 }]}>
+              <View style={styles.moodPillsRow}>
+                <View style={[styles.moodPill, { backgroundColor: `${currentMoodInfo.color}25`, borderColor: `${currentMoodInfo.color}50` }]}>
+                  <Feather name={currentMoodInfo.icon as any} size={12} color={currentMoodInfo.color} />
+                  <Text style={[styles.moodPillText, { color: currentMoodInfo.color }]}>{currentMoodInfo.label}</Text>
+                </View>
+                <Feather name="arrow-right" size={14} color="rgba(255,255,255,0.5)" />
+                <View style={[styles.moodPill, { backgroundColor: `${targetMoodInfo.color}25`, borderColor: `${targetMoodInfo.color}50` }]}>
+                  <Feather name={targetMoodInfo.icon as any} size={12} color={targetMoodInfo.color} />
+                  <Text style={[styles.moodPillText, { color: targetMoodInfo.color }]}>{targetMoodInfo.label}</Text>
+                </View>
+              </View>
               <Pressable
                 onPress={() => { resetControlsTimer(); setShowSoundSwitcher(true); }}
                 style={[styles.musicToggleBtn, isMusicPlaying ? { backgroundColor: `${ACCENT_GOLD}30`, borderColor: `${ACCENT_GOLD}50` } : undefined]}
@@ -1449,10 +1460,32 @@ const styles = StyleSheet.create({
   breathingContainer: {
     flex: 1,
   },
-  journeyMusicButton: {
+  journeyControlsRow: {
     position: "absolute",
+    left: Spacing.md,
     right: Spacing.md,
     zIndex: 51,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  moodPillsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  moodPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  moodPillText: {
+    fontSize: 12,
+    fontWeight: "600",
   },
   musicToggleBtn: {
     width: 36,

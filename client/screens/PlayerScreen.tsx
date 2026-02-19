@@ -734,6 +734,22 @@ export default function PlayerScreen() {
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
+        {journeyContext?.currentMoodLabel && journeyContext?.targetMoodLabel ? (
+          <View style={{ alignItems: 'center', marginBottom: 12 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16, borderWidth: 1, backgroundColor: `${journeyContext.currentMoodColor}25`, borderColor: `${journeyContext.currentMoodColor}50` }}>
+                <Feather name={journeyContext.currentMoodIcon as any} size={12} color={journeyContext.currentMoodColor} />
+                <Text style={{ fontSize: 12, fontWeight: '600', color: journeyContext.currentMoodColor }}>{journeyContext.currentMoodLabel}</Text>
+              </View>
+              <Feather name="arrow-right" size={14} color={theme.textSecondary} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16, borderWidth: 1, backgroundColor: `${journeyContext.targetMoodColor}25`, borderColor: `${journeyContext.targetMoodColor}50` }}>
+                <Feather name={journeyContext.targetMoodIcon as any} size={12} color={journeyContext.targetMoodColor} />
+                <Text style={{ fontSize: 12, fontWeight: '600', color: journeyContext.targetMoodColor }}>{journeyContext.targetMoodLabel}</Text>
+              </View>
+            </View>
+          </View>
+        ) : null}
+
         <View style={styles.visualizerContainer}>
           {rsvpEnabled ? (
             <RSVPDisplay
@@ -751,22 +767,6 @@ export default function PlayerScreen() {
             />
           )}
         </View>
-
-        {journeyContext?.currentMoodLabel && journeyContext?.targetMoodLabel ? (
-          <View style={{ alignItems: 'center', marginBottom: 8 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16, borderWidth: 1, backgroundColor: `${journeyContext.currentMoodColor}25`, borderColor: `${journeyContext.currentMoodColor}50` }}>
-                <Feather name={journeyContext.currentMoodIcon as any} size={12} color={journeyContext.currentMoodColor} />
-                <Text style={{ fontSize: 12, fontWeight: '600', color: journeyContext.currentMoodColor }}>{journeyContext.currentMoodLabel}</Text>
-              </View>
-              <Feather name="arrow-right" size={14} color="rgba(255,255,255,0.5)" />
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16, borderWidth: 1, backgroundColor: `${journeyContext.targetMoodColor}25`, borderColor: `${journeyContext.targetMoodColor}50` }}>
-                <Feather name={journeyContext.targetMoodIcon as any} size={12} color={journeyContext.targetMoodColor} />
-                <Text style={{ fontSize: 12, fontWeight: '600', color: journeyContext.targetMoodColor }}>{journeyContext.targetMoodLabel}</Text>
-              </View>
-            </View>
-          </View>
-        ) : null}
 
         {journeyContext && !isLandscape && !isInFullscreenMode ? (
           <Animated.View style={[tiltHintAnimatedStyle, { alignItems: 'center', marginTop: -4, marginBottom: 4 }]} pointerEvents="none">

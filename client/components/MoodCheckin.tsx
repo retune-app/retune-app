@@ -54,21 +54,21 @@ const STARTING_MOODS: MoodOption[] = [
   { id: "overwhelmed", label: "Overwhelmed", icon: "layers", color: "#AB47BC" },
   { id: "frustrated", label: "Frustrated", icon: "x-circle", color: "#EF5350" },
   { id: "sad", label: "Down", icon: "cloud-rain", color: "#7986CB" },
-  { id: "wired", label: "Wired", icon: "activity", color: "#FF8A65" },
+  { id: "wired", label: "Wired", icon: "activity", color: "#E040FB" },
   { id: "scattered", label: "Scattered", icon: "shuffle", color: "#9575CD" },
-  { id: "good", label: "Good", icon: "sun", color: "#66BB6A" },
+  { id: "good", label: "Good", icon: "sun", color: "#81C784" },
 ];
 
 const TARGET_MOODS: MoodOption[] = [
   { id: "calm", label: "Calm", icon: "sunset", color: "#66BB6A" },
-  { id: "energized", label: "Energized", icon: "battery-charging", color: "#FFA726" },
+  { id: "energized", label: "Energized", icon: "battery-charging", color: "#FFCA28" },
   { id: "confident", label: "Confident", icon: "shield", color: "#42A5F5" },
   { id: "focused", label: "Focused", icon: "crosshair", color: "#26C6DA" },
   { id: "locked_in", label: "Locked In", icon: "target", color: "#1E88E5" },
   { id: "grateful", label: "Grateful", icon: "heart", color: "#EC407A" },
-  { id: "joyful", label: "Joyful", icon: "star", color: "#FFB74D" },
-  { id: "grounded", label: "Grounded", icon: "anchor", color: "#8D6E63" },
-  { id: "lit_up", label: "Lit Up", icon: "sunrise", color: "#FF7043" },
+  { id: "joyful", label: "Joyful", icon: "star", color: "#FFD54F" },
+  { id: "grounded", label: "Grounded", icon: "anchor", color: "#A1887F" },
+  { id: "lit_up", label: "Lit Up", icon: "sunrise", color: "#FF6D00" },
 ];
 
 function getTimeOfDay(): string {

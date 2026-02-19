@@ -120,7 +120,7 @@ export default function BenefitsScreen() {
       description: "Short guided meditations crafted by AI based on how you're feeling right now. After affirmations, meditation consolidates new thought patterns — turning fresh ideas into lasting neural pathways.",
       bullets: [
         "Tailored to your current mood and energy",
-        "3, 5, or 10 minute sessions",
+        "1, 2, or 3 minute sessions",
         "Locks in affirmations through focused reflection",
       ],
     },

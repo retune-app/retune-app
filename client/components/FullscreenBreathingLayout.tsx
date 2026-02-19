@@ -52,6 +52,7 @@ interface FullscreenBreathingLayoutProps {
   hapticsEnabled?: boolean;
   hideTopControls?: boolean;
   affirmationTitle?: string;
+  isLandscapeOverride?: boolean;
 }
 
 export default function FullscreenBreathingLayout({
@@ -82,10 +83,11 @@ export default function FullscreenBreathingLayout({
   hapticsEnabled,
   hideTopControls = false,
   affirmationTitle,
+  isLandscapeOverride,
 }: FullscreenBreathingLayoutProps) {
   const screenWidth = Dimensions.get("window").width;
   const screenHeight = Dimensions.get("window").height;
-  const isLandscape = screenWidth > screenHeight;
+  const isLandscape = isLandscapeOverride !== undefined ? isLandscapeOverride : screenWidth > screenHeight;
 
   const controlsAnimatedStyle = useAnimatedStyle(() => ({
     opacity: controlsOpacity.value,

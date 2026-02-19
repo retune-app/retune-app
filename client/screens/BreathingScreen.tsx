@@ -973,6 +973,7 @@ export default function BreathingScreen() {
             backgroundColor={theme.navy}
             showContent={countdownValue === null}
             hapticsEnabled={hapticsEnabled}
+            isLandscapeOverride={isLandscape}
             affirmationTitle={voiceEnabled && breathingAffirmation ? breathingAffirmation.title : undefined}
             stats={[
               { label: "Time Left", value: formatTime(remainingTime) },

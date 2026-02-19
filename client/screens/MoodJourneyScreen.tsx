@@ -1185,6 +1185,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
           resetControlsTimer={resetControlsTimer}
           insets={insets}
           backgroundColor={NAVY}
+          isLandscapeOverride={isLandscape}
           showContent={countdownValue === null}
           hapticsEnabled={hapticsEnabled}
           hideTopControls={!isLandscape}

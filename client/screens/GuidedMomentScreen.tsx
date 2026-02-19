@@ -1052,7 +1052,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
         styles.controlsOverlay,
         controlsFadeStyle,
         {
-          paddingTop: journeyContext ? (insets.top + 70) : (insets.top + Spacing.sm),
+          paddingTop: journeyContext ? (isLandscape ? (insets.top + Spacing.sm) : (insets.top + 70)) : (insets.top + Spacing.sm),
           paddingBottom: insets.bottom + Spacing.sm,
         },
       ]}
@@ -1247,7 +1247,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
       colors={[NAVY, NAVY_MID] as [string, string]}
       style={styles.container}
     >
-      {journeyContext ? (
+      {journeyContext && !isLandscape ? (
         <Animated.View style={[{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 51 }, controlsFadeStyle]} pointerEvents={controlsVisible ? "box-none" : "none"}>
           <JourneyStepBar
             currentStep={journeyContext.currentStep}

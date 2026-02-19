@@ -99,9 +99,9 @@ export default function FullscreenBreathingLayout({
     return (
       <Pressable style={[styles.landscapeContainer, { backgroundColor }]} onPress={onToggleControls}>
         {renderStepBar ? (
-          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 52 }} pointerEvents="box-none">
+          <Animated.View style={[{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 52 }, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "box-none" : "none"}>
             {renderStepBar()}
-          </View>
+          </Animated.View>
         ) : (
           <Animated.View style={[styles.landscapeCloseButton, { top: insets.top + 4 }, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"}>
             <Pressable onPress={() => { resetControlsTimer(); onClose(); }}>

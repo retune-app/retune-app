@@ -30,6 +30,12 @@ export type JourneyContext = {
   stepLabels: string[];
   journeyVoiceId?: string;
   journeyVoiceType?: "personal" | "ai";
+  currentMoodLabel?: string;
+  currentMoodIcon?: string;
+  currentMoodColor?: string;
+  targetMoodLabel?: string;
+  targetMoodIcon?: string;
+  targetMoodColor?: string;
 };
 
 export type RootStackParamList = {

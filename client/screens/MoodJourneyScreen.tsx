@@ -626,6 +626,12 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
       stepLabels: journeyStepLabels,
       journeyVoiceId: journeyVoiceRef.current.voiceId,
       journeyVoiceType: journeyVoiceRef.current.voiceType,
+      currentMoodLabel: currentMoodInfo.label,
+      currentMoodIcon: currentMoodInfo.icon,
+      currentMoodColor: currentMoodInfo.color,
+      targetMoodLabel: targetMoodInfo.label,
+      targetMoodIcon: targetMoodInfo.icon,
+      targetMoodColor: targetMoodInfo.color,
     };
 
     if (step.type === "breathe") {
@@ -1126,7 +1132,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
               showPrevious={true}
               skipDelay={10}
             />
-            <View style={[styles.journeyControlsRow, { top: insets.top + 70 }]}>
+            <View style={[styles.journeyMoodPillsCenter, { top: insets.top + 72 }]}>
               <View style={styles.moodPillsRow}>
                 <View style={[styles.moodPill, { backgroundColor: `${currentMoodInfo.color}25`, borderColor: `${currentMoodInfo.color}50` }]}>
                   <Feather name={currentMoodInfo.icon as any} size={12} color={currentMoodInfo.color} />
@@ -1138,6 +1144,8 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
                   <Text style={[styles.moodPillText, { color: targetMoodInfo.color }]}>{targetMoodInfo.label}</Text>
                 </View>
               </View>
+            </View>
+            <View style={[styles.journeyMusicButtonPos, { top: insets.top + 72 }]}>
               <Pressable
                 onPress={() => { resetControlsTimer(); setShowSoundSwitcher(true); }}
                 style={[styles.musicToggleBtn, isMusicPlaying ? { backgroundColor: `${ACCENT_GOLD}30`, borderColor: `${ACCENT_GOLD}50` } : undefined]}
@@ -1460,14 +1468,17 @@ const styles = StyleSheet.create({
   breathingContainer: {
     flex: 1,
   },
-  journeyControlsRow: {
+  journeyMoodPillsCenter: {
     position: "absolute",
-    left: Spacing.md,
-    right: Spacing.md,
+    left: 0,
+    right: 0,
     zIndex: 51,
-    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+  },
+  journeyMusicButtonPos: {
+    position: "absolute",
+    right: Spacing.md,
+    zIndex: 52,
   },
   moodPillsRow: {
     flexDirection: "row",

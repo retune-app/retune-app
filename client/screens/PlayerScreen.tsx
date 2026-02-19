@@ -669,33 +669,16 @@ export default function PlayerScreen() {
 
       <Animated.View style={[{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 51 }, controlsFadeStyle]} pointerEvents={controlsVisible ? "box-none" : "none"}>
         {journeyContext ? (
-          <>
-            <JourneyStepBar
-              currentStep={journeyContext.currentStep}
-              totalSteps={journeyContext.totalSteps}
-              stepLabels={journeyContext.stepLabels}
-              onPrevious={async () => { await stop(); journeyNavigationRef.action = 'back'; navigation.goBack(); }}
-              showSkip={false}
-              showPrevious={true}
-              showEndJourney={true}
-              onEndJourney={async () => { await stop(); journeyNavigationRef.action = 'complete'; (navigation as any).navigate("Main", { screen: "AffirmTab" }); }}
-            />
-            {journeyContext.currentMoodLabel && journeyContext.targetMoodLabel ? (
-              <View style={{ alignItems: 'center', marginTop: 8 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16, borderWidth: 1, backgroundColor: `${journeyContext.currentMoodColor}25`, borderColor: `${journeyContext.currentMoodColor}50` }}>
-                    <Feather name={journeyContext.currentMoodIcon as any} size={12} color={journeyContext.currentMoodColor} />
-                    <Text style={{ fontSize: 12, fontWeight: '600', color: journeyContext.currentMoodColor }}>{journeyContext.currentMoodLabel}</Text>
-                  </View>
-                  <Feather name="arrow-right" size={14} color="rgba(255,255,255,0.5)" />
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16, borderWidth: 1, backgroundColor: `${journeyContext.targetMoodColor}25`, borderColor: `${journeyContext.targetMoodColor}50` }}>
-                    <Feather name={journeyContext.targetMoodIcon as any} size={12} color={journeyContext.targetMoodColor} />
-                    <Text style={{ fontSize: 12, fontWeight: '600', color: journeyContext.targetMoodColor }}>{journeyContext.targetMoodLabel}</Text>
-                  </View>
-                </View>
-              </View>
-            ) : null}
-          </>
+          <JourneyStepBar
+            currentStep={journeyContext.currentStep}
+            totalSteps={journeyContext.totalSteps}
+            stepLabels={journeyContext.stepLabels}
+            onPrevious={async () => { await stop(); journeyNavigationRef.action = 'back'; navigation.goBack(); }}
+            showSkip={false}
+            showPrevious={true}
+            showEndJourney={true}
+            onEndJourney={async () => { await stop(); journeyNavigationRef.action = 'complete'; (navigation as any).navigate("Main", { screen: "AffirmTab" }); }}
+          />
         ) : (
           <View style={{ paddingTop: insets.top + 8, paddingHorizontal: Spacing.lg, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: theme.backgroundDefault }}>
             <Pressable
@@ -768,6 +751,22 @@ export default function PlayerScreen() {
             />
           )}
         </View>
+
+        {journeyContext?.currentMoodLabel && journeyContext?.targetMoodLabel ? (
+          <View style={{ alignItems: 'center', marginBottom: 8 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16, borderWidth: 1, backgroundColor: `${journeyContext.currentMoodColor}25`, borderColor: `${journeyContext.currentMoodColor}50` }}>
+                <Feather name={journeyContext.currentMoodIcon as any} size={12} color={journeyContext.currentMoodColor} />
+                <Text style={{ fontSize: 12, fontWeight: '600', color: journeyContext.currentMoodColor }}>{journeyContext.currentMoodLabel}</Text>
+              </View>
+              <Feather name="arrow-right" size={14} color="rgba(255,255,255,0.5)" />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16, borderWidth: 1, backgroundColor: `${journeyContext.targetMoodColor}25`, borderColor: `${journeyContext.targetMoodColor}50` }}>
+                <Feather name={journeyContext.targetMoodIcon as any} size={12} color={journeyContext.targetMoodColor} />
+                <Text style={{ fontSize: 12, fontWeight: '600', color: journeyContext.targetMoodColor }}>{journeyContext.targetMoodLabel}</Text>
+              </View>
+            </View>
+          </View>
+        ) : null}
 
         {journeyContext && !isLandscape && !isInFullscreenMode ? (
           <Animated.View style={[tiltHintAnimatedStyle, { alignItems: 'center', marginTop: -4, marginBottom: 4 }]} pointerEvents="none">

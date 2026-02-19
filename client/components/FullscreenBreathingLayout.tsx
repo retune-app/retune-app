@@ -98,39 +98,9 @@ export default function FullscreenBreathingLayout({
 
     return (
       <Pressable style={[styles.landscapeContainer, { backgroundColor }]} onPress={onToggleControls}>
-        {renderStepBar ? (
-          <Animated.View style={[{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 52 }, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "box-none" : "none"}>
-            {renderStepBar()}
-          </Animated.View>
-        ) : (
-          <Animated.View style={[styles.landscapeCloseButton, { top: insets.top + 4 }, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"}>
-            <Pressable onPress={() => { resetControlsTimer(); onClose(); }}>
-              <BlurView intensity={40} tint="dark" style={styles.blurButton}>
-                <Feather name="x" size={24} color="#FFFFFF" />
-              </BlurView>
-            </Pressable>
-          </Animated.View>
-        )}
-
         <View style={[styles.landscapeContent, { paddingLeft: Math.max(insets.left, 48), paddingRight: Math.max(insets.right, 48) }]}>
           <Animated.View style={[styles.landscapeSidePanel, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"} onStartShouldSetResponder={() => true}>
-            {renderMoodPills ? renderMoodPills() : null}
-            <Text style={[styles.landscapeTechniqueName, { color: technique.color }]}>
-              {technique.name}
-            </Text>
-            <Text style={styles.landscapePhaseLabel}>
-              {technique.benefits}
-            </Text>
-            {affirmationTitle ? (
-              <Text style={styles.landscapeAffirmationTitle} numberOfLines={2}>
-                {affirmationTitle}
-              </Text>
-            ) : null}
-            {renderWisdom ? (
-              <View style={{ maxHeight: 80, overflow: 'hidden' }}>
-                {renderWisdom()}
-              </View>
-            ) : null}
+            {renderWisdom ? renderWisdom() : null}
           </Animated.View>
 
           <View style={styles.landscapeCircleContainer}>
@@ -146,31 +116,29 @@ export default function FullscreenBreathingLayout({
             {renderCircleOverlay ? renderCircleOverlay(circleSize) : null}
           </View>
 
-          <View style={styles.landscapeSidePanel}>
-            <Animated.View style={[{ alignItems: 'center', width: '100%' }, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"} onStartShouldSetResponder={() => true}>
-              {stats.map((stat, i) => (
-                <View key={i} style={styles.landscapeStats}>
-                  <Text style={styles.landscapeStatLabel}>{stat.label}</Text>
-                  <Text style={[styles.landscapeStatValue, stat.color ? { color: stat.color } : undefined]}>{stat.value}</Text>
-                </View>
-              ))}
-
-              <View style={styles.landscapeControlsRow}>
-                <Pressable onPress={() => { resetControlsTimer(); onTogglePlay(); }}>
-                  <LinearGradient
-                    colors={[technique.color, `${technique.color}CC`]}
-                    style={styles.landscapePlayButton}
-                  >
-                    <Feather name={isPlaying ? "pause" : "play"} size={24} color="#FFFFFF" />
-                  </LinearGradient>
-                </Pressable>
-                {renderMusicButton ? renderMusicButton() : null}
-                {renderStopButton ? renderStopButton() : null}
+          <Animated.View style={[styles.landscapeSidePanel, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"} onStartShouldSetResponder={() => true}>
+            {stats.map((stat, i) => (
+              <View key={i} style={styles.landscapeStats}>
+                <Text style={styles.landscapeStatLabel}>{stat.label}</Text>
+                <Text style={[styles.landscapeStatValue, stat.color ? { color: stat.color } : undefined]}>{stat.value}</Text>
               </View>
+            ))}
 
-              {renderBottomExtra ? renderBottomExtra() : null}
-            </Animated.View>
-          </View>
+            <View style={styles.landscapeControlsRow}>
+              <Pressable onPress={() => { resetControlsTimer(); onTogglePlay(); }}>
+                <LinearGradient
+                  colors={[technique.color, `${technique.color}CC`]}
+                  style={styles.landscapePlayButton}
+                >
+                  <Feather name={isPlaying ? "pause" : "play"} size={24} color="#FFFFFF" />
+                </LinearGradient>
+              </Pressable>
+              {renderMusicButton ? renderMusicButton() : null}
+              {renderStopButton ? renderStopButton() : null}
+            </View>
+
+            {renderBottomExtra ? renderBottomExtra() : null}
+          </Animated.View>
         </View>
       </Pressable>
     );

@@ -22,6 +22,7 @@ import { Audio } from "expo-av";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
+import * as ScreenOrientation from "expo-screen-orientation";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -261,6 +262,13 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
 
   useEffect(() => {
     stopAffirmationAudio();
+  }, []);
+
+  useEffect(() => {
+    ScreenOrientation.unlockAsync();
+    return () => {
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+    };
   }, []);
 
   const [playerState, setPlayerState] = useState<PlayerState>("idle");

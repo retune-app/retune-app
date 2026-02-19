@@ -139,7 +139,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const { stop: stopAffirmationAudio } = useAudio();
-  const { isPlaying: isMusicPlaying, startBackgroundMusic, stopBackgroundMusic, selectedMusic, setSelectedMusic, volume, setVolume } = useBackgroundMusic();
+  const { isPlaying: isMusicPlaying, startBackgroundMusic, stopBackgroundMusic, pauseBackgroundMusic, resumeBackgroundMusic, selectedMusic, setSelectedMusic, volume, setVolume } = useBackgroundMusic();
   const toggleMusic = useCallback(async () => {
     if (isMusicPlaying) {
       await stopBackgroundMusic();
@@ -1161,6 +1161,11 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
           isPlaying={breathingPlaying}
           onTogglePlay={() => {
             try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+            if (breathingPlaying) {
+              pauseBackgroundMusic();
+            } else {
+              if (musicEnabled) resumeBackgroundMusic();
+            }
             setBreathingPlaying(!breathingPlaying);
           }}
           onClose={handleEndJourney}

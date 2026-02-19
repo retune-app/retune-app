@@ -186,7 +186,7 @@ export default function FullscreenBreathingLayout({
       ) : null}
 
       {renderWisdom ? (
-        <View style={[styles.portraitWisdomContainer, { top: insets.top + Math.max((screenHeight / 2 - portraitCircleSize / 2 - insets.top) / 2 - 22, 8) }]} pointerEvents="none">
+        <View style={[styles.portraitWisdomContainer, { top: insets.top + Math.max((screenHeight / 2 - portraitCircleSize / 2 - insets.top) / 2 + 4, 8) }]} pointerEvents="none">
           {renderWisdom()}
         </View>
       ) : null}

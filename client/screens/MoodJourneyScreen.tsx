@@ -253,10 +253,22 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
       ScreenOrientation.unlockAsync();
       const subscription = ScreenOrientation.addOrientationChangeListener((event) => {
         const o = event.orientationInfo.orientation;
-        setIsLandscape(
+        const nowLandscape =
           o === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
-          o === ScreenOrientation.Orientation.LANDSCAPE_RIGHT
-        );
+          o === ScreenOrientation.Orientation.LANDSCAPE_RIGHT;
+        setIsLandscape((prev) => {
+          if (prev && !nowLandscape) {
+            setShowControls(true);
+            controlsOpacity.value = withTiming(1, { duration: 200 });
+            if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
+            controlsTimeoutRef.current = setTimeout(() => {
+              setShowControls(false);
+              controlsOpacity.value = withTiming(0, { duration: 200 });
+              controlsTimeoutRef.current = null;
+            }, 4000);
+          }
+          return nowLandscape;
+        });
       });
       return () => {
         ScreenOrientation.removeOrientationChangeListener(subscription);

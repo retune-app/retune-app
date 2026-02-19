@@ -67,17 +67,24 @@ interface MoodInfo {
 }
 
 const MOOD_MAP: Record<string, MoodInfo> = {
-  stressed: { id: "stressed", label: "Stressed", icon: "cloud", color: "#E85D5D" },
-  anxious: { id: "anxious", label: "Anxious", icon: "wind", color: "#4FC3F7" },
-  tired: { id: "tired", label: "Tired", icon: "moon", color: "#7B68EE" },
-  sad: { id: "sad", label: "Sad", icon: "cloud-rain", color: "#7986CB" },
-  overwhelmed: { id: "overwhelmed", label: "Overwhelmed", icon: "loader", color: "#FF7043" },
-  calm: { id: "calm", label: "Calm", icon: "sun", color: "#50C9B0" },
-  energized: { id: "energized", label: "Energized", icon: "zap", color: "#F5A623" },
-  grateful: { id: "grateful", label: "Grateful", icon: "heart", color: "#C9A227" },
-  confident: { id: "confident", label: "Confident", icon: "shield", color: "#FF6B6B" },
-  focused: { id: "focused", label: "Focused", icon: "target", color: "#42A5F5" },
+  stressed: { id: "stressed", label: "Stressed", icon: "zap", color: "#FF7043" },
+  anxious: { id: "anxious", label: "Worried", icon: "alert-circle", color: "#FFA726" },
+  tired: { id: "tired", label: "Tired", icon: "moon", color: "#78909C" },
+  sad: { id: "sad", label: "Down", icon: "cloud-rain", color: "#7986CB" },
+  overwhelmed: { id: "overwhelmed", label: "Overwhelmed", icon: "layers", color: "#AB47BC" },
+  frustrated: { id: "frustrated", label: "Frustrated", icon: "x-circle", color: "#EF5350" },
+  wired: { id: "wired", label: "Wired", icon: "activity", color: "#FF8A65" },
+  scattered: { id: "scattered", label: "Scattered", icon: "shuffle", color: "#9575CD" },
+  good: { id: "good", label: "Good", icon: "sun", color: "#66BB6A" },
+  calm: { id: "calm", label: "Calm", icon: "sunset", color: "#66BB6A" },
+  energized: { id: "energized", label: "Energized", icon: "battery-charging", color: "#FFA726" },
+  grateful: { id: "grateful", label: "Grateful", icon: "heart", color: "#EC407A" },
+  confident: { id: "confident", label: "Confident", icon: "shield", color: "#42A5F5" },
+  focused: { id: "focused", label: "Focused", icon: "crosshair", color: "#26C6DA" },
   joyful: { id: "joyful", label: "Joyful", icon: "star", color: "#FFB74D" },
+  locked_in: { id: "locked_in", label: "Locked In", icon: "target", color: "#1E88E5" },
+  grounded: { id: "grounded", label: "Grounded", icon: "anchor", color: "#8D6E63" },
+  lit_up: { id: "lit_up", label: "Lit Up", icon: "sunrise", color: "#FF7043" },
 };
 
 interface JourneyStep {

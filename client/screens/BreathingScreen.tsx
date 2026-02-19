@@ -681,6 +681,7 @@ export default function BreathingScreen() {
     isStartingRef.current = false;
     
     setIsPlaying(false);
+    setCountdownValue(null);
     setElapsedTime(0);
     setCyclesCompleted(0);
     setSelectedDuration(60);
@@ -906,10 +907,12 @@ export default function BreathingScreen() {
       setShowLandscapeMode(true);
 
       await new Promise(resolve => setTimeout(resolve, 100));
+      if (!isStartingRef.current) { setCountdownValue(null); return; }
 
       fullscreenOpacity.value = withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) });
       
       for (let i = 3; i >= 1; i--) {
+        if (!isStartingRef.current) { setCountdownValue(null); return; }
         setCountdownValue(i);
         countdownScale.value = 0.8;
         countdownOpacityVal.value = 0;
@@ -917,10 +920,12 @@ export default function BreathingScreen() {
         countdownOpacityVal.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.ease) });
         
         await new Promise(resolve => setTimeout(resolve, 700));
+        if (!isStartingRef.current) { setCountdownValue(null); return; }
         countdownOpacityVal.value = withTiming(0, { duration: 300, easing: Easing.in(Easing.ease) });
         await new Promise(resolve => setTimeout(resolve, 300));
       }
       
+      if (!isStartingRef.current) { setCountdownValue(null); return; }
       setCountdownValue(null);
       await handleStart();
     } finally {

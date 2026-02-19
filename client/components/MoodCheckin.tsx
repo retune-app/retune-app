@@ -28,7 +28,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
-import { VIBES, VIBE_LIST, type VibeId, type VibeConfig } from "@shared/vibes";
+import { resolveVibeFromMoodPair, getVibeConfig } from "@shared/vibes";
 import { MeditationIcon } from "@/components/MeditationIcon";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
@@ -40,13 +40,29 @@ const ACCENT_GOLD = "#C9A227";
 const GOLD_LIGHT = "#E5C95C";
 const NAVY = "#0F1C3F";
 
-const LAST_VIBE_KEY = "@retuned/last-vibe";
+interface MoodOption {
+  id: string;
+  label: string;
+  icon: string;
+  color: string;
+}
 
-const VIBE_PROMPTS = [
-  { title: "What's your vibe?", subtitle: "Pick the one that feels right" },
-  { title: "Check in with yourself", subtitle: "No wrong answers" },
-  { title: "How are you right now?", subtitle: "Choose your starting point" },
-  { title: "Tune in", subtitle: "What resonates with you?" },
+const STARTING_MOODS: MoodOption[] = [
+  { id: "stressed", label: "Stressed", icon: "zap", color: "#FF7043" },
+  { id: "anxious", label: "Worried", icon: "alert-circle", color: "#FFA726" },
+  { id: "tired", label: "Tired", icon: "moon", color: "#78909C" },
+  { id: "sad", label: "Down", icon: "cloud-rain", color: "#7986CB" },
+  { id: "overwhelmed", label: "Overwhelmed", icon: "layers", color: "#AB47BC" },
+  { id: "calm", label: "Calm", icon: "sun", color: "#66BB6A" },
+];
+
+const TARGET_MOODS: MoodOption[] = [
+  { id: "calm", label: "Calm", icon: "sunset", color: "#66BB6A" },
+  { id: "energized", label: "Energized", icon: "battery-charging", color: "#FFA726" },
+  { id: "confident", label: "Confident", icon: "shield", color: "#42A5F5" },
+  { id: "focused", label: "Focused", icon: "crosshair", color: "#26C6DA" },
+  { id: "grateful", label: "Grateful", icon: "heart", color: "#EC407A" },
+  { id: "joyful", label: "Joyful", icon: "star", color: "#FFB74D" },
 ];
 
 function getTimeOfDay(): string {
@@ -84,7 +100,7 @@ interface JourneyResponse {
   steps: JourneyStep[];
 }
 
-type Phase = "vibe" | "journey";
+type Phase = "mood" | "target" | "journey";
 
 function getStepIcon(type: string): string {
   if (type === "breathe") return "wind";
@@ -102,18 +118,11 @@ function StepIconComponent({ type, size, color }: { type: string; size: number; 
 export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
   const { theme } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const [phase, setPhase] = useState<Phase>("vibe");
-  const [selectedVibe, setSelectedVibe] = useState<VibeConfig | null>(null);
+  const [phase, setPhase] = useState<Phase>("mood");
+  const [selectedMood, setSelectedMood] = useState<MoodOption | null>(null);
+  const [selectedTarget, setSelectedTarget] = useState<MoodOption | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [journeyResponse, setJourneyResponse] = useState<JourneyResponse | null>(null);
-  const [vibePrompt] = useState(() => VIBE_PROMPTS[Math.floor(Math.random() * VIBE_PROMPTS.length)]);
-  const [lastVibeId, setLastVibeId] = useState<string | null>(null);
-
-  useEffect(() => {
-    AsyncStorage.getItem(LAST_VIBE_KEY).then((val) => {
-      if (val) setLastVibeId(val);
-    }).catch(() => {});
-  }, []);
 
   const connDot0 = useSharedValue(0.3);
   const connDot1 = useSharedValue(0.3);
@@ -146,44 +155,52 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
   const handleClose = useCallback(() => {
     onClose();
     setTimeout(() => {
-      setPhase("vibe");
-      setSelectedVibe(null);
+      setPhase("mood");
+      setSelectedMood(null);
+      setSelectedTarget(null);
       setIsLoading(false);
       setJourneyResponse(null);
     }, 300);
   }, [onClose]);
 
-  const handleVibeSelect = useCallback(async (vibe: VibeConfig) => {
+  const handleMoodSelect = useCallback((mood: MoodOption) => {
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
-    setSelectedVibe(vibe);
-    setLastVibeId(vibe.id);
-    AsyncStorage.setItem(LAST_VIBE_KEY, vibe.id).catch(() => {});
+    setSelectedMood(mood);
+    setPhase("target");
+  }, []);
+
+  const handleTargetSelect = useCallback(async (target: MoodOption) => {
+    if (!selectedMood) return;
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+    setSelectedTarget(target);
     setPhase("journey");
     setIsLoading(true);
 
     try {
-      const url = new URL("/api/vibe-checkin", getApiUrl()).toString();
+      const url = new URL("/api/mood-checkin", getApiUrl()).toString();
       const result = await apiRequest("POST", url, {
-        vibeId: vibe.id,
+        mood: selectedMood.id,
+        targetMood: target.id,
         timeOfDay: getTimeOfDay(),
       });
       const data = await result.json();
       setJourneyResponse(data);
     } catch (error) {
-      const breathing = vibe.breathing;
+      const vibeId = resolveVibeFromMoodPair(selectedMood.id, target.id);
+      const vibe = getVibeConfig(vibeId);
       setJourneyResponse({
         acknowledgment: "This moment is yours. Let's guide you gently.",
-        vibeId: vibe.id,
-        vibeLabel: vibe.label,
-        vibeAccentColor: vibe.ui.accentColor,
-        vibeIcon: vibe.ui.icon,
-        currentMood: vibe.moodMapping.startingMoods[0],
-        targetMood: vibe.moodMapping.targetMoods[0],
+        vibeId: vibeId,
+        vibeLabel: vibe?.label,
+        vibeAccentColor: vibe?.ui.accentColor,
+        vibeIcon: vibe?.ui.icon,
+        currentMood: selectedMood.id,
+        targetMood: target.id,
         steps: [
           {
             type: "breathe",
-            techniqueId: breathing.primaryTechniqueId,
-            techniqueName: breathing.primaryTechniqueName,
+            techniqueId: vibe?.breathing.primaryTechniqueId || "box",
+            techniqueName: vibe?.breathing.primaryTechniqueName || "Box Breathing",
             note: "Rhythmic breathing activates your vagus nerve, calming the body.",
           },
           {
@@ -199,7 +216,7 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [selectedMood]);
 
   const handleBeginJourney = useCallback(() => {
     try {
@@ -219,15 +236,15 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
     if (step.type === "breathe") {
       const singleJourney = {
         acknowledgment: journeyResponse?.acknowledgment || "",
-        currentMood: journeyResponse?.currentMood || selectedVibe?.moodMapping.startingMoods[0] || "calm",
-        targetMood: journeyResponse?.targetMood || selectedVibe?.moodMapping.targetMoods[0] || "calm",
-        vibeId: journeyResponse?.vibeId || selectedVibe?.id,
+        currentMood: journeyResponse?.currentMood || selectedMood?.id || "calm",
+        targetMood: journeyResponse?.targetMood || selectedTarget?.id || "calm",
+        vibeId: journeyResponse?.vibeId,
         steps: [step],
       };
       (navigation as any).navigate("MoodJourney", { journey: singleJourney });
     } else if (step.type === "meditate") {
       navigation.navigate("GuidedMoment", {
-        mood: journeyResponse?.targetMood || selectedVibe?.moodMapping.targetMoods[0] || "calm",
+        mood: journeyResponse?.targetMood || selectedTarget?.id || "calm",
         timeOfDay: getTimeOfDay(),
       });
     } else if (step.type === "listen") {
@@ -237,7 +254,7 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
         navigation.navigate("Create");
       }
     }
-  }, [journeyResponse, selectedVibe, navigation, handleClose]);
+  }, [journeyResponse, selectedMood, selectedTarget, navigation, handleClose]);
 
   const getStepTypeLabel = (type: string): string => {
     if (type === "breathe") return "Breathe";
@@ -277,10 +294,49 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
     }
   }, [visible]);
 
-  const journeyAccent = journeyResponse?.vibeAccentColor || selectedVibe?.ui.accentColor || ACCENT_GOLD;
-  const journeyGradient: [string, string] = selectedVibe
-    ? selectedVibe.ui.gradientColors
+  const journeyAccent = journeyResponse?.vibeAccentColor || ACCENT_GOLD;
+  const journeyGradient: [string, string] = journeyResponse?.vibeAccentColor
+    ? [journeyResponse.vibeAccentColor, `${journeyResponse.vibeAccentColor}CC`]
     : [ACCENT_GOLD, GOLD_LIGHT];
+
+  const handleBackToMood = useCallback(() => {
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
+    setPhase("mood");
+    setSelectedMood(null);
+    setSelectedTarget(null);
+  }, []);
+
+  const renderMoodGrid = (moods: MoodOption[], onSelect: (m: MoodOption) => void, title: string, subtitle: string) => (
+    <Animated.View entering={FadeIn.duration(200)}>
+      <ThemedText type="h3" style={styles.modalTitle}>
+        {title}
+      </ThemedText>
+      <ThemedText type="body" style={[styles.modalSubtitle, { color: theme.textSecondary }]}>
+        {subtitle}
+      </ThemedText>
+
+      <View style={styles.moodGrid}>
+        {moods.map((mood) => (
+          <Pressable
+            key={mood.id}
+            onPress={() => onSelect(mood)}
+            style={({ pressed }) => [
+              styles.moodChip,
+              { backgroundColor: pressed ? `${mood.color}20` : `${mood.color}10`, borderColor: `${mood.color}25` },
+            ]}
+            testID={`button-mood-${mood.id}`}
+          >
+            <View style={[styles.moodIconCircle, { backgroundColor: `${mood.color}20` }]}>
+              <Feather name={mood.icon as any} size={24} color={mood.color} />
+            </View>
+            <ThemedText type="caption" style={[styles.moodLabel, { color: mood.color }]}>
+              {mood.label}
+            </ThemedText>
+          </Pressable>
+        ))}
+      </View>
+    </Animated.View>
+  );
 
   return (
     <Modal
@@ -305,43 +361,22 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
             style={styles.modalScroll}
             contentContainerStyle={{ paddingBottom: 16 }}
           >
-            {phase === "vibe" ? (
+            {phase === "mood" ? (
+              renderMoodGrid(STARTING_MOODS, handleMoodSelect, "How are you feeling?", "Be honest — no wrong answers")
+            ) : phase === "target" ? (
               <Animated.View entering={FadeIn.duration(200)}>
-                <ThemedText type="h3" style={styles.modalTitle}>
-                  {vibePrompt.title}
-                </ThemedText>
-                <ThemedText type="body" style={[styles.modalSubtitle, { color: theme.textSecondary }]}>
-                  {vibePrompt.subtitle}
-                </ThemedText>
-
-                <View style={styles.vibeGrid}>
-                  {VIBE_LIST.map((vibeId) => {
-                    const vibe = VIBES[vibeId];
-                    const accent = vibe.ui.accentColor;
-                    return (
-                      <Pressable
-                        key={vibe.id}
-                        onPress={() => handleVibeSelect(vibe)}
-                        style={[
-                          styles.vibeChip,
-                          { backgroundColor: `${accent}10`, borderColor: `${accent}25` },
-                          vibe.id === lastVibeId ? { borderColor: `${accent}60`, borderWidth: 1.5 } : undefined,
-                        ]}
-                        testID={`button-vibe-${vibe.id}`}
-                      >
-                        <View style={[styles.vibeIconCircle, { backgroundColor: `${accent}20` }]}>
-                          <Feather name={vibe.ui.icon as any} size={24} color={accent} />
-                        </View>
-                        <ThemedText type="caption" style={[styles.vibeLabel, { color: accent }]}>
-                          {vibe.label}
-                        </ThemedText>
-                        <ThemedText type="caption" style={[styles.vibeSubtitle, { color: theme.textSecondary }]}>
-                          {vibe.subtitle}
-                        </ThemedText>
-                      </Pressable>
-                    );
-                  })}
+                <View style={styles.selectedMoodBadge}>
+                  {selectedMood ? (
+                    <Pressable onPress={handleBackToMood} style={[styles.selectedMoodPill, { backgroundColor: `${selectedMood.color}15`, borderColor: `${selectedMood.color}30` }]}>
+                      <Feather name={selectedMood.icon as any} size={14} color={selectedMood.color} />
+                      <ThemedText type="caption" style={{ color: selectedMood.color, fontWeight: "600", fontSize: 12 }}>
+                        {selectedMood.label}
+                      </ThemedText>
+                      <Feather name="x" size={12} color={selectedMood.color} />
+                    </Pressable>
+                  ) : null}
                 </View>
+                {renderMoodGrid(TARGET_MOODS, handleTargetSelect, "I want to feel...", "Where would you like to go?")}
               </Animated.View>
             ) : isLoading ? (
               <Animated.View entering={FadeIn.duration(200)} style={styles.loadingContainer}>
@@ -352,14 +387,19 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
               </Animated.View>
             ) : journeyResponse ? (
               <Animated.View entering={FadeIn.duration(300)}>
-                <View style={styles.vibeHeader}>
-                  <View style={[styles.vibeHeaderCircle, { backgroundColor: `${journeyAccent}20` }]}>
-                    <Feather name={(journeyResponse.vibeIcon || selectedVibe?.ui.icon || "star") as any} size={22} color={journeyAccent} />
+                {selectedMood && selectedTarget ? (
+                  <View style={styles.moodPairHeader}>
+                    <View style={[styles.moodPairPill, { backgroundColor: `${selectedMood.color}15` }]}>
+                      <Feather name={selectedMood.icon as any} size={14} color={selectedMood.color} />
+                      <ThemedText type="caption" style={{ color: selectedMood.color, fontWeight: "600", fontSize: 12 }}>{selectedMood.label}</ThemedText>
+                    </View>
+                    <Feather name="arrow-right" size={16} color={theme.textSecondary} />
+                    <View style={[styles.moodPairPill, { backgroundColor: `${selectedTarget.color}15` }]}>
+                      <Feather name={selectedTarget.icon as any} size={14} color={selectedTarget.color} />
+                      <ThemedText type="caption" style={{ color: selectedTarget.color, fontWeight: "600", fontSize: 12 }}>{selectedTarget.label}</ThemedText>
+                    </View>
                   </View>
-                  <ThemedText type="caption" style={[styles.vibeHeaderLabel, { color: journeyAccent }]}>
-                    {journeyResponse.vibeLabel || selectedVibe?.label || ""}
-                  </ThemedText>
-                </View>
+                ) : null}
 
                 <ThemedText type="h3" style={styles.modalTitle}>
                   {journeyResponse.journeyTitle || "Your Journey"}
@@ -497,54 +537,61 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
     fontSize: 14,
   },
-  vibeGrid: {
+  moodGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
     gap: Spacing.sm,
   },
-  vibeChip: {
-    width: "47%",
+  moodChip: {
+    width: "31%",
     alignItems: "center",
     paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.sm,
+    paddingHorizontal: Spacing.xs,
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
-    minHeight: 110,
+    minHeight: 90,
   },
-  vibeIconCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: Spacing.xs,
-  },
-  vibeLabel: {
-    fontWeight: "700",
-    fontSize: 14,
-    marginBottom: 2,
-  },
-  vibeSubtitle: {
-    fontSize: 11,
-    lineHeight: 14,
-    textAlign: "center",
-  },
-  vibeHeader: {
-    alignItems: "center",
-    marginBottom: Spacing.sm,
-  },
-  vibeHeaderCircle: {
+  moodIconCircle: {
     width: 44,
     height: 44,
     borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 4,
+    marginBottom: Spacing.xs,
   },
-  vibeHeaderLabel: {
-    fontWeight: "600",
+  moodLabel: {
+    fontWeight: "700",
     fontSize: 13,
+    textAlign: "center",
+  },
+  selectedMoodBadge: {
+    alignItems: "center",
+    marginBottom: Spacing.sm,
+  },
+  selectedMoodPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  moodPairHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  moodPairPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 16,
   },
   loadingContainer: {
     alignItems: "center",

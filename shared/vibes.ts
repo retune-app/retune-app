@@ -530,3 +530,25 @@ export function getStartingMoodForVibe(vibeId: VibeId): string {
 export function getTargetMoodForVibe(vibeId: VibeId): string {
   return VIBES[vibeId].moodMapping.targetMoods[0];
 }
+
+export function resolveVibeFromMoodPair(startingMood: string, targetMood: string): VibeId {
+  let bestVibe: VibeId = "reset";
+  let bestScore = -1;
+
+  for (const vibeId of VIBE_LIST) {
+    const vibe = VIBES[vibeId];
+    let score = 0;
+    if (vibe.moodMapping.startingMoods.includes(startingMood)) {
+      score += vibe.moodMapping.startingMoods.indexOf(startingMood) === 0 ? 3 : 2;
+    }
+    if (vibe.moodMapping.targetMoods.includes(targetMood)) {
+      score += vibe.moodMapping.targetMoods.indexOf(targetMood) === 0 ? 3 : 2;
+    }
+    if (score > bestScore) {
+      bestScore = score;
+      bestVibe = vibeId;
+    }
+  }
+
+  return bestVibe;
+}

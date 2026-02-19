@@ -11,7 +11,7 @@ import { openai } from "./replit_integrations/audio/client";
 import OpenAI from "openai";
 import { isPremiumUser, FREE_FEATURES, PREMIUM_FEATURES_LIST, BETA_MODE } from "./premium";
 import { MOOD_TAG_PREFERENCES, TARGET_MOOD_TAGS, type MoodType, type TimeOfDay, type TargetMoodType } from "@shared/pillars";
-import { VIBE_LIST, getVibeConfig, type VibeId } from "@shared/vibes";
+import { VIBE_LIST, getVibeConfig, resolveVibeFromMoodPair, type VibeId } from "@shared/vibes";
 import { routeVibe, pickBestAffirmation, getSuggestedCreationTheme as getVibeCreationTheme, getVibeJourneyPromptContext } from "./vibe-engine";
 import {
   cloneVoice,
@@ -3223,11 +3223,22 @@ Rules for tone:
         }
       }
 
+      const resolvedVibeId = resolveVibeFromMoodPair(mood, targetMood);
+      const resolvedVibe = getVibeConfig(resolvedVibeId);
+
+      for (const step of steps) {
+        step.vibeId = resolvedVibeId;
+      }
+
       res.json({
         journeyTitle,
         acknowledgment,
         currentMood: mood,
         targetMood,
+        vibeId: resolvedVibeId,
+        vibeLabel: resolvedVibe?.label,
+        vibeAccentColor: resolvedVibe?.ui.accentColor,
+        vibeIcon: resolvedVibe?.ui.icon,
         steps,
       });
     } catch (error) {

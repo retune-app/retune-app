@@ -1207,6 +1207,26 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
               </View>
             </View>
           )}
+          renderStepBar={() => (
+            <JourneyStepBar
+              currentStep={currentStepIndex}
+              totalSteps={journey.steps.length}
+              stepLabels={journeyStepLabels}
+              onPrevious={handleGoBack}
+              onSkip={currentStepIndex < journey.steps.length - 1 ? handleSkipStep : undefined}
+              showSkip={currentStepIndex < journey.steps.length - 1}
+              showPrevious={true}
+              skipDelay={10}
+            />
+          )}
+          renderMusicButton={() => (
+            <Pressable
+              onPress={() => { resetControlsTimer(); setShowSoundSwitcher(true); }}
+              style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: isMusicPlaying ? `${ACCENT_GOLD}30` : "rgba(255,255,255,0.12)", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: isMusicPlaying ? `${ACCENT_GOLD}50` : "transparent" }}
+            >
+              <Feather name="music" size={18} color={isMusicPlaying ? ACCENT_GOLD : "rgba(255,255,255,0.7)"} />
+            </Pressable>
+          )}
           renderWisdom={() => (
             <BreathingWisdom
               techniqueId={technique.id}

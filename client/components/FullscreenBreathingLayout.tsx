@@ -47,6 +47,8 @@ interface FullscreenBreathingLayoutProps {
   renderStopButton?: () => React.ReactNode;
   renderWisdom?: () => React.ReactNode;
   renderMoodPills?: () => React.ReactNode;
+  renderStepBar?: () => React.ReactNode;
+  renderMusicButton?: () => React.ReactNode;
   hapticsEnabled?: boolean;
   hideTopControls?: boolean;
   affirmationTitle?: string;
@@ -75,6 +77,8 @@ export default function FullscreenBreathingLayout({
   renderStopButton,
   renderWisdom,
   renderMoodPills,
+  renderStepBar,
+  renderMusicButton,
   hapticsEnabled,
   hideTopControls = false,
   affirmationTitle,
@@ -92,13 +96,19 @@ export default function FullscreenBreathingLayout({
 
     return (
       <Pressable style={[styles.landscapeContainer, { backgroundColor }]} onPress={onToggleControls}>
-        <Animated.View style={[styles.landscapeCloseButton, { top: insets.top + 4 }, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"}>
-          <Pressable onPress={() => { resetControlsTimer(); onClose(); }}>
-            <BlurView intensity={40} tint="dark" style={styles.blurButton}>
-              <Feather name="x" size={24} color="#FFFFFF" />
-            </BlurView>
-          </Pressable>
-        </Animated.View>
+        {renderStepBar ? (
+          <Animated.View style={[{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 51 }, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "box-none" : "none"}>
+            {renderStepBar()}
+          </Animated.View>
+        ) : (
+          <Animated.View style={[styles.landscapeCloseButton, { top: insets.top + 4 }, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"}>
+            <Pressable onPress={() => { resetControlsTimer(); onClose(); }}>
+              <BlurView intensity={40} tint="dark" style={styles.blurButton}>
+                <Feather name="x" size={24} color="#FFFFFF" />
+              </BlurView>
+            </Pressable>
+          </Animated.View>
+        )}
 
         <View style={[styles.landscapeContent, { paddingLeft: Math.max(insets.left, 48), paddingRight: Math.max(insets.right, 48) }]}>
           <Animated.View style={[styles.landscapeSidePanel, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"} onStartShouldSetResponder={() => true}>
@@ -147,6 +157,7 @@ export default function FullscreenBreathingLayout({
                   <Feather name={isPlaying ? "pause" : "play"} size={24} color="#FFFFFF" />
                 </LinearGradient>
               </Pressable>
+              {renderMusicButton ? renderMusicButton() : null}
               {renderStopButton ? renderStopButton() : null}
             </View>
 

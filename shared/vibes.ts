@@ -70,8 +70,8 @@ export const VIBES: Record<VibeId, VibeConfig> = {
     subtitle: "I need to start fresh",
     description: "Clearing out the old, making space for what's next",
     moodMapping: {
-      startingMoods: ["overwhelmed", "stressed"],
-      targetMoods: ["calm", "focused"],
+      startingMoods: ["overwhelmed", "stressed", "scattered"],
+      targetMoods: ["calm", "focused", "grounded"],
     },
     tts: {
       scriptTone: "Clear, steady, and renewing. Like the first breath after a storm passes. Use language that acknowledges what was and opens space for what's coming.",
@@ -125,8 +125,8 @@ export const VIBES: Record<VibeId, VibeConfig> = {
     subtitle: "I need to calm down",
     description: "Slowing everything down, finding ease",
     moodMapping: {
-      startingMoods: ["stressed", "anxious"],
-      targetMoods: ["calm"],
+      startingMoods: ["stressed", "anxious", "wired"],
+      targetMoods: ["calm", "grounded"],
     },
     tts: {
       scriptTone: "Soft, unhurried, and soothing. Like sinking into a warm bath. Use languid, flowing language with natural pauses.",
@@ -180,8 +180,8 @@ export const VIBES: Record<VibeId, VibeConfig> = {
     subtitle: "I need to focus",
     description: "Sharpening up, cutting through the noise",
     moodMapping: {
-      startingMoods: ["tired", "calm"],
-      targetMoods: ["focused", "energized"],
+      startingMoods: ["tired", "good", "scattered"],
+      targetMoods: ["focused", "locked_in", "energized"],
     },
     tts: {
       scriptTone: "Clear, precise, and direct. Like a laser cutting through fog. Each word lands with purpose. No filler, no fluff.",
@@ -235,8 +235,8 @@ export const VIBES: Record<VibeId, VibeConfig> = {
     subtitle: "I want to feel good about myself",
     description: "Building yourself up from the inside out",
     moodMapping: {
-      startingMoods: ["sad", "calm"],
-      targetMoods: ["confident", "joyful"],
+      startingMoods: ["sad", "good", "frustrated"],
+      targetMoods: ["confident", "joyful", "lit_up"],
     },
     tts: {
       scriptTone: "Warm, affirming, and uplifting. Like sunlight on your face. Confident without being aggressive. Celebrating who you are.",
@@ -290,8 +290,8 @@ export const VIBES: Record<VibeId, VibeConfig> = {
     subtitle: "I can't stop overthinking",
     description: "Getting out of the loop, back into the body",
     moodMapping: {
-      startingMoods: ["anxious", "overwhelmed"],
-      targetMoods: ["calm", "focused"],
+      startingMoods: ["anxious", "overwhelmed", "scattered", "wired"],
+      targetMoods: ["calm", "focused", "grounded"],
     },
     tts: {
       scriptTone: "Grounding, steady, and anchoring. Like roots growing deep into earth. Concrete, physical language. Repeat grounding cues. Prioritize predictability.",
@@ -345,8 +345,8 @@ export const VIBES: Record<VibeId, VibeConfig> = {
     subtitle: "I'm good, keep it going",
     description: "Maintaining your balance, deepening what's working",
     moodMapping: {
-      startingMoods: ["calm"],
-      targetMoods: ["grateful", "joyful"],
+      startingMoods: ["good", "calm"],
+      targetMoods: ["grateful", "joyful", "grounded"],
     },
     tts: {
       scriptTone: "Warm, grounded, and present. Like sitting by a fire with someone you trust. Unhurried, appreciative, savoring.",
@@ -400,8 +400,8 @@ export const VIBES: Record<VibeId, VibeConfig> = {
     subtitle: "I'm ready to go",
     description: "Channeling raw energy into unstoppable momentum",
     moodMapping: {
-      startingMoods: ["calm", "tired"],
-      targetMoods: ["energized", "confident"],
+      startingMoods: ["good", "wired", "tired"],
+      targetMoods: ["energized", "confident", "lit_up", "locked_in"],
     },
     tts: {
       scriptTone: "Bold, powerful, and activating. Like standing at the edge of something big. Confident, forward-moving, direct. Energy without aggression.",
@@ -455,8 +455,8 @@ export const VIBES: Record<VibeId, VibeConfig> = {
     subtitle: "I'm carrying a lot right now",
     description: "Making space for what hurts, without rushing through it",
     moodMapping: {
-      startingMoods: ["sad", "overwhelmed"],
-      targetMoods: ["calm", "grateful"],
+      startingMoods: ["sad", "overwhelmed", "frustrated"],
+      targetMoods: ["calm", "grateful", "grounded"],
     },
     tts: {
       scriptTone: "Tender, compassionate, and unhurried. Like being held by someone who gets it. No silver linings, no fixing. Just presence and warmth.",

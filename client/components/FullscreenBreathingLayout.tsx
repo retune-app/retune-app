@@ -97,9 +97,9 @@ export default function FullscreenBreathingLayout({
     return (
       <Pressable style={[styles.landscapeContainer, { backgroundColor }]} onPress={onToggleControls}>
         {renderStepBar ? (
-          <Animated.View style={[{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 51 }, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "box-none" : "none"}>
+          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 52 }} pointerEvents="box-none">
             {renderStepBar()}
-          </Animated.View>
+          </View>
         ) : (
           <Animated.View style={[styles.landscapeCloseButton, { top: insets.top + 4 }, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"}>
             <Pressable onPress={() => { resetControlsTimer(); onClose(); }}>
@@ -110,22 +110,24 @@ export default function FullscreenBreathingLayout({
           </Animated.View>
         )}
 
-        <View style={[styles.landscapeContent, { paddingLeft: Math.max(insets.left, 48), paddingRight: Math.max(insets.right, 48) }]}>
-          <Animated.View style={[styles.landscapeSidePanel, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"} onStartShouldSetResponder={() => true}>
-            {renderMoodPills ? renderMoodPills() : null}
-            <Text style={[styles.landscapeTechniqueName, { color: technique.color }]}>
-              {technique.name}
-            </Text>
-            <Text style={styles.landscapePhaseLabel}>
-              {technique.benefits}
-            </Text>
-            {affirmationTitle ? (
-              <Text style={styles.landscapeAffirmationTitle} numberOfLines={2}>
-                {affirmationTitle}
+        <View style={[renderStepBar ? styles.landscapeContentJourney : styles.landscapeContent, { paddingLeft: Math.max(insets.left, 48), paddingRight: Math.max(insets.right, 48) }]}>
+          {!renderStepBar ? (
+            <Animated.View style={[styles.landscapeSidePanel, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"} onStartShouldSetResponder={() => true}>
+              {renderMoodPills ? renderMoodPills() : null}
+              <Text style={[styles.landscapeTechniqueName, { color: technique.color }]}>
+                {technique.name}
               </Text>
-            ) : null}
-            {renderWisdom ? renderWisdom() : null}
-          </Animated.View>
+              <Text style={styles.landscapePhaseLabel}>
+                {technique.benefits}
+              </Text>
+              {affirmationTitle ? (
+                <Text style={styles.landscapeAffirmationTitle} numberOfLines={2}>
+                  {affirmationTitle}
+                </Text>
+              ) : null}
+              {renderWisdom ? renderWisdom() : null}
+            </Animated.View>
+          ) : null}
 
           <View style={styles.landscapeCircleContainer}>
             {renderProgressRing ? renderProgressRing(circleSize) : null}
@@ -140,29 +142,40 @@ export default function FullscreenBreathingLayout({
             {renderCircleOverlay ? renderCircleOverlay(circleSize) : null}
           </View>
 
-          <Animated.View style={[styles.landscapeSidePanel, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"} onStartShouldSetResponder={() => true}>
-            {stats.map((stat, i) => (
-              <View key={i} style={styles.landscapeStats}>
-                <Text style={styles.landscapeStatLabel}>{stat.label}</Text>
-                <Text style={[styles.landscapeStatValue, stat.color ? { color: stat.color } : undefined]}>{stat.value}</Text>
+          <View style={renderStepBar ? styles.landscapeRightPanel : styles.landscapeSidePanel}>
+            {renderStepBar && renderMoodPills ? renderMoodPills() : null}
+            <Animated.View style={[{ alignItems: 'center' }, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"} onStartShouldSetResponder={() => true}>
+              <Text style={[styles.landscapeTechniqueName, { color: technique.color }]}>
+                {technique.name}
+              </Text>
+              {stats.map((stat, i) => (
+                <View key={i} style={styles.landscapeStats}>
+                  <Text style={styles.landscapeStatLabel}>{stat.label}</Text>
+                  <Text style={[styles.landscapeStatValue, stat.color ? { color: stat.color } : undefined]}>{stat.value}</Text>
+                </View>
+              ))}
+              {renderStepBar && renderWisdom ? (
+                <View style={{ maxHeight: 60, overflow: 'hidden' }}>
+                  {renderWisdom()}
+                </View>
+              ) : null}
+
+              <View style={styles.landscapeControlsRow}>
+                <Pressable onPress={() => { resetControlsTimer(); onTogglePlay(); }}>
+                  <LinearGradient
+                    colors={[technique.color, `${technique.color}CC`]}
+                    style={styles.landscapePlayButton}
+                  >
+                    <Feather name={isPlaying ? "pause" : "play"} size={24} color="#FFFFFF" />
+                  </LinearGradient>
+                </Pressable>
+                {renderMusicButton ? renderMusicButton() : null}
+                {renderStopButton ? renderStopButton() : null}
               </View>
-            ))}
 
-            <View style={styles.landscapeControlsRow}>
-              <Pressable onPress={() => { resetControlsTimer(); onTogglePlay(); }}>
-                <LinearGradient
-                  colors={[technique.color, `${technique.color}CC`]}
-                  style={styles.landscapePlayButton}
-                >
-                  <Feather name={isPlaying ? "pause" : "play"} size={24} color="#FFFFFF" />
-                </LinearGradient>
-              </Pressable>
-              {renderMusicButton ? renderMusicButton() : null}
-              {renderStopButton ? renderStopButton() : null}
-            </View>
-
-            {renderBottomExtra ? renderBottomExtra() : null}
-          </Animated.View>
+              {renderBottomExtra ? renderBottomExtra() : null}
+            </Animated.View>
+          </View>
         </View>
       </Pressable>
     );
@@ -281,9 +294,22 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     width: "100%",
   },
+  landscapeContentJourney: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
+    gap: 24,
+  },
   landscapeSidePanel: {
     width: 180,
     alignItems: "center",
+  },
+  landscapeRightPanel: {
+    width: 200,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
   },
   landscapeTechniqueName: {
     fontSize: 20,

@@ -1121,7 +1121,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
     return (
       <Animated.View entering={FadeIn.duration(600)} exiting={FadeOut.duration(400)} style={styles.breathingContainer}>
         {!isLandscape ? (
-          <Animated.View style={[{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 51 }, controlsAnimStyle]} pointerEvents={showControls ? "box-none" : "none"}>
+          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 52 }} pointerEvents="box-none">
             <JourneyStepBar
               currentStep={currentStepIndex}
               totalSteps={journey.steps.length}
@@ -1145,7 +1145,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
                 </View>
               </View>
             </View>
-            <View style={[styles.journeyMusicButtonPos, { top: insets.top + 72 }]}>
+            <Animated.View style={[styles.journeyMusicButtonPos, { top: insets.top + 72 }, controlsAnimStyle]} pointerEvents={showControls ? "auto" : "none"}>
               <Pressable
                 onPress={() => { resetControlsTimer(); setShowSoundSwitcher(true); }}
                 style={[styles.musicToggleBtn, isMusicPlaying ? { backgroundColor: `${ACCENT_GOLD}30`, borderColor: `${ACCENT_GOLD}50` } : undefined]}
@@ -1153,8 +1153,8 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
               >
                 <Feather name="music" size={16} color={isMusicPlaying ? ACCENT_GOLD : "rgba(255,255,255,0.6)"} />
               </Pressable>
-            </View>
-          </Animated.View>
+            </Animated.View>
+          </View>
         ) : null}
         <FullscreenBreathingLayout
           technique={technique}

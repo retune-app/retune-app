@@ -1011,10 +1011,10 @@ export default function PlayerScreen() {
 
         {showScript && affirmation?.script ? (
           <View style={[styles.scriptPreview, { backgroundColor: theme.backgroundSecondary }]}>
-            <View style={styles.scriptHeaderRow}>
+            <View style={styles.scriptHeaderCol}>
               <View style={styles.scriptTitleRow}>
-                <Feather name="file-text" size={16} color={theme.primary} />
-                <ThemedText type="h4" style={{ marginLeft: Spacing.xs }} numberOfLines={1}>
+                <Feather name="file-text" size={16} color={theme.primary} style={{ marginTop: 2 }} />
+                <ThemedText type="h4" style={{ marginLeft: Spacing.xs, flex: 1 }}>
                   {affirmation.title}
                 </ThemedText>
               </View>
@@ -1022,7 +1022,7 @@ export default function PlayerScreen() {
                 const wordCount = affirmation.script.split(/\s+/).filter(Boolean).length;
                 const label = wordCount < 80 ? "Short" : wordCount < 150 ? "Medium" : "Long";
                 return (
-                  <View style={{ backgroundColor: theme.primary + '20', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 }}>
+                  <View style={{ backgroundColor: theme.primary + '20', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8, alignSelf: 'flex-start', marginTop: Spacing.xs }}>
                     <ThemedText type="caption" style={{ color: theme.primary, fontWeight: '600' }}>
                       {label}
                     </ThemedText>
@@ -1242,15 +1242,12 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     marginBottom: Spacing.lg,
   },
-  scriptHeaderRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+  scriptHeaderCol: {
     marginBottom: Spacing.sm,
   },
   scriptTitleRow: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
   },
   scriptDivider: {
     height: 1,

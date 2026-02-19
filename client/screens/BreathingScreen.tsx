@@ -175,6 +175,7 @@ export default function BreathingScreen() {
   const sessionCompletedNaturally = useRef(false);
   const affirmationSoundRef = useRef<Audio.Sound | null>(null);
   const breathingReplayTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isStartingRef = useRef(false);
 
   // Fetch affirmations for background display
   const { data: affirmations = [] } = useQuery<Affirmation[]>({
@@ -677,6 +678,7 @@ export default function BreathingScreen() {
   const handleStop = async () => {
     const wasNaturalCompletion = sessionCompletedNaturally.current;
     sessionCompletedNaturally.current = false;
+    isStartingRef.current = false;
     
     setIsPlaying(false);
     setElapsedTime(0);
@@ -894,29 +896,36 @@ export default function BreathingScreen() {
   }));
 
   const handleStartWithCountdown = useCallback(async () => {
-    if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); } catch (e) {} }
-    
-    fullscreenOpacity.value = 0;
-    setShowLandscapeMode(true);
+    if (isStartingRef.current) return;
+    isStartingRef.current = true;
 
-    await new Promise(resolve => setTimeout(resolve, 100));
-
-    fullscreenOpacity.value = withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) });
-    
-    for (let i = 3; i >= 1; i--) {
-      setCountdownValue(i);
-      countdownScale.value = 0.8;
-      countdownOpacityVal.value = 0;
-      countdownScale.value = withTiming(1, { duration: 700, easing: Easing.out(Easing.quad) });
-      countdownOpacityVal.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.ease) });
+    try {
+      if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); } catch (e) {} }
       
-      await new Promise(resolve => setTimeout(resolve, 700));
-      countdownOpacityVal.value = withTiming(0, { duration: 300, easing: Easing.in(Easing.ease) });
-      await new Promise(resolve => setTimeout(resolve, 300));
+      fullscreenOpacity.value = 0;
+      setShowLandscapeMode(true);
+
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      fullscreenOpacity.value = withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) });
+      
+      for (let i = 3; i >= 1; i--) {
+        setCountdownValue(i);
+        countdownScale.value = 0.8;
+        countdownOpacityVal.value = 0;
+        countdownScale.value = withTiming(1, { duration: 700, easing: Easing.out(Easing.quad) });
+        countdownOpacityVal.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.ease) });
+        
+        await new Promise(resolve => setTimeout(resolve, 700));
+        countdownOpacityVal.value = withTiming(0, { duration: 300, easing: Easing.in(Easing.ease) });
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+      
+      setCountdownValue(null);
+      await handleStart();
+    } finally {
+      isStartingRef.current = false;
     }
-    
-    setCountdownValue(null);
-    await handleStart();
   }, [handleStart, hapticsEnabled]);
 
   useEffect(() => {

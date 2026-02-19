@@ -326,7 +326,11 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
   const resumeBackgroundMusic = useCallback(async () => {
     try {
       if (soundRef.current) {
-        const status = await soundRef.current.getStatusAsync();
+        let status = await soundRef.current.getStatusAsync();
+        if (status.isLoaded && status.isPlaying) {
+          await new Promise(r => setTimeout(r, 100));
+          status = await soundRef.current.getStatusAsync();
+        }
         if (status.isLoaded && !status.isPlaying) {
           await soundRef.current.playAsync();
           updateIsPlaying(true);

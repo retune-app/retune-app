@@ -1168,14 +1168,17 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
         <FullscreenBreathingLayout
           technique={technique}
           isPlaying={breathingPlaying}
-          onTogglePlay={() => {
+          onTogglePlay={async () => {
             try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
-            if (breathingPlaying) {
-              pauseBackgroundMusic();
+            const wasPlaying = breathingPlaying;
+            setBreathingPlaying(!wasPlaying);
+            if (wasPlaying) {
+              await pauseBackgroundMusic();
             } else {
-              if (musicEnabled) resumeBackgroundMusic();
+              if (musicEnabled) {
+                await resumeBackgroundMusic();
+              }
             }
-            setBreathingPlaying(!breathingPlaying);
           }}
           onClose={handleEndJourney}
           onCycleComplete={() => setCyclesCompleted((c) => c + 1)}

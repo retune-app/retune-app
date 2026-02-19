@@ -68,8 +68,8 @@ export default function BenefitsScreen() {
   const insets = useSafeAreaInsets();
 
   const handleOpenScience = async () => {
-    const baseUrl = getApiUrl();
-    const scienceUrl = `${baseUrl}/science`;
+    const prodDomain = process.env.EXPO_PUBLIC_DOMAIN || '';
+    const scienceUrl = prodDomain ? `https://${prodDomain}/science` : `${getApiUrl()}/science`;
     try {
       if (Platform.OS === "web") {
         Linking.openURL(scienceUrl);

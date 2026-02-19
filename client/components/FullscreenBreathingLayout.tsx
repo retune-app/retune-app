@@ -46,6 +46,7 @@ interface FullscreenBreathingLayoutProps {
   renderBelowCircle?: () => React.ReactNode;
   renderStopButton?: () => React.ReactNode;
   renderWisdom?: () => React.ReactNode;
+  renderMoodPills?: () => React.ReactNode;
   hapticsEnabled?: boolean;
   hideTopControls?: boolean;
   affirmationTitle?: string;
@@ -73,6 +74,7 @@ export default function FullscreenBreathingLayout({
   renderBelowCircle,
   renderStopButton,
   renderWisdom,
+  renderMoodPills,
   hapticsEnabled,
   hideTopControls = false,
   affirmationTitle,
@@ -100,6 +102,7 @@ export default function FullscreenBreathingLayout({
 
         <View style={[styles.landscapeContent, { paddingLeft: Math.max(insets.left, 48), paddingRight: Math.max(insets.right, 48) }]}>
           <Animated.View style={[styles.landscapeSidePanel, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"} onStartShouldSetResponder={() => true}>
+            {renderMoodPills ? renderMoodPills() : null}
             <Text style={[styles.landscapeTechniqueName, { color: technique.color }]}>
               {technique.name}
             </Text>

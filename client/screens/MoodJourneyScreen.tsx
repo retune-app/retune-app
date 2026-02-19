@@ -1194,6 +1194,19 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
           ]}
           renderProgressRing={(size) => renderProgressRing(size)}
           renderCircleOverlay={(size) => renderCountdownOverlay(size)}
+          renderMoodPills={() => (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+              <View style={[styles.moodPill, { backgroundColor: `${currentMoodInfo.color}25`, borderColor: `${currentMoodInfo.color}50` }]}>
+                <Feather name={currentMoodInfo.icon as any} size={12} color={currentMoodInfo.color} />
+                <Text style={[styles.moodPillText, { color: currentMoodInfo.color }]}>{currentMoodInfo.label}</Text>
+              </View>
+              <Feather name="arrow-right" size={14} color="rgba(255,255,255,0.5)" />
+              <View style={[styles.moodPill, { backgroundColor: `${targetMoodInfo.color}25`, borderColor: `${targetMoodInfo.color}50` }]}>
+                <Feather name={targetMoodInfo.icon as any} size={12} color={targetMoodInfo.color} />
+                <Text style={[styles.moodPillText, { color: targetMoodInfo.color }]}>{targetMoodInfo.label}</Text>
+              </View>
+            </View>
+          )}
           renderWisdom={() => (
             <BreathingWisdom
               techniqueId={technique.id}

@@ -2858,8 +2858,8 @@ Rules:
         return res.status(400).json({ error: "mood, targetMood, and timeOfDay are required" });
       }
 
-      const validStartingMoods = ["calm", "stressed", "tired", "anxious", "sad", "overwhelmed"];
-      const validTargetMoods = ["calm", "energized", "grateful", "confident", "focused", "joyful"];
+      const validStartingMoods = ["calm", "stressed", "tired", "anxious", "sad", "overwhelmed", "wired", "frustrated", "scattered", "good"];
+      const validTargetMoods = ["calm", "energized", "grateful", "confident", "focused", "joyful", "locked_in", "grounded", "lit_up"];
       const validTimes = ["morning", "afternoon", "evening", "night"];
 
       if (!validStartingMoods.includes(mood)) {
@@ -2901,119 +2901,34 @@ Rules:
       const hasAffirmationsWithAudio = userAffirmationsList.filter(a => a.audioUrl).length > 0;
       const userPreferredVoiceType = user?.preferredVoiceType || "ai";
 
-      const moodPrefs = MOOD_TAG_PREFERENCES[mood as MoodType]?.[timeOfDay as TimeOfDay];
-      const preferredTags = moodPrefs?.preferredTags || [];
-      const preferredPillars = moodPrefs?.preferredPillars || ["Mind"];
+      const resolvedVibeId = resolveVibeFromMoodPair(mood, targetMood);
+      const resolvedVibe = getVibeConfig(resolvedVibeId);
+      const vibeRouting = routeVibe(resolvedVibeId);
 
       let matchedAffirmation: { id: number; title: string; description: string | null; voiceType: string | null } | null = null;
       let matchReason: "tag" | "pillar" | "any" | null = null;
 
-      const withAudio = userAffirmationsList.filter(a => a.audioUrl);
-
-      if (withAudio.length > 0) {
-        const targetPrefs = TARGET_MOOD_TAGS[targetMood as TargetMoodType];
-
-        const scoreAffirmation = (a: typeof withAudio[0]) => {
-          let score = 0;
-          const tags = (a.categoryName || "").split(",").map(t => t.trim()).filter(Boolean);
-
-          if (targetPrefs) {
-            const targetTagMatches = tags.filter(t => targetPrefs.boostTags.includes(t)).length;
-            score += targetTagMatches * 4;
-            if (a.pillar && targetPrefs.boostPillars.includes(a.pillar)) {
-              score += targetPrefs.boostPillars.indexOf(a.pillar) === 0 ? 3 : 2;
-            }
-            const penaltyMatches = tags.filter(t => targetPrefs.penaltyTags.includes(t)).length;
-            score -= penaltyMatches * 3;
-          }
-
-          const startingTagMatches = tags.filter(t => preferredTags.includes(t)).length;
-          score += startingTagMatches * 1;
-          if (a.pillar && preferredPillars.includes(a.pillar)) {
-            score += 1;
-          }
-
-          if (a.isFavorite) score += 1;
-          if (a.voiceType === userPreferredVoiceType) score += 1;
-          return score;
-        };
-
-        const scored = withAudio.map(a => ({ ...a, score: scoreAffirmation(a) }));
-        scored.sort((a, b) => b.score - a.score);
-
-        const topScore = scored[0].score;
-        if (topScore > 0) {
-          const topPool = scored.filter(a => a.score === topScore);
-          const picked = topPool[Math.floor(Math.random() * topPool.length)];
-          matchedAffirmation = picked;
-          matchReason = topScore >= 4 ? "tag" : "pillar";
-        } else {
+      if (vibeRouting) {
+        const result = pickBestAffirmation(userAffirmationsList, vibeRouting.matching, userPreferredVoiceType);
+        if (result) {
+          matchedAffirmation = result.affirmation;
+          matchReason = result.matchReason;
+        }
+      } else {
+        const withAudio = userAffirmationsList.filter(a => a.audioUrl);
+        if (withAudio.length > 0) {
           matchedAffirmation = withAudio[Math.floor(Math.random() * withAudio.length)];
           matchReason = "any";
         }
       }
 
-      const suggestedCreationTheme = !matchedAffirmation ? (() => {
-        const themeMap: Record<string, Record<string, string>> = {
-          stressed: { morning: "calm clarity to start your day", afternoon: "releasing tension and finding ease", evening: "letting go of the day's weight", night: "peaceful surrender into rest" },
-          anxious: { morning: "grounded confidence for the day ahead", afternoon: "calm resilience and inner safety", evening: "releasing worry and finding peace", night: "safe, calm sleep and letting go of fear" },
-          tired: { morning: "gentle energy and vitality", afternoon: "renewed focus and stamina", evening: "restful sleep and deep recovery", night: "peaceful sleep and body restoration" },
-          sad: { morning: "warmth and gentle hope for the day", afternoon: "finding light in the present moment", evening: "self-compassion and tender care", night: "comfort and knowing tomorrow is new" },
-          overwhelmed: { morning: "simplicity and one step at a time", afternoon: "clearing the noise and finding clarity", evening: "releasing what you can't control", night: "letting go and trusting the process" },
-          calm: { morning: "deepening your morning serenity", afternoon: "sustaining your peaceful presence", evening: "gratitude and gentle reflection", night: "honoring your calm with restful sleep" },
-        };
-        return themeMap[mood]?.[timeOfDay] || "your current emotional state";
-      })() : null;
+      const suggestedCreationTheme = !matchedAffirmation
+        ? getVibeCreationTheme(resolvedVibeId, timeOfDay)
+        : null;
 
-      const moodPairBreathMap: Record<string, { name: string; id: string }> = {
-        "stressed→calm": { name: "4-7-8 Relaxation", id: "478" },
-        "stressed→energized": { name: "Box Breathing", id: "box" },
-        "stressed→grateful": { name: "Coherent Breathing", id: "coherent" },
-        "stressed→confident": { name: "Box Breathing", id: "box" },
-        "stressed→focused": { name: "Box Breathing", id: "box" },
-        "stressed→joyful": { name: "Coherent Breathing", id: "coherent" },
-        "anxious→calm": { name: "4-7-8 Relaxation", id: "478" },
-        "anxious→grateful": { name: "Box Breathing", id: "box" },
-        "anxious→confident": { name: "Box Breathing", id: "box" },
-        "anxious→focused": { name: "Alternate Nostril", id: "alternate" },
-        "anxious→energized": { name: "Box Breathing", id: "box" },
-        "anxious→joyful": { name: "Coherent Breathing", id: "coherent" },
-        "tired→energized": { name: "Energizing Breath", id: "energizing" },
-        "tired→calm": { name: "Coherent Breathing", id: "coherent" },
-        "tired→focused": { name: "Energizing Breath", id: "energizing" },
-        "tired→confident": { name: "Energizing Breath", id: "energizing" },
-        "tired→grateful": { name: "Coherent Breathing", id: "coherent" },
-        "tired→joyful": { name: "Energizing Breath", id: "energizing" },
-        "sad→calm": { name: "Coherent Breathing", id: "coherent" },
-        "sad→grateful": { name: "Coherent Breathing", id: "coherent" },
-        "sad→joyful": { name: "Energizing Breath", id: "energizing" },
-        "sad→confident": { name: "Box Breathing", id: "box" },
-        "sad→energized": { name: "Energizing Breath", id: "energizing" },
-        "sad→focused": { name: "Box Breathing", id: "box" },
-        "overwhelmed→calm": { name: "4-7-8 Relaxation", id: "478" },
-        "overwhelmed→focused": { name: "Alternate Nostril", id: "alternate" },
-        "overwhelmed→grateful": { name: "Coherent Breathing", id: "coherent" },
-        "overwhelmed→confident": { name: "Box Breathing", id: "box" },
-        "overwhelmed→energized": { name: "Box Breathing", id: "box" },
-        "overwhelmed→joyful": { name: "Coherent Breathing", id: "coherent" },
-        "calm→energized": { name: "Energizing Breath", id: "energizing" },
-        "calm→grateful": { name: "Coherent Breathing", id: "coherent" },
-        "calm→confident": { name: "Energizing Breath", id: "energizing" },
-        "calm→focused": { name: "Box Breathing", id: "box" },
-        "calm→joyful": { name: "Coherent Breathing", id: "coherent" },
-      };
-
-      const moodOnlyBreathFallback: Record<string, { name: string; id: string }> = {
-        stressed: { name: "Box Breathing", id: "box" },
-        anxious: { name: "4-7-8 Relaxation", id: "478" },
-        tired: { name: "Energizing Breath", id: "energizing" },
-        sad: { name: "Coherent Breathing", id: "coherent" },
-        overwhelmed: { name: "4-7-8 Relaxation", id: "478" },
-        calm: { name: "Coherent Breathing", id: "coherent" },
-      };
-
-      const pairKey = `${mood}→${targetMood}`;
-      const breathing = moodPairBreathMap[pairKey] || moodOnlyBreathFallback[mood] || { name: "Box Breathing", id: "box" };
+      const breathing = vibeRouting
+        ? { name: vibeRouting.breathingTechniqueName, id: vibeRouting.breathingTechniqueId }
+        : { name: "Box Breathing", id: "box" };
 
       let listenContext = "";
       if (matchedAffirmation) {
@@ -3092,9 +3007,11 @@ Rules:
               content: `You are the voice of Retuned, a personal wellness app backed by neuroscience and mindfulness traditions. The user wants to journey from feeling ${mood} to feeling ${targetMood}. Design a personalized wellness journey with 2-3 steps (minimum 2, maximum 3) from these tools: breathe, meditate, listen.
 
 Choose steps wisely — not every journey needs all three. Consider:
-- If user is already calm, they probably don't need breathing
-- If they want energy, meditation alone won't cut it
-- If they're anxious, breathing should almost always be first
+- If user is already calm or good, they probably don't need breathing
+- If they want energy or to feel lit up, meditation alone won't cut it
+- If they're anxious, wired, or scattered, breathing should almost always be first
+- If they're frustrated, breathing helps channel that energy constructively
+- If they're already in a good state (good, calm), focus on amplifying rather than fixing
 - Order matters: breathing first to settle the body, meditation to shift the mind, listening to reinforce
 
 KNOWLEDGE BASE — draw from these naturally (pick 1-2 per response, never lecture):
@@ -3106,6 +3023,7 @@ User context:
 - Current mood: ${mood}
 - Target mood: ${targetMood}
 - Time: ${timeOfDay}
+- Vibe: "${resolvedVibe?.label || "Reset"}" — ${vibeRouting ? getVibeJourneyPromptContext(resolvedVibeId) : ""}
 - ${listenContext}
 - ${voiceContext}
 - Total affirmations: ${userAffirmationsList.length}
@@ -3208,6 +3126,9 @@ Rules for tone:
             note: meditateNote || "A guided moment to reconnect with yourself.",
             mood: targetMood,
             timeOfDay,
+            meditationStyle: vibeRouting?.meditationStyle,
+            meditationFocus: vibeRouting?.meditationFocus,
+            meditationTTS: vibeRouting?.meditationTTS,
           });
         } else if (stepType === "listen") {
           steps.push({
@@ -3222,9 +3143,6 @@ Rules for tone:
           });
         }
       }
-
-      const resolvedVibeId = resolveVibeFromMoodPair(mood, targetMood);
-      const resolvedVibe = getVibeConfig(resolvedVibeId);
 
       for (const step of steps) {
         step.vibeId = resolvedVibeId;
@@ -3621,7 +3539,7 @@ Rules for tone:
         return res.status(400).json({ error: "mood and timeOfDay are required" });
       }
 
-      const validMoods = ["calm", "stressed", "tired", "anxious", "sad", "overwhelmed", "energized", "grateful", "confident", "focused", "joyful"];
+      const validMoods = ["calm", "stressed", "tired", "anxious", "sad", "overwhelmed", "energized", "grateful", "confident", "focused", "joyful", "wired", "frustrated", "scattered", "good", "locked_in", "grounded", "lit_up"];
       const validTimes = ["morning", "afternoon", "evening", "night"];
       const validDurations = [1, 2, 3];
 
@@ -3840,7 +3758,7 @@ Rules for tone:
         return res.status(400).json({ error: "mood and timeOfDay are required" });
       }
 
-      const validMoods = ["calm", "stressed", "tired", "anxious", "sad", "overwhelmed", "energized", "grateful", "confident", "focused", "joyful"];
+      const validMoods = ["calm", "stressed", "tired", "anxious", "sad", "overwhelmed", "energized", "grateful", "confident", "focused", "joyful", "wired", "frustrated", "scattered", "good", "locked_in", "grounded", "lit_up"];
       const validTimes = ["morning", "afternoon", "evening", "night"];
       const validDurations = [1, 2, 3];
 

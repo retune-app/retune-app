@@ -56,7 +56,11 @@ import {
   DURATION_OPTIONS,
   getTotalCycleDuration,
   getCyclesForDuration,
+  BREATHING_CATEGORY_ORDER,
+  BREATHING_CATEGORY_LABELS,
+  BREATHING_CATEGORY_ICONS,
   type BreathingTechnique,
+  type BreathingCategory,
 } from "@shared/breathingTechniques";
 
 const ACCENT_GOLD = "#C9A227";
@@ -1364,43 +1368,68 @@ export default function BreathingScreen() {
               Each technique offers unique benefits for your mind and body
             </ThemedText>
 
-            {BREATHING_TECHNIQUES.map((technique) => (
-              <Pressable
-                key={technique.id}
-                onPress={() => selectTechnique(technique)}
-                onLongPress={() => handleLongPressTechnique(technique)}
-                delayLongPress={500}
-                style={[
-                  styles.techniqueOption,
-                  {
-                    backgroundColor: selectedTechnique.id === technique.id
-                      ? `${technique.color}20`
-                      : theme.cardBackground,
-                    borderColor: selectedTechnique.id === technique.id
-                      ? technique.color
-                      : theme.border,
-                  },
-                ]}
-              >
-                <View style={[styles.techniqueOptionIcon, { backgroundColor: `${technique.color}30` }]}>
-                  <Feather name={technique.icon as any} size={28} color={technique.color} />
-                </View>
-                <View style={styles.techniqueOptionInfo}>
-                  <ThemedText type="body" style={{ fontWeight: "700", color: technique.color }}>
-                    {technique.name}
-                  </ThemedText>
-                  <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: 2 }}>
-                    {technique.pattern}
-                  </ThemedText>
-                  <ThemedText type="small" style={{ color: technique.color, marginTop: 4 }}>
-                    {technique.benefits}
-                  </ThemedText>
-                </View>
-                {selectedTechnique.id === technique.id ? (
-                  <Feather name="check-circle" size={24} color={technique.color} />
-                ) : null}
-              </Pressable>
-            ))}
+            <ScrollView style={{ maxHeight: 480 }} showsVerticalScrollIndicator={false}>
+              {BREATHING_CATEGORY_ORDER.map((category) => {
+                const techniques = BREATHING_TECHNIQUES.filter(t => t.category === category);
+                if (techniques.length === 0) return null;
+                return (
+                  <View key={category} style={{ marginBottom: Spacing.md }}>
+                    <View style={styles.categorySectionHeader}>
+                      <Feather name={BREATHING_CATEGORY_ICONS[category] as any} size={14} color={theme.textSecondary} />
+                      <ThemedText type="caption" style={{ color: theme.textSecondary, fontWeight: "600", textTransform: "uppercase", letterSpacing: 1, marginLeft: 6 }}>
+                        {BREATHING_CATEGORY_LABELS[category]}
+                      </ThemedText>
+                    </View>
+                    {techniques.map((technique) => (
+                      <Pressable
+                        key={technique.id}
+                        onPress={() => selectTechnique(technique)}
+                        onLongPress={() => handleLongPressTechnique(technique)}
+                        delayLongPress={500}
+                        style={[
+                          styles.techniqueOption,
+                          {
+                            backgroundColor: selectedTechnique.id === technique.id
+                              ? `${technique.color}20`
+                              : theme.cardBackground,
+                            borderColor: selectedTechnique.id === technique.id
+                              ? technique.color
+                              : theme.border,
+                          },
+                        ]}
+                      >
+                        <View style={[styles.techniqueOptionIcon, { backgroundColor: `${technique.color}30` }]}>
+                          <Feather name={technique.icon as any} size={28} color={technique.color} />
+                        </View>
+                        <View style={styles.techniqueOptionInfo}>
+                          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                            <ThemedText type="body" style={{ fontWeight: "700", color: technique.color }}>
+                              {technique.name}
+                            </ThemedText>
+                            {technique.difficulty !== "beginner" ? (
+                              <View style={[styles.difficultyBadge, { backgroundColor: `${technique.color}15`, borderColor: `${technique.color}30` }]}>
+                                <ThemedText type="small" style={{ color: technique.color, fontSize: 9, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                                  {technique.difficulty === "advanced" ? "Advanced" : "Inter"}
+                                </ThemedText>
+                              </View>
+                            ) : null}
+                          </View>
+                          <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: 2 }}>
+                            {technique.pattern}
+                          </ThemedText>
+                          <ThemedText type="small" style={{ color: technique.color, marginTop: 4 }}>
+                            {technique.benefits}
+                          </ThemedText>
+                        </View>
+                        {selectedTechnique.id === technique.id ? (
+                          <Feather name="check-circle" size={24} color={technique.color} />
+                        ) : null}
+                      </Pressable>
+                    ))}
+                  </View>
+                );
+              })}
+            </ScrollView>
           </View>
         </Pressable>
       </Modal>
@@ -1669,13 +1698,26 @@ const styles = StyleSheet.create({
   modalSubtitle: {
     marginBottom: Spacing.xl,
   },
+  categorySectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Spacing.sm,
+    marginTop: Spacing.xs,
+    paddingLeft: 4,
+  },
+  difficultyBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    borderWidth: 1,
+  },
   techniqueOption: {
     flexDirection: "row",
     alignItems: "center",
     padding: Spacing.lg,
     borderRadius: BorderRadius.lg,
     borderWidth: 2,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
   },
   techniqueOptionIcon: {
     width: 56,

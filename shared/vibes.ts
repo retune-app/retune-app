@@ -136,8 +136,8 @@ export const VIBES: Record<VibeId, VibeConfig> = {
       elevenLabsStyle: 0.25,
     },
     breathing: {
-      primaryTechniqueId: "478",
-      primaryTechniqueName: "4-7-8 Relaxation",
+      primaryTechniqueId: "calming-2to1",
+      primaryTechniqueName: "2:1 Calming Breath",
       fallbackTechniqueId: "coherent",
       fallbackTechniqueName: "Coherent Breathing",
       suggestedDuration: 180,
@@ -193,8 +193,8 @@ export const VIBES: Record<VibeId, VibeConfig> = {
     breathing: {
       primaryTechniqueId: "box",
       primaryTechniqueName: "Box Breathing",
-      fallbackTechniqueId: "alternate",
-      fallbackTechniqueName: "Alternate Nostril",
+      fallbackTechniqueId: "vishama-vritti",
+      fallbackTechniqueName: "Vishama Vritti",
       suggestedDuration: 120,
     },
     ambient: {
@@ -301,10 +301,10 @@ export const VIBES: Record<VibeId, VibeConfig> = {
       elevenLabsStyle: 0.2,
     },
     breathing: {
-      primaryTechniqueId: "alternate",
-      primaryTechniqueName: "Alternate Nostril",
-      fallbackTechniqueId: "478",
-      fallbackTechniqueName: "4-7-8 Relaxation",
+      primaryTechniqueId: "physio-sigh",
+      primaryTechniqueName: "Physiological Sigh",
+      fallbackTechniqueId: "triangle",
+      fallbackTechniqueName: "Triangle Breathing",
       suggestedDuration: 180,
     },
     ambient: {
@@ -468,8 +468,8 @@ export const VIBES: Record<VibeId, VibeConfig> = {
     breathing: {
       primaryTechniqueId: "coherent",
       primaryTechniqueName: "Coherent Breathing",
-      fallbackTechniqueId: "478",
-      fallbackTechniqueName: "4-7-8 Relaxation",
+      fallbackTechniqueId: "deep-relax-7211",
+      fallbackTechniqueName: "7-2-11 Deep Relaxation",
       suggestedDuration: 180,
     },
     ambient: {

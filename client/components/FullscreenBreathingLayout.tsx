@@ -99,7 +99,7 @@ export default function FullscreenBreathingLayout({
     return (
       <Pressable style={[styles.landscapeContainer, { backgroundColor }]} onPress={onToggleControls}>
         <View style={[styles.landscapeContent, { paddingLeft: Math.max(insets.left, 48), paddingRight: Math.max(insets.right, 48) }]}>
-          <Animated.View style={[styles.landscapeSidePanel, { justifyContent: 'flex-start', paddingTop: 8 }, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"} onStartShouldSetResponder={() => true}>
+          <Animated.View style={[styles.landscapeSidePanel, { justifyContent: 'flex-start', alignSelf: 'stretch', paddingTop: 8 }, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"} onStartShouldSetResponder={() => true}>
             {renderMoodPills ? renderMoodPills() : null}
           </Animated.View>
 

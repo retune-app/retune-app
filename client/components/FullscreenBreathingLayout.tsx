@@ -113,27 +113,25 @@ export default function FullscreenBreathingLayout({
         )}
 
         <View style={[styles.landscapeContent, { paddingLeft: Math.max(insets.left, 48), paddingRight: Math.max(insets.right, 48) }]}>
-          <View style={styles.landscapeSidePanel}>
+          <Animated.View style={[styles.landscapeSidePanel, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"} onStartShouldSetResponder={() => true}>
             {renderMoodPills ? renderMoodPills() : null}
-            <Animated.View style={[{ alignItems: 'center' }, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"} onStartShouldSetResponder={() => true}>
-              <Text style={[styles.landscapeTechniqueName, { color: technique.color }]}>
-                {technique.name}
+            <Text style={[styles.landscapeTechniqueName, { color: technique.color }]}>
+              {technique.name}
+            </Text>
+            <Text style={styles.landscapePhaseLabel}>
+              {technique.benefits}
+            </Text>
+            {affirmationTitle ? (
+              <Text style={styles.landscapeAffirmationTitle} numberOfLines={2}>
+                {affirmationTitle}
               </Text>
-              <Text style={styles.landscapePhaseLabel}>
-                {technique.benefits}
-              </Text>
-              {affirmationTitle ? (
-                <Text style={styles.landscapeAffirmationTitle} numberOfLines={2}>
-                  {affirmationTitle}
-                </Text>
-              ) : null}
-              {renderWisdom ? (
-                <View style={{ maxHeight: 80, overflow: 'hidden' }}>
-                  {renderWisdom()}
-                </View>
-              ) : null}
-            </Animated.View>
-          </View>
+            ) : null}
+            {renderWisdom ? (
+              <View style={{ maxHeight: 80, overflow: 'hidden' }}>
+                {renderWisdom()}
+              </View>
+            ) : null}
+          </Animated.View>
 
           <View style={styles.landscapeCircleContainer}>
             {renderProgressRing ? renderProgressRing(circleSize) : null}

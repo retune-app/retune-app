@@ -1141,27 +1141,29 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
               showPrevious={true}
               skipDelay={skipReady ? 0 : 10}
             />
-            <View style={[styles.journeyMoodPillsCenter, { top: insets.top + 72 }]}>
-              <View style={styles.moodPillsRow}>
-                <View style={[styles.moodPill, { backgroundColor: `${currentMoodInfo.color}25`, borderColor: `${currentMoodInfo.color}50` }]}>
-                  <Feather name={currentMoodInfo.icon as any} size={12} color={currentMoodInfo.color} />
-                  <Text style={[styles.moodPillText, { color: currentMoodInfo.color }]}>{currentMoodInfo.label}</Text>
-                </View>
-                <Feather name="arrow-right" size={14} color="rgba(255,255,255,0.5)" />
-                <View style={[styles.moodPill, { backgroundColor: `${targetMoodInfo.color}25`, borderColor: `${targetMoodInfo.color}50` }]}>
-                  <Feather name={targetMoodInfo.icon as any} size={12} color={targetMoodInfo.color} />
-                  <Text style={[styles.moodPillText, { color: targetMoodInfo.color }]}>{targetMoodInfo.label}</Text>
+            <Animated.View style={[{ position: 'absolute', left: 0, right: 0, top: insets.top + 72 }, controlsAnimStyle]} pointerEvents={showControls ? "box-none" : "none"}>
+              <View style={styles.journeyMoodPillsCenter}>
+                <View style={styles.moodPillsRow}>
+                  <View style={[styles.moodPill, { backgroundColor: `${currentMoodInfo.color}25`, borderColor: `${currentMoodInfo.color}50` }]}>
+                    <Feather name={currentMoodInfo.icon as any} size={12} color={currentMoodInfo.color} />
+                    <Text style={[styles.moodPillText, { color: currentMoodInfo.color }]}>{currentMoodInfo.label}</Text>
+                  </View>
+                  <Feather name="arrow-right" size={14} color="rgba(255,255,255,0.5)" />
+                  <View style={[styles.moodPill, { backgroundColor: `${targetMoodInfo.color}25`, borderColor: `${targetMoodInfo.color}50` }]}>
+                    <Feather name={targetMoodInfo.icon as any} size={12} color={targetMoodInfo.color} />
+                    <Text style={[styles.moodPillText, { color: targetMoodInfo.color }]}>{targetMoodInfo.label}</Text>
+                  </View>
                 </View>
               </View>
-            </View>
-            <Animated.View style={[styles.journeyMusicButtonPos, { top: insets.top + 72 }, controlsAnimStyle]} pointerEvents={showControls ? "auto" : "none"}>
-              <Pressable
-                onPress={() => { resetControlsTimer(); setShowSoundSwitcher(true); }}
-                style={[styles.musicToggleBtn, isMusicPlaying ? { backgroundColor: `${ACCENT_GOLD}30`, borderColor: `${ACCENT_GOLD}50` } : undefined]}
-                hitSlop={8}
-              >
-                <Feather name="music" size={16} color={isMusicPlaying ? ACCENT_GOLD : "rgba(255,255,255,0.6)"} />
-              </Pressable>
+              <View style={styles.journeyMusicButtonPos}>
+                <Pressable
+                  onPress={() => { resetControlsTimer(); setShowSoundSwitcher(true); }}
+                  style={[styles.musicToggleBtn, isMusicPlaying ? { backgroundColor: `${ACCENT_GOLD}30`, borderColor: `${ACCENT_GOLD}50` } : undefined]}
+                  hitSlop={8}
+                >
+                  <Feather name="music" size={16} color={isMusicPlaying ? ACCENT_GOLD : "rgba(255,255,255,0.6)"} />
+                </Pressable>
+              </View>
             </Animated.View>
           </View>
         ) : null}

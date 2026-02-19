@@ -160,7 +160,6 @@ const getMeditationLoadingMessage = (mood: string, isJourney: boolean): string =
   if (isJourney) {
     return pickRandom([
       `Preparing your meditation...`,
-      `Tuning into your ${moodLabel} state...`,
       `Building a moment of stillness...`,
       `Finding the right guidance for you...`,
       `Creating space for your mind to shift...`,
@@ -169,7 +168,6 @@ const getMeditationLoadingMessage = (mood: string, isJourney: boolean): string =
   return pickRandom([
     `Crafting your\nmicro-meditation...`,
     `Creating a moment\njust for you...`,
-    `Tuning into your\n${moodLabel} state...`,
     `Building a guided\nmoment of stillness...`,
     `Finding the right\nwords for you...`,
     `Preparing something\ntailored to ${moodLabel}...`,
@@ -181,7 +179,6 @@ const getMeditationStatusMessage = (mood: string): string => {
   return pickRandom([
     `Crafting your micro-meditation...`,
     `Creating a moment just for ${moodLabel}...`,
-    `Tuning into what you need right now...`,
     `Building your guided moment...`,
     `Finding the right words for your ${moodLabel} state...`,
   ]);
@@ -1053,27 +1050,30 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
       ]}
       pointerEvents={controlsVisible ? "box-none" : "none"}
     >
+      {journeyContext?.currentMoodLabel && journeyContext?.targetMoodLabel ? (
+        <View style={{ alignItems: 'center', marginBottom: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16, borderWidth: 1, backgroundColor: `${journeyContext.currentMoodColor}25`, borderColor: `${journeyContext.currentMoodColor}50` }}>
+              <Feather name={journeyContext.currentMoodIcon as any} size={12} color={journeyContext.currentMoodColor} />
+              <Text style={{ fontSize: 12, fontWeight: '600', color: journeyContext.currentMoodColor }}>{journeyContext.currentMoodLabel}</Text>
+            </View>
+            <Feather name="arrow-right" size={14} color="rgba(255,255,255,0.5)" />
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16, borderWidth: 1, backgroundColor: `${journeyContext.targetMoodColor}25`, borderColor: `${journeyContext.targetMoodColor}50` }}>
+              <Feather name={journeyContext.targetMoodIcon as any} size={12} color={journeyContext.targetMoodColor} />
+              <Text style={{ fontSize: 12, fontWeight: '600', color: journeyContext.targetMoodColor }}>{journeyContext.targetMoodLabel}</Text>
+            </View>
+          </View>
+        </View>
+      ) : null}
       <View style={styles.topControls} pointerEvents="auto">
         <View style={styles.topLeft}>
-          {journeyContext?.currentMoodLabel && journeyContext?.targetMoodLabel ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16, borderWidth: 1, backgroundColor: `${journeyContext.currentMoodColor}25`, borderColor: `${journeyContext.currentMoodColor}50` }}>
-                <Feather name={journeyContext.currentMoodIcon as any} size={12} color={journeyContext.currentMoodColor} />
-                <Text style={{ fontSize: 12, fontWeight: '600', color: journeyContext.currentMoodColor }}>{journeyContext.currentMoodLabel}</Text>
-              </View>
-              <Feather name="arrow-right" size={14} color="rgba(255,255,255,0.5)" />
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16, borderWidth: 1, backgroundColor: `${journeyContext.targetMoodColor}25`, borderColor: `${journeyContext.targetMoodColor}50` }}>
-                <Feather name={journeyContext.targetMoodIcon as any} size={12} color={journeyContext.targetMoodColor} />
-                <Text style={{ fontSize: 12, fontWeight: '600', color: journeyContext.targetMoodColor }}>{journeyContext.targetMoodLabel}</Text>
-              </View>
-            </View>
-          ) : (
+          {!journeyContext ? (
             <View style={styles.moodBadge}>
               <ThemedText type="caption" style={styles.moodBadgeText}>
                 {MOOD_LABELS[mood] || mood}
               </ThemedText>
             </View>
-          )}
+          ) : null}
         </View>
         <View style={styles.topRight}>
           {(playerState === "playing" || playerState === "paused" || playerState === "ready") ? (

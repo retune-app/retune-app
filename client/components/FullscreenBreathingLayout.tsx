@@ -144,8 +144,8 @@ export default function FullscreenBreathingLayout({
 
           <View style={renderStepBar ? styles.landscapeRightPanel : styles.landscapeSidePanel}>
             {renderStepBar && renderMoodPills ? renderMoodPills() : null}
-            <Animated.View style={[{ alignItems: 'center' }, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"} onStartShouldSetResponder={() => true}>
-              <Text style={[styles.landscapeTechniqueName, { color: technique.color }]}>
+            <Animated.View style={[{ alignItems: 'center', width: '100%' }, controlsAnimatedStyle]} pointerEvents={controlsVisible ? "auto" : "none"} onStartShouldSetResponder={() => true}>
+              <Text style={[styles.landscapeTechniqueName, { color: technique.color }]} numberOfLines={1}>
                 {technique.name}
               </Text>
               {stats.map((stat, i) => (
@@ -154,11 +154,6 @@ export default function FullscreenBreathingLayout({
                   <Text style={[styles.landscapeStatValue, stat.color ? { color: stat.color } : undefined]}>{stat.value}</Text>
                 </View>
               ))}
-              {renderStepBar && renderWisdom ? (
-                <View style={{ maxHeight: 60, overflow: 'hidden' }}>
-                  {renderWisdom()}
-                </View>
-              ) : null}
 
               <View style={styles.landscapeControlsRow}>
                 <Pressable onPress={() => { resetControlsTimer(); onTogglePlay(); }}>
@@ -299,17 +294,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     width: "100%",
-    gap: 24,
+    gap: 32,
   },
   landscapeSidePanel: {
     width: 180,
     alignItems: "center",
   },
   landscapeRightPanel: {
-    width: 200,
+    width: 180,
     alignItems: "center",
     justifyContent: "center",
-    overflow: "hidden",
   },
   landscapeTechniqueName: {
     fontSize: 20,

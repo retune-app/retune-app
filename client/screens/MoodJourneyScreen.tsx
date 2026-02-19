@@ -192,6 +192,8 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
   const meditationSafetyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const transitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const countdownAbortRef = useRef(false);
+  const stepStartTimeRef = useRef<number>(Date.now());
+  const [skipReady, setSkipReady] = useState(false);
   const [isLandscape, setIsLandscape] = useState(false);
   const countdownScale = useSharedValue(0.8);
   const countdownOpacityVal = useSharedValue(0);
@@ -228,6 +230,13 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
     };
     resolveVoice();
   }, []);
+
+  useEffect(() => {
+    setSkipReady(false);
+    stepStartTimeRef.current = Date.now();
+    const timer = setTimeout(() => setSkipReady(true), 10000);
+    return () => clearTimeout(timer);
+  }, [currentStepIndex]);
 
   useEffect(() => {
     AsyncStorage.getItem("@settings/hapticsEnabled").then((val) => {
@@ -1130,7 +1139,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
               onSkip={currentStepIndex < journey.steps.length - 1 ? handleSkipStep : undefined}
               showSkip={currentStepIndex < journey.steps.length - 1}
               showPrevious={true}
-              skipDelay={10}
+              skipDelay={skipReady ? 0 : 10}
             />
             <View style={[styles.journeyMoodPillsCenter, { top: insets.top + 72 }]}>
               <View style={styles.moodPillsRow}>
@@ -1216,7 +1225,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
               onSkip={currentStepIndex < journey.steps.length - 1 ? handleSkipStep : undefined}
               showSkip={currentStepIndex < journey.steps.length - 1}
               showPrevious={true}
-              skipDelay={10}
+              skipDelay={skipReady ? 0 : 10}
             />
           )}
           renderMusicButton={() => (
@@ -1226,13 +1235,6 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
             >
               <Feather name="music" size={18} color={isMusicPlaying ? ACCENT_GOLD : "rgba(255,255,255,0.7)"} />
             </Pressable>
-          )}
-          renderWisdom={() => (
-            <BreathingWisdom
-              techniqueId={technique.id}
-              isPlaying={breathingPlaying}
-              cyclesCompleted={cyclesCompleted}
-            />
           )}
         />
       </Animated.View>

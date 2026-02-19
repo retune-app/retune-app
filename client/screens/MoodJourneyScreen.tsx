@@ -148,6 +148,22 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
     }
   }, [isMusicPlaying, startBackgroundMusic, stopBackgroundMusic]);
 
+  const fadeOutAndStopMusic = useCallback(async () => {
+    try {
+      const savedVolume = volume;
+      const steps = 5;
+      const stepDelay = 100;
+      for (let i = steps - 1; i >= 0; i--) {
+        await setVolume(savedVolume * (i / steps));
+        await new Promise(r => setTimeout(r, stepDelay));
+      }
+      await stopBackgroundMusic();
+      await setVolume(savedVolume);
+    } catch (e) {
+      await stopBackgroundMusic();
+    }
+  }, [volume, setVolume, stopBackgroundMusic]);
+
   const journeyStepLabels = useMemo(() => journey.steps.map((s: any) => getStepLabel(s.type)), [journey.steps]);
 
   const [phase, setPhase] = useState<JourneyPhase>("intro");
@@ -171,6 +187,11 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
   const [showSoundSwitcher, setShowSoundSwitcher] = useState(false);
   const [musicEnabled, setMusicEnabled] = useState(true);
   const journeyMusicInitRef = useRef(false);
+  const mountedRef = useRef(true);
+  const listenTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const meditationSafetyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const transitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const countdownAbortRef = useRef(false);
   const [isLandscape, setIsLandscape] = useState(false);
   const countdownScale = useSharedValue(0.8);
   const countdownOpacityVal = useSharedValue(0);
@@ -614,7 +635,9 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
       prefetchMeditationScript(stepIndex);
 
       (async () => {
+        countdownAbortRef.current = false;
         await new Promise(resolve => setTimeout(resolve, 400));
+        if (countdownAbortRef.current || !mountedRef.current) return;
         for (let i = 3; i >= 1; i--) {
           setCountdownValue(i);
           countdownScale.value = 0.8;
@@ -622,8 +645,10 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
           countdownScale.value = withTiming(1, { duration: 700, easing: Easing.out(Easing.quad) });
           countdownOpacityVal.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.ease) });
           await new Promise(resolve => setTimeout(resolve, 700));
+          if (countdownAbortRef.current || !mountedRef.current) return;
           countdownOpacityVal.value = withTiming(0, { duration: 300, easing: Easing.in(Easing.ease) });
           await new Promise(resolve => setTimeout(resolve, 300));
+          if (countdownAbortRef.current || !mountedRef.current) return;
         }
         setCountdownValue(null);
         setBreathingPlaying(true);
@@ -633,7 +658,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
       setBreathingPlaying(false);
       hasNavigatedRef.current = false;
       const doNavigate = () => {
-        if (!hasNavigatedRef.current) {
+        if (!hasNavigatedRef.current && mountedRef.current) {
           hasNavigatedRef.current = true;
           returningFromStepRef.current = true;
           navigation.navigate("GuidedMoment", {
@@ -644,26 +669,26 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
           });
         }
       };
-      const safetyTimeout = setTimeout(doNavigate, 8000);
+      meditationSafetyTimeoutRef.current = setTimeout(doNavigate, 6000);
       (async () => {
         if (prefetchPromiseRef.current) {
           try {
             await Promise.race([
               prefetchPromiseRef.current,
-              new Promise(resolve => setTimeout(resolve, 5000)),
+              new Promise(resolve => setTimeout(resolve, 4000)),
             ]);
           } catch (e) {}
           prefetchPromiseRef.current = null;
         }
-        clearTimeout(safetyTimeout);
+        clearTimeout(meditationSafetyTimeoutRef.current!);
         doNavigate();
       })();
     } else if (step.type === "listen") {
       setPhase("navigating-listen");
       setBreathingPlaying(false);
       hasNavigatedRef.current = false;
-      setTimeout(() => {
-        if (!hasNavigatedRef.current) {
+      listenTimeoutRef.current = setTimeout(() => {
+        if (!hasNavigatedRef.current && mountedRef.current) {
           hasNavigatedRef.current = true;
           returningFromStepRef.current = true;
           if (step.affirmationId) {
@@ -692,8 +717,10 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
     } else {
       setCurrentStepIndex(nextIndex);
       setPhase("transition");
-      setTimeout(() => {
-        launchStep(nextIndex);
+      transitionTimeoutRef.current = setTimeout(() => {
+        if (mountedRef.current) {
+          launchStep(nextIndex);
+        }
       }, 3000);
     }
   }, [currentStepIndex, journey.steps.length, launchStep]);
@@ -737,7 +764,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
   const handleGoBack = useCallback(() => {
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
     if (currentStepIndex <= 0) {
-      stopBackgroundMusic();
+      fadeOutAndStopMusic();
       navigation.goBack();
       return;
     }
@@ -751,7 +778,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
     setShowControls(false);
     hasNavigatedRef.current = false;
     launchStep(prevIndex);
-  }, [currentStepIndex, navigation, launchStep, stopBackgroundMusic]);
+  }, [currentStepIndex, navigation, launchStep, fadeOutAndStopMusic]);
 
   const handleSkipStep = useCallback(() => {
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
@@ -797,10 +824,14 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
   }, []);
 
   useEffect(() => {
+    mountedRef.current = true;
     return () => {
-      if (controlsTimeoutRef.current) {
-        clearTimeout(controlsTimeoutRef.current);
-      }
+      mountedRef.current = false;
+      if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
+      if (listenTimeoutRef.current) clearTimeout(listenTimeoutRef.current);
+      if (meditationSafetyTimeoutRef.current) clearTimeout(meditationSafetyTimeoutRef.current);
+      if (transitionTimeoutRef.current) clearTimeout(transitionTimeoutRef.current);
+      countdownAbortRef.current = true;
     };
   }, []);
 
@@ -834,11 +865,11 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
         console.warn("Failed to record journey completion:", e);
       }
 
-      await stopBackgroundMusic();
+      await fadeOutAndStopMusic();
       await stopAffirmationAudio();
       (navigation as any).navigate("Main", { screen: "BreatheTab" });
     })();
-  }, [navigation, stopBackgroundMusic, stopAffirmationAudio, currentStepIndex, journey, route.params]);
+  }, [navigation, fadeOutAndStopMusic, stopAffirmationAudio, currentStepIndex, journey, route.params]);
 
   const formatTime = (seconds: number): string => {
     const m = Math.floor(seconds / 60);

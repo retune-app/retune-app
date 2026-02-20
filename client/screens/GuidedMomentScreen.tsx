@@ -45,6 +45,7 @@ import {
 } from "@/contexts/BackgroundMusicContext";
 import { RSVPDisplay } from "@/components/RSVPDisplay";
 import { useAudio } from "@/contexts/AudioContext";
+import { getSmartSoundForMeditation } from "@shared/smartSoundMatching";
 
 const ACCENT_GOLD = "#C9A227";
 const GOLD_LIGHT = "#E5C95C";
@@ -57,74 +58,6 @@ const DURATION_OPTIONS = [
   { value: 3, label: "3 min" },
 ];
 
-const MOOD_SOUND_MAP: Record<string, Record<string, BackgroundMusicType>> = {
-  calm: {
-    morning: "ocean-waves-beach",
-    afternoon: "ocean-waves-beach",
-    evening: "meditation-gentle-chimes",
-    night: "meditation-deep-drone",
-  },
-  stressed: {
-    morning: "rain-soft",
-    afternoon: "rain-calming",
-    evening: "meditation-singing-bowls",
-    night: "binaural-delta",
-  },
-  tired: {
-    morning: "forest-birds-morning",
-    afternoon: "binaural-alpha",
-    evening: "meditation-gentle-chimes",
-    night: "meditation-deep-drone",
-  },
-  energized: {
-    morning: "binaural-beta",
-    afternoon: "binaural-beta",
-    evening: "meditation-forest-melody",
-    night: "meditation-gentle-chimes",
-  },
-  anxious: {
-    morning: "meditation-singing-bowls",
-    afternoon: "rain-soft",
-    evening: "meditation-singing-bowls",
-    night: "binaural-delta",
-  },
-  grateful: {
-    morning: "forest-birds-morning",
-    afternoon: "forest-rain-birds",
-    evening: "meditation-forest-melody",
-    night: "forest-night",
-  },
-  sad: {
-    morning: "rain-soft",
-    afternoon: "rain-calming",
-    evening: "meditation-singing-bowls",
-    night: "meditation-deep-drone",
-  },
-  overwhelmed: {
-    morning: "meditation-singing-bowls",
-    afternoon: "rain-soft",
-    evening: "meditation-gentle-chimes",
-    night: "binaural-delta",
-  },
-  confident: {
-    morning: "binaural-beta",
-    afternoon: "binaural-alpha",
-    evening: "meditation-forest-melody",
-    night: "meditation-gentle-chimes",
-  },
-  focused: {
-    morning: "binaural-beta",
-    afternoon: "binaural-alpha",
-    evening: "binaural-alpha",
-    night: "meditation-gentle-chimes",
-  },
-  joyful: {
-    morning: "forest-birds-morning",
-    afternoon: "forest-rain-birds",
-    evening: "meditation-forest-melody",
-    night: "forest-night",
-  },
-};
 
 const MOOD_LABELS: Record<string, string> = {
   calm: "Calm",
@@ -277,7 +210,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
   const [currentPosition, setCurrentPosition] = useState(0);
   const [selectedDuration, setSelectedDuration] = useState<number>(2);
   const [selectedSound, setSelectedSound] = useState<BackgroundMusicType>(
-    MOOD_SOUND_MAP[mood]?.[timeOfDay] || MOOD_SOUND_MAP[mood]?.["morning"] || "ocean-waves-beach"
+    getSmartSoundForMeditation().soundId as BackgroundMusicType
   );
   const [selectedVoice, setSelectedVoice] = useState("hume_lotus");
   const [voicePreferenceLoaded, setVoicePreferenceLoaded] = useState(false);
@@ -663,7 +596,8 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
     progressAnim.value = 0;
 
     if (!journeyContext) {
-      const autoSound = MOOD_SOUND_MAP[mood]?.[timeOfDay] || MOOD_SOUND_MAP[mood]?.["morning"] || "ocean-waves-beach";
+      const smartResult = getSmartSoundForMeditation();
+      const autoSound = smartResult.soundId as BackgroundMusicType;
       setSelectedSound(autoSound);
       if (autoSound !== "none") {
         await setSelectedMusic(autoSound);

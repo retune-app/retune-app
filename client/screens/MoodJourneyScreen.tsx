@@ -51,6 +51,8 @@ import {
   getCyclesForDuration,
   type BreathingTechnique,
 } from "@shared/breathingTechniques";
+import { getSmartSoundForMoodJourney } from "@shared/smartSoundMatching";
+import { getVibeConfig } from "@shared/vibes";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import type { GeneratedMoment } from "@/screens/GuidedMomentScreen";
 
@@ -543,7 +545,10 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
       journeyMusicInitRef.current = true;
       (async () => {
         if (!isMusicPlaying) {
-          await setSelectedMusic('forest-rain-birds' as BackgroundMusicType, false);
+          const vibeConfig = journey.vibeId ? getVibeConfig(journey.vibeId) : undefined;
+          const vibePreferredSounds = vibeConfig?.ambient?.preferredSounds || [];
+          const smartSound = getSmartSoundForMoodJourney(vibePreferredSounds);
+          await setSelectedMusic(smartSound.soundId as BackgroundMusicType, false);
           await startBackgroundMusic();
           setMusicEnabled(true);
         }

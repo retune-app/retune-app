@@ -21,7 +21,8 @@ import { AmbientSoundMixer } from "@/components/AmbientSoundMixer";
 import { ThemedModal } from "@/components/ThemedModal";
 import { useTheme } from "@/hooks/useTheme";
 import { useAudio, preloadAudioToCache, clearCachedAudio } from "@/contexts/AudioContext";
-import { useBackgroundMusic } from "@/contexts/BackgroundMusicContext";
+import { useBackgroundMusic, BackgroundMusicType, BACKGROUND_MUSIC_OPTIONS } from "@/contexts/BackgroundMusicContext";
+import { getSmartSoundForAffirmation } from "@shared/smartSoundMatching";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { apiRequest } from "@/lib/query-client";
 import { getVoiceDisplayName, VOICE_ID_TO_NAME, AI_VOICES } from "@shared/voiceMapping";
@@ -72,15 +73,22 @@ export default function PlayerScreen() {
     breathingAffirmation,
     setBreathingAffirmation,
   } = useAudio();
-  const { selectedMusic, setSelectedMusic, stopBackgroundMusic } = useBackgroundMusic();
+  const { selectedMusic, setSelectedMusic, startBackgroundMusic, stopBackgroundMusic, setVolume } = useBackgroundMusic();
   const previousMusicRef = useRef<string | null>(null);
+  const autoStartedAmbientRef = useRef(false);
+  const [autoSelectedSound, setAutoSelectedSound] = useState<{ soundId: string; label: string } | null>(null);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('beforeRemove', () => {
       stop();
+      if (autoStartedAmbientRef.current) {
+        stopBackgroundMusic();
+        setSelectedMusic('none' as BackgroundMusicType);
+        autoStartedAmbientRef.current = false;
+      }
     });
     return unsubscribe;
-  }, [navigation, stop]);
+  }, [navigation, stop, stopBackgroundMusic, setSelectedMusic]);
 
   const rsvpEnabled = RSVP_ENABLED;
   const rsvpFontSize = RSVP_FONT_SIZE;
@@ -588,6 +596,15 @@ export default function PlayerScreen() {
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
+    if (selectedMusic === 'none' && !autoStartedAmbientRef.current) {
+      const result = getSmartSoundForAffirmation();
+      autoStartedAmbientRef.current = true;
+      setAutoSelectedSound({ soundId: result.soundId, label: result.label });
+      await setVolume(0.15);
+      await setSelectedMusic(result.soundId as BackgroundMusicType);
+      await startBackgroundMusic();
+    }
+
     if (currentAffirmation?.id === affirmationId) {
       await togglePlayPause();
     } else {
@@ -852,6 +869,28 @@ export default function PlayerScreen() {
             </ThemedText>
           </Pressable>
         </View>
+
+        {autoSelectedSound ? (
+          <Pressable
+            onPress={() => {
+              stopBackgroundMusic();
+              setSelectedMusic('none' as BackgroundMusicType);
+              autoStartedAmbientRef.current = false;
+              setAutoSelectedSound(null);
+            }}
+            style={[styles.autoSoundIndicator, { backgroundColor: theme.primary + '15', borderColor: theme.primary + '30' }]}
+            testID="button-auto-sound-dismiss"
+          >
+            <Feather name="music" size={14} color={theme.primary} />
+            <ThemedText type="small" style={{ color: theme.text, marginLeft: 6, fontWeight: '600', fontSize: 13 }}>
+              {BACKGROUND_MUSIC_OPTIONS.find(o => o.id === autoSelectedSound.soundId)?.name || autoSelectedSound.soundId}
+            </ThemedText>
+            <ThemedText type="caption" style={{ color: theme.textSecondary, marginLeft: 4, fontSize: 11 }}>
+              {`\u00B7 ${autoSelectedSound.label}`}
+            </ThemedText>
+            <Feather name="x" size={14} color={theme.textSecondary} style={{ marginLeft: 'auto' }} />
+          </Pressable>
+        ) : null}
 
         <View style={styles.actions}>
           <IconButton
@@ -1239,6 +1278,16 @@ const styles = StyleSheet.create({
     borderRadius: 36,
     alignItems: "center",
     justifyContent: "center",
+  },
+  autoSoundIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1,
+    marginBottom: Spacing.md,
+    width: "100%",
   },
   actions: {
     flexDirection: "row",

@@ -62,6 +62,7 @@ import {
   type BreathingTechnique,
   type BreathingCategory,
 } from "@shared/breathingTechniques";
+import { getSmartSoundForBreathing, type SmartSoundResult } from "@shared/smartSoundMatching";
 
 const ACCENT_GOLD = "#C9A227";
 
@@ -130,6 +131,9 @@ export default function BreathingScreen() {
   const [voiceVolume, setVoiceVolume] = useState(0.8);
 
   const [showSoundSwitcher, setShowSoundSwitcher] = useState(false);
+
+  const userManuallySelectedSound = useRef<boolean>(false);
+  const [smartSoundLabel, setSmartSoundLabel] = useState<string>('');
 
   const categories = React.useMemo(() => {
     const byCategory = getSoundsByCategory();
@@ -299,6 +303,14 @@ export default function BreathingScreen() {
     loadDefaultTechnique();
   }, []);
 
+  useEffect(() => {
+    if (!userManuallySelectedSound.current && musicEnabled) {
+      const result = getSmartSoundForBreathing(selectedTechnique.id);
+      setSelectedMusic(result.soundId as BackgroundMusicType, false);
+      setSmartSoundLabel(result.label);
+    }
+  }, [selectedTechnique]);
+
   // Affirmation audio playback functions
   const startAffirmationLoop = useCallback(async () => {
     if (!backgroundAffirmation?.audioUrl) return;
@@ -350,6 +362,8 @@ export default function BreathingScreen() {
   }, [backgroundAffirmation]);
 
   const handleSwitchSoundDuringPlayback = useCallback(async (soundId: BackgroundMusicType) => {
+    userManuallySelectedSound.current = true;
+    setSmartSoundLabel('');
     if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} }
     
     if (soundId === 'none') {
@@ -1310,7 +1324,7 @@ export default function BreathingScreen() {
               >
                 <Text style={[styles.optionPillText, { color: musicEnabled ? "#FFFFFF" : theme.text }]} numberOfLines={1}>
                   {selectedMusic !== 'none' 
-                    ? BACKGROUND_MUSIC_OPTIONS.find(o => o.id === selectedMusic)?.name || 'Music'
+                    ? `${BACKGROUND_MUSIC_OPTIONS.find(o => o.id === selectedMusic)?.name || 'Music'}${smartSoundLabel ? ` \u00B7 ${smartSoundLabel}` : ''}`
                     : 'Music'}
                 </Text>
               </Pressable>

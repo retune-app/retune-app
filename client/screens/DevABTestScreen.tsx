@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import * as FileSystem from "expo-file-system";
+import { File } from "expo-file-system/next";
 
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
@@ -131,8 +131,8 @@ export default function DevABTestScreen() {
         const blob = await response.blob();
         formData.append("voiceClip", blob, "voice.wav");
       } else {
-        const fileInfo = await FileSystem.getInfoAsync(recordingUri);
-        if (!fileInfo.exists) throw new Error("Recording file not found");
+        const file = new File(recordingUri);
+        if (!file.exists) throw new Error("Recording file not found");
         formData.append("voiceClip", {
           uri: recordingUri,
           name: "voice.m4a",

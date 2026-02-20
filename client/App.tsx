@@ -1,5 +1,10 @@
 import React, { useEffect } from "react";
-import { StyleSheet, View, ActivityIndicator } from "react-native";
+import { StyleSheet, View, ActivityIndicator, LogBox } from "react-native";
+
+LogBox.ignoreLogs([
+  "Method getInfoAsync imported from",
+  "expo-file-system",
+]);
 import { NavigationContainer } from "@react-navigation/native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";

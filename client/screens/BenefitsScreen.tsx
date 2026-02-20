@@ -103,7 +103,7 @@ export default function BenefitsScreen() {
       iconColor: "#2EC4B6",
       iconBgColor: "#2EC4B620",
       title: "Breathing That Rewires",
-      subtitle: "5 science-backed techniques",
+      subtitle: "10 science-backed techniques",
       description: "Deep breathing isn't just calming — it physically shifts your nervous system from fight-or-flight to rest-and-receive. This primes your brain to absorb affirmations more effectively.",
       bullets: [
         "Activates the vagus nerve within 60 seconds",

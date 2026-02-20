@@ -463,7 +463,7 @@ If 30% of paid users choose annual plans ($39.99/yr for Believe, $79.99/yr for E
 | **Calm** | $14.99 | No | Limited | Yes | Yes (pre-recorded) |
 | **Headspace** | $12.99 | No | Limited | Yes | Yes (pre-recorded) |
 | **Insight Timer** | Free / $9.99 | No | No | Yes | Yes (community) |
-| **Retuned** | Free / $4.99 / $9.99 | **Yes (Inner Voice)** | **Yes (AI-generated)** | **Yes (5 techniques)** | **Yes (AI-generated)** |
+| **Retuned** | Free / $4.99 / $9.99 | **Yes (Inner Voice)** | **Yes (AI-generated)** | **Yes (10 techniques)** | **Yes (AI-generated)** |
 
 **Unique differentiators:**
 1. **Inner Voice** — No competitor offers personal voice cloning for affirmations

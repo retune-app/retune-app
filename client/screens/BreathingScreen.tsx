@@ -133,10 +133,7 @@ export default function BreathingScreen() {
   const [showSoundSwitcher, setShowSoundSwitcher] = useState(false);
 
   const userManuallySelectedSound = useRef<boolean>(false);
-  const [showSoundTip, setShowSoundTip] = useState(false);
-  const [showVoiceTip, setShowVoiceTip] = useState(false);
-  const soundTipOpacity = useSharedValue(0);
-  const voiceTipOpacity = useSharedValue(0);
+
 
   const categories = React.useMemo(() => {
     const byCategory = getSoundsByCategory();
@@ -313,33 +310,6 @@ export default function BreathingScreen() {
     }
   }, [selectedTechnique]);
 
-  useEffect(() => {
-    const checkTips = async () => {
-      const [soundSeen, voiceSeen] = await Promise.all([
-        AsyncStorage.getItem('@tip_sound_auto_pair'),
-        AsyncStorage.getItem('@tip_voice_library'),
-      ]);
-      if (!soundSeen) {
-        setShowSoundTip(true);
-        soundTipOpacity.value = withDelay(800, withTiming(1, { duration: 400 }));
-        setTimeout(async () => {
-          soundTipOpacity.value = withTiming(0, { duration: 600 });
-          setTimeout(() => setShowSoundTip(false), 700);
-          await AsyncStorage.setItem('@tip_sound_auto_pair', 'true');
-        }, 5000);
-      }
-      if (!voiceSeen) {
-        setShowVoiceTip(true);
-        voiceTipOpacity.value = withDelay(1400, withTiming(1, { duration: 400 }));
-        setTimeout(async () => {
-          voiceTipOpacity.value = withTiming(0, { duration: 600 });
-          setTimeout(() => setShowVoiceTip(false), 700);
-          await AsyncStorage.setItem('@tip_voice_library', 'true');
-        }, 6000);
-      }
-    };
-    checkTips();
-  }, []);
 
   // Affirmation audio playback functions
   const startAffirmationLoop = useCallback(async () => {
@@ -1386,18 +1356,6 @@ export default function BreathingScreen() {
                 <Text style={[styles.optionPillText, { color: voiceEnabled ? "#FFFFFF" : theme.text }]}>Voice</Text>
               </Pressable>
             </View>
-            {showSoundTip ? (
-              <Animated.View style={[styles.tipBubble, { opacity: soundTipOpacity }]}>
-                <Feather name="volume-2" size={12} color={ACCENT_GOLD} style={{ marginRight: 5 }} />
-                <Text style={[styles.tipText, { color: theme.textSecondary }]}>Sound auto-paired to your session. Tap to change.</Text>
-              </Animated.View>
-            ) : null}
-            {showVoiceTip ? (
-              <Animated.View style={[styles.tipBubble, { opacity: voiceTipOpacity }]}>
-                <Feather name="mic" size={12} color={ACCENT_GOLD} style={{ marginRight: 5 }} />
-                <Text style={[styles.tipText, { color: theme.textSecondary }]}>Play affirmations from your library during breathing. Tap Voice to browse.</Text>
-              </Animated.View>
-            ) : null}
           </View>
         </Animated.View>
 
@@ -1890,19 +1848,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 16,
     marginBottom: 12,
-  },
-  tipBubble: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-    backgroundColor: "rgba(201, 162, 39, 0.1)",
-  },
-  tipText: {
-    fontSize: 11,
-    lineHeight: 15,
-    flex: 1,
   },
 });

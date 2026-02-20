@@ -1082,41 +1082,6 @@ export default function BreathingScreen() {
             onQuickPlay={handleQuickPlay}
             onSettingsPress={() => navigation.navigate("Main", { screen: "SettingsTab" })}
             onMoodPress={() => setShowMoodCheckin(true)}
-            onNudgeAction={(actionType) => {
-              switch (actionType) {
-                case "create":
-                  navigation.navigate("Create");
-                  break;
-                case "breathe":
-                  handleStartWithCountdown();
-                  break;
-                case "meditate":
-                  setShowMoodCheckin(true);
-                  break;
-                case "journey":
-                  setShowMoodCheckin(true);
-                  break;
-                case "clone":
-                  navigation.navigate("VoiceSetup");
-                  break;
-                case "listen": {
-                  const currentId = currentAffirmation?.id;
-                  const otherAffirmations = affirmations.filter(a => a.id !== currentId && a.audioUrl);
-                  const recommended = otherAffirmations.length > 0
-                    ? otherAffirmations[Math.floor(Math.random() * otherAffirmations.length)]
-                    : null;
-                  if (recommended) {
-                    requestRecommendedAffirmation(recommended.id);
-                    playAffirmation(recommended as any);
-                  } else if (currentAffirmation) {
-                    requestHighlightAffirmation(currentAffirmation.id);
-                    playAffirmation(currentAffirmation as any);
-                  }
-                  (navigation as any).navigate("Main", { screen: "AffirmTab" });
-                  break;
-                }
-              }
-            }}
             isPlaying={isAudioPlaying}
           />
         </Animated.View>

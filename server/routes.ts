@@ -223,8 +223,7 @@ function getPillarVoiceConfig(pillar?: string | null): typeof MEDITATION_MOOD_CO
   return config;
 }
 
-const dailyGreetingCache = new Map<string, { message: string; actionText?: string; actionType?: string }>();
-const lastNudgeTypeByUser = new Map<string, string>();
+const dailyGreetingCache = new Map<string, { message: string }>();
 
 const dailyGreetingFallbacks: Record<string, string> = {
   morning: "A new morning means a new chance to become who you are meant to be",
@@ -4180,15 +4179,6 @@ Rules for tone:
         .orderBy(sql`count(*) desc`)
         .limit(1);
 
-      const nudgeOpportunities: string[] = [];
-      if (totalAffirmations === 0) nudgeOpportunities.push("NO_AFFIRMATIONS: User has never created an affirmation yet.");
-      else if (totalAffirmations < 3) nudgeOpportunities.push(`FEW_AFFIRMATIONS: User has only ${totalAffirmations} affirmation(s). Encourage creating more.`);
-      if (!hasVoiceClone) nudgeOpportunities.push("NO_VOICE_CLONE: User hasn't set up voice cloning (Inner Voice) yet.");
-      if (totalBreathingSessions === 0) nudgeOpportunities.push("NO_BREATHING: User hasn't tried any breathing exercises yet.");
-      if (totalListens === 0 && totalAffirmations > 0) nudgeOpportunities.push("NO_LISTENS: User has affirmations but hasn't listened to any yet. Use actionType 'listen'.");
-      if (totalListens > 0 && totalAffirmations > 0) nudgeOpportunities.push(`LISTEN_AGAIN: User has ${totalListens} listening sessions — encourage them to listen again. Repetition rewires neural pathways. Use actionType 'listen'.`);
-      if (totalJourneys === 0) nudgeOpportunities.push("NO_JOURNEYS: User has never tried a mood journey. These are guided wellness paths combining breathing, meditation, and affirmations.");
-
       let statsContext = "";
       if (totalBreathingSessions > 0 || totalAffirmations > 0 || totalJourneys > 0) {
         const parts = [];
@@ -4215,26 +4205,6 @@ Rules for tone:
         welcomeBackContext = `\nWELCOME BACK: The user is returning after being away for ${awayLabel}. Acknowledge their return warmly but subtly — don't say "welcome back" literally. Instead, reference the time away naturally: "Your ${normalizedTime} reset awaits" or "picking up right where you left off" or weave their streak/stats into a return-flavored message. Make it feel like the app noticed them and is glad they're here.`;
       }
 
-      const lastNudge = lastNudgeTypeByUser.get(userId);
-      let filteredNudges = nudgeOpportunities;
-      if (lastNudge && nudgeOpportunities.length > 1) {
-        filteredNudges = nudgeOpportunities.filter(n => {
-          const tag = n.split(":")[0];
-          if (lastNudge === "listen" && (tag === "LISTEN_AGAIN" || tag === "NO_LISTENS")) return false;
-          if (lastNudge === "create" && (tag === "NO_AFFIRMATIONS" || tag === "FEW_AFFIRMATIONS")) return false;
-          if (lastNudge === "clone" && tag === "NO_VOICE_CLONE") return false;
-          if (lastNudge === "breathe" && tag === "NO_BREATHING") return false;
-          if (lastNudge === "journey" && tag === "NO_JOURNEYS") return false;
-          return true;
-        });
-        if (filteredNudges.length === 0) filteredNudges = nudgeOpportunities;
-      }
-
-      let nudgeContext = "";
-      if (filteredNudges.length > 0) {
-        nudgeContext = `\nNudge opportunities (pick ONE randomly if you want to nudge, or skip if you prefer pure encouragement):\n${filteredNudges.join("\n")}`;
-      }
-
       const response = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
@@ -4243,36 +4213,32 @@ Rules for tone:
             content: [
               `You write ultra-short empowering sub-messages for the Retuned wellness app. The greeting line ("Good ${normalizedTime}, ${firstName}") is already shown above your message — you only write the sub-message below it.`,
               ``,
-              `CONTEXT: It is ${dayOfWeek} ${normalizedTime}. Weave the day or time naturally into the message when it feels right — like a friend who knows what part of the week it is. Don't force it. Examples: "Thursday nights were made for rewiring...", "${dayOfWeek}s hit different when your mind is clear", "midweek — the perfect reset point". Sometimes skip the day entirely and just be encouraging.`,
+              `CONTEXT: It is ${dayOfWeek} ${normalizedTime}. Weave the day or time naturally into the message when it feels right — like a friend who knows what part of the week it is. Don't force it. Examples: "Thursday nights were made for rewiring", "${dayOfWeek}s hit different when your mind is clear", "midweek — the perfect reset point". Sometimes skip the day entirely.`,
               ``,
-              `TONE: Warm, not cheery. Like a knowing friend. Be creative, witty, surprising — users should look forward to what it says next. No quotation marks, no exclamation marks.`,
+              `TONE: Warm, not cheery. Like a knowing friend who believes in you. Be creative, witty, poetic, surprising — users should look forward to what it says next. No quotation marks, no exclamation marks.`,
               ``,
-              `THEMES to weave in (pick one per message): neural pathways strengthening, brain rewiring for confidence, neuroplasticity shaping beliefs, amygdala calming through breathwork, prefrontal cortex activation, mood journeys building emotional resilience pathways. Use accessible language — no jargon.`,
+              `THEMES (pick one per message, use accessible language — no jargon):`,
+              `- You are quietly becoming someone new`,
+              `- Your thoughts are reshaping your brain right now`,
+              `- Stillness is where real strength builds`,
+              `- The version of you that shows up tomorrow starts tonight`,
+              `- Small moments of calm rewire everything`,
+              `- Your mind is learning a new language — belief`,
+              `- Confidence isn't found, it's built — one breath at a time`,
+              `- What you repeat to yourself becomes who you are`,
+              `- The calm you feel right now is changing your brain`,
               `${statsContext}`,
               `${welcomeBackContext}`,
-              `${nudgeContext}`,
               ``,
               `RESPONSE FORMAT: Return valid JSON only. No markdown, no code fences.`,
-              `{`,
-              `  "message": "Your main message text here (max 12 words)",`,
-              `  "actionText": "tappable link text (2-5 words, optional — omit key if no nudge)",`,
-              `  "actionType": "create | breathe | meditate | clone | listen (only if actionText is provided)"`,
-              `}`,
+              `{ "message": "your message here" }`,
               ``,
               `RULES:`,
-              `- "message" is the full visible text INCLUDING a natural lead-in to the action. Max 12 words total.`,
-              `- If nudging, end "message" with a dash or ellipsis, then put the call-to-action in "actionText". The actionText is rendered as a tappable link right after the message.`,
-              `  Example: { "message": "Your mind is ready for something new —", "actionText": "create your first affirmation", "actionType": "create" }`,
-              `  Example: { "message": "Imagine hearing these words in your voice —", "actionText": "try Inner Voice", "actionType": "clone" }`,
-              `  Example: { "message": "A 60-second reset could change your day —", "actionText": "breathe now", "actionType": "breathe" }`,
-              `  Example: { "message": "Let stillness find you —", "actionText": "start a guided moment", "actionType": "meditate" }`,
-              `  Example: { "message": "Your mind knows the path to ${topJourneyMood?.targetMood || 'calm'} now —", "actionText": "start a mood journey", "actionType": "journey" }`,
-              `  Example: { "message": "Your neural pathways are ready to absorb —", "actionText": "listen now", "actionType": "listen" }`,
-              `- If no nudge fits, just return { "message": "..." } with pure encouragement (max 10 words).`,
-              `- actionType mapping: "create" = create new affirmation, "breathe" = breathing exercise, "meditate" = guided meditation, "clone" = voice cloning setup, "journey" = mood check-in/journey, "listen" = play an affirmation.`,
-              `- About 60% of the time, include a nudge when opportunities exist. 40% pure encouragement.`,
-              `- Never nag. Be curious, inviting, playful. Each message should feel fresh.`,
-              `- NEVER use first-person "I" (e.g., "I know you can do it", "I believe in you"). Always address the user directly with "you/your".`,
+              `- Max 14 words. Aim for 8-12.`,
+              `- Pure inspiration, encouragement, or gentle wisdom. No calls to action, no nudges, no suggestions to do anything.`,
+              `- Speak as if whispering a truth the user already knows but needed to hear.`,
+              `- NEVER use first-person "I". Always address the user with "you/your" or use universal statements.`,
+              `- Vary structure: sometimes a statement, sometimes a question, sometimes a fragment.`,
             ].join("\n"),
           },
           {
@@ -4287,27 +4253,16 @@ Rules for tone:
       });
 
       const raw = response.choices[0]?.message?.content?.trim() || "";
-      let parsed: { message: string; actionText?: string; actionType?: string };
+      let parsed: { message: string };
       try {
         const cleaned = raw.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
         parsed = JSON.parse(cleaned);
         parsed.message = (parsed.message || "").replace(/["""''!]/g, "");
-        if (parsed.actionText) {
-          parsed.actionText = parsed.actionText.replace(/["""''!]/g, "");
-        }
-        const validActions = ["create", "breathe", "meditate", "clone", "journey", "listen"];
-        if (parsed.actionType && !validActions.includes(parsed.actionType)) {
-          delete parsed.actionText;
-          delete parsed.actionType;
-        }
       } catch {
         parsed = { message: raw.replace(/["""''!]/g, "").substring(0, 80) || dailyGreetingFallbacks[normalizedTime] };
       }
 
       dailyGreetingCache.set(cacheKey, parsed);
-      if (parsed.actionType) {
-        lastNudgeTypeByUser.set(userId, parsed.actionType);
-      }
       res.json({ ...parsed, cached: false });
     } catch (error) {
       console.error("Daily greeting generation failed:", error);

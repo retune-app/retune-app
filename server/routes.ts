@@ -4068,11 +4068,14 @@ Rules for tone:
     const timeOfDay = (req.query.timeOfDay as string) || "morning";
     const validTimes = ["morning", "afternoon", "evening", "night"];
     const normalizedTime = validTimes.includes(timeOfDay) ? timeOfDay : "morning";
+    const validDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const clientDayOfWeek = req.query.dayOfWeek as string;
+    const dayOfWeek = (clientDayOfWeek && validDays.includes(clientDayOfWeek)) ? clientDayOfWeek : validDays[new Date().getDay()];
     const hoursAway = req.query.hoursAway ? parseInt(req.query.hoursAway as string, 10) : null;
     const isWelcomeBack = hoursAway !== null && hoursAway >= 4;
 
     const today = new Date().toISOString().slice(0, 10);
-    const cacheKey = isWelcomeBack ? `${userId}-${today}-wb` : `${userId}-${today}`;
+    const cacheKey = isWelcomeBack ? `${userId}-${today}-${dayOfWeek}-wb` : `${userId}-${today}-${dayOfWeek}`;
 
     const cached = dailyGreetingCache.get(cacheKey);
     if (cached) {
@@ -4240,7 +4243,7 @@ Rules for tone:
             content: [
               `You write ultra-short empowering sub-messages for the Retuned wellness app. The greeting line ("Good morning, Name") is already shown above your message — you only write the sub-message below it.`,
               ``,
-              `TONE: ${normalizedTime} mood. Warm, not cheery. Like a knowing friend. Be creative, witty, surprising — users should look forward to what it says next. No quotation marks, no exclamation marks.`,
+              `TONE: ${normalizedTime} mood on a ${dayOfWeek}. Warm, not cheery. Like a knowing friend. Be creative, witty, surprising — users should look forward to what it says next. No quotation marks, no exclamation marks.`,
               ``,
               `THEMES to weave in (pick one per message): neural pathways strengthening, brain rewiring for confidence, neuroplasticity shaping beliefs, amygdala calming through breathwork, prefrontal cortex activation, mood journeys building emotional resilience pathways. Use accessible language — no jargon.`,
               `${statsContext}`,
@@ -4273,8 +4276,8 @@ Rules for tone:
           {
             role: "user",
             content: isWelcomeBack
-              ? `Generate a ${normalizedTime} welcome-back sub-message for a user returning after ${hoursAway} hours.`
-              : `Generate a ${normalizedTime} sub-message.`,
+              ? `Generate a ${dayOfWeek} ${normalizedTime} welcome-back sub-message for a user returning after ${hoursAway} hours.`
+              : `Generate a ${dayOfWeek} ${normalizedTime} sub-message.`,
           },
         ],
         temperature: 0.85,

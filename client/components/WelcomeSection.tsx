@@ -248,7 +248,7 @@ export function WelcomeSection({
           >
             <Feather name={icon as any} size={16} color={theme.gold} />
             <ThemedText type="body" style={[styles.greeting, { color: theme.text, fontSize: 16, fontWeight: "700" }]}>
-              {greeting}, {displayName}
+              {greeting}, {displayName}. It's {dayOfWeek} {timeOfDay}.
             </ThemedText>
           </Pressable>
           <View style={styles.suggestionRow}>

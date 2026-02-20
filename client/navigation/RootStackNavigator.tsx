@@ -16,6 +16,7 @@ import PlayerScreen from "@/screens/PlayerScreen";
 import AnalyticsScreen from "@/screens/AnalyticsScreen";
 import OnboardingScreen from "@/screens/OnboardingScreen";
 import { AuthScreen } from "@/screens/AuthScreen";
+import DevABTestScreen from "@/screens/DevABTestScreen";
 import { MiniPlayer } from "@/components/MiniPlayer";
 import { useScreenOptions } from "@/hooks/useScreenOptions";
 import { useAuth } from "@/contexts/AuthContext";
@@ -49,6 +50,7 @@ export type RootStackParamList = {
   Analytics: undefined;
   GuidedMoment: GuidedMomentScreenParams;
   MoodJourney: { journey: any };
+  DevABTest: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -260,6 +262,14 @@ export default function RootStackNavigator() {
             presentation: "card",
             animation: "fade",
             gestureEnabled: false,
+          }}
+        />
+        <Stack.Screen
+          name="DevABTest"
+          component={DevABTestScreen}
+          options={{
+            headerTitle: "Dev: A/B Test",
+            animation: "slide_from_right",
           }}
         />
       </Stack.Navigator>

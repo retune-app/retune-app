@@ -652,6 +652,14 @@ export default function ProfileScreen() {
             value={`v${Constants.expoConfig?.version || "1.0"} (${Constants.expoConfig?.ios?.buildNumber || "1"})`}
             showArrow={false}
           />
+          {__DEV__ ? (
+            <SettingItem
+              icon="cpu"
+              label="Dev: Voice A/B Test"
+              value="Compare ElevenLabs vs Chatterbox"
+              onPress={() => navigation.navigate("DevABTest" as never)}
+            />
+          ) : null}
         </View>
       </View>
 

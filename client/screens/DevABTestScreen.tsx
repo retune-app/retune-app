@@ -77,8 +77,13 @@ export default function DevABTestScreen() {
       setIsRecording(true);
       setRecordingDuration(0);
 
+      let elapsed = 0;
       timerRef.current = setInterval(() => {
-        setRecordingDuration((d) => d + 1);
+        elapsed += 1;
+        setRecordingDuration(elapsed);
+        if (elapsed >= 30) {
+          doStopRecording();
+        }
       }, 1000);
 
       try { await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch {}
@@ -87,15 +92,19 @@ export default function DevABTestScreen() {
     }
   }, []);
 
-  const stopRecording = useCallback(async () => {
+  const doStopRecording = useCallback(async () => {
     if (!recordingRef.current) return;
 
     try {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+
       await recordingRef.current.stopAndUnloadAsync();
       const uri = recordingRef.current.getURI();
       recordingRef.current = null;
       setIsRecording(false);
-      if (timerRef.current) clearInterval(timerRef.current);
 
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: false,
@@ -251,9 +260,9 @@ export default function DevABTestScreen() {
         {phase === "record" || phase === "generating" ? (
           <>
             <View style={[styles.card, { backgroundColor: cardBg }]}>
-              <ThemedText style={styles.sectionLabel}>1. Record Your Voice (5-10 seconds)</ThemedText>
+              <ThemedText style={styles.sectionLabel}>1. Record Your Voice (up to 30 seconds)</ThemedText>
               <ThemedText style={[styles.hint, { color: theme.textSecondary }]}>
-                Read anything naturally — this is your voice reference
+                Read anything naturally — longer samples give better clones
               </ThemedText>
 
               <View style={styles.recorderRow}>
@@ -275,7 +284,7 @@ export default function DevABTestScreen() {
                   </View>
                 ) : (
                   <Pressable
-                    onPress={isRecording ? stopRecording : startRecording}
+                    onPress={isRecording ? doStopRecording : startRecording}
                     style={[
                       styles.recordBtn,
                       { backgroundColor: isRecording ? "#EF4444" : GOLD },

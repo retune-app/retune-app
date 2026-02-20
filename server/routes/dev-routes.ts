@@ -6,7 +6,7 @@ import { tmpdir } from "os";
 import { randomUUID } from "crypto";
 import { cloneVoice, textToSpeech as elevenLabsTTS, deleteVoice } from "../replit_integrations/elevenlabs/client";
 
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 25 * 1024 * 1024 } });
 
 interface ProviderResult {
   provider: string;

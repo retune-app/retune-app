@@ -40,8 +40,19 @@ async function generateWithElevenLabs(voiceBuffer: Buffer, text: string): Promis
 async function generateWithChatterbox(voiceBuffer: Buffer, text: string): Promise<ProviderResult> {
   const { Client, handle_file } = await import("@gradio/client");
   const client = await Client.connect("ResembleAI/Chatterbox");
-  const audioBlob = new Blob([new Uint8Array(voiceBuffer)]);
-  const result = await client.predict("/generate", [text, handle_file(audioBlob), 0.5, 0.5]);
+  const audioBlob = new Blob([new Uint8Array(voiceBuffer)], { type: "audio/wav" });
+
+  const result = await client.predict(1, [
+    text,
+    handle_file(audioBlob),
+    0.5,
+    0.8,
+    0,
+    0.5,
+    0.05,
+    1.0,
+    1.2,
+  ]);
 
   const audioData = (result as any).data[0];
   let base64: string;

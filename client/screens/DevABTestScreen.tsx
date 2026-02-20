@@ -147,12 +147,18 @@ export default function DevABTestScreen() {
       const headers: Record<string, string> = {};
       if (authToken) headers["X-Auth-Token"] = authToken;
 
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 300000);
+
       const res = await fetch(url, {
         method: "POST",
         headers,
         body: formData,
         credentials: "include",
+        signal: controller.signal,
       });
+
+      clearTimeout(timeout);
 
       if (!res.ok) {
         const errText = await res.text();

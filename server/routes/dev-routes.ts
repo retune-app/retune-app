@@ -73,6 +73,8 @@ async function generateWithChatterbox(voiceBuffer: Buffer, text: string): Promis
 
 export function registerDevRoutes(app: Express, requireAuth: any) {
   app.post("/api/dev/ab-test", requireAuth, upload.single("voiceClip"), async (req: any, res: Response) => {
+    req.setTimeout(300000);
+    res.setTimeout(300000);
     try {
       const text = req.body?.text;
       const voiceFile = req.file;

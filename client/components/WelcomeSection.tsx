@@ -193,9 +193,13 @@ export function WelcomeSection({
     return "night";
   }, []);
 
+  const dayOfWeek = useMemo(() => {
+    return ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][new Date().getDay()];
+  }, []);
+
   const greetingUrl = hoursAway
-    ? `/api/daily-greeting?timeOfDay=${timeOfDay}&hoursAway=${hoursAway}`
-    : `/api/daily-greeting?timeOfDay=${timeOfDay}`;
+    ? `/api/daily-greeting?timeOfDay=${timeOfDay}&dayOfWeek=${dayOfWeek}&hoursAway=${hoursAway}`
+    : `/api/daily-greeting?timeOfDay=${timeOfDay}&dayOfWeek=${dayOfWeek}`;
 
   const { data: aiGreeting } = useQuery<GreetingResponse>({
     queryKey: [greetingUrl],

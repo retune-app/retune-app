@@ -57,6 +57,56 @@ const breathingWisdomFallbacks: Record<string, string[]> = {
     "Your autonomic nervous system is rebalancing with every switch",
     "Right nostril breathing activates your sympathetic system, left calms it — you're doing both",
     "This is one of the fastest ways to bring your nervous system into equilibrium"
+  ],
+  triangle: [
+    "Three equal phases create a perfectly balanced breathing rhythm",
+    "This pattern is used in military training for calm under pressure",
+    "Equal timing across inhale, hold, and exhale synchronizes your nervous system",
+    "The simplicity of this pattern makes it easier for your brain to relax into",
+    "Triangle breathing reduces cognitive load — fewer counts means deeper focus",
+    "Your heart rate variability improves faster with simple, repeatable patterns",
+    "This rhythm naturally slows your breathing to about 5 breaths per minute",
+    "The hold phase gives your lungs extra time to absorb oxygen efficiently"
+  ],
+  "physio-sigh": [
+    "Stanford researchers found this is the fastest way to reduce stress in real time",
+    "The double inhale pops open collapsed air sacs in your lungs",
+    "That quick second sip of air maximizes your lung surface area instantly",
+    "The long exhale drives your heart rate down within a single breath cycle",
+    "This is your body's natural reset — you do it involuntarily before sleep",
+    "One physiological sigh can shift your nervous system in under 30 seconds",
+    "The exhale-to-inhale ratio here is what makes it so calming so fast",
+    "Your diaphragm is doing a full reset with every double-inhale cycle"
+  ],
+  "calming-2to1": [
+    "The 2:1 exhale-to-inhale ratio is the gold standard for activating calm",
+    "Longer exhales directly stimulate your vagus nerve — your body's brake pedal",
+    "This ratio is used in clinical anxiety treatment protocols",
+    "Your heart rate drops measurably during every extended exhale",
+    "The simplicity of two counts makes this one of the easiest calming techniques",
+    "Doubling your exhale length doubles your parasympathetic activation",
+    "This pattern mirrors the breathing rhythm your body uses during deep sleep",
+    "Each cycle is training your nervous system to downshift more efficiently"
+  ],
+  "deep-relax-7211": [
+    "The 11-second exhale is one of the longest in any breathing practice",
+    "This pattern drops your breathing rate to just 3 breaths per minute",
+    "Ultra-slow breathing like this has been shown to lower blood pressure",
+    "The brief hold lets CO2 build just enough to deepen your next exhale",
+    "Therapists use this pattern specifically for insomnia and sleep disorders",
+    "Your brain waves are shifting toward theta — the frequency right before sleep",
+    "This extended exhale gives your vagus nerve maximum stimulation time",
+    "At this pace your body is entering its deepest possible relaxation state"
+  ],
+  "vishama-vritti": [
+    "Unequal breathing ratios sharpen mental focus by engaging your prefrontal cortex",
+    "The extended hold phase increases CO2 tolerance — a marker of stress resilience",
+    "This Vedic technique has been practiced for over 3,000 years for mental clarity",
+    "The asymmetric pattern forces your brain to stay present and attentive",
+    "Your concentration improves because the varying counts demand active awareness",
+    "The long hold phase trains your nervous system to stay calm under pressure",
+    "This rhythm strengthens the connection between your breathing and your attention",
+    "Unequal ratios challenge your autonomic system — that's what builds resilience"
   ]
 };
 
@@ -192,8 +242,9 @@ export function registerBreathingRoutes(app: Express): void {
       const techniqueId = req.query.techniqueId as string;
 
       // Validate technique ID
-      if (!techniqueId || !["box", "478", "coherent", "energizing", "alternate"].includes(techniqueId)) {
-        return res.status(400).json({ error: "Invalid technique ID. Must be one of: box, 478, coherent, energizing, alternate" });
+      const validTechniques = ["box", "478", "coherent", "energizing", "alternate", "triangle", "physio-sigh", "calming-2to1", "deep-relax-7211", "vishama-vritti"];
+      if (!techniqueId || !validTechniques.includes(techniqueId)) {
+        return res.status(400).json({ error: `Invalid technique ID. Must be one of: ${validTechniques.join(", ")}` });
       }
 
       // Create cache key: techniqueId + today's date
@@ -240,6 +291,31 @@ export function registerBreathingRoutes(app: Express): void {
             name: "Alternate Nostril (Nadi Shodhana)",
             pattern: "4-4-4-4 seconds alternating nostrils (inhale left, exhale right, inhale right, exhale left)",
             focus: "Brain hemisphere balancing, nervous system equilibrium, deep focus and calm."
+          },
+          triangle: {
+            name: "Triangle Breathing",
+            pattern: "4-4-4 seconds (inhale, hold, exhale)",
+            focus: "Balance, grounding, simplicity. Three equal phases for calm focus."
+          },
+          "physio-sigh": {
+            name: "Physiological Sigh",
+            pattern: "4 second deep inhale + 1 second quick sip, 6 second exhale",
+            focus: "Rapid stress relief, discovered by Stanford researchers. Mimics natural calming reflex."
+          },
+          "calming-2to1": {
+            name: "2:1 Calming Breath",
+            pattern: "4 second inhale, 8 second exhale (2:1 ratio)",
+            focus: "Deep calm, sleep preparation. Extended exhale maximizes vagus nerve activation."
+          },
+          "deep-relax-7211": {
+            name: "7-2-11 Deep Relaxation",
+            pattern: "7 second inhale, 2 second hold, 11 second exhale",
+            focus: "Sleep induction, deep relaxation. Used in clinical settings for insomnia."
+          },
+          "vishama-vritti": {
+            name: "Vishama Vritti",
+            pattern: "4 second inhale, 8 second hold, 6 second exhale (unequal ratio)",
+            focus: "Mental clarity, concentration, stress resilience. Ancient Vedic breathing technique."
           }
         };
 

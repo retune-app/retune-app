@@ -178,7 +178,16 @@ export default function DevABTestScreen() {
       setAbResult(data);
       setPhase("results");
     } catch (err: any) {
-      setError(err.message || "Something went wrong");
+      const msg = err.message || "Something went wrong";
+      if (err.name === "AbortError") {
+        setError("Request timed out — the HuggingFace server may be cold starting. Try again in a minute.");
+      } else if (msg.includes("Network request failed")) {
+        setError("Network request failed — check your connection and make sure you're logged in. Try closing and reopening the app.");
+      } else if (msg.includes("401") || msg.includes("Unauthorized")) {
+        setError("Session expired — please go back, sign out, and sign back in.");
+      } else {
+        setError(msg);
+      }
       setPhase("record");
     }
   }, [recordingUri, text]);

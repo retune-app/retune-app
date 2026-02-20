@@ -79,6 +79,8 @@ export function registerDevRoutes(app: Express, requireAuth: any) {
       const text = req.body?.text;
       const voiceFile = req.file;
 
+      console.log(`[AB-TEST] Request received — text length: ${text?.length || 0}, file size: ${voiceFile?.size || 0} bytes`);
+
       if (!text || !voiceFile) {
         return res.status(400).json({ error: "Both 'text' and 'voiceClip' are required" });
       }
@@ -101,10 +103,14 @@ export function registerDevRoutes(app: Express, requireAuth: any) {
         }
       };
 
+      console.log(`[AB-TEST] Starting both providers in parallel...`);
+
       const [elevenLabs, chatterbox] = await Promise.all([
         timedCall(() => generateWithElevenLabs(voiceBuffer, text), "elevenlabs"),
         timedCall(() => generateWithChatterbox(voiceBuffer, text), "chatterbox"),
       ]);
+
+      console.log(`[AB-TEST] Complete — ElevenLabs: ${elevenLabs.timeMs}ms (${elevenLabs.result.error ? 'FAILED' : 'OK'}), Chatterbox: ${chatterbox.timeMs}ms (${chatterbox.result.error ? 'FAILED' : 'OK'})`);
 
       res.json({
         results: [elevenLabs.result, chatterbox.result],

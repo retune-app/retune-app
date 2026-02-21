@@ -1254,11 +1254,6 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
           onPress={handleScreenTap}
           testID="guided-moment-tap-area"
         >
-          {journeyContext && playerState === "generating" ? (
-            <ThemedText type="caption" style={styles.aboveRingsStatusText}>
-              {getMeditationLoadingMessage(mood, true)}
-            </ThemedText>
-          ) : null}
           {isLandscape && journeyContext?.currentMoodLabel && journeyContext?.targetMoodLabel ? (
             <Animated.View style={[styles.landscapeMoodPillsPanel, { left: Math.max(insets.left, 16) }, controlsFadeStyle]} pointerEvents={controlsVisible ? "auto" : "none"}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -1277,6 +1272,11 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
           <View style={isLandscape ? styles.landscapeLayout : styles.portraitLayout}>
             <View style={styles.ringsArea}>
               {renderBreathingRings()}
+              {journeyContext && playerState === "generating" ? (
+                <ThemedText type="caption" style={styles.ringsGeneratingText}>
+                  {getMeditationLoadingMessage(mood, true)}
+                </ThemedText>
+              ) : null}
             </View>
 
           </View>
@@ -1505,6 +1505,13 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.7)",
     fontSize: 14,
     textAlign: "center",
+  },
+  ringsGeneratingText: {
+    position: "absolute",
+    color: "rgba(255,255,255,0.55)",
+    fontSize: 13,
+    textAlign: "center",
+    paddingHorizontal: 40,
   },
   ringsContainer: {
     alignItems: "center",

@@ -31,11 +31,11 @@ import Animated, {
   FadeOut,
   interpolate,
 } from "react-native-reanimated";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Slider from "@react-native-community/slider";
 import Svg, { Circle } from "react-native-svg";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getApiUrl } from "@/lib/query-client";
+import { getApiUrl, apiRequest } from "@/lib/query-client";
 
 const PROGRESS_INDICATOR_KEY = "@settings/progressIndicator";
 const DEFAULT_BREATHING_TECHNIQUE_KEY = "@breathing/defaultTechnique";
@@ -87,8 +87,10 @@ export default function BreathingScreen() {
   const { user } = useAuth();
   const { currentAffirmation, isPlaying: isAudioPlaying, playAffirmation, togglePlayPause, breathingAffirmation, requestHighlightAffirmation, requestRecommendedAffirmation, stop: stopAffirmationAudio } = useAudio();
   const { selectedMusic, setSelectedMusic, startBackgroundMusic, stopBackgroundMusic, isPlaying: isMusicPlaying, volume, setVolume, setDucked } = useBackgroundMusic();
+  const queryClient = useQueryClient();
 
   const [selectedTechnique, setSelectedTechnique] = useState<BreathingTechnique>(BREATHING_TECHNIQUES[0]);
+  const [favoriteTechniqueId, setFavoriteTechniqueId] = useState<string | null>(null);
   const [selectedDuration, setSelectedDuration] = useState(60);
   const [isPlaying, setIsPlaying] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -286,23 +288,81 @@ export default function BreathingScreen() {
     };
   }, []);
 
-  // Load saved default breathing technique on mount
+  const FAVORITE_BREATHING_KEY = "@breathing/favoriteTechnique";
+
   useEffect(() => {
     const loadDefaultTechnique = async () => {
       try {
-        const savedTechniqueId = await AsyncStorage.getItem(DEFAULT_BREATHING_TECHNIQUE_KEY);
-        if (savedTechniqueId) {
-          const technique = BREATHING_TECHNIQUES.find(t => t.id === savedTechniqueId);
+        const [savedTechniqueId, cachedFavoriteId] = await Promise.all([
+          AsyncStorage.getItem(DEFAULT_BREATHING_TECHNIQUE_KEY),
+          AsyncStorage.getItem(FAVORITE_BREATHING_KEY),
+        ]);
+        if (cachedFavoriteId) {
+          setFavoriteTechniqueId(cachedFavoriteId);
+        }
+        const defaultId = cachedFavoriteId || savedTechniqueId;
+        if (defaultId) {
+          const technique = BREATHING_TECHNIQUES.find(t => t.id === defaultId);
           if (technique) {
             setSelectedTechnique(technique);
+            setSelectedCategory(technique.category);
           }
         }
-      } catch (error) {
-        console.error('Error loading default technique:', error);
-      }
+      } catch (error) {}
     };
     loadDefaultTechnique();
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    const syncFavorite = async () => {
+      try {
+        const res = await fetch(new URL("/api/breathing/favorite", getApiUrl()).toString(), { credentials: "include" });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.favoriteId) {
+            setFavoriteTechniqueId(data.favoriteId);
+            await AsyncStorage.setItem(FAVORITE_BREATHING_KEY, data.favoriteId);
+            const cachedDefault = await AsyncStorage.getItem(DEFAULT_BREATHING_TECHNIQUE_KEY);
+            if (!cachedDefault) {
+              const technique = BREATHING_TECHNIQUES.find(t => t.id === data.favoriteId);
+              if (technique) {
+                setSelectedTechnique(technique);
+                setSelectedCategory(technique.category);
+              }
+            }
+          } else {
+            setFavoriteTechniqueId(null);
+            await AsyncStorage.removeItem(FAVORITE_BREATHING_KEY);
+          }
+        }
+      } catch (error) {}
+    };
+    syncFavorite();
+  }, [user]);
+
+  const favoriteMutation = useMutation({
+    mutationFn: async (techniqueId: string | null) => {
+      await apiRequest("PATCH", "/api/breathing/favorite", { techniqueId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/breathing/favorite"] });
+    },
+  });
+
+  const toggleFavorite = useCallback(async (techniqueId: string) => {
+    const newFavoriteId = favoriteTechniqueId === techniqueId ? null : techniqueId;
+    setFavoriteTechniqueId(newFavoriteId);
+    if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} }
+    try {
+      if (newFavoriteId) {
+        await AsyncStorage.setItem(FAVORITE_BREATHING_KEY, newFavoriteId);
+      } else {
+        await AsyncStorage.removeItem(FAVORITE_BREATHING_KEY);
+      }
+    } catch (e) {}
+    favoriteMutation.mutate(newFavoriteId);
+  }, [favoriteTechniqueId, hapticsEnabled, favoriteMutation]);
 
   useEffect(() => {
     if (!userManuallySelectedSound.current && musicEnabled) {
@@ -749,28 +809,7 @@ export default function BreathingScreen() {
   };
 
   const handleLongPressTechnique = (technique: BreathingTechnique) => {
-    if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {} }
-    Alert.alert(
-      "Set as Default",
-      `Always start with "${technique.name}" when you open the app?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Set as Default", 
-          onPress: async () => {
-            try {
-              await AsyncStorage.setItem(DEFAULT_BREATHING_TECHNIQUE_KEY, technique.id);
-              setSelectedTechnique(technique);
-              setSelectedCategory(technique.category);
-              setShowTechniqueSelector(false);
-              if (hapticsEnabled) { try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {} }
-            } catch (error) {
-              console.error('Error setting default technique:', error);
-            }
-          }
-        },
-      ]
-    );
+    toggleFavorite(technique.id);
   };
 
   const exitFullscreen = () => {
@@ -1404,17 +1443,18 @@ export default function BreathingScreen() {
             </View>
             {BREATHING_TECHNIQUES.filter(t => t.category === selectedCategory).map((technique) => {
               const isSelected = selectedTechnique.id === technique.id;
+              const isFavorited = favoriteTechniqueId === technique.id;
               return (
                 <Pressable
                   key={technique.id}
                   onPress={() => selectTechnique(technique)}
-                  onLongPress={() => handleLongPressTechnique(technique)}
-                  delayLongPress={500}
                   style={[
                     styles.pickerTechniqueCard,
                     {
                       backgroundColor: isSelected ? `${technique.color}15` : theme.cardBackground,
                       borderColor: isSelected ? technique.color : theme.border,
+                      borderLeftWidth: isFavorited ? 3 : 1.5,
+                      borderLeftColor: isFavorited ? ACCENT_GOLD : (isSelected ? technique.color : theme.border),
                     },
                   ]}
                 >
@@ -1441,9 +1481,18 @@ export default function BreathingScreen() {
                       {technique.benefits}
                     </ThemedText>
                   </View>
-                  {isSelected ? (
-                    <Feather name="check-circle" size={20} color={technique.color} />
-                  ) : null}
+                  <Pressable
+                    onPress={(e) => { e.stopPropagation(); toggleFavorite(technique.id); }}
+                    hitSlop={8}
+                    style={styles.favoriteButton}
+                  >
+                    <Feather
+                      name={isFavorited ? "heart" : "heart"}
+                      size={18}
+                      color={isFavorited ? ACCENT_GOLD : `${theme.textSecondary}50`}
+                      style={isFavorited ? { opacity: 1 } : { opacity: 0.5 }}
+                    />
+                  </Pressable>
                 </Pressable>
               );
             })}
@@ -1657,6 +1706,10 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
+  },
+  favoriteButton: {
+    padding: 6,
+    marginLeft: 4,
   },
   // Circle Section
   circleSection: {

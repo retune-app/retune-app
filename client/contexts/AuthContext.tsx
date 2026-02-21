@@ -193,7 +193,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error("Login error:", error);
-      return { success: false, error: "Unable to connect. Please check your connection and try again." };
+      return { success: false, error: "We apologize for the inconvenience — we're currently updating the app. Please try again in a moment." };
     }
   };
 
@@ -221,7 +221,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error("Signup error:", error);
-      return { success: false, error: "Unable to connect. Please check your connection and try again." };
+      return { success: false, error: "We apologize for the inconvenience — we're currently updating the app. Please try again in a moment." };
     }
   };
 
@@ -237,7 +237,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const contentType = response.headers.get("content-type");
       if (!contentType || !contentType.includes("application/json")) {
         console.error("OAuth response not JSON:", contentType);
-        return { success: false, error: "Unable to connect. Please check your connection and try again." };
+        return { success: false, error: "We apologize for the inconvenience — we're currently updating the app. Please try again in a moment." };
       }
 
       let data;
@@ -245,7 +245,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         data = await response.json();
       } catch (parseError) {
         console.error("Failed to parse OAuth response:", parseError);
-        return { success: false, error: "Unable to connect. Please check your connection and try again." };
+        return { success: false, error: "We apologize for the inconvenience — we're currently updating the app. Please try again in a moment." };
       }
 
       if (response.ok) {
@@ -261,7 +261,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error("OAuth login error:", error);
-      return { success: false, error: "Unable to connect. Please check your connection and try again." };
+      return { success: false, error: "We apologize for the inconvenience — we're currently updating the app. Please try again in a moment." };
     }
   };
 

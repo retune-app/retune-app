@@ -100,12 +100,15 @@ export async function apiRequest(
     });
   } catch (err) {
     console.error(`[API network] ${method} ${url.pathname} failed — server unreachable`, err);
-    throw new Error("Unable to connect. Please check your connection and try again.");
+    throw new Error("We apologize for the inconvenience — we're currently updating the app. Please try again in a moment.");
   }
 
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
     logApiError("mutation", method, url.pathname, res.status, text);
+    if (res.status >= 500) {
+      throw new Error("We apologize for the inconvenience — we're currently updating the app. Please try again in a moment.");
+    }
     throw new Error(`${res.status}: ${text}`);
   }
 
@@ -135,7 +138,7 @@ export const getQueryFn: <T>(options: {
       });
     } catch (err) {
       console.error(`[API network] GET ${url.pathname} failed — server unreachable`, err);
-      throw new Error("Unable to connect. Please check your connection and try again.");
+      throw new Error("We apologize for the inconvenience — we're currently updating the app. Please try again in a moment.");
     }
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
@@ -145,6 +148,9 @@ export const getQueryFn: <T>(options: {
     if (!res.ok) {
       const text = (await res.text()) || res.statusText;
       logApiError("query", "GET", url.pathname, res.status, text);
+      if (res.status >= 500) {
+        throw new Error("We apologize for the inconvenience — we're currently updating the app. Please try again in a moment.");
+      }
       throw new Error(`${res.status}: ${text}`);
     }
 

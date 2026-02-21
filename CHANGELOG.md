@@ -1,5 +1,25 @@
 # RETUNED Changelog
 
+## Version 1.7.4 (Build 8) — February 21, 2026
+
+### Orientation Transition Overlay
+- Added an animated navy overlay to PlayerScreen that bridges the gap between portrait-to-landscape and landscape-to-portrait transitions, eliminating content flashes during orientation changes.
+- Entering landscape: overlay fades in over 100ms while portrait content hides instantly, providing a smooth backdrop for the fullscreen RSVP modal.
+- Returning to portrait: overlay snaps to full opacity immediately, modal dismisses, then overlay fades out over 300ms (after 150ms delay) while portrait content fades back in over 200ms (after 200ms delay).
+- Uses `transitionOverlayOpacity` shared value with `useAnimatedStyle` for GPU-accelerated transitions.
+
+### Code Cleanup
+- Removed unused `Spacing` import from RSVPDisplay.tsx.
+
+### Files Changed
+- `client/screens/PlayerScreen.tsx` — Transition overlay layer, refined animation timings
+- `client/components/RSVPDisplay.tsx` — Unused import removal
+- `app.json` — Version 1.7.4, build number 8
+- `CHANGELOG.md` — This entry
+- `replit.md` — Updated to reflect current state
+
+---
+
 ## Version 1.7.3 (Build 7) — February 21, 2026
 
 ### Background Music Preloading

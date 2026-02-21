@@ -224,7 +224,6 @@ export default function CreateScreen() {
   const [currentStep, setCurrentStep] = useState(1);
   const [showCreateButton, setShowCreateButton] = useState(false);
   const [showPillarHelp, setShowPillarHelp] = useState(false);
-  const [showPillarTip, setShowPillarTip] = useState(false);
   const [showCreatingOverlay, setShowCreatingOverlay] = useState(false);
   const [contentWarning, setContentWarning] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<GoalInspiration[]>(() => getRandomInspirations(3, null));
@@ -248,11 +247,6 @@ export default function CreateScreen() {
         try {
           setCustomTags(JSON.parse(value));
         } catch (e) {}
-      }
-    });
-    AsyncStorage.getItem("@tips/pillarSelection").then((value) => {
-      if (!value) {
-        setShowPillarTip(true);
       }
     });
   }, []);
@@ -330,15 +324,7 @@ export default function CreateScreen() {
     setNewTagName("");
   };
 
-  const dismissPillarTip = useCallback(() => {
-    setShowPillarTip(false);
-    AsyncStorage.setItem("@tips/pillarSelection", "true");
-  }, []);
-
   const handlePillarSelect = (pillar: PillarName) => {
-    if (showPillarTip) {
-      dismissPillarTip();
-    }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     if (selectedPillar === pillar) {
       setSelectedPillar(null);
@@ -797,25 +783,6 @@ export default function CreateScreen() {
               </View>
             </View>
 
-            {showPillarTip ? (
-              <Animated.View entering={FadeIn.duration(300)} style={[styles.pillarTipContainer, { backgroundColor: theme.cardBackground }]}>
-                <View style={[styles.pillarTipAccent, { backgroundColor: '#E5C95C' }]} />
-                <View style={styles.pillarTipContent}>
-                  <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                    Choose a pillar to focus your affirmation on a specific area of life
-                  </ThemedText>
-                </View>
-                <Pressable
-                  onPress={dismissPillarTip}
-                  style={styles.pillarTipDismiss}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  testID="button-dismiss-pillar-tip"
-                >
-                  <Feather name="x" size={14} color={theme.textSecondary} />
-                </Pressable>
-              </Animated.View>
-            ) : null}
-
             <View style={styles.pillarsGrid}>
               {PILLAR_LIST.map((pillarName) => {
                 const pillar = PILLARS[pillarName];
@@ -875,7 +842,7 @@ export default function CreateScreen() {
                 <View style={styles.stepHeader}>
                   <View style={[styles.stepAccent, { backgroundColor: accentColor }]} />
                   <View>
-                    <ThemedText type="h3" style={styles.stepTitle}>Tags</ThemedText>
+                    <ThemedText type="h3" style={styles.stepTitle}>Intentions</ThemedText>
                     <ThemedText type="caption" style={{ color: theme.textSecondary }}>
                       {selectedSubcategories.length}/{MAX_SUBCATEGORIES} selected (optional)
                     </ThemedText>
@@ -1239,7 +1206,7 @@ export default function CreateScreen() {
                         <ThemedText type="body" style={{ fontWeight: "600" }}>{pillarName}</ThemedText>
                         <View style={[styles.pillarHelpDot, { backgroundColor: pillar.color }]} />
                       </View>
-                      <ThemedText type="caption" style={{ color: theme.textSecondary }} numberOfLines={2}>
+                      <ThemedText type="caption" style={{ color: theme.textSecondary }}>
                         {pillar.description}
                       </ThemedText>
                     </View>
@@ -1698,26 +1665,6 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-  },
-  pillarTipContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: Spacing.md,
-    borderRadius: BorderRadius.md,
-    overflow: "hidden",
-  },
-  pillarTipAccent: {
-    width: 4,
-    alignSelf: "stretch",
-  },
-  pillarTipContent: {
-    flex: 1,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-  },
-  pillarTipDismiss: {
-    padding: Spacing.sm,
-    marginRight: Spacing.xs,
   },
   contentWarningCard: {
     width: "85%",

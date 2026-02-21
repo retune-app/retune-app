@@ -207,6 +207,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
   }, []);
 
   const [playerState, setPlayerState] = useState<PlayerState>("idle");
+  useEffect(() => { playerStateRef.current = playerState; }, [playerState]);
   const [moment, setMoment] = useState<GeneratedMoment | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [currentPosition, setCurrentPosition] = useState(0);
@@ -226,6 +227,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
   const autoPlayRef = useRef(false);
   const playAudioRef = useRef<() => Promise<void>>(() => Promise.resolve());
   const handleCloseRef = useRef<(() => void) | null>(null);
+  const playerStateRef = useRef<PlayerState>("idle");
   const abortControllerRef = useRef<AbortController | null>(null);
   const cachedScriptRef = useRef<{ script: string; disclaimer: string; duration: number } | null>(null);
   const scriptFetchingRef = useRef(false);
@@ -421,11 +423,11 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
     showControls();
     if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
     controlsTimerRef.current = setTimeout(() => {
-      if (playerState === "playing") {
+      if (playerStateRef.current === "playing") {
         hideControls();
       }
     }, CONTROLS_AUTO_HIDE_MS);
-  }, [playerState, showControls, hideControls]);
+  }, [showControls, hideControls]);
 
   const handleScreenTap = useCallback(() => {
     if (playerState === "playing" || playerState === "paused") {
@@ -1168,6 +1170,15 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
           ) : null}
         </View>
       ) : null}
+
+      {!isLandscape && (playerState === "playing" || playerState === "paused") ? (
+        <View style={styles.landscapeHint} pointerEvents="none">
+          <Feather name="smartphone" size={12} color="rgba(255,255,255,0.3)" style={{ transform: [{ rotate: '90deg' }] }} />
+          <ThemedText type="caption" style={styles.landscapeHintText}>
+            {"Tilt sideways for Focus Mode"}
+          </ThemedText>
+        </View>
+      ) : null}
     </Animated.View>
   );
   };
@@ -1878,5 +1889,16 @@ const styles = StyleSheet.create({
   volumeSlider: {
     flex: 1,
     height: 30,
+  },
+  landscapeHint: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    marginTop: Spacing.sm,
+  },
+  landscapeHintText: {
+    color: "rgba(255,255,255,0.3)",
+    fontSize: 11,
   },
 });

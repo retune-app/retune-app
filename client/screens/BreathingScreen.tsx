@@ -1183,6 +1183,9 @@ export default function BreathingScreen() {
                 {selectedTechnique.pattern}
               </ThemedText>
             </View>
+            {favoriteTechniqueId === selectedTechnique.id ? (
+              <Feather name="heart" size={14} color={ACCENT_GOLD} style={{ marginRight: 6, opacity: 0.8 }} />
+            ) : null}
             <Pressable
               testID="button-technique-info"
               onPress={() => {

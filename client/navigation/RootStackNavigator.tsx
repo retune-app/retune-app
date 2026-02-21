@@ -49,7 +49,7 @@ export type RootStackParamList = {
   Player: { affirmationId: number; isNew?: boolean; autoPlay?: boolean; journeyContext?: JourneyContext };
   Analytics: undefined;
   GuidedMoment: GuidedMomentScreenParams;
-  MoodJourney: { journey: any };
+  MoodJourney: { journey: any; originTab?: string };
   DevABTest: undefined;
 };
 

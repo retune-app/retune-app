@@ -84,6 +84,7 @@ interface MoodCheckinProps {
   onStartAffirmations?: () => void;
   visible: boolean;
   onClose: () => void;
+  originTab?: string;
 }
 
 interface JourneyStep {
@@ -121,7 +122,7 @@ function StepIconComponent({ type, size, color }: { type: string; size: number; 
   return <Feather name={getStepIcon(type) as any} size={size} color={color} />;
 }
 
-export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
+export function MoodCheckin({ visible, onClose, originTab }: MoodCheckinProps) {
   const { theme } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [phase, setPhase] = useState<Phase>("mood");
@@ -230,9 +231,9 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
     } catch (e) {}
     if (journeyResponse) {
       handleClose();
-      (navigation as any).navigate("MoodJourney", { journey: journeyResponse });
+      (navigation as any).navigate("MoodJourney", { journey: journeyResponse, originTab });
     }
-  }, [journeyResponse, navigation, handleClose]);
+  }, [journeyResponse, navigation, handleClose, originTab]);
 
   const handleSingleStep = useCallback((step: JourneyStep) => {
     try {
@@ -247,7 +248,7 @@ export function MoodCheckin({ visible, onClose }: MoodCheckinProps) {
         vibeId: journeyResponse?.vibeId,
         steps: [step],
       };
-      (navigation as any).navigate("MoodJourney", { journey: singleJourney });
+      (navigation as any).navigate("MoodJourney", { journey: singleJourney, originTab });
     } else if (step.type === "meditate") {
       navigation.navigate("GuidedMoment", {
         mood: journeyResponse?.targetMood || selectedTarget?.id || "calm",

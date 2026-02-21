@@ -1544,6 +1544,7 @@ export default function BreathingScreen() {
       <MoodCheckin
         visible={showMoodCheckin}
         onClose={() => setShowMoodCheckin(false)}
+        originTab="BreatheTab"
         onStartBreathing={(techniqueId) => {
           const technique = BREATHING_TECHNIQUES.find(t => t.id === techniqueId);
           if (technique) {

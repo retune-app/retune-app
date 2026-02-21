@@ -708,6 +708,7 @@ export default function HomeScreen() {
       <MoodCheckin
         visible={showMoodCheckin}
         onClose={() => setShowMoodCheckin(false)}
+        originTab="BelieveTab"
         onStartBreathing={() => {
           (navigation as any).navigate("Main", { screen: "BreatheTab" });
         }}

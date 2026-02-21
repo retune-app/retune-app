@@ -1,1 +1,1 @@
-export const journeyNavigationRef = { action: 'complete' as 'complete' | 'back' | 'skip' };
+export const journeyNavigationRef = { action: 'complete' as 'complete' | 'back' | 'skip' | 'endJourney' };

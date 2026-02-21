@@ -198,6 +198,14 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
   }, []);
 
   useEffect(() => {
+    Audio.setAudioModeAsync({
+      playsInSilentModeIOS: true,
+      staysActiveInBackground: true,
+      shouldDuckAndroid: true,
+    });
+  }, []);
+
+  useEffect(() => {
     ScreenOrientation.unlockAsync();
     return () => {
       ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
@@ -665,12 +673,6 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
       await cleanupVoice();
       setCurrentPosition(0);
       progressAnim.value = 0;
-
-      await Audio.setAudioModeAsync({
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: true,
-        shouldDuckAndroid: true,
-      });
 
       const uri = `data:audio/mp3;base64,${moment.audioBase64}`;
       const { sound } = await Audio.Sound.createAsync(
@@ -1187,11 +1189,11 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
             currentStep={journeyContext.currentStep}
             totalSteps={journeyContext.totalSteps}
             stepLabels={journeyContext.stepLabels}
-            onPrevious={async () => { await cleanupVoice(); journeyNavigationRef.action = 'back'; navigation.goBack(); }}
-            onSkip={async () => { await cleanupVoice(); journeyNavigationRef.action = 'skip'; navigation.goBack(); }}
+            onPrevious={async () => { await cleanupVoice(); await resumeBackgroundMusic(); journeyNavigationRef.action = 'back'; navigation.goBack(); }}
+            onSkip={async () => { await cleanupVoice(); await resumeBackgroundMusic(); journeyNavigationRef.action = 'skip'; navigation.goBack(); }}
             showSkip={journeyContext.currentStep < journeyContext.totalSteps - 1}
             showEndJourney={journeyContext.currentStep >= journeyContext.totalSteps - 1}
-            onEndJourney={async () => { await cleanupVoice(); await stopBackgroundMusic(); journeyNavigationRef.action = 'complete'; (navigation as any).navigate("Main"); }}
+            onEndJourney={async () => { await cleanupVoice(); await stopBackgroundMusic(); journeyNavigationRef.action = 'endJourney'; navigation.goBack(); }}
             showPrevious={true}
             skipDelay={10}
           />

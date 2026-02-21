@@ -137,7 +137,7 @@ function getStepLabel(type: string): string {
 }
 
 export default function MoodJourneyScreen({ route, navigation }: Props) {
-  const { journey } = route.params as { journey: JourneyData };
+  const { journey, originTab } = route.params as { journey: JourneyData; originTab?: string };
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const { stop: stopAffirmationAudio } = useAudio();
@@ -567,7 +567,9 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
         hasNavigatedRef.current = false;
         const action = journeyNavigationRef.action;
         journeyNavigationRef.action = 'complete';
-        if (action === 'back') {
+        if (action === 'endJourney') {
+          handleEndJourney();
+        } else if (action === 'back') {
           handleGoBack();
         } else {
           advanceToNextStep();
@@ -808,7 +810,8 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
     if (currentStepIndex <= 0) {
       fadeOutAndStopMusic();
-      navigation.goBack();
+      stopAffirmationAudio();
+      (navigation as any).navigate("Main", { screen: originTab || "BreatheTab" });
       return;
     }
     setBreathingPlaying(false);
@@ -821,7 +824,7 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
     setShowControls(false);
     hasNavigatedRef.current = false;
     launchStep(prevIndex);
-  }, [currentStepIndex, navigation, launchStep, fadeOutAndStopMusic]);
+  }, [currentStepIndex, navigation, launchStep, fadeOutAndStopMusic, stopAffirmationAudio, originTab]);
 
   const handleSkipStep = useCallback(() => {
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
@@ -910,9 +913,9 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
 
       await fadeOutAndStopMusic();
       await stopAffirmationAudio();
-      (navigation as any).navigate("Main", { screen: "BreatheTab" });
+      (navigation as any).navigate("Main", { screen: originTab || "BreatheTab" });
     })();
-  }, [navigation, fadeOutAndStopMusic, stopAffirmationAudio, currentStepIndex, journey, route.params]);
+  }, [navigation, fadeOutAndStopMusic, stopAffirmationAudio, currentStepIndex, journey, route.params, originTab]);
 
   const formatTime = (seconds: number): string => {
     const m = Math.floor(seconds / 60);

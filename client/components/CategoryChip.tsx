@@ -108,14 +108,14 @@ export function CategoryChip({
 
 const styles = StyleSheet.create({
   chip: {
-    paddingHorizontal: Spacing.lg,
-    height: 36,
+    paddingHorizontal: Spacing.md,
+    height: 30,
     justifyContent: "center",
     borderRadius: BorderRadius.full,
     borderWidth: 1,
   },
   iconOnlyChip: {
-    paddingHorizontal: Spacing.md,
+    paddingHorizontal: Spacing.sm,
   },
   chipContent: {
     flexDirection: "row",

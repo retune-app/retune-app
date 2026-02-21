@@ -820,8 +820,8 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   categoriesContainer: {
-    paddingVertical: Spacing.xs,
-    gap: Spacing.sm,
+    paddingVertical: 2,
+    gap: Spacing.xs,
   },
   separator: {
     height: Spacing.md,

@@ -128,6 +128,8 @@ interface BackgroundMusicContextType {
   stopBackgroundMusic: () => Promise<void>;
   pauseBackgroundMusic: () => Promise<void>;
   resumeBackgroundMusic: () => Promise<void>;
+  preloadBackgroundMusic: () => Promise<void>;
+  playPreloadedMusic: () => Promise<void>;
 }
 
 const BackgroundMusicContext = createContext<BackgroundMusicContextType | undefined>(undefined);
@@ -271,13 +273,67 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
     }
   }, []);
 
+  const preloadBackgroundMusic = useCallback(async () => {
+    const currentMusic = selectedMusicRef.current;
+    if (currentMusic === 'none') return;
+
+    try {
+      if (soundRef.current) {
+        const status = await soundRef.current.getStatusAsync();
+        if (status.isLoaded) return;
+      }
+      await unloadCurrentSound();
+      const effectiveVolume = isDuckedRef.current ? volumeRef.current * DUCK_FACTOR : volumeRef.current;
+      const { sound } = await Audio.Sound.createAsync(
+        AUDIO_FILES[currentMusic],
+        {
+          isLooping: true,
+          volume: applyVolumeCurve(effectiveVolume),
+          shouldPlay: false,
+        }
+      );
+      soundRef.current = sound;
+    } catch (error) {
+      console.error('Error preloading background music:', error);
+    }
+  }, []);
+
+  const playPreloadedMusic = useCallback(async () => {
+    try {
+      if (soundRef.current) {
+        const status = await soundRef.current.getStatusAsync();
+        if (status.isLoaded && !status.isPlaying) {
+          await soundRef.current.playAsync();
+          updateIsPlaying(true);
+          return;
+        }
+        if (status.isLoaded && status.isPlaying) {
+          return;
+        }
+      }
+      await startBackgroundMusicInternal();
+    } catch (error) {
+      console.error('Error playing preloaded music:', error);
+    }
+  }, []);
+
+  const startBackgroundMusicInternal = async () => {
+    const currentMusic = selectedMusicRef.current;
+    if (currentMusic === 'none') return;
+
+    await unloadCurrentSound();
+    await loadAndPlaySound(currentMusic);
+  };
+
   const startBackgroundMusic = useCallback(async () => {
     const currentMusic = selectedMusicRef.current;
     if (currentMusic === 'none') {
       return;
     }
 
-    if (switchingRef.current) return;
+    if (switchingRef.current) {
+      switchingRef.current = false;
+    }
     switchingRef.current = true;
 
     try {
@@ -354,6 +410,8 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
         stopBackgroundMusic,
         pauseBackgroundMusic,
         resumeBackgroundMusic,
+        preloadBackgroundMusic,
+        playPreloadedMusic,
       }}
     >
       {children}

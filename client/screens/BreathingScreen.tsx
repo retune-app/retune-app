@@ -86,7 +86,7 @@ export default function BreathingScreen() {
   const { theme, isDark } = useTheme();
   const { user } = useAuth();
   const { currentAffirmation, isPlaying: isAudioPlaying, playAffirmation, togglePlayPause, breathingAffirmation, requestHighlightAffirmation, requestRecommendedAffirmation, stop: stopAffirmationAudio } = useAudio();
-  const { selectedMusic, setSelectedMusic, startBackgroundMusic, stopBackgroundMusic, isPlaying: isMusicPlaying, volume, setVolume, setDucked } = useBackgroundMusic();
+  const { selectedMusic, setSelectedMusic, startBackgroundMusic, stopBackgroundMusic, isPlaying: isMusicPlaying, volume, setVolume, setDucked, preloadBackgroundMusic, playPreloadedMusic } = useBackgroundMusic();
   const queryClient = useQueryClient();
 
   const [selectedTechnique, setSelectedTechnique] = useState<BreathingTechnique>(BREATHING_TECHNIQUES[0]);
@@ -718,7 +718,7 @@ export default function BreathingScreen() {
       await setDucked(true);
     }
     if (musicEnabledRef.current) {
-      await startBackgroundMusic();
+      await playPreloadedMusic();
     }
     if (voiceEnabledRef.current) {
       await startAffirmationLoop();
@@ -964,6 +964,10 @@ export default function BreathingScreen() {
       fullscreenOpacity.value = 0;
       setShowLandscapeMode(true);
 
+      if (musicEnabledRef.current) {
+        preloadBackgroundMusic();
+      }
+
       await new Promise(resolve => setTimeout(resolve, 100));
       if (!isStartingRef.current) { setCountdownValue(null); return; }
 
@@ -989,7 +993,7 @@ export default function BreathingScreen() {
     } finally {
       isStartingRef.current = false;
     }
-  }, [handleStart, hapticsEnabled]);
+  }, [handleStart, hapticsEnabled, preloadBackgroundMusic]);
 
   useEffect(() => {
     if (autoStart && breathingAffirmation && !autoStartTriggered.current) {

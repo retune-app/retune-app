@@ -1064,6 +1064,15 @@ export default function PlayerScreen() {
           </View>
         </Animated.View>
 
+        {!isLandscape ? (
+          <View style={styles.landscapeHint}>
+            <Feather name="smartphone" size={12} color={theme.textSecondary} style={{ opacity: 0.4, transform: [{ rotate: '90deg' }] }} />
+            <ThemedText type="caption" style={[styles.landscapeHintText, { color: theme.textSecondary }]}>
+              {"Tilt sideways for Focus Mode"}
+            </ThemedText>
+          </View>
+        ) : null}
+
         {showScript && affirmation?.script ? (
           <View style={[styles.scriptPreview, { backgroundColor: theme.backgroundSecondary }]}>
             <View style={styles.scriptHeaderCol}>
@@ -1402,5 +1411,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     zIndex: 10,
+  },
+  landscapeHint: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.xs,
+  },
+  landscapeHintText: {
+    fontSize: 11,
+    opacity: 0.4,
   },
   });

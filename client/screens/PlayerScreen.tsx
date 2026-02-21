@@ -457,18 +457,15 @@ export default function PlayerScreen() {
 
     if (justRotatedToLandscape) {
       portraitContentOpacity.value = 0;
-      transitionOverlayOpacity.value = withTiming(1, { duration: 120 });
+      transitionOverlayOpacity.value = withTiming(1, { duration: 100 });
     } else if (justRotatedToPortrait) {
-      transitionOverlayOpacity.value = withTiming(1, { duration: 80 });
-      portraitContentOpacity.value = withDelay(300, withTiming(1, { duration: 200 }));
+      transitionOverlayOpacity.value = 1;
+      portraitContentOpacity.value = withDelay(200, withTiming(1, { duration: 200 }));
+      transitionOverlayOpacity.value = withDelay(150, withTiming(0, { duration: 300 }));
     }
 
     if (justRotatedToPortrait && isInFullscreenMode) {
-      setTimeout(() => {
-        if (!mountedRef.current) return;
-        setIsInFullscreenMode(false);
-        transitionOverlayOpacity.value = withDelay(50, withTiming(0, { duration: 250 }));
-      }, 100);
+      setIsInFullscreenMode(false);
     } else if (justRotatedToLandscape && rsvpEnabled && isCurrentlyPlaying && !isInFullscreenMode) {
       setIsInFullscreenMode(true);
     }

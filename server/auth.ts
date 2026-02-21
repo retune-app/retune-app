@@ -151,7 +151,7 @@ export function setupAuth(app: Express) {
       const rateLimitCheck = checkRateLimit(clientIp);
       
       if (!rateLimitCheck.allowed) {
-        console.log(`SECURITY: Rate limit exceeded for IP ${clientIp}`);
+        console.log(JSON.stringify({ level: "INFO", ts: new Date().toISOString(), component: "security", message: `SECURITY: Rate limit exceeded for IP ${clientIp}` }));
         res.setHeader("Retry-After", rateLimitCheck.retryAfter!.toString());
         return res.status(429).json({ 
           error: "Too many login attempts. Please try again later.",
@@ -219,7 +219,7 @@ export function setupAuth(app: Express) {
       const userId = req.session.userId;
       if (userId) {
         await db.delete(authTokens).where(eq(authTokens.userId, userId));
-        console.log(`SECURITY: Invalidated all auth tokens for user ${userId} on logout`);
+        console.log(JSON.stringify({ level: "INFO", ts: new Date().toISOString(), component: "security", message: `SECURITY: Invalidated all auth tokens for user ${userId} on logout` }));
       }
       
       // Also invalidate token from header if present

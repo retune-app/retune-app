@@ -33,7 +33,7 @@ export async function findInactiveVoices(inactiveDays: number = 60) {
 export async function rotateUserVoice(userId: string, voiceId: string) {
   try {
     await deleteVoice(voiceId);
-    console.log(`Deleted voice ${voiceId} from ElevenLabs for user ${userId}`);
+    console.log(JSON.stringify({ level: "INFO", ts: new Date().toISOString(), component: "voiceRotation", message: `Deleted voice ${voiceId} from ElevenLabs for user ${userId}` }));
   } catch (error: any) {
     console.error(`Failed to delete voice ${voiceId} from ElevenLabs:`, error?.message);
   }
@@ -168,7 +168,7 @@ export async function freeVoiceSlotForNewClone(requestingUserId: string): Promis
       return { freed: false, error: "LRU user has no voice ID" };
     }
 
-    console.log(`[Voice Slots] Rotating LRU voice: user=${lruUser.id}, voiceId=${lruUser.voiceId}, lastUsed=${lruUser.voiceLastUsedAt || lruUser.createdAt}`);
+    console.log(JSON.stringify({ level: "INFO", ts: new Date().toISOString(), component: "voiceSlots", message: `[Voice Slots] Rotating LRU voice: user=${lruUser.id}, voiceId=${lruUser.voiceId}, lastUsed=${lruUser.voiceLastUsedAt || lruUser.createdAt}` }));
     await rotateUserVoice(lruUser.id, lruUser.voiceId);
 
     return { freed: true, rotatedUserId: lruUser.id, rotatedVoiceId: lruUser.voiceId };

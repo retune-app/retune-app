@@ -33,7 +33,7 @@ export async function sendPushNotifications(messages: ExpoPushMessage[]) {
       if (typeof token === "string") {
         try {
           await db.delete(pushTokens).where(eq(pushTokens.token, token));
-          console.log(`[Push] Removed invalid token: ${token.substring(0, 20)}...`);
+          console.log(JSON.stringify({ level: "INFO", ts: new Date().toISOString(), component: "push", message: `[Push] Removed invalid token: ${token.substring(0, 20)}...` }));
         } catch (err) {
           console.error("[Push] Failed to remove invalid token:", err);
         }
@@ -74,7 +74,7 @@ export async function sendVoiceExpiryWarnings() {
     );
 
   if (atRiskUsers.length === 0) {
-    console.log("[Voice Expiry] No users with expiring voice clones");
+    console.log(JSON.stringify({ level: "INFO", ts: new Date().toISOString(), component: "voiceExpiry", message: "[Voice Expiry] No users with expiring voice clones" }));
     return { warned: 0 };
   }
 
@@ -128,9 +128,9 @@ export async function sendVoiceExpiryWarnings() {
       .where(eq(users.id, user.id));
 
     totalWarned++;
-    console.log(`[Voice Expiry] Warned user ${user.id} (${user.name}) — ${daysUntilExpiry} days until expiry`);
+    console.log(JSON.stringify({ level: "INFO", ts: new Date().toISOString(), component: "voiceExpiry", message: `[Voice Expiry] Warned user ${user.id} (${user.name}) — ${daysUntilExpiry} days until expiry` }));
   }
 
-  console.log(`[Voice Expiry] Sent warnings to ${totalWarned} users`);
+  console.log(JSON.stringify({ level: "INFO", ts: new Date().toISOString(), component: "voiceExpiry", message: `[Voice Expiry] Sent warnings to ${totalWarned} users` }));
   return { warned: totalWarned };
 }

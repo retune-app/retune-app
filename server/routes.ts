@@ -1247,10 +1247,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           if (resolvedPath.startsWith(resolvedUploadDir + path.sep) && fs.existsSync(audioPath)) {
             fs.unlinkSync(audioPath);
-            console.log(`SECURE DELETE: Removed audio file ${filename}`);
+            console.log(JSON.stringify({ level: "INFO", ts: new Date().toISOString(), component: "security", message: `SECURE DELETE: Removed audio file ${filename}` }));
           }
         } else {
-          console.log(`SECURITY: Skipped deletion of invalid filename pattern: ${affirmation.audioUrl}`);
+          console.log(JSON.stringify({ level: "INFO", ts: new Date().toISOString(), component: "security", message: `SECURITY: Skipped deletion of invalid filename pattern: ${affirmation.audioUrl}` }));
         }
       }
       
@@ -1535,7 +1535,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // PRIVACY: Delete the voice sample file immediately after cloning
           fs.unlink(file.path, (err) => {
             if (err) console.error("Failed to delete voice sample file:", err);
-            else console.log("Voice sample file deleted for privacy:", file.filename);
+            else console.log(JSON.stringify({ level: "INFO", ts: new Date().toISOString(), component: "voiceClone", message: `Voice sample file deleted for privacy: ${file.filename}` }));
           });
 
           // Update sample with voice ID (audioUrl cleared for privacy)
@@ -1577,7 +1577,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             try {
               const slotResult = await freeVoiceSlotForNewClone(req.userId!);
               if (slotResult.freed) {
-                console.log(`[Voice Slots] Freed slot (rotated user=${slotResult.rotatedUserId}). Retrying clone...`);
+                console.log(JSON.stringify({ level: "INFO", ts: new Date().toISOString(), component: "voiceSlots", message: `[Voice Slots] Freed slot (rotated user=${slotResult.rotatedUserId}). Retrying clone...` }));
                 
                 const retryVoiceId = await cloneVoice(file.path, "My Affirmation Voice");
                 fs.unlink(file.path, () => {});
@@ -3576,7 +3576,7 @@ Rules for tone:
       const dayOfWeek = (clientDayOfWeek && validDays.includes(clientDayOfWeek)) ? clientDayOfWeek : validDays[new Date().getDay()];
 
       if (clientDisconnected) {
-        console.log(`Client disconnected before script generation (${duration}min), aborting`);
+        console.log(JSON.stringify({ level: "INFO", ts: new Date().toISOString(), component: "guidedMoment", message: `Client disconnected before script generation (${duration}min), aborting` }));
         return;
       }
 
@@ -3705,7 +3705,7 @@ Rules for tone:
       }
 
       if (clientDisconnected) {
-        console.log(`Client disconnected before TTS, aborting`);
+        console.log(JSON.stringify({ level: "INFO", ts: new Date().toISOString(), component: "guidedMoment", message: "Client disconnected before TTS, aborting" }));
         return;
       }
 
@@ -3813,7 +3813,7 @@ Rules for tone:
       const dayOfWeek = (clientDayOfWeekLegacy && validDaysLegacy.includes(clientDayOfWeekLegacy)) ? clientDayOfWeekLegacy : validDaysLegacy[new Date().getDay()];
 
       if (clientDisconnected) {
-        console.log(`Client disconnected before script generation (${duration}min), aborting`);
+        console.log(JSON.stringify({ level: "INFO", ts: new Date().toISOString(), component: "meditation", message: `Client disconnected before script generation (${duration}min), aborting` }));
         return;
       }
 
@@ -3871,7 +3871,7 @@ Rules for tone:
       }
 
       if (clientDisconnected) {
-        console.log(`Client disconnected after script generation (${duration}min), skipping TTS`);
+        console.log(JSON.stringify({ level: "INFO", ts: new Date().toISOString(), component: "meditation", message: `Client disconnected after script generation (${duration}min), skipping TTS` }));
         return;
       }
 
@@ -4322,19 +4322,19 @@ Rules for tone:
     try {
       const expiryResult = await sendVoiceExpiryWarnings();
       if (expiryResult.warned > 0) {
-        console.log(`[Voice Expiry] Sent ${expiryResult.warned} expiry warnings`);
+        console.log(JSON.stringify({ level: "INFO", ts: new Date().toISOString(), component: "voiceExpiry", message: `[Voice Expiry] Sent ${expiryResult.warned} expiry warnings` }));
       }
     } catch (expiryError) {
       console.error("[Voice Expiry] Warning check failed:", expiryError);
     }
 
     try {
-      console.log("[Voice Rotation] Running scheduled voice cleanup...");
+      console.log(JSON.stringify({ level: "INFO", ts: new Date().toISOString(), component: "voiceRotation", message: "[Voice Rotation] Running scheduled voice cleanup..." }));
       const results = await runVoiceRotation(60);
       if (results.rotated > 0) {
-        console.log(`[Voice Rotation] Rotated ${results.rotated} inactive voices`);
+        console.log(JSON.stringify({ level: "INFO", ts: new Date().toISOString(), component: "voiceRotation", message: `[Voice Rotation] Rotated ${results.rotated} inactive voices` }));
       } else {
-        console.log("[Voice Rotation] No inactive voices to rotate");
+        console.log(JSON.stringify({ level: "INFO", ts: new Date().toISOString(), component: "voiceRotation", message: "[Voice Rotation] No inactive voices to rotate" }));
       }
 
       const warning = await checkVoiceSlotWarning();

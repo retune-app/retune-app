@@ -367,7 +367,7 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
     if (playerState === "playing") {
       centerContentOpacity.value = withTiming(1, { duration: 600, easing: Easing.in(Easing.ease) });
       centerContentScale.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.ease) });
-      resetControlsTimer();
+      hideControls();
     } else if (playerState === "idle" || playerState === "generating") {
       centerContentOpacity.value = 1;
       centerContentScale.value = 1;

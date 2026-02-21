@@ -337,7 +337,7 @@ export default function HomeScreen() {
     navigation.navigate("Main", { screen: "SettingsTab" } as any);
   };
 
-  const FIXED_HEADER_HEIGHT = 120;
+  const FIXED_HEADER_HEIGHT = 125;
 
   const [showVoiceNudge, setShowVoiceNudge] = useState(false);
   const [voiceNudgeDismissed, setVoiceNudgeDismissed] = useState(false);
@@ -615,7 +615,7 @@ export default function HomeScreen() {
         contentContainerStyle={[
           styles.contentContainer,
           {
-            paddingTop: insets.top + FIXED_HEADER_HEIGHT + Spacing.xs,
+            paddingTop: insets.top + FIXED_HEADER_HEIGHT + Spacing.sm,
             paddingBottom: tabBarHeight + 80 + Spacing.xl,
           },
           filteredAffirmations.length === 0 && styles.emptyContainer,

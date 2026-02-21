@@ -1,5 +1,34 @@
 # RETUNED Changelog
 
+## Version 1.7.3 (Build 7) — February 21, 2026
+
+### Background Music Preloading
+- Background music now preloads during the 3-2-1 countdown before breathing exercises begin, eliminating the ~3-second audio startup delay.
+- Added `preloadBackgroundMusic()` and `playPreloadedMusic()` methods to the BackgroundMusicContext for a two-phase load-then-play workflow.
+- Fixed `switchingRef` safety reset to prevent a stuck boolean from silently blocking music start.
+
+### Favorite Breathing Technique
+- Users can tap a heart icon on any breathing technique to mark it as their favorite (persisted via AsyncStorage).
+- Favorite technique shows a small gold heart on the home screen technique selector row.
+- In the technique picker modal, the favorite technique displays a gold left border accent for quick identification.
+
+### Code Cleanup
+- Removed unused imports from BreathingScreen.tsx: `Alert`, `withSpring`, `interpolate`.
+- Removed unused destructured variable `requestRecommendedAffirmation` from BreathingScreen.tsx.
+- Removed unused style definitions from BreathingScreen.tsx: `modalContent`, `modalTitle`, `modalSubtitle`.
+- Fixed redundant ternary on favorite heart icon (both branches returned `"heart"`).
+- Removed unused `getMeditationStatusMessage` function from GuidedMomentScreen.tsx.
+
+### Files Changed
+- `client/contexts/BackgroundMusicContext.tsx` — Preload/play methods, switchingRef fix
+- `client/screens/BreathingScreen.tsx` — Favorite technique UI, countdown preloading, dead code removal
+- `client/screens/GuidedMomentScreen.tsx` — Dead function removal
+- `app.json` — Version 1.7.3, build number 7
+- `CHANGELOG.md` — This entry
+- `replit.md` — Updated to reflect current state
+
+---
+
 ## Version 1.7.2 (Build 4) — February 18, 2026
 
 ### App Icon Refresh

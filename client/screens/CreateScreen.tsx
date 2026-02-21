@@ -1193,7 +1193,7 @@ export default function CreateScreen() {
             <ThemedText type="body" style={{ color: theme.textSecondary, marginBottom: Spacing.lg }}>
               Pillars represent the key areas of your life. Choose one to focus your affirmation on.
             </ThemedText>
-            <ScrollView style={styles.pillarHelpList} showsVerticalScrollIndicator={false}>
+            <View style={styles.pillarHelpList}>
               {PILLAR_LIST.map((pillarName) => {
                 const pillar = PILLARS[pillarName];
                 return (
@@ -1213,7 +1213,7 @@ export default function CreateScreen() {
                   </View>
                 );
               })}
-            </ScrollView>
+            </View>
             <Button
               variant="primary"
               onPress={() => setShowPillarHelp(false)}
@@ -1625,7 +1625,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   pillarHelpList: {
-    maxHeight: 320,
   },
   pillarHelpRow: {
     flexDirection: "row",

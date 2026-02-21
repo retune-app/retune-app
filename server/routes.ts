@@ -2859,7 +2859,7 @@ Rules:
       }
 
       const validStartingMoods = ["calm", "stressed", "tired", "anxious", "sad", "overwhelmed", "wired", "frustrated", "scattered", "good"];
-      const validTargetMoods = ["calm", "energized", "grateful", "confident", "focused", "joyful", "locked_in", "grounded", "lit_up"];
+      const validTargetMoods = ["calm", "energized", "grateful", "confident", "focused", "joyful", "determined", "grounded", "lit_up"];
       const validTimes = ["morning", "afternoon", "evening", "night"];
 
       if (!validStartingMoods.includes(mood)) {
@@ -3539,7 +3539,7 @@ Rules for tone:
         return res.status(400).json({ error: "mood and timeOfDay are required" });
       }
 
-      const validMoods = ["calm", "stressed", "tired", "anxious", "sad", "overwhelmed", "energized", "grateful", "confident", "focused", "joyful", "wired", "frustrated", "scattered", "good", "locked_in", "grounded", "lit_up"];
+      const validMoods = ["calm", "stressed", "tired", "anxious", "sad", "overwhelmed", "energized", "grateful", "confident", "focused", "joyful", "wired", "frustrated", "scattered", "good", "determined", "grounded", "lit_up"];
       const validTimes = ["morning", "afternoon", "evening", "night"];
       const validDurations = [1, 2, 3];
 
@@ -3758,7 +3758,7 @@ Rules for tone:
         return res.status(400).json({ error: "mood and timeOfDay are required" });
       }
 
-      const validMoods = ["calm", "stressed", "tired", "anxious", "sad", "overwhelmed", "energized", "grateful", "confident", "focused", "joyful", "wired", "frustrated", "scattered", "good", "locked_in", "grounded", "lit_up"];
+      const validMoods = ["calm", "stressed", "tired", "anxious", "sad", "overwhelmed", "energized", "grateful", "confident", "focused", "joyful", "wired", "frustrated", "scattered", "good", "determined", "grounded", "lit_up"];
       const validTimes = ["morning", "afternoon", "evening", "night"];
       const validDurations = [1, 2, 3];
 

@@ -64,7 +64,7 @@ const TARGET_MOODS: MoodOption[] = [
   { id: "energized", label: "Energized", icon: "battery-charging", color: "#FFCA28" },
   { id: "confident", label: "Confident", icon: "shield", color: "#42A5F5" },
   { id: "focused", label: "Focused", icon: "crosshair", color: "#26C6DA" },
-  { id: "locked_in", label: "Locked In", icon: "target", color: "#1E88E5" },
+  { id: "determined", label: "Determined", icon: "compass", color: "#1E88E5" },
   { id: "grateful", label: "Grateful", icon: "heart", color: "#EC407A" },
   { id: "joyful", label: "Joyful", icon: "star", color: "#FFD54F" },
   { id: "grounded", label: "Grounded", icon: "anchor", color: "#A1887F" },

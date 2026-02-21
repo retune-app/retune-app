@@ -181,7 +181,7 @@ export const VIBES: Record<VibeId, VibeConfig> = {
     description: "Sharpening up, cutting through the noise",
     moodMapping: {
       startingMoods: ["tired", "good", "scattered"],
-      targetMoods: ["focused", "locked_in", "energized"],
+      targetMoods: ["focused", "determined", "energized"],
     },
     tts: {
       scriptTone: "Clear, precise, and direct. Like a laser cutting through fog. Each word lands with purpose. No filler, no fluff.",
@@ -401,7 +401,7 @@ export const VIBES: Record<VibeId, VibeConfig> = {
     description: "Channeling raw energy into unstoppable momentum",
     moodMapping: {
       startingMoods: ["good", "wired", "tired"],
-      targetMoods: ["energized", "confident", "lit_up", "locked_in"],
+      targetMoods: ["energized", "confident", "lit_up", "determined"],
     },
     tts: {
       scriptTone: "Bold, powerful, and activating. Like standing at the edge of something big. Confident, forward-moving, direct. Energy without aggression.",

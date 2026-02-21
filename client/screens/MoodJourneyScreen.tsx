@@ -84,7 +84,7 @@ const MOOD_MAP: Record<string, MoodInfo> = {
   confident: { id: "confident", label: "Confident", icon: "shield", color: "#42A5F5" },
   focused: { id: "focused", label: "Focused", icon: "crosshair", color: "#26C6DA" },
   joyful: { id: "joyful", label: "Joyful", icon: "star", color: "#FFD54F" },
-  locked_in: { id: "locked_in", label: "Locked In", icon: "target", color: "#1E88E5" },
+  determined: { id: "determined", label: "Determined", icon: "compass", color: "#1E88E5" },
   grounded: { id: "grounded", label: "Grounded", icon: "anchor", color: "#A1887F" },
   lit_up: { id: "lit_up", label: "Lit Up", icon: "sunrise", color: "#FF6D00" },
 };

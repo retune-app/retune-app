@@ -538,18 +538,6 @@ function setupErrorHandler(app: express.Application) {
     });
   }
 
-  try {
-    const dbStart = Date.now();
-    await pool.query("SELECT 1");
-    logInfo("startup", "Database connection verified", {
-      latency_ms: Date.now() - dbStart,
-    });
-  } catch (err) {
-    logWarn("startup", "Database connection check failed — server will start but DB may be unavailable", {
-      error: err instanceof Error ? err.message : String(err),
-    });
-  }
-
   const port = parseInt(process.env.PORT || "5000", 10);
   server.listen(
     {
@@ -565,4 +553,16 @@ function setupErrorHandler(app: express.Application) {
       });
     },
   );
+
+  try {
+    const dbStart = Date.now();
+    await pool.query("SELECT 1");
+    logInfo("startup", "Database connection verified", {
+      latency_ms: Date.now() - dbStart,
+    });
+  } catch (err) {
+    logWarn("startup", "Database connection check failed — server is running but DB may be unavailable", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
 })();

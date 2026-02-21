@@ -364,9 +364,10 @@ export default function HomeScreen() {
     navigation.navigate("VoiceSetup");
   }, [navigation]);
 
-  const renderHeader = () => (
-    <View style={styles.headerContent}>
-      {showVoiceNudge ? (
+  const renderHeader = () => {
+    if (!showVoiceNudge) return null;
+    return (
+      <View style={styles.headerContent}>
         <Animated.View entering={FadeInUp.delay(300).duration(500)}>
           <Pressable
             onPress={handleVoiceNudgeAction}
@@ -399,9 +400,9 @@ export default function HomeScreen() {
             </Pressable>
           </Pressable>
         </Animated.View>
-      ) : null}
-    </View>
-  );
+      </View>
+    );
+  };
 
   const renderFixedHeader = () => (
     <View style={[styles.fixedHeader, { paddingTop: insets.top + Spacing.sm }]}>

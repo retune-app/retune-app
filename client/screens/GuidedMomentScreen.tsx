@@ -194,15 +194,9 @@ export default function GuidedMomentScreen({ route, navigation }: NativeStackScr
   const { stop: stopAffirmationAudio } = useAudio();
 
   useEffect(() => {
-    stopAffirmationAudio();
-  }, []);
-
-  useEffect(() => {
-    Audio.setAudioModeAsync({
-      playsInSilentModeIOS: true,
-      staysActiveInBackground: true,
-      shouldDuckAndroid: true,
-    });
+    if (!journeyContext) {
+      stopAffirmationAudio();
+    }
   }, []);
 
   useEffect(() => {

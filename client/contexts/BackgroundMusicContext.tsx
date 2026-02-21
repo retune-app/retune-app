@@ -153,6 +153,11 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
   }, [volume]);
 
   useEffect(() => {
+    Audio.setAudioModeAsync({
+      playsInSilentModeIOS: true,
+      staysActiveInBackground: true,
+      shouldDuckAndroid: true,
+    });
     loadSavedPreferences();
     return () => {
       if (soundRef.current) {
@@ -211,12 +216,6 @@ export function BackgroundMusicProvider({ children }: { children: React.ReactNod
   };
 
   const loadAndPlaySound = async (musicType: Exclude<BackgroundMusicType, 'none'>) => {
-    await Audio.setAudioModeAsync({
-      playsInSilentModeIOS: true,
-      staysActiveInBackground: true,
-      shouldDuckAndroid: true,
-    });
-
     const effectiveVolume = isDuckedRef.current ? volumeRef.current * DUCK_FACTOR : volumeRef.current;
     const { sound } = await Audio.Sound.createAsync(
       AUDIO_FILES[musicType],

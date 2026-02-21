@@ -1,26 +1,12 @@
 # RETUNED Changelog
 
-## Version 1.7.4 (Build 8) — February 21, 2026
+## Version 1.7.3 (Build 1) — February 21, 2026
 
 ### Orientation Transition Overlay
 - Added an animated navy overlay to PlayerScreen that bridges the gap between portrait-to-landscape and landscape-to-portrait transitions, eliminating content flashes during orientation changes.
 - Entering landscape: overlay fades in over 100ms while portrait content hides instantly, providing a smooth backdrop for the fullscreen RSVP modal.
 - Returning to portrait: overlay snaps to full opacity immediately, modal dismisses, then overlay fades out over 300ms (after 150ms delay) while portrait content fades back in over 200ms (after 200ms delay).
 - Uses `transitionOverlayOpacity` shared value with `useAnimatedStyle` for GPU-accelerated transitions.
-
-### Code Cleanup
-- Removed unused `Spacing` import from RSVPDisplay.tsx.
-
-### Files Changed
-- `client/screens/PlayerScreen.tsx` — Transition overlay layer, refined animation timings
-- `client/components/RSVPDisplay.tsx` — Unused import removal
-- `app.json` — Version 1.7.4, build number 8
-- `CHANGELOG.md` — This entry
-- `replit.md` — Updated to reflect current state
-
----
-
-## Version 1.7.3 (Build 7) — February 21, 2026
 
 ### Background Music Preloading
 - Background music now preloads during the 3-2-1 countdown before breathing exercises begin, eliminating the ~3-second audio startup delay.
@@ -38,12 +24,15 @@
 - Removed unused style definitions from BreathingScreen.tsx: `modalContent`, `modalTitle`, `modalSubtitle`.
 - Fixed redundant ternary on favorite heart icon (both branches returned `"heart"`).
 - Removed unused `getMeditationStatusMessage` function from GuidedMomentScreen.tsx.
+- Removed unused `Spacing` import from RSVPDisplay.tsx.
 
 ### Files Changed
+- `client/screens/PlayerScreen.tsx` — Transition overlay layer, refined animation timings
+- `client/components/RSVPDisplay.tsx` — Unused import removal
 - `client/contexts/BackgroundMusicContext.tsx` — Preload/play methods, switchingRef fix
 - `client/screens/BreathingScreen.tsx` — Favorite technique UI, countdown preloading, dead code removal
 - `client/screens/GuidedMomentScreen.tsx` — Dead function removal
-- `app.json` — Version 1.7.3, build number 7
+- `app.json` — Version 1.7.3, build number 1
 - `CHANGELOG.md` — This entry
 - `replit.md` — Updated to reflect current state
 

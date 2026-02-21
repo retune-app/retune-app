@@ -7,7 +7,6 @@ import {
   Text,
   Modal,
   StatusBar,
-  Alert,
   PanResponder,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -25,11 +24,9 @@ import Animated, {
   withRepeat,
   withSequence,
   withDelay,
-  withSpring,
   Easing,
   FadeIn,
   FadeOut,
-  interpolate,
 } from "react-native-reanimated";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Slider from "@react-native-community/slider";
@@ -85,7 +82,7 @@ export default function BreathingScreen() {
   const [showLandscapeMode, setShowLandscapeMode] = useState(false);
   const { theme, isDark } = useTheme();
   const { user } = useAuth();
-  const { currentAffirmation, isPlaying: isAudioPlaying, playAffirmation, togglePlayPause, breathingAffirmation, requestHighlightAffirmation, requestRecommendedAffirmation, stop: stopAffirmationAudio } = useAudio();
+  const { currentAffirmation, isPlaying: isAudioPlaying, playAffirmation, togglePlayPause, breathingAffirmation, requestHighlightAffirmation, stop: stopAffirmationAudio } = useAudio();
   const { selectedMusic, setSelectedMusic, startBackgroundMusic, stopBackgroundMusic, isPlaying: isMusicPlaying, volume, setVolume, setDucked, preloadBackgroundMusic, playPreloadedMusic } = useBackgroundMusic();
   const queryClient = useQueryClient();
 
@@ -1494,10 +1491,10 @@ export default function BreathingScreen() {
                     style={styles.favoriteButton}
                   >
                     <Feather
-                      name={isFavorited ? "heart" : "heart"}
+                      name="heart"
                       size={18}
                       color={isFavorited ? ACCENT_GOLD : `${theme.textSecondary}50`}
-                      style={isFavorited ? { opacity: 1 } : { opacity: 0.5 }}
+                      style={{ opacity: isFavorited ? 1 : 0.5 }}
                     />
                   </Pressable>
                 </Pressable>
@@ -1791,12 +1788,6 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "flex-end",
   },
-  modalContent: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: Spacing.lg,
-    paddingBottom: 48,
-  },
   completionOverlay: {
     flex: 1,
     backgroundColor: "rgba(15, 28, 63, 0.95)",
@@ -1830,12 +1821,6 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     alignSelf: "center",
     marginBottom: Spacing.lg,
-  },
-  modalTitle: {
-    marginBottom: Spacing.sm,
-  },
-  modalSubtitle: {
-    marginBottom: Spacing.xl,
   },
   difficultyBadge: {
     paddingHorizontal: 6,

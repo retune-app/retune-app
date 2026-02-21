@@ -32,6 +32,7 @@ export const users = pgTable("users", {
   cartesiaVoiceId: text("cartesia_voice_id"),
   role: text("role").default("user"), // 'user', 'admin', 'reviewer'
   subscriptionTier: text("subscription_tier").default("free"), // 'free' or 'premium'
+  favoriteBreathingTechniqueId: text("favorite_breathing_technique_id"),
   active: boolean("active").default(true),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });

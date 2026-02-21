@@ -1,7 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { requireAuth, type AuthenticatedRequest } from "../auth";
 import { db } from "../db";
-import { breathingSessions } from "@shared/schema";
+import { breathingSessions, users } from "@shared/schema";
 import { eq, desc, and, sql } from "drizzle-orm";
 import { openai } from "../replit_integrations/audio/client";
 
@@ -398,6 +398,27 @@ Return ONLY the 8 tips, one per line. No numbering, no titles, no extra text.`;
     } catch (error) {
       console.error("Error generating breathing wisdom:", error);
       res.status(500).json({ error: "Failed to generate breathing wisdom" });
+    }
+  });
+
+  app.get("/api/breathing/favorite", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const result = await db.select({ favoriteBreathingTechniqueId: users.favoriteBreathingTechniqueId }).from(users).where(eq(users.id, req.userId!));
+      res.json({ favoriteId: result[0]?.favoriteBreathingTechniqueId || null });
+    } catch (error) {
+      console.error("Error fetching favorite breathing technique:", error);
+      res.status(500).json({ error: "Failed to fetch favorite" });
+    }
+  });
+
+  app.patch("/api/breathing/favorite", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { techniqueId } = req.body;
+      await db.update(users).set({ favoriteBreathingTechniqueId: techniqueId || null }).where(eq(users.id, req.userId!));
+      res.json({ favoriteId: techniqueId || null });
+    } catch (error) {
+      console.error("Error saving favorite breathing technique:", error);
+      res.status(500).json({ error: "Failed to save favorite" });
     }
   });
 }

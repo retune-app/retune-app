@@ -104,6 +104,7 @@ export default function BreathingScreen() {
     }, [])
   );
   const [showTechniqueSelector, setShowTechniqueSelector] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<BreathingCategory>(selectedTechnique.category);
   const [isLandscape, setIsLandscape] = useState(false);
   const [musicEnabled, setMusicEnabled] = useState(true);
   const [voiceEnabled, setVoiceEnabled] = useState(false);
@@ -735,10 +736,10 @@ export default function BreathingScreen() {
   const selectTechnique = async (technique: BreathingTechnique) => {
     if (!isPlaying) {
       setSelectedTechnique(technique);
+      setSelectedCategory(technique.category);
       setShowTechniqueSelector(false);
       if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} }
       
-      // Save as the last selected technique
       try {
         await AsyncStorage.setItem(DEFAULT_BREATHING_TECHNIQUE_KEY, technique.id);
       } catch (error) {
@@ -760,6 +761,7 @@ export default function BreathingScreen() {
             try {
               await AsyncStorage.setItem(DEFAULT_BREATHING_TECHNIQUE_KEY, technique.id);
               setSelectedTechnique(technique);
+              setSelectedCategory(technique.category);
               setShowTechniqueSelector(false);
               if (hapticsEnabled) { try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {} }
             } catch (error) {
@@ -1086,44 +1088,92 @@ export default function BreathingScreen() {
           />
         </Animated.View>
 
-        {/* Technique Selector Card - Compact */}
+        {/* Category Tabs + Technique Selector - Inline */}
         <Animated.View entering={FadeIn.delay(100).duration(600)} style={styles.techniqueWrapper}>
-          <Pressable
-            onPress={() => setShowTechniqueSelector(true)}
-            style={[styles.techniqueCard, { backgroundColor: theme.cardBackground, borderWidth: 2, borderColor: `${selectedTechnique.color}60` }, Shadows.medium]}
-          >
-            <View style={styles.techniqueCardContent}>
-              <View style={[styles.techniqueIconSmall, { backgroundColor: `${selectedTechnique.color}30` }]}>
-                <Feather name={selectedTechnique.icon as any} size={22} color={selectedTechnique.color} />
-              </View>
-              <View style={styles.techniqueCardInfo}>
-                <ThemedText type="body" style={{ fontWeight: "600", color: selectedTechnique.color }}>
-                  {selectedTechnique.name}
-                </ThemedText>
-                <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                  {selectedTechnique.benefits}
-                </ThemedText>
-              </View>
-              <Feather name="chevron-right" size={20} color={theme.textSecondary} />
-            </View>
-          </Pressable>
-          <Pressable
-            testID="button-technique-info"
-            onPress={() => {
-              if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} }
-              setShowTechniqueInfo(true);
-            }}
-            style={[
-              styles.techniqueInfoButton,
-              {
-                backgroundColor: `${selectedTechnique.color}14`,
-                borderWidth: 1,
-                borderColor: `${selectedTechnique.color}26`,
-              },
-            ]}
-          >
-            <Feather name="info" size={18} color={`${selectedTechnique.color}66`} />
-          </Pressable>
+          <View style={styles.categoryTabsRow}>
+            {BREATHING_CATEGORY_ORDER.map((category) => {
+              const isActive = selectedCategory === category;
+              const categoryColor = BREATHING_TECHNIQUES.find(t => t.category === category)?.color || ACCENT_GOLD;
+              return (
+                <Pressable
+                  key={category}
+                  onPress={() => {
+                    setSelectedCategory(category);
+                    if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} }
+                  }}
+                  style={[
+                    styles.categoryTab,
+                    {
+                      backgroundColor: isActive ? `${categoryColor}20` : 'transparent',
+                      borderColor: isActive ? categoryColor : `${theme.textSecondary}30`,
+                    },
+                  ]}
+                  testID={`category-tab-${category}`}
+                >
+                  <Feather name={BREATHING_CATEGORY_ICONS[category] as any} size={14} color={isActive ? categoryColor : theme.textSecondary} />
+                  <Text style={[styles.categoryTabText, { color: isActive ? categoryColor : theme.textSecondary }]}>
+                    {BREATHING_CATEGORY_LABELS[category]}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          <View style={styles.techniquesInlineList}>
+            {BREATHING_TECHNIQUES.filter(t => t.category === selectedCategory).map((technique) => {
+              const isSelected = selectedTechnique.id === technique.id;
+              return (
+                <Pressable
+                  key={technique.id}
+                  onPress={() => selectTechnique(technique)}
+                  onLongPress={() => handleLongPressTechnique(technique)}
+                  delayLongPress={500}
+                  style={[
+                    styles.techniqueInlineCard,
+                    {
+                      backgroundColor: isSelected ? `${technique.color}18` : theme.cardBackground,
+                      borderColor: isSelected ? technique.color : `${theme.textSecondary}20`,
+                    },
+                  ]}
+                  testID={`technique-${technique.id}`}
+                >
+                  <View style={[styles.techniqueInlineIcon, { backgroundColor: `${technique.color}25` }]}>
+                    <Feather name={technique.icon as any} size={20} color={technique.color} />
+                  </View>
+                  <View style={styles.techniqueInlineInfo}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                      <ThemedText type="body" style={{ fontWeight: "600", fontSize: 14, color: isSelected ? technique.color : theme.text }}>
+                        {technique.name}
+                      </ThemedText>
+                      {technique.difficulty !== "beginner" ? (
+                        <View style={[styles.difficultyBadge, { backgroundColor: `${technique.color}15`, borderColor: `${technique.color}30` }]}>
+                          <ThemedText type="small" style={{ color: technique.color, fontSize: 8, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                            {technique.difficulty === "advanced" ? "ADV" : "INT"}
+                          </ThemedText>
+                        </View>
+                      ) : null}
+                    </View>
+                    <ThemedText type="small" style={{ color: theme.textSecondary, fontSize: 11, marginTop: 1 }}>
+                      {technique.pattern}
+                    </ThemedText>
+                  </View>
+                  {isSelected ? (
+                    <Pressable
+                      testID="button-technique-info"
+                      onPress={() => {
+                        if (hapticsEnabled) { try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {} }
+                        setShowTechniqueInfo(true);
+                      }}
+                      hitSlop={8}
+                      style={[styles.techniqueInlineInfoBtn, { backgroundColor: `${technique.color}14`, borderColor: `${technique.color}26` }]}
+                    >
+                      <Feather name="info" size={14} color={`${technique.color}80`} />
+                    </Pressable>
+                  ) : null}
+                </Pressable>
+              );
+            })}
+          </View>
         </Animated.View>
 
         {/* Breathing Circle - Hero Element */}
@@ -1326,92 +1376,6 @@ export default function BreathingScreen() {
 
       </View>
 
-      {/* Technique Selection Modal */}
-      <Modal
-        visible={showTechniqueSelector}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setShowTechniqueSelector(false)}
-      >
-        <Pressable 
-          style={styles.modalOverlay} 
-          onPress={() => setShowTechniqueSelector(false)}
-        >
-          <View style={[styles.modalContent, { backgroundColor: theme.backgroundRoot }]}>
-            <View style={styles.modalHandle} />
-            <ThemedText type="h3" style={styles.modalTitle}>
-              Choose Your Breathing Technique
-            </ThemedText>
-            <ThemedText type="body" style={[styles.modalSubtitle, { color: theme.textSecondary }]}>
-              Each technique offers unique benefits for your mind and body
-            </ThemedText>
-
-            <ScrollView style={{ maxHeight: 480 }} showsVerticalScrollIndicator={false}>
-              {BREATHING_CATEGORY_ORDER.map((category) => {
-                const techniques = BREATHING_TECHNIQUES.filter(t => t.category === category);
-                if (techniques.length === 0) return null;
-                return (
-                  <View key={category} style={{ marginBottom: Spacing.md }}>
-                    <View style={styles.categorySectionHeader}>
-                      <Feather name={BREATHING_CATEGORY_ICONS[category] as any} size={14} color={theme.textSecondary} />
-                      <ThemedText type="caption" style={{ color: theme.textSecondary, fontWeight: "600", textTransform: "uppercase", letterSpacing: 1, marginLeft: 6 }}>
-                        {BREATHING_CATEGORY_LABELS[category]}
-                      </ThemedText>
-                    </View>
-                    {techniques.map((technique) => (
-                      <Pressable
-                        key={technique.id}
-                        onPress={() => selectTechnique(technique)}
-                        onLongPress={() => handleLongPressTechnique(technique)}
-                        delayLongPress={500}
-                        style={[
-                          styles.techniqueOption,
-                          {
-                            backgroundColor: selectedTechnique.id === technique.id
-                              ? `${technique.color}20`
-                              : theme.cardBackground,
-                            borderColor: selectedTechnique.id === technique.id
-                              ? technique.color
-                              : theme.border,
-                          },
-                        ]}
-                      >
-                        <View style={[styles.techniqueOptionIcon, { backgroundColor: `${technique.color}30` }]}>
-                          <Feather name={technique.icon as any} size={28} color={technique.color} />
-                        </View>
-                        <View style={styles.techniqueOptionInfo}>
-                          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                            <ThemedText type="body" style={{ fontWeight: "700", color: technique.color }}>
-                              {technique.name}
-                            </ThemedText>
-                            {technique.difficulty !== "beginner" ? (
-                              <View style={[styles.difficultyBadge, { backgroundColor: `${technique.color}15`, borderColor: `${technique.color}30` }]}>
-                                <ThemedText type="small" style={{ color: technique.color, fontSize: 9, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.5 }}>
-                                  {technique.difficulty === "advanced" ? "Advanced" : "Inter"}
-                                </ThemedText>
-                              </View>
-                            ) : null}
-                          </View>
-                          <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: 2 }}>
-                            {technique.pattern}
-                          </ThemedText>
-                          <ThemedText type="small" style={{ color: technique.color, marginTop: 4 }}>
-                            {technique.benefits}
-                          </ThemedText>
-                        </View>
-                        {selectedTechnique.id === technique.id ? (
-                          <Feather name="check-circle" size={24} color={technique.color} />
-                        ) : null}
-                      </Pressable>
-                    ))}
-                  </View>
-                );
-              })}
-            </ScrollView>
-          </View>
-        </Pressable>
-      </Modal>
-
       {/* Technique Info Modal */}
       <Modal
         visible={showTechniqueInfo}
@@ -1509,6 +1473,7 @@ export default function BreathingScreen() {
           const technique = BREATHING_TECHNIQUES.find(t => t.id === techniqueId);
           if (technique) {
             setSelectedTechnique(technique);
+            setSelectedCategory(technique.category);
             AsyncStorage.setItem(DEFAULT_BREATHING_TECHNIQUE_KEY, technique.id).catch(() => {});
             setTimeout(() => handleStartWithCountdown(), 300);
           }
@@ -1534,7 +1499,57 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   techniqueWrapper: {
-    marginBottom: 0,
+    marginBottom: Spacing.xs,
+  },
+  categoryTabsRow: {
+    flexDirection: "row",
+    gap: 6,
+    marginBottom: Spacing.sm,
+  },
+  categoryTab: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    paddingVertical: 8,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1.5,
+  },
+  categoryTabText: {
+    fontSize: 11,
+    fontWeight: "600",
+    letterSpacing: 0.3,
+  },
+  techniquesInlineList: {
+    gap: 6,
+  },
+  techniqueInlineCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1.5,
+  },
+  techniqueInlineIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  techniqueInlineInfo: {
+    flex: 1,
+    marginLeft: 10,
+  },
+  techniqueInlineInfoBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
   },
   // Circle Section
   circleSection: {
@@ -1557,27 +1572,6 @@ const styles = StyleSheet.create({
   },
   progressRing: {
     position: "absolute",
-  },
-  // Technique Card
-  techniqueCard: {
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
-    marginBottom: Spacing.lg,
-  },
-  techniqueCardContent: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  techniqueIconSmall: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  techniqueCardInfo: {
-    flex: 1,
-    marginLeft: Spacing.md,
   },
 
   // Bottom Options Panel
@@ -1676,37 +1670,11 @@ const styles = StyleSheet.create({
   modalSubtitle: {
     marginBottom: Spacing.xl,
   },
-  categorySectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: Spacing.sm,
-    marginTop: Spacing.xs,
-    paddingLeft: 4,
-  },
   difficultyBadge: {
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
     borderWidth: 1,
-  },
-  techniqueOption: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.lg,
-    borderWidth: 2,
-    marginBottom: Spacing.sm,
-  },
-  techniqueOptionIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  techniqueOptionInfo: {
-    flex: 1,
-    marginLeft: Spacing.md,
   },
 
   landscapeStopButton: {
@@ -1721,16 +1689,6 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  techniqueInfoButton: {
-    alignSelf: "flex-start",
-    marginTop: 4,
-    marginLeft: 8,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
   },

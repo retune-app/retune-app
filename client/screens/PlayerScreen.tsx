@@ -100,6 +100,7 @@ export default function PlayerScreen() {
   const [hasSaved, setHasSaved] = useState(false);
   const prevLandscapeRef = useRef(false);
 
+  const portraitContentOpacity = useSharedValue(1);
   const tiltHintOpacity = useSharedValue(0);
   const tiltHintShowCount = useRef(0);
   const tiltHintDismissed = useRef(false);
@@ -156,6 +157,10 @@ export default function PlayerScreen() {
   const [bottomControlsVisible, setBottomControlsVisible] = useState(true);
   const bottomControlsFadeStyle = useAnimatedStyle(() => ({
     opacity: bottomControlsOpacity.value,
+  }));
+
+  const portraitFadeStyle = useAnimatedStyle(() => ({
+    opacity: portraitContentOpacity.value,
   }));
 
   const isLastJourneyStep = journeyContext ? journeyContext.currentStep === journeyContext.totalSteps - 1 : false;
@@ -445,6 +450,12 @@ export default function PlayerScreen() {
     const justRotatedToPortrait = !isLandscape && wasLandscape;
     prevLandscapeRef.current = isLandscape;
 
+    if (justRotatedToLandscape) {
+      portraitContentOpacity.value = 0;
+    } else if (justRotatedToPortrait) {
+      portraitContentOpacity.value = withDelay(150, withTiming(1, { duration: 200 }));
+    }
+
     if (justRotatedToPortrait && isInFullscreenMode) {
       setIsInFullscreenMode(false);
     } else if (justRotatedToLandscape && rsvpEnabled && isCurrentlyPlaying && !isInFullscreenMode) {
@@ -648,7 +659,7 @@ export default function PlayerScreen() {
       {/* Fullscreen Landscape Focus Mode - tilt back to portrait to exit */}
       <Modal
         visible={showFullscreenFocus}
-        animationType="fade"
+        animationType="none"
         statusBarTranslucent
         supportedOrientations={["landscape-left", "landscape-right", "portrait"]}
         presentationStyle="fullScreen"
@@ -684,6 +695,7 @@ export default function PlayerScreen() {
         </View>
       </Modal>
 
+      <Animated.View style={[{ flex: 1 }, portraitFadeStyle]}>
       <Animated.View style={[{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 51 }, controlsFadeStyle]} pointerEvents={controlsVisible ? "box-none" : "none"}>
         {journeyContext ? (
           <JourneyStepBar
@@ -1114,6 +1126,7 @@ export default function PlayerScreen() {
           </View>
         ) : null}
       </ScrollView>
+      </Animated.View>
 
       {/* Delete Confirmation Modal */}
       <ThemedModal

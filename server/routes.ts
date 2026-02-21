@@ -894,7 +894,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const resolvedPath = path.resolve(filePath);
       const resolvedUploadDir = path.resolve(uploadDir);
       if (!resolvedPath.startsWith(resolvedUploadDir + path.sep)) {
-        console.log(`SECURITY: Path traversal attempt blocked: ${rawFilename}`);
+        console.log(JSON.stringify({ level: "WARN", ts: new Date().toISOString(), component: "security", message: `Path traversal attempt blocked: ${rawFilename}` }));
         return res.status(403).json({ error: "Access denied" });
       }
       

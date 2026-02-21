@@ -1,23 +1,7 @@
 # Retuned
 
 ## Overview
-Retuned is an application designed to help users reprogram their subconscious minds through personalized audio affirmations. It leverages AI to generate affirmation scripts based on user goals, which can then be played in the user's cloned voice or a selection of curated AI voices. The project aims to provide a powerful tool for personal growth and mental well-being, focusing on subconscious language patterns to maximize effectiveness. Key features include voice cloning, guided breathing exercises, AI-powered mood check-ins with personalized wellness paths, micro-meditations, and a comprehensive ambient sound library.
-
-## Recent Changes
-- **v1.7.3 Build 5 Journey Audio Persistence (Feb 21, 2026)**: Fixed background sound cutting out during meditation countdown and skip transitions. Moved `Audio.setAudioModeAsync` from `playAudio` to GuidedMomentScreen mount effect so audio session is pre-configured before countdown. Added `resumeBackgroundMusic()` safeguards to skip/previous handlers in GuidedMomentScreen. Journey exit now tracks `originTab` (BreatheTab or BelieveTab) — exiting at any point stops all audio immediately and returns user to the tab where they started. New `endJourney` action in `journeyNavigationRef` routes through MoodJourneyScreen's exit handler for proper cleanup.
-- **v1.7.3 Build 1 (Feb 21, 2026)**:
-  - **Server Resilience v2**: Server now starts accepting connections before database verification (prevents deployment health check failures). Database pool configured with 10s connection timeout, 30s idle timeout, max 20 connections. Structured JSON logging standardized across all server modules. Friendly user-facing error message during temporary outages: "We apologize for the inconvenience — we're currently updating the app."
-  - **Dev A/B Voice Testing**: Built `/api/dev/ab-test` endpoint for comparing ElevenLabs vs Chatterbox TTS quality. DevABTestScreen with voice recorder (30-second limit), text input, blind A/B playback, and provider reveal. Chatterbox integration via Gradio API (fn_index=1, 9 parameters). Accessible from ProfileScreen. Status: paused for further evaluation.
-- **v1.7.3 Smart Sound Matching (Feb 20, 2026)**: Intelligent ambient sound auto-selection based on mood, breathing technique, and time of day. New shared utility `shared/smartSoundMatching.ts` provides `getSmartSoundForBreathing()`, `getSmartSoundForAffirmation()`, `getSmartSoundForMeditation()`, and `getSmartSoundForMoodJourney()`. Four time windows (morning/afternoon/evening/night) each have curated sound pools. Each breathing technique has paired sounds (e.g., Box→pink noise, 4-7-8→rain/delta). Vibe preferred sounds take priority, time-of-day breaks ties, user manual choice always wins. Integrated into BreathingScreen (auto-selects on technique change, shows match label on pill), PlayerScreen (auto-starts ambient at 15% volume when none selected, dismissible indicator), GuidedMomentScreen (replaced hardcoded MOOD_SOUND_MAP), MoodJourneyScreen (replaced hardcoded forest-rain-birds default with vibe+time-matched sound). Marketing updated: landing page, science page, support FAQ.
-- **v1.7.3 Breathing Library Expansion (Feb 19, 2026)**: Expanded from 5 to 10 breathing techniques with category/difficulty system. New techniques: Triangle (4-4-4, Balance/Beginner), Physiological Sigh (4+1-6, Balance/Intermediate), 2:1 Calming (4-8, Sleep/Beginner), 7-2-11 Deep Relaxation (7-2-11, Sleep/Advanced), Vishama Vritti (4-8-6, Focus/Intermediate). Technique selector UI groups by goal category (Balance, Focus, Sleep, Energy) with category headers and difficulty badges. Vibe system updated: chill→2:1 Calming primary, in_my_head→Physiological Sigh primary + Triangle fallback, locked_in→Vishama Vritti fallback, heavy→7-2-11 fallback.
-- **v1.7.3 Vibe-Powered Mood Journey (Feb 19, 2026)**: Expanded mood check-in to 10 starting moods (added Good, Wired, Frustrated, Scattered) and 9 target moods (added Locked In, Grounded, Lit Up). Full vibe integration: `resolveVibeFromMoodPair()` auto-maps 90 mood pair combinations to vibeId. Server `/api/mood-checkin` now uses vibe system for all personalization — breathing technique selection (via `vibeRouting.breathingTechniqueId`), affirmation matching (via `pickBestAffirmation` with vibe's boostTags/boostPillars/penaltyTags), creation theme suggestions (via `getSuggestedCreationTheme`), and meditation config (style, focusArea, ttsConfig passed to journey steps). Old hardcoded `moodPairBreathMap`, `moodOnlyBreathFallback`, inline affirmation scoring, and inline themeMap all replaced by vibe-engine. Vibe tone context injected into GPT journey prompt. Guided-moments endpoints also accept new mood IDs. Inner Voice affirmation TTS unchanged (Spirit pillar: stability 0.6, style 0.25, 1.8s pause). Architecture: `shared/vibes.ts` (config + resolveVibeFromMoodPair), `server/vibe-engine.ts` (routeVibe, pickBestAffirmation, scoreAffirmationForVibe, getSuggestedCreationTheme, getVibeJourneyPromptContext), `client/components/MoodCheckin.tsx` (2-step UI with mood pair display).
-- **v1.7.2 Build 5 Icon Update (Feb 18, 2026)**: Updated to icon-light-v9 (more rings variant). Applied across landing page logo, all static pages (support, science, terms, privacy), and app icon for next EAS build.
-- **v1.7.2 Build 4 App Icon & Landing Page (Feb 18, 2026)**: Switched app icon to light rings design (gold rings on white/grey, no play button). Updated landing page logo to match and enlarged nav logo from 38px to 46px.
-- **v1.7.2 Build 3 Affirmation Humanizer (Feb 18, 2026)**: Two-pass humanizer system for affirmations. Option A: Enhanced system prompt with rules 10 (HUMAN VOICE) and 11 (AVOID AI-ISMS) for natural language generation. Option B: Post-processing `humanizeScript` pass via GPT-4o-mini rewrites stiff AI phrasing into private-thought tone with contractions, varied rhythm, and dashes. Falls back to original script on failure.
-- **v1.7.2 Build 2 Code Optimization (Feb 18, 2026)**: Removed 43 debug console.logs from server, 14 unused imports across 11 client files. Modularized server/routes.ts (5,143→4,050 lines) by extracting GitHub, breathing, reminder, and admin routes into `server/routes/` modules.
-- **v1.7.2 Build 2 Auth Screen Redesign (Feb 2026)**: Removed circular logo, restructured to fixed flex layout with RETUNED wordmark (Outfit_500Medium) at top and login card at bottom. Unified sign-in button heights to 48px.
-- **v1.7.2 Build 2 Landing Page Typography (Feb 2026)**: Cormorant Garamond (serif) for h1/h2, Outfit (sans-serif) for h3/h4/body/UI. Nav branding: Outfit 500, 17px, 4.5px letter-spacing.
-- **v1.7.2 Build 2 Font Cleanup (Feb 2026)**: Removed Poppins, Montserrat, Space Grotesk. App loads only Nunito (primary) + Outfit (brand/auth).
+Retuned is an application designed to help users reprogram their subconscious minds through personalized audio affirmations. It leverages AI to generate affirmation scripts based on user goals, which can then be played in the user's cloned voice or a selection of curated AI voices. The project aims to provide a powerful tool for personal growth and mental well-being, focusing on subconscious language patterns to maximize effectiveness. Key capabilities include voice cloning, guided breathing exercises, AI-powered mood check-ins with personalized wellness paths, micro-meditations, and an extensive ambient sound library.
 
 ## User Preferences
 - Preferred communication style: Simple, everyday language.
@@ -32,48 +16,46 @@ Retuned is an application designed to help users reprogram their subconscious mi
 
 ### Core Technologies
 - **Frontend**: React Native with Expo SDK 54 (iOS, Android, web).
-- **Backend**: Express 5 (Node.js). Routes modularized: `server/routes.ts` (core 51 endpoints) + `server/routes/` modules (github, breathing, reminders, admin — 34 endpoints).
+- **Backend**: Express 5 (Node.js).
 - **Database**: PostgreSQL with Drizzle ORM.
 - **State Management**: TanStack Query.
-- **Styling**: Custom theme with light/dark mode. Nunito font family (primary), Outfit (brand/auth screen). Landing pages use Cormorant Garamond + Outfit.
+- **Styling**: Custom theme with light/dark mode, Nunito (primary) and Outfit (brand/auth) font families. Landing pages use Cormorant Garamond + Outfit.
 - **Animations**: React Native Reanimated.
 - **Audio**: `expo-av` for recording and playback.
 
 ### UI/UX Decisions
-The application follows a "Serene Empowerment" aesthetic, utilizing Primary Gold and Navy colors, Nunito typography, and custom components like `GoldShimmer` and `BreathingPulse`. It features a 2-tab navigation structure (Breathe, Believe) with a central "Create" button, and integrates haptic feedback and custom screen transitions for an enhanced user experience.
+The application employs a "Serene Empowerment" aesthetic, featuring Primary Gold and Navy colors, Nunito typography, and custom components like `GoldShimmer` and `BreathingPulse`. It utilizes a 2-tab navigation structure (Breathe, Believe) with a central "Create" button, and incorporates haptic feedback and custom screen transitions for an enhanced user experience. Icons are updated to a light rings design.
 
 ### Technical Implementations
-- **Personalized Affirmations**: AI generates scripts incorporating Subconscious Language Patterns, organized by 5 Life Pillars (Mind, Body, Spirit, Connection, Achievement), each with distinct Text-to-Speech (TTS) treatments for optimal delivery.
-- **Voice Management**: A hybrid TTS system uses Hume AI for stock voices, ElevenLabs for cloned voices (Inner Voice), and OpenAI as a fallback. An automated voice rotation system manages inactive ElevenLabs cloned voices. Journey voice consistency ensures a single voice is used across all journey steps. Inner Voice affirmations use fixed Spirit pillar TTS settings (stability 0.6, style 0.25, 1.8s pause) for consistent, contemplative delivery regardless of pillar. AI Voice affirmations use pillar-specific Hume speed/pause configs. **Note**: Cartesia integration code is preserved in `server/cartesia-tts.ts` but is fully disabled — no Cartesia API calls are made during normal operation. The `ttsProvider` field in the users table and admin provider-switch endpoint exist but are inactive. Cartesia can be re-enabled for A/B testing at a later date.
-- **Global Audio Player**: Ensures consistent audio playback across the application.
-- **RSVP Mode**: Displays word-synced text for visual reinforcement during affirmations. Uses 200ms forward offset (scaled by playback speed), 50ms audio progress updates, ORP (Optimal Recognition Point) character highlighting, and XL font size. ElevenLabs word timings use re-encoded ffmpeg segments for sample-accurate sync. Full configuration reference: `docs/voice-cloning/10-tts-rsvp-reference.md`.
-- **Breathing Mode**: Offers science-backed techniques with animated visualizations, customizable durations, and ambient soundscapes, including mood-matched recommendations. Controls (Duration/Audio) are grouped in a themed card with technique-colored border and subtle shadow.
-- **AI Mood Check-in**: An ephemeral system that analyzes user mood to recommend personalized wellness paths: breathing, meditating, or listening/creating affirmations, utilizing multi-layer scoring for smart affirmation matching.
-- **Mood Journey Personalization**: Tracks journey completions and feeds this history into AI daily greetings and mood check-in prompts for deeper personalization. Ambient sounds persist seamlessly across step transitions.
-- **Micro-Meditations**: Ephemeral, AI-generated guided meditations tailored to current mood and available in varying durations.
-- **AI Daily Greetings**: Context-aware, personalized messages based on user activity.
+- **Personalized Affirmations**: AI-generated scripts incorporating Subconscious Language Patterns, categorized by 5 Life Pillars (Mind, Body, Spirit, Connection, Achievement), each with distinct Text-to-Speech (TTS) treatments. A two-pass humanizer system refines AI phrasing for natural language.
+- **Voice Management**: A hybrid TTS system uses Hume AI for stock voices, ElevenLabs for cloned voices (Inner Voice), and OpenAI as a fallback. An automated rotation system manages inactive ElevenLabs cloned voices, with server-side push notifications warning users of expiry. Journey voice consistency ensures a single voice throughout.
+- **Global Audio Player**: Ensures consistent audio playback across the application, with seamless ambient sound persistence during mood journey step transitions.
+- **RSVP Mode**: Displays word-synced text for visual reinforcement during affirmations with ORP character highlighting and scaled timings for ElevenLabs.
+- **Breathing Mode**: Offers 10 science-backed techniques grouped by goal category and difficulty, with animated visualizations, customizable durations, and ambient soundscapes. Smart sound matching auto-selects ambient sounds based on mood, breathing technique, and time of day.
+- **AI Mood Check-in**: An ephemeral system that analyzes user mood across 10 starting moods and 9 target moods to recommend personalized wellness paths (breathing, meditating, affirmations) using a vibe-powered multi-layer scoring engine for affirmation matching and creation theme suggestions.
+- **Micro-Meditations**: Ephemeral, AI-generated guided meditations tailored to current mood.
+- **AI Daily Greetings**: Context-aware, personalized messages based on user activity and mood journey history.
 - **User Analytics**: Tracks listening sessions, streaks, and category breakdowns.
 - **Sound Library**: A collection of 25 seamless ambient sound loops across 7 categories.
-- **Authentication**: Session-based for web, token-based for mobile.
+- **Authentication**: Session-based for web, token-based for mobile. Redesigned auth screens feature a fixed flex layout, wordmark, and unified button heights.
 - **Daily Reminders**: A flexible notification system for breathing or affirmation sessions, with AI-generated messages.
-- **Voice Clone Expiry Warnings**: Server-side push notifications warn users at ~53 and ~58 days of voice inactivity before the 60-day rotation. Users can tap to keep their voice active via a lightweight `/api/voice/keep-active` endpoint. Push tokens stored in `push_tokens` table, sent via Expo push notification service (`expo-server-sdk`).
-- **Security & Privacy**: Features explicit voice consent, immediate deletion of voice recordings post-cloning, usage limits, rate limiting, and GDPR-compliant data deletion.
+- **Security & Privacy**: Explicit voice consent, immediate deletion of voice recordings post-cloning, usage limits, rate limiting, and GDPR-compliant data deletion.
 - **First-Time User Experience (FTUE)**: Includes onboarding, deferred voice setup, first-play celebrations, and contextual hints.
-- **Server Resilience (v1.7.2, updated v1.7.3)**: Structured JSON logging (level/timestamp/component), process-level crash handlers (uncaughtException/unhandledRejection), try/catch isolation around each startup subsystem so partial failures don't crash the server, `/api/health` endpoint for monitoring (checks server + DB), client-side API error logging with HTML-detection for misconfiguration alerts, and API catch-all for unknown endpoints returning proper JSON. **v1.7.3 additions**: Server-first startup order (accepts connections before DB verification to prevent deployment health check failures), connection pool timeouts (10s connect, 30s idle, max 20 connections), and friendly user-facing error message during temporary outages.
+- **Server Resilience**: Structured JSON logging, process-level crash handlers, subsystem isolation, `/api/health` endpoint, client-side API error logging, and API catch-all. Server starts accepting connections before database verification, uses connection pooling with timeouts, and provides a friendly user-facing error message during outages.
 
 ## External Dependencies
 
 ### AI Services
 - **OpenAI API**: Affirmation script generation, micro-meditation script generation, daily greeting generation, and TTS fallback.
-- **Hume AI API**: Primary TTS for stock AI voices (with word-level timestamps) and micro-meditations.
+- **Hume AI API**: Primary TTS for stock AI voices and micro-meditations.
 - **ElevenLabs API**: Voice cloning and TTS for personal cloned voices.
-- **Cartesia API**: *Currently disabled*. Code preserved in `server/cartesia-tts.ts` for future A/B testing. Uses Sonic-3 model, embedding-based cloning (3-second samples), no slot limits.
+- **Cartesia API**: Code preserved in `server/cartesia-tts.ts` but currently disabled.
 
 ### Database
 - **PostgreSQL**: Primary database for application data.
 
 ### Key npm Packages
-- `expo-av`, `expo-file-system`, `drizzle-orm`, `pg`, `multer`, `elevenlabs`, `hume`, `@cartesia/cartesia-js`, `@tanstack/react-query`, `expo-linear-gradient`, `@expo-google-fonts/outfit`.
+- `expo-av`, `expo-file-system`, `drizzle-orm`, `pg`, `multer`, `elevenlabs`, `hume`, `@tanstack/react-query`, `expo-linear-gradient`, `@expo-google-fonts/outfit`.
 
 ### Environment Variables
 - `DATABASE_URL`

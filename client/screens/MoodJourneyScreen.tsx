@@ -639,6 +639,12 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
     prefetchPromiseRef.current = promise;
   }, [journey]);
 
+  useEffect(() => {
+    if (journeyVoiceResolved && !prefetchPromiseRef.current && !prefetchedMeditationRef.current) {
+      prefetchMeditationScript(-1);
+    }
+  }, [journeyVoiceResolved, prefetchMeditationScript]);
+
   const launchStep = useCallback((stepIndex: number) => {
     const step = journey.steps[stepIndex];
     if (!step) {

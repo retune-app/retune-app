@@ -108,15 +108,6 @@ const getMeditationLoadingMessage = (mood: string, isJourney: boolean): string =
   ]);
 };
 
-const getMeditationStatusMessage = (mood: string): string => {
-  const moodLabel = MOOD_LABELS[mood] || mood;
-  return pickRandom([
-    `Crafting your micro-meditation...`,
-    `Creating a moment just for ${moodLabel}...`,
-    `Building your guided moment...`,
-    `Finding the right words for your ${moodLabel} state...`,
-  ]);
-};
 
 const CATEGORY_COLORS: Record<string, string> = {
   rain: "#4FC3F7",

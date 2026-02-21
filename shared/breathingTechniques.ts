@@ -4,7 +4,7 @@ export type BreathingCategory = "sleep" | "focus" | "energy" | "balance";
 export type BreathingDifficulty = "beginner" | "intermediate" | "advanced";
 
 export const BREATHING_CATEGORY_LABELS: Record<BreathingCategory, string> = {
-  sleep: "Sleep",
+  sleep: "Rest",
   focus: "Focus",
   energy: "Energy",
   balance: "Balance",

@@ -52,6 +52,14 @@ function stripPunctuation(word: string): string {
   return word.replace(/[^a-zA-Z0-9']/g, "");
 }
 
+function splitMergedWords(word: string): string {
+  const match = word.match(/^([a-z]+)([A-Z])/);
+  if (match) {
+    return match[1];
+  }
+  return word;
+}
+
 function renderWordWithORP(
   word: string,
   fontSize: number,
@@ -133,7 +141,7 @@ export function RSVPDisplay({
     return null;
   }, [wordTimings, currentPositionMs]);
 
-  const displayWord = currentWord ? (stripPunctuation(currentWord.word) || currentWord.word) : null;
+  const displayWord = currentWord ? (splitMergedWords(stripPunctuation(currentWord.word)) || currentWord.word) : null;
 
   useEffect(() => {
     if (ambient) {

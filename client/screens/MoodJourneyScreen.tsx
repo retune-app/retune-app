@@ -692,7 +692,6 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
         setBreathingPlaying(true);
       })();
     } else if (step.type === "meditate") {
-      setPhase("navigating-meditation");
       setBreathingPlaying(false);
       hasNavigatedRef.current = false;
       const doNavigate = () => {
@@ -707,20 +706,26 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
           });
         }
       };
-      meditationSafetyTimeoutRef.current = setTimeout(doNavigate, 6000);
-      (async () => {
-        if (prefetchPromiseRef.current) {
-          try {
-            await Promise.race([
-              prefetchPromiseRef.current,
-              new Promise(resolve => setTimeout(resolve, 4000)),
-            ]);
-          } catch (e) {}
-          prefetchPromiseRef.current = null;
-        }
-        clearTimeout(meditationSafetyTimeoutRef.current!);
+      if (prefetchedMeditationRef.current) {
+        setPhase("navigating-meditation");
         doNavigate();
-      })();
+      } else {
+        setPhase("navigating-meditation");
+        meditationSafetyTimeoutRef.current = setTimeout(doNavigate, 6000);
+        (async () => {
+          if (prefetchPromiseRef.current) {
+            try {
+              await Promise.race([
+                prefetchPromiseRef.current,
+                new Promise(resolve => setTimeout(resolve, 4000)),
+              ]);
+            } catch (e) {}
+            prefetchPromiseRef.current = null;
+          }
+          clearTimeout(meditationSafetyTimeoutRef.current!);
+          doNavigate();
+        })();
+      }
     } else if (step.type === "listen") {
       setPhase("navigating-listen");
       setBreathingPlaying(false);

@@ -101,6 +101,7 @@ export default function PlayerScreen() {
   const prevLandscapeRef = useRef(false);
 
   const portraitContentOpacity = useSharedValue(1);
+  const transitionOverlayOpacity = useSharedValue(0);
   const tiltHintOpacity = useSharedValue(0);
   const tiltHintShowCount = useRef(0);
   const tiltHintDismissed = useRef(false);
@@ -161,6 +162,10 @@ export default function PlayerScreen() {
 
   const portraitFadeStyle = useAnimatedStyle(() => ({
     opacity: portraitContentOpacity.value,
+  }));
+
+  const transitionOverlayStyle = useAnimatedStyle(() => ({
+    opacity: transitionOverlayOpacity.value,
   }));
 
   const isLastJourneyStep = journeyContext ? journeyContext.currentStep === journeyContext.totalSteps - 1 : false;
@@ -452,8 +457,10 @@ export default function PlayerScreen() {
 
     if (justRotatedToLandscape) {
       portraitContentOpacity.value = 0;
+      transitionOverlayOpacity.value = withTiming(1, { duration: 150 });
     } else if (justRotatedToPortrait) {
-      portraitContentOpacity.value = withDelay(150, withTiming(1, { duration: 200 }));
+      portraitContentOpacity.value = withDelay(350, withTiming(1, { duration: 250 }));
+      transitionOverlayOpacity.value = withDelay(250, withTiming(0, { duration: 350 }));
     }
 
     if (justRotatedToPortrait && isInFullscreenMode) {
@@ -694,6 +701,16 @@ export default function PlayerScreen() {
           </Pressable>
         </View>
       </Modal>
+
+      <Animated.View
+        style={[{
+          position: 'absolute',
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: theme.navy,
+          zIndex: 50,
+        }, transitionOverlayStyle]}
+        pointerEvents="none"
+      />
 
       <Animated.View style={[{ flex: 1 }, portraitFadeStyle]}>
       <Animated.View style={[{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 51 }, controlsFadeStyle]} pointerEvents={controlsVisible ? "box-none" : "none"}>

@@ -9,7 +9,7 @@ import React, {
 import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SecureStore from "expo-secure-store";
-import { getApiUrl, queryClient } from "@/lib/query-client";
+import { getApiUrl, queryClient, fetchWithRetry } from "@/lib/query-client";
 import { setGlobalAuthToken, getAuthToken } from "@/lib/auth-token";
 
 const AUTH_TOKEN_KEY = "auth_token";
@@ -137,7 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         headers["X-Auth-Token"] = tokenToUse;
       }
       
-      const response = await fetch(new URL("/api/auth/me", getApiUrl()).toString(), {
+      const response = await fetchWithRetry(new URL("/api/auth/me", getApiUrl()).toString(), {
         credentials: "include",
         headers,
       });
@@ -171,7 +171,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await fetch(new URL("/api/auth/login", getApiUrl()).toString(), {
+      const response = await fetchWithRetry(new URL("/api/auth/login", getApiUrl()).toString(), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -199,7 +199,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signup = async (name: string, email: string, password: string) => {
     try {
-      const response = await fetch(new URL("/api/auth/signup", getApiUrl()).toString(), {
+      const response = await fetchWithRetry(new URL("/api/auth/signup", getApiUrl()).toString(), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -227,7 +227,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const oauthLogin = async (params: OAuthParams) => {
     try {
-      const response = await fetch(new URL("/api/auth/oauth", getApiUrl()).toString(), {
+      const response = await fetchWithRetry(new URL("/api/auth/oauth", getApiUrl()).toString(), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

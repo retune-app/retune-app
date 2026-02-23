@@ -64,7 +64,7 @@ function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function fetchWithRetry(
+export async function fetchWithRetry(
   input: RequestInfo,
   init?: RequestInit,
   retries = MAX_RETRIES,

@@ -16,6 +16,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import * as ScreenOrientation from "expo-screen-orientation";
 import { Audio } from "expo-av";
+import { trackBreathingStart, trackBreathingComplete } from "@/lib/analytics";
 import BreathingWisdom from "@/components/BreathingWisdom";
 import Animated, {
   useSharedValue,
@@ -710,6 +711,7 @@ export default function BreathingScreen() {
     setIsPlaying(true);
     setElapsedTime(0);
     setCyclesCompleted(0);
+    trackBreathingStart(selectedTechnique.name, selectedDuration / 60);
     if (hapticsEnabled) { try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {} }
     if (musicEnabledRef.current && voiceEnabledRef.current) {
       await setDucked(true);
@@ -754,6 +756,10 @@ export default function BreathingScreen() {
     const wasNaturalCompletion = sessionCompletedNaturally.current;
     sessionCompletedNaturally.current = false;
     isStartingRef.current = false;
+    
+    if (wasNaturalCompletion) {
+      trackBreathingComplete(selectedTechnique.name, selectedDuration / 60);
+    }
     
     setIsPlaying(false);
     setCountdownValue(null);

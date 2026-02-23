@@ -35,6 +35,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { apiRequest, getApiUrl } from "@/lib/query-client";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
+import { trackMoodCheckin, trackMoodCheckinComplete } from "@/lib/analytics";
 
 const ACCENT_GOLD = "#C9A227";
 const GOLD_LIGHT = "#E5C95C";
@@ -174,6 +175,7 @@ export function MoodCheckin({ visible, onClose, originTab }: MoodCheckinProps) {
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
     setSelectedMood(mood);
     setPhase("target");
+    trackMoodCheckin(mood.id);
   }, []);
 
   const handleTargetSelect = useCallback(async (target: MoodOption) => {
@@ -181,6 +183,7 @@ export function MoodCheckin({ visible, onClose, originTab }: MoodCheckinProps) {
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch (e) {}
     setSelectedTarget(target);
     setPhase("journey");
+    trackMoodCheckinComplete(selectedMood.id, target.id);
     setIsLoading(true);
 
     try {

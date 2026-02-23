@@ -44,6 +44,7 @@ import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { apiRequest, getApiUrl } from "@/lib/query-client";
 import { getAuthToken } from "@/lib/auth-token";
 import { useAudio } from "@/contexts/AudioContext";
+import { trackAffirmationCreate } from "@/lib/analytics";
 import { PILLARS, PILLAR_LIST, type PillarName } from "@shared/pillars";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
@@ -513,6 +514,7 @@ export default function CreateScreen() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/affirmations"] });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      trackAffirmationCreate(selectedPillar || "unknown", mode);
       
       if (!breathingAffirmation) {
         setBreathingAffirmation(data);

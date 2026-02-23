@@ -25,6 +25,7 @@ import { useBackgroundMusic, BackgroundMusicType, BACKGROUND_MUSIC_OPTIONS } fro
 import { getSmartSoundForAffirmation } from "@shared/smartSoundMatching";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { apiRequest } from "@/lib/query-client";
+import { trackAffirmationPlay } from "@/lib/analytics";
 import { getVoiceDisplayName, VOICE_ID_TO_NAME, AI_VOICES } from "@shared/voiceMapping";
 import JourneyStepBar from "@/components/JourneyStepBar";
 import { journeyNavigationRef } from "@/navigation/journeyNavigationRef";
@@ -627,6 +628,7 @@ export default function PlayerScreen() {
     if (currentAffirmation?.id === affirmationId) {
       await togglePlayPause();
     } else {
+      trackAffirmationPlay(affirmation.id, affirmation.pillar || "unknown");
       await playAffirmation(affirmation);
     }
   };

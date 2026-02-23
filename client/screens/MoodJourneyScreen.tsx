@@ -36,6 +36,7 @@ import Slider from "@react-native-community/slider";
 import { getApiUrl } from "@/lib/query-client";
 import { getAuthToken } from "@/lib/auth-token";
 import { journeyNavigationRef } from "@/navigation/journeyNavigationRef";
+import { trackJourneyStart, trackJourneyStepComplete, trackJourneyComplete, trackJourneyExit } from "@/lib/analytics";
 import { useAudio } from "@/contexts/AudioContext";
 import { useBackgroundMusic, getSoundsByCategory, type BackgroundMusicType, type BackgroundMusicOption } from "@/contexts/BackgroundMusicContext";
 import FullscreenBreathingLayout from "@/components/FullscreenBreathingLayout";
@@ -654,6 +655,10 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
       return;
     }
 
+    if (stepIndex === 0) {
+      trackJourneyStart(step.type, journey.targetMood);
+    }
+
     const jCtx = {
       currentStep: stepIndex,
       totalSteps: journey.steps.length,
@@ -755,6 +760,11 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
   }, [currentStepIndex, launchStep]);
 
   const advanceToNextStep = useCallback(() => {
+    const currentStep = journey.steps[currentStepIndex];
+    if (currentStep) {
+      trackJourneyStepComplete(currentStep.type, journey.steps.map(s => s.type).join("-"));
+    }
+    
     const nextIndex = currentStepIndex + 1;
     if (nextIndex >= journey.steps.length) {
       try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch (e) {}
@@ -883,6 +893,13 @@ export default function MoodJourneyScreen({ route, navigation }: Props) {
 
   const handleEndJourney = useCallback(() => {
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch (e) {}
+    const durationSecs = Math.round((Date.now() - journeyStartRef.current) / 1000);
+    if (currentStepIndex >= journey.steps.length - 1) {
+      trackJourneyComplete(journey.steps.map(s => s.type).join("-"), durationSecs);
+    } else {
+      const exitStep = journey.steps[currentStepIndex]?.type || "unknown";
+      trackJourneyExit(journey.steps.map(s => s.type).join("-"), exitStep);
+    }
     (async () => {
       try {
         const timeOfDay = new Date().getHours() < 12 ? "morning" : new Date().getHours() < 17 ? "afternoon" : new Date().getHours() < 21 ? "evening" : "night";

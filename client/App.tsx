@@ -25,6 +25,7 @@ import {
 
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/query-client";
+import { trackAppOpen } from "@/lib/analytics";
 
 import RootStackNavigator from "@/navigation/RootStackNavigator";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -66,6 +67,10 @@ function AppWithProviders() {
       SplashScreen.hideAsync();
     }
   }, [fontsLoaded, fontError]);
+
+  useEffect(() => {
+    trackAppOpen();
+  }, []);
 
   if (!fontsLoaded && !fontError) {
     return (

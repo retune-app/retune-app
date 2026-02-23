@@ -35,7 +35,7 @@ The application employs a "Serene Empowerment" aesthetic, featuring Primary Gold
 - **AI Mood Check-in**: An ephemeral system that analyzes user mood across 10 starting moods and 9 target moods to recommend personalized wellness paths (breathing, meditating, affirmations) using a vibe-powered multi-layer scoring engine for affirmation matching and creation theme suggestions.
 - **Micro-Meditations**: Ephemeral, AI-generated guided meditations tailored to current mood.
 - **AI Daily Greetings**: Context-aware, personalized messages based on user activity and mood journey history.
-- **User Analytics**: Tracks listening sessions, streaks, and category breakdowns.
+- **User Analytics**: Tracks listening sessions, streaks, and category breakdowns. Server-side event telemetry system (`analytics_events` table) tracks app opens, mood check-ins, journey flow (start/step/complete/exit), breathing sessions, affirmation creation/playback, and meditations. Client-side batching via `client/lib/analytics.ts` with auto-flush. Admin summary endpoint at `/api/admin/analytics/summary`.
 - **Sound Library**: A collection of 25 seamless ambient sound loops across 7 categories.
 - **Authentication**: Session-based for web, token-based for mobile. Redesigned auth screens feature a fixed flex layout, wordmark, and unified button heights.
 - **Daily Reminders**: A flexible notification system for breathing or affirmation sessions, with AI-generated messages.

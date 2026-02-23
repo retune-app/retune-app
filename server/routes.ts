@@ -31,6 +31,7 @@ import { registerBreathingRoutes } from "./routes/breathing-routes";
 import { registerReminderRoutes } from "./routes/reminder-routes";
 import { registerAdminRoutes, ADMIN_USER_IDS } from "./routes/admin-routes";
 import { registerDevRoutes } from "./routes/dev-routes";
+import { registerAnalyticsRoutes } from "./routes/analytics-routes";
 
 // Rate limiters to prevent API abuse
 const aiGenerationLimiter = rateLimit({
@@ -3923,6 +3924,8 @@ Rules for tone:
   registerAdminRoutes(app, generateAudio, getPillarVoiceConfig);
 
   registerDevRoutes(app, requireAuth);
+
+  registerAnalyticsRoutes(app);
 
   // Set voice cloning consent (required before recording)
   app.post("/api/user/voice-consent", requireAuth, async (req: AuthenticatedRequest, res: Response) => {

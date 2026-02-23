@@ -56,6 +56,40 @@ export function getApiUrl(): string {
   return url.href.replace(/\/$/, "");
 }
 
+const SERVER_UNAVAILABLE_MSG = "We apologize for the inconvenience — we're currently updating the app. Please try again in a moment.";
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 2000;
+
+function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function fetchWithRetry(
+  input: RequestInfo,
+  init?: RequestInit,
+  retries = MAX_RETRIES,
+): Promise<Response> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch(input, init);
+      if (res.status >= 500 && attempt < retries) {
+        console.warn(`[API retry] Server returned ${res.status}, retrying in ${RETRY_DELAY_MS}ms (attempt ${attempt + 1}/${retries})`);
+        await sleep(RETRY_DELAY_MS);
+        continue;
+      }
+      return res;
+    } catch (err) {
+      if (attempt < retries) {
+        console.warn(`[API retry] Network error, retrying in ${RETRY_DELAY_MS}ms (attempt ${attempt + 1}/${retries})`);
+        await sleep(RETRY_DELAY_MS);
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw new Error("Unreachable");
+}
+
 function logApiError(context: string, method: string, url: string, status: number, body: string) {
   const isHtml = body.startsWith("<!") || body.startsWith("<html");
   console.error(
@@ -92,22 +126,22 @@ export async function apiRequest(
 
   let res: Response;
   try {
-    res = await fetch(url, {
+    res = await fetchWithRetry(url.toString(), {
       method,
       headers,
       body: data ? JSON.stringify(data) : undefined,
       credentials: "include",
     });
   } catch (err) {
-    console.error(`[API network] ${method} ${url.pathname} failed — server unreachable`, err);
-    throw new Error("We apologize for the inconvenience — we're currently updating the app. Please try again in a moment.");
+    console.error(`[API network] ${method} ${url.pathname} failed — server unreachable after retries`, err);
+    throw new Error(SERVER_UNAVAILABLE_MSG);
   }
 
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
     logApiError("mutation", method, url.pathname, res.status, text);
     if (res.status >= 500) {
-      throw new Error("We apologize for the inconvenience — we're currently updating the app. Please try again in a moment.");
+      throw new Error(SERVER_UNAVAILABLE_MSG);
     }
     throw new Error(`${res.status}: ${text}`);
   }
@@ -132,13 +166,13 @@ export const getQueryFn: <T>(options: {
 
     let res: Response;
     try {
-      res = await fetch(url, {
+      res = await fetchWithRetry(url.toString(), {
         credentials: "include",
         headers,
       });
     } catch (err) {
-      console.error(`[API network] GET ${url.pathname} failed — server unreachable`, err);
-      throw new Error("We apologize for the inconvenience — we're currently updating the app. Please try again in a moment.");
+      console.error(`[API network] GET ${url.pathname} failed — server unreachable after retries`, err);
+      throw new Error(SERVER_UNAVAILABLE_MSG);
     }
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
@@ -149,7 +183,7 @@ export const getQueryFn: <T>(options: {
       const text = (await res.text()) || res.statusText;
       logApiError("query", "GET", url.pathname, res.status, text);
       if (res.status >= 500) {
-        throw new Error("We apologize for the inconvenience — we're currently updating the app. Please try again in a moment.");
+        throw new Error(SERVER_UNAVAILABLE_MSG);
       }
       throw new Error(`${res.status}: ${text}`);
     }
@@ -164,7 +198,12 @@ export const queryClient = new QueryClient({
       refetchInterval: false,
       refetchOnWindowFocus: false,
       staleTime: Infinity,
-      retry: false,
+      retry: (failureCount, error) => {
+        if (error?.message === SERVER_UNAVAILABLE_MSG) return false;
+        if (error?.message?.includes("401")) return false;
+        return failureCount < 2;
+      },
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
     },
     mutations: {
       retry: false,

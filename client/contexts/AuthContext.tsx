@@ -203,7 +203,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, devicePlatform: Platform.OS }),
       });
 
       const data = await response.json();
@@ -231,7 +231,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify(params),
+        body: JSON.stringify({ ...params, devicePlatform: Platform.OS }),
       });
 
       const contentType = response.headers.get("content-type");

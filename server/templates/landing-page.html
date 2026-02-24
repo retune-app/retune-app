@@ -2524,6 +2524,14 @@
         });
       });
     })();
+
+    (function() {
+      var params = new URLSearchParams(window.location.search);
+      var ref = params.get('ref');
+      if (ref) {
+        try { localStorage.setItem('retuned_ref', ref); } catch(e) {}
+      }
+    })();
   </script>
 </body>
 </html>

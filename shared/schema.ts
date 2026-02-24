@@ -416,6 +416,17 @@ export const insertJourneyCompletionSchema = createInsertSchema(journeyCompletio
 export type JourneyCompletion = typeof journeyCompletions.$inferSelect;
 export type InsertJourneyCompletion = z.infer<typeof insertJourneyCompletionSchema>;
 
+export const serverErrors = pgTable("server_errors", {
+  id: serial("id").primaryKey(),
+  level: text("level").notNull().default("error"),
+  component: text("component"),
+  message: text("message").notNull(),
+  stack: text("stack"),
+  metadata: jsonb("metadata"),
+  resolved: boolean("resolved").default(false),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
 export const analyticsEvents = pgTable("analytics_events", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }),

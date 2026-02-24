@@ -3,8 +3,8 @@ import path from "path";
 import fs from "fs";
 import { requireAuth, type AuthenticatedRequest } from "../auth";
 import { db } from "../db";
-import { affirmations } from "@shared/schema";
-import { eq } from "drizzle-orm";
+import { affirmations, serverErrors, users, journeyCompletions, listeningSessions, breathingSessions, analyticsEvents } from "@shared/schema";
+import { eq, desc, sql, gte } from "drizzle-orm";
 import { generateSoundEffect } from "../replit_integrations/elevenlabs/client";
 import { findInactiveVoices, runVoiceRotation, getVoiceSlotStats } from "../voice-rotation";
 
@@ -196,6 +196,90 @@ export function registerAdminRoutes(
 
   app.patch("/api/admin/users/:userId/tts-provider", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     return res.status(410).json({ error: "TTS provider switching is temporarily disabled. All users use ElevenLabs." });
+  });
+
+  app.get("/api/admin/errors", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    if (!ADMIN_USER_IDS.has(req.userId!)) {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+    try {
+      const limit = Math.min(parseInt(req.query.limit as string) || 50, 500);
+      const errors = await db
+        .select()
+        .from(serverErrors)
+        .orderBy(desc(serverErrors.createdAt))
+        .limit(limit);
+      res.json({ errors, count: errors.length });
+    } catch (error) {
+      console.error("Error fetching server errors:", error);
+      res.status(500).json({ error: "Failed to fetch server errors" });
+    }
+  });
+
+  app.patch("/api/admin/errors/:id/resolve", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    if (!ADMIN_USER_IDS.has(req.userId!)) {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+    try {
+      const errorId = parseInt(req.params.id as string);
+      if (isNaN(errorId)) {
+        return res.status(400).json({ error: "Invalid error ID" });
+      }
+      const [updated] = await db
+        .update(serverErrors)
+        .set({ resolved: true })
+        .where(eq(serverErrors.id, errorId))
+        .returning();
+      if (!updated) {
+        return res.status(404).json({ error: "Error not found" });
+      }
+      res.json({ success: true, error: updated });
+    } catch (error) {
+      console.error("Error resolving server error:", error);
+      res.status(500).json({ error: "Failed to resolve error" });
+    }
+  });
+
+  app.get("/api/admin/backup", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    if (!ADMIN_USER_IDS.has(req.userId!)) {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+    try {
+      const usersData = await db.select({
+        id: users.id,
+        email: users.email,
+        name: users.name,
+        authProvider: users.authProvider,
+        country: users.country,
+        city: users.city,
+        createdAt: users.createdAt,
+        lastActiveAt: users.lastActiveAt,
+        devicePlatform: users.devicePlatform,
+        signupSource: users.signupSource,
+        hasVoiceSample: users.hasVoiceSample,
+        subscriptionTier: users.subscriptionTier,
+        role: users.role,
+      }).from(users);
+
+      const affirmationsData = await db.select().from(affirmations);
+      const journeyCompletionsData = await db.select().from(journeyCompletions);
+      const listeningSessionsData = await db.select().from(listeningSessions);
+      const breathingSessionsData = await db.select().from(breathingSessions);
+      const analyticsEventsData = await db.select().from(analyticsEvents);
+
+      res.json({
+        timestamp: new Date().toISOString(),
+        users: usersData,
+        affirmations: affirmationsData,
+        journey_completions: journeyCompletionsData,
+        listening_sessions: listeningSessionsData,
+        breathing_sessions: breathingSessionsData,
+        analytics_events: analyticsEventsData,
+      });
+    } catch (error) {
+      console.error("Error creating backup:", error);
+      res.status(500).json({ error: "Failed to create backup" });
+    }
   });
 }
 

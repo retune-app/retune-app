@@ -4,7 +4,7 @@ import session from "express-session";
 import type { Express, Request, Response, NextFunction } from "express";
 import { db } from "./db";
 import { users, authTokens } from "@shared/schema";
-import { eq, and, gt } from "drizzle-orm";
+import { eq, and, gt, lt } from "drizzle-orm";
 import { getGeoFromIp, getClientIp } from "./geolocation";
 
 // Simple in-memory rate limiting for auth endpoints
@@ -389,6 +389,16 @@ export function setupAuth(app: Express) {
       res.status(500).json({ error: "Failed to get user" });
     }
   });
+
+  // Periodic cleanup of expired auth tokens (runs every 6 hours)
+  setInterval(async () => {
+    try {
+      await db.delete(authTokens).where(lt(authTokens.expiresAt, new Date()));
+      console.log(JSON.stringify({ level: "INFO", ts: new Date().toISOString(), component: "auth", message: "Expired auth tokens cleaned up" }));
+    } catch (error) {
+      console.error("[auth] Token cleanup error:", error);
+    }
+  }, 6 * 60 * 60 * 1000);
 }
 
 // Generate auth token for mobile apps (stored in database for persistence)

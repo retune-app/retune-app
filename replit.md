@@ -41,6 +41,10 @@ The application employs a "Serene Empowerment" aesthetic, featuring Primary Gold
 - **Daily Reminders**: A flexible notification system for breathing or affirmation sessions, with AI-generated messages.
 - **Security & Privacy**: Explicit voice consent, immediate deletion of voice recordings post-cloning, usage limits, rate limiting, and GDPR-compliant data deletion.
 - **First-Time User Experience (FTUE)**: Includes onboarding, deferred voice setup, first-play celebrations, and contextual hints.
+- **Error Tracking**: Critical server errors logged to `server_errors` database table via `server/error-tracker.ts`. Admin endpoints: GET `/api/admin/errors`, PATCH `/api/admin/errors/:id/resolve`. Process-level errors and HTTP 500s are automatically tracked.
+- **Admin Dashboard**: Server-rendered HTML at `/admin` (admin-only). Shows DAU, signups, top events, feature usage, user geography, platform breakdown, recent errors, daily signup chart. Powered by `/api/admin/dashboard-data` endpoint. Includes backup download button.
+- **Database Backup**: GET `/api/admin/backup` exports users (sans password), affirmations, journey completions, listening sessions, breathing sessions, and analytics events as JSON.
+- **Auth Token Cleanup**: Automated cleanup runs every 6 hours, deleting expired auth tokens from the database.
 - **Server Resilience**: Structured JSON logging, process-level crash handlers, subsystem isolation, `/api/health` endpoint, client-side API error logging, and API catch-all. Server starts accepting connections before database verification, uses connection pooling with timeouts, and provides a friendly user-facing error message during outages.
 
 ## External Dependencies

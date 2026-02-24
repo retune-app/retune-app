@@ -4,6 +4,9 @@ import { registerRoutes } from "./routes";
 import * as fs from "fs";
 import * as path from "path";
 import { pool } from "./db";
+import { requireAuth, type AuthenticatedRequest } from "./auth";
+import { ADMIN_USER_IDS } from "./routes/admin-routes";
+import { trackError } from "./error-tracker";
 
 const app = express();
 const SERVER_VERSION = "1.7.3";
@@ -57,6 +60,7 @@ function setupProcessHandlers() {
       error: err.message,
       stack: err.stack,
     });
+    trackError("process", `Uncaught exception: ${err.message}`, err);
   });
 
   process.on("unhandledRejection", (reason) => {
@@ -66,6 +70,7 @@ function setupProcessHandlers() {
       error: message,
       stack,
     });
+    trackError("process", `Unhandled rejection: ${message}`, reason instanceof Error ? reason : undefined);
   });
 
   logInfo("process", "Process-level error handlers installed");
@@ -336,6 +341,20 @@ function configureExpoAndLanding(app: express.Application) {
     }
   });
 
+  app.get("/admin", requireAuth, (req: Request, res: Response) => {
+    const adminReq = req as AuthenticatedRequest;
+    if (!ADMIN_USER_IDS.has(adminReq.userId!)) {
+      return res.status(403).send("Access denied");
+    }
+    const dashboardPath = path.resolve(process.cwd(), "server", "templates", "admin-dashboard.html");
+    if (fs.existsSync(dashboardPath)) {
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      res.sendFile(dashboardPath);
+    } else {
+      res.status(404).send("Admin dashboard not found");
+    }
+  });
+
   app.use((req: Request, res: Response, next: NextFunction) => {
     if (req.path.startsWith("/api")) {
       return next();
@@ -435,6 +454,14 @@ function setupErrorHandler(app: express.Application) {
       error: message,
       stack: err instanceof Error ? err.stack : undefined,
     });
+
+    if (status >= 500) {
+      trackError("http", message, err instanceof Error ? err : undefined, {
+        method: req.method,
+        path: req.path,
+        status,
+      });
+    }
 
     if (res.headersSent) {
       return next(err);

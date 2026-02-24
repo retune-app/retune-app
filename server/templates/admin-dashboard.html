@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - RETUNED</title>
+  <link rel="icon" type="image/png" href="/landing-assets/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #FAFAFA;
+      --bg-warm: #F7F4EF;
+      --text: #2C2C2C;
+      --text-muted: #6B6B6B;
+      --text-light: #8A8A8A;
+      --believe: #C9A227;
+      --believe-light: #D4B545;
+      --believe-glow: rgba(201, 162, 39, 0.15);
+      --believe-bg: rgba(201, 162, 39, 0.08);
+      --breathe: #2EC4B6;
+      --breathe-bg: rgba(46, 196, 182, 0.08);
+      --meditate: #7C3AED;
+      --meditate-bg: rgba(124, 58, 237, 0.08);
+      --white: #FFFFFF;
+      --border: rgba(44, 44, 44, 0.1);
+      --card-shadow: 0 2px 20px rgba(0,0,0,0.06);
+      --navy: #1B2B4B;
+      --navy-light: #2A3F6B;
+      --danger: #E74C3C;
+      --success: #27AE60;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    h1, h2 {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+
+    h3, h4 {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 clamp(16px, 4vw, 40px);
+    }
+
+    .top-bar {
+      background: var(--navy);
+      padding: 16px 0;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+    }
+
+    .top-bar .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .top-bar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .top-bar-left img {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+    }
+
+    .top-bar-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      letter-spacing: 3px;
+    }
+
+    .top-bar-title span {
+      color: var(--believe);
+      margin-left: 6px;
+    }
+
+    .top-bar-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+    }
+
+    .btn-ghost {
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+    }
+
+    .btn-ghost:hover { background: rgba(255,255,255,0.2); }
+
+    .btn-gold {
+      background: var(--believe);
+      color: #fff;
+    }
+
+    .btn-gold:hover { background: var(--believe-light); }
+
+    .btn-sm {
+      padding: 4px 10px;
+      font-size: 12px;
+      border-radius: 6px;
+    }
+
+    .btn-danger {
+      background: transparent;
+      color: var(--danger);
+      border: 1px solid var(--danger);
+    }
+
+    .btn-danger:hover { background: rgba(231,76,60,0.08); }
+
+    .btn-success-outline {
+      background: transparent;
+      color: var(--success);
+      border: 1px solid var(--success);
+    }
+
+    .period-selector {
+      display: flex;
+      background: rgba(255,255,255,0.08);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .period-btn {
+      padding: 7px 14px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.6);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .period-btn.active {
+      background: var(--believe);
+      color: #fff;
+    }
+
+    .period-btn:hover:not(.active) { color: #fff; }
+
+    .dashboard {
+      padding: 28px 0 80px;
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: var(--card-shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+    }
+
+    .stat-card:nth-child(1)::before { background: var(--believe); }
+    .stat-card:nth-child(2)::before { background: var(--breathe); }
+    .stat-card:nth-child(3)::before { background: var(--meditate); }
+    .stat-card:nth-child(4)::before { background: var(--believe); }
+
+    .stat-card-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-card-value {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .stat-card-value.loading {
+      color: var(--text-light);
+      font-size: 20px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 400;
+    }
+
+    .section-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .section-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      box-shadow: var(--card-shadow);
+    }
+
+    .section-card.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .section-card h3 {
+      font-size: 16px;
+      color: var(--text);
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--believe);
+      display: inline-block;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-light);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      font-size: 14px;
+      color: var(--text-muted);
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    td:first-child { color: var(--text); font-weight: 500; }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .badge-resolved {
+      background: rgba(39, 174, 96, 0.1);
+      color: var(--success);
+    }
+
+    .badge-open {
+      background: rgba(231, 76, 60, 0.1);
+      color: var(--danger);
+    }
+
+    .chart-container {
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+      height: 140px;
+      padding-top: 10px;
+    }
+
+    .chart-bar-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100%;
+      justify-content: flex-end;
+    }
+
+    .chart-bar {
+      width: 100%;
+      max-width: 36px;
+      background: linear-gradient(180deg, var(--believe), var(--believe-light));
+      border-radius: 4px 4px 0 0;
+      min-height: 2px;
+      transition: height 0.5s ease;
+    }
+
+    .chart-label {
+      font-size: 10px;
+      color: var(--text-light);
+      margin-top: 6px;
+      text-align: center;
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      max-height: 50px;
+      overflow: hidden;
+    }
+
+    .chart-count {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .loading-text {
+      color: var(--text-light);
+      font-size: 14px;
+      padding: 20px 0;
+      text-align: center;
+    }
+
+    .error-banner {
+      background: rgba(231,76,60,0.08);
+      border: 1px solid rgba(231,76,60,0.2);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      color: var(--danger);
+      font-size: 14px;
+      font-weight: 500;
+      display: none;
+    }
+
+    .error-message-cell {
+      max-width: 300px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .timestamp-cell {
+      font-size: 12px;
+      color: var(--text-light);
+      white-space: nowrap;
+    }
+
+    footer {
+      padding: 32px 0;
+      text-align: center;
+      border-top: 1px solid var(--border);
+    }
+
+    footer p {
+      font-size: 13px;
+      color: var(--text-light);
+    }
+
+    @media (max-width: 900px) {
+      .cards-grid { grid-template-columns: repeat(2, 1fr); }
+      .section-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 600px) {
+      .cards-grid { grid-template-columns: 1fr; }
+      .top-bar-title { font-size: 14px; letter-spacing: 2px; }
+      .period-btn { padding: 6px 10px; font-size: 12px; }
+      .stat-card-value { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="top-bar">
+    <div class="container">
+      <div class="top-bar-left">
+        <img src="/landing-assets/logo.png" width="34" height="34" alt="Retuned">
+        <div class="top-bar-title">RETUNED<span>ADMIN</span></div>
+      </div>
+      <div class="top-bar-actions">
+        <div class="period-selector">
+          <button class="period-btn active" data-days="7">7d</button>
+          <button class="period-btn" data-days="30">30d</button>
+          <button class="period-btn" data-days="90">90d</button>
+        </div>
+        <a href="/api/admin/backup" class="btn btn-gold">Download Backup</a>
+        <a href="/" class="btn btn-ghost">Home</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="dashboard">
+    <div class="container">
+
+      <div id="error-banner" class="error-banner"></div>
+
+      <div class="cards-grid">
+        <div class="stat-card">
+          <div class="stat-card-label">Total Users</div>
+          <div class="stat-card-value loading" id="stat-total-users">...</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Active Users</div>
+          <div class="stat-card-value loading" id="stat-active-users">...</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Total Events</div>
+          <div class="stat-card-value loading" id="stat-total-events">...</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">New Signups</div>
+          <div class="stat-card-value loading" id="stat-new-signups">...</div>
+        </div>
+      </div>
+
+      <div class="section-card full-width" style="margin-bottom: 20px;">
+        <h3>Daily Signups (14 days)</h3>
+        <div class="chart-container" id="signups-chart">
+          <div class="loading-text">Loading chart...</div>
+        </div>
+      </div>
+
+      <div class="section-grid">
+        <div class="section-card">
+          <h3>Top Events</h3>
+          <div id="top-events-table">
+            <div class="loading-text">Loading...</div>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <h3>User Geography</h3>
+          <div id="geography-table">
+            <div class="loading-text">Loading...</div>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <h3>Feature Usage</h3>
+          <div id="feature-usage-table">
+            <div class="loading-text">Loading...</div>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <h3>Platform Breakdown</h3>
+          <div id="platform-table">
+            <div class="loading-text">Loading...</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-card full-width" style="margin-bottom: 20px;">
+        <h3>Recent Errors</h3>
+        <div id="errors-table">
+          <div class="loading-text">Loading...</div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>&copy; 2026 Retuned Admin Dashboard</p>
+    </div>
+  </footer>
+
+  <script>
+    var currentDays = 7;
+
+    function showError(msg) {
+      var banner = document.getElementById('error-banner');
+      banner.textContent = msg;
+      banner.style.display = 'block';
+    }
+
+    function hideError() {
+      document.getElementById('error-banner').style.display = 'none';
+    }
+
+    function formatDate(dateStr) {
+      var d = new Date(dateStr);
+      return (d.getMonth() + 1) + '/' + d.getDate();
+    }
+
+    function formatTimestamp(ts) {
+      var d = new Date(ts);
+      return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function renderTable(rows, columns) {
+      if (!rows || rows.length === 0) {
+        return '<div class="loading-text">No data available</div>';
+      }
+      var html = '<table><thead><tr>';
+      columns.forEach(function(col) {
+        html += '<th>' + col.label + '</th>';
+      });
+      html += '</tr></thead><tbody>';
+      rows.forEach(function(row) {
+        html += '<tr>';
+        columns.forEach(function(col) {
+          html += '<td>' + (col.render ? col.render(row) : (row[col.key] || '-')) + '</td>';
+        });
+        html += '</tr>';
+      });
+      html += '</tbody></table>';
+      return html;
+    }
+
+    function renderChart(data) {
+      var container = document.getElementById('signups-chart');
+      if (!data || data.length === 0) {
+        container.innerHTML = '<div class="loading-text">No signup data</div>';
+        return;
+      }
+      var maxCount = Math.max.apply(null, data.map(function(d) { return d.count; }));
+      if (maxCount === 0) maxCount = 1;
+      var html = '';
+      data.forEach(function(d) {
+        var height = Math.max(2, (d.count / maxCount) * 120);
+        html += '<div class="chart-bar-wrapper">';
+        html += '<div class="chart-count">' + d.count + '</div>';
+        html += '<div class="chart-bar" style="height:' + height + 'px"></div>';
+        html += '<div class="chart-label">' + formatDate(d.date) + '</div>';
+        html += '</div>';
+      });
+      container.innerHTML = html;
+    }
+
+    function resolveError(id, btn) {
+      btn.disabled = true;
+      btn.textContent = '...';
+      fetch('/api/admin/errors/' + id + '/resolve', {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (data.success) {
+          var row = btn.closest('tr');
+          var badgeCell = row.querySelector('.status-cell');
+          if (badgeCell) badgeCell.innerHTML = '<span class="badge badge-resolved">Resolved</span>';
+          btn.remove();
+        } else {
+          btn.disabled = false;
+          btn.textContent = 'Resolve';
+        }
+      })
+      .catch(function() {
+        btn.disabled = false;
+        btn.textContent = 'Resolve';
+      });
+    }
+
+    function loadDashboard() {
+      hideError();
+
+      document.getElementById('stat-total-users').className = 'stat-card-value loading';
+      document.getElementById('stat-total-users').textContent = '...';
+      document.getElementById('stat-active-users').className = 'stat-card-value loading';
+      document.getElementById('stat-active-users').textContent = '...';
+      document.getElementById('stat-total-events').className = 'stat-card-value loading';
+      document.getElementById('stat-total-events').textContent = '...';
+      document.getElementById('stat-new-signups').className = 'stat-card-value loading';
+      document.getElementById('stat-new-signups').textContent = '...';
+
+      var summaryPromise = fetch('/api/admin/analytics/summary?days=' + currentDays, { credentials: 'include' })
+        .then(function(res) {
+          if (!res.ok) throw new Error('Summary: ' + res.status);
+          return res.json();
+        });
+
+      var dashboardPromise = fetch('/api/admin/dashboard-data?days=' + currentDays, { credentials: 'include' })
+        .then(function(res) {
+          if (!res.ok) throw new Error('Dashboard data: ' + res.status);
+          return res.json();
+        });
+
+      var errorsPromise = fetch('/api/admin/errors?limit=20', { credentials: 'include' })
+        .then(function(res) {
+          if (!res.ok) throw new Error('Errors: ' + res.status);
+          return res.json();
+        });
+
+      summaryPromise.then(function(summary) {
+        var el = document.getElementById('stat-total-events');
+        el.textContent = Number(summary.totalEvents).toLocaleString();
+        el.className = 'stat-card-value';
+
+        document.getElementById('top-events-table').innerHTML = renderTable(summary.topEvents, [
+          { key: 'eventName', label: 'Event' },
+          { key: 'count', label: 'Count', render: function(r) { return Number(r.count).toLocaleString(); } }
+        ]);
+      }).catch(function(err) {
+        showError('Failed to load analytics summary: ' + err.message);
+      });
+
+      dashboardPromise.then(function(data) {
+        var totalEl = document.getElementById('stat-total-users');
+        totalEl.textContent = Number(data.totalUsers).toLocaleString();
+        totalEl.className = 'stat-card-value';
+
+        var activeEl = document.getElementById('stat-active-users');
+        activeEl.textContent = Number(data.activeUsers7d).toLocaleString();
+        activeEl.className = 'stat-card-value';
+
+        var signupsEl = document.getElementById('stat-new-signups');
+        signupsEl.textContent = Number(data.newSignups7d).toLocaleString();
+        signupsEl.className = 'stat-card-value';
+
+        document.getElementById('geography-table').innerHTML = renderTable(data.geography, [
+          { key: 'country', label: 'Country' },
+          { key: 'count', label: 'Users', render: function(r) { return Number(r.count).toLocaleString(); } }
+        ]);
+
+        document.getElementById('feature-usage-table').innerHTML = renderTable(data.featureUsage, [
+          { key: 'feature', label: 'Feature' },
+          { key: 'count', label: 'Events', render: function(r) { return Number(r.count).toLocaleString(); } }
+        ]);
+
+        document.getElementById('platform-table').innerHTML = renderTable(data.platformBreakdown, [
+          { key: 'platform', label: 'Platform' },
+          { key: 'count', label: 'Users', render: function(r) { return Number(r.count).toLocaleString(); } }
+        ]);
+
+        renderChart(data.dailySignups);
+      }).catch(function(err) {
+        showError('Failed to load dashboard data: ' + err.message);
+      });
+
+      errorsPromise.then(function(data) {
+        if (!data.errors || data.errors.length === 0) {
+          document.getElementById('errors-table').innerHTML = '<div class="loading-text">No errors recorded</div>';
+          return;
+        }
+        var html = '<table><thead><tr><th>Component</th><th>Message</th><th>Time</th><th>Status</th><th></th></tr></thead><tbody>';
+        data.errors.forEach(function(err) {
+          html += '<tr>';
+          html += '<td>' + (err.component || '-') + '</td>';
+          html += '<td class="error-message-cell" title="' + (err.message || '').replace(/"/g, '&quot;') + '">' + (err.message || '-') + '</td>';
+          html += '<td class="timestamp-cell">' + formatTimestamp(err.createdAt) + '</td>';
+          html += '<td class="status-cell">';
+          if (err.resolved) {
+            html += '<span class="badge badge-resolved">Resolved</span>';
+          } else {
+            html += '<span class="badge badge-open">Open</span>';
+          }
+          html += '</td>';
+          html += '<td>';
+          if (!err.resolved) {
+            html += '<button class="btn btn-sm btn-success-outline" onclick="resolveError(' + err.id + ', this)">Resolve</button>';
+          }
+          html += '</td>';
+          html += '</tr>';
+        });
+        html += '</tbody></table>';
+        document.getElementById('errors-table').innerHTML = html;
+      }).catch(function(err) {
+        showError('Failed to load errors: ' + err.message);
+      });
+    }
+
+    document.querySelectorAll('.period-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.period-btn').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        currentDays = parseInt(btn.getAttribute('data-days'));
+        loadDashboard();
+      });
+    });
+
+    loadDashboard();
+  </script>
+
+</body>
+</html>

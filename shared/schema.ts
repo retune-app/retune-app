@@ -34,6 +34,13 @@ export const users = pgTable("users", {
   subscriptionTier: text("subscription_tier").default("free"), // 'free' or 'premium'
   favoriteBreathingTechniqueId: text("favorite_breathing_technique_id"),
   active: boolean("active").default(true),
+  country: text("country"),
+  city: text("city"),
+  timezone: text("timezone"),
+  lastActiveAt: timestamp("last_active_at"),
+  signupSource: text("signup_source"),
+  lastLoginIp: text("last_login_ip"),
+  devicePlatform: text("device_platform"),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 

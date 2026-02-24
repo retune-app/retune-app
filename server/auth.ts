@@ -5,6 +5,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { db } from "./db";
 import { users, authTokens } from "@shared/schema";
 import { eq, and, gt } from "drizzle-orm";
+import { getGeoFromIp, getClientIp } from "./geolocation";
 
 // Simple in-memory rate limiting for auth endpoints
 const loginAttempts = new Map<string, { count: number; resetTime: number }>();
@@ -79,7 +80,7 @@ export function setupAuth(app: Express) {
   // Register new user (signup)
   app.post("/api/auth/signup", async (req: Request, res: Response) => {
     try {
-      const { name, email, password } = req.body;
+      const { name, email, password, signupSource, devicePlatform } = req.body;
 
       if (!email || !password) {
         return res.status(400).json({ error: "Email and password are required" });
@@ -103,6 +104,9 @@ export function setupAuth(app: Express) {
         return res.status(400).json({ error: "Email already registered" });
       }
 
+      const clientIp = getClientIp(req);
+      const geo = await getGeoFromIp(clientIp);
+
       // Hash password and create user
       const hashedPassword = await hashPassword(password);
       const [newUser] = await db
@@ -111,6 +115,13 @@ export function setupAuth(app: Express) {
           email: email.toLowerCase(),
           password: hashedPassword,
           name: name,
+          country: geo.country,
+          city: geo.city,
+          timezone: geo.timezone,
+          lastLoginIp: clientIp,
+          signupSource: signupSource || null,
+          devicePlatform: devicePlatform || null,
+          lastActiveAt: new Date(),
         })
         .returning();
 
@@ -185,6 +196,15 @@ export function setupAuth(app: Express) {
       // SECURITY: Reset rate limit on successful login
       resetRateLimit(clientIp);
 
+      const geo = await getGeoFromIp(clientIp);
+      await db.update(users).set({
+        country: geo.country || user.country,
+        city: geo.city || user.city,
+        timezone: geo.timezone || user.timezone,
+        lastLoginIp: clientIp,
+        lastActiveAt: new Date(),
+      }).where(eq(users.id, user.id));
+
       // Generate auth token for mobile apps
       const authToken = await generateAuthToken(user.id);
       
@@ -245,7 +265,7 @@ export function setupAuth(app: Express) {
   // OAuth login (Google/Apple) - token verification
   app.post("/api/auth/oauth", async (req: Request, res: Response) => {
     try {
-      const { email, name, provider, providerId, avatarUrl } = req.body;
+      const { email, name, provider, providerId, avatarUrl, signupSource, devicePlatform } = req.body;
 
       if (!email || !provider || !providerId) {
         return res.status(400).json({ error: "Email, provider, and providerId are required" });
@@ -254,6 +274,9 @@ export function setupAuth(app: Express) {
       if (!["google", "apple"].includes(provider)) {
         return res.status(400).json({ error: "Invalid auth provider" });
       }
+
+      const clientIp = getClientIp(req);
+      const geo = await getGeoFromIp(clientIp);
 
       // Check if user exists by email
       const [existingUser] = await db
@@ -264,22 +287,21 @@ export function setupAuth(app: Express) {
       let user;
 
       if (existingUser) {
-        // Update existing user's OAuth info if needed
-        if (!existingUser.providerId || existingUser.authProvider !== provider) {
-          [user] = await db
-            .update(users)
-            .set({
-              authProvider: provider,
-              providerId: providerId,
-              avatarUrl: avatarUrl || existingUser.avatarUrl,
-            })
-            .where(eq(users.id, existingUser.id))
-            .returning();
-        } else {
-          user = existingUser;
-        }
+        [user] = await db
+          .update(users)
+          .set({
+            authProvider: existingUser.providerId ? existingUser.authProvider : provider,
+            providerId: existingUser.providerId || providerId,
+            avatarUrl: avatarUrl || existingUser.avatarUrl,
+            country: geo.country || existingUser.country,
+            city: geo.city || existingUser.city,
+            timezone: geo.timezone || existingUser.timezone,
+            lastLoginIp: clientIp,
+            lastActiveAt: new Date(),
+          })
+          .where(eq(users.id, existingUser.id))
+          .returning();
       } else {
-        // Create new OAuth user
         [user] = await db
           .insert(users)
           .values({
@@ -288,6 +310,13 @@ export function setupAuth(app: Express) {
             authProvider: provider,
             providerId: providerId,
             avatarUrl: avatarUrl,
+            country: geo.country,
+            city: geo.city,
+            timezone: geo.timezone,
+            lastLoginIp: clientIp,
+            signupSource: signupSource || null,
+            devicePlatform: devicePlatform || null,
+            lastActiveAt: new Date(),
           })
           .returning();
       }
@@ -428,11 +457,23 @@ function asyncMiddleware(fn: (req: AuthenticatedRequest, res: Response, next: Ne
   };
 }
 
+const lastActiveCache = new Map<string, number>();
+const LAST_ACTIVE_THROTTLE = 5 * 60 * 1000;
+
+function updateLastActive(userId: string) {
+  const now = Date.now();
+  const last = lastActiveCache.get(userId) || 0;
+  if (now - last < LAST_ACTIVE_THROTTLE) return;
+  lastActiveCache.set(userId, now);
+  db.update(users).set({ lastActiveAt: new Date() }).where(eq(users.id, userId)).catch(() => {});
+}
+
 // Middleware to require authentication
 async function requireAuthAsync(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
   // First try session-based auth (works on web)
   if (req.session.userId) {
     req.userId = req.session.userId;
+    updateLastActive(req.session.userId);
     next();
     return;
   }
@@ -444,6 +485,7 @@ async function requireAuthAsync(req: AuthenticatedRequest, res: Response, next: 
       const userId = await verifyAuthToken(authToken);
       if (userId) {
         req.userId = userId;
+        updateLastActive(userId);
         next();
         return;
       }

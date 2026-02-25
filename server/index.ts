@@ -9,7 +9,7 @@ import { ADMIN_USER_IDS } from "./routes/admin-routes";
 import { trackError } from "./error-tracker";
 
 const app = express();
-const SERVER_VERSION = "1.7.3";
+const SERVER_VERSION = "1.7.4";
 
 declare module "http" {
   interface IncomingMessage {

@@ -1,5 +1,86 @@
 # RETUNED Changelog
 
+## Version 1.7.4 (Build 1) — February 25, 2026
+
+### Client-Side Analytics System
+- New `client/lib/analytics.ts` module with batched event tracking and auto-flush on a timed interval.
+- Tracks app opens, mood check-ins, journey flow (start/step/complete/exit), breathing sessions, affirmation creation/playback, and meditations.
+- Analytics hooks integrated into App.tsx, BreathingScreen, CreateScreen, MoodJourneyScreen, PlayerScreen, and MoodCheckin.
+
+### Server Analytics Endpoints
+- New `server/routes/analytics-routes.ts` with event ingestion (`POST /api/analytics/events`) and admin summary endpoint (`GET /api/admin/analytics/summary`).
+- Admin dashboard data endpoint (`GET /api/admin/dashboard-data`) powers the new admin dashboard.
+
+### Admin Dashboard
+- Server-rendered HTML dashboard at `/admin` (admin-only access).
+- Shows DAU, signups, top events, feature usage, user geography, platform breakdown, recent errors, and a daily signup chart.
+- Includes a one-click database backup download button.
+
+### Error Tracking System
+- New `server/error-tracker.ts` with `trackError()` function and `server_errors` database table.
+- Process-level `uncaughtException`/`unhandledRejection` and HTTP 500 errors are automatically tracked.
+- Admin endpoints: `GET /api/admin/errors` and `PATCH /api/admin/errors/:id/resolve`.
+
+### Database Backup
+- `GET /api/admin/backup` exports users (sans password hash), affirmations, journey completions, listening sessions, breathing sessions, and analytics events as a JSON download.
+
+### IP-Based Geolocation
+- New `server/geolocation.ts` — captures country, city, and timezone on login/signup via ipwho.is (free, HTTPS, 24-hour in-memory cache).
+- New columns on users table: `country`, `city`, `timezone`.
+
+### User Activity Tracking
+- `last_active_at` column on users table, updated on authenticated requests (throttled to 5-minute intervals to reduce DB writes).
+
+### Referral Source Tracking
+- Landing page captures `?ref=` URL parameter and passes it to the mobile app on signup.
+- `referral_source` column on users table stores the originating referral.
+
+### Device Platform Tracking
+- `device_platform` column on users table, captured on signup and OAuth login.
+
+### Privacy Policy Update
+- Updated `server/templates/privacy-policy.html` to disclose IP-based location data, device platform, analytics events, and referral source collection.
+
+### Auth Token Cleanup
+- Automated cleanup job runs every 6 hours, deleting expired auth tokens from the database.
+
+### Dev Menu Removal
+- Removed development-only voice testing option from the settings screen.
+
+### Client-Side Retry Logic
+- Added automatic retry logic for failed API requests to improve app stability on unreliable connections.
+
+### Schema Changes
+- New tables: `analytics_events`, `server_errors`.
+- New user columns: `country`, `city`, `timezone`, `last_active_at`, `referral_source`, `device_platform`.
+
+### Files Changed
+- `client/lib/analytics.ts` — New client-side analytics module
+- `client/App.tsx` — Analytics initialization
+- `client/components/MoodCheckin.tsx` — Mood check-in event tracking
+- `client/contexts/AuthContext.tsx` — Device platform capture
+- `client/screens/BreathingScreen.tsx` — Breathing session event tracking
+- `client/screens/CreateScreen.tsx` — Affirmation creation event tracking
+- `client/screens/MoodJourneyScreen.tsx` — Journey flow event tracking
+- `client/screens/PlayerScreen.tsx` — Playback event tracking
+- `client/screens/ProfileScreen.tsx` — Dev option removal
+- `server/auth.ts` — Geolocation on login/signup, last_active_at throttle, token cleanup
+- `server/error-tracker.ts` — New error tracking module
+- `server/geolocation.ts` — New IP geolocation module
+- `server/index.ts` — Version 1.7.4, error tracking integration, token cleanup scheduler
+- `server/routes.ts` — Referral source on signup
+- `server/routes/admin-routes.ts` — Error and backup admin endpoints, dashboard route
+- `server/routes/analytics-routes.ts` — New analytics endpoints
+- `server/templates/admin-dashboard.html` — New admin dashboard UI
+- `server/templates/privacy-policy.html` — Privacy policy updates
+- `server/templates/landing-page.html` — Referral parameter capture
+- `shared/schema.ts` — New tables and columns
+- `app.json` — Version 1.7.4, build number 1
+- `CHANGELOG.md` — This entry
+- `replit.md` — Updated to reflect current state
+
+---
+
 ## Version 1.7.3 (Build 1) — February 21, 2026
 
 ### Orientation Transition Overlay

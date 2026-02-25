@@ -20,7 +20,7 @@ export async function getGeoFromIp(ip: string): Promise<GeoResult> {
   }
 
   try {
-    const response = await fetch(`http://ip-api.com/json/${cleanIp}?fields=country,city,timezone,status`, {
+    const response = await fetch(`https://ipwho.is/${cleanIp}`, {
       signal: AbortSignal.timeout(3000),
     });
 
@@ -30,14 +30,14 @@ export async function getGeoFromIp(ip: string): Promise<GeoResult> {
 
     const data = await response.json();
 
-    if (data.status === "fail") {
+    if (!data.success) {
       return { country: null, city: null, timezone: null };
     }
 
     const result: GeoResult = {
       country: data.country || null,
       city: data.city || null,
-      timezone: data.timezone || null,
+      timezone: data.timezone?.id || null,
     };
 
     geoCache.set(cleanIp, { result, expires: Date.now() + CACHE_TTL });

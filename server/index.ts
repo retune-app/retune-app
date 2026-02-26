@@ -581,6 +581,29 @@ function setupErrorHandler(app: express.Application) {
     },
   );
 
+  const gracefulShutdown = (signal: string) => {
+    logInfo("shutdown", `Received ${signal}, starting graceful shutdown`);
+    server.close(() => {
+      logInfo("shutdown", "HTTP server closed, draining database pool");
+      pool.end().then(() => {
+        logInfo("shutdown", "Database pool closed, exiting");
+        process.exit(0);
+      }).catch((err: unknown) => {
+        logError("shutdown", "Error closing database pool", {
+          error: err instanceof Error ? err.message : String(err),
+        });
+        process.exit(1);
+      });
+    });
+    setTimeout(() => {
+      logWarn("shutdown", "Graceful shutdown timed out after 15s, forcing exit");
+      process.exit(1);
+    }, 15000);
+  };
+
+  process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+  process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+
   try {
     const dbStart = Date.now();
     await pool.query("SELECT 1");

@@ -7,7 +7,7 @@ packages = ["python3", "python312Packages.numpy", "python312Packages.scipy"]
 
 [deployment]
 deploymentTarget = "vm"
-build = ["sh", "-c", "npm run expo:static:build && npm run server:build"]
+build = ["sh", "-c", "npm run server:build"]
 run = ["sh", "-c", "PORT=8081 npm run server:prod"]
 
 [[ports]]

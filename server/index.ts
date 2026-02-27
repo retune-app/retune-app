@@ -298,6 +298,10 @@ function configureExpoAndLanding(app: express.Application) {
     "landing-page.html",
   );
   const appName = getAppName();
+  let cachedTemplate = "";
+  try {
+    cachedTemplate = fs.readFileSync(templatePath, "utf-8");
+  } catch {}
 
   logInfo("startup", "Serving static Expo files with dynamic manifest routing");
 
@@ -370,16 +374,11 @@ function configureExpoAndLanding(app: express.Application) {
     }
 
     if (req.path === "/") {
-      const userAgent = req.header("user-agent") || "";
-      const isBrowser = userAgent.includes("Mozilla") || userAgent.includes("Chrome") || userAgent.includes("Safari");
-      if (!isBrowser) {
-        return res.status(200).json({ status: "ok", version: SERVER_VERSION });
-      }
-      const freshTemplate = fs.readFileSync(templatePath, "utf-8");
+      const template = cachedTemplate || fs.readFileSync(templatePath, "utf-8");
       return serveLandingPage({
         req,
         res,
-        landingPageTemplate: freshTemplate,
+        landingPageTemplate: template,
         appName,
       });
     }

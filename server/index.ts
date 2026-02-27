@@ -373,16 +373,6 @@ function configureExpoAndLanding(app: express.Application) {
       return serveExpoManifest(platform, req, res);
     }
 
-    if (req.path === "/") {
-      const template = cachedTemplate || fs.readFileSync(templatePath, "utf-8");
-      return serveLandingPage({
-        req,
-        res,
-        landingPageTemplate: template,
-        appName,
-      });
-    }
-
     next();
   });
 
@@ -485,14 +475,32 @@ function setupErrorHandler(app: express.Application) {
     env: process.env.NODE_ENV || "development",
   });
 
-  app.use((req: Request, res: Response, next: NextFunction) => {
-    if (req.path === "/__health") {
-      return res.status(200).send("ok");
+  const landingTemplatePath = path.resolve(process.cwd(), "server", "templates", "landing-page.html");
+  let landingHtmlCache = "";
+  try {
+    landingHtmlCache = fs.readFileSync(landingTemplatePath, "utf-8");
+  } catch {}
+
+  app.get("/__health", (_req: Request, res: Response) => {
+    res.status(200).send("ok");
+  });
+  app.get("/", (req: Request, res: Response) => {
+    const wantsHtml = (req.headers.accept || "").includes("text/html");
+    if (wantsHtml && landingHtmlCache) {
+      const forwardedProto = req.header("x-forwarded-proto");
+      const protocol = forwardedProto || req.protocol || "https";
+      const forwardedHost = req.header("x-forwarded-host");
+      const host = forwardedHost || req.get("host");
+      const baseUrl = `${protocol}://${host}`;
+      const html = landingHtmlCache
+        .replace(/BASE_URL_PLACEHOLDER/g, baseUrl)
+        .replace(/EXPS_URL_PLACEHOLDER/g, host || "")
+        .replace(/APP_NAME_PLACEHOLDER/g, getAppName());
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+      return res.status(200).send(html);
     }
-    if (req.path === "/" && !(req.headers.accept || "").includes("text/html")) {
-      return res.status(200).send("ok");
-    }
-    next();
+    res.status(200).send("ok");
   });
 
   try {

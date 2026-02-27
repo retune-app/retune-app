@@ -476,31 +476,26 @@ function setupErrorHandler(app: express.Application) {
   });
 
   const landingTemplatePath = path.resolve(process.cwd(), "server", "templates", "landing-page.html");
-  let landingHtmlCache = "";
+  let earlyLandingCache = "";
   try {
-    landingHtmlCache = fs.readFileSync(landingTemplatePath, "utf-8");
+    earlyLandingCache = fs.readFileSync(landingTemplatePath, "utf-8");
   } catch {}
 
   app.get("/__health", (_req: Request, res: Response) => {
     res.status(200).send("ok");
   });
   app.get("/", (req: Request, res: Response) => {
-    const wantsHtml = (req.headers.accept || "").includes("text/html");
-    if (wantsHtml && landingHtmlCache) {
-      const forwardedProto = req.header("x-forwarded-proto");
-      const protocol = forwardedProto || req.protocol || "https";
-      const forwardedHost = req.header("x-forwarded-host");
-      const host = forwardedHost || req.get("host");
-      const baseUrl = `${protocol}://${host}`;
-      const html = landingHtmlCache
-        .replace(/BASE_URL_PLACEHOLDER/g, baseUrl)
-        .replace(/EXPS_URL_PLACEHOLDER/g, host || "")
-        .replace(/APP_NAME_PLACEHOLDER/g, getAppName());
-      res.setHeader("Content-Type", "text/html; charset=utf-8");
-      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-      return res.status(200).send(html);
+    if (!earlyLandingCache) {
+      return res.status(200).send("ok");
     }
-    res.status(200).send("ok");
+    const protocol = req.header("x-forwarded-proto") || req.protocol || "https";
+    const host = req.header("x-forwarded-host") || req.get("host") || "";
+    const html = earlyLandingCache
+      .replace(/BASE_URL_PLACEHOLDER/g, `${protocol}://${host}`)
+      .replace(/EXPS_URL_PLACEHOLDER/g, host)
+      .replace(/APP_NAME_PLACEHOLDER/g, getAppName());
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.status(200).send(html);
   });
 
   try {

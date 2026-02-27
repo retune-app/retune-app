@@ -6,9 +6,9 @@ channel = "stable-24_05"
 packages = ["python3", "python312Packages.numpy", "python312Packages.scipy"]
 
 [deployment]
-deploymentTarget = "vm"
+deploymentTarget = "autoscale"
 build = ["sh", "-c", "npm run server:build"]
-run = ["sh", "-c", "PORT=8081 npm run server:prod"]
+run = ["sh", "-c", "PORT=5000 npm run server:prod"]
 
 [[ports]]
 localPort = 5000

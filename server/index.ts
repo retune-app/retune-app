@@ -370,6 +370,11 @@ function configureExpoAndLanding(app: express.Application) {
     }
 
     if (req.path === "/") {
+      const userAgent = req.header("user-agent") || "";
+      const isBrowser = userAgent.includes("Mozilla") || userAgent.includes("Chrome") || userAgent.includes("Safari");
+      if (!isBrowser) {
+        return res.status(200).json({ status: "ok", version: SERVER_VERSION });
+      }
       const freshTemplate = fs.readFileSync(templatePath, "utf-8");
       return serveLandingPage({
         req,
@@ -517,20 +522,24 @@ function setupErrorHandler(app: express.Application) {
     });
   }
 
-  try {
-    configureExpoAndLanding(app);
-    logInfo("startup", "Expo and landing page configured");
-  } catch (err) {
-    logError("startup", "Failed to configure Expo/landing — continuing", {
-      error: err instanceof Error ? err.message : String(err),
-    });
-  }
+  app.get("/__health", (_req: Request, res: Response) => {
+    res.status(200).json({ status: "ok" });
+  });
 
   try {
     setupHealthEndpoint(app);
     logInfo("startup", "Health endpoint registered at /api/health");
   } catch (err) {
     logError("startup", "Failed to setup health endpoint — continuing", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+
+  try {
+    configureExpoAndLanding(app);
+    logInfo("startup", "Expo and landing page configured");
+  } catch (err) {
+    logError("startup", "Failed to configure Expo/landing — continuing", {
       error: err instanceof Error ? err.message : String(err),
     });
   }

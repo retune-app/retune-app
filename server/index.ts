@@ -485,6 +485,16 @@ function setupErrorHandler(app: express.Application) {
     env: process.env.NODE_ENV || "development",
   });
 
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    if (req.path === "/__health") {
+      return res.status(200).send("ok");
+    }
+    if (req.path === "/" && !(req.headers.accept || "").includes("text/html")) {
+      return res.status(200).send("ok");
+    }
+    next();
+  });
+
   try {
     setupSecurityHeaders(app);
     logInfo("startup", "Security headers configured");
@@ -520,10 +530,6 @@ function setupErrorHandler(app: express.Application) {
       error: err instanceof Error ? err.message : String(err),
     });
   }
-
-  app.get("/__health", (_req: Request, res: Response) => {
-    res.status(200).json({ status: "ok" });
-  });
 
   try {
     setupHealthEndpoint(app);

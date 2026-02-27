@@ -479,23 +479,48 @@ function setupErrorHandler(app: express.Application) {
   let earlyLandingCache = "";
   try {
     earlyLandingCache = fs.readFileSync(landingTemplatePath, "utf-8");
-  } catch {}
+    logInfo("startup", "Landing page template cached", {
+      size_bytes: earlyLandingCache.length,
+      path: landingTemplatePath,
+    });
+  } catch (err) {
+    logWarn("startup", "Landing page template not found — root will return plain ok", {
+      path: landingTemplatePath,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
 
   app.get("/__health", (_req: Request, res: Response) => {
+    logInfo("healthcheck", "__health hit", { status: 200 });
     res.status(200).send("ok");
   });
   app.get("/", (req: Request, res: Response) => {
-    if (!earlyLandingCache) {
-      return res.status(200).send("ok");
+    try {
+      if (!earlyLandingCache) {
+        logInfo("healthcheck", "Root hit — no template, returning ok", { status: 200 });
+        return res.status(200).send("ok");
+      }
+      const protocol = req.header("x-forwarded-proto") || req.protocol || "https";
+      const host = req.header("x-forwarded-host") || req.get("host") || "";
+      const html = earlyLandingCache
+        .replace(/BASE_URL_PLACEHOLDER/g, `${protocol}://${host}`)
+        .replace(/EXPS_URL_PLACEHOLDER/g, host)
+        .replace(/APP_NAME_PLACEHOLDER/g, getAppName());
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      logInfo("healthcheck", "Root hit — serving landing page", {
+        status: 200,
+        size: html.length,
+        accept: req.headers.accept || "none",
+      });
+      res.status(200).send(html);
+    } catch (err) {
+      logError("healthcheck", "Root handler error — returning ok fallback", {
+        error: err instanceof Error ? err.message : String(err),
+      });
+      if (!res.headersSent) {
+        res.status(200).send("ok");
+      }
     }
-    const protocol = req.header("x-forwarded-proto") || req.protocol || "https";
-    const host = req.header("x-forwarded-host") || req.get("host") || "";
-    const html = earlyLandingCache
-      .replace(/BASE_URL_PLACEHOLDER/g, `${protocol}://${host}`)
-      .replace(/EXPS_URL_PLACEHOLDER/g, host)
-      .replace(/APP_NAME_PLACEHOLDER/g, getAppName());
-    res.setHeader("Content-Type", "text/html; charset=utf-8");
-    res.status(200).send(html);
   });
 
   try {
@@ -583,6 +608,7 @@ function setupErrorHandler(app: express.Application) {
   }
 
   const port = parseInt(process.env.PORT || "5000", 10);
+  logInfo("startup", `Attempting to listen on port ${port}`);
   server.listen(
     {
       port,
@@ -597,6 +623,12 @@ function setupErrorHandler(app: express.Application) {
       });
     },
   );
+  server.on("error", (err: Error) => {
+    logError("startup", `Failed to listen on port ${port}`, {
+      error: err.message,
+      code: (err as NodeJS.ErrnoException).code,
+    });
+  });
 
   const gracefulShutdown = (signal: string) => {
     logInfo("shutdown", `Received ${signal}, starting graceful shutdown`);

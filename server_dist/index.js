@@ -7904,24 +7904,45 @@ function setupErrorHandler(app2) {
     });
   }
   app.get("/__health", (_req, res) => {
+    logInfo("healthcheck", "/__health hit", { status: 200 });
     res.status(200).send("ok");
   });
   app.get("/", (req, res) => {
+    const accept = req.headers.accept || "";
     try {
       if (!earlyLandingCache) {
+        logInfo("healthcheck", "/ hit \u2014 no landing cache, returning ok", {
+          method: req.method,
+          accept: accept.substring(0, 80),
+          response_bytes: 2,
+          status: 200
+        });
         return res.status(200).send("ok");
       }
-      const wantsHtml = (req.headers.accept || "").includes("text/html");
+      const wantsHtml = accept.includes("text/html");
       if (!wantsHtml) {
+        logInfo("healthcheck", "/ hit \u2014 non-browser request, returning ok", {
+          method: req.method,
+          accept: accept.substring(0, 80),
+          response_bytes: 2,
+          status: 200
+        });
         return res.status(200).send("ok");
       }
       const protocol = req.header("x-forwarded-proto") || req.protocol || "https";
       const host = req.header("x-forwarded-host") || req.get("host") || "";
       const html = earlyLandingCache.replace(/BASE_URL_PLACEHOLDER/g, `${protocol}://${host}`).replace(/EXPS_URL_PLACEHOLDER/g, host).replace(/APP_NAME_PLACEHOLDER/g, getAppName());
       res.setHeader("Content-Type", "text/html; charset=utf-8");
+      logInfo("healthcheck", "/ hit \u2014 serving landing page", {
+        method: req.method,
+        response_bytes: html.length,
+        status: 200
+      });
       res.status(200).send(html);
     } catch (err) {
       logError("healthcheck", "Root handler error", {
+        method: req.method,
+        accept: accept.substring(0, 80),
         error: err instanceof Error ? err.message : String(err)
       });
       if (!res.headersSent) {

@@ -61,6 +61,15 @@ The application employs a "Serene Empowerment" aesthetic, featuring Primary Gold
 ### Key npm Packages
 - `expo-av`, `expo-file-system`, `drizzle-orm`, `pg`, `multer`, `elevenlabs`, `hume`, `@tanstack/react-query`, `expo-linear-gradient`, `@expo-google-fonts/outfit`.
 
+### Deployment
+- **Target**: `vm` (always-on, NOT autoscale)
+- **Production port**: 5000 (must match `[[ports]] localPort = 5000` in `.replit` for health checks)
+- **Dev backend port**: 5000, **Dev frontend (Expo) port**: 8081
+- **Build**: `npm run server:build` (esbuild, no Metro/Expo build)
+- **Run**: `PORT=5000 npm run server:prod`
+- **Health checks**: `/__health` and `/` respond before any middleware loads (port opens in <10ms)
+- **NEVER set production PORT to 8081** — that port is for the Expo dev server only
+
 ### Environment Variables
 - `DATABASE_URL`
 - `AI_INTEGRATIONS_OPENAI_API_KEY`

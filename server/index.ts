@@ -496,8 +496,15 @@ function setupErrorHandler(app: express.Application) {
   });
   app.get("/", (req: Request, res: Response) => {
     try {
+      logInfo("healthcheck", "Root hit", {
+        accept: req.headers.accept || "none",
+        ua: (req.headers["user-agent"] || "none").substring(0, 80),
+      });
       if (!earlyLandingCache) {
-        logInfo("healthcheck", "Root hit — no template, returning ok", { status: 200 });
+        return res.status(200).send("ok");
+      }
+      const wantsHtml = (req.headers.accept || "").includes("text/html");
+      if (!wantsHtml) {
         return res.status(200).send("ok");
       }
       const protocol = req.header("x-forwarded-proto") || req.protocol || "https";
@@ -507,14 +514,9 @@ function setupErrorHandler(app: express.Application) {
         .replace(/EXPS_URL_PLACEHOLDER/g, host)
         .replace(/APP_NAME_PLACEHOLDER/g, getAppName());
       res.setHeader("Content-Type", "text/html; charset=utf-8");
-      logInfo("healthcheck", "Root hit — serving landing page", {
-        status: 200,
-        size: html.length,
-        accept: req.headers.accept || "none",
-      });
       res.status(200).send(html);
     } catch (err) {
-      logError("healthcheck", "Root handler error — returning ok fallback", {
+      logError("healthcheck", "Root handler error", {
         error: err instanceof Error ? err.message : String(err),
       });
       if (!res.headersSent) {

@@ -63,12 +63,12 @@ The application employs a "Serene Empowerment" aesthetic, featuring Primary Gold
 
 ### Deployment
 - **Target**: `vm` (always-on, NOT autoscale)
-- **Production port**: 5000 (must match `[[ports]] localPort = 5000` in `.replit` for health checks)
+- **Production port**: 8081 (must match `[[ports]] localPort = 8081 externalPort = 80` in `.replit` for health checks)
 - **Dev backend port**: 5000, **Dev frontend (Expo) port**: 8081
 - **Build**: `npm run server:build` (esbuild, no Metro/Expo build)
-- **Run**: `PORT=5000 npm run server:prod`
+- **Run**: `PORT=8081 npm run server:prod`
 - **Health checks**: `/__health` and `/` respond before any middleware loads (port opens in <10ms)
-- **NEVER set production PORT to 8081** — that port is for the Expo dev server only
+- **Port rule**: Production PORT must match the `[[ports]]` entry with `externalPort = 80` — currently `localPort = 8081`
 
 ### Environment Variables
 - `DATABASE_URL`

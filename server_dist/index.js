@@ -6,9 +6,9 @@ var __export = (target, all) => {
 
 // server/index.ts
 import express from "express";
+import { createServer } from "node:http";
 
 // server/routes.ts
-import { createServer } from "node:http";
 import multer2 from "multer";
 import path3 from "path";
 import fs3 from "fs";
@@ -7495,8 +7495,6 @@ WELCOME BACK: The user is returning after being away for ${awayLabel}. Acknowled
       console.error("[Voice Rotation] Scheduled cleanup failed:", error);
     }
   }, 24 * 60 * 60 * 1e3);
-  const httpServer = createServer(app2);
-  return httpServer;
 }
 
 // server/index.ts
@@ -7521,6 +7519,7 @@ async function trackError(component, message, error, metadata) {
 // server/index.ts
 var app = express();
 var SERVER_VERSION = "1.7.4";
+var server = createServer(app);
 function timestamp2() {
   return (/* @__PURE__ */ new Date()).toISOString();
 }
@@ -7875,30 +7874,40 @@ function setupErrorHandler(app2) {
     node_version: process.version,
     env: process.env.NODE_ENV || "development"
   });
+  const port = parseInt(process.env.PORT || "5000", 10);
+  logInfo("startup", `Opening port ${port} immediately for health checks`);
+  await new Promise((resolve2, reject) => {
+    server.listen({ port, host: "0.0.0.0" }, () => {
+      logInfo("startup", `Port ${port} open \u2014 accepting connections`, {
+        boot_time_ms: Date.now() - startTime
+      });
+      resolve2();
+    });
+    server.on("error", (err) => {
+      logError("startup", `Failed to open port ${port}`, {
+        error: err.message,
+        code: err.code
+      });
+      reject(err);
+    });
+  });
   const landingTemplatePath = path4.resolve(process.cwd(), "server", "templates", "landing-page.html");
   let earlyLandingCache = "";
   try {
     earlyLandingCache = fs4.readFileSync(landingTemplatePath, "utf-8");
     logInfo("startup", "Landing page template cached", {
-      size_bytes: earlyLandingCache.length,
-      path: landingTemplatePath
+      size_bytes: earlyLandingCache.length
     });
   } catch (err) {
-    logWarn("startup", "Landing page template not found \u2014 root will return plain ok", {
-      path: landingTemplatePath,
+    logWarn("startup", "Landing page template not found", {
       error: err instanceof Error ? err.message : String(err)
     });
   }
   app.get("/__health", (_req, res) => {
-    logInfo("healthcheck", "__health hit", { status: 200 });
     res.status(200).send("ok");
   });
   app.get("/", (req, res) => {
     try {
-      logInfo("healthcheck", "Root hit", {
-        accept: req.headers.accept || "none",
-        ua: (req.headers["user-agent"] || "none").substring(0, 80)
-      });
       if (!earlyLandingCache) {
         return res.status(200).send("ok");
       }
@@ -7968,9 +7977,8 @@ function setupErrorHandler(app2) {
       error: err instanceof Error ? err.message : String(err)
     });
   }
-  let server;
   try {
-    server = await registerRoutes(app);
+    await registerRoutes(app);
     logInfo("startup", "API routes registered");
   } catch (err) {
     logError("startup", "Failed to register API routes \u2014 this is critical", {
@@ -7995,27 +8003,9 @@ function setupErrorHandler(app2) {
       error: err instanceof Error ? err.message : String(err)
     });
   }
-  const port = parseInt(process.env.PORT || "5000", 10);
-  logInfo("startup", `Attempting to listen on port ${port}`);
-  server.listen(
-    {
-      port,
-      host: "0.0.0.0",
-      reusePort: true
-    },
-    () => {
-      const bootTime = Date.now() - startTime;
-      logInfo("startup", `Server ready on port ${port}`, {
-        boot_time_ms: bootTime,
-        version: SERVER_VERSION
-      });
-    }
-  );
-  server.on("error", (err) => {
-    logError("startup", `Failed to listen on port ${port}`, {
-      error: err.message,
-      code: err.code
-    });
+  logInfo("startup", "All middleware configured \u2014 server fully ready", {
+    boot_time_ms: Date.now() - startTime,
+    version: SERVER_VERSION
   });
   const gracefulShutdown = (signal) => {
     logInfo("shutdown", `Received ${signal}, starting graceful shutdown`);

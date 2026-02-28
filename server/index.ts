@@ -1,5 +1,6 @@
 import express from "express";
 import type { Request, Response, NextFunction } from "express";
+import { createServer } from "node:http";
 import { registerRoutes } from "./routes";
 import * as fs from "fs";
 import * as path from "path";
@@ -10,6 +11,7 @@ import { trackError } from "./error-tracker";
 
 const app = express();
 const SERVER_VERSION = "1.7.4";
+const server = createServer(app);
 
 declare module "http" {
   interface IncomingMessage {
@@ -475,31 +477,42 @@ function setupErrorHandler(app: express.Application) {
     env: process.env.NODE_ENV || "development",
   });
 
+  const port = parseInt(process.env.PORT || "5000", 10);
+  logInfo("startup", `Opening port ${port} immediately for health checks`);
+  await new Promise<void>((resolve, reject) => {
+    server.listen({ port, host: "0.0.0.0" }, () => {
+      logInfo("startup", `Port ${port} open — accepting connections`, {
+        boot_time_ms: Date.now() - startTime,
+      });
+      resolve();
+    });
+    server.on("error", (err: Error) => {
+      logError("startup", `Failed to open port ${port}`, {
+        error: err.message,
+        code: (err as NodeJS.ErrnoException).code,
+      });
+      reject(err);
+    });
+  });
+
   const landingTemplatePath = path.resolve(process.cwd(), "server", "templates", "landing-page.html");
   let earlyLandingCache = "";
   try {
     earlyLandingCache = fs.readFileSync(landingTemplatePath, "utf-8");
     logInfo("startup", "Landing page template cached", {
       size_bytes: earlyLandingCache.length,
-      path: landingTemplatePath,
     });
   } catch (err) {
-    logWarn("startup", "Landing page template not found — root will return plain ok", {
-      path: landingTemplatePath,
+    logWarn("startup", "Landing page template not found", {
       error: err instanceof Error ? err.message : String(err),
     });
   }
 
   app.get("/__health", (_req: Request, res: Response) => {
-    logInfo("healthcheck", "__health hit", { status: 200 });
     res.status(200).send("ok");
   });
   app.get("/", (req: Request, res: Response) => {
     try {
-      logInfo("healthcheck", "Root hit", {
-        accept: req.headers.accept || "none",
-        ua: (req.headers["user-agent"] || "none").substring(0, 80),
-      });
       if (!earlyLandingCache) {
         return res.status(200).send("ok");
       }
@@ -579,9 +592,8 @@ function setupErrorHandler(app: express.Application) {
     });
   }
 
-  let server;
   try {
-    server = await registerRoutes(app);
+    await registerRoutes(app);
     logInfo("startup", "API routes registered");
   } catch (err) {
     logError("startup", "Failed to register API routes — this is critical", {
@@ -609,27 +621,9 @@ function setupErrorHandler(app: express.Application) {
     });
   }
 
-  const port = parseInt(process.env.PORT || "5000", 10);
-  logInfo("startup", `Attempting to listen on port ${port}`);
-  server.listen(
-    {
-      port,
-      host: "0.0.0.0",
-      reusePort: true,
-    },
-    () => {
-      const bootTime = Date.now() - startTime;
-      logInfo("startup", `Server ready on port ${port}`, {
-        boot_time_ms: bootTime,
-        version: SERVER_VERSION,
-      });
-    },
-  );
-  server.on("error", (err: Error) => {
-    logError("startup", `Failed to listen on port ${port}`, {
-      error: err.message,
-      code: (err as NodeJS.ErrnoException).code,
-    });
+  logInfo("startup", "All middleware configured — server fully ready", {
+    boot_time_ms: Date.now() - startTime,
+    version: SERVER_VERSION,
   });
 
   const gracefulShutdown = (signal: string) => {

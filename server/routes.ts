@@ -1,5 +1,4 @@
 import type { Express, Request, Response } from "express";
-import { createServer, type Server } from "node:http";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -861,7 +860,7 @@ async function generateAudio(
   throw new Error("TTS_UNAVAILABLE: All TTS services (Hume AI, OpenAI) are unavailable");
 }
 
-export async function registerRoutes(app: Express): Promise<Server> {
+export async function registerRoutes(app: Express): Promise<void> {
   // Setup authentication
   setupAuth(app);
 
@@ -4349,7 +4348,4 @@ Rules for tone:
     }
   }, 24 * 60 * 60 * 1000);
 
-  const httpServer = createServer(app);
-
-  return httpServer;
 }

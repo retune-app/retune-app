@@ -7522,15 +7522,18 @@ var SERVER_VERSION = "1.7.4";
 var appFullyReady = false;
 var server = createServer((req, res) => {
   if (!appFullyReady) {
-    console.log(`[RAW-HTTP] ${req.method} ${req.url} \u2192 200 ok (startup)`);
     res.writeHead(200, { "Content-Type": "text/plain", "Cache-Control": "no-cache" });
     res.end("ok");
     return;
   }
-  if (req.url === "/__health") {
-    res.writeHead(200, { "Content-Type": "text/plain", "Cache-Control": "no-cache" });
-    res.end("ok");
-    return;
+  const url = (req.url || "").split("?")[0];
+  if (url === "/" || url === "/__health") {
+    const wantHtml = (req.headers.accept || "").includes("text/html");
+    if (url === "/__health" || !wantHtml) {
+      res.writeHead(200, { "Content-Type": "text/plain", "Cache-Control": "no-cache" });
+      res.end("ok");
+      return;
+    }
   }
   app(req, res);
 });
@@ -7928,22 +7931,6 @@ function setupErrorHandler(app2) {
       reject(err);
     });
   });
-  if (process.env.NODE_ENV === "production") {
-    const secondaryPorts = [5e3, 8082].filter((p) => p !== port);
-    for (const sp of secondaryPorts) {
-      const mini = createServer((req, res) => {
-        console.log(`[SECONDARY:${sp}] ${req.method} ${req.url} \u2192 200 ok`);
-        res.writeHead(200, { "Content-Type": "text/plain" });
-        res.end("ok");
-      });
-      mini.listen({ port: sp, host: "0.0.0.0" }, () => {
-        logInfo("startup", `Secondary health listener on port ${sp}`);
-      });
-      mini.on("error", (err) => {
-        logInfo("startup", `Secondary port ${sp} unavailable (${err.code}) \u2014 skipping`);
-      });
-    }
-  }
   try {
     setupSecurityHeaders(app);
     logInfo("startup", "Security headers configured");
@@ -8046,7 +8033,10 @@ function setupErrorHandler(app2) {
   process.on("SIGINT", () => gracefulShutdown("SIGINT"));
   try {
     const dbStart = Date.now();
-    await pool.query("SELECT 1");
+    const dbTimeout = new Promise(
+      (_, reject) => setTimeout(() => reject(new Error("Database connection timed out after 5s")), 5e3)
+    );
+    await Promise.race([pool.query("SELECT 1"), dbTimeout]);
     logInfo("startup", "Database connection verified", {
       latency_ms: Date.now() - dbStart
     });

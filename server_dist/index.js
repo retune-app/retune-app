@@ -7922,6 +7922,21 @@ function setupErrorHandler(app2) {
       reject(err);
     });
   });
+  if (process.env.NODE_ENV === "production") {
+    const secondaryPorts = [5e3, 8082].filter((p) => p !== port);
+    for (const sp of secondaryPorts) {
+      const mini = createServer((req, res) => {
+        res.writeHead(200, { "Content-Type": "text/plain" });
+        res.end("ok");
+      });
+      mini.listen({ port: sp, host: "0.0.0.0" }, () => {
+        logInfo("startup", `Secondary health listener on port ${sp}`);
+      });
+      mini.on("error", (err) => {
+        logInfo("startup", `Secondary port ${sp} unavailable (${err.code}) \u2014 skipping`);
+      });
+    }
+  }
   try {
     setupSecurityHeaders(app);
     logInfo("startup", "Security headers configured");

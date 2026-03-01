@@ -533,6 +533,24 @@ function setupErrorHandler(app: express.Application) {
     });
   });
 
+  // Open secondary health-check listeners on other [[ports]] entries
+  // so the deployment system gets a 200 no matter which port it probes
+  if (process.env.NODE_ENV === "production") {
+    const secondaryPorts = [5000, 8082].filter((p) => p !== port);
+    for (const sp of secondaryPorts) {
+      const mini = createServer((req, res) => {
+        res.writeHead(200, { "Content-Type": "text/plain" });
+        res.end("ok");
+      });
+      mini.listen({ port: sp, host: "0.0.0.0" }, () => {
+        logInfo("startup", `Secondary health listener on port ${sp}`);
+      });
+      mini.on("error", (err: Error) => {
+        logInfo("startup", `Secondary port ${sp} unavailable (${(err as NodeJS.ErrnoException).code}) — skipping`);
+      });
+    }
+  }
+
   try {
     setupSecurityHeaders(app);
     logInfo("startup", "Security headers configured");

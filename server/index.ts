@@ -11,20 +11,12 @@ import { trackError } from "./error-tracker";
 
 const app = express();
 const SERVER_VERSION = "1.7.4";
-let healthCheckReady = false;
-let cachedHealthResponse: { landingCache: string; appName: string } | null = null;
+let appFullyReady = false;
 const server = createServer((req, res) => {
-  if (healthCheckReady && cachedHealthResponse) {
-    if (req.url === "/__health") {
-      res.writeHead(200, { "Content-Type": "text/plain", "Cache-Control": "no-cache" });
-      res.end("ok");
-      return;
-    }
-    if (req.url === "/" && !(req.headers.accept || "").includes("text/html")) {
-      res.writeHead(200, { "Content-Type": "text/plain", "Cache-Control": "no-cache" });
-      res.end("ok");
-      return;
-    }
+  if (req.url === "/__health" || (req.url === "/" && !appFullyReady)) {
+    res.writeHead(200, { "Content-Type": "text/plain", "Cache-Control": "no-cache" });
+    res.end("ok");
+    return;
   }
   app(req, res);
 });
@@ -505,10 +497,6 @@ function setupErrorHandler(app: express.Application) {
     app_name: cachedAppName,
   });
 
-  // --- Enable the raw http-level health check handler ---
-  cachedHealthResponse = { landingCache: earlyLandingCache, appName: cachedAppName };
-  healthCheckReady = true;
-
   // --- Register root route in Express for browser requests (landing page) ---
   app.get("/", (req: Request, res: Response) => {
     res.setHeader("Cache-Control", "no-cache");
@@ -628,6 +616,7 @@ function setupErrorHandler(app: express.Application) {
     });
   }
 
+  appFullyReady = true;
   logInfo("startup", "All middleware configured — server fully ready", {
     boot_time_ms: Date.now() - startTime,
     version: SERVER_VERSION,

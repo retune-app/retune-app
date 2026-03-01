@@ -7519,20 +7519,12 @@ async function trackError(component, message, error, metadata) {
 // server/index.ts
 var app = express();
 var SERVER_VERSION = "1.7.4";
-var healthCheckReady = false;
-var cachedHealthResponse = null;
+var appFullyReady = false;
 var server = createServer((req, res) => {
-  if (healthCheckReady && cachedHealthResponse) {
-    if (req.url === "/__health") {
-      res.writeHead(200, { "Content-Type": "text/plain", "Cache-Control": "no-cache" });
-      res.end("ok");
-      return;
-    }
-    if (req.url === "/" && !(req.headers.accept || "").includes("text/html")) {
-      res.writeHead(200, { "Content-Type": "text/plain", "Cache-Control": "no-cache" });
-      res.end("ok");
-      return;
-    }
+  if (req.url === "/__health" || req.url === "/" && !appFullyReady) {
+    res.writeHead(200, { "Content-Type": "text/plain", "Cache-Control": "no-cache" });
+    res.end("ok");
+    return;
   }
   app(req, res);
 });
@@ -7901,8 +7893,6 @@ function setupErrorHandler(app2) {
     size_bytes: earlyLandingCache.length,
     app_name: cachedAppName
   });
-  cachedHealthResponse = { landingCache: earlyLandingCache, appName: cachedAppName };
-  healthCheckReady = true;
   app.get("/", (req, res) => {
     res.setHeader("Cache-Control", "no-cache");
     if (!earlyLandingCache || !(req.headers.accept || "").includes("text/html")) {
@@ -8006,6 +7996,7 @@ function setupErrorHandler(app2) {
       error: err instanceof Error ? err.message : String(err)
     });
   }
+  appFullyReady = true;
   logInfo("startup", "All middleware configured \u2014 server fully ready", {
     boot_time_ms: Date.now() - startTime,
     version: SERVER_VERSION

@@ -7874,37 +7874,6 @@ function setupErrorHandler(app2) {
     node_version: process.version,
     env: process.env.NODE_ENV || "development"
   });
-  const port = parseInt(process.env.PORT || "5000", 10);
-  logInfo("startup", `Opening port ${port} immediately for health checks`);
-  await new Promise((resolve2, reject) => {
-    server.listen({ port, host: "0.0.0.0" }, () => {
-      logInfo("startup", `Port ${port} open \u2014 accepting connections`, {
-        boot_time_ms: Date.now() - startTime
-      });
-      resolve2();
-    });
-    server.on("error", (err) => {
-      logError("startup", `Failed to open port ${port}`, {
-        error: err.message,
-        code: err.code
-      });
-      reject(err);
-    });
-  });
-  const secondaryPort = port === 8081 ? 5e3 : port === 5e3 ? 8081 : null;
-  if (secondaryPort) {
-    const secondary = createServer(app);
-    secondary.listen({ port: secondaryPort, host: "0.0.0.0" }, () => {
-      logInfo("startup", `Secondary port ${secondaryPort} open`, {
-        boot_time_ms: Date.now() - startTime
-      });
-    });
-    secondary.on("error", (err) => {
-      logWarn("startup", `Secondary port ${secondaryPort} failed (non-fatal)`, {
-        error: err.message
-      });
-    });
-  }
   const landingTemplatePath = path4.resolve(process.cwd(), "server", "templates", "landing-page.html");
   let earlyLandingCache = "";
   try {
@@ -7964,6 +7933,38 @@ function setupErrorHandler(app2) {
       }
     }
   });
+  logInfo("startup", "Health and root routes registered before port open");
+  const port = parseInt(process.env.PORT || "5000", 10);
+  logInfo("startup", `Opening port ${port}`);
+  await new Promise((resolve2, reject) => {
+    server.listen({ port, host: "0.0.0.0" }, () => {
+      logInfo("startup", `Port ${port} open \u2014 accepting connections`, {
+        boot_time_ms: Date.now() - startTime
+      });
+      resolve2();
+    });
+    server.on("error", (err) => {
+      logError("startup", `Failed to open port ${port}`, {
+        error: err.message,
+        code: err.code
+      });
+      reject(err);
+    });
+  });
+  const secondaryPort = port === 8081 ? 5e3 : port === 5e3 ? 8081 : null;
+  if (secondaryPort) {
+    const secondary = createServer(app);
+    secondary.listen({ port: secondaryPort, host: "0.0.0.0" }, () => {
+      logInfo("startup", `Secondary port ${secondaryPort} open`, {
+        boot_time_ms: Date.now() - startTime
+      });
+    });
+    secondary.on("error", (err) => {
+      logWarn("startup", `Secondary port ${secondaryPort} failed (non-fatal)`, {
+        error: err.message
+      });
+    });
+  }
   try {
     setupSecurityHeaders(app);
     logInfo("startup", "Security headers configured");

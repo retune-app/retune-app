@@ -477,39 +477,7 @@ function setupErrorHandler(app: express.Application) {
     env: process.env.NODE_ENV || "development",
   });
 
-  const port = parseInt(process.env.PORT || "5000", 10);
-  logInfo("startup", `Opening port ${port} immediately for health checks`);
-  await new Promise<void>((resolve, reject) => {
-    server.listen({ port, host: "0.0.0.0" }, () => {
-      logInfo("startup", `Port ${port} open — accepting connections`, {
-        boot_time_ms: Date.now() - startTime,
-      });
-      resolve();
-    });
-    server.on("error", (err: Error) => {
-      logError("startup", `Failed to open port ${port}`, {
-        error: err.message,
-        code: (err as NodeJS.ErrnoException).code,
-      });
-      reject(err);
-    });
-  });
-
-  const secondaryPort = port === 8081 ? 5000 : (port === 5000 ? 8081 : null);
-  if (secondaryPort) {
-    const secondary = createServer(app);
-    secondary.listen({ port: secondaryPort, host: "0.0.0.0" }, () => {
-      logInfo("startup", `Secondary port ${secondaryPort} open`, {
-        boot_time_ms: Date.now() - startTime,
-      });
-    });
-    secondary.on("error", (err: Error) => {
-      logWarn("startup", `Secondary port ${secondaryPort} failed (non-fatal)`, {
-        error: err.message,
-      });
-    });
-  }
-
+  // --- Register health/root routes BEFORE opening ports ---
   const landingTemplatePath = path.resolve(process.cwd(), "server", "templates", "landing-page.html");
   let earlyLandingCache = "";
   try {
@@ -573,6 +541,41 @@ function setupErrorHandler(app: express.Application) {
       }
     }
   });
+  logInfo("startup", "Health and root routes registered before port open");
+
+  // --- NOW open the port — routes are ready ---
+  const port = parseInt(process.env.PORT || "5000", 10);
+  logInfo("startup", `Opening port ${port}`);
+  await new Promise<void>((resolve, reject) => {
+    server.listen({ port, host: "0.0.0.0" }, () => {
+      logInfo("startup", `Port ${port} open — accepting connections`, {
+        boot_time_ms: Date.now() - startTime,
+      });
+      resolve();
+    });
+    server.on("error", (err: Error) => {
+      logError("startup", `Failed to open port ${port}`, {
+        error: err.message,
+        code: (err as NodeJS.ErrnoException).code,
+      });
+      reject(err);
+    });
+  });
+
+  const secondaryPort = port === 8081 ? 5000 : (port === 5000 ? 8081 : null);
+  if (secondaryPort) {
+    const secondary = createServer(app);
+    secondary.listen({ port: secondaryPort, host: "0.0.0.0" }, () => {
+      logInfo("startup", `Secondary port ${secondaryPort} open`, {
+        boot_time_ms: Date.now() - startTime,
+      });
+    });
+    secondary.on("error", (err: Error) => {
+      logWarn("startup", `Secondary port ${secondaryPort} failed (non-fatal)`, {
+        error: err.message,
+      });
+    });
+  }
 
   try {
     setupSecurityHeaders(app);

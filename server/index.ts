@@ -13,7 +13,15 @@ const app = express();
 const SERVER_VERSION = "1.7.4";
 let appFullyReady = false;
 const server = createServer((req, res) => {
-  if (req.url === "/__health" || (req.url === "/" && !appFullyReady)) {
+  // During startup, respond 200 to EVERY request (health checks may use any path/query)
+  if (!appFullyReady) {
+    console.log(`[RAW-HTTP] ${req.method} ${req.url} → 200 ok (startup)`);
+    res.writeHead(200, { "Content-Type": "text/plain", "Cache-Control": "no-cache" });
+    res.end("ok");
+    return;
+  }
+  // After fully ready, still fast-path /__health
+  if (req.url === "/__health") {
     res.writeHead(200, { "Content-Type": "text/plain", "Cache-Control": "no-cache" });
     res.end("ok");
     return;
@@ -539,6 +547,7 @@ function setupErrorHandler(app: express.Application) {
     const secondaryPorts = [5000, 8082].filter((p) => p !== port);
     for (const sp of secondaryPorts) {
       const mini = createServer((req, res) => {
+        console.log(`[SECONDARY:${sp}] ${req.method} ${req.url} → 200 ok`);
         res.writeHead(200, { "Content-Type": "text/plain" });
         res.end("ok");
       });

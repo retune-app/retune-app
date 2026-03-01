@@ -7521,7 +7521,13 @@ var app = express();
 var SERVER_VERSION = "1.7.4";
 var appFullyReady = false;
 var server = createServer((req, res) => {
-  if (req.url === "/__health" || req.url === "/" && !appFullyReady) {
+  if (!appFullyReady) {
+    console.log(`[RAW-HTTP] ${req.method} ${req.url} \u2192 200 ok (startup)`);
+    res.writeHead(200, { "Content-Type": "text/plain", "Cache-Control": "no-cache" });
+    res.end("ok");
+    return;
+  }
+  if (req.url === "/__health") {
     res.writeHead(200, { "Content-Type": "text/plain", "Cache-Control": "no-cache" });
     res.end("ok");
     return;
@@ -7926,6 +7932,7 @@ function setupErrorHandler(app2) {
     const secondaryPorts = [5e3, 8082].filter((p) => p !== port);
     for (const sp of secondaryPorts) {
       const mini = createServer((req, res) => {
+        console.log(`[SECONDARY:${sp}] ${req.method} ${req.url} \u2192 200 ok`);
         res.writeHead(200, { "Content-Type": "text/plain" });
         res.end("ok");
       });

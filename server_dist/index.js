@@ -7878,60 +7878,27 @@ function setupErrorHandler(app2) {
   let earlyLandingCache = "";
   try {
     earlyLandingCache = fs4.readFileSync(landingTemplatePath, "utf-8");
-    logInfo("startup", "Landing page template cached", {
-      size_bytes: earlyLandingCache.length
-    });
-  } catch (err) {
-    logWarn("startup", "Landing page template not found", {
-      error: err instanceof Error ? err.message : String(err)
-    });
+  } catch {
   }
+  const cachedAppName = getAppName();
+  logInfo("startup", "Landing page cached", {
+    size_bytes: earlyLandingCache.length,
+    app_name: cachedAppName
+  });
   app.get("/__health", (_req, res) => {
-    logInfo("healthcheck", "/__health hit", { status: 200 });
+    res.setHeader("Cache-Control", "no-cache");
     res.status(200).send("ok");
   });
   app.get("/", (req, res) => {
-    const accept = req.headers.accept || "";
-    try {
-      if (!earlyLandingCache) {
-        logInfo("healthcheck", "/ hit \u2014 no landing cache, returning ok", {
-          method: req.method,
-          accept: accept.substring(0, 80),
-          response_bytes: 2,
-          status: 200
-        });
-        return res.status(200).send("ok");
-      }
-      const wantsHtml = accept.includes("text/html");
-      if (!wantsHtml) {
-        logInfo("healthcheck", "/ hit \u2014 non-browser request, returning ok", {
-          method: req.method,
-          accept: accept.substring(0, 80),
-          response_bytes: 2,
-          status: 200
-        });
-        return res.status(200).send("ok");
-      }
-      const protocol = req.header("x-forwarded-proto") || req.protocol || "https";
-      const host = req.header("x-forwarded-host") || req.get("host") || "";
-      const html = earlyLandingCache.replace(/BASE_URL_PLACEHOLDER/g, `${protocol}://${host}`).replace(/EXPS_URL_PLACEHOLDER/g, host).replace(/APP_NAME_PLACEHOLDER/g, getAppName());
-      res.setHeader("Content-Type", "text/html; charset=utf-8");
-      logInfo("healthcheck", "/ hit \u2014 serving landing page", {
-        method: req.method,
-        response_bytes: html.length,
-        status: 200
-      });
-      res.status(200).send(html);
-    } catch (err) {
-      logError("healthcheck", "Root handler error", {
-        method: req.method,
-        accept: accept.substring(0, 80),
-        error: err instanceof Error ? err.message : String(err)
-      });
-      if (!res.headersSent) {
-        res.status(200).send("ok");
-      }
+    res.setHeader("Cache-Control", "no-cache");
+    if (!earlyLandingCache || !(req.headers.accept || "").includes("text/html")) {
+      return res.status(200).send("ok");
     }
+    const protocol = req.header("x-forwarded-proto") || req.protocol || "https";
+    const host = req.header("x-forwarded-host") || req.get("host") || "";
+    const html = earlyLandingCache.replace(/BASE_URL_PLACEHOLDER/g, `${protocol}://${host}`).replace(/EXPS_URL_PLACEHOLDER/g, host).replace(/APP_NAME_PLACEHOLDER/g, cachedAppName);
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.status(200).send(html);
   });
   logInfo("startup", "Health and root routes registered before port open");
   const port = parseInt(process.env.PORT || "5000", 10);

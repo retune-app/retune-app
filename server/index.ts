@@ -544,8 +544,9 @@ function setupErrorHandler(app: express.Application) {
   logInfo("startup", "Health and root routes registered before port open");
 
   // --- NOW open the port — routes are ready ---
-  const port = parseInt(process.env.PORT || "5000", 10);
-  logInfo("startup", `Opening port ${port}`);
+  const isProduction = process.env.NODE_ENV === "production";
+  const port = isProduction ? 8081 : parseInt(process.env.PORT || "5000", 10);
+  logInfo("startup", `Opening port ${port}`, { production: isProduction });
   await new Promise<void>((resolve, reject) => {
     server.listen({ port, host: "0.0.0.0" }, () => {
       logInfo("startup", `Port ${port} open — accepting connections`, {
@@ -561,21 +562,6 @@ function setupErrorHandler(app: express.Application) {
       reject(err);
     });
   });
-
-  const secondaryPort = port === 8081 ? 5000 : (port === 5000 ? 8081 : null);
-  if (secondaryPort) {
-    const secondary = createServer(app);
-    secondary.listen({ port: secondaryPort, host: "0.0.0.0" }, () => {
-      logInfo("startup", `Secondary port ${secondaryPort} open`, {
-        boot_time_ms: Date.now() - startTime,
-      });
-    });
-    secondary.on("error", (err: Error) => {
-      logWarn("startup", `Secondary port ${secondaryPort} failed (non-fatal)`, {
-        error: err.message,
-      });
-    });
-  }
 
   try {
     setupSecurityHeaders(app);

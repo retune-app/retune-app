@@ -7934,8 +7934,9 @@ function setupErrorHandler(app2) {
     }
   });
   logInfo("startup", "Health and root routes registered before port open");
-  const port = parseInt(process.env.PORT || "5000", 10);
-  logInfo("startup", `Opening port ${port}`);
+  const isProduction = process.env.NODE_ENV === "production";
+  const port = isProduction ? 8081 : parseInt(process.env.PORT || "5000", 10);
+  logInfo("startup", `Opening port ${port}`, { production: isProduction });
   await new Promise((resolve2, reject) => {
     server.listen({ port, host: "0.0.0.0" }, () => {
       logInfo("startup", `Port ${port} open \u2014 accepting connections`, {
@@ -7951,20 +7952,6 @@ function setupErrorHandler(app2) {
       reject(err);
     });
   });
-  const secondaryPort = port === 8081 ? 5e3 : port === 5e3 ? 8081 : null;
-  if (secondaryPort) {
-    const secondary = createServer(app);
-    secondary.listen({ port: secondaryPort, host: "0.0.0.0" }, () => {
-      logInfo("startup", `Secondary port ${secondaryPort} open`, {
-        boot_time_ms: Date.now() - startTime
-      });
-    });
-    secondary.on("error", (err) => {
-      logWarn("startup", `Secondary port ${secondaryPort} failed (non-fatal)`, {
-        error: err.message
-      });
-    });
-  }
   try {
     setupSecurityHeaders(app);
     logInfo("startup", "Security headers configured");

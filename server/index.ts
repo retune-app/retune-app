@@ -29,6 +29,13 @@ const server = createServer((req, res) => {
   app(req, res);
 });
 
+// Open port IMMEDIATELY at module level so health checks never get "connection refused"
+// The raw handler above already catches / and /__health unconditionally
+const PORT = parseInt(process.env.PORT || "5000", 10);
+server.listen({ port: PORT, host: "0.0.0.0" }, () => {
+  console.log(`[BOOT] Port ${PORT} open in <${Math.round(performance.now())}ms`);
+});
+
 declare module "http" {
   interface IncomingMessage {
     rawBody: unknown;
@@ -518,26 +525,7 @@ function setupErrorHandler(app: express.Application) {
     size_bytes: landingPageCache.length,
     app_name: appNameCache,
   });
-  logInfo("startup", "Root (/) and /__health handled at raw HTTP level — bypasses Express");
-
-  // --- NOW open the port — routes are ready ---
-  const port = parseInt(process.env.PORT || "5000", 10);
-  logInfo("startup", `Opening port ${port}`);
-  await new Promise<void>((resolve, reject) => {
-    server.listen({ port, host: "0.0.0.0" }, () => {
-      logInfo("startup", `Port ${port} open — accepting connections`, {
-        boot_time_ms: Date.now() - startTime,
-      });
-      resolve();
-    });
-    server.on("error", (err: Error) => {
-      logError("startup", `Failed to open port ${port}`, {
-        error: err.message,
-        code: (err as NodeJS.ErrnoException).code,
-      });
-      reject(err);
-    });
-  });
+  logInfo("startup", `Port ${PORT} already open (module-level listen) — configuring middleware`);
 
   try {
     setupSecurityHeaders(app);

@@ -7536,6 +7536,10 @@ var server = createServer((req, res) => {
   }
   app(req, res);
 });
+var PORT = parseInt(process.env.PORT || "5000", 10);
+server.listen({ port: PORT, host: "0.0.0.0" }, () => {
+  console.log(`[BOOT] Port ${PORT} open in <${Math.round(performance.now())}ms`);
+});
 function timestamp2() {
   return (/* @__PURE__ */ new Date()).toISOString();
 }
@@ -7911,24 +7915,7 @@ function setupErrorHandler(app2) {
     size_bytes: landingPageCache.length,
     app_name: appNameCache
   });
-  logInfo("startup", "Root (/) and /__health handled at raw HTTP level \u2014 bypasses Express");
-  const port = parseInt(process.env.PORT || "5000", 10);
-  logInfo("startup", `Opening port ${port}`);
-  await new Promise((resolve2, reject) => {
-    server.listen({ port, host: "0.0.0.0" }, () => {
-      logInfo("startup", `Port ${port} open \u2014 accepting connections`, {
-        boot_time_ms: Date.now() - startTime
-      });
-      resolve2();
-    });
-    server.on("error", (err) => {
-      logError("startup", `Failed to open port ${port}`, {
-        error: err.message,
-        code: err.code
-      });
-      reject(err);
-    });
-  });
+  logInfo("startup", `Port ${PORT} already open (module-level listen) \u2014 configuring middleware`);
   try {
     setupSecurityHeaders(app);
     logInfo("startup", "Security headers configured");

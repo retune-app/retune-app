@@ -7519,37 +7519,7 @@ async function trackError(component, message, error, metadata) {
 // server/index.ts
 var app = express();
 var SERVER_VERSION = "1.7.4";
-var appFullyReady = false;
-var landingPageCache = "";
-var appNameCache = "";
-function requestHandler(req, res) {
-  const url = (req.url || "").split("?")[0];
-  if (url === "/" || url === "/__health") {
-    res.writeHead(200, { "Content-Type": "text/plain", "Cache-Control": "no-cache" });
-    res.end("ok");
-    return;
-  }
-  if (!appFullyReady) {
-    res.writeHead(200, { "Content-Type": "text/plain", "Cache-Control": "no-cache" });
-    res.end("ok");
-    return;
-  }
-  app(req, res);
-}
-var PORT = parseInt(process.env.PORT || "5000", 10);
-var bootstrapServer = globalThis.__bootstrapServer;
-var server;
-if (bootstrapServer) {
-  server = bootstrapServer;
-  server.removeAllListeners("request");
-  server.on("request", requestHandler);
-  console.log(`[server] Took over bootstrap server on port ${PORT}`);
-} else {
-  server = createServer(requestHandler);
-  server.listen({ port: PORT, host: "0.0.0.0" }, () => {
-    console.log(`[server] Port ${PORT} open`);
-  });
-}
+var server = createServer(app);
 function timestamp2() {
   return (/* @__PURE__ */ new Date()).toISOString();
 }
@@ -7764,7 +7734,6 @@ function configureExpoAndLanding(app2) {
   }
   logInfo("startup", "Serving static Expo files with dynamic manifest routing");
   app2.get("/welcome", (req, res) => {
-    res.setHeader("Cache-Control", "no-cache");
     if (!cachedTemplate) {
       return res.status(200).send("ok");
     }
@@ -7772,6 +7741,7 @@ function configureExpoAndLanding(app2) {
     const host = req.header("x-forwarded-host") || req.get("host") || "";
     const html = cachedTemplate.replace(/BASE_URL_PLACEHOLDER/g, `${protocol}://${host}`).replace(/EXPS_URL_PLACEHOLDER/g, host).replace(/APP_NAME_PLACEHOLDER/g, appName);
     res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
     res.status(200).send(html);
   });
   app2.get("/privacy-policy", (_req, res) => {
@@ -7916,16 +7886,42 @@ function setupErrorHandler(app2) {
     env: process.env.NODE_ENV || "development"
   });
   const landingTemplatePath = path4.resolve(process.cwd(), "server", "templates", "landing-page.html");
+  let earlyLandingCache = "";
   try {
-    landingPageCache = fs4.readFileSync(landingTemplatePath, "utf-8");
-  } catch {
+    earlyLandingCache = fs4.readFileSync(landingTemplatePath, "utf-8");
+    logInfo("startup", "Landing page template cached", {
+      size_bytes: earlyLandingCache.length
+    });
+  } catch (err) {
+    logWarn("startup", "Landing page template not found", {
+      error: err instanceof Error ? err.message : String(err)
+    });
   }
-  appNameCache = getAppName();
-  logInfo("startup", "Landing page cached", {
-    size_bytes: landingPageCache.length,
-    app_name: appNameCache
+  app.get("/__health", (_req, res) => {
+    logInfo("healthcheck", "/__health hit", { status: 200 });
+    res.status(200).send("ok");
   });
-  logInfo("startup", `Port ${PORT} already open (module-level listen) \u2014 configuring middleware`);
+  app.get("/", (_req, res) => {
+    res.status(200).send("ok");
+  });
+  logInfo("startup", "Health and root routes registered before port open");
+  const port = parseInt(process.env.PORT || "5000", 10);
+  logInfo("startup", `Opening port ${port}`);
+  await new Promise((resolve2, reject) => {
+    server.listen({ port, host: "0.0.0.0" }, () => {
+      logInfo("startup", `Port ${port} open \u2014 accepting connections`, {
+        boot_time_ms: Date.now() - startTime
+      });
+      resolve2();
+    });
+    server.on("error", (err) => {
+      logError("startup", `Failed to open port ${port}`, {
+        error: err.message,
+        code: err.code
+      });
+      reject(err);
+    });
+  });
   try {
     setupSecurityHeaders(app);
     logInfo("startup", "Security headers configured");
@@ -8000,7 +7996,6 @@ function setupErrorHandler(app2) {
       error: err instanceof Error ? err.message : String(err)
     });
   }
-  appFullyReady = true;
   logInfo("startup", "All middleware configured \u2014 server fully ready", {
     boot_time_ms: Date.now() - startTime,
     version: SERVER_VERSION
@@ -8028,10 +8023,7 @@ function setupErrorHandler(app2) {
   process.on("SIGINT", () => gracefulShutdown("SIGINT"));
   try {
     const dbStart = Date.now();
-    const dbTimeout = new Promise(
-      (_, reject) => setTimeout(() => reject(new Error("Database connection timed out after 5s")), 5e3)
-    );
-    await Promise.race([pool.query("SELECT 1"), dbTimeout]);
+    await pool.query("SELECT 1");
     logInfo("startup", "Database connection verified", {
       latency_ms: Date.now() - dbStart
     });

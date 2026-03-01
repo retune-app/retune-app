@@ -11,40 +11,7 @@ import { trackError } from "./error-tracker";
 
 const app = express();
 const SERVER_VERSION = "1.7.4";
-let appFullyReady = false;
-let landingPageCache = "";
-let appNameCache = "";
-
-function requestHandler(req: import("http").IncomingMessage, res: import("http").ServerResponse) {
-  const url = (req.url || "").split("?")[0];
-  if (url === "/" || url === "/__health") {
-    res.writeHead(200, { "Content-Type": "text/plain", "Cache-Control": "no-cache" });
-    res.end("ok");
-    return;
-  }
-  if (!appFullyReady) {
-    res.writeHead(200, { "Content-Type": "text/plain", "Cache-Control": "no-cache" });
-    res.end("ok");
-    return;
-  }
-  app(req, res);
-}
-
-const PORT = parseInt(process.env.PORT || "5000", 10);
-const bootstrapServer = (globalThis as any).__bootstrapServer;
-let server: import("http").Server;
-
-if (bootstrapServer) {
-  server = bootstrapServer;
-  server.removeAllListeners("request");
-  server.on("request", requestHandler);
-  console.log(`[server] Took over bootstrap server on port ${PORT}`);
-} else {
-  server = createServer(requestHandler);
-  server.listen({ port: PORT, host: "0.0.0.0" }, () => {
-    console.log(`[server] Port ${PORT} open`);
-  });
-}
+const server = createServer(app);
 
 declare module "http" {
   interface IncomingMessage {
@@ -341,7 +308,6 @@ function configureExpoAndLanding(app: express.Application) {
   logInfo("startup", "Serving static Expo files with dynamic manifest routing");
 
   app.get("/welcome", (req: Request, res: Response) => {
-    res.setHeader("Cache-Control", "no-cache");
     if (!cachedTemplate) {
       return res.status(200).send("ok");
     }
@@ -352,6 +318,7 @@ function configureExpoAndLanding(app: express.Application) {
       .replace(/EXPS_URL_PLACEHOLDER/g, host)
       .replace(/APP_NAME_PLACEHOLDER/g, appName);
     res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
     res.status(200).send(html);
   });
 
@@ -525,17 +492,47 @@ function setupErrorHandler(app: express.Application) {
     env: process.env.NODE_ENV || "development",
   });
 
-  // --- Cache everything at startup for instant responses ---
+  // --- Register health/root routes BEFORE opening ports ---
   const landingTemplatePath = path.resolve(process.cwd(), "server", "templates", "landing-page.html");
+  let earlyLandingCache = "";
   try {
-    landingPageCache = fs.readFileSync(landingTemplatePath, "utf-8");
-  } catch {}
-  appNameCache = getAppName();
-  logInfo("startup", "Landing page cached", {
-    size_bytes: landingPageCache.length,
-    app_name: appNameCache,
+    earlyLandingCache = fs.readFileSync(landingTemplatePath, "utf-8");
+    logInfo("startup", "Landing page template cached", {
+      size_bytes: earlyLandingCache.length,
+    });
+  } catch (err) {
+    logWarn("startup", "Landing page template not found", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+
+  app.get("/__health", (_req: Request, res: Response) => {
+    logInfo("healthcheck", "/__health hit", { status: 200 });
+    res.status(200).send("ok");
   });
-  logInfo("startup", `Port ${PORT} already open (module-level listen) — configuring middleware`);
+  app.get("/", (_req: Request, res: Response) => {
+    res.status(200).send("ok");
+  });
+  logInfo("startup", "Health and root routes registered before port open");
+
+  // --- NOW open the port — routes are ready ---
+  const port = parseInt(process.env.PORT || "5000", 10);
+  logInfo("startup", `Opening port ${port}`);
+  await new Promise<void>((resolve, reject) => {
+    server.listen({ port, host: "0.0.0.0" }, () => {
+      logInfo("startup", `Port ${port} open — accepting connections`, {
+        boot_time_ms: Date.now() - startTime,
+      });
+      resolve();
+    });
+    server.on("error", (err: Error) => {
+      logError("startup", `Failed to open port ${port}`, {
+        error: err.message,
+        code: (err as NodeJS.ErrnoException).code,
+      });
+      reject(err);
+    });
+  });
 
   try {
     setupSecurityHeaders(app);
@@ -620,7 +617,6 @@ function setupErrorHandler(app: express.Application) {
     });
   }
 
-  appFullyReady = true;
   logInfo("startup", "All middleware configured — server fully ready", {
     boot_time_ms: Date.now() - startTime,
     version: SERVER_VERSION,
@@ -651,10 +647,7 @@ function setupErrorHandler(app: express.Application) {
 
   try {
     const dbStart = Date.now();
-    const dbTimeout = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error("Database connection timed out after 5s")), 5000)
-    );
-    await Promise.race([pool.query("SELECT 1"), dbTimeout]);
+    await pool.query("SELECT 1");
     logInfo("startup", "Database connection verified", {
       latency_ms: Date.now() - dbStart,
     });

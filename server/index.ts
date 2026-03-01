@@ -544,9 +544,8 @@ function setupErrorHandler(app: express.Application) {
   logInfo("startup", "Health and root routes registered before port open");
 
   // --- NOW open the port — routes are ready ---
-  const isProduction = process.env.NODE_ENV === "production";
-  const port = isProduction ? 8081 : parseInt(process.env.PORT || "5000", 10);
-  logInfo("startup", `Opening port ${port}`, { production: isProduction });
+  const port = parseInt(process.env.PORT || "5000", 10);
+  logInfo("startup", `Opening port ${port}`);
   await new Promise<void>((resolve, reject) => {
     server.listen({ port, host: "0.0.0.0" }, () => {
       logInfo("startup", `Port ${port} open — accepting connections`, {

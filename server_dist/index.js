@@ -7934,9 +7934,8 @@ function setupErrorHandler(app2) {
     }
   });
   logInfo("startup", "Health and root routes registered before port open");
-  const isProduction = process.env.NODE_ENV === "production";
-  const port = isProduction ? 8081 : parseInt(process.env.PORT || "5000", 10);
-  logInfo("startup", `Opening port ${port}`, { production: isProduction });
+  const port = parseInt(process.env.PORT || "5000", 10);
+  logInfo("startup", `Opening port ${port}`);
   await new Promise((resolve2, reject) => {
     server.listen({ port, host: "0.0.0.0" }, () => {
       logInfo("startup", `Port ${port} open \u2014 accepting connections`, {

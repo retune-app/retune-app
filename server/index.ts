@@ -12,22 +12,39 @@ import { trackError } from "./error-tracker";
 const app = express();
 const SERVER_VERSION = "1.7.4";
 let appFullyReady = false;
+let landingPageCache = "";
+let appNameCache = "";
 const server = createServer((req, res) => {
-  // During startup, respond 200 to EVERY request (health checks may use any path/query)
   if (!appFullyReady) {
     res.writeHead(200, { "Content-Type": "text/plain", "Cache-Control": "no-cache" });
     res.end("ok");
     return;
   }
-  // After fully ready, fast-path health checks at raw HTTP level (bypasses Express)
   const url = (req.url || "").split("?")[0];
-  if (url === "/" || url === "/__health") {
+  if (url === "/__health") {
+    res.writeHead(200, { "Content-Type": "text/plain", "Cache-Control": "no-cache" });
+    res.end("ok");
+    return;
+  }
+  if (url === "/") {
     const wantHtml = (req.headers.accept || "").includes("text/html");
-    if (url === "/__health" || !wantHtml) {
+    if (!wantHtml || !landingPageCache) {
       res.writeHead(200, { "Content-Type": "text/plain", "Cache-Control": "no-cache" });
       res.end("ok");
       return;
     }
+    const proto = req.headers["x-forwarded-proto"] || "https";
+    const host = req.headers["x-forwarded-host"] || req.headers.host || "";
+    const html = landingPageCache
+      .replace(/BASE_URL_PLACEHOLDER/g, `${proto}://${host}`)
+      .replace(/EXPS_URL_PLACEHOLDER/g, String(host))
+      .replace(/APP_NAME_PLACEHOLDER/g, appNameCache);
+    res.writeHead(200, {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-cache",
+    });
+    res.end(html);
+    return;
   }
   app(req, res);
 });
@@ -498,32 +515,15 @@ function setupErrorHandler(app: express.Application) {
 
   // --- Cache everything at startup for instant responses ---
   const landingTemplatePath = path.resolve(process.cwd(), "server", "templates", "landing-page.html");
-  let earlyLandingCache = "";
   try {
-    earlyLandingCache = fs.readFileSync(landingTemplatePath, "utf-8");
+    landingPageCache = fs.readFileSync(landingTemplatePath, "utf-8");
   } catch {}
-  const cachedAppName = getAppName();
+  appNameCache = getAppName();
   logInfo("startup", "Landing page cached", {
-    size_bytes: earlyLandingCache.length,
-    app_name: cachedAppName,
+    size_bytes: landingPageCache.length,
+    app_name: appNameCache,
   });
-
-  // --- Register root route in Express for browser requests (landing page) ---
-  app.get("/", (req: Request, res: Response) => {
-    res.setHeader("Cache-Control", "no-cache");
-    if (!earlyLandingCache || !(req.headers.accept || "").includes("text/html")) {
-      return res.status(200).send("ok");
-    }
-    const protocol = req.header("x-forwarded-proto") || req.protocol || "https";
-    const host = req.header("x-forwarded-host") || req.get("host") || "";
-    const html = earlyLandingCache
-      .replace(/BASE_URL_PLACEHOLDER/g, `${protocol}://${host}`)
-      .replace(/EXPS_URL_PLACEHOLDER/g, host)
-      .replace(/APP_NAME_PLACEHOLDER/g, cachedAppName);
-    res.setHeader("Content-Type", "text/html; charset=utf-8");
-    res.status(200).send(html);
-  });
-  logInfo("startup", "Health check (raw http) and root route registered before port open");
+  logInfo("startup", "Root (/) and /__health handled at raw HTTP level — bypasses Express");
 
   // --- NOW open the port — routes are ready ---
   const port = parseInt(process.env.PORT || "5000", 10);

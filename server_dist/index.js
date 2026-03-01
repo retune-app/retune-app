@@ -7520,6 +7520,8 @@ async function trackError(component, message, error, metadata) {
 var app = express();
 var SERVER_VERSION = "1.7.4";
 var appFullyReady = false;
+var landingPageCache = "";
+var appNameCache = "";
 var server = createServer((req, res) => {
   if (!appFullyReady) {
     res.writeHead(200, { "Content-Type": "text/plain", "Cache-Control": "no-cache" });
@@ -7527,13 +7529,27 @@ var server = createServer((req, res) => {
     return;
   }
   const url = (req.url || "").split("?")[0];
-  if (url === "/" || url === "/__health") {
+  if (url === "/__health") {
+    res.writeHead(200, { "Content-Type": "text/plain", "Cache-Control": "no-cache" });
+    res.end("ok");
+    return;
+  }
+  if (url === "/") {
     const wantHtml = (req.headers.accept || "").includes("text/html");
-    if (url === "/__health" || !wantHtml) {
+    if (!wantHtml || !landingPageCache) {
       res.writeHead(200, { "Content-Type": "text/plain", "Cache-Control": "no-cache" });
       res.end("ok");
       return;
     }
+    const proto = req.headers["x-forwarded-proto"] || "https";
+    const host = req.headers["x-forwarded-host"] || req.headers.host || "";
+    const html = landingPageCache.replace(/BASE_URL_PLACEHOLDER/g, `${proto}://${host}`).replace(/EXPS_URL_PLACEHOLDER/g, String(host)).replace(/APP_NAME_PLACEHOLDER/g, appNameCache);
+    res.writeHead(200, {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-cache"
+    });
+    res.end(html);
+    return;
   }
   app(req, res);
 });
@@ -7892,28 +7908,16 @@ function setupErrorHandler(app2) {
     env: process.env.NODE_ENV || "development"
   });
   const landingTemplatePath = path4.resolve(process.cwd(), "server", "templates", "landing-page.html");
-  let earlyLandingCache = "";
   try {
-    earlyLandingCache = fs4.readFileSync(landingTemplatePath, "utf-8");
+    landingPageCache = fs4.readFileSync(landingTemplatePath, "utf-8");
   } catch {
   }
-  const cachedAppName = getAppName();
+  appNameCache = getAppName();
   logInfo("startup", "Landing page cached", {
-    size_bytes: earlyLandingCache.length,
-    app_name: cachedAppName
+    size_bytes: landingPageCache.length,
+    app_name: appNameCache
   });
-  app.get("/", (req, res) => {
-    res.setHeader("Cache-Control", "no-cache");
-    if (!earlyLandingCache || !(req.headers.accept || "").includes("text/html")) {
-      return res.status(200).send("ok");
-    }
-    const protocol = req.header("x-forwarded-proto") || req.protocol || "https";
-    const host = req.header("x-forwarded-host") || req.get("host") || "";
-    const html = earlyLandingCache.replace(/BASE_URL_PLACEHOLDER/g, `${protocol}://${host}`).replace(/EXPS_URL_PLACEHOLDER/g, host).replace(/APP_NAME_PLACEHOLDER/g, cachedAppName);
-    res.setHeader("Content-Type", "text/html; charset=utf-8");
-    res.status(200).send(html);
-  });
-  logInfo("startup", "Health check (raw http) and root route registered before port open");
+  logInfo("startup", "Root (/) and /__health handled at raw HTTP level \u2014 bypasses Express");
   const port = parseInt(process.env.PORT || "5000", 10);
   logInfo("startup", `Opening port ${port}`);
   await new Promise((resolve2, reject) => {

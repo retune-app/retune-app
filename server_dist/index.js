@@ -7891,6 +7891,20 @@ function setupErrorHandler(app2) {
       reject(err);
     });
   });
+  const secondaryPort = port === 8081 ? 5e3 : port === 5e3 ? 8081 : null;
+  if (secondaryPort) {
+    const secondary = createServer(app);
+    secondary.listen({ port: secondaryPort, host: "0.0.0.0" }, () => {
+      logInfo("startup", `Secondary port ${secondaryPort} open`, {
+        boot_time_ms: Date.now() - startTime
+      });
+    });
+    secondary.on("error", (err) => {
+      logWarn("startup", `Secondary port ${secondaryPort} failed (non-fatal)`, {
+        error: err.message
+      });
+    });
+  }
   const landingTemplatePath = path4.resolve(process.cwd(), "server", "templates", "landing-page.html");
   let earlyLandingCache = "";
   try {

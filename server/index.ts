@@ -11,7 +11,23 @@ import { trackError } from "./error-tracker";
 
 const app = express();
 const SERVER_VERSION = "1.7.4";
-const server = createServer(app);
+let healthCheckReady = false;
+let cachedHealthResponse: { landingCache: string; appName: string } | null = null;
+const server = createServer((req, res) => {
+  if (healthCheckReady && cachedHealthResponse) {
+    if (req.url === "/__health") {
+      res.writeHead(200, { "Content-Type": "text/plain", "Cache-Control": "no-cache" });
+      res.end("ok");
+      return;
+    }
+    if (req.url === "/" && !(req.headers.accept || "").includes("text/html")) {
+      res.writeHead(200, { "Content-Type": "text/plain", "Cache-Control": "no-cache" });
+      res.end("ok");
+      return;
+    }
+  }
+  app(req, res);
+});
 
 declare module "http" {
   interface IncomingMessage {
@@ -489,11 +505,11 @@ function setupErrorHandler(app: express.Application) {
     app_name: cachedAppName,
   });
 
-  // --- Register health/root routes BEFORE opening ports ---
-  app.get("/__health", (_req: Request, res: Response) => {
-    res.setHeader("Cache-Control", "no-cache");
-    res.status(200).send("ok");
-  });
+  // --- Enable the raw http-level health check handler ---
+  cachedHealthResponse = { landingCache: earlyLandingCache, appName: cachedAppName };
+  healthCheckReady = true;
+
+  // --- Register root route in Express for browser requests (landing page) ---
   app.get("/", (req: Request, res: Response) => {
     res.setHeader("Cache-Control", "no-cache");
     if (!earlyLandingCache || !(req.headers.accept || "").includes("text/html")) {
@@ -508,7 +524,7 @@ function setupErrorHandler(app: express.Application) {
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.status(200).send(html);
   });
-  logInfo("startup", "Health and root routes registered before port open");
+  logInfo("startup", "Health check (raw http) and root route registered before port open");
 
   // --- NOW open the port — routes are ready ---
   const port = parseInt(process.env.PORT || "5000", 10);

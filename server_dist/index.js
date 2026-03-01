@@ -7519,7 +7519,23 @@ async function trackError(component, message, error, metadata) {
 // server/index.ts
 var app = express();
 var SERVER_VERSION = "1.7.4";
-var server = createServer(app);
+var healthCheckReady = false;
+var cachedHealthResponse = null;
+var server = createServer((req, res) => {
+  if (healthCheckReady && cachedHealthResponse) {
+    if (req.url === "/__health") {
+      res.writeHead(200, { "Content-Type": "text/plain", "Cache-Control": "no-cache" });
+      res.end("ok");
+      return;
+    }
+    if (req.url === "/" && !(req.headers.accept || "").includes("text/html")) {
+      res.writeHead(200, { "Content-Type": "text/plain", "Cache-Control": "no-cache" });
+      res.end("ok");
+      return;
+    }
+  }
+  app(req, res);
+});
 function timestamp2() {
   return (/* @__PURE__ */ new Date()).toISOString();
 }
@@ -7885,10 +7901,8 @@ function setupErrorHandler(app2) {
     size_bytes: earlyLandingCache.length,
     app_name: cachedAppName
   });
-  app.get("/__health", (_req, res) => {
-    res.setHeader("Cache-Control", "no-cache");
-    res.status(200).send("ok");
-  });
+  cachedHealthResponse = { landingCache: earlyLandingCache, appName: cachedAppName };
+  healthCheckReady = true;
   app.get("/", (req, res) => {
     res.setHeader("Cache-Control", "no-cache");
     if (!earlyLandingCache || !(req.headers.accept || "").includes("text/html")) {
@@ -7900,7 +7914,7 @@ function setupErrorHandler(app2) {
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.status(200).send(html);
   });
-  logInfo("startup", "Health and root routes registered before port open");
+  logInfo("startup", "Health check (raw http) and root route registered before port open");
   const port = parseInt(process.env.PORT || "5000", 10);
   logInfo("startup", `Opening port ${port}`);
   await new Promise((resolve2, reject) => {

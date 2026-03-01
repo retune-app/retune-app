@@ -15,35 +15,15 @@ let appFullyReady = false;
 let landingPageCache = "";
 let appNameCache = "";
 const server = createServer((req, res) => {
+  const url = (req.url || "").split("?")[0];
+  if (url === "/" || url === "/__health") {
+    res.writeHead(200, { "Content-Type": "text/plain", "Cache-Control": "no-cache" });
+    res.end("ok");
+    return;
+  }
   if (!appFullyReady) {
     res.writeHead(200, { "Content-Type": "text/plain", "Cache-Control": "no-cache" });
     res.end("ok");
-    return;
-  }
-  const url = (req.url || "").split("?")[0];
-  if (url === "/__health") {
-    res.writeHead(200, { "Content-Type": "text/plain", "Cache-Control": "no-cache" });
-    res.end("ok");
-    return;
-  }
-  if (url === "/") {
-    const wantHtml = (req.headers.accept || "").includes("text/html");
-    if (!wantHtml || !landingPageCache) {
-      res.writeHead(200, { "Content-Type": "text/plain", "Cache-Control": "no-cache" });
-      res.end("ok");
-      return;
-    }
-    const proto = req.headers["x-forwarded-proto"] || "https";
-    const host = req.headers["x-forwarded-host"] || req.headers.host || "";
-    const html = landingPageCache
-      .replace(/BASE_URL_PLACEHOLDER/g, `${proto}://${host}`)
-      .replace(/EXPS_URL_PLACEHOLDER/g, String(host))
-      .replace(/APP_NAME_PLACEHOLDER/g, appNameCache);
-    res.writeHead(200, {
-      "Content-Type": "text/html; charset=utf-8",
-      "Cache-Control": "no-cache",
-    });
-    res.end(html);
     return;
   }
   app(req, res);
@@ -342,6 +322,21 @@ function configureExpoAndLanding(app: express.Application) {
   } catch {}
 
   logInfo("startup", "Serving static Expo files with dynamic manifest routing");
+
+  app.get("/welcome", (req: Request, res: Response) => {
+    res.setHeader("Cache-Control", "no-cache");
+    if (!cachedTemplate) {
+      return res.status(200).send("ok");
+    }
+    const protocol = req.header("x-forwarded-proto") || req.protocol || "https";
+    const host = req.header("x-forwarded-host") || req.get("host") || "";
+    const html = cachedTemplate
+      .replace(/BASE_URL_PLACEHOLDER/g, `${protocol}://${host}`)
+      .replace(/EXPS_URL_PLACEHOLDER/g, host)
+      .replace(/APP_NAME_PLACEHOLDER/g, appName);
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.status(200).send(html);
+  });
 
   app.get("/privacy-policy", (_req: Request, res: Response) => {
     const privacyPath = path.resolve(process.cwd(), "server", "templates", "privacy-policy.html");

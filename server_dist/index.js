@@ -7523,32 +7523,15 @@ var appFullyReady = false;
 var landingPageCache = "";
 var appNameCache = "";
 var server = createServer((req, res) => {
+  const url = (req.url || "").split("?")[0];
+  if (url === "/" || url === "/__health") {
+    res.writeHead(200, { "Content-Type": "text/plain", "Cache-Control": "no-cache" });
+    res.end("ok");
+    return;
+  }
   if (!appFullyReady) {
     res.writeHead(200, { "Content-Type": "text/plain", "Cache-Control": "no-cache" });
     res.end("ok");
-    return;
-  }
-  const url = (req.url || "").split("?")[0];
-  if (url === "/__health") {
-    res.writeHead(200, { "Content-Type": "text/plain", "Cache-Control": "no-cache" });
-    res.end("ok");
-    return;
-  }
-  if (url === "/") {
-    const wantHtml = (req.headers.accept || "").includes("text/html");
-    if (!wantHtml || !landingPageCache) {
-      res.writeHead(200, { "Content-Type": "text/plain", "Cache-Control": "no-cache" });
-      res.end("ok");
-      return;
-    }
-    const proto = req.headers["x-forwarded-proto"] || "https";
-    const host = req.headers["x-forwarded-host"] || req.headers.host || "";
-    const html = landingPageCache.replace(/BASE_URL_PLACEHOLDER/g, `${proto}://${host}`).replace(/EXPS_URL_PLACEHOLDER/g, String(host)).replace(/APP_NAME_PLACEHOLDER/g, appNameCache);
-    res.writeHead(200, {
-      "Content-Type": "text/html; charset=utf-8",
-      "Cache-Control": "no-cache"
-    });
-    res.end(html);
     return;
   }
   app(req, res);
@@ -7766,6 +7749,17 @@ function configureExpoAndLanding(app2) {
   } catch {
   }
   logInfo("startup", "Serving static Expo files with dynamic manifest routing");
+  app2.get("/welcome", (req, res) => {
+    res.setHeader("Cache-Control", "no-cache");
+    if (!cachedTemplate) {
+      return res.status(200).send("ok");
+    }
+    const protocol = req.header("x-forwarded-proto") || req.protocol || "https";
+    const host = req.header("x-forwarded-host") || req.get("host") || "";
+    const html = cachedTemplate.replace(/BASE_URL_PLACEHOLDER/g, `${protocol}://${host}`).replace(/EXPS_URL_PLACEHOLDER/g, host).replace(/APP_NAME_PLACEHOLDER/g, appName);
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.status(200).send(html);
+  });
   app2.get("/privacy-policy", (_req, res) => {
     const privacyPath = path4.resolve(process.cwd(), "server", "templates", "privacy-policy.html");
     if (fs4.existsSync(privacyPath)) {

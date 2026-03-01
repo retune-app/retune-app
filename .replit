@@ -8,7 +8,7 @@ packages = ["python3", "python312Packages.numpy", "python312Packages.scipy"]
 [deployment]
 deploymentTarget = "vm"
 build = ["sh", "-c", "npm run server:build"]
-run = ["sh", "-c", "PORT=8081 npm run server:prod"]
+run = ["sh", "-c", "PORT=8081 node server/bootstrap.cjs"]
 
 [[ports]]
 localPort = 5000
@@ -21,6 +21,10 @@ externalPort = 80
 [[ports]]
 localPort = 8082
 externalPort = 3000
+
+[[ports]]
+localPort = 9998
+externalPort = 3002
 
 [env]
 PORT = "5000"

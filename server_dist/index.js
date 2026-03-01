@@ -7522,7 +7522,7 @@ var SERVER_VERSION = "1.7.4";
 var appFullyReady = false;
 var landingPageCache = "";
 var appNameCache = "";
-var server = createServer((req, res) => {
+function requestHandler(req, res) {
   const url = (req.url || "").split("?")[0];
   if (url === "/" || url === "/__health") {
     res.writeHead(200, { "Content-Type": "text/plain", "Cache-Control": "no-cache" });
@@ -7535,11 +7535,21 @@ var server = createServer((req, res) => {
     return;
   }
   app(req, res);
-});
+}
 var PORT = parseInt(process.env.PORT || "5000", 10);
-server.listen({ port: PORT, host: "0.0.0.0" }, () => {
-  console.log(`[BOOT] Port ${PORT} open in <${Math.round(performance.now())}ms`);
-});
+var bootstrapServer = globalThis.__bootstrapServer;
+var server;
+if (bootstrapServer) {
+  server = bootstrapServer;
+  server.removeAllListeners("request");
+  server.on("request", requestHandler);
+  console.log(`[server] Took over bootstrap server on port ${PORT}`);
+} else {
+  server = createServer(requestHandler);
+  server.listen({ port: PORT, host: "0.0.0.0" }, () => {
+    console.log(`[server] Port ${PORT} open`);
+  });
+}
 function timestamp2() {
   return (/* @__PURE__ */ new Date()).toISOString();
 }

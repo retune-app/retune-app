@@ -14,7 +14,8 @@ const SERVER_VERSION = "1.7.4";
 let appFullyReady = false;
 let landingPageCache = "";
 let appNameCache = "";
-const server = createServer((req, res) => {
+
+function requestHandler(req: import("http").IncomingMessage, res: import("http").ServerResponse) {
   const url = (req.url || "").split("?")[0];
   if (url === "/" || url === "/__health") {
     res.writeHead(200, { "Content-Type": "text/plain", "Cache-Control": "no-cache" });
@@ -27,14 +28,23 @@ const server = createServer((req, res) => {
     return;
   }
   app(req, res);
-});
+}
 
-// Open port IMMEDIATELY at module level so health checks never get "connection refused"
-// The raw handler above already catches / and /__health unconditionally
 const PORT = parseInt(process.env.PORT || "5000", 10);
-server.listen({ port: PORT, host: "0.0.0.0" }, () => {
-  console.log(`[BOOT] Port ${PORT} open in <${Math.round(performance.now())}ms`);
-});
+const bootstrapServer = (globalThis as any).__bootstrapServer;
+let server: import("http").Server;
+
+if (bootstrapServer) {
+  server = bootstrapServer;
+  server.removeAllListeners("request");
+  server.on("request", requestHandler);
+  console.log(`[server] Took over bootstrap server on port ${PORT}`);
+} else {
+  server = createServer(requestHandler);
+  server.listen({ port: PORT, host: "0.0.0.0" }, () => {
+    console.log(`[server] Port ${PORT} open`);
+  });
+}
 
 declare module "http" {
   interface IncomingMessage {

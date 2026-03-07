@@ -7519,7 +7519,25 @@ async function trackError(component, message, error, metadata) {
 // server/index.ts
 var app = express();
 var SERVER_VERSION = "1.7.4";
-var server = createServer(app);
+var HEALTH_HTML = "<!DOCTYPE html><html><head><title>Retuned</title></head><body>ok</body></html>";
+var server = createServer((req, res) => {
+  const url = (req.url || "").split("?")[0];
+  if (url === "/" || url === "/__health") {
+    const expoPlatform = req.headers["expo-platform"];
+    if (expoPlatform && (expoPlatform === "ios" || expoPlatform === "android")) {
+      app(req, res);
+      return;
+    }
+    res.writeHead(200, {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-cache",
+      "Content-Length": Buffer.byteLength(HEALTH_HTML)
+    });
+    res.end(HEALTH_HTML);
+    return;
+  }
+  app(req, res);
+});
 function timestamp2() {
   return (/* @__PURE__ */ new Date()).toISOString();
 }
@@ -7897,14 +7915,7 @@ function setupErrorHandler(app2) {
       error: err instanceof Error ? err.message : String(err)
     });
   }
-  app.get("/__health", (_req, res) => {
-    logInfo("healthcheck", "/__health hit", { status: 200 });
-    res.status(200).send("ok");
-  });
-  app.get("/", (_req, res) => {
-    res.status(200).send("ok");
-  });
-  logInfo("startup", "Health and root routes registered before port open");
+  logInfo("startup", "Health routes handled at raw HTTP level (before Express)");
   const port = parseInt(process.env.PORT || "5000", 10);
   logInfo("startup", `Opening port ${port}`);
   await new Promise((resolve2, reject) => {

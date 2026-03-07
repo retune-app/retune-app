@@ -62,13 +62,14 @@ The application employs a "Serene Empowerment" aesthetic, featuring Primary Gold
 - `expo-av`, `expo-file-system`, `drizzle-orm`, `pg`, `multer`, `elevenlabs`, `hume`, `@tanstack/react-query`, `expo-linear-gradient`, `@expo-google-fonts/outfit`.
 
 ### Deployment
-- **Target**: `vm` (always-on, NOT autoscale)
+- **Target**: `vm` (Reserved VM, always-on — required for scheduled tasks like voice rotation and auth token cleanup)
 - **Production port**: 8081 (must match `[[ports]] localPort = 8081 externalPort = 80` in `.replit` for health checks)
 - **Dev backend port**: 5000, **Dev frontend (Expo) port**: 8081
-- **Build**: `npm run server:build` (esbuild, no Metro/Expo build)
+- **Build**: `npm run server:build` (esbuild with `--format=esm`, outputs to `server_dist/index.js`)
 - **Run**: `PORT=8081 npm run server:prod`
-- **Health checks**: `/__health` and `/` respond before any middleware loads (port opens in <10ms)
+- **Health checks**: `/__health` and `/` are Express routes registered before middleware; port opens after full initialization
 - **Port rule**: Production PORT must match the `[[ports]]` entry with `externalPort = 80` — currently `localPort = 8081`
+- **ESM support**: `server_dist/package.json` with `{"type": "module"}` is required for the built output — do not delete this file
 
 ### Environment Variables
 - `DATABASE_URL`

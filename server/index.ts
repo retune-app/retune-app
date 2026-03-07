@@ -1,6 +1,5 @@
 import express from "express";
 import type { Request, Response, NextFunction } from "express";
-import { createServer } from "node:http";
 import { registerRoutes } from "./routes";
 import * as fs from "fs";
 import * as path from "path";
@@ -11,25 +10,6 @@ import { trackError } from "./error-tracker";
 
 const app = express();
 const SERVER_VERSION = "1.7.4";
-const HEALTH_HTML = "<!DOCTYPE html><html><head><title>Retuned</title></head><body>ok</body></html>";
-const server = createServer((req, res) => {
-  const url = (req.url || "").split("?")[0];
-  if (url === "/" || url === "/__health") {
-    const expoPlatform = req.headers["expo-platform"];
-    if (expoPlatform && (expoPlatform === "ios" || expoPlatform === "android")) {
-      app(req, res);
-      return;
-    }
-    res.writeHead(200, {
-      "Content-Type": "text/html; charset=utf-8",
-      "Cache-Control": "no-cache",
-      "Content-Length": Buffer.byteLength(HEALTH_HTML),
-    });
-    res.end(HEALTH_HTML);
-    return;
-  }
-  app(req, res);
-});
 
 declare module "http" {
   interface IncomingMessage {
@@ -325,21 +305,6 @@ function configureExpoAndLanding(app: express.Application) {
 
   logInfo("startup", "Serving static Expo files with dynamic manifest routing");
 
-  app.get("/welcome", (req: Request, res: Response) => {
-    if (!cachedTemplate) {
-      return res.status(200).send("ok");
-    }
-    const protocol = req.header("x-forwarded-proto") || req.protocol || "https";
-    const host = req.header("x-forwarded-host") || req.get("host") || "";
-    const html = cachedTemplate
-      .replace(/BASE_URL_PLACEHOLDER/g, `${protocol}://${host}`)
-      .replace(/EXPS_URL_PLACEHOLDER/g, host)
-      .replace(/APP_NAME_PLACEHOLDER/g, appName);
-    res.setHeader("Content-Type", "text/html; charset=utf-8");
-    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-    res.status(200).send(html);
-  });
-
   app.get("/privacy-policy", (_req: Request, res: Response) => {
     const privacyPath = path.resolve(process.cwd(), "server", "templates", "privacy-policy.html");
     if (fs.existsSync(privacyPath)) {
@@ -515,34 +480,23 @@ function setupErrorHandler(app: express.Application) {
   let earlyLandingCache = "";
   try {
     earlyLandingCache = fs.readFileSync(landingTemplatePath, "utf-8");
-    logInfo("startup", "Landing page template cached", {
-      size_bytes: earlyLandingCache.length,
-    });
-  } catch (err) {
-    logWarn("startup", "Landing page template not found", {
-      error: err instanceof Error ? err.message : String(err),
-    });
-  }
+  } catch {}
 
-  logInfo("startup", "Health routes handled at raw HTTP level (before Express)");
-
-  // --- NOW open the port — routes are ready ---
-  const port = parseInt(process.env.PORT || "5000", 10);
-  logInfo("startup", `Opening port ${port}`);
-  await new Promise<void>((resolve, reject) => {
-    server.listen({ port, host: "0.0.0.0" }, () => {
-      logInfo("startup", `Port ${port} open — accepting connections`, {
-        boot_time_ms: Date.now() - startTime,
-      });
-      resolve();
-    });
-    server.on("error", (err: Error) => {
-      logError("startup", `Failed to open port ${port}`, {
-        error: err.message,
-        code: (err as NodeJS.ErrnoException).code,
-      });
-      reject(err);
-    });
+  app.get("/__health", (_req: Request, res: Response) => {
+    res.status(200).send("ok");
+  });
+  app.get("/", (req: Request, res: Response) => {
+    if (!earlyLandingCache) {
+      return res.status(200).send("ok");
+    }
+    const protocol = req.header("x-forwarded-proto") || req.protocol || "https";
+    const host = req.header("x-forwarded-host") || req.get("host") || "";
+    const html = earlyLandingCache
+      .replace(/BASE_URL_PLACEHOLDER/g, `${protocol}://${host}`)
+      .replace(/EXPS_URL_PLACEHOLDER/g, host)
+      .replace(/APP_NAME_PLACEHOLDER/g, getAppName());
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.status(200).send(html);
   });
 
   try {
@@ -599,8 +553,9 @@ function setupErrorHandler(app: express.Application) {
     });
   }
 
+  let server;
   try {
-    await registerRoutes(app);
+    server = await registerRoutes(app);
     logInfo("startup", "API routes registered");
   } catch (err) {
     logError("startup", "Failed to register API routes — this is critical", {
@@ -628,10 +583,21 @@ function setupErrorHandler(app: express.Application) {
     });
   }
 
-  logInfo("startup", "All middleware configured — server fully ready", {
-    boot_time_ms: Date.now() - startTime,
-    version: SERVER_VERSION,
-  });
+  const port = parseInt(process.env.PORT || "5000", 10);
+  server.listen(
+    {
+      port,
+      host: "0.0.0.0",
+      reusePort: true,
+    },
+    () => {
+      const bootTime = Date.now() - startTime;
+      logInfo("startup", `Server ready on port ${port}`, {
+        boot_time_ms: bootTime,
+        version: SERVER_VERSION,
+      });
+    },
+  );
 
   const gracefulShutdown = (signal: string) => {
     logInfo("shutdown", `Received ${signal}, starting graceful shutdown`);

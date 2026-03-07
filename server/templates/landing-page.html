@@ -209,6 +209,33 @@
       outline-offset: 3px;
     }
 
+    .nav-web {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 22px;
+      background: transparent;
+      color: var(--text);
+      border: 1.5px solid var(--border);
+      border-radius: 24px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 500;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .nav-web:hover {
+      border-color: var(--believe);
+      color: var(--believe);
+      transform: translateY(-1px);
+    }
+
+    .nav-web svg {
+      width: 16px;
+      height: 16px;
+    }
+
     /* ===== HERO ===== */
     .hero {
       min-height: 90vh;
@@ -1552,6 +1579,38 @@
       outline-offset: 3px;
     }
 
+    .btn-web {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 32px;
+      background: var(--believe);
+      color: var(--white);
+      border: none;
+      border-radius: 30px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 16px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .btn-web:hover {
+      background: var(--believe-light);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px var(--believe-glow);
+    }
+
+    .btn-web:focus-visible {
+      outline: 2px solid var(--believe);
+      outline-offset: 3px;
+    }
+
+    .btn-web svg {
+      width: 20px;
+      height: 20px;
+    }
+
     /* ===== FOOTER ===== */
     footer {
       padding: 80px 0 40px;
@@ -1810,6 +1869,11 @@
         padding: 8px 16px;
       }
 
+      .nav-web {
+        font-size: 12px;
+        padding: 8px 16px;
+      }
+
       .flywheel-diagram {
         max-width: 320px;
         margin-bottom: 50px;
@@ -1835,7 +1899,8 @@
       }
 
       .cta-buttons .btn-ios,
-      .cta-buttons .btn-android {
+      .cta-buttons .btn-android,
+      .cta-buttons .btn-web {
         width: 100%;
         justify-content: center;
       }
@@ -1899,7 +1964,13 @@
         <img src="/landing-assets/logo.png" alt="RETUNED logo" width="46" height="46">
         <span class="logo-text">RETUNED</span>
       </a>
-      <a href="https://apps.apple.com/app/retuned/id6758591982" class="nav-cta" target="_blank" rel="noopener noreferrer">Experience the Flywheel</a>
+      <div style="display:flex;gap:10px;align-items:center">
+        <a href="BASE_URL_PLACEHOLDER/auth" class="nav-web">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          Use on Web
+        </a>
+        <a href="https://apps.apple.com/app/retuned/id6758591982" class="nav-cta" target="_blank" rel="noopener noreferrer">Download for iOS</a>
+      </div>
     </div>
   </nav>
 
@@ -2413,6 +2484,10 @@
       <h2 class="fade-in">Experience the Wellness Flywheel</h2>
       <p class="fade-in">See how affirmations, breathing, and meditation amplify each other in one continuous journey. Your first session will show you what integration really feels like.</p>
       <div class="cta-buttons fade-in">
+        <a href="BASE_URL_PLACEHOLDER/auth" class="btn-web">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          Use on Web &#8594;
+        </a>
         <a href="https://apps.apple.com/app/retuned/id6758591982" class="btn-ios" target="_blank" rel="noopener noreferrer">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
           Download for iOS &#8594;

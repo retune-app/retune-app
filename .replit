@@ -7,7 +7,7 @@ packages = ["python3", "python312Packages.numpy", "python312Packages.scipy"]
 
 [deployment]
 deploymentTarget = "vm"
-build = ["bash", "-c", "npm run server:build && EXPO_PUBLIC_DOMAIN=retuned.replit.app npx expo export --platform web --output-dir web-build"]
+build = ["bash", "server/build-production.sh"]
 run = ["bash", "server/start-production.sh"]
 
 [[ports]]

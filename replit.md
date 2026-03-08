@@ -70,6 +70,8 @@ The application employs a "Serene Empowerment" aesthetic, featuring Primary Gold
 - **Health checks**: `/__health` and `/` are Express routes registered before middleware; port opens after full initialization
 - **Port rule**: Production PORT must match the `[[ports]]` entry with `externalPort = 80` — currently `localPort = 8081`
 - **ESM support**: `server_dist/package.json` with `{"type": "module"}` is required for the built output — do not delete this file
+- **Web build**: `web-build/` contains pre-built Expo web bundle (`npx expo export --platform web --output-dir web-build`). Server detects `web.retuned.app` host and serves the web app instead of the landing page. Must be rebuilt when frontend code changes that should be reflected on web.
+- **Domain routing**: `web.retuned.app` → Expo web app; `retuned.replit.app` / other domains → landing page
 
 ### Environment Variables
 - `DATABASE_URL`

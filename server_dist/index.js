@@ -7881,8 +7881,36 @@ function setupErrorHandler(app2) {
     earlyLandingCache = fs4.readFileSync(landingTemplatePath, "utf-8");
   } catch {
   }
+  const webBuildPath = path4.resolve(process.cwd(), "web-build");
+  const webBuildIndexPath = path4.resolve(webBuildPath, "index.html");
+  let webBuildIndexCache = "";
+  try {
+    if (fs4.existsSync(webBuildIndexPath)) {
+      webBuildIndexCache = fs4.readFileSync(webBuildIndexPath, "utf-8");
+      logInfo("startup", "Web build loaded for web.retuned.app");
+    }
+  } catch {
+  }
+  function isWebAppHost(req) {
+    const host = (req.header("x-forwarded-host") || req.get("host") || "").toLowerCase().split(":")[0];
+    return host === "web.retuned.app";
+  }
+  const webBuildStatic = express.static(webBuildPath, { index: false, fallthrough: true });
   app.get("/__health", (_req, res) => {
     res.status(200).send("ok");
+  });
+  app.use((req, res, next) => {
+    if (isWebAppHost(req) && !req.path.startsWith("/api") && !req.path.startsWith("/__health")) {
+      webBuildStatic(req, res, () => {
+        if (webBuildIndexCache) {
+          res.setHeader("Content-Type", "text/html; charset=utf-8");
+          return res.status(200).send(webBuildIndexCache);
+        }
+        next();
+      });
+      return;
+    }
+    next();
   });
   app.get("/", (req, res) => {
     if (!earlyLandingCache) {

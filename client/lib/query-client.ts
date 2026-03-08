@@ -14,20 +14,17 @@ export function getApiUrl(): string {
       return "http://localhost:5000";
     }
     
-    // For production (.replit.app), use the same origin (no port needed)
-    // Production deployments serve both frontend and API on the same domain
     const currentOrigin = window.location?.origin;
-    if (currentOrigin && currentOrigin.includes(".replit.app")) {
-      return currentOrigin;
-    }
     
     // For development (.replit.dev), use port 5000 explicitly
-    // The default port 80 routes to Expo (8081), but port 5000 routes to Express
-    // e.g., https://domain.replit.dev:5000
     if (currentOrigin && currentOrigin.includes(".replit.dev")) {
-      // Extract the hostname and add port 5000
       const hostname = window.location?.hostname;
       return `https://${hostname}:5000`;
+    }
+
+    // For production web (any non-dev, non-localhost domain), use same origin
+    if (currentOrigin) {
+      return currentOrigin;
     }
   }
 

@@ -65,8 +65,8 @@ The application employs a "Serene Empowerment" aesthetic, featuring Primary Gold
 - **Target**: `vm` (Reserved VM, always-on — required for scheduled tasks like voice rotation and auth token cleanup)
 - **Production port**: 8081 (must match `[[ports]] localPort = 8081 externalPort = 80` in `.replit` for health checks)
 - **Dev backend port**: 5000, **Dev frontend (Expo) port**: 8081
-- **Build**: `npm run server:build` (esbuild with `--format=esm`, outputs to `server_dist/index.js`)
-- **Run**: `PORT=8081 npm run server:prod`
+- **Build**: `npm run server:build && npx expo export --platform web` (esbuild server + Expo web bundle, outputs to `server_dist/` and `web-build/`)
+- **Run**: `bash server/start-production.sh` (auto-restart wrapper — if the Node.js process crashes, it restarts within 3 seconds)
 - **Health checks**: `/__health` and `/` are Express routes registered before middleware; port opens after full initialization
 - **Port rule**: Production PORT must match the `[[ports]]` entry with `externalPort = 80` — currently `localPort = 8081`
 - **ESM support**: `server_dist/package.json` with `{"type": "module"}` is required for the built output — do not delete this file

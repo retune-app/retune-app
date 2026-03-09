@@ -32,6 +32,7 @@ import { registerReminderRoutes } from "./routes/reminder-routes";
 import { registerAdminRoutes, ADMIN_USER_IDS } from "./routes/admin-routes";
 import { registerDevRoutes } from "./routes/dev-routes";
 import { registerAnalyticsRoutes } from "./routes/analytics-routes";
+import { logInfo, logWarn, logError } from "./logger";
 
 // Rate limiters to prevent API abuse
 const aiGenerationLimiter = rateLimit({
@@ -480,7 +481,7 @@ KILL THESE AI PATTERNS:
 
     return result;
   } catch (error) {
-    console.error("Humanizer pass failed, using original script:", error);
+    logError("routes", "Humanizer pass failed, using original script", { error: error instanceof Error ? error.message : String(error) });
     return script;
   }
 }
@@ -539,7 +540,7 @@ Respond with ONLY the title, nothing else.`,
     title = title.replace(/^["']|["']$/g, "");
     return title;
   } catch (error) {
-    console.error("Auto-title generation failed:", error);
+    logError("routes", "Auto-title generation failed", { error: error instanceof Error ? error.message : String(error) });
     return "My Affirmation";
   }
 }
@@ -587,7 +588,7 @@ Respond with ONLY the description, nothing else.`,
 
     return response.choices[0]?.message?.content?.trim().replace(/['"]/g, '').replace(/\.$/, '') || "";
   } catch (error) {
-    console.error("Error generating description:", error);
+    logError("routes", "Error generating description", { error: error instanceof Error ? error.message : String(error) });
     return "";
   }
 }
@@ -631,7 +632,7 @@ Respond with ONLY the category name, nothing else.`,
     
     return "Confidence"; // Default fallback
   } catch (error) {
-    console.error("Auto-categorization failed:", error);
+    logError("routes", "Auto-categorization failed", { error: error instanceof Error ? error.message : String(error) });
     return "Confidence"; // Default fallback
   }
 }
@@ -783,7 +784,7 @@ async function generateAudioSimple(text: string, voiceId: string, isPersonalVoic
     try {
       return await humeSimpleTTS(text, humeName);
     } catch (humeError: any) {
-      console.error("Hume AI simple TTS failed, trying OpenAI fallback:", humeError?.message || humeError);
+      logError("routes", "Hume AI simple TTS failed, trying OpenAI fallback", { error: humeError?.message || String(humeError) });
     }
   }
 
@@ -793,7 +794,7 @@ async function generateAudioSimple(text: string, voiceId: string, isPersonalVoic
       const openaiVoice = getOpenAIFallbackVoice(voiceId);
       return await generateAudioSimpleOpenAI(text, openaiVoice);
     } catch (openaiError: any) {
-      console.error("OpenAI simple TTS fallback also failed:", openaiError?.message || openaiError);
+      logError("routes", "OpenAI simple TTS fallback also failed", { error: openaiError?.message || String(openaiError) });
     }
   }
 
@@ -822,10 +823,7 @@ async function generateAudio(
       const isVoiceNotFound = elevenLabsError?.message?.includes("voice_not_found") ||
         elevenLabsError?.message?.includes("Not Found") ||
         String(elevenLabsError).includes("voice_not_found");
-      console.error(
-        `ElevenLabs TTS failed for PERSONAL voice (${voiceId})${isQuotaExhausted ? " (quota exhausted)" : ""}${isVoiceNotFound ? " (voice not found)" : ""}:`,
-        elevenLabsError?.message || elevenLabsError
-      );
+      logError("routes", `ElevenLabs TTS failed for PERSONAL voice (${voiceId})${isQuotaExhausted ? " (quota exhausted)" : ""}${isVoiceNotFound ? " (voice not found)" : ""}`, { error: elevenLabsError?.message || String(elevenLabsError) });
       if (isQuotaExhausted) {
         throw new Error("QUOTA_EXCEEDED: Your voice cloning credits have been used up for this period. Please switch to an AI voice or wait for your credits to reset.");
       }
@@ -844,7 +842,7 @@ async function generateAudio(
       const result = await humeTextToSpeech(script, humeName, moodConfig?.humeSpeed, moodConfig?.pauseSeconds);
       return result;
     } catch (humeError: any) {
-      console.error("Hume AI TTS failed, trying OpenAI fallback:", humeError?.message || humeError);
+      logError("routes", "Hume AI TTS failed, trying OpenAI fallback", { error: humeError?.message || String(humeError) });
     }
   }
 
@@ -854,7 +852,7 @@ async function generateAudio(
       const openaiVoice = getOpenAIFallbackVoice(voiceId);
       return await generateAudioOpenAI(script, openaiVoice);
     } catch (openaiError: any) {
-      console.error("OpenAI TTS fallback also failed:", openaiError?.message || openaiError);
+      logError("routes", "OpenAI TTS fallback also failed", { error: openaiError?.message || String(openaiError) });
     }
   }
 
@@ -895,7 +893,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const resolvedPath = path.resolve(filePath);
       const resolvedUploadDir = path.resolve(uploadDir);
       if (!resolvedPath.startsWith(resolvedUploadDir + path.sep)) {
-        console.log(JSON.stringify({ level: "WARN", ts: new Date().toISOString(), component: "security", message: `Path traversal attempt blocked: ${rawFilename}` }));
+        logWarn("security", `Path traversal attempt blocked: ${rawFilename}`);
         return res.status(403).json({ error: "Access denied" });
       }
       
@@ -925,7 +923,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.sendFile(filePath);
     } catch (error) {
-      console.error("Error serving file:", error);
+      logError("routes", "Error serving file", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to serve file" });
     }
   });
@@ -936,7 +934,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const allCategories = await db.select().from(categories);
       res.json(allCategories);
     } catch (error) {
-      console.error("Error fetching categories:", error);
+      logError("routes", "Error fetching categories", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to fetch categories" });
     }
   });
@@ -951,7 +949,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .orderBy(asc(affirmations.displayOrder), desc(affirmations.createdAt));
       res.json(allAffirmations);
     } catch (error) {
-      console.error("Error fetching affirmations:", error);
+      logError("routes", "Error fetching affirmations", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to fetch affirmations" });
     }
   });
@@ -974,7 +972,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(affirmation);
     } catch (error) {
-      console.error("Error fetching affirmation:", error);
+      logError("routes", "Error fetching affirmation", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to fetch affirmation" });
     }
   });
@@ -988,7 +986,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result = await moderateContent(text);
       res.json(result);
     } catch (error) {
-      console.error("Moderation check error:", error);
+      logError("routes", "Moderation check error", { error: error instanceof Error ? error.message : String(error) });
       res.json({ flagged: false, categories: [], message: "" });
     }
   });
@@ -1055,7 +1053,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
     } catch (error) {
-      console.error("Error generating script:", error);
+      logError("routes", "Error generating script", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to generate script" });
     }
   });
@@ -1089,7 +1087,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           finalDescription = await autoGenerateDescription(script);
         } catch (e) {
-          console.error("Failed to auto-generate description:", e);
+          logError("routes", "Failed to auto-generate description", { error: e instanceof Error ? e.message : String(e) });
         }
       }
 
@@ -1202,7 +1200,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(newAffirmation);
     } catch (error: any) {
-      console.error("Error creating affirmation:", error);
+      logError("routes", "Error creating affirmation", { error: error instanceof Error ? error.message : String(error) });
       if (error?.message?.includes("QUOTA_EXCEEDED")) {
         res.status(429).json({ error: "QUOTA_EXCEEDED", message: "Your voice credits have been used up for this period. The affirmation will be created with an AI voice instead." });
       } else if (error?.message?.includes("PERSONAL_VOICE_FAILED")) {
@@ -1248,10 +1246,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           if (resolvedPath.startsWith(resolvedUploadDir + path.sep) && fs.existsSync(audioPath)) {
             fs.unlinkSync(audioPath);
-            console.log(JSON.stringify({ level: "INFO", ts: new Date().toISOString(), component: "security", message: `SECURE DELETE: Removed audio file ${filename}` }));
+            logInfo("security", `SECURE DELETE: Removed audio file ${filename}`);
           }
         } else {
-          console.log(JSON.stringify({ level: "INFO", ts: new Date().toISOString(), component: "security", message: `SECURITY: Skipped deletion of invalid filename pattern: ${affirmation.audioUrl}` }));
+          logInfo("security", `SECURITY: Skipped deletion of invalid filename pattern: ${affirmation.audioUrl}`);
         }
       }
       
@@ -1262,7 +1260,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ success: true });
     } catch (error) {
-      console.error("Error deleting affirmation:", error);
+      logError("routes", "Error deleting affirmation", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to delete affirmation" });
     }
   });
@@ -1288,7 +1286,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(updated);
     } catch (error) {
-      console.error("Error updating favorite:", error);
+      logError("routes", "Error updating favorite", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to update favorite" });
     }
   });
@@ -1318,7 +1316,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(updated);
     } catch (error) {
-      console.error("Error renaming affirmation:", error);
+      logError("routes", "Error renaming affirmation", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to rename affirmation" });
     }
   });
@@ -1376,7 +1374,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(updated);
     } catch (error) {
-      console.error("Error auto-saving affirmation:", error);
+      logError("routes", "Error auto-saving affirmation", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to auto-save affirmation" });
     }
   });
@@ -1407,13 +1405,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             updated++;
           }
         } catch (e) {
-          console.error(`Failed to generate description for affirmation ${aff.id}:`, e);
+          logError("routes", `Failed to generate description for affirmation ${aff.id}`, { error: e instanceof Error ? e.message : String(e) });
         }
       }
 
       res.json({ updated, total: userAffirmations.length });
     } catch (error) {
-      console.error("Error backfilling descriptions:", error);
+      logError("routes", "Error backfilling descriptions", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to backfill descriptions" });
     }
   });
@@ -1458,7 +1456,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(updated);
     } catch (error) {
-      console.error("Error updating play count:", error);
+      logError("routes", "Error updating play count", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to update play count" });
     }
   });
@@ -1535,8 +1533,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           // PRIVACY: Delete the voice sample file immediately after cloning
           fs.unlink(file.path, (err) => {
-            if (err) console.error("Failed to delete voice sample file:", err);
-            else console.log(JSON.stringify({ level: "INFO", ts: new Date().toISOString(), component: "voiceClone", message: `Voice sample file deleted for privacy: ${file.filename}` }));
+            if (err) logError("voiceClone", "Failed to delete voice sample file", { error: err instanceof Error ? err.message : String(err) });
+            else logInfo("voiceClone", `Voice sample file deleted for privacy: ${file.filename}`);
           });
 
           // Update sample with voice ID (audioUrl cleared for privacy)
@@ -1557,7 +1555,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             clonesRemaining: MAX_VOICE_CLONES - (clonesUsed + 1)
           });
         } catch (cloneError: any) {
-          console.error("Voice cloning error:", cloneError);
+          logError("routes", "Voice cloning error", { error: cloneError instanceof Error ? cloneError.message : String(cloneError) });
 
           // PRIVACY: Delete file even on failure
           fs.unlink(file.path, () => {});
@@ -1573,12 +1571,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           let userMessage = "Voice cloning failed. Please try again.";
 
           if (errorDetail.toLowerCase().includes("maximum") || errorDetail.toLowerCase().includes("custom voices") || errorDetail.toLowerCase().includes("voice limit")) {
-            console.warn("[Voice Slots] ElevenLabs quota hit. Attempting queue-based slot recovery...");
+            logWarn("voiceSlots", "ElevenLabs quota hit. Attempting queue-based slot recovery...");
             
             try {
               const slotResult = await freeVoiceSlotForNewClone(req.userId!);
               if (slotResult.freed) {
-                console.log(JSON.stringify({ level: "INFO", ts: new Date().toISOString(), component: "voiceSlots", message: `[Voice Slots] Freed slot (rotated user=${slotResult.rotatedUserId}). Retrying clone...` }));
+                logInfo("voiceSlots", `Freed slot (rotated user=${slotResult.rotatedUserId}). Retrying clone...`);
                 
                 const retryVoiceId = await cloneVoice(file.path, "My Affirmation Voice");
                 fs.unlink(file.path, () => {});
@@ -1605,7 +1603,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 });
               }
             } catch (retryError: any) {
-              console.error("[Voice Slots] Retry after slot recovery failed:", retryError?.message);
+              logError("voiceSlots", "Retry after slot recovery failed", { error: retryError?.message || String(retryError) });
             }
             
             userMessage = "Voice cloning is temporarily unavailable. Please try again in a few minutes.";
@@ -1625,7 +1623,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           res.status(statusCode === 429 ? 429 : 500).json({ error: userMessage });
         }
       } catch (error) {
-        console.error("Error uploading voice sample:", error);
+        logError("routes", "Error uploading voice sample", { error: error instanceof Error ? error.message : String(error) });
         res.status(500).json({ error: "Failed to upload voice sample" });
       }
     }
@@ -1657,7 +1655,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: sample?.status || null,
       });
     } catch (error) {
-      console.error("Error fetching voice sample status:", error);
+      logError("routes", "Error fetching voice sample status", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to fetch voice sample status" });
     }
   });
@@ -1711,7 +1709,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         voiceName: validVoice.name,
       });
     } catch (error: any) {
-      console.error("Error generating voice preview:", error?.message || error);
+      logError("routes", "Error generating voice preview", { error: error?.message || String(error) });
       res.status(500).json({ error: "Failed to generate voice preview. Please try again." });
     }
   });
@@ -1766,7 +1764,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         voiceName: "Inner Voice",
       });
     } catch (error) {
-      console.error("Error generating Inner Voice preview:", error);
+      logError("routes", "Error generating Inner Voice preview", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to generate Inner Voice preview. Please try again." });
     }
   });
@@ -1808,7 +1806,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         hasCartesiaVoice: false,
       });
     } catch (error) {
-      console.error("Error fetching voice preferences:", error);
+      logError("routes", "Error fetching voice preferences", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to fetch voice preferences" });
     }
   });
@@ -1855,7 +1853,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ success: true, ...updates });
     } catch (error) {
-      console.error("Error updating voice preferences:", error);
+      logError("routes", "Error updating voice preferences", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to update voice preferences" });
     }
   });
@@ -1965,7 +1963,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(updated);
     } catch (error: any) {
-      console.error("Error regenerating voice:", error);
+      logError("routes", "Error regenerating voice", { error: error instanceof Error ? error.message : String(error) });
       const errorMsg = error?.message || "";
       if (errorMsg.includes("QUOTA_EXCEEDED")) {
         return res.status(422).json({ 
@@ -1994,7 +1992,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(userCustomCategories);
     } catch (error) {
-      console.error("Error fetching custom categories:", error);
+      logError("routes", "Error fetching custom categories", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to fetch custom categories" });
     }
   });
@@ -2051,7 +2049,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.status(201).json(newCategory);
     } catch (error) {
-      console.error("Error creating custom category:", error);
+      logError("routes", "Error creating custom category", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to create custom category" });
     }
   });
@@ -2084,7 +2082,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ success: true });
     } catch (error) {
-      console.error("Error deleting custom category:", error);
+      logError("routes", "Error deleting custom category", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to delete custom category" });
     }
   });
@@ -2321,19 +2319,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
       });
     } catch (error) {
-      console.error("Error fetching user stats:", error);
+      logError("routes", "Error fetching user stats", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to fetch user stats" });
-    }
-  });
-
-  // Get categories
-  app.get("/api/categories", async (req: Request, res: Response) => {
-    try {
-      const allCategories = await db.select().from(categories);
-      res.json(allCategories);
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-      res.status(500).json({ error: "Failed to fetch categories" });
     }
   });
 
@@ -2438,7 +2425,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           createdAffirmations.push(newAffirmation);
         } catch (error) {
-          console.error(`Error creating sample affirmation "${sample.title}":`, error);
+          logError("routes", `Error creating sample affirmation "${sample.title}"`, { error: error instanceof Error ? error.message : String(error) });
         }
       }
 
@@ -2448,7 +2435,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         affirmations: createdAffirmations 
       });
     } catch (error) {
-      console.error("Error creating sample affirmations:", error);
+      logError("routes", "Error creating sample affirmations", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to create sample affirmations" });
     }
   });
@@ -2475,7 +2462,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ success: true });
     } catch (error) {
-      console.error("Error reordering affirmations:", error);
+      logError("routes", "Error reordering affirmations", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to reorder affirmations" });
     }
   });
@@ -2498,7 +2485,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ success: true });
     } catch (error) {
-      console.error("Error initializing categories:", error);
+      logError("routes", "Error initializing categories", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to initialize categories" });
     }
   });
@@ -2521,7 +2508,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ success: true, name: trimmedName });
     } catch (error) {
-      console.error("Error updating name:", error);
+      logError("routes", "Error updating name", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to update name" });
     }
   });
@@ -2542,7 +2529,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         deletedCount: deletedAffirmations.length
       });
     } catch (error) {
-      console.error("Error clearing affirmations:", error);
+      logError("routes", "Error clearing affirmations", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to clear affirmations" });
     }
   });
@@ -2579,7 +2566,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         deletedVoiceSamples: deletedSamples.length
       });
     } catch (error) {
-      console.error("Error resetting user data:", error);
+      logError("routes", "Error resetting user data", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to reset user data" });
     }
   });
@@ -2613,13 +2600,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Destroy the session
       req.session.destroy((err) => {
         if (err) {
-          console.error("Session destroy error:", err);
+          logError("routes", "Session destroy error", { error: err instanceof Error ? err.message : String(err) });
         }
       });
 
       res.json({ success: true });
     } catch (error) {
-      console.error("Error deleting user account:", error);
+      logError("routes", "Error deleting user account", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to delete account" });
     }
   });
@@ -2656,7 +2643,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         eveningTime: settings.eveningTime,
       });
     } catch (error) {
-      console.error("Error fetching notification settings:", error);
+      logError("routes", "Error fetching notification settings", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to fetch notification settings" });
     }
   });
@@ -2730,7 +2717,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
     } catch (error) {
-      console.error("Error updating notification settings:", error);
+      logError("routes", "Error updating notification settings", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to update notification settings" });
     }
   });
@@ -2762,7 +2749,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ success: true });
     } catch (error: any) {
-      console.error("Error registering push token:", error);
+      logError("routes", "Error registering push token", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to register push token" });
     }
   });
@@ -2785,7 +2772,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ success: true, message: "Voice clone marked as active" });
     } catch (error: any) {
-      console.error("Error keeping voice active:", error);
+      logError("routes", "Error keeping voice active", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to update voice status" });
     }
   });
@@ -2846,7 +2833,7 @@ Rules:
         });
       }
     } catch (error) {
-      console.error("Error generating mood prompt:", error);
+      logError("routes", "Error generating mood prompt", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to generate prompt" });
     }
   });
@@ -3161,7 +3148,7 @@ Rules for tone:
         steps,
       });
     } catch (error) {
-      console.error("Error in mood check-in:", error);
+      logError("routes", "Error in mood check-in", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to process mood check-in" });
     }
   });
@@ -3404,7 +3391,7 @@ Rules for tone:
         steps,
       });
     } catch (error) {
-      console.error("Error in vibe check-in:", error);
+      logError("routes", "Error in vibe check-in", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to process vibe check-in" });
     }
   });
@@ -3439,7 +3426,7 @@ Rules for tone:
       
       res.json(completion);
     } catch (error) {
-      console.error("Error recording journey completion:", error);
+      logError("routes", "Error recording journey completion", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to record journey completion" });
     }
   });
@@ -3522,7 +3509,7 @@ Rules for tone:
         lastJourney: recentJourneys[0] || null,
       });
     } catch (error) {
-      console.error("Error fetching journey stats:", error);
+      logError("routes", "Error fetching journey stats", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to fetch journey stats" });
     }
   });
@@ -3577,7 +3564,7 @@ Rules for tone:
       const dayOfWeek = (clientDayOfWeek && validDays.includes(clientDayOfWeek)) ? clientDayOfWeek : validDays[new Date().getDay()];
 
       if (clientDisconnected) {
-        console.log(JSON.stringify({ level: "INFO", ts: new Date().toISOString(), component: "guidedMoment", message: `Client disconnected before script generation (${duration}min), aborting` }));
+        logInfo("guidedMoment", `Client disconnected before script generation (${duration}min), aborting`);
         return;
       }
 
@@ -3653,7 +3640,7 @@ Rules for tone:
         disclaimer: "This is a mindfulness exercise for relaxation purposes. It is not a substitute for professional mental health care.",
       });
     } catch (error: any) {
-      console.error("Error generating micro-meditation script:", error);
+      logError("routes", "Error generating micro-meditation script", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to generate micro-meditation script. Please try again." });
     }
   });
@@ -3701,12 +3688,12 @@ Rules for tone:
         if (resolved) {
           voiceId = resolved;
         } else {
-          console.warn(`User ${userId} requested personal voice but no voice clone found`);
+          logWarn("routes", `User ${userId} requested personal voice but no voice clone found`);
         }
       }
 
       if (clientDisconnected) {
-        console.log(JSON.stringify({ level: "INFO", ts: new Date().toISOString(), component: "guidedMoment", message: "Client disconnected before TTS, aborting" }));
+        logInfo("guidedMoment", "Client disconnected before TTS, aborting");
         return;
       }
 
@@ -3728,7 +3715,7 @@ Rules for tone:
           audioDuration = result.duration;
         }
       } catch (ttsError: any) {
-        console.error("Guided moment TTS failed:", ttsError?.message || ttsError);
+        logError("routes", "Guided moment TTS failed", { error: ttsError?.message || String(ttsError) });
         return res.status(500).json({
           error: "Could not generate audio for your micro-meditation. Please try again.",
           code: ttsError?.message?.includes("QUOTA_EXCEEDED") ? "QUOTA_EXCEEDED" :
@@ -3743,7 +3730,7 @@ Rules for tone:
         wordTimings,
       });
     } catch (error: any) {
-      console.error("Error generating micro-meditation audio:", error);
+      logError("routes", "Error generating micro-meditation audio", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to generate micro-meditation audio. Please try again." });
     }
   });
@@ -3805,7 +3792,7 @@ Rules for tone:
         if (resolved) {
           voiceId = resolved;
         } else {
-          console.warn(`User ${userId} requested personal voice but no voice clone found`);
+          logWarn("routes", `User ${userId} requested personal voice but no voice clone found`);
         }
       }
 
@@ -3814,7 +3801,7 @@ Rules for tone:
       const dayOfWeek = (clientDayOfWeekLegacy && validDaysLegacy.includes(clientDayOfWeekLegacy)) ? clientDayOfWeekLegacy : validDaysLegacy[new Date().getDay()];
 
       if (clientDisconnected) {
-        console.log(JSON.stringify({ level: "INFO", ts: new Date().toISOString(), component: "meditation", message: `Client disconnected before script generation (${duration}min), aborting` }));
+        logInfo("meditation", `Client disconnected before script generation (${duration}min), aborting`);
         return;
       }
 
@@ -3872,7 +3859,7 @@ Rules for tone:
       }
 
       if (clientDisconnected) {
-        console.log(JSON.stringify({ level: "INFO", ts: new Date().toISOString(), component: "meditation", message: `Client disconnected after script generation (${duration}min), skipping TTS` }));
+        logInfo("meditation", `Client disconnected after script generation (${duration}min), skipping TTS`);
         return;
       }
 
@@ -3894,7 +3881,7 @@ Rules for tone:
           audioDuration = result.duration;
         }
       } catch (ttsError: any) {
-        console.error("Guided moment TTS failed:", ttsError?.message || ttsError);
+        logError("routes", "Guided moment TTS failed", { error: ttsError?.message || String(ttsError) });
         return res.status(500).json({ 
           error: "Could not generate audio for your micro-meditation. Please try again.",
           code: ttsError?.message?.includes("QUOTA_EXCEEDED") ? "QUOTA_EXCEEDED" : 
@@ -3912,7 +3899,7 @@ Rules for tone:
         disclaimer: "This is a mindfulness exercise for relaxation purposes. It is not a substitute for professional mental health care.",
       });
     } catch (error: any) {
-      console.error("Error generating micro-meditation:", error);
+      logError("routes", "Error generating micro-meditation", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to generate micro-meditation. Please try again." });
     }
   });
@@ -3943,7 +3930,7 @@ Rules for tone:
 
       res.json({ success: true, hasConsentedToVoiceCloning: consent });
     } catch (error) {
-      console.error("Error updating voice consent:", error);
+      logError("routes", "Error updating voice consent", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to update consent" });
     }
   });
@@ -3966,7 +3953,7 @@ Rules for tone:
         premiumFeatures: PREMIUM_FEATURES_LIST,
       });
     } catch (error) {
-      console.error("Error fetching subscription:", error);
+      logError("routes", "Error fetching subscription", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to fetch subscription info" });
     }
   });
@@ -4000,7 +3987,7 @@ Rules for tone:
         hasConsentedToVoiceCloning: user?.hasConsentedToVoiceCloning || false
       });
     } catch (error) {
-      console.error("Error fetching user limits:", error);
+      logError("routes", "Error fetching user limits", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to fetch limits" });
     }
   });
@@ -4022,7 +4009,7 @@ Rules for tone:
           const filePath = path.join(uploadDir, aff.audioUrl.replace("/uploads/", ""));
           fs.unlink(filePath, (err) => {
             if (err && err.code !== "ENOENT") {
-              console.error("Failed to delete audio file:", err);
+              logError("routes", "Failed to delete audio file", { error: err instanceof Error ? err.message : String(err) });
             }
           });
         }
@@ -4061,7 +4048,7 @@ Rules for tone:
         message: "All your data has been permanently deleted." 
       });
     } catch (error) {
-      console.error("Error deleting user data:", error);
+      logError("routes", "Error deleting user data", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to delete user data. Please contact support." });
     }
   });
@@ -4316,7 +4303,7 @@ Rules for tone:
       dailyGreetingCache.set(cacheKey, parsed);
       res.json({ ...parsed, cached: false });
     } catch (error) {
-      console.error("Daily greeting generation failed:", error);
+      logError("routes", "Daily greeting generation failed", { error: error instanceof Error ? error.message : String(error) });
       res.json({ message: dailyGreetingFallbacks[normalizedTime], cached: false });
     }
   });
@@ -4325,27 +4312,27 @@ Rules for tone:
     try {
       const expiryResult = await sendVoiceExpiryWarnings();
       if (expiryResult.warned > 0) {
-        console.log(JSON.stringify({ level: "INFO", ts: new Date().toISOString(), component: "voiceExpiry", message: `[Voice Expiry] Sent ${expiryResult.warned} expiry warnings` }));
+        logInfo("voiceExpiry", `Sent ${expiryResult.warned} expiry warnings`);
       }
     } catch (expiryError) {
-      console.error("[Voice Expiry] Warning check failed:", expiryError);
+      logError("voiceExpiry", "Warning check failed", { error: expiryError instanceof Error ? expiryError.message : String(expiryError) });
     }
 
     try {
-      console.log(JSON.stringify({ level: "INFO", ts: new Date().toISOString(), component: "voiceRotation", message: "[Voice Rotation] Running scheduled voice cleanup..." }));
+      logInfo("voiceRotation", "Running scheduled voice cleanup...");
       const results = await runVoiceRotation(60);
       if (results.rotated > 0) {
-        console.log(JSON.stringify({ level: "INFO", ts: new Date().toISOString(), component: "voiceRotation", message: `[Voice Rotation] Rotated ${results.rotated} inactive voices` }));
+        logInfo("voiceRotation", `Rotated ${results.rotated} inactive voices`);
       } else {
-        console.log(JSON.stringify({ level: "INFO", ts: new Date().toISOString(), component: "voiceRotation", message: "[Voice Rotation] No inactive voices to rotate" }));
+        logInfo("voiceRotation", "No inactive voices to rotate");
       }
 
       const warning = await checkVoiceSlotWarning();
       if (warning) {
-        console.warn(warning);
+        logWarn("voiceRotation", warning);
       }
     } catch (error) {
-      console.error("[Voice Rotation] Scheduled cleanup failed:", error);
+      logError("voiceRotation", "Scheduled cleanup failed", { error: error instanceof Error ? error.message : String(error) });
     }
   }, 24 * 60 * 60 * 1000);
 

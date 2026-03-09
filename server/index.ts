@@ -7,6 +7,7 @@ import { pool } from "./db";
 import { requireAuth, type AuthenticatedRequest } from "./auth";
 import { ADMIN_USER_IDS } from "./routes/admin-routes";
 import { trackError } from "./error-tracker";
+import { logInfo, logWarn, logError } from "./logger";
 
 const app = express();
 const SERVER_VERSION = "1.7.4";
@@ -15,43 +16,6 @@ declare module "http" {
   interface IncomingMessage {
     rawBody: unknown;
   }
-}
-
-function timestamp(): string {
-  return new Date().toISOString();
-}
-
-function logInfo(component: string, message: string, data?: Record<string, unknown>) {
-  const entry = {
-    level: "INFO",
-    ts: timestamp(),
-    component,
-    message,
-    ...data,
-  };
-  console.log(JSON.stringify(entry));
-}
-
-function logWarn(component: string, message: string, data?: Record<string, unknown>) {
-  const entry = {
-    level: "WARN",
-    ts: timestamp(),
-    component,
-    message,
-    ...data,
-  };
-  console.warn(JSON.stringify(entry));
-}
-
-function logError(component: string, message: string, data?: Record<string, unknown>) {
-  const entry = {
-    level: "ERROR",
-    ts: timestamp(),
-    component,
-    message,
-    ...data,
-  };
-  console.error(JSON.stringify(entry));
 }
 
 function setupProcessHandlers() {
@@ -176,12 +140,8 @@ function setupRequestLogging(app: express.Application) {
 
       const duration = Date.now() - start;
       const status = capturedStatus || res.statusCode;
-      const level = status >= 500 ? "ERROR" : status >= 400 ? "WARN" : "INFO";
 
-      const entry: Record<string, unknown> = {
-        level,
-        ts: timestamp(),
-        component: "http",
+      const data: Record<string, unknown> = {
         method: req.method,
         path: reqPath,
         status,
@@ -189,16 +149,16 @@ function setupRequestLogging(app: express.Application) {
       };
 
       if (status >= 400) {
-        entry.ip = req.ip || req.headers["x-forwarded-for"] || "unknown";
-        entry.user_agent = req.headers["user-agent"]?.substring(0, 120) || "unknown";
+        data.ip = req.ip || req.headers["x-forwarded-for"] || "unknown";
+        data.user_agent = req.headers["user-agent"]?.substring(0, 120) || "unknown";
       }
 
       if (status >= 500) {
-        console.error(JSON.stringify(entry));
+        logError("http", `${req.method} ${reqPath} ${status}`, data);
       } else if (status >= 400) {
-        console.warn(JSON.stringify(entry));
+        logWarn("http", `${req.method} ${reqPath} ${status}`, data);
       } else {
-        console.log(JSON.stringify(entry));
+        logInfo("http", `${req.method} ${reqPath} ${status}`, data);
       }
     });
 
@@ -259,49 +219,7 @@ function serveExpoManifest(platform: string, req: Request, res: Response) {
   res.send(manifest);
 }
 
-function serveLandingPage({
-  req,
-  res,
-  landingPageTemplate,
-  appName,
-}: {
-  req: Request;
-  res: Response;
-  landingPageTemplate: string;
-  appName: string;
-}) {
-  const forwardedProto = req.header("x-forwarded-proto");
-  const protocol = forwardedProto || req.protocol || "https";
-  const forwardedHost = req.header("x-forwarded-host");
-  const host = forwardedHost || req.get("host");
-  const baseUrl = `${protocol}://${host}`;
-  const expsUrl = `${host}`;
-
-  const html = landingPageTemplate
-    .replace(/BASE_URL_PLACEHOLDER/g, baseUrl)
-    .replace(/EXPS_URL_PLACEHOLDER/g, expsUrl)
-    .replace(/APP_NAME_PLACEHOLDER/g, appName);
-
-  res.setHeader("Content-Type", "text/html; charset=utf-8");
-  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  res.setHeader("Pragma", "no-cache");
-  res.setHeader("Expires", "0");
-  res.removeHeader("ETag");
-  res.status(200).send(html);
-}
-
 function configureExpoAndLanding(app: express.Application) {
-  const templatePath = path.resolve(
-    process.cwd(),
-    "server",
-    "templates",
-    "landing-page.html",
-  );
-  const appName = getAppName();
-  let cachedTemplate = "";
-  try {
-    cachedTemplate = fs.readFileSync(templatePath, "utf-8");
-  } catch {}
 
   logInfo("startup", "Serving static Expo files with dynamic manifest routing");
 
@@ -397,7 +315,7 @@ function setupHealthEndpoint(app: express.Application) {
       version: SERVER_VERSION,
       uptime_s: Math.floor(process.uptime()),
       memory_mb: Math.round(process.memoryUsage().rss / 1024 / 1024),
-      timestamp: timestamp(),
+      timestamp: new Date().toISOString(),
     };
 
     try {

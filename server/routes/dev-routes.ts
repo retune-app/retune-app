@@ -5,6 +5,7 @@ import { join } from "path";
 import { tmpdir } from "os";
 import { randomUUID } from "crypto";
 import { cloneVoice, textToSpeech as elevenLabsTTS, deleteVoice } from "../replit_integrations/elevenlabs/client";
+import { logInfo, logError } from "../logger";
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 25 * 1024 * 1024 } });
 
@@ -90,7 +91,7 @@ export function registerDevRoutes(app: Express, requireAuth: any) {
       const text = req.body?.text;
       const voiceFile = req.file;
 
-      console.log(`[AB-TEST] Request received — text length: ${text?.length || 0}, file size: ${voiceFile?.size || 0} bytes`);
+      logInfo("ab-test", "Request received", { textLength: text?.length || 0, fileSize: voiceFile?.size || 0 });
 
       if (!text || !voiceFile) {
         return res.status(400).json({ error: "Both 'text' and 'voiceClip' are required" });
@@ -114,14 +115,14 @@ export function registerDevRoutes(app: Express, requireAuth: any) {
         }
       };
 
-      console.log(`[AB-TEST] Starting both providers in parallel...`);
+      logInfo("ab-test", "Starting both providers in parallel");
 
       const [elevenLabs, chatterbox] = await Promise.all([
         timedCall(() => generateWithElevenLabs(voiceBuffer, text), "elevenlabs"),
         timedCall(() => generateWithChatterbox(voiceBuffer, text), "chatterbox"),
       ]);
 
-      console.log(`[AB-TEST] Complete — ElevenLabs: ${elevenLabs.timeMs}ms (${elevenLabs.result.error ? 'FAILED' : 'OK'}), Chatterbox: ${chatterbox.timeMs}ms (${chatterbox.result.error ? 'FAILED' : 'OK'})`);
+      logInfo("ab-test", "Complete", { elevenLabsMs: elevenLabs.timeMs, elevenLabsStatus: elevenLabs.result.error ? "FAILED" : "OK", chatterboxMs: chatterbox.timeMs, chatterboxStatus: chatterbox.result.error ? "FAILED" : "OK" });
 
       res.json({
         results: [elevenLabs.result, chatterbox.result],
@@ -131,7 +132,7 @@ export function registerDevRoutes(app: Express, requireAuth: any) {
         },
       });
     } catch (error: any) {
-      console.error("AB test error:", error);
+      logError("ab-test", "AB test failed", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "AB test failed", details: error.message });
     }
   });

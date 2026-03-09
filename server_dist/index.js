@@ -3978,6 +3978,43 @@ import { writeFile as writeFile2, unlink as unlink2 } from "fs/promises";
 import { join as join2 } from "path";
 import { tmpdir as tmpdir2 } from "os";
 import { randomUUID as randomUUID2 } from "crypto";
+
+// server/logger.ts
+function timestamp2() {
+  return (/* @__PURE__ */ new Date()).toISOString();
+}
+function logInfo(component, message, data) {
+  const entry = {
+    level: "INFO",
+    ts: timestamp2(),
+    component,
+    message,
+    ...data
+  };
+  console.log(JSON.stringify(entry));
+}
+function logWarn(component, message, data) {
+  const entry = {
+    level: "WARN",
+    ts: timestamp2(),
+    component,
+    message,
+    ...data
+  };
+  console.warn(JSON.stringify(entry));
+}
+function logError(component, message, data) {
+  const entry = {
+    level: "ERROR",
+    ts: timestamp2(),
+    component,
+    message,
+    ...data
+  };
+  console.error(JSON.stringify(entry));
+}
+
+// server/routes/dev-routes.ts
 var upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 25 * 1024 * 1024 } });
 async function generateWithElevenLabs(voiceBuffer, text2) {
   const tempPath = join2(tmpdir2(), `ab-test-${randomUUID2()}.mp3`);
@@ -4049,7 +4086,7 @@ function registerDevRoutes(app2, requireAuth2) {
     try {
       const text2 = req.body?.text;
       const voiceFile = req.file;
-      console.log(`[AB-TEST] Request received \u2014 text length: ${text2?.length || 0}, file size: ${voiceFile?.size || 0} bytes`);
+      logInfo("ab-test", "Request received", { textLength: text2?.length || 0, fileSize: voiceFile?.size || 0 });
       if (!text2 || !voiceFile) {
         return res.status(400).json({ error: "Both 'text' and 'voiceClip' are required" });
       }
@@ -4066,12 +4103,12 @@ function registerDevRoutes(app2, requireAuth2) {
           };
         }
       };
-      console.log(`[AB-TEST] Starting both providers in parallel...`);
+      logInfo("ab-test", "Starting both providers in parallel");
       const [elevenLabs, chatterbox] = await Promise.all([
         timedCall(() => generateWithElevenLabs(voiceBuffer, text2), "elevenlabs"),
         timedCall(() => generateWithChatterbox(voiceBuffer, text2), "chatterbox")
       ]);
-      console.log(`[AB-TEST] Complete \u2014 ElevenLabs: ${elevenLabs.timeMs}ms (${elevenLabs.result.error ? "FAILED" : "OK"}), Chatterbox: ${chatterbox.timeMs}ms (${chatterbox.result.error ? "FAILED" : "OK"})`);
+      logInfo("ab-test", "Complete", { elevenLabsMs: elevenLabs.timeMs, elevenLabsStatus: elevenLabs.result.error ? "FAILED" : "OK", chatterboxMs: chatterbox.timeMs, chatterboxStatus: chatterbox.result.error ? "FAILED" : "OK" });
       res.json({
         results: [elevenLabs.result, chatterbox.result],
         generationTimeMs: {
@@ -4080,7 +4117,7 @@ function registerDevRoutes(app2, requireAuth2) {
         }
       });
     } catch (error) {
-      console.error("AB test error:", error);
+      logError("ab-test", "AB test failed", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "AB test failed", details: error.message });
     }
   });
@@ -4570,7 +4607,7 @@ KILL THESE AI PATTERNS:
     }
     return result;
   } catch (error) {
-    console.error("Humanizer pass failed, using original script:", error);
+    logError("routes", "Humanizer pass failed, using original script", { error: error instanceof Error ? error.message : String(error) });
     return script;
   }
 }
@@ -4626,7 +4663,7 @@ Respond with ONLY the title, nothing else.`
     title = title.replace(/^["']|["']$/g, "");
     return title;
   } catch (error) {
-    console.error("Auto-title generation failed:", error);
+    logError("routes", "Auto-title generation failed", { error: error instanceof Error ? error.message : String(error) });
     return "My Affirmation";
   }
 }
@@ -4671,7 +4708,7 @@ Respond with ONLY the description, nothing else.`
     });
     return response.choices[0]?.message?.content?.trim().replace(/['"]/g, "").replace(/\.$/, "") || "";
   } catch (error) {
-    console.error("Error generating description:", error);
+    logError("routes", "Error generating description", { error: error instanceof Error ? error.message : String(error) });
     return "";
   }
 }
@@ -4706,7 +4743,7 @@ Respond with ONLY the category name, nothing else.`
     }
     return "Confidence";
   } catch (error) {
-    console.error("Auto-categorization failed:", error);
+    logError("routes", "Auto-categorization failed", { error: error instanceof Error ? error.message : String(error) });
     return "Confidence";
   }
 }
@@ -4824,7 +4861,7 @@ async function generateAudioSimple(text2, voiceId, isPersonalVoice = false, ttsP
     try {
       return await humeSimpleTTS(text2, humeName);
     } catch (humeError) {
-      console.error("Hume AI simple TTS failed, trying OpenAI fallback:", humeError?.message || humeError);
+      logError("routes", "Hume AI simple TTS failed, trying OpenAI fallback", { error: humeError?.message || String(humeError) });
     }
   }
   if (directOpenAI2) {
@@ -4832,7 +4869,7 @@ async function generateAudioSimple(text2, voiceId, isPersonalVoice = false, ttsP
       const openaiVoice = getOpenAIFallbackVoice(voiceId);
       return await generateAudioSimpleOpenAI(text2, openaiVoice);
     } catch (openaiError) {
-      console.error("OpenAI simple TTS fallback also failed:", openaiError?.message || openaiError);
+      logError("routes", "OpenAI simple TTS fallback also failed", { error: openaiError?.message || String(openaiError) });
     }
   }
   throw new Error("TTS_UNAVAILABLE: All TTS services are unavailable");
@@ -4846,10 +4883,7 @@ async function generateAudio(script, voiceId, isPersonalVoice = false, moodConfi
     } catch (elevenLabsError) {
       const isQuotaExhausted = elevenLabsError?.message?.includes("quota_exceeded") || elevenLabsError?.message?.includes("Unauthorized") || String(elevenLabsError).includes("quota_exceeded");
       const isVoiceNotFound = elevenLabsError?.message?.includes("voice_not_found") || elevenLabsError?.message?.includes("Not Found") || String(elevenLabsError).includes("voice_not_found");
-      console.error(
-        `ElevenLabs TTS failed for PERSONAL voice (${voiceId})${isQuotaExhausted ? " (quota exhausted)" : ""}${isVoiceNotFound ? " (voice not found)" : ""}:`,
-        elevenLabsError?.message || elevenLabsError
-      );
+      logError("routes", `ElevenLabs TTS failed for PERSONAL voice (${voiceId})${isQuotaExhausted ? " (quota exhausted)" : ""}${isVoiceNotFound ? " (voice not found)" : ""}`, { error: elevenLabsError?.message || String(elevenLabsError) });
       if (isQuotaExhausted) {
         throw new Error("QUOTA_EXCEEDED: Your voice cloning credits have been used up for this period. Please switch to an AI voice or wait for your credits to reset.");
       }
@@ -4865,7 +4899,7 @@ async function generateAudio(script, voiceId, isPersonalVoice = false, moodConfi
       const result = await humeTextToSpeech(script, humeName, moodConfig?.humeSpeed, moodConfig?.pauseSeconds);
       return result;
     } catch (humeError) {
-      console.error("Hume AI TTS failed, trying OpenAI fallback:", humeError?.message || humeError);
+      logError("routes", "Hume AI TTS failed, trying OpenAI fallback", { error: humeError?.message || String(humeError) });
     }
   }
   if (directOpenAI2) {
@@ -4873,7 +4907,7 @@ async function generateAudio(script, voiceId, isPersonalVoice = false, moodConfi
       const openaiVoice = getOpenAIFallbackVoice(voiceId);
       return await generateAudioOpenAI(script, openaiVoice);
     } catch (openaiError) {
-      console.error("OpenAI TTS fallback also failed:", openaiError?.message || openaiError);
+      logError("routes", "OpenAI TTS fallback also failed", { error: openaiError?.message || String(openaiError) });
     }
   }
   throw new Error("TTS_UNAVAILABLE: All TTS services (Hume AI, OpenAI) are unavailable");
@@ -4898,7 +4932,7 @@ async function registerRoutes(app2) {
       const resolvedPath = path3.resolve(filePath);
       const resolvedUploadDir = path3.resolve(uploadDir);
       if (!resolvedPath.startsWith(resolvedUploadDir + path3.sep)) {
-        console.log(JSON.stringify({ level: "WARN", ts: (/* @__PURE__ */ new Date()).toISOString(), component: "security", message: `Path traversal attempt blocked: ${rawFilename}` }));
+        logWarn("security", `Path traversal attempt blocked: ${rawFilename}`);
         return res.status(403).json({ error: "Access denied" });
       }
       if (!fs3.existsSync(filePath)) {
@@ -4921,7 +4955,7 @@ async function registerRoutes(app2) {
       }
       res.sendFile(filePath);
     } catch (error) {
-      console.error("Error serving file:", error);
+      logError("routes", "Error serving file", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to serve file" });
     }
   });
@@ -4930,7 +4964,7 @@ async function registerRoutes(app2) {
       const allCategories = await db.select().from(categories);
       res.json(allCategories);
     } catch (error) {
-      console.error("Error fetching categories:", error);
+      logError("routes", "Error fetching categories", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to fetch categories" });
     }
   });
@@ -4939,7 +4973,7 @@ async function registerRoutes(app2) {
       const allAffirmations = await db.select().from(affirmations).where(eq8(affirmations.userId, req.userId)).orderBy(asc(affirmations.displayOrder), desc3(affirmations.createdAt));
       res.json(allAffirmations);
     } catch (error) {
-      console.error("Error fetching affirmations:", error);
+      logError("routes", "Error fetching affirmations", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to fetch affirmations" });
     }
   });
@@ -4955,7 +4989,7 @@ async function registerRoutes(app2) {
       }
       res.json(affirmation);
     } catch (error) {
-      console.error("Error fetching affirmation:", error);
+      logError("routes", "Error fetching affirmation", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to fetch affirmation" });
     }
   });
@@ -4968,7 +5002,7 @@ async function registerRoutes(app2) {
       const result = await moderateContent(text2);
       res.json(result);
     } catch (error) {
-      console.error("Moderation check error:", error);
+      logError("routes", "Moderation check error", { error: error instanceof Error ? error.message : String(error) });
       res.json({ flagged: false, categories: [], message: "" });
     }
   });
@@ -5017,7 +5051,7 @@ async function registerRoutes(app2) {
         }
       });
     } catch (error) {
-      console.error("Error generating script:", error);
+      logError("routes", "Error generating script", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to generate script" });
     }
   });
@@ -5044,7 +5078,7 @@ async function registerRoutes(app2) {
         try {
           finalDescription = await autoGenerateDescription(script);
         } catch (e) {
-          console.error("Failed to auto-generate description:", e);
+          logError("routes", "Failed to auto-generate description", { error: e instanceof Error ? e.message : String(e) });
         }
       }
       let categoryName = null;
@@ -5130,7 +5164,7 @@ async function registerRoutes(app2) {
       }).returning();
       res.json(newAffirmation);
     } catch (error) {
-      console.error("Error creating affirmation:", error);
+      logError("routes", "Error creating affirmation", { error: error instanceof Error ? error.message : String(error) });
       if (error?.message?.includes("QUOTA_EXCEEDED")) {
         res.status(429).json({ error: "QUOTA_EXCEEDED", message: "Your voice credits have been used up for this period. The affirmation will be created with an AI voice instead." });
       } else if (error?.message?.includes("PERSONAL_VOICE_FAILED")) {
@@ -5160,16 +5194,16 @@ async function registerRoutes(app2) {
           const resolvedUploadDir = path3.resolve(uploadDir);
           if (resolvedPath.startsWith(resolvedUploadDir + path3.sep) && fs3.existsSync(audioPath)) {
             fs3.unlinkSync(audioPath);
-            console.log(JSON.stringify({ level: "INFO", ts: (/* @__PURE__ */ new Date()).toISOString(), component: "security", message: `SECURE DELETE: Removed audio file ${filename}` }));
+            logInfo("security", `SECURE DELETE: Removed audio file ${filename}`);
           }
         } else {
-          console.log(JSON.stringify({ level: "INFO", ts: (/* @__PURE__ */ new Date()).toISOString(), component: "security", message: `SECURITY: Skipped deletion of invalid filename pattern: ${affirmation.audioUrl}` }));
+          logInfo("security", `SECURITY: Skipped deletion of invalid filename pattern: ${affirmation.audioUrl}`);
         }
       }
       await db.delete(affirmations).where(eq8(affirmations.id, parseInt(id)));
       res.json({ success: true });
     } catch (error) {
-      console.error("Error deleting affirmation:", error);
+      logError("routes", "Error deleting affirmation", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to delete affirmation" });
     }
   });
@@ -5186,7 +5220,7 @@ async function registerRoutes(app2) {
       }
       res.json(updated);
     } catch (error) {
-      console.error("Error updating favorite:", error);
+      logError("routes", "Error updating favorite", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to update favorite" });
     }
   });
@@ -5206,7 +5240,7 @@ async function registerRoutes(app2) {
       }
       res.json(updated);
     } catch (error) {
-      console.error("Error renaming affirmation:", error);
+      logError("routes", "Error renaming affirmation", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to rename affirmation" });
     }
   });
@@ -5243,7 +5277,7 @@ async function registerRoutes(app2) {
       }).where(eq8(affirmations.id, parseInt(id))).returning();
       res.json(updated);
     } catch (error) {
-      console.error("Error auto-saving affirmation:", error);
+      logError("routes", "Error auto-saving affirmation", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to auto-save affirmation" });
     }
   });
@@ -5265,12 +5299,12 @@ async function registerRoutes(app2) {
             updated++;
           }
         } catch (e) {
-          console.error(`Failed to generate description for affirmation ${aff.id}:`, e);
+          logError("routes", `Failed to generate description for affirmation ${aff.id}`, { error: e instanceof Error ? e.message : String(e) });
         }
       }
       res.json({ updated, total: userAffirmations.length });
     } catch (error) {
-      console.error("Error backfilling descriptions:", error);
+      logError("routes", "Error backfilling descriptions", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to backfill descriptions" });
     }
   });
@@ -5299,7 +5333,7 @@ async function registerRoutes(app2) {
       });
       res.json(updated);
     } catch (error) {
-      console.error("Error updating play count:", error);
+      logError("routes", "Error updating play count", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to update play count" });
     }
   });
@@ -5353,8 +5387,8 @@ async function registerRoutes(app2) {
           providerVoiceUpdate.elevenLabsVoiceId = voiceId;
           providerVoiceUpdate.voiceId = voiceId;
           fs3.unlink(file.path, (err) => {
-            if (err) console.error("Failed to delete voice sample file:", err);
-            else console.log(JSON.stringify({ level: "INFO", ts: (/* @__PURE__ */ new Date()).toISOString(), component: "voiceClone", message: `Voice sample file deleted for privacy: ${file.filename}` }));
+            if (err) logError("voiceClone", "Failed to delete voice sample file", { error: err instanceof Error ? err.message : String(err) });
+            else logInfo("voiceClone", `Voice sample file deleted for privacy: ${file.filename}`);
           });
           const [updatedSample] = await db.update(voiceSamples).set({ voiceId, status: "ready", audioUrl: null }).where(eq8(voiceSamples.id, sample.id)).returning();
           await db.update(users).set(providerVoiceUpdate).where(eq8(users.id, req.userId));
@@ -5363,7 +5397,7 @@ async function registerRoutes(app2) {
             clonesRemaining: MAX_VOICE_CLONES - (clonesUsed + 1)
           });
         } catch (cloneError) {
-          console.error("Voice cloning error:", cloneError);
+          logError("routes", "Voice cloning error", { error: cloneError instanceof Error ? cloneError.message : String(cloneError) });
           fs3.unlink(file.path, () => {
           });
           await db.update(voiceSamples).set({ status: "failed", audioUrl: null }).where(eq8(voiceSamples.id, sample.id));
@@ -5371,11 +5405,11 @@ async function registerRoutes(app2) {
           const statusCode = cloneError?.statusCode || 500;
           let userMessage = "Voice cloning failed. Please try again.";
           if (errorDetail.toLowerCase().includes("maximum") || errorDetail.toLowerCase().includes("custom voices") || errorDetail.toLowerCase().includes("voice limit")) {
-            console.warn("[Voice Slots] ElevenLabs quota hit. Attempting queue-based slot recovery...");
+            logWarn("voiceSlots", "ElevenLabs quota hit. Attempting queue-based slot recovery...");
             try {
               const slotResult = await freeVoiceSlotForNewClone(req.userId);
               if (slotResult.freed) {
-                console.log(JSON.stringify({ level: "INFO", ts: (/* @__PURE__ */ new Date()).toISOString(), component: "voiceSlots", message: `[Voice Slots] Freed slot (rotated user=${slotResult.rotatedUserId}). Retrying clone...` }));
+                logInfo("voiceSlots", `Freed slot (rotated user=${slotResult.rotatedUserId}). Retrying clone...`);
                 const retryVoiceId = await cloneVoice(file.path, "My Affirmation Voice");
                 fs3.unlink(file.path, () => {
                 });
@@ -5392,7 +5426,7 @@ async function registerRoutes(app2) {
                 });
               }
             } catch (retryError) {
-              console.error("[Voice Slots] Retry after slot recovery failed:", retryError?.message);
+              logError("voiceSlots", "Retry after slot recovery failed", { error: retryError?.message || String(retryError) });
             }
             userMessage = "Voice cloning is temporarily unavailable. Please try again in a few minutes.";
           } else if (statusCode === 401 || statusCode === 403) {
@@ -5410,7 +5444,7 @@ async function registerRoutes(app2) {
           res.status(statusCode === 429 ? 429 : 500).json({ error: userMessage });
         }
       } catch (error) {
-        console.error("Error uploading voice sample:", error);
+        logError("routes", "Error uploading voice sample", { error: error instanceof Error ? error.message : String(error) });
         res.status(500).json({ error: "Failed to upload voice sample" });
       }
     }
@@ -5427,7 +5461,7 @@ async function registerRoutes(app2) {
         status: sample?.status || null
       });
     } catch (error) {
-      console.error("Error fetching voice sample status:", error);
+      logError("routes", "Error fetching voice sample status", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to fetch voice sample status" });
     }
   });
@@ -5469,7 +5503,7 @@ async function registerRoutes(app2) {
         voiceName: validVoice.name
       });
     } catch (error) {
-      console.error("Error generating voice preview:", error?.message || error);
+      logError("routes", "Error generating voice preview", { error: error?.message || String(error) });
       res.status(500).json({ error: "Failed to generate voice preview. Please try again." });
     }
   });
@@ -5510,7 +5544,7 @@ async function registerRoutes(app2) {
         voiceName: "Inner Voice"
       });
     } catch (error) {
-      console.error("Error generating Inner Voice preview:", error);
+      logError("routes", "Error generating Inner Voice preview", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to generate Inner Voice preview. Please try again." });
     }
   });
@@ -5544,7 +5578,7 @@ async function registerRoutes(app2) {
         hasCartesiaVoice: false
       });
     } catch (error) {
-      console.error("Error fetching voice preferences:", error);
+      logError("routes", "Error fetching voice preferences", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to fetch voice preferences" });
     }
   });
@@ -5576,7 +5610,7 @@ async function registerRoutes(app2) {
       await db.update(users).set(updates).where(eq8(users.id, req.userId));
       res.json({ success: true, ...updates });
     } catch (error) {
-      console.error("Error updating voice preferences:", error);
+      logError("routes", "Error updating voice preferences", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to update voice preferences" });
     }
   });
@@ -5643,7 +5677,7 @@ async function registerRoutes(app2) {
       const [updated] = await db.select().from(affirmations).where(eq8(affirmations.id, affirmationId));
       res.json(updated);
     } catch (error) {
-      console.error("Error regenerating voice:", error);
+      logError("routes", "Error regenerating voice", { error: error instanceof Error ? error.message : String(error) });
       const errorMsg = error?.message || "";
       if (errorMsg.includes("QUOTA_EXCEEDED")) {
         return res.status(422).json({
@@ -5665,7 +5699,7 @@ async function registerRoutes(app2) {
       const userCustomCategories = await db.select().from(customCategories).where(eq8(customCategories.userId, req.userId)).orderBy(asc(customCategories.createdAt));
       res.json(userCustomCategories);
     } catch (error) {
-      console.error("Error fetching custom categories:", error);
+      logError("routes", "Error fetching custom categories", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to fetch custom categories" });
     }
   });
@@ -5702,7 +5736,7 @@ async function registerRoutes(app2) {
       }).returning();
       res.status(201).json(newCategory);
     } catch (error) {
-      console.error("Error creating custom category:", error);
+      logError("routes", "Error creating custom category", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to create custom category" });
     }
   });
@@ -5722,7 +5756,7 @@ async function registerRoutes(app2) {
       await db.delete(customCategories).where(eq8(customCategories.id, categoryId));
       res.json({ success: true });
     } catch (error) {
-      console.error("Error deleting custom category:", error);
+      logError("routes", "Error deleting custom category", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to delete custom category" });
     }
   });
@@ -5896,17 +5930,8 @@ async function registerRoutes(app2) {
         }
       });
     } catch (error) {
-      console.error("Error fetching user stats:", error);
+      logError("routes", "Error fetching user stats", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to fetch user stats" });
-    }
-  });
-  app2.get("/api/categories", async (req, res) => {
-    try {
-      const allCategories = await db.select().from(categories);
-      res.json(allCategories);
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-      res.status(500).json({ error: "Failed to fetch categories" });
     }
   });
   app2.post("/api/affirmations/samples", requireAuth, async (req, res) => {
@@ -5990,7 +6015,7 @@ async function registerRoutes(app2) {
           }).returning();
           createdAffirmations.push(newAffirmation);
         } catch (error) {
-          console.error(`Error creating sample affirmation "${sample.title}":`, error);
+          logError("routes", `Error creating sample affirmation "${sample.title}"`, { error: error instanceof Error ? error.message : String(error) });
         }
       }
       res.json({
@@ -5999,7 +6024,7 @@ async function registerRoutes(app2) {
         affirmations: createdAffirmations
       });
     } catch (error) {
-      console.error("Error creating sample affirmations:", error);
+      logError("routes", "Error creating sample affirmations", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to create sample affirmations" });
     }
   });
@@ -6017,7 +6042,7 @@ async function registerRoutes(app2) {
       }
       res.json({ success: true });
     } catch (error) {
-      console.error("Error reordering affirmations:", error);
+      logError("routes", "Error reordering affirmations", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to reorder affirmations" });
     }
   });
@@ -6036,7 +6061,7 @@ async function registerRoutes(app2) {
       }
       res.json({ success: true });
     } catch (error) {
-      console.error("Error initializing categories:", error);
+      logError("routes", "Error initializing categories", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to initialize categories" });
     }
   });
@@ -6050,7 +6075,7 @@ async function registerRoutes(app2) {
       await db.update(users).set({ name: trimmedName }).where(eq8(users.id, req.userId));
       res.json({ success: true, name: trimmedName });
     } catch (error) {
-      console.error("Error updating name:", error);
+      logError("routes", "Error updating name", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to update name" });
     }
   });
@@ -6063,7 +6088,7 @@ async function registerRoutes(app2) {
         deletedCount: deletedAffirmations.length
       });
     } catch (error) {
-      console.error("Error clearing affirmations:", error);
+      logError("routes", "Error clearing affirmations", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to clear affirmations" });
     }
   });
@@ -6082,7 +6107,7 @@ async function registerRoutes(app2) {
         deletedVoiceSamples: deletedSamples.length
       });
     } catch (error) {
-      console.error("Error resetting user data:", error);
+      logError("routes", "Error resetting user data", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to reset user data" });
     }
   });
@@ -6095,12 +6120,12 @@ async function registerRoutes(app2) {
       await db.delete(users).where(eq8(users.id, userId));
       req.session.destroy((err) => {
         if (err) {
-          console.error("Session destroy error:", err);
+          logError("routes", "Session destroy error", { error: err instanceof Error ? err.message : String(err) });
         }
       });
       res.json({ success: true });
     } catch (error) {
-      console.error("Error deleting user account:", error);
+      logError("routes", "Error deleting user account", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to delete account" });
     }
   });
@@ -6127,7 +6152,7 @@ async function registerRoutes(app2) {
         eveningTime: settings.eveningTime
       });
     } catch (error) {
-      console.error("Error fetching notification settings:", error);
+      logError("routes", "Error fetching notification settings", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to fetch notification settings" });
     }
   });
@@ -6181,7 +6206,7 @@ async function registerRoutes(app2) {
         });
       }
     } catch (error) {
-      console.error("Error updating notification settings:", error);
+      logError("routes", "Error updating notification settings", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to update notification settings" });
     }
   });
@@ -6199,7 +6224,7 @@ async function registerRoutes(app2) {
       }
       res.json({ success: true });
     } catch (error) {
-      console.error("Error registering push token:", error);
+      logError("routes", "Error registering push token", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to register push token" });
     }
   });
@@ -6212,7 +6237,7 @@ async function registerRoutes(app2) {
       await db.update(users).set({ voiceLastUsedAt: /* @__PURE__ */ new Date(), voiceExpiryWarningAt: null }).where(eq8(users.id, req.userId));
       res.json({ success: true, message: "Voice clone marked as active" });
     } catch (error) {
-      console.error("Error keeping voice active:", error);
+      logError("routes", "Error keeping voice active", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to update voice status" });
     }
   });
@@ -6267,7 +6292,7 @@ Rules:
         });
       }
     } catch (error) {
-      console.error("Error generating mood prompt:", error);
+      logError("routes", "Error generating mood prompt", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to generate prompt" });
     }
   });
@@ -6536,7 +6561,7 @@ Rules for tone:
         steps
       });
     } catch (error) {
-      console.error("Error in mood check-in:", error);
+      logError("routes", "Error in mood check-in", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to process mood check-in" });
     }
   });
@@ -6743,7 +6768,7 @@ Rules for tone:
         steps
       });
     } catch (error) {
-      console.error("Error in vibe check-in:", error);
+      logError("routes", "Error in vibe check-in", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to process vibe check-in" });
     }
   });
@@ -6771,7 +6796,7 @@ Rules for tone:
       }).returning();
       res.json(completion);
     } catch (error) {
-      console.error("Error recording journey completion:", error);
+      logError("routes", "Error recording journey completion", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to record journey completion" });
     }
   });
@@ -6824,7 +6849,7 @@ Rules for tone:
         lastJourney: recentJourneys[0] || null
       });
     } catch (error) {
-      console.error("Error fetching journey stats:", error);
+      logError("routes", "Error fetching journey stats", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to fetch journey stats" });
     }
   });
@@ -6866,7 +6891,7 @@ Rules for tone:
       const clientDayOfWeek = req.body.dayOfWeek;
       const dayOfWeek = clientDayOfWeek && validDays.includes(clientDayOfWeek) ? clientDayOfWeek : validDays[(/* @__PURE__ */ new Date()).getDay()];
       if (clientDisconnected) {
-        console.log(JSON.stringify({ level: "INFO", ts: (/* @__PURE__ */ new Date()).toISOString(), component: "guidedMoment", message: `Client disconnected before script generation (${duration}min), aborting` }));
+        logInfo("guidedMoment", `Client disconnected before script generation (${duration}min), aborting`);
         return;
       }
       let moodConfig = MEDITATION_MOOD_CONFIG[mood] || MEDITATION_MOOD_CONFIG.calm;
@@ -6939,7 +6964,7 @@ The user's vibe is "${vibeRouting.vibe.label}" \u2014 ${vibeRouting.vibe.descrip
         disclaimer: "This is a mindfulness exercise for relaxation purposes. It is not a substitute for professional mental health care."
       });
     } catch (error) {
-      console.error("Error generating micro-meditation script:", error);
+      logError("routes", "Error generating micro-meditation script", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to generate micro-meditation script. Please try again." });
     }
   });
@@ -6984,11 +7009,11 @@ The user's vibe is "${vibeRouting.vibe.label}" \u2014 ${vibeRouting.vibe.descrip
         if (resolved) {
           voiceId = resolved;
         } else {
-          console.warn(`User ${userId} requested personal voice but no voice clone found`);
+          logWarn("routes", `User ${userId} requested personal voice but no voice clone found`);
         }
       }
       if (clientDisconnected) {
-        console.log(JSON.stringify({ level: "INFO", ts: (/* @__PURE__ */ new Date()).toISOString(), component: "guidedMoment", message: "Client disconnected before TTS, aborting" }));
+        logInfo("guidedMoment", "Client disconnected before TTS, aborting");
         return;
       }
       let audioBuffer;
@@ -7008,7 +7033,7 @@ The user's vibe is "${vibeRouting.vibe.label}" \u2014 ${vibeRouting.vibe.descrip
           audioDuration = result.duration;
         }
       } catch (ttsError) {
-        console.error("Guided moment TTS failed:", ttsError?.message || ttsError);
+        logError("routes", "Guided moment TTS failed", { error: ttsError?.message || String(ttsError) });
         return res.status(500).json({
           error: "Could not generate audio for your micro-meditation. Please try again.",
           code: ttsError?.message?.includes("QUOTA_EXCEEDED") ? "QUOTA_EXCEEDED" : ttsError?.message?.includes("VOICE_EXPIRED") ? "VOICE_EXPIRED" : "TTS_FAILED"
@@ -7021,7 +7046,7 @@ The user's vibe is "${vibeRouting.vibe.label}" \u2014 ${vibeRouting.vibe.descrip
         wordTimings
       });
     } catch (error) {
-      console.error("Error generating micro-meditation audio:", error);
+      logError("routes", "Error generating micro-meditation audio", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to generate micro-meditation audio. Please try again." });
     }
   });
@@ -7074,14 +7099,14 @@ The user's vibe is "${vibeRouting.vibe.label}" \u2014 ${vibeRouting.vibe.descrip
         if (resolved) {
           voiceId = resolved;
         } else {
-          console.warn(`User ${userId} requested personal voice but no voice clone found`);
+          logWarn("routes", `User ${userId} requested personal voice but no voice clone found`);
         }
       }
       const validDaysLegacy = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
       const clientDayOfWeekLegacy = req.body.dayOfWeek;
       const dayOfWeek = clientDayOfWeekLegacy && validDaysLegacy.includes(clientDayOfWeekLegacy) ? clientDayOfWeekLegacy : validDaysLegacy[(/* @__PURE__ */ new Date()).getDay()];
       if (clientDisconnected) {
-        console.log(JSON.stringify({ level: "INFO", ts: (/* @__PURE__ */ new Date()).toISOString(), component: "meditation", message: `Client disconnected before script generation (${duration}min), aborting` }));
+        logInfo("meditation", `Client disconnected before script generation (${duration}min), aborting`);
         return;
       }
       const moodConfig = MEDITATION_MOOD_CONFIG[mood] || MEDITATION_MOOD_CONFIG.calm;
@@ -7135,7 +7160,7 @@ The user's vibe is "${vibeRouting.vibe.label}" \u2014 ${vibeRouting.vibe.descrip
         return res.status(500).json({ error: "Failed to generate meditation script" });
       }
       if (clientDisconnected) {
-        console.log(JSON.stringify({ level: "INFO", ts: (/* @__PURE__ */ new Date()).toISOString(), component: "meditation", message: `Client disconnected after script generation (${duration}min), skipping TTS` }));
+        logInfo("meditation", `Client disconnected after script generation (${duration}min), skipping TTS`);
         return;
       }
       let audioBuffer;
@@ -7155,7 +7180,7 @@ The user's vibe is "${vibeRouting.vibe.label}" \u2014 ${vibeRouting.vibe.descrip
           audioDuration = result.duration;
         }
       } catch (ttsError) {
-        console.error("Guided moment TTS failed:", ttsError?.message || ttsError);
+        logError("routes", "Guided moment TTS failed", { error: ttsError?.message || String(ttsError) });
         return res.status(500).json({
           error: "Could not generate audio for your micro-meditation. Please try again.",
           code: ttsError?.message?.includes("QUOTA_EXCEEDED") ? "QUOTA_EXCEEDED" : ttsError?.message?.includes("VOICE_EXPIRED") ? "VOICE_EXPIRED" : "TTS_FAILED"
@@ -7171,7 +7196,7 @@ The user's vibe is "${vibeRouting.vibe.label}" \u2014 ${vibeRouting.vibe.descrip
         disclaimer: "This is a mindfulness exercise for relaxation purposes. It is not a substitute for professional mental health care."
       });
     } catch (error) {
-      console.error("Error generating micro-meditation:", error);
+      logError("routes", "Error generating micro-meditation", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to generate micro-meditation. Please try again." });
     }
   });
@@ -7189,7 +7214,7 @@ The user's vibe is "${vibeRouting.vibe.label}" \u2014 ${vibeRouting.vibe.descrip
       await db.update(users).set({ hasConsentedToVoiceCloning: consent }).where(eq8(users.id, req.userId));
       res.json({ success: true, hasConsentedToVoiceCloning: consent });
     } catch (error) {
-      console.error("Error updating voice consent:", error);
+      logError("routes", "Error updating voice consent", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to update consent" });
     }
   });
@@ -7205,7 +7230,7 @@ The user's vibe is "${vibeRouting.vibe.label}" \u2014 ${vibeRouting.vibe.descrip
         premiumFeatures: PREMIUM_FEATURES_LIST
       });
     } catch (error) {
-      console.error("Error fetching subscription:", error);
+      logError("routes", "Error fetching subscription", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to fetch subscription info" });
     }
   });
@@ -7231,7 +7256,7 @@ The user's vibe is "${vibeRouting.vibe.label}" \u2014 ${vibeRouting.vibe.descrip
         hasConsentedToVoiceCloning: user?.hasConsentedToVoiceCloning || false
       });
     } catch (error) {
-      console.error("Error fetching user limits:", error);
+      logError("routes", "Error fetching user limits", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to fetch limits" });
     }
   });
@@ -7244,7 +7269,7 @@ The user's vibe is "${vibeRouting.vibe.label}" \u2014 ${vibeRouting.vibe.descrip
           const filePath = path3.join(uploadDir, aff.audioUrl.replace("/uploads/", ""));
           fs3.unlink(filePath, (err) => {
             if (err && err.code !== "ENOENT") {
-              console.error("Failed to delete audio file:", err);
+              logError("routes", "Failed to delete audio file", { error: err instanceof Error ? err.message : String(err) });
             }
           });
         }
@@ -7272,7 +7297,7 @@ The user's vibe is "${vibeRouting.vibe.label}" \u2014 ${vibeRouting.vibe.descrip
         message: "All your data has been permanently deleted."
       });
     } catch (error) {
-      console.error("Error deleting user data:", error);
+      logError("routes", "Error deleting user data", { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ error: "Failed to delete user data. Please contact support." });
     }
   });
@@ -7466,7 +7491,7 @@ WELCOME BACK: The user is returning after being away for ${awayLabel}. Acknowled
       dailyGreetingCache.set(cacheKey, parsed);
       res.json({ ...parsed, cached: false });
     } catch (error) {
-      console.error("Daily greeting generation failed:", error);
+      logError("routes", "Daily greeting generation failed", { error: error instanceof Error ? error.message : String(error) });
       res.json({ message: dailyGreetingFallbacks[normalizedTime], cached: false });
     }
   });
@@ -7474,25 +7499,25 @@ WELCOME BACK: The user is returning after being away for ${awayLabel}. Acknowled
     try {
       const expiryResult = await sendVoiceExpiryWarnings();
       if (expiryResult.warned > 0) {
-        console.log(JSON.stringify({ level: "INFO", ts: (/* @__PURE__ */ new Date()).toISOString(), component: "voiceExpiry", message: `[Voice Expiry] Sent ${expiryResult.warned} expiry warnings` }));
+        logInfo("voiceExpiry", `Sent ${expiryResult.warned} expiry warnings`);
       }
     } catch (expiryError) {
-      console.error("[Voice Expiry] Warning check failed:", expiryError);
+      logError("voiceExpiry", "Warning check failed", { error: expiryError instanceof Error ? expiryError.message : String(expiryError) });
     }
     try {
-      console.log(JSON.stringify({ level: "INFO", ts: (/* @__PURE__ */ new Date()).toISOString(), component: "voiceRotation", message: "[Voice Rotation] Running scheduled voice cleanup..." }));
+      logInfo("voiceRotation", "Running scheduled voice cleanup...");
       const results = await runVoiceRotation(60);
       if (results.rotated > 0) {
-        console.log(JSON.stringify({ level: "INFO", ts: (/* @__PURE__ */ new Date()).toISOString(), component: "voiceRotation", message: `[Voice Rotation] Rotated ${results.rotated} inactive voices` }));
+        logInfo("voiceRotation", `Rotated ${results.rotated} inactive voices`);
       } else {
-        console.log(JSON.stringify({ level: "INFO", ts: (/* @__PURE__ */ new Date()).toISOString(), component: "voiceRotation", message: "[Voice Rotation] No inactive voices to rotate" }));
+        logInfo("voiceRotation", "No inactive voices to rotate");
       }
       const warning = await checkVoiceSlotWarning();
       if (warning) {
-        console.warn(warning);
+        logWarn("voiceRotation", warning);
       }
     } catch (error) {
-      console.error("[Voice Rotation] Scheduled cleanup failed:", error);
+      logError("voiceRotation", "Scheduled cleanup failed", { error: error instanceof Error ? error.message : String(error) });
     }
   }, 24 * 60 * 60 * 1e3);
   const httpServer = createServer(app2);
@@ -7521,39 +7546,6 @@ async function trackError(component, message, error, metadata) {
 // server/index.ts
 var app = express();
 var SERVER_VERSION = "1.7.4";
-function timestamp2() {
-  return (/* @__PURE__ */ new Date()).toISOString();
-}
-function logInfo(component, message, data) {
-  const entry = {
-    level: "INFO",
-    ts: timestamp2(),
-    component,
-    message,
-    ...data
-  };
-  console.log(JSON.stringify(entry));
-}
-function logWarn(component, message, data) {
-  const entry = {
-    level: "WARN",
-    ts: timestamp2(),
-    component,
-    message,
-    ...data
-  };
-  console.warn(JSON.stringify(entry));
-}
-function logError(component, message, data) {
-  const entry = {
-    level: "ERROR",
-    ts: timestamp2(),
-    component,
-    message,
-    ...data
-  };
-  console.error(JSON.stringify(entry));
-}
 function setupProcessHandlers() {
   process.on("uncaughtException", (err) => {
     logError("process", "Uncaught exception \u2014 server staying alive", {
@@ -7653,26 +7645,22 @@ function setupRequestLogging(app2) {
       if (!reqPath.startsWith("/api")) return;
       const duration = Date.now() - start;
       const status = capturedStatus || res.statusCode;
-      const level = status >= 500 ? "ERROR" : status >= 400 ? "WARN" : "INFO";
-      const entry = {
-        level,
-        ts: timestamp2(),
-        component: "http",
+      const data = {
         method: req.method,
         path: reqPath,
         status,
         duration_ms: duration
       };
       if (status >= 400) {
-        entry.ip = req.ip || req.headers["x-forwarded-for"] || "unknown";
-        entry.user_agent = req.headers["user-agent"]?.substring(0, 120) || "unknown";
+        data.ip = req.ip || req.headers["x-forwarded-for"] || "unknown";
+        data.user_agent = req.headers["user-agent"]?.substring(0, 120) || "unknown";
       }
       if (status >= 500) {
-        console.error(JSON.stringify(entry));
+        logError("http", `${req.method} ${reqPath} ${status}`, data);
       } else if (status >= 400) {
-        console.warn(JSON.stringify(entry));
+        logWarn("http", `${req.method} ${reqPath} ${status}`, data);
       } else {
-        console.log(JSON.stringify(entry));
+        logInfo("http", `${req.method} ${reqPath} ${status}`, data);
       }
     });
     next();
@@ -7721,18 +7709,6 @@ function serveExpoManifest(platform, req, res) {
   res.send(manifest);
 }
 function configureExpoAndLanding(app2) {
-  const templatePath = path4.resolve(
-    process.cwd(),
-    "server",
-    "templates",
-    "landing-page.html"
-  );
-  const appName = getAppName();
-  let cachedTemplate = "";
-  try {
-    cachedTemplate = fs4.readFileSync(templatePath, "utf-8");
-  } catch {
-  }
   logInfo("startup", "Serving static Expo files with dynamic manifest routing");
   app2.get("/privacy-policy", (_req, res) => {
     const privacyPath = path4.resolve(process.cwd(), "server", "templates", "privacy-policy.html");
@@ -7814,7 +7790,7 @@ function setupHealthEndpoint(app2) {
       version: SERVER_VERSION,
       uptime_s: Math.floor(process.uptime()),
       memory_mb: Math.round(process.memoryUsage().rss / 1024 / 1024),
-      timestamp: timestamp2()
+      timestamp: (/* @__PURE__ */ new Date()).toISOString()
     };
     try {
       const start = Date.now();

@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { Readable } from "stream";
 import type { WordTiming } from "./replit_integrations/elevenlabs/client";
+import { logInfo, logError } from "./logger";
 
 export interface CartesiaEmotionConfig {
   emotion: string;
@@ -62,7 +63,7 @@ export async function cartesiaCloneVoice(
   const ext = path.extname(audioFilePath).toLowerCase();
   const mimeType = ext === '.m4a' ? 'audio/mp4' : ext === '.wav' ? 'audio/wav' : ext === '.mp3' ? 'audio/mpeg' : 'audio/mp4';
 
-  console.log(`[Cartesia] Cloning voice from ${ext} file (${fileBuffer.length} bytes, mime: ${mimeType})`);
+  logInfo("cartesia", "Cloning voice", { ext, bytes: fileBuffer.length, mimeType });
 
   const blob = new Blob([fileBuffer], { type: mimeType }) as any;
 
@@ -79,13 +80,13 @@ export async function cartesiaCloneVoice(
     );
 
     const duration = Date.now() - startTime;
-    console.log(`[Cartesia] Voice cloned in ${duration}ms: ${clonedVoice.id}`);
+    logInfo("cartesia", "Voice cloned", { durationMs: duration, voiceId: clonedVoice.id });
 
     return clonedVoice.id;
   } catch (error: any) {
     const statusCode = error?.statusCode || 500;
     const rawBody = error?.body?.error?.rawBody || error?.message || "Unknown error";
-    console.error(`[Cartesia] Clone failed (${statusCode}): ${rawBody}`);
+    logError("cartesia", "Clone failed", { statusCode, detail: rawBody });
     const err: any = new Error(rawBody);
     err.statusCode = statusCode;
     err.cartesiaDetail = rawBody;
@@ -162,7 +163,7 @@ export async function cartesiaTTS(
   const wordTimings = estimateWordTimings(text, durationSeconds * 1000);
 
   const elapsed = Date.now() - startTime;
-  console.log(`[Cartesia] TTS generated in ${elapsed}ms: ${text.length} chars, ${estimatedDuration}s audio`);
+  logInfo("cartesia", "TTS generated", { elapsedMs: elapsed, chars: text.length, durationSec: estimatedDuration });
 
   const audioArrayBuffer = new Uint8Array(audioBuffer).buffer as ArrayBuffer;
 
@@ -202,7 +203,7 @@ export async function cartesiaSimpleTTS(
 
   const audioBuffer = await streamToBuffer(response);
   const elapsed = Date.now() - startTime;
-  console.log(`[Cartesia] Simple TTS generated in ${elapsed}ms`);
+  logInfo("cartesia", "Simple TTS generated", { elapsedMs: elapsed });
 
   return new Uint8Array(audioBuffer).buffer as ArrayBuffer;
 }
@@ -265,7 +266,7 @@ function estimateWordTimings(text: string, totalDurationMs: number): WordTiming[
 export async function cartesiaDeleteVoice(voiceId: string): Promise<void> {
   const client = getClient();
   await client.voices.delete(voiceId);
-  console.log(`[Cartesia] Voice deleted: ${voiceId}`);
+  logInfo("cartesia", "Voice deleted", { voiceId });
 }
 
 export async function cartesiaListVoices(): Promise<any[]> {

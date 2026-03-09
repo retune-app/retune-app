@@ -45,7 +45,8 @@ The application employs a "Serene Empowerment" aesthetic, featuring Primary Gold
 - **Admin Dashboard**: Server-rendered HTML at `/admin` (admin-only). Shows DAU, signups, top events, feature usage, user geography, platform breakdown, recent errors, daily signup chart. Powered by `/api/admin/dashboard-data` endpoint. Includes backup download button.
 - **Database Backup**: GET `/api/admin/backup` exports users (sans password), affirmations, journey completions, listening sessions, breathing sessions, and analytics events as JSON.
 - **Auth Token Cleanup**: Automated cleanup runs every 6 hours, deleting expired auth tokens from the database.
-- **Server Resilience**: Structured JSON logging, process-level crash handlers, subsystem isolation, `/api/health` endpoint, client-side API error logging, and API catch-all. Server starts accepting connections before database verification, uses connection pooling with timeouts, and provides a friendly user-facing error message during outages.
+- **Structured Logging**: Centralized logger module (`server/logger.ts`) exports `logInfo`, `logWarn`, `logError` for consistent JSON-structured logging across all server files. All server code uses these helpers instead of raw `console.*` calls.
+- **Server Resilience**: Process-level crash handlers, subsystem isolation, `/api/health` endpoint, client-side API error logging, and API catch-all. Server starts accepting connections before database verification, uses connection pooling with timeouts, and provides a friendly user-facing error message during outages.
 
 ## External Dependencies
 

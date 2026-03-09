@@ -126,9 +126,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const refreshUser = useCallback(async () => {
+  const refreshUser = useCallback(async (): Promise<boolean> => {
     try {
-      // Get token from storage to ensure we have the latest
       const storedToken = await loadToken();
       const tokenToUse = storedToken || getAuthToken();
       
@@ -145,16 +144,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (response.ok) {
         const userData = await response.json();
         setUser(userData.user);
+        return true;
       }
-      // Don't log out on error - just keep existing user data
-      // This prevents logout when refreshing after profile updates
+      if (response.status === 401) {
+        return true;
+      }
+      return false;
     } catch (error) {
       console.error("Failed to refresh user:", error);
-      // Don't set user to null - keep existing data on network errors
+      return false;
     }
   }, []);
 
   useEffect(() => {
+    const waitForServer = async (): Promise<boolean> => {
+      const DEADLINE_MS = 30000;
+      const POLL_INTERVAL_MS = 3000;
+      const startTime = Date.now();
+      let attempt = 0;
+      while (Date.now() - startTime < DEADLINE_MS) {
+        attempt++;
+        try {
+          const healthUrl = new URL("/api/health", getApiUrl()).toString();
+          const remaining = DEADLINE_MS - (Date.now() - startTime);
+          const timeout = Math.min(4000, remaining);
+          if (timeout <= 0) break;
+          const res = await fetch(healthUrl, { signal: AbortSignal.timeout(timeout) });
+          if (res.ok) return true;
+        } catch {}
+        const remaining = DEADLINE_MS - (Date.now() - startTime);
+        if (remaining <= 0) break;
+        console.warn(`[Auth] Server not ready, retrying (attempt ${attempt}, ${Math.round(remaining / 1000)}s left)`);
+        await new Promise(r => setTimeout(r, Math.min(POLL_INTERVAL_MS, remaining)));
+      }
+      return false;
+    };
+
     const checkAuth = async () => {
       setIsLoading(true);
       const savedToken = await loadToken();
@@ -163,7 +188,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setAuthToken(savedToken);
       }
       
-      await refreshUser();
+      const success = await refreshUser();
+      if (!success) {
+        const serverUp = await waitForServer();
+        if (serverUp) {
+          await refreshUser();
+        }
+      }
       setIsLoading(false);
     };
     checkAuth();

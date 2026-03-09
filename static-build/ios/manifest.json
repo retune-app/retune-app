@@ -1,11 +1,11 @@
 {
-  "id": "f46fdc0c-e430-4bf0-ae35-ab8a94ac3886",
-  "createdAt": "2026-03-09T03:40:11.963Z",
+  "id": "0ccf655d-f1e7-411b-9d9c-6af85df037c6",
+  "createdAt": "2026-03-09T17:12:40.870Z",
   "runtimeVersion": "exposdk:54.0.0",
   "launchAsset": {
-    "key": "bundle-1773027611963-2484",
+    "key": "bundle-1773076360870-1863",
     "contentType": "application/javascript",
-    "url": "https://retuned.replit.app:5000/1773027611963-2484/_expo/static/js/ios/bundle.js"
+    "url": "https://retuned.replit.app/1773076360870-1863/_expo/static/js/ios/bundle.js"
   },
   "assets": [],
   "metadata": {},
@@ -130,10 +130,10 @@
         "backgroundColor": "#E8EDF2"
       },
       "iconUrl": "http://127.0.0.1:8081/assets/./assets/images/icon-light-1024x1024.png",
-      "hostUri": "retuned.replit.app:5000/ios"
+      "hostUri": "retuned.replit.app/ios"
     },
     "expoGo": {
-      "debuggerHost": "retuned.replit.app:5000/ios",
+      "debuggerHost": "retuned.replit.app/ios",
       "developer": {
         "tool": "expo-cli",
         "projectRoot": "/home/runner/workspace"
@@ -143,6 +143,6 @@
       },
       "mainModuleName": "client/index"
     },
-    "scopeKey": "@anonymous/subconscious-rewire-bbe702a1-042a-49cd-8faa-8a82fb76437f"
+    "scopeKey": "@anonymous/subconscious-rewire-851e69b7-2cab-46dc-aad2-0b51c6aebb8a"
   }
 }

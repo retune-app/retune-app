@@ -54,11 +54,15 @@ export function getApiUrl(): string {
 }
 
 const SERVER_UNAVAILABLE_MSG = "We apologize for the inconvenience — we're currently updating the app. Please try again in a moment.";
-const MAX_RETRIES = 3;
-const RETRY_DELAY_MS = 2000;
+const MAX_RETRIES = 5;
+const RETRY_DELAYS_MS = [2000, 3000, 5000, 8000, 10000];
 
 function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function getRetryDelay(attempt: number): number {
+  return RETRY_DELAYS_MS[Math.min(attempt, RETRY_DELAYS_MS.length - 1)];
 }
 
 export async function fetchWithRetry(
@@ -70,15 +74,17 @@ export async function fetchWithRetry(
     try {
       const res = await fetch(input, init);
       if (res.status >= 500 && attempt < retries) {
-        console.warn(`[API retry] Server returned ${res.status}, retrying in ${RETRY_DELAY_MS}ms (attempt ${attempt + 1}/${retries})`);
-        await sleep(RETRY_DELAY_MS);
+        const delay = getRetryDelay(attempt);
+        console.warn(`[API retry] Server returned ${res.status}, retrying in ${delay}ms (attempt ${attempt + 1}/${retries})`);
+        await sleep(delay);
         continue;
       }
       return res;
     } catch (err) {
       if (attempt < retries) {
-        console.warn(`[API retry] Network error, retrying in ${RETRY_DELAY_MS}ms (attempt ${attempt + 1}/${retries})`);
-        await sleep(RETRY_DELAY_MS);
+        const delay = getRetryDelay(attempt);
+        console.warn(`[API retry] Network error, retrying in ${delay}ms (attempt ${attempt + 1}/${retries})`);
+        await sleep(delay);
         continue;
       }
       throw err;

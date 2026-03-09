@@ -46,7 +46,7 @@ The application employs a "Serene Empowerment" aesthetic, featuring Primary Gold
 - **Database Backup**: GET `/api/admin/backup` exports users (sans password), affirmations, journey completions, listening sessions, breathing sessions, and analytics events as JSON.
 - **Auth Token Cleanup**: Automated cleanup runs every 6 hours, deleting expired auth tokens from the database.
 - **Structured Logging**: Centralized logger module (`server/logger.ts`) exports `logInfo`, `logWarn`, `logError` for consistent JSON-structured logging across all server files. All server code uses these helpers instead of raw `console.*` calls.
-- **Server Resilience**: Process-level crash handlers, subsystem isolation, `/api/health` endpoint, client-side API error logging, and API catch-all. Server starts accepting connections before database verification, uses connection pooling with timeouts, and provides a friendly user-facing error message during outages.
+- **Server Resilience**: Process-level crash handlers, subsystem isolation, `/api/health` endpoint, client-side API error logging, and API catch-all. Server starts accepting connections before database verification, uses connection pooling with timeouts, and provides a friendly user-facing error message during outages. Client-side `fetchWithRetry` uses exponential backoff (2s, 3s, 5s, 8s, 10s — 5 retries, ~28s total). On launch, if the initial auth check fails, a `waitForServer` loop pings `/api/health` every 3s for up to 30s (wall-clock deadline) before retrying auth, keeping the loading spinner visible. External uptime monitoring (UptimeRobot) pings `/__health` every 5 minutes to prevent VM dormancy.
 
 ## External Dependencies
 

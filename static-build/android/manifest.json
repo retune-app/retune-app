@@ -1,11 +1,11 @@
 {
-  "id": "b6635f96-b53f-4ea7-8697-b7872c266fc8",
-  "createdAt": "2026-03-09T02:27:38.623Z",
+  "id": "2cfc8889-cde4-41fe-8778-256e4224fabc",
+  "createdAt": "2026-03-09T03:40:11.963Z",
   "runtimeVersion": "exposdk:54.0.0",
   "launchAsset": {
-    "key": "bundle-1773023258623-1272",
+    "key": "bundle-1773027611963-2484",
     "contentType": "application/javascript",
-    "url": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev:5000/1773023258623-1272/_expo/static/js/android/bundle.js"
+    "url": "https://retuned.replit.app:5000/1773027611963-2484/_expo/static/js/android/bundle.js"
   },
   "assets": [],
   "metadata": {},
@@ -60,7 +60,7 @@
         "adaptiveIcon": {
           "backgroundColor": "#0F1C3F",
           "foregroundImage": "./assets/images/icon-light-1024x1024.png",
-          "foregroundImageUrl": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev/assets/./assets/images/icon-light-1024x1024.png"
+          "foregroundImageUrl": "http://127.0.0.1:8081/assets/./assets/images/icon-light-1024x1024.png"
         },
         "edgeToEdgeEnabled": true,
         "predictiveBackGestureEnabled": false,
@@ -129,11 +129,11 @@
       "androidStatusBar": {
         "backgroundColor": "#E8EDF2"
       },
-      "iconUrl": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev/assets/./assets/images/icon-light-1024x1024.png",
-      "hostUri": "ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev:5000/android"
+      "iconUrl": "http://127.0.0.1:8081/assets/./assets/images/icon-light-1024x1024.png",
+      "hostUri": "retuned.replit.app:5000/android"
     },
     "expoGo": {
-      "debuggerHost": "ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev:5000/android",
+      "debuggerHost": "retuned.replit.app:5000/android",
       "developer": {
         "tool": "expo-cli",
         "projectRoot": "/home/runner/workspace"
@@ -143,6 +143,6 @@
       },
       "mainModuleName": "client/index"
     },
-    "scopeKey": "@anonymous/subconscious-rewire-afc2ca44-cf4e-42b6-92e5-06d697fc7025"
+    "scopeKey": "@anonymous/subconscious-rewire-bbe702a1-042a-49cd-8faa-8a82fb76437f"
   }
 }

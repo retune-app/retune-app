@@ -1,11 +1,11 @@
 {
-  "id": "8ff08ab3-1fd2-4152-85bb-fd711777d4aa",
-  "createdAt": "2026-02-18T02:57:08.118Z",
+  "id": "3fa4f95d-369f-4be6-a3da-6323e45f2885",
+  "createdAt": "2026-03-09T02:27:38.623Z",
   "runtimeVersion": "exposdk:54.0.0",
   "launchAsset": {
-    "key": "bundle-1771383428118-41222",
+    "key": "bundle-1773023258623-1272",
     "contentType": "application/javascript",
-    "url": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev:5000/1771383428118-41222/_expo/static/js/ios/bundle.js"
+    "url": "https://ff93deb0-d981-4d8f-95ba-9fcb51c94fda-00-yzel5vbl3e42.kirk.replit.dev:5000/1773023258623-1272/_expo/static/js/ios/bundle.js"
   },
   "assets": [],
   "metadata": {},
@@ -14,7 +14,7 @@
     "expoClient": {
       "name": "Retuned",
       "slug": "subconscious-rewire",
-      "version": "1.7.2",
+      "version": "1.7.4",
       "runtimeVersion": "exposdk:54.0.0",
       "orientation": "default",
       "icon": "./assets/images/icon-light-1024x1024.png",
@@ -30,7 +30,7 @@
       "ios": {
         "supportsTablet": true,
         "bundleIdentifier": "com.subconsciousrewire.app",
-        "buildNumber": "4",
+        "buildNumber": "1",
         "usesAppleSignIn": true,
         "infoPlist": {
           "NSMicrophoneUsageDescription": "This app needs access to your microphone to record your voice for personalized affirmations.",
@@ -79,7 +79,7 @@
         [
           "expo-splash-screen",
           {
-            "image": "./assets/images/icon-dark-1024x1024.png",
+            "image": "./assets/images/icon-light-1024x1024.png",
             "imageWidth": 200,
             "resizeMode": "contain",
             "backgroundColor": "#E8EDF2",
@@ -143,6 +143,6 @@
       },
       "mainModuleName": "client/index"
     },
-    "scopeKey": "@anonymous/subconscious-rewire-1cb845ef-6a70-4be8-80d0-316973639caa"
+    "scopeKey": "@anonymous/subconscious-rewire-afc2ca44-cf4e-42b6-92e5-06d697fc7025"
   }
 }

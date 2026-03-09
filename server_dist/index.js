@@ -8044,4 +8044,29 @@ function setupErrorHandler(app2) {
       error: err instanceof Error ? err.message : String(err)
     });
   }
+  if (process.env.NODE_ENV === "production") {
+    const KEEP_ALIVE_INTERVAL_MS = 4 * 60 * 1e3;
+    let keepAliveUrl = "";
+    if (process.env.REPLIT_DOMAINS) {
+      const primaryDomain = process.env.REPLIT_DOMAINS.split(",")[0].trim();
+      keepAliveUrl = `https://${primaryDomain}/__health`;
+    } else {
+      keepAliveUrl = `https://retuned.replit.app/__health`;
+    }
+    let firstPingLogged = false;
+    setInterval(async () => {
+      try {
+        const res = await fetch(keepAliveUrl, { signal: AbortSignal.timeout(1e4) });
+        if (!firstPingLogged) {
+          logInfo("keep-alive", `Self-ping active: ${keepAliveUrl} (${res.status})`, { interval_min: 4 });
+          firstPingLogged = true;
+        }
+      } catch (err) {
+        logWarn("keep-alive", `Self-ping failed: ${keepAliveUrl}`, {
+          error: err instanceof Error ? err.message : String(err)
+        });
+      }
+    }, KEEP_ALIVE_INTERVAL_MS);
+    logInfo("startup", `Keep-alive self-ping configured every 4 minutes`, { url: keepAliveUrl });
+  }
 })();

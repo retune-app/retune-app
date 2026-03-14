@@ -1,5 +1,28 @@
 # RETUNED Changelog
 
+## Version 1.7.5 (Build 1) — March 14, 2026
+
+### Critical: App Store API Domain Fix
+- Fixed `eas.json` production `EXPO_PUBLIC_DOMAIN` — was pointing to a temporary Replit dev domain (`kirk.replit.dev`) instead of the production server (`retuned.replit.app`). This caused the App Store build to never connect to the API.
+- Added safety net in `getApiUrl()`: native apps with a `.replit.dev` domain automatically redirect to `https://retuned.replit.app`, preventing future misconfiguration.
+
+### Improved Connection Resilience
+- `fetchWithRetry` now uses exponential backoff (2s, 3s, 5s, 8s, 10s) instead of flat 2-second retries, with max retries increased from 3 to 5 (~28s total retry window).
+- Auth check on launch now includes a `waitForServer` recovery loop: if the initial auth check fails, the app pings `/api/health` every 3s for up to 30s (wall-clock deadline) before retrying, keeping the loading spinner visible instead of showing an error.
+- `refreshUser()` now returns `false` on 5xx server errors (previously returned `true`), ensuring the recovery loop activates correctly.
+
+### Build System Fix
+- `scripts/build.js` no longer appends `:5000` to `.replit.app` production domains when generating static bundle URLs.
+
+### Centralized Logging
+- Created `server/logger.ts` with `logInfo`, `logWarn`, `logError` helpers for consistent JSON-structured logging.
+- Migrated all raw `console.*` calls across `server/routes.ts`, `server/cartesia-tts.ts`, `server/routes/dev-routes.ts`, and `server/index.ts` to use centralized logger.
+
+### Code Cleanup
+- Removed duplicate `/api/categories` route from `server/index.ts`.
+- Removed dead `serveLandingPage` function and unused `cachedTemplate` variable.
+- Added `metro.config.js` to exclude `.local/` from Metro file watcher (prevented Metro crashes from workflow log rotation).
+
 ## Version 1.7.4 (Build 1) — February 25, 2026
 
 ### Client-Side Analytics System

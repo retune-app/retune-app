@@ -73,6 +73,9 @@ The application employs a "Serene Empowerment" aesthetic, featuring Primary Gold
 - **ESM support**: `server_dist/package.json` with `{"type": "module"}` is required for the built output — do not delete this file
 - **Web build**: `web-build/` contains pre-built Expo web bundle (`npx expo export --platform web --output-dir web-build`). Server detects `web.retuned.app` host and serves the web app instead of the landing page. Must be rebuilt when frontend code changes that should be reflected on web.
 - **Domain routing**: `web.retuned.app` → Expo web app; `retuned.replit.app` / other domains → landing page
+- **EAS Build**: `eas.json` configures production builds with `EXPO_PUBLIC_DOMAIN=retuned.replit.app`. CRITICAL: This must always be the production domain, never a dev domain. `getApiUrl()` has a safety net redirecting `.replit.dev` → `retuned.replit.app` on native.
+- **OTA Updates**: `app.json` `updates.url` set to `https://retuned.app/manifest` but `expo-updates` is NOT installed — OTA is non-functional. Future builds should install `expo-updates` to enable OTA.
+- **Static bundle rebuild**: Kill Metro first (`pkill -f "expo start"`), then `EXPO_PUBLIC_DOMAIN=retuned.replit.app node scripts/build.js`. Build script auto-detects `.replit.app` domains and omits port suffix.
 
 ### Environment Variables
 - `DATABASE_URL`

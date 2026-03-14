@@ -10,7 +10,7 @@ import { trackError } from "./error-tracker";
 import { logInfo, logWarn, logError } from "./logger";
 
 const app = express();
-const SERVER_VERSION = "1.7.4";
+const SERVER_VERSION = "1.7.5";
 
 declare module "http" {
   interface IncomingMessage {

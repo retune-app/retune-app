@@ -1,11 +1,11 @@
 {
-  "id": "859e7ad9-4418-4842-b5c2-0fb2fc39f70f",
-  "createdAt": "2026-03-09T17:12:40.870Z",
+  "id": "1d19a76c-914f-42a2-baba-446da2aa63db",
+  "createdAt": "2026-03-14T11:15:11.025Z",
   "runtimeVersion": "exposdk:54.0.0",
   "launchAsset": {
-    "key": "bundle-1773076360870-1863",
+    "key": "bundle-1773486911025-1788",
     "contentType": "application/javascript",
-    "url": "https://retuned.replit.app/1773076360870-1863/_expo/static/js/android/bundle.js"
+    "url": "https://retuned.replit.app/1773486911025-1788/_expo/static/js/android/bundle.js"
   },
   "assets": [],
   "metadata": {},
@@ -143,6 +143,6 @@
       },
       "mainModuleName": "client/index"
     },
-    "scopeKey": "@anonymous/subconscious-rewire-851e69b7-2cab-46dc-aad2-0b51c6aebb8a"
+    "scopeKey": "@anonymous/subconscious-rewire-21785c36-a51c-496c-86be-d5ed190b1c8c"
   }
 }

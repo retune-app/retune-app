@@ -37,19 +37,21 @@ export function getApiUrl(): string {
 
   // For production (.replit.app), no port needed - same domain serves API
   if (host.includes(".replit.app")) {
-    // Remove any port if present and use https
     const cleanHost = host.split(":")[0];
     return `https://${cleanHost}`;
   }
 
-  // For development (.replit.dev), use port 5000 explicitly
-  // The domain "something.replit.dev:5000" should stay as is
-  // The domain "something.replit.dev" should become "something.replit.dev:5000"
+  // App Store builds may have a .replit.dev domain baked in from EAS build config.
+  // In production native apps, always use the production API server.
+  if (host.includes(".replit.dev")) {
+    return "https://retuned.replit.app";
+  }
+
+  // For local development, use port 5000 explicitly
   const hostWithPort = host.includes(":") ? host : `${host}:5000`;
 
   let url = new URL(`https://${hostWithPort}`);
 
-  // Remove trailing slash to prevent double slashes in URL concatenation
   return url.href.replace(/\/$/, "");
 }
 
